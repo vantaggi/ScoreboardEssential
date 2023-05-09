@@ -1,0 +1,77 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.example.scoreboardessential.wear-mergeDebugResources-3:/values-bg/values-bg.xml",
+            "map": [
+                {
+                    "source": "/home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/res/values-bg/values.xml",
+                    "from": {
+                        "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
+                        "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                        "startOffsets": "245,352,549,682,791,1017,1150,1295,1429,1657,1767,1973,2109,2325,2517,2613,2698",
+                        "endColumns": "106,196,132,108,225,132,144,133,227,109,205,135,215,191,95,84,97",
+                        "endOffsets": "351,548,681,790,1016,1149,1294,1428,1656,1766,1972,2108,2324,2516,2612,2697,2795"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,216,413,550,663,889,1026,1175,1510,1738,1852,2058,2198,2414,2610,2710,2799",
+                        "endColumns": "110,196,136,112,225,136,148,137,227,113,205,139,215,195,99,88,101",
+                        "endOffsets": "211,408,545,658,884,1021,1170,1308,1733,1847,2053,2193,2409,2605,2705,2794,2896"
+                    }
+                },
+                {
+                    "source": "/home/user/android-studio/jbr/caches/transforms-3/6863554b5934014f8e380f5ea3e03757/transformed/core-1.7.0/res/values-bg/values-bg.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "100",
+                        "endOffsets": "151"
+                    },
+                    "to": {
+                        "startLines": "24",
+                        "startColumns": "4",
+                        "startOffsets": "3357",
+                        "endColumns": "100",
+                        "endOffsets": "3453"
+                    }
+                },
+                {
+                    "source": "/home/user/android-studio/jbr/caches/transforms-3/1e904ee101f927b7deafa4609c3a170b/transformed/wear-1.2.0/res/values-bg/values-bg.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7",
+                        "startColumns": "4,4,4,4,4,4",
+                        "startOffsets": "55,166,292,404,511,623",
+                        "endColumns": "110,125,111,106,111,115",
+                        "endOffsets": "161,287,399,506,618,734"
+                    },
+                    "to": {
+                        "startLines": "20,21,22,23,25,26",
+                        "startColumns": "4,4,4,4,4,4",
+                        "startOffsets": "2901,3012,3138,3250,3458,3570",
+                        "endColumns": "110,125,111,106,111,115",
+                        "endOffsets": "3007,3133,3245,3352,3565,3681"
+                    }
+                },
+                {
+                    "source": "/home/user/android-studio/jbr/caches/transforms-3/33090db44398f8d982e66d4e4a3ee7db/transformed/play-services-basement-17.5.0/res/values-bg/values.xml",
+                    "from": {
+                        "startLines": "4",
+                        "startColumns": "0",
+                        "startOffsets": "247",
+                        "endColumns": "196",
+                        "endOffsets": "443"
+                    },
+                    "to": {
+                        "startLines": "10",
+                        "startColumns": "4",
+                        "startOffsets": "1313",
+                        "endColumns": "196",
+                        "endOffsets": "1505"
+                    }
+                }
+            ]
+        }
+    ]
+}

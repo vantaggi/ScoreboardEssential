@@ -1,0 +1,89 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.scoreboardessential"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="30"
+8-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml
+9        android:targetSdkVersion="33" />
+9-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml
+10
+11    <application
+11-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:5:5-23:19
+12        android:allowBackup="true"
+12-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:6:9-35
+13        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+13-->[androidx.core:core:1.7.0] /home/user/android-studio/jbr/caches/transforms-3/6863554b5934014f8e380f5ea3e03757/transformed/core-1.7.0/AndroidManifest.xml:24:18-86
+14        android:dataExtractionRules="@xml/data_extraction_rules"
+14-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:7:9-65
+15        android:debuggable="true"
+16        android:extractNativeLibs="false"
+17        android:fullBackupContent="@xml/backup_rules"
+17-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:8:9-54
+18        android:icon="@mipmap/ic_launcher"
+18-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:9:9-43
+19        android:label="@string/app_name"
+19-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:10:9-41
+20        android:supportsRtl="true"
+20-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:11:9-35
+21        android:theme="@style/Theme.ScoreboardEssential" >
+21-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:12:9-57
+22        <activity
+22-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:14:9-22:20
+23            android:name="com.example.scoreboardessential.MainActivity"
+23-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:15:13-41
+24            android:exported="true" >
+24-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:16:13-36
+25            <intent-filter>
+25-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:17:13-21:29
+26                <action android:name="android.intent.action.MAIN" />
+26-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:18:17-69
+26-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:18:25-66
+27
+28                <category android:name="android.intent.category.LAUNCHER" />
+28-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:20:17-77
+28-->/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/mobile/src/main/AndroidManifest.xml:20:27-74
+29            </intent-filter>
+30        </activity>
+31        <activity
+31-->[com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:23:9-26:75
+32            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+32-->[com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:24:13-79
+33            android:exported="false"
+33-->[com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:25:13-37
+34            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+34-->[com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:26:13-72
+35
+36        <meta-data
+36-->[com.google.android.gms:play-services-basement:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/33090db44398f8d982e66d4e4a3ee7db/transformed/play-services-basement-17.5.0/AndroidManifest.xml:23:9-25:69
+37            android:name="com.google.android.gms.version"
+37-->[com.google.android.gms:play-services-basement:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/33090db44398f8d982e66d4e4a3ee7db/transformed/play-services-basement-17.5.0/AndroidManifest.xml:24:13-58
+38            android:value="@integer/google_play_services_version" />
+38-->[com.google.android.gms:play-services-basement:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/33090db44398f8d982e66d4e4a3ee7db/transformed/play-services-basement-17.5.0/AndroidManifest.xml:25:13-66
+39
+40        <provider
+40-->[androidx.emoji2:emoji2:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/0c2a6fc7125aa26ea749e0e581cab939/transformed/emoji2-1.0.0/AndroidManifest.xml:26:9-34:20
+41            android:name="androidx.startup.InitializationProvider"
+41-->[androidx.emoji2:emoji2:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/0c2a6fc7125aa26ea749e0e581cab939/transformed/emoji2-1.0.0/AndroidManifest.xml:27:13-67
+42            android:authorities="com.example.scoreboardessential.androidx-startup"
+42-->[androidx.emoji2:emoji2:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/0c2a6fc7125aa26ea749e0e581cab939/transformed/emoji2-1.0.0/AndroidManifest.xml:28:13-68
+43            android:exported="false" >
+43-->[androidx.emoji2:emoji2:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/0c2a6fc7125aa26ea749e0e581cab939/transformed/emoji2-1.0.0/AndroidManifest.xml:29:13-37
+44            <meta-data
+44-->[androidx.emoji2:emoji2:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/0c2a6fc7125aa26ea749e0e581cab939/transformed/emoji2-1.0.0/AndroidManifest.xml:31:13-33:52
+45                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+45-->[androidx.emoji2:emoji2:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/0c2a6fc7125aa26ea749e0e581cab939/transformed/emoji2-1.0.0/AndroidManifest.xml:32:17-75
+46                android:value="androidx.startup" />
+46-->[androidx.emoji2:emoji2:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/0c2a6fc7125aa26ea749e0e581cab939/transformed/emoji2-1.0.0/AndroidManifest.xml:33:17-49
+47            <meta-data
+47-->[androidx.lifecycle:lifecycle-process:2.4.0] /home/user/android-studio/jbr/caches/transforms-3/2d0e9ec2bf966d8dc182924b0ee09a9d/transformed/lifecycle-process-2.4.0/AndroidManifest.xml:31:13-33:52
+48                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+48-->[androidx.lifecycle:lifecycle-process:2.4.0] /home/user/android-studio/jbr/caches/transforms-3/2d0e9ec2bf966d8dc182924b0ee09a9d/transformed/lifecycle-process-2.4.0/AndroidManifest.xml:32:17-78
+49                android:value="androidx.startup" />
+49-->[androidx.lifecycle:lifecycle-process:2.4.0] /home/user/android-studio/jbr/caches/transforms-3/2d0e9ec2bf966d8dc182924b0ee09a9d/transformed/lifecycle-process-2.4.0/AndroidManifest.xml:33:17-49
+50        </provider>
+51    </application>
+52
+53</manifest>

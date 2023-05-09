@@ -1,0 +1,233 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:2:1-38:12
+INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:2:1-38:12
+INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:2:1-38:12
+INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:2:1-38:12
+MERGED from [androidx.databinding:viewbinding:7.4.1] /home/user/android-studio/jbr/caches/transforms-3/116db3d9efd249bff786bb533726107f/transformed/viewbinding-7.4.1/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.wear:wear:1.2.0] /home/user/android-studio/jbr/caches/transforms-3/1e904ee101f927b7deafa4609c3a170b/transformed/wear-1.2.0/AndroidManifest.xml:17:1-30:12
+MERGED from [androidx.core:core-ktx:1.7.0] /home/user/android-studio/jbr/caches/transforms-3/a0e11b62965542377e66b9cc2f2f0589/transformed/core-ktx-1.7.0/AndroidManifest.xml:2:1-9:12
+MERGED from [com.google.android.gms:play-services-wearable:17.1.0] /home/user/android-studio/jbr/caches/transforms-3/50e5743ace4f93eb68ad1bde4d11f081/transformed/play-services-wearable-17.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.percentlayout:percentlayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/35a0f2405a0972eef66dca56678a2701/transformed/percentlayout-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.legacy:legacy-support-v4:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/63fa029852094ba906e36b74467d556a/transformed/legacy-support-v4-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.recyclerview:recyclerview:1.2.1] /home/user/android-studio/jbr/caches/transforms-3/44cb91b2d1c579bdc2e1395c8234c974/transformed/recyclerview-1.2.1/AndroidManifest.xml:17:1-24:12
+MERGED from [com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:17:1-29:12
+MERGED from [com.google.android.gms:play-services-tasks:17.2.0] /home/user/android-studio/jbr/caches/transforms-3/d0218c6e97605648b4e6b8eb4cd1107e/transformed/play-services-tasks-17.2.0/AndroidManifest.xml:2:1-9:12
+MERGED from [com.google.android.gms:play-services-basement:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/33090db44398f8d982e66d4e4a3ee7db/transformed/play-services-basement-17.5.0/AndroidManifest.xml:17:1-28:12
+MERGED from [androidx.media:media:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/23f6d0a51eb8de2426639568d2062d8b/transformed/media-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.legacy:legacy-support-core-ui:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/52475b09ba76c6a4c05cfcf37d8e6eb3/transformed/legacy-support-core-ui-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/5d369924b46cb974b206673703e6fc35/transformed/legacy-support-core-utils-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.fragment:fragment:1.2.4] /home/user/android-studio/jbr/caches/transforms-3/0a48020774b69157cccb62880eb6cd99/transformed/fragment-1.2.4/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/e789588554a9261e440bd79046caf9a8/transformed/viewpager-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/bb53665559ac4ad481644c6c4c462df1/transformed/coordinatorlayout-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/0b74afe45f74cadd2ccf566e09706589/transformed/drawerlayout-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.slidingpanelayout:slidingpanelayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/d06c719413cea256e3d07208cde445df/transformed/slidingpanelayout-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.customview:customview:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/2a9025db8710f4d4581488b796f4f918/transformed/customview-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/7127e72917a333919842b20137e4fa20/transformed/swiperefreshlayout-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.loader:loader:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/38d54e46337108b0e8962be7fd594022/transformed/loader-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.asynclayoutinflater:asynclayoutinflater:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/2ca90870b090e627e436dd27eef01b33/transformed/asynclayoutinflater-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.activity:activity:1.1.0] /home/user/android-studio/jbr/caches/transforms-3/4f2caddbc56d9af578b4b0ecee80e674/transformed/activity-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.core:core:1.7.0] /home/user/android-studio/jbr/caches/transforms-3/6863554b5934014f8e380f5ea3e03757/transformed/core-1.7.0/AndroidManifest.xml:17:1-26:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/user/android-studio/jbr/caches/transforms-3/a4aa7fbb1abaa741d90f2d6d053f630c/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.3.1] /home/user/android-studio/jbr/caches/transforms-3/d7b2e2cddd87499d72e88862c3fd85bb/transformed/lifecycle-runtime-2.3.1/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.documentfile:documentfile:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/f5cbe5f9d6c6dc9c7c243dfa09c5f2e0/transformed/documentfile-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/3dac3c555a009f19ad2bc626d96ade9b/transformed/localbroadcastmanager-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.print:print:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/f4968768adee87c4c6c87280eb34bf46/transformed/print-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/eea76464974f392a795321ab89438ae2/transformed/interpolator-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/70c229d4855d6f4f58f8e76b5800ca68/transformed/cursoradapter-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.2.0] /home/user/android-studio/jbr/caches/transforms-3/50d9f17495b955d7976193dccf3ff418/transformed/lifecycle-viewmodel-savedstate-2.2.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.2.0] /home/user/android-studio/jbr/caches/transforms-3/4dc957db0983e4801932eac9f021b3b0/transformed/lifecycle-viewmodel-2.2.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.0.0] /home/user/android-studio/jbr/caches/transforms-3/34a21eb817fcb42b7859242a638924f1/transformed/lifecycle-livedata-2.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.2.0] /home/user/android-studio/jbr/caches/transforms-3/10f3cdf0a7a3dc91d74393a080279df7/transformed/lifecycle-livedata-core-2.2.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.arch.core:core-runtime:2.1.0] /home/user/android-studio/jbr/caches/transforms-3/ceeab03a3b8b453e9cc18fb6a8c9587e/transformed/core-runtime-2.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.savedstate:savedstate:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/bb9d53abe3e92a6c9f7f55f080ed2cc7/transformed/savedstate-1.0.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.annotation:annotation-experimental:1.1.0] /home/user/android-studio/jbr/caches/transforms-3/7ba1a1485512c0202103b5247d3a60cc/transformed/annotation-experimental-1.1.0/AndroidManifest.xml:17:1-24:12
+INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:2:1-38:12
+INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:2:1-38:12
+INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:2:1-38:12
+	package
+		INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:2:1-38:12
+		INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+	android:versionName
+		INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:2:1-38:12
+		INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+	android:versionCode
+		INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:2:1-38:12
+		INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:2:11-69
+uses-permission#android.permission.WAKE_LOCK
+ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:4:5-68
+	android:name
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:4:22-65
+uses-feature#android.hardware.type.watch
+ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:6:5-64
+	android:name
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:6:19-61
+application
+ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:8:5-36:19
+MERGED from [androidx.wear:wear:1.2.0] /home/user/android-studio/jbr/caches/transforms-3/1e904ee101f927b7deafa4609c3a170b/transformed/wear-1.2.0/AndroidManifest.xml:24:5-28:19
+MERGED from [androidx.wear:wear:1.2.0] /home/user/android-studio/jbr/caches/transforms-3/1e904ee101f927b7deafa4609c3a170b/transformed/wear-1.2.0/AndroidManifest.xml:24:5-28:19
+MERGED from [com.google.android.gms:play-services-wearable:17.1.0] /home/user/android-studio/jbr/caches/transforms-3/50e5743ace4f93eb68ad1bde4d11f081/transformed/play-services-wearable-17.1.0/AndroidManifest.xml:22:5-20
+MERGED from [com.google.android.gms:play-services-wearable:17.1.0] /home/user/android-studio/jbr/caches/transforms-3/50e5743ace4f93eb68ad1bde4d11f081/transformed/play-services-wearable-17.1.0/AndroidManifest.xml:22:5-20
+MERGED from [com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:22:5-27:19
+MERGED from [com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:22:5-27:19
+MERGED from [com.google.android.gms:play-services-tasks:17.2.0] /home/user/android-studio/jbr/caches/transforms-3/d0218c6e97605648b4e6b8eb4cd1107e/transformed/play-services-tasks-17.2.0/AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-tasks:17.2.0] /home/user/android-studio/jbr/caches/transforms-3/d0218c6e97605648b4e6b8eb4cd1107e/transformed/play-services-tasks-17.2.0/AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-basement:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/33090db44398f8d982e66d4e4a3ee7db/transformed/play-services-basement-17.5.0/AndroidManifest.xml:22:5-26:19
+MERGED from [com.google.android.gms:play-services-basement:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/33090db44398f8d982e66d4e4a3ee7db/transformed/play-services-basement-17.5.0/AndroidManifest.xml:22:5-26:19
+MERGED from [androidx.core:core:1.7.0] /home/user/android-studio/jbr/caches/transforms-3/6863554b5934014f8e380f5ea3e03757/transformed/core-1.7.0/AndroidManifest.xml:24:5-89
+MERGED from [androidx.core:core:1.7.0] /home/user/android-studio/jbr/caches/transforms-3/6863554b5934014f8e380f5ea3e03757/transformed/core-1.7.0/AndroidManifest.xml:24:5-89
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/user/android-studio/jbr/caches/transforms-3/a4aa7fbb1abaa741d90f2d6d053f630c/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/user/android-studio/jbr/caches/transforms-3/a4aa7fbb1abaa741d90f2d6d053f630c/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:24:5-25:19
+	android:appComponentFactory
+		ADDED from [androidx.core:core:1.7.0] /home/user/android-studio/jbr/caches/transforms-3/6863554b5934014f8e380f5ea3e03757/transformed/core-1.7.0/AndroidManifest.xml:24:18-86
+	android:supportsRtl
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:12:9-35
+	android:label
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:11:9-41
+	android:icon
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:10:9-43
+	android:allowBackup
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:9:9-35
+	android:theme
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:13:9-59
+uses-library#com.google.android.wearable
+ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:14:9-16:39
+MERGED from [androidx.wear:wear:1.2.0] /home/user/android-studio/jbr/caches/transforms-3/1e904ee101f927b7deafa4609c3a170b/transformed/wear-1.2.0/AndroidManifest.xml:25:9-27:40
+MERGED from [androidx.wear:wear:1.2.0] /home/user/android-studio/jbr/caches/transforms-3/1e904ee101f927b7deafa4609c3a170b/transformed/wear-1.2.0/AndroidManifest.xml:25:9-27:40
+	android:required
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:16:13-36
+	android:name
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:15:13-55
+meta-data#com.google.android.wearable.standalone
+ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:22:9-24:36
+	android:value
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:24:13-33
+	android:name
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:23:13-66
+activity#com.example.scoreboardessential.MainActivity
+ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:26:9-35:20
+	android:label
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:29:13-45
+	android:exported
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:28:13-36
+	android:name
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:27:13-41
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:30:13-34:29
+action#android.intent.action.MAIN
+ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:31:17-69
+	android:name
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:31:25-66
+category#android.intent.category.LAUNCHER
+ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:33:17-77
+	android:name
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml:33:27-74
+uses-sdk
+INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+MERGED from [androidx.databinding:viewbinding:7.4.1] /home/user/android-studio/jbr/caches/transforms-3/116db3d9efd249bff786bb533726107f/transformed/viewbinding-7.4.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.databinding:viewbinding:7.4.1] /home/user/android-studio/jbr/caches/transforms-3/116db3d9efd249bff786bb533726107f/transformed/viewbinding-7.4.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.wear:wear:1.2.0] /home/user/android-studio/jbr/caches/transforms-3/1e904ee101f927b7deafa4609c3a170b/transformed/wear-1.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.wear:wear:1.2.0] /home/user/android-studio/jbr/caches/transforms-3/1e904ee101f927b7deafa4609c3a170b/transformed/wear-1.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.core:core-ktx:1.7.0] /home/user/android-studio/jbr/caches/transforms-3/a0e11b62965542377e66b9cc2f2f0589/transformed/core-ktx-1.7.0/AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.core:core-ktx:1.7.0] /home/user/android-studio/jbr/caches/transforms-3/a0e11b62965542377e66b9cc2f2f0589/transformed/core-ktx-1.7.0/AndroidManifest.xml:5:5-7:41
+MERGED from [com.google.android.gms:play-services-wearable:17.1.0] /home/user/android-studio/jbr/caches/transforms-3/50e5743ace4f93eb68ad1bde4d11f081/transformed/play-services-wearable-17.1.0/AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-wearable:17.1.0] /home/user/android-studio/jbr/caches/transforms-3/50e5743ace4f93eb68ad1bde4d11f081/transformed/play-services-wearable-17.1.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.percentlayout:percentlayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/35a0f2405a0972eef66dca56678a2701/transformed/percentlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.percentlayout:percentlayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/35a0f2405a0972eef66dca56678a2701/transformed/percentlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-v4:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/63fa029852094ba906e36b74467d556a/transformed/legacy-support-v4-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-v4:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/63fa029852094ba906e36b74467d556a/transformed/legacy-support-v4-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.recyclerview:recyclerview:1.2.1] /home/user/android-studio/jbr/caches/transforms-3/44cb91b2d1c579bdc2e1395c8234c974/transformed/recyclerview-1.2.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.recyclerview:recyclerview:1.2.1] /home/user/android-studio/jbr/caches/transforms-3/44cb91b2d1c579bdc2e1395c8234c974/transformed/recyclerview-1.2.1/AndroidManifest.xml:20:5-22:41
+MERGED from [com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-tasks:17.2.0] /home/user/android-studio/jbr/caches/transforms-3/d0218c6e97605648b4e6b8eb4cd1107e/transformed/play-services-tasks-17.2.0/AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-tasks:17.2.0] /home/user/android-studio/jbr/caches/transforms-3/d0218c6e97605648b4e6b8eb4cd1107e/transformed/play-services-tasks-17.2.0/AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-basement:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/33090db44398f8d982e66d4e4a3ee7db/transformed/play-services-basement-17.5.0/AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.gms:play-services-basement:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/33090db44398f8d982e66d4e4a3ee7db/transformed/play-services-basement-17.5.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.media:media:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/23f6d0a51eb8de2426639568d2062d8b/transformed/media-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.media:media:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/23f6d0a51eb8de2426639568d2062d8b/transformed/media-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-ui:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/52475b09ba76c6a4c05cfcf37d8e6eb3/transformed/legacy-support-core-ui-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-ui:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/52475b09ba76c6a4c05cfcf37d8e6eb3/transformed/legacy-support-core-ui-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/5d369924b46cb974b206673703e6fc35/transformed/legacy-support-core-utils-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/5d369924b46cb974b206673703e6fc35/transformed/legacy-support-core-utils-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.fragment:fragment:1.2.4] /home/user/android-studio/jbr/caches/transforms-3/0a48020774b69157cccb62880eb6cd99/transformed/fragment-1.2.4/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.2.4] /home/user/android-studio/jbr/caches/transforms-3/0a48020774b69157cccb62880eb6cd99/transformed/fragment-1.2.4/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager:viewpager:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/e789588554a9261e440bd79046caf9a8/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/e789588554a9261e440bd79046caf9a8/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/bb53665559ac4ad481644c6c4c462df1/transformed/coordinatorlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/bb53665559ac4ad481644c6c4c462df1/transformed/coordinatorlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/0b74afe45f74cadd2ccf566e09706589/transformed/drawerlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/0b74afe45f74cadd2ccf566e09706589/transformed/drawerlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.slidingpanelayout:slidingpanelayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/d06c719413cea256e3d07208cde445df/transformed/slidingpanelayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.slidingpanelayout:slidingpanelayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/d06c719413cea256e3d07208cde445df/transformed/slidingpanelayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/2a9025db8710f4d4581488b796f4f918/transformed/customview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/2a9025db8710f4d4581488b796f4f918/transformed/customview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/7127e72917a333919842b20137e4fa20/transformed/swiperefreshlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/7127e72917a333919842b20137e4fa20/transformed/swiperefreshlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/38d54e46337108b0e8962be7fd594022/transformed/loader-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/38d54e46337108b0e8962be7fd594022/transformed/loader-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.asynclayoutinflater:asynclayoutinflater:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/2ca90870b090e627e436dd27eef01b33/transformed/asynclayoutinflater-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.asynclayoutinflater:asynclayoutinflater:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/2ca90870b090e627e436dd27eef01b33/transformed/asynclayoutinflater-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.1.0] /home/user/android-studio/jbr/caches/transforms-3/4f2caddbc56d9af578b4b0ecee80e674/transformed/activity-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.activity:activity:1.1.0] /home/user/android-studio/jbr/caches/transforms-3/4f2caddbc56d9af578b4b0ecee80e674/transformed/activity-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.core:core:1.7.0] /home/user/android-studio/jbr/caches/transforms-3/6863554b5934014f8e380f5ea3e03757/transformed/core-1.7.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.core:core:1.7.0] /home/user/android-studio/jbr/caches/transforms-3/6863554b5934014f8e380f5ea3e03757/transformed/core-1.7.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/user/android-studio/jbr/caches/transforms-3/a4aa7fbb1abaa741d90f2d6d053f630c/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/user/android-studio/jbr/caches/transforms-3/a4aa7fbb1abaa741d90f2d6d053f630c/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.3.1] /home/user/android-studio/jbr/caches/transforms-3/d7b2e2cddd87499d72e88862c3fd85bb/transformed/lifecycle-runtime-2.3.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.3.1] /home/user/android-studio/jbr/caches/transforms-3/d7b2e2cddd87499d72e88862c3fd85bb/transformed/lifecycle-runtime-2.3.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.documentfile:documentfile:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/f5cbe5f9d6c6dc9c7c243dfa09c5f2e0/transformed/documentfile-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/f5cbe5f9d6c6dc9c7c243dfa09c5f2e0/transformed/documentfile-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/3dac3c555a009f19ad2bc626d96ade9b/transformed/localbroadcastmanager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/3dac3c555a009f19ad2bc626d96ade9b/transformed/localbroadcastmanager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/f4968768adee87c4c6c87280eb34bf46/transformed/print-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/f4968768adee87c4c6c87280eb34bf46/transformed/print-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/eea76464974f392a795321ab89438ae2/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/eea76464974f392a795321ab89438ae2/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/70c229d4855d6f4f58f8e76b5800ca68/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/70c229d4855d6f4f58f8e76b5800ca68/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.2.0] /home/user/android-studio/jbr/caches/transforms-3/50d9f17495b955d7976193dccf3ff418/transformed/lifecycle-viewmodel-savedstate-2.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.2.0] /home/user/android-studio/jbr/caches/transforms-3/50d9f17495b955d7976193dccf3ff418/transformed/lifecycle-viewmodel-savedstate-2.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.2.0] /home/user/android-studio/jbr/caches/transforms-3/4dc957db0983e4801932eac9f021b3b0/transformed/lifecycle-viewmodel-2.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.2.0] /home/user/android-studio/jbr/caches/transforms-3/4dc957db0983e4801932eac9f021b3b0/transformed/lifecycle-viewmodel-2.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.0.0] /home/user/android-studio/jbr/caches/transforms-3/34a21eb817fcb42b7859242a638924f1/transformed/lifecycle-livedata-2.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.0.0] /home/user/android-studio/jbr/caches/transforms-3/34a21eb817fcb42b7859242a638924f1/transformed/lifecycle-livedata-2.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.2.0] /home/user/android-studio/jbr/caches/transforms-3/10f3cdf0a7a3dc91d74393a080279df7/transformed/lifecycle-livedata-core-2.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.2.0] /home/user/android-studio/jbr/caches/transforms-3/10f3cdf0a7a3dc91d74393a080279df7/transformed/lifecycle-livedata-core-2.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.arch.core:core-runtime:2.1.0] /home/user/android-studio/jbr/caches/transforms-3/ceeab03a3b8b453e9cc18fb6a8c9587e/transformed/core-runtime-2.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.arch.core:core-runtime:2.1.0] /home/user/android-studio/jbr/caches/transforms-3/ceeab03a3b8b453e9cc18fb6a8c9587e/transformed/core-runtime-2.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.savedstate:savedstate:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/bb9d53abe3e92a6c9f7f55f080ed2cc7/transformed/savedstate-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.savedstate:savedstate:1.0.0] /home/user/android-studio/jbr/caches/transforms-3/bb9d53abe3e92a6c9f7f55f080ed2cc7/transformed/savedstate-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.annotation:annotation-experimental:1.1.0] /home/user/android-studio/jbr/caches/transforms-3/7ba1a1485512c0202103b5247d3a60cc/transformed/annotation-experimental-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.annotation:annotation-experimental:1.1.0] /home/user/android-studio/jbr/caches/transforms-3/7ba1a1485512c0202103b5247d3a60cc/transformed/annotation-experimental-1.1.0/AndroidManifest.xml:20:5-22:41
+INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+		INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+		ADDED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+		INJECTED from /home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/AndroidManifest.xml
+activity#com.google.android.gms.common.api.GoogleApiActivity
+ADDED from [com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:23:9-26:75
+	android:exported
+		ADDED from [com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:25:13-37
+	android:theme
+		ADDED from [com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:26:13-72
+	android:name
+		ADDED from [com.google.android.gms:play-services-base:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/cbd11f884941602516c46d36c6f1c17d/transformed/play-services-base-17.5.0/AndroidManifest.xml:24:13-79
+meta-data#com.google.android.gms.version
+ADDED from [com.google.android.gms:play-services-basement:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/33090db44398f8d982e66d4e4a3ee7db/transformed/play-services-basement-17.5.0/AndroidManifest.xml:23:9-25:69
+	android:value
+		ADDED from [com.google.android.gms:play-services-basement:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/33090db44398f8d982e66d4e4a3ee7db/transformed/play-services-basement-17.5.0/AndroidManifest.xml:25:13-66
+	android:name
+		ADDED from [com.google.android.gms:play-services-basement:17.5.0] /home/user/android-studio/jbr/caches/transforms-3/33090db44398f8d982e66d4e4a3ee7db/transformed/play-services-basement-17.5.0/AndroidManifest.xml:24:13-58

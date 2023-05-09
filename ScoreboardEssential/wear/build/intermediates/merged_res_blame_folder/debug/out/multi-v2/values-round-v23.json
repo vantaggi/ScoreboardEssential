@@ -1,0 +1,36 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.example.scoreboardessential.wear-mergeDebugResources-3:/values-round-v23/values-round-v23.xml",
+            "map": [
+                {
+                    "source": "/home/user/AndroidStudioProjects/ScoreboardEssential/ScoreboardEssential/wear/src/main/res/values-round/strings.xml",
+                    "from": {
+                        "startLines": "1",
+                        "startColumns": "4",
+                        "startOffsets": "17",
+                        "endColumns": "58",
+                        "endOffsets": "71"
+                    },
+                    "to": {
+                        "startLines": "5",
+                        "startColumns": "4",
+                        "startOffsets": "284",
+                        "endColumns": "58",
+                        "endOffsets": "338"
+                    }
+                },
+                {
+                    "source": "/home/user/android-studio/jbr/caches/transforms-3/1e904ee101f927b7deafa4609c3a170b/transformed/wear-1.2.0/res/values-round-v23/values-round-v23.xml",
+                    "from": {
+                        "startLines": "2,3,4",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "55,118,204",
+                        "endColumns": "62,85,79",
+                        "endOffsets": "113,199,279"
+                    }
+                }
+            ]
+        }
+    ]
+}
