@@ -24,36 +24,67 @@
         android:layout_width="match_parent"
         android:layout_rowWeight="1"
         android:columnCount="2"
-        android:rowCount="2"
+        android:rowCount="1"
         android:weightSum="2">
 
-        <TextView
-            android:id="@+id/team_1_score_text_view"
-            android:layout_width="0dp"
-            android:layout_row="1"
+        <FrameLayout
+            android:id="@+id/team_1_frame_layout"
             android:layout_rowWeight="1"
-            android:layout_column="0"
-            android:layout_columnWeight="1"
-            android:background="@android:color/holo_red_dark"
-            android:gravity="center"
-            android:textColor="@android:color/white"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            tools:text="@tools:sample/lorem" />
+            android:layout_columnWeight="1">
 
-        <TextView
-            android:id="@+id/team_2_score_text_view"
-            android:layout_width="0dp"
-            android:layout_row="1"
+            <TextView
+                android:id="@+id/team_1_score_text_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/holo_red_dark"
+                android:gravity="center"
+                android:textColor="@android:color/white"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                tools:text="@tools:sample/lorem" />
+
+            <Button
+                android:id="@+id/team_1_add_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Button" />
+
+            <Button
+                android:id="@+id/team_1_subtract_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Button" />
+
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/team_2_frame_layout"
             android:layout_rowWeight="1"
-            android:layout_column="1"
-            android:layout_columnWeight="1"
-            android:background="@android:color/holo_blue_dark"
-            android:gravity="center"
-            android:textColor="@android:color/white"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            tools:text="@tools:sample/lorem" />
+            android:layout_columnWeight="1">
+
+            <TextView
+                android:id="@+id/team_2_score_text_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/holo_blue_dark"
+                android:gravity="center"
+                android:textColor="@android:color/white"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                tools:text="@tools:sample/lorem" />
+
+            <Button
+                android:id="@+id/team_2_add_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Button" />
+
+            <Button
+                android:id="@+id/team_2_subtract_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Button" />
+        </FrameLayout>
 
     </GridLayout>
 
