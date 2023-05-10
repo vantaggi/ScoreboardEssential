@@ -338,6 +338,7 @@ id fill_horizontal
 id fill_vertical
 id forever
 id fragment_container_view_tag
+id grid_layout
 id height
 id icon
 id icon_group
@@ -368,6 +369,7 @@ id right
 id right_icon
 id right_side
 id round
+id scores_grid_layout
 id singlePage
 id square
 id standard
@@ -386,9 +388,12 @@ id tag_transition_group
 id tag_unhandled_key_event_manager
 id tag_unhandled_key_listeners
 id tag_window_insets_animation_callback
+id team_1_score_text_view
+id team_2_score_text_view
 id text
 id text2
 id time
+id timer_text_view
 id title
 id top
 id view_tree_lifecycle_owner

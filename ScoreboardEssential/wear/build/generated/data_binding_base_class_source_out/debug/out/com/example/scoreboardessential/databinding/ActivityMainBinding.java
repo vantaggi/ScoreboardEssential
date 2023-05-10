@@ -4,12 +4,12 @@ package com.example.scoreboardessential.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.GridLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
-import androidx.wear.widget.BoxInsetLayout;
 import com.example.scoreboardessential.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
@@ -17,19 +17,37 @@ import java.lang.String;
 
 public final class ActivityMainBinding implements ViewBinding {
   @NonNull
-  private final BoxInsetLayout rootView;
+  private final GridLayout rootView;
 
   @NonNull
-  public final TextView text;
+  public final GridLayout gridLayout;
 
-  private ActivityMainBinding(@NonNull BoxInsetLayout rootView, @NonNull TextView text) {
+  @NonNull
+  public final GridLayout scoresGridLayout;
+
+  @NonNull
+  public final TextView team1ScoreTextView;
+
+  @NonNull
+  public final TextView team2ScoreTextView;
+
+  @NonNull
+  public final TextView timerTextView;
+
+  private ActivityMainBinding(@NonNull GridLayout rootView, @NonNull GridLayout gridLayout,
+      @NonNull GridLayout scoresGridLayout, @NonNull TextView team1ScoreTextView,
+      @NonNull TextView team2ScoreTextView, @NonNull TextView timerTextView) {
     this.rootView = rootView;
-    this.text = text;
+    this.gridLayout = gridLayout;
+    this.scoresGridLayout = scoresGridLayout;
+    this.team1ScoreTextView = team1ScoreTextView;
+    this.team2ScoreTextView = team2ScoreTextView;
+    this.timerTextView = timerTextView;
   }
 
   @Override
   @NonNull
-  public BoxInsetLayout getRoot() {
+  public GridLayout getRoot() {
     return rootView;
   }
 
@@ -54,13 +72,34 @@ public final class ActivityMainBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
-      id = R.id.text;
-      TextView text = ViewBindings.findChildViewById(rootView, id);
-      if (text == null) {
+      GridLayout gridLayout = (GridLayout) rootView;
+
+      id = R.id.scores_grid_layout;
+      GridLayout scoresGridLayout = ViewBindings.findChildViewById(rootView, id);
+      if (scoresGridLayout == null) {
         break missingId;
       }
 
-      return new ActivityMainBinding((BoxInsetLayout) rootView, text);
+      id = R.id.team_1_score_text_view;
+      TextView team1ScoreTextView = ViewBindings.findChildViewById(rootView, id);
+      if (team1ScoreTextView == null) {
+        break missingId;
+      }
+
+      id = R.id.team_2_score_text_view;
+      TextView team2ScoreTextView = ViewBindings.findChildViewById(rootView, id);
+      if (team2ScoreTextView == null) {
+        break missingId;
+      }
+
+      id = R.id.timer_text_view;
+      TextView timerTextView = ViewBindings.findChildViewById(rootView, id);
+      if (timerTextView == null) {
+        break missingId;
+      }
+
+      return new ActivityMainBinding((GridLayout) rootView, gridLayout, scoresGridLayout,
+          team1ScoreTextView, team2ScoreTextView, timerTextView);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));
