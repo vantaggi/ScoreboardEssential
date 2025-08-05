@@ -7,10 +7,13 @@ import android.util.Log
 import android.view.View
 import android.widget.TextView
 import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.DataEvent
+import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
 
     private lateinit var timerTextView: TextView
     private lateinit var team1ScoreTextView: TextView
@@ -45,6 +48,8 @@ class MainActivity : AppCompatActivity() {
         val putDataMapReq = PutDataMapRequest.create(DataSync.SCORE_PATH).apply {
             dataMap.putInt(DataSync.TEAM1_SCORE_KEY, team1Score)
             dataMap.putInt(DataSync.TEAM2_SCORE_KEY, team2Score)
+            dataMap.putLong(DataSync.TIMER_KEY, remainingTimeInMillis)
+            dataMap.putBoolean(DataSync.TIMER_STATE_KEY, isTimerRunning)
         }
         val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
         dataClient.putDataItem(putDataReq).addOnSuccessListener {
@@ -119,5 +124,41 @@ class MainActivity : AppCompatActivity() {
         val minutes = (remainingTimeInMillis / 1000) / 60
         val seconds = (remainingTimeInMillis / 1000) % 60
         timerTextView.text = String.format("%02d:%02d", minutes, seconds)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        dataClient.addListener(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        dataClient.removeListener(this)
+    }
+
+    override fun onDataChanged(dataEvents: DataEventBuffer) {
+        Log.d("DataSync", "onDataChanged: $dataEvents")
+        dataEvents.forEach { event ->
+            if (event.type == DataEvent.TYPE_CHANGED) {
+                val dataItem = event.dataItem
+                if (dataItem.uri.path?.compareTo(DataSync.SCORE_PATH) == 0) {
+                    val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+                    team1Score = dataMap.getInt(DataSync.TEAM1_SCORE_KEY)
+                    team2Score = dataMap.getInt(DataSync.TEAM2_SCORE_KEY)
+                    remainingTimeInMillis = dataMap.getLong(DataSync.TIMER_KEY)
+                    isTimerRunning = dataMap.getBoolean(DataSync.TIMER_STATE_KEY)
+
+                    updateUi(team1Score, team2Score)
+                    updateTimerTextView()
+                }
+            }
+        }
+    }
+
+    private fun updateUi(team1Score: Int, team2Score: Int) {
+        runOnUiThread {
+            team1ScoreTextView.text = team1Score.toString()
+            team2ScoreTextView.text = team2Score.toString()
+        }
     }
 }
