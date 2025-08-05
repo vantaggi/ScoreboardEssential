@@ -7,12 +7,114 @@
     tools:context=".MainActivity">
 
     <TextView
+        android:id="@+id/team1_score_textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:text="0"
+        android:textSize="48sp"
+        app:layout_constraintBottom_toTopOf="@+id/guideline_middle"
+        app:layout_constraintEnd_toStartOf="@+id/guideline_vertical"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/team2_score_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:textSize="48sp"
+        app:layout_constraintBottom_toTopOf="@+id/guideline_middle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/guideline_vertical"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/team1_add_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="+"
+        app:layout_constraintTop_toBottomOf="@id/team1_score_textview"
+        app:layout_constraintStart_toStartOf="@id/team1_score_textview"
+        app:layout_constraintEnd_toEndOf="@id/team1_score_textview"/>
+
+    <Button
+        android:id="@+id/team1_subtract_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="-"
+        app:layout_constraintTop_toBottomOf="@id/team1_add_button"
+        app:layout_constraintStart_toStartOf="@id/team1_add_button"
+        app:layout_constraintEnd_toEndOf="@id/team1_add_button"/>
+
+    <Button
+        android:id="@+id/team2_add_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="+"
+        app:layout_constraintTop_toBottomOf="@id/team2_score_textview"
+        app:layout_constraintStart_toStartOf="@id/team2_score_textview"
+        app:layout_constraintEnd_toEndOf="@id/team2_score_textview"/>
+
+    <Button
+        android:id="@+id/team2_subtract_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="-"
+        app:layout_constraintTop_toBottomOf="@id/team2_add_button"
+        app:layout_constraintStart_toStartOf="@id/team2_add_button"
+        app:layout_constraintEnd_toEndOf="@id/team2_add_button"/>
+
+
+    <TextView
+        android:id="@+id/timer_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="00:00"
+        android:textSize="34sp"
+        app:layout_constraintTop_toBottomOf="@id/guideline_middle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/timer_buttons_layout"/>
+
+    <LinearLayout
+        android:id="@+id/timer_buttons_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/timer_textview"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Button
+            android:id="@+id/timer_start_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start"/>
+        <Button
+            android:id="@+id/timer_pause_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pause"/>
+        <Button
+            android:id="@+id/timer_reset_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reset"/>
+    </LinearLayout>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_middle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.5" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
