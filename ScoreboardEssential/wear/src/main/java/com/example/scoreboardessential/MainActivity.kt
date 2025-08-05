@@ -3,8 +3,12 @@ package com.example.scoreboardessential
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
 import android.view.View
 import android.widget.TextView
+import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.Wearable
 
 class MainActivity : AppCompatActivity() {
 
@@ -19,9 +23,13 @@ class MainActivity : AppCompatActivity() {
     private var team1Score = 0
     private var team2Score = 0
 
+    private lateinit var dataClient: DataClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        dataClient = Wearable.getDataClient(this)
 
         // initialize views
         timerTextView = findViewById(R.id.timer_text_view)
@@ -31,6 +39,19 @@ class MainActivity : AppCompatActivity() {
         // set initial scores
         team1ScoreTextView.text = team1Score.toString()
         team2ScoreTextView.text = team2Score.toString()
+    }
+
+    private fun sendScoreUpdate() {
+        val putDataMapReq = PutDataMapRequest.create(DataSync.SCORE_PATH).apply {
+            dataMap.putInt(DataSync.TEAM1_SCORE_KEY, team1Score)
+            dataMap.putInt(DataSync.TEAM2_SCORE_KEY, team2Score)
+        }
+        val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
+        dataClient.putDataItem(putDataReq).addOnSuccessListener {
+            Log.d("DataSync", "Data sent successfully: $it")
+        }.addOnFailureListener {
+            Log.e("DataSync", "Data sending failed", it)
+        }
     }
 
     fun startStopTimer(view: View) {
@@ -73,6 +94,7 @@ class MainActivity : AppCompatActivity() {
                 team2ScoreTextView.text = team2Score.toString()
             }
         }
+        sendScoreUpdate()
     }
 
     fun subtractScore(view: View) {
@@ -90,6 +112,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        sendScoreUpdate()
     }
 
     private fun updateTimerTextView() {
