@@ -11,6 +11,8 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import android.os.CountDownTimer
+import android.view.View
 
 class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
 
