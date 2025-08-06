@@ -33,36 +33,36 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="+"
-        app:layout_constraintTop_toBottomOf="@id/team1_score_textview"
+        app:layout_constraintEnd_toEndOf="@id/team1_score_textview"
         app:layout_constraintStart_toStartOf="@id/team1_score_textview"
-        app:layout_constraintEnd_toEndOf="@id/team1_score_textview"/>
+        app:layout_constraintTop_toBottomOf="@id/team1_score_textview" />
 
     <Button
         android:id="@+id/team1_subtract_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="-"
-        app:layout_constraintTop_toBottomOf="@id/team1_add_button"
+        app:layout_constraintEnd_toEndOf="@id/team1_add_button"
         app:layout_constraintStart_toStartOf="@id/team1_add_button"
-        app:layout_constraintEnd_toEndOf="@id/team1_add_button"/>
+        app:layout_constraintTop_toBottomOf="@id/team1_add_button" />
 
     <Button
         android:id="@+id/team2_add_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="+"
-        app:layout_constraintTop_toBottomOf="@id/team2_score_textview"
+        app:layout_constraintEnd_toEndOf="@id/team2_score_textview"
         app:layout_constraintStart_toStartOf="@id/team2_score_textview"
-        app:layout_constraintEnd_toEndOf="@id/team2_score_textview"/>
+        app:layout_constraintTop_toBottomOf="@id/team2_score_textview" />
 
     <Button
         android:id="@+id/team2_subtract_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="-"
-        app:layout_constraintTop_toBottomOf="@id/team2_add_button"
+        app:layout_constraintEnd_toEndOf="@id/team2_add_button"
         app:layout_constraintStart_toStartOf="@id/team2_add_button"
-        app:layout_constraintEnd_toEndOf="@id/team2_add_button"/>
+        app:layout_constraintTop_toBottomOf="@id/team2_add_button" />
 
 
     <TextView
@@ -71,36 +71,38 @@
         android:layout_height="wrap_content"
         android:text="00:00"
         android:textSize="34sp"
-        app:layout_constraintTop_toBottomOf="@id/guideline_middle"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/timer_buttons_layout"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/timer_buttons_layout"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/guideline_middle" />
 
     <LinearLayout
         android:id="@+id/timer_buttons_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/timer_textview"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/timer_textview">
 
         <Button
             android:id="@+id/timer_start_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Start"/>
+            android:text="Start" />
+
         <Button
             android:id="@+id/timer_pause_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Pause"/>
+            android:text="Pause" />
+
         <Button
             android:id="@+id/timer_reset_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Reset"/>
+            android:text="Reset" />
     </LinearLayout>
 
     <androidx.constraintlayout.widget.Guideline

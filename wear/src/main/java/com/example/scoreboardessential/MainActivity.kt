@@ -1,11 +1,11 @@
 package com.example.scoreboardessential
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
 import android.view.View
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
@@ -94,6 +94,7 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
                 team1Score++
                 team1ScoreTextView.text = team1Score.toString()
             }
+
             R.id.team_2_add_button -> {
                 team2Score++
                 team2ScoreTextView.text = team2Score.toString()
@@ -110,6 +111,7 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
                     team1ScoreTextView.text = team1Score.toString()
                 }
             }
+
             R.id.team_2_subtract_button -> {
                 if (team2Score > 0) {
                     team2Score--
