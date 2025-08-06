@@ -1,0 +1,17 @@
+# Gradle
+**/.gradle
+**/build
+
+# Android
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Intellij
+.idea/
+
+# Mac
+.DS_Store
+
+# Local properties
+local.properties
