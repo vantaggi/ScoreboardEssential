@@ -135,7 +135,6 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
             val intent = Intent(this, MatchHistoryActivity::class.java)
             startActivity(intent)
         }
-
         findViewById<ImageButton>(R.id.team1_customize_button).setOnClickListener {
             ColorPickerDialog.Builder(this)
                 .setTitle("Team 1 Color")
