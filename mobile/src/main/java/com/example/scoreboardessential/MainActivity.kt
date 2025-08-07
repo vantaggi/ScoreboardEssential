@@ -1,5 +1,6 @@
 package com.example.scoreboardessential
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
@@ -8,12 +9,17 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.scoreboardessential.database.AppDatabase
+import com.example.scoreboardessential.database.Match
+import com.example.scoreboardessential.database.MatchDao
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
 
@@ -27,7 +33,10 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
     private lateinit var team2ScoreTextView: TextView
     private lateinit var timerTextView: TextView
     private lateinit var timerEditText: EditText
+    private lateinit var team1NameEditText: EditText
+    private lateinit var team2NameEditText: EditText
     private lateinit var dataClient: DataClient
+    private lateinit var matchDao: MatchDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,8 +46,12 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
         team2ScoreTextView = findViewById(R.id.team2_score_textview)
         timerTextView = findViewById(R.id.timer_textview)
         timerEditText = findViewById(R.id.timer_edittext)
+        team1NameEditText = findViewById(R.id.team1_name_edittext)
+        team2NameEditText = findViewById(R.id.team2_name_edittext)
+
 
         dataClient = Wearable.getDataClient(this)
+        matchDao = AppDatabase.getDatabase(this).matchDao()
 
         findViewById<Button>(R.id.team1_add_button).setOnClickListener {
             team1Score++
@@ -73,10 +86,26 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
             }
         }
         findViewById<Button>(R.id.reset_scores_button).setOnClickListener {
+            lifecycleScope.launch {
+                val match = Match(
+                    team1Name = team1NameEditText.text.toString().ifEmpty { "Team 1" },
+                    team2Name = team2NameEditText.text.toString().ifEmpty { "Team 2" },
+                    team1Score = team1Score,
+                    team2Score = team2Score,
+                    timestamp = System.currentTimeMillis()
+                )
+                matchDao.insert(match)
+            }
+
             team1Score = 0
             team2Score = 0
             updateUi(team1Score, team2Score)
             sendResetUpdate()
+        }
+
+        findViewById<Button>(R.id.match_history_button).setOnClickListener {
+            val intent = Intent(this, MatchHistoryActivity::class.java)
+            startActivity(intent)
         }
     }
 
