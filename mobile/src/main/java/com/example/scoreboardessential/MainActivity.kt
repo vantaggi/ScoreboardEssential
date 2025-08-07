@@ -22,28 +22,9 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.IntentFilter
-
-class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
+class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
-
-    private val scoreUpdateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == "com.example.scoreboardessential.SCORE_UPDATE") {
-                val team = intent.getStringExtra("team")
-                if (team == "team_1") {
-                    viewModel.addTeam1Score()
-                    showSelectScorerDialog(1)
-                } else if (team == "team_2") {
-                    viewModel.addTeam2Score()
-                    showSelectScorerDialog(2)
-                }
-            }
-        }
-    }
 
     private lateinit var team1ScoreTextView: TextView
     private lateinit var team2ScoreTextView: TextView
@@ -83,16 +64,20 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
             updateTimerTextView(time)
         })
 
+        viewModel.showSelectScorerDialog.observe(this, Observer { team ->
+            if (team != null) {
+                showSelectScorerDialog(team)
+            }
+        })
+
         findViewById<Button>(R.id.team1_add_button).setOnClickListener {
             viewModel.addTeam1Score()
-            showSelectScorerDialog(1)
         }
         findViewById<Button>(R.id.team1_subtract_button).setOnClickListener {
             viewModel.subtractTeam1Score()
         }
         findViewById<Button>(R.id.team2_add_button).setOnClickListener {
             viewModel.addTeam2Score()
-            showSelectScorerDialog(2)
         }
         findViewById<Button>(R.id.team2_subtract_button).setOnClickListener {
             viewModel.subtractTeam2Score()
@@ -191,38 +176,6 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
         private const val POST_NOTIFICATIONS_REQUEST_CODE = 456
     }
 
-    override fun onResume() {
-        super.onResume()
-        Wearable.getDataClient(this).addListener(this)
-        registerReceiver(scoreUpdateReceiver, IntentFilter("com.example.scoreboardessential.SCORE_UPDATE"))
-    }
-
-    override fun onPause() {
-        super.onPause()
-        viewModel.saveState()
-        Wearable.getDataClient(this).removeListener(this)
-        unregisterReceiver(scoreUpdateReceiver)
-    }
-
-    override fun onDataChanged(dataEvents: DataEventBuffer) {
-        Log.d("DataSync", "onDataChanged: $dataEvents")
-        dataEvents.forEach { event ->
-            if (event.type == DataEvent.TYPE_CHANGED) {
-                val dataItem = event.dataItem
-                if (dataItem.uri.path?.compareTo(DataSyncObject.SCORE_PATH) == 0) {
-                    val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
-                    if (dataMap.containsKey(DataSyncObject.TEAM1_SCORE_KEY)) {
-                        viewModel.team1Score.value = dataMap.getInt(DataSyncObject.TEAM1_SCORE_KEY)
-                        viewModel.team2Score.value = dataMap.getInt(DataSyncObject.TEAM2_SCORE_KEY)
-                    }
-                    if (dataMap.containsKey(DataSyncObject.TIMER_KEY)) {
-                        viewModel.timerValue.value = dataMap.getLong(DataSyncObject.TIMER_KEY)
-                        viewModel.isTimerRunning.value = dataMap.getBoolean(DataSyncObject.TIMER_STATE_KEY)
-                    }
-                }
-            }
-        }
-    }
 
     fun startStopTimer(view: View) {
         viewModel.startStopTimer()
