@@ -14,12 +14,12 @@
     </style>
 
     <style name="TextAppearance.Scoreboard.Score" parent="TextAppearance.Material3.DisplayLarge">
-        <item name="android:fontFamily">@font/RobotoCondensed-Bold</item>
+        <item name="android:fontFamily">@font/robotocondensed_bold</item>
         <item name="android:textSize">96sp</item>
     </style>
 
     <style name="TextAppearance.Scoreboard.TeamName" parent="TextAppearance.Material3.HeadlineMedium">
-        <item name="android:fontFamily">@font/RobotoCondensed-Bold</item>
+        <item name="android:fontFamily">@font/robotocondensed_bold</item>
     </style>
 
     <style name="Widget.Scoreboard.Button" parent="Widget.Material3.Button">
