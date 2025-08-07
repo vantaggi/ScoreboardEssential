@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="wear_team1_color">#FFEF5350</color> <!-- Lighter Red -->
+    <color name="wear_team2_color">#FF4DB6AC</color> <!-- Lighter Blue -->
+</resources>

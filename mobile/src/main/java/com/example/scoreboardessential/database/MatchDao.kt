@@ -15,6 +15,9 @@ interface MatchDao {
     @Query("SELECT * FROM matches ORDER BY timestamp DESC")
     fun getAllMatches(): Flow<List<Match>>
 
+    @androidx.room.Transaction
+    @Query("SELECT * FROM matches ORDER BY timestamp DESC")
+    fun getAllMatchesWithTeams(): Flow<List<MatchWithTeams>>
     @Delete
     suspend fun delete(match: Match)
 }
