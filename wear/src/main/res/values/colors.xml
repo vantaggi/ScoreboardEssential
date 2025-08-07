@@ -2,4 +2,11 @@
 <resources>
     <color name="wear_team1_color">#FFD50000</color> <!-- Red -->
     <color name="wear_team2_color">#FF00574B</color> <!-- Blue -->
+    <color name="surface_dark">#1A1B1E</color>
+    <color name="surface_variant_dark">#2F3033</color>
+    <color name="action_blue">#4FC3F7</color>
+    <color name="on_surface_light">#E3E3E3</color>
+    <color name="on_surface_variant_light">#B5B5B5</color>
+    <color name="team1_orange">#FFA726</color>
+    <color name="team2_lime">#AEEA00</color>
 </resources>

@@ -1,14 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme for Wear OS -->
-    <style name="Theme.ScoreboardEssential" parent="android:Theme.DeviceDefault">
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/wear_team1_color</item>
-        <item name="colorPrimaryDark">@color/wear_team1_color</item>
-        <item name="colorSecondary">@color/wear_team2_color</item>
-        <item name="colorAccent">@android:color/white</item>
-        <item name="android:textColorPrimary">@android:color/white</item>
-        <item name="android:textColorSecondary">@android:color/white</item>
-        <item name="android:colorBackground">@android:color/black</item>
+    <style name="Theme.ScoreboardEssential" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/action_blue</item>
+        <item name="android:colorBackground">@color/surface_dark</item>
+        <item name="colorSurface">@color/surface_dark</item>
+        <item name="colorOnSurface">@color/on_surface_light</item>
+        <item name="android:textColorPrimary">@color/on_surface_light</item>
+        <item name="android:textColorSecondary">@color/on_surface_variant_light</item>
+        <item name="android:statusBarColor">@color/surface_variant_dark</item>
+    </style>
+
+    <style name="TextAppearance.Scoreboard.Score" parent="TextAppearance.Material3.DisplayLarge">
+        <item name="android:fontFamily">@font/RobotoCondensed-Bold</item>
+        <item name="android:textSize">48sp</item>
+    </style>
+
+    <style name="TextAppearance.Scoreboard.TeamName" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:fontFamily">@font/RobotoCondensed-Bold</item>
+    </style>
+
+    <style name="Widget.Scoreboard.Button" parent="Widget.Material3.Button">
+        <item name="android:backgroundTint">@color/action_blue</item>
+        <item name="android:textColor">@color/surface_dark</item>
     </style>
 </resources>

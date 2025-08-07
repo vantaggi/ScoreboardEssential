@@ -15,7 +15,7 @@
         android:layout_rowWeight="1"
         android:background="?android:attr/colorBackground"
         android:gravity="center"
-        android:textColor="?android:attr/textColorPrimary"
+        android:textAppearance="@style/TextAppearance.Scoreboard.Score"
         tools:text="@tools:sample/date/hhmmss" />
 
     <GridLayout
@@ -34,12 +34,11 @@
                 android:id="@+id/team_1_score_text_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="?attr/colorPrimary"
+                android:background="@color/team1_orange"
                 android:foregroundGravity="bottom"
                 android:gravity="center"
                 android:onClick="addScore"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textStyle="bold"
+                android:textAppearance="@style/TextAppearance.Scoreboard.Score"
                 tools:text="@tools:sample/lorem" />
 
         </FrameLayout>
@@ -53,11 +52,10 @@
                 android:id="@+id/team_2_score_text_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="?attr/colorSecondary"
+                android:background="@color/team2_lime"
                 android:gravity="center"
                 android:onClick="addScore"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textStyle="bold"
+                android:textAppearance="@style/TextAppearance.Scoreboard.Score"
                 tools:text="@tools:sample/lorem" />
 
         </FrameLayout>
@@ -66,6 +64,7 @@
 
     <Button
         android:id="@+id/reset_button"
+        style="@style/Widget.Scoreboard.Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
