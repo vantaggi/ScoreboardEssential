@@ -23,17 +23,6 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
     // The text view that displays the score for team 2.
     private lateinit var team2ScoreTextView: TextView
 
-    // The countdown timer.
-    private var timer: CountDownTimer? = null
-    // Whether the timer is running.
-    private var isTimerRunning = false
-    // The remaining time on the timer in milliseconds.
-    private var remainingTimeInMillis = 0L
-
-    // The score for team 1.
-    private var team1Score = 0
-    // The score for team 2.
-    private var team2Score = 0
 
     // The data client for communicating with the mobile app.
     private lateinit var dataClient: DataClient
@@ -49,84 +38,52 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         team1ScoreTextView = findViewById(R.id.team_1_score_text_view)
         team2ScoreTextView = findViewById(R.id.team_2_score_text_view)
 
-        // set initial scores
-        team1ScoreTextView.text = team1Score.toString()
-        team2ScoreTextView.text = team2Score.toString()
     }
 
-    // Sends a message to the mobile app to update the score.
-    private fun sendScoreUpdateMessage(team: String) {
+    private fun sendMessage(path: String, data: ByteArray = byteArrayOf()) {
         Wearable.getNodeClient(this).connectedNodes.addOnSuccessListener { nodes ->
-            for (node in nodes) {
-                Wearable.getMessageClient(this).sendMessage(
-                    node.id,
-                    "/score_update",
-                    team.toByteArray()
-                ).apply {
-                    addOnSuccessListener {
-                        Log.d("DataSync", "Message sent successfully to ${node.displayName}")
+            nodes.forEach { node ->
+                Wearable.getMessageClient(this).sendMessage(node.id, path, data)
+                    .addOnSuccessListener {
+                        Log.d("DataSync", "Message sent to ${node.displayName}")
                     }
-                    addOnFailureListener {
-                        Log.e("DataSync", "Message sending failed to ${node.displayName}", it)
+                    .addOnFailureListener {
+                        Log.e("DataSync", "Failed to send message to ${node.displayName}", it)
                     }
-                }
             }
         }
     }
 
     // Starts or stops the timer.
     fun startStopTimer(view: View) {
-        if (isTimerRunning) {
-            // stop the timer
-            timer?.cancel()
-            isTimerRunning = false
-        } else {
-            // start the timer
-            timer = object : CountDownTimer(remainingTimeInMillis, 1000) {
-                override fun onTick(millisUntilFinished: Long) {
-                    remainingTimeInMillis = millisUntilFinished
-                    updateTimerTextView()
-                }
-
-                override fun onFinish() {
-                    isTimerRunning = false
-                }
-            }.start()
-
-            isTimerRunning = true
-        }
+        sendMessage("/start_stop_timer")
     }
 
     // Resets the timer.
     fun resetTimer(view: View) {
-        timer?.cancel()
-        isTimerRunning = false
-        remainingTimeInMillis = 0
-        updateTimerTextView()
+        sendMessage("/reset_timer")
     }
 
     // Adds a point to the score of the given team.
     fun addScore(view: View) {
         when (view.id) {
             R.id.team_1_score_text_view -> {
-                sendScoreUpdateMessage("team_1")
+                sendMessage("/score_update", "team_1".toByteArray())
             }
 
             R.id.team_2_score_text_view -> {
-                sendScoreUpdateMessage("team_2")
+                sendMessage("/score_update", "team_2".toByteArray())
             }
         }
     }
 
     // Resets the scores.
     fun resetScores(view: View) {
-        team1Score = 0
-        team2Score = 0
-        updateUi(team1Score, team2Score)
+        sendMessage("/reset_scores")
     }
 
     // Updates the timer text view with the current time.
-    private fun updateTimerTextView() {
+    private fun updateTimerTextView(remainingTimeInMillis: Long) {
         val minutes = (remainingTimeInMillis / 1000) / 60
         val seconds = (remainingTimeInMillis / 1000) % 60
         timerTextView.text = String.format("%02d:%02d", minutes, seconds)
@@ -150,24 +107,22 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
                 val dataItem = event.dataItem
                 if (dataItem.uri.path?.compareTo(DataSyncObject.SCORE_PATH) == 0) {
                     val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
-                    if (dataMap.containsKey(DataSyncObject.TEAM1_SCORE_KEY)) {
-                        team1Score = dataMap.getInt(DataSyncObject.TEAM1_SCORE_KEY)
-                        team2Score = dataMap.getInt(DataSyncObject.TEAM2_SCORE_KEY)
-                        updateUi(team1Score, team2Score)
-                    }
+
+                    val team1Score = dataMap.getInt(DataSyncObject.TEAM1_SCORE_KEY, 0)
+                    val team2Score = dataMap.getInt(DataSyncObject.TEAM2_SCORE_KEY, 0)
+                    updateUi(team1Score, team2Score)
+
                     if (dataMap.containsKey(DataSyncObject.TIMER_KEY)) {
-                        remainingTimeInMillis = dataMap.getLong(DataSyncObject.TIMER_KEY)
-                        isTimerRunning = dataMap.getBoolean(DataSyncObject.TIMER_STATE_KEY)
-                        updateTimerTextView()
+                        val remainingTimeInMillis = dataMap.getLong(DataSyncObject.TIMER_KEY)
+                        updateTimerTextView(remainingTimeInMillis)
                     }
-                    if (dataMap.containsKey(DataSyncObject.RESET_KEY)) {
-                        team1Score = 0
-                        team2Score = 0
-                        updateUi(team1Score, team2Score)
+                    if (dataMap.containsKey(DataSyncObject.RESET_KEY) && dataMap.getBoolean(DataSyncObject.RESET_KEY)) {
+                        updateUi(0, 0)
+                        updateTimerTextView(0)
                     }
                     if (dataMap.containsKey(DataSyncObject.SET_TIMER_KEY)) {
-                        remainingTimeInMillis = dataMap.getLong(DataSyncObject.SET_TIMER_KEY)
-                        updateTimerTextView()
+                        val remainingTimeInMillis = dataMap.getLong(DataSyncObject.SET_TIMER_KEY)
+                        updateTimerTextView(remainingTimeInMillis)
                     }
                 }
             }

@@ -4,8 +4,11 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import com.example.scoreboardessential.repository.MatchRepository
 
 class ScoreboardEssentialApplication : Application() {
+
+    val matchRepository: MatchRepository by lazy { MatchRepository(this) }
 
     override fun onCreate() {
         super.onCreate()
