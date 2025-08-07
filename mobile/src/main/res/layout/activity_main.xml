@@ -125,6 +125,34 @@
             android:text="Set" />
     </LinearLayout>
 
+    <EditText
+        android:id="@+id/team1_name_edittext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Team 1 Name"
+        app:layout_constraintBottom_toTopOf="@+id/team1_score_textview"
+        app:layout_constraintEnd_toEndOf="@+id/team1_score_textview"
+        app:layout_constraintStart_toStartOf="@+id/team1_score_textview" />
+
+    <EditText
+        android:id="@+id/team2_name_edittext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Team 2 Name"
+        app:layout_constraintBottom_toTopOf="@+id/team2_score_textview"
+        app:layout_constraintEnd_toEndOf="@+id/team2_score_textview"
+        app:layout_constraintStart_toStartOf="@+id/team2_score_textview" />
+
+    <Button
+        android:id="@+id/match_history_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Match History"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/reset_scores_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/set_timer_layout" />
+
     <Button
         android:id="@+id/reset_scores_button"
         android:layout_width="wrap_content"
@@ -132,7 +160,7 @@
         android:text="Reset Scores"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@id/match_history_button"
         app:layout_constraintTop_toBottomOf="@id/set_timer_layout" />
 
     <androidx.constraintlayout.widget.Guideline
