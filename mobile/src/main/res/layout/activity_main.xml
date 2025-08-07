@@ -12,8 +12,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="0"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="48sp"
+        android:textAppearance="@style/TextAppearance.Scoreboard.Score"
+        android:textColor="@color/team1_orange"
         app:layout_constraintBottom_toTopOf="@+id/guideline_middle"
         app:layout_constraintEnd_toStartOf="@+id/guideline_vertical"
         app:layout_constraintStart_toStartOf="parent"
@@ -24,8 +24,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="0"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="48sp"
+        android:textAppearance="@style/TextAppearance.Scoreboard.Score"
+        android:textColor="@color/team2_lime"
         app:layout_constraintBottom_toTopOf="@+id/guideline_middle"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/guideline_vertical"
@@ -33,6 +33,7 @@
 
     <Button
         android:id="@+id/team1_add_button"
+        style="@style/Widget.Scoreboard.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="+"
@@ -42,6 +43,7 @@
 
     <Button
         android:id="@+id/team1_subtract_button"
+        style="@style/Widget.Scoreboard.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="-"
@@ -51,6 +53,7 @@
 
     <Button
         android:id="@+id/team2_add_button"
+        style="@style/Widget.Scoreboard.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="+"
@@ -60,6 +63,7 @@
 
     <Button
         android:id="@+id/team2_subtract_button"
+        style="@style/Widget.Scoreboard.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="-"
@@ -92,6 +96,7 @@
 
         <Button
             android:id="@+id/timer_start_button"
+            style="@style/Widget.Scoreboard.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="startStopTimer"
@@ -99,6 +104,7 @@
 
         <Button
             android:id="@+id/timer_reset_button"
+            style="@style/Widget.Scoreboard.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="resetTimer"
@@ -124,6 +130,7 @@
 
         <Button
             android:id="@+id/set_timer_button"
+            style="@style/Widget.Scoreboard.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Set" />
@@ -134,6 +141,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:hint="Team 1 Name"
+        android:textAppearance="@style/TextAppearance.Scoreboard.TeamName"
         app:layout_constraintBottom_toTopOf="@+id/team1_score_textview"
         app:layout_constraintEnd_toStartOf="@+id/team1_customize_button"
         app:layout_constraintStart_toStartOf="@+id/team1_score_textview" />
@@ -160,6 +168,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:hint="Team 2 Name"
+        android:textAppearance="@style/TextAppearance.Scoreboard.TeamName"
         app:layout_constraintBottom_toTopOf="@+id/team2_score_textview"
         app:layout_constraintEnd_toStartOf="@+id/team2_customize_button"
         app:layout_constraintStart_toStartOf="@+id/team2_score_textview" />
@@ -183,6 +192,7 @@
         app:layout_constraintBottom_toBottomOf="@id/team2_customize_button" />
     <Button
         android:id="@+id/match_history_button"
+        style="@style/Widget.Scoreboard.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Match History"
@@ -193,6 +203,7 @@
 
     <Button
         android:id="@+id/reset_scores_button"
+        style="@style/Widget.Scoreboard.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Reset Scores"
