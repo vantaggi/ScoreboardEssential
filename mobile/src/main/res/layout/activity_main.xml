@@ -81,7 +81,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/set_timer_layout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/timer_textview">
@@ -90,20 +90,50 @@
             android:id="@+id/timer_start_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:onClick="startStopTimer"
             android:text="Start" />
-
-        <Button
-            android:id="@+id/timer_pause_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Pause" />
 
         <Button
             android:id="@+id/timer_reset_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:onClick="resetTimer"
             android:text="Reset" />
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/set_timer_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/timer_buttons_layout">
+
+        <EditText
+            android:id="@+id/timer_edittext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="Set timer (seconds)"
+            android:inputType="number" />
+
+        <Button
+            android:id="@+id/set_timer_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/reset_scores_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Reset Scores"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/set_timer_layout" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_vertical"

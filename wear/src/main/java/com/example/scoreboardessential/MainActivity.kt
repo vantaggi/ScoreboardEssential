@@ -5,7 +5,7 @@ import android.os.CountDownTimer
 import android.util.Log
 import android.view.View
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
@@ -13,7 +13,7 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 
-class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
+class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
 
     private lateinit var timerTextView: TextView
     private lateinit var team1ScoreTextView: TextView
@@ -45,11 +45,11 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
     }
 
     private fun sendScoreUpdate() {
-        val putDataMapReq = PutDataMapRequest.create(DataSync.SCORE_PATH).apply {
-            dataMap.putInt(DataSync.TEAM1_SCORE_KEY, team1Score)
-            dataMap.putInt(DataSync.TEAM2_SCORE_KEY, team2Score)
-            dataMap.putLong(DataSync.TIMER_KEY, remainingTimeInMillis)
-            dataMap.putBoolean(DataSync.TIMER_STATE_KEY, isTimerRunning)
+        val putDataMapReq = PutDataMapRequest.create(DataSyncObject.SCORE_PATH).apply {
+            dataMap.putInt(DataSyncObject.TEAM1_SCORE_KEY, team1Score)
+            dataMap.putInt(DataSyncObject.TEAM2_SCORE_KEY, team2Score)
+            dataMap.putLong(DataSyncObject.TIMER_KEY, remainingTimeInMillis)
+            dataMap.putBoolean(DataSyncObject.TIMER_STATE_KEY, isTimerRunning)
         }
         val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
         dataClient.putDataItem(putDataReq).addOnSuccessListener {
@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
 
             isTimerRunning = true
         }
+        sendScoreUpdate()
     }
 
     fun resetTimer(view: View) {
@@ -86,16 +87,17 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
         isTimerRunning = false
         remainingTimeInMillis = 0
         updateTimerTextView()
+        sendScoreUpdate()
     }
 
     fun addScore(view: View) {
         when (view.id) {
-            R.id.team_1_add_button -> {
+            R.id.team_1_score_text_view -> {
                 team1Score++
                 team1ScoreTextView.text = team1Score.toString()
             }
 
-            R.id.team_2_add_button -> {
+            R.id.team_2_score_text_view -> {
                 team2Score++
                 team2ScoreTextView.text = team2Score.toString()
             }
@@ -103,22 +105,10 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
         sendScoreUpdate()
     }
 
-    fun subtractScore(view: View) {
-        when (view.id) {
-            R.id.team_1_subtract_button -> {
-                if (team1Score > 0) {
-                    team1Score--
-                    team1ScoreTextView.text = team1Score.toString()
-                }
-            }
-
-            R.id.team_2_subtract_button -> {
-                if (team2Score > 0) {
-                    team2Score--
-                    team2ScoreTextView.text = team2Score.toString()
-                }
-            }
-        }
+    fun resetScores(view: View) {
+        team1Score = 0
+        team2Score = 0
+        updateUi(team1Score, team2Score)
         sendScoreUpdate()
     }
 
@@ -143,15 +133,27 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
         dataEvents.forEach { event ->
             if (event.type == DataEvent.TYPE_CHANGED) {
                 val dataItem = event.dataItem
-                if (dataItem.uri.path?.compareTo(DataSync.SCORE_PATH) == 0) {
+                if (dataItem.uri.path?.compareTo(DataSyncObject.SCORE_PATH) == 0) {
                     val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
-                    team1Score = dataMap.getInt(DataSync.TEAM1_SCORE_KEY)
-                    team2Score = dataMap.getInt(DataSync.TEAM2_SCORE_KEY)
-                    remainingTimeInMillis = dataMap.getLong(DataSync.TIMER_KEY)
-                    isTimerRunning = dataMap.getBoolean(DataSync.TIMER_STATE_KEY)
-
-                    updateUi(team1Score, team2Score)
-                    updateTimerTextView()
+                    if (dataMap.containsKey(DataSyncObject.TEAM1_SCORE_KEY)) {
+                        team1Score = dataMap.getInt(DataSyncObject.TEAM1_SCORE_KEY)
+                        team2Score = dataMap.getInt(DataSyncObject.TEAM2_SCORE_KEY)
+                        updateUi(team1Score, team2Score)
+                    }
+                    if (dataMap.containsKey(DataSyncObject.TIMER_KEY)) {
+                        remainingTimeInMillis = dataMap.getLong(DataSyncObject.TIMER_KEY)
+                        isTimerRunning = dataMap.getBoolean(DataSyncObject.TIMER_STATE_KEY)
+                        updateTimerTextView()
+                    }
+                    if (dataMap.containsKey(DataSyncObject.RESET_KEY)) {
+                        team1Score = 0
+                        team2Score = 0
+                        updateUi(team1Score, team2Score)
+                    }
+                    if (dataMap.containsKey(DataSyncObject.SET_TIMER_KEY)) {
+                        remainingTimeInMillis = dataMap.getLong(DataSyncObject.SET_TIMER_KEY)
+                        updateTimerTextView()
+                    }
                 }
             }
         }
