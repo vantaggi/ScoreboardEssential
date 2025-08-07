@@ -5,6 +5,7 @@ import android.os.CountDownTimer
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.wearable.DataClient
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
     private lateinit var team1ScoreTextView: TextView
     private lateinit var team2ScoreTextView: TextView
     private lateinit var timerTextView: TextView
+    private lateinit var timerEditText: EditText
     private lateinit var dataClient: DataClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,6 +36,7 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
         team1ScoreTextView = findViewById(R.id.team1_score_textview)
         team2ScoreTextView = findViewById(R.id.team2_score_textview)
         timerTextView = findViewById(R.id.timer_textview)
+        timerEditText = findViewById(R.id.timer_edittext)
 
         dataClient = Wearable.getDataClient(this)
 
@@ -61,14 +64,28 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
                 sendScoreUpdate()
             }
         }
+        findViewById<Button>(R.id.set_timer_button).setOnClickListener {
+            val seconds = timerEditText.text.toString().toLongOrNull()
+            if (seconds != null) {
+                remainingTimeInMillis = seconds * 1000
+                updateTimerTextView()
+                sendSetTimerUpdate()
+            }
+        }
+        findViewById<Button>(R.id.reset_scores_button).setOnClickListener {
+            team1Score = 0
+            team2Score = 0
+            updateUi(team1Score, team2Score)
+            sendResetUpdate()
+        }
     }
 
     private fun sendScoreUpdate() {
-        val putDataMapReq = PutDataMapRequest.create(DataSync.SCORE_PATH).apply {
-            dataMap.putInt(DataSync.TEAM1_SCORE_KEY, team1Score)
-            dataMap.putInt(DataSync.TEAM2_SCORE_KEY, team2Score)
-            dataMap.putLong(DataSync.TIMER_KEY, remainingTimeInMillis)
-            dataMap.putBoolean(DataSync.TIMER_STATE_KEY, isTimerRunning)
+        val putDataMapReq = PutDataMapRequest.create(DataSyncObject.SCORE_PATH).apply {
+            dataMap.putInt(DataSyncObject.TEAM1_SCORE_KEY, team1Score)
+            dataMap.putInt(DataSyncObject.TEAM2_SCORE_KEY, team2Score)
+            dataMap.putLong(DataSyncObject.TIMER_KEY, remainingTimeInMillis)
+            dataMap.putBoolean(DataSyncObject.TIMER_STATE_KEY, isTimerRunning)
         }
         val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
         dataClient.putDataItem(putDataReq).addOnSuccessListener {
@@ -76,6 +93,22 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
         }.addOnFailureListener {
             Log.e("DataSync", "Data sending failed", it)
         }
+    }
+
+    private fun sendSetTimerUpdate() {
+        val putDataMapReq = PutDataMapRequest.create(DataSyncObject.SCORE_PATH).apply {
+            dataMap.putLong(DataSyncObject.SET_TIMER_KEY, remainingTimeInMillis)
+        }
+        val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
+        dataClient.putDataItem(putDataReq)
+    }
+
+    private fun sendResetUpdate() {
+        val putDataMapReq = PutDataMapRequest.create(DataSyncObject.SCORE_PATH).apply {
+            dataMap.putBoolean(DataSyncObject.RESET_KEY, true)
+        }
+        val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
+        dataClient.putDataItem(putDataReq)
     }
 
     override fun onResume() {
@@ -93,15 +126,18 @@ class MainActivity : AppCompatActivity(), DataClient.OnDataChangedListener {
         dataEvents.forEach { event ->
             if (event.type == DataEvent.TYPE_CHANGED) {
                 val dataItem = event.dataItem
-                if (dataItem.uri.path?.compareTo(DataSync.SCORE_PATH) == 0) {
+                if (dataItem.uri.path?.compareTo(DataSyncObject.SCORE_PATH) == 0) {
                     val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
-                    team1Score = dataMap.getInt(DataSync.TEAM1_SCORE_KEY)
-                    team2Score = dataMap.getInt(DataSync.TEAM2_SCORE_KEY)
-                    remainingTimeInMillis = dataMap.getLong(DataSync.TIMER_KEY)
-                    isTimerRunning = dataMap.getBoolean(DataSync.TIMER_STATE_KEY)
-
-                    updateUi(team1Score, team2Score)
-                    updateTimerTextView()
+                    if (dataMap.containsKey(DataSyncObject.TEAM1_SCORE_KEY)) {
+                        team1Score = dataMap.getInt(DataSyncObject.TEAM1_SCORE_KEY)
+                        team2Score = dataMap.getInt(DataSyncObject.TEAM2_SCORE_KEY)
+                        updateUi(team1Score, team2Score)
+                    }
+                    if (dataMap.containsKey(DataSyncObject.TIMER_KEY)) {
+                        remainingTimeInMillis = dataMap.getLong(DataSyncObject.TIMER_KEY)
+                        isTimerRunning = dataMap.getBoolean(DataSyncObject.TIMER_STATE_KEY)
+                        updateTimerTextView()
+                    }
                 }
             }
         }
