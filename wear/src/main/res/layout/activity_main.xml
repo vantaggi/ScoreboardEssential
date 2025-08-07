@@ -13,9 +13,9 @@
         android:id="@+id/timer_text_view"
         android:layout_width="match_parent"
         android:layout_rowWeight="1"
-        android:background="@android:color/black"
+        android:background="?android:attr/colorBackground"
         android:gravity="center"
-        android:textColor="@android:color/white"
+        android:textColor="?android:attr/textColorPrimary"
         tools:text="@tools:sample/date/hhmmss" />
 
     <GridLayout
@@ -34,11 +34,11 @@
                 android:id="@+id/team_1_score_text_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@android:color/holo_red_dark"
+                android:background="?attr/colorPrimary"
                 android:foregroundGravity="bottom"
                 android:gravity="center"
                 android:onClick="addScore"
-                android:textColor="@android:color/white"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textStyle="bold"
                 tools:text="@tools:sample/lorem" />
 
@@ -53,10 +53,10 @@
                 android:id="@+id/team_2_score_text_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@android:color/holo_blue_dark"
+                android:background="?attr/colorSecondary"
                 android:gravity="center"
                 android:onClick="addScore"
-                android:textColor="@android:color/white"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textStyle="bold"
                 tools:text="@tools:sample/lorem" />
 
