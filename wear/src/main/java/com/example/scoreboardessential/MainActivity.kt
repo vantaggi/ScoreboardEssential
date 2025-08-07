@@ -10,22 +10,32 @@ import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
-import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
 
+// The main activity for the Wear OS app.
 class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
 
+    // The text view that displays the timer.
     private lateinit var timerTextView: TextView
+    // The text view that displays the score for team 1.
     private lateinit var team1ScoreTextView: TextView
+    // The text view that displays the score for team 2.
     private lateinit var team2ScoreTextView: TextView
 
+    // The countdown timer.
     private var timer: CountDownTimer? = null
+    // Whether the timer is running.
     private var isTimerRunning = false
+    // The remaining time on the timer in milliseconds.
     private var remainingTimeInMillis = 0L
 
+    // The score for team 1.
     private var team1Score = 0
+    // The score for team 2.
     private var team2Score = 0
 
+    // The data client for communicating with the mobile app.
     private lateinit var dataClient: DataClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,21 +54,27 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         team2ScoreTextView.text = team2Score.toString()
     }
 
-    private fun sendScoreUpdate() {
-        val putDataMapReq = PutDataMapRequest.create(DataSyncObject.SCORE_PATH).apply {
-            dataMap.putInt(DataSyncObject.TEAM1_SCORE_KEY, team1Score)
-            dataMap.putInt(DataSyncObject.TEAM2_SCORE_KEY, team2Score)
-            dataMap.putLong(DataSyncObject.TIMER_KEY, remainingTimeInMillis)
-            dataMap.putBoolean(DataSyncObject.TIMER_STATE_KEY, isTimerRunning)
-        }
-        val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
-        dataClient.putDataItem(putDataReq).addOnSuccessListener {
-            Log.d("DataSync", "Data sent successfully: $it")
-        }.addOnFailureListener {
-            Log.e("DataSync", "Data sending failed", it)
+    // Sends a message to the mobile app to update the score.
+    private fun sendScoreUpdateMessage(team: String) {
+        Wearable.getNodeClient(this).connectedNodes.addOnSuccessListener { nodes ->
+            for (node in nodes) {
+                Wearable.getMessageClient(this).sendMessage(
+                    node.id,
+                    "/score_update",
+                    team.toByteArray()
+                ).apply {
+                    addOnSuccessListener {
+                        Log.d("DataSync", "Message sent successfully to ${node.displayName}")
+                    }
+                    addOnFailureListener {
+                        Log.e("DataSync", "Message sending failed to ${node.displayName}", it)
+                    }
+                }
+            }
         }
     }
 
+    // Starts or stops the timer.
     fun startStopTimer(view: View) {
         if (isTimerRunning) {
             // stop the timer
@@ -79,39 +95,37 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
 
             isTimerRunning = true
         }
-        sendScoreUpdate()
     }
 
+    // Resets the timer.
     fun resetTimer(view: View) {
         timer?.cancel()
         isTimerRunning = false
         remainingTimeInMillis = 0
         updateTimerTextView()
-        sendScoreUpdate()
     }
 
+    // Adds a point to the score of the given team.
     fun addScore(view: View) {
         when (view.id) {
             R.id.team_1_score_text_view -> {
-                team1Score++
-                team1ScoreTextView.text = team1Score.toString()
+                sendScoreUpdateMessage("team_1")
             }
 
             R.id.team_2_score_text_view -> {
-                team2Score++
-                team2ScoreTextView.text = team2Score.toString()
+                sendScoreUpdateMessage("team_2")
             }
         }
-        sendScoreUpdate()
     }
 
+    // Resets the scores.
     fun resetScores(view: View) {
         team1Score = 0
         team2Score = 0
         updateUi(team1Score, team2Score)
-        sendScoreUpdate()
     }
 
+    // Updates the timer text view with the current time.
     private fun updateTimerTextView() {
         val minutes = (remainingTimeInMillis / 1000) / 60
         val seconds = (remainingTimeInMillis / 1000) % 60
@@ -128,6 +142,7 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         dataClient.removeListener(this)
     }
 
+    // Called when data is changed on the mobile app.
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         Log.d("DataSync", "onDataChanged: $dataEvents")
         dataEvents.forEach { event ->
@@ -159,6 +174,7 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         }
     }
 
+    // Updates the UI with the current scores.
     private fun updateUi(team1Score: Int, team2Score: Int) {
         runOnUiThread {
             team1ScoreTextView.text = team1Score.toString()
