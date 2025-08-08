@@ -100,6 +100,14 @@ class MatchRepository(context: Context) {
         }
     }
 
+    fun setScores(score1: Int, score2: Int) {
+        with(sharedPreferences.edit()) {
+            putInt("team1_score", score1)
+            putInt("team2_score", score2)
+            apply()
+        }
+    }
+
     fun setTeam1Name(name: String) {
         with(sharedPreferences.edit()) {
             putString("team1_name", name)

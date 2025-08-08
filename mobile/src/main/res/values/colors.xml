@@ -18,4 +18,11 @@
     <color name="on_surface_variant_light">#B5B5B5</color>
     <color name="team1_orange">#FFA726</color>
     <color name="team2_lime">#AEEA00</color>
+
+    <!-- Fallback for colors defined only in night theme -->
+    <color name="purple_200">@color/primary</color>
+    <color name="purple_500">@color/primary</color>
+    <color name="purple_700">@color/primary_dark</color>
+    <color name="teal_200">@color/accent</color>
+    <color name="teal_700">@color/accent</color>
 </resources>
