@@ -4,28 +4,27 @@ import android.app.Dialog
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import com.example.scoreboardessential.database.Player
 
-// A dialog fragment that allows the user to select a scorer from a list of players.
 class SelectScorerDialogFragment : DialogFragment() {
 
-    // Listener for when a scorer is selected.
     interface ScorerDialogListener {
-        fun onScorerSelected(scorer: String)
+        fun onScorerSelected(player: Player)
     }
 
     private var listener: ScorerDialogListener? = null
-    private var players: Array<String> = emptyArray()
+    private var players: Array<Player> = emptyArray()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        players = arguments?.getStringArray("players") ?: emptyArray()
+        players = arguments?.getParcelableArray("players") as Array<Player>
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return activity?.let {
             val builder = AlertDialog.Builder(it)
             builder.setTitle("Select Scorer")
-                .setItems(players) { _, which ->
+                .setItems(players.map { it.playerName }.toTypedArray()) { _, which ->
                     listener?.onScorerSelected(players[which])
                 }
             builder.create()
@@ -37,10 +36,9 @@ class SelectScorerDialogFragment : DialogFragment() {
     }
 
     companion object {
-        // Creates a new instance of the dialog fragment.
-        fun newInstance(players: Array<String>): SelectScorerDialogFragment {
+        fun newInstance(players: Array<Player>): SelectScorerDialogFragment {
             val args = Bundle()
-            args.putStringArray("players", players)
+            args.putParcelableArray("players", players)
             val fragment = SelectScorerDialogFragment()
             fragment.arguments = args
             return fragment

@@ -5,19 +5,21 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MatchDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(match: Match)
+    suspend fun insert(match: Match): Long
 
-    @Query("SELECT * FROM matches ORDER BY timestamp DESC")
-    fun getAllMatches(): Flow<List<Match>>
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertMatchPlayerCrossRef(crossRef: MatchPlayerCrossRef)
 
-    @androidx.room.Transaction
+    @Transaction
     @Query("SELECT * FROM matches ORDER BY timestamp DESC")
-    fun getAllMatchesWithTeams(): Flow<List<MatchWithTeams>>
+    fun getAllMatchesWithPlayers(): Flow<List<MatchWithPlayers>>
+
     @Delete
     suspend fun delete(match: Match)
 }

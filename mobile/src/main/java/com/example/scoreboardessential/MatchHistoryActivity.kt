@@ -22,7 +22,7 @@ class MatchHistoryActivity : AppCompatActivity() {
 
         val matchDao = AppDatabase.getDatabase(this).matchDao()
         lifecycleScope.launch {
-            matchDao.getAllMatchesWithTeams().collectLatest { matches ->
+            matchDao.getAllMatchesWithPlayers().collectLatest { matches ->
                 adapter.submitList(matches)
             }
         }

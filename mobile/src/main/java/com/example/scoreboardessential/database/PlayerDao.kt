@@ -19,6 +19,6 @@ interface PlayerDao {
     @Delete
     suspend fun delete(player: Player)
 
-    @Query("SELECT * FROM players WHERE teamId = :teamId ORDER BY name ASC")
-    fun getPlayersForTeam(teamId: Int): Flow<List<Player>>
+    @Query("SELECT * FROM players ORDER BY playerName ASC")
+    fun getAllPlayers(): Flow<List<Player>>
 }
