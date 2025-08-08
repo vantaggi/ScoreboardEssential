@@ -4,10 +4,14 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import com.example.scoreboardessential.database.AppDatabase
 import com.example.scoreboardessential.repository.MatchRepository
+import com.example.scoreboardessential.repository.PlayerRepository
 
 class ScoreboardEssentialApplication : Application() {
 
+    val database by lazy { AppDatabase.getDatabase(this) }
+    val repository by lazy { PlayerRepository(database.playerDao()) }
     val matchRepository: MatchRepository by lazy { MatchRepository(this) }
 
     override fun onCreate() {

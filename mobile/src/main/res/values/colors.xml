@@ -17,7 +17,11 @@
     <color name="on_surface_light">#E3E3E3</color>
     <color name="on_surface_variant_light">#B5B5B5</color>
     <color name="team1_orange">#FFA726</color>
+    <color name="team1_orange_dark">#F57C00</color>
+    <color name="team1_orange_light">#FFE0B2</color>
     <color name="team2_lime">#AEEA00</color>
+    <color name="team2_lime_dark">#76FF03</color>
+    <color name="team2_lime_light">#F0F4C3</color>
 
     <!-- Fallback for colors defined only in night theme -->
     <color name="purple_200">@color/primary</color>
