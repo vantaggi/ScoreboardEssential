@@ -1,0 +1,164 @@
+package com.example.scoreboardessential
+
+import android.app.Application
+import android.os.CountDownTimer
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.util.Log
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+// Sealed class to represent the state of the keeper timer
+sealed class KeeperTimerState {
+    object Hidden : KeeperTimerState()
+    data class Running(val secondsRemaining: Int) : KeeperTimerState()
+    object Finished : KeeperTimerState()
+}
+
+class WearViewModel(application: Application) : AndroidViewModel(application) {
+
+    // Team Scores
+    private val _team1Score = MutableStateFlow(0)
+    val team1Score = _team1Score.asStateFlow()
+
+    private val _team2Score = MutableStateFlow(0)
+    val team2Score = _team2Score.asStateFlow()
+
+    // Match Timer
+    private val _matchTimer = MutableStateFlow("00:00")
+    val matchTimer = _matchTimer.asStateFlow()
+    private var matchTimerJob: Job? = null
+    private var matchTimeInSeconds = 0L
+
+    // Keeper Timer
+    private val _keeperTimer = MutableStateFlow<KeeperTimerState>(KeeperTimerState.Hidden)
+    val keeperTimer = _keeperTimer.asStateFlow()
+    private var keeperCountDownTimer: CountDownTimer? = null
+    private val keeperTimerDuration = 300000L // 5 minutes
+
+    // Haptics
+    private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
+
+    init {
+        startMatchTimer()
+    }
+
+    // --- Score Management ---
+    fun incrementTeam1Score() {
+        _team1Score.value++
+        triggerShortVibration()
+        sendScoreUpdate()
+    }
+
+    fun decrementTeam1Score() {
+        if (_team1Score.value > 0) {
+            _team1Score.value--
+            triggerShortVibration()
+            sendScoreUpdate()
+        }
+    }
+
+    fun incrementTeam2Score() {
+        _team2Score.value++
+        triggerShortVibration()
+        sendScoreUpdate()
+    }
+
+    fun decrementTeam2Score() {
+        if (_team2Score.value > 0) {
+            _team2Score.value--
+            triggerShortVibration()
+            sendScoreUpdate()
+        }
+    }
+
+    // --- Match Timer Management ---
+    private fun startMatchTimer() {
+        matchTimerJob?.cancel()
+        matchTimerJob = viewModelScope.launch {
+            while (true) {
+                val minutes = matchTimeInSeconds / 60
+                val seconds = matchTimeInSeconds % 60
+                _matchTimer.value = String.format("%02d:%02d", minutes, seconds)
+                delay(1000)
+                matchTimeInSeconds++
+            }
+        }
+    }
+
+    // --- Keeper Timer Management ---
+    fun handleKeeperTimer() {
+        if (keeperTimer.value is KeeperTimerState.Running) {
+            // If running, a long press should reset it.
+            resetKeeperTimer()
+        } else {
+            // If hidden or finished, start it.
+            startKeeperTimer()
+        }
+    }
+
+    private fun startKeeperTimer() {
+        keeperCountDownTimer?.cancel()
+        _keeperTimer.value = KeeperTimerState.Running((keeperTimerDuration / 1000).toInt())
+        keeperCountDownTimer = object : CountDownTimer(keeperTimerDuration, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                _keeperTimer.value = KeeperTimerState.Running((millisUntilFinished / 1000).toInt())
+            }
+
+            override fun onFinish() {
+                _keeperTimer.value = KeeperTimerState.Finished
+                triggerStrongContinuousVibration()
+            }
+        }.start()
+        triggerShortVibration()
+    }
+
+    private fun resetKeeperTimer() {
+        keeperCountDownTimer?.cancel()
+        vibrator?.cancel() // Stop the continuous vibration if it's active
+        _keeperTimer.value = KeeperTimerState.Hidden // Or decide if it should restart immediately
+        triggerShortVibration()
+    }
+
+    // --- Haptic Feedback ---
+    private fun triggerShortVibration() {
+        val effect = VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE)
+        vibrator?.vibrate(effect)
+    }
+
+    private fun triggerStrongContinuousVibration() {
+        val pattern = longArrayOf(0, 500, 500) // Vibrate for 500ms, pause for 500ms
+        val effect = VibrationEffect.createWaveform(pattern, 0) // Repeat from the start
+        vibrator?.vibrate(effect)
+    }
+
+    // --- Data Synchronization ---
+    private fun sendScoreUpdate() {
+        val dataClient = Wearable.getMessageClient(getApplication())
+        val messagePath = "/update-score"
+        // Encode scores into a byte array. A simple format: "T1Score,T2Score"
+        val data = "${_team1Score.value},${_team2Score.value}".toByteArray()
+
+        Wearable.getNodeClient(getApplication()).connectedNodes.addOnSuccessListener { nodes ->
+            nodes.forEach { node ->
+                dataClient.sendMessage(node.id, messagePath, data)
+                    .addOnSuccessListener { Log.d("WearViewModel", "Score update sent to ${node.displayName}") }
+                    .addOnFailureListener { e -> Log.e("WearViewModel", "Failed to send score update", e) }
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        matchTimerJob?.cancel()
+        keeperCountDownTimer?.cancel()
+        vibrator?.cancel()
+    }
+}

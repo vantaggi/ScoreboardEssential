@@ -17,6 +17,7 @@ import com.example.scoreboardessential.database.PlayerDao
 import com.example.scoreboardessential.database.Team
 import com.example.scoreboardessential.database.TeamDao
 import com.example.scoreboardessential.repository.MatchRepository
+import com.example.scoreboardessential.utils.ScoreUpdateEventBus
 import com.example.scoreboardessential.utils.SingleLiveEvent
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataMapRequest
@@ -118,6 +119,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
 
         isTimerRunning.observeForever(timerRunningObserver)
+        listenForScoreUpdates()
+    }
+
+    private fun listenForScoreUpdates() {
+        viewModelScope.launch {
+            ScoreUpdateEventBus.events.collect { event ->
+                updateScoresFromWear(event.team1Score, event.team2Score)
+            }
+        }
+    }
+
+    private fun updateScoresFromWear(newScore1: Int, newScore2: Int) {
+        val oldScore1 = team1Score.value ?: 0
+        val oldScore2 = team2Score.value ?: 0
+
+        viewModelScope.launch {
+            matchRepository.setScores(newScore1, newScore2)
+
+            if (newScore1 > oldScore1) {
+                showSelectScorerDialog.postValue(1)
+            }
+            if (newScore2 > oldScore2) {
+                showSelectScorerDialog.postValue(2)
+            }
+        }
     }
 
     override fun onCleared() {

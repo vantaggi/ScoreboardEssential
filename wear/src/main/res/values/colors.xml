@@ -8,5 +8,7 @@
     <color name="on_surface_light">#E3E3E3</color>
     <color name="on_surface_variant_light">#B5B5B5</color>
     <color name="team1_orange">#FFA726</color>
+    <color name="team1_orange_dark">#B36F00</color>
     <color name="team2_lime">#AEEA00</color>
+    <color name="team2_lime_dark">#79A700</color>
 </resources>
