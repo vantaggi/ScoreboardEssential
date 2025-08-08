@@ -60,6 +60,14 @@ class MainActivity : AppCompatActivity() {
             team2NameEditText.setText(name)
         })
 
+        viewModel.team1Color.observe(this, Observer { color ->
+            team1ScoreTextView.setBackgroundColor(color)
+        })
+
+        viewModel.team2Color.observe(this, Observer { color ->
+            team2ScoreTextView.setBackgroundColor(color)
+        })
+
         viewModel.timerValue.observe(this, Observer { time ->
             updateTimerTextView(time)
         })
@@ -104,7 +112,7 @@ class MainActivity : AppCompatActivity() {
                 .setPreferenceName("Team1ColorPicker")
                 .setPositiveButton(getString(R.string.confirm),
                     ColorEnvelopeListener { envelope, fromUser ->
-                        //
+                        viewModel.setTeamColor(1, envelope.color)
                     })
                 .setNegativeButton(getString(R.string.cancel)) { dialogInterface, i ->
                     dialogInterface.dismiss()
@@ -120,7 +128,7 @@ class MainActivity : AppCompatActivity() {
                 .setPreferenceName("Team2ColorPicker")
                 .setPositiveButton(getString(R.string.confirm),
                     ColorEnvelopeListener { envelope, fromUser ->
-                        //
+                        viewModel.setTeamColor(2, envelope.color)
                     })
                 .setNegativeButton(getString(R.string.cancel)) { dialogInterface, i ->
                     dialogInterface.dismiss()

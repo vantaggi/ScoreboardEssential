@@ -1,21 +1,28 @@
 package com.example.scoreboardessential.database
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-import androidx.room.ForeignKey
-
-@Entity(tableName = "matches",
+@Entity(
+    tableName = "matches",
     foreignKeys = [
-        ForeignKey(entity = Team::class,
+        ForeignKey(
+            entity = Team::class,
             parentColumns = ["id"],
             childColumns = ["team1Id"],
-            onDelete = ForeignKey.CASCADE),
-        ForeignKey(entity = Team::class,
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Team::class,
             parentColumns = ["id"],
             childColumns = ["team2Id"],
-            onDelete = ForeignKey.CASCADE)
-    ])
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index(value = ["team1Id"]), Index(value = ["team2Id"])]
+)
 data class Match(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

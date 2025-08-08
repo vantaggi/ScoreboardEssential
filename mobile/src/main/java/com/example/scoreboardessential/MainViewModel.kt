@@ -12,6 +12,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.scoreboardessential.database.AppDatabase
 import com.example.scoreboardessential.database.Match
 import com.example.scoreboardessential.database.MatchDao
+import com.example.scoreboardessential.database.Player
+import com.example.scoreboardessential.database.PlayerDao
 import com.example.scoreboardessential.database.Team
 import com.example.scoreboardessential.database.TeamDao
 import com.example.scoreboardessential.repository.MatchRepository
@@ -19,18 +21,25 @@ import com.example.scoreboardessential.utils.SingleLiveEvent
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 // ViewModel for the main screen of the app.
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val matchRepository: MatchRepository = (application as ScoreboardEssentialApplication).matchRepository
+    private val playerDao: PlayerDao
+    private val teamDao: TeamDao
+    private val matchDao: MatchDao
 
     // Scores and team names are now Flows from the repository, converted to LiveData
     val team1Score: LiveData<Int> = matchRepository.team1Score.asLiveData()
     val team2Score: LiveData<Int> = matchRepository.team2Score.asLiveData()
     val team1Name: LiveData<String> = matchRepository.team1Name.asLiveData()
     val team2Name: LiveData<String> = matchRepository.team2Name.asLiveData()
+    val team1Color: LiveData<Int> = matchRepository.team1Color.asLiveData()
+    val team2Color: LiveData<Int> = matchRepository.team2Color.asLiveData()
 
     // Event to trigger the "Select Scorer" dialog
     val showSelectScorerDialog = SingleLiveEvent<Int>()
@@ -44,20 +53,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _team2Scorers = MutableLiveData<List<String>>(emptyList())
     val team2Scorers: LiveData<List<String>> = _team2Scorers
 
-
-    // The list of players for team 1.
-    private val _team1Players = MutableLiveData<List<String>>(listOf("Player 1", "Player 2", "Player 3"))
-    val team1Players: LiveData<List<String>> = _team1Players
-
-    // The list of players for team 2.
-    private val _team2Players = MutableLiveData<List<String>>(listOf("Player 4", "Player 5", "Player 6"))
-    val team2Players: LiveData<List<String>> = _team2Players
+    val team1Players: LiveData<List<String>>
+    val team2Players: LiveData<List<String>>
 
     // The countdown timer.
     private var timer: CountDownTimer? = null
     private val dataClient: DataClient = Wearable.getDataClient(application)
-    private val matchDao: MatchDao
-    private val teamDao: TeamDao
 
     private var team1: Team? = null
     private var team2: Team? = null
@@ -86,8 +87,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     init {
-        matchDao = AppDatabase.getDatabase(application).matchDao()
-        teamDao = AppDatabase.getDatabase(application).teamDao()
+        val db = AppDatabase.getDatabase(application)
+        matchDao = db.matchDao()
+        teamDao = db.teamDao()
+        playerDao = db.playerDao()
+
+        viewModelScope.launch {
+            if (matchRepository.team1Id.value == 0L) {
+                val team1 = Team(name = "Team 1", color = 0, logoUri = null)
+                val team2 = Team(name = "Team 2", color = 0, logoUri = null)
+                val id1 = teamDao.insertWithId(team1)
+                val id2 = teamDao.insertWithId(team2)
+                matchRepository.setTeamIds(id1, id2)
+
+                // Add default players
+                playerDao.insert(Player(teamId = id1.toInt(), name = "Player 1"))
+                playerDao.insert(Player(teamId = id1.toInt(), name = "Player 2"))
+                playerDao.insert(Player(teamId = id2.toInt(), name = "Player 3"))
+                playerDao.insert(Player(teamId = id2.toInt(), name = "Player 4"))
+            }
+        }
+
+        team1Players = matchRepository.team1Id.flatMapLatest { teamId ->
+            playerDao.getPlayersForTeam(teamId.toInt())
+        }.map { players -> players.map { it.name } }.asLiveData()
+
+        team2Players = matchRepository.team2Id.flatMapLatest { teamId ->
+            playerDao.getPlayersForTeam(teamId.toInt())
+        }.map { players -> players.map { it.name } }.asLiveData()
+
 
         isTimerRunning.observeForever(timerRunningObserver)
     }
@@ -108,6 +136,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setTeam2Name(name: String) {
         viewModelScope.launch {
             matchRepository.setTeam2Name(name)
+        }
+    }
+
+    fun setTeamColor(team: Int, color: Int) {
+        viewModelScope.launch {
+            matchRepository.setTeamColor(team, color)
+        }
+    }
+
+    fun addPlayer(teamId: Int, name: String) {
+        viewModelScope.launch {
+            playerDao.insert(Player(teamId = teamId, name = name))
+        }
+    }
+
+    fun deletePlayer(player: Player) {
+        viewModelScope.launch {
+            playerDao.delete(player)
         }
     }
 
@@ -182,12 +228,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Resets the scores and the list of scorers.
     fun resetScores() {
         viewModelScope.launch {
-            team1?.let { teamDao.update(it.copy(name = team1Name.value!!)) }
-            team2?.let { teamDao.update(it.copy(name = team2Name.value!!)) }
+            val id1 = matchRepository.team1Id.value
+            val id2 = matchRepository.team2Id.value
+            val name1 = team1Name.value ?: "Team 1"
+            val name2 = team2Name.value ?: "Team 2"
+            val color1 = team1Color.value ?: 0
+            val color2 = team2Color.value ?: 0
+
+            // This assumes logo URIs are handled elsewhere and might be null
+            teamDao.update(Team(id = id1.toInt(), name = name1, color = color1, logoUri = null))
+            teamDao.update(Team(id = id2.toInt(), name = name2, color = color2, logoUri = null))
 
             val match = Match(
-                team1Id = team1!!.id,
-                team2Id = team2!!.id,
+                team1Id = id1.toInt(),
+                team2Id = id2.toInt(),
                 team1Score = team1Score.value!!,
                 team2Score = team2Score.value!!,
                 timestamp = System.currentTimeMillis()

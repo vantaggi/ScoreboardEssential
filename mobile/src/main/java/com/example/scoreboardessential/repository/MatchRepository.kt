@@ -2,6 +2,7 @@ package com.example.scoreboardessential.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Color
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -22,6 +23,18 @@ class MatchRepository(context: Context) {
     private val _team2Name = MutableStateFlow(sharedPreferences.getString("team2_name", "Team 2")!!)
     val team2Name: StateFlow<String> = _team2Name
 
+    private val _team1Id = MutableStateFlow(sharedPreferences.getLong("team1_id", 0L))
+    val team1Id: StateFlow<Long> = _team1Id
+
+    private val _team2Id = MutableStateFlow(sharedPreferences.getLong("team2_id", 0L))
+    val team2Id: StateFlow<Long> = _team2Id
+
+    private val _team1Color = MutableStateFlow(sharedPreferences.getInt("team1_color", Color.BLACK))
+    val team1Color: StateFlow<Int> = _team1Color
+
+    private val _team2Color = MutableStateFlow(sharedPreferences.getInt("team2_color", Color.BLACK))
+    val team2Color: StateFlow<Int> = _team2Color
+
     private val _timerValue = MutableStateFlow(sharedPreferences.getLong("timer_value", 0L))
     val timerValue: StateFlow<Long> = _timerValue
 
@@ -40,6 +53,10 @@ class MatchRepository(context: Context) {
             "team2_score" -> _team2Score.value = prefs.getInt(key, 0)
             "team1_name" -> _team1Name.value = prefs.getString(key, "Team 1")!!
             "team2_name" -> _team2Name.value = prefs.getString(key, "Team 2")!!
+            "team1_id" -> _team1Id.value = prefs.getLong(key, 0L)
+            "team2_id" -> _team2Id.value = prefs.getLong(key, 0L)
+            "team1_color" -> _team1Color.value = prefs.getInt(key, Color.BLACK)
+            "team2_color" -> _team2Color.value = prefs.getInt(key, Color.BLACK)
             "timer_value" -> _timerValue.value = prefs.getLong(key, 0L)
             "is_timer_running" -> _isTimerRunning.value = prefs.getBoolean(key, false)
             "team1_scorers" -> _team1Scorers.value = prefs.getStringSet(key, emptySet())!!.toList()
@@ -93,6 +110,22 @@ class MatchRepository(context: Context) {
     fun setTeam2Name(name: String) {
         with(sharedPreferences.edit()) {
             putString("team2_name", name)
+            apply()
+        }
+    }
+
+    fun setTeamIds(id1: Long, id2: Long) {
+        with(sharedPreferences.edit()) {
+            putLong("team1_id", id1)
+            putLong("team2_id", id2)
+            apply()
+        }
+    }
+
+    fun setTeamColor(team: Int, color: Int) {
+        val key = if (team == 1) "team1_color" else "team2_color"
+        with(sharedPreferences.edit()) {
+            putInt(key, color)
             apply()
         }
     }
