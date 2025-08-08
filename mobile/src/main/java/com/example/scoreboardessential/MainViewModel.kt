@@ -32,11 +32,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _team2Score = MutableLiveData(0)
     val team2Score: LiveData<Int> = _team2Score
 
-    private val _matchTimer = MutableLiveData("00:00")
-    val matchTimer: LiveData<String> = _matchTimer
+    private val _team1Name = MutableLiveData("Team 1")
+    val team1Name: LiveData<String> = _team1Name
 
-    private val _keeperTimer = MutableLiveData("0")
-    val keeperTimer: LiveData<String> = _keeperTimer
+    private val _team2Name = MutableLiveData("Team 2")
+    val team2Name: LiveData<String> = _team2Name
+
+    private val _team1Color = MutableLiveData(0xFF000000.toInt())
+    val team1Color: LiveData<Int> = _team1Color
+
+    private val _team2Color = MutableLiveData(0xFF000000.toInt())
+    val team2Color: LiveData<Int> = _team2Color
+
+    private val _timerValue = MutableLiveData(0L)
+    val timerValue: LiveData<Long> = _timerValue
 
     private val _team1Players = MutableLiveData<List<Player>>(emptyList())
     val team1Players: LiveData<List<Player>> = _team1Players
@@ -47,6 +56,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val showSelectScorerDialog = SingleLiveEvent<Int>()
 
     private var timer: CountDownTimer? = null
+    private var isTimerRunning = false
+    private var initialTimerValue = 0L
     private val dataClient: DataClient = Wearable.getDataClient(application)
 
     init {
@@ -104,11 +115,67 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         sendScoreUpdate()
     }
 
-    fun addScorer(team: Int, player: Player) {
+    fun addScorer(team: Int, scorer: String) {
+        // Implementazione semplificata - dovresti adattarla secondo le tue necessità
         viewModelScope.launch {
-            player.goals++
-            playerDao.update(player)
+            val players = if (team == 1) _team1Players.value else _team2Players.value
+            val player = players?.find { it.playerName == scorer }
+            if (player != null) {
+                player.goals++
+                playerDao.update(player)
+            }
         }
+    }
+
+    fun setTeam1Name(name: String) {
+        _team1Name.value = name
+    }
+
+    fun setTeam2Name(name: String) {
+        _team2Name.value = name
+    }
+
+    fun setTeamColor(team: Int, color: Int) {
+        if (team == 1) {
+            _team1Color.value = color
+        } else {
+            _team2Color.value = color
+        }
+    }
+
+    fun setTimer(seconds: Long) {
+        initialTimerValue = seconds * 1000
+        _timerValue.value = initialTimerValue
+    }
+
+    fun startStopTimer() {
+        if (isTimerRunning) {
+            timer?.cancel()
+            isTimerRunning = false
+        } else {
+            startTimer()
+            isTimerRunning = true
+        }
+    }
+
+    fun resetTimer() {
+        timer?.cancel()
+        isTimerRunning = false
+        _timerValue.value = initialTimerValue
+    }
+
+    private fun startTimer() {
+        val currentTime = _timerValue.value ?: 0L
+        timer = object : CountDownTimer(currentTime, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                _timerValue.postValue(millisUntilFinished)
+            }
+
+            override fun onFinish() {
+                _timerValue.postValue(0L)
+                isTimerRunning = false
+            }
+        }.start()
     }
 
     fun resetScores() {
@@ -151,5 +218,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
         dataClient.putDataItem(putDataReq)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        timer?.cancel()
     }
 }

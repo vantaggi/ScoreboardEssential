@@ -22,6 +22,7 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
+import com.example.scoreboardessential.database.Player
 class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
@@ -209,8 +210,8 @@ class MainActivity : AppCompatActivity() {
         if (players != null) {
             val dialog = SelectScorerDialogFragment.newInstance(players)
             dialog.setScorerDialogListener(object : SelectScorerDialogFragment.ScorerDialogListener {
-                override fun onScorerSelected(scorer: String) {
-                    viewModel.addScorer(team, scorer)
+                override fun onScorerSelected(player: Player) {
+                    viewModel.addScorer(team, player.playerName)
                 }
             })
             dialog.show(supportFragmentManager, "SelectScorerDialogFragment")
