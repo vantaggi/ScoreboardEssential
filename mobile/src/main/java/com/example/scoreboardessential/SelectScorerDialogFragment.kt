@@ -1,6 +1,7 @@
 package com.example.scoreboardessential
 
 import android.app.Dialog
+import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -17,7 +18,12 @@ class SelectScorerDialogFragment : DialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        players = arguments?.getParcelableArray("players") as Array<Player>
+        players = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requireArguments().getParcelableArray("players", Player::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            requireArguments().getParcelableArray("players")
+        } as? Array<Player> ?: emptyArray()
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
