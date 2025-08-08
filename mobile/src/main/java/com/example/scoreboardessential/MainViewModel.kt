@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.scoreboardessential.database.AppDatabase
@@ -36,8 +37,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val timerValue: LiveData<Long> = matchRepository.timerValue.asLiveData()
     val isTimerRunning: LiveData<Boolean> = matchRepository.isTimerRunning.asLiveData()
-    val team1Scorers: LiveData<List<String>> = matchRepository.team1Scorers.asLiveData()
-    val team2Scorers: LiveData<List<String>> = matchRepository.team2Scorers.asLiveData()
+
+    private val _team1Scorers = MutableLiveData<List<String>>(emptyList())
+    val team1Scorers: LiveData<List<String>> = _team1Scorers
+
+    private val _team2Scorers = MutableLiveData<List<String>>(emptyList())
+    val team2Scorers: LiveData<List<String>> = _team2Scorers
+
 
     // The list of players for team 1.
     private val _team1Players = MutableLiveData<List<String>>(listOf("Player 1", "Player 2", "Player 3"))
@@ -56,20 +62,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var team1: Team? = null
     private var team2: Team? = null
 
+    private val timerRunningObserver = Observer<Boolean> { running ->
+        if (running) {
+            if (timer == null) { // To avoid multiple timers
+                timer = object : CountDownTimer(timerValue.value ?: 0, 1000) {
+                    override fun onTick(millisUntilFinished: Long) {
+                        viewModelScope.launch {
+                            matchRepository.setTimerValue(millisUntilFinished)
+                        }
+                    }
+
+                    override fun onFinish() {
+                        viewModelScope.launch {
+                            matchRepository.setTimerRunning(false)
+                        }
+                    }
+                }.start()
+            }
+        } else {
+            timer?.cancel()
+            timer = null
+        }
+    }
+
     init {
         matchDao = AppDatabase.getDatabase(application).matchDao()
         teamDao = AppDatabase.getDatabase(application).teamDao()
 
-        isTimerRunning.observeForever { running ->
-            if (running) {
-                if (timer == null) { // To avoid multiple timers
-                    startStopTimer()
-                }
-            } else {
-                timer?.cancel()
-                timer = null
-            }
-        }
+        isTimerRunning.observeForever(timerRunningObserver)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        isTimerRunning.removeObserver(timerRunningObserver)
     }
 
     // Sets the name of team 1.
@@ -128,41 +153,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private val timerRunningObserver = Observer<Boolean> { running ->
-        if (running) {
-            if (timer == null) { // To avoid multiple timers
-                timer = object : CountDownTimer(timerValue.value ?: 0, 1000) {
-                    override fun onTick(millisUntilFinished: Long) {
-                        viewModelScope.launch {
-                            matchRepository.setTimerValue(millisUntilFinished)
-                        }
-                    }
-
-                    override fun onFinish() {
-                        viewModelScope.launch {
-                            matchRepository.setTimerRunning(false)
-                        }
-                    }
-                }.start()
-            }
-        } else {
-            timer?.cancel()
-            timer = null
-        }
-    }
-
-    init {
-        matchDao = AppDatabase.getDatabase(application).matchDao()
-        teamDao = AppDatabase.getDatabase(application).teamDao()
-
-        isTimerRunning.observeForever(timerRunningObserver)
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        isTimerRunning.removeObserver(timerRunningObserver)
-    }
-
     // Starts or stops the timer.
     fun startStopTimer() {
         val running = isTimerRunning.value == true
@@ -216,8 +206,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val putDataMapReq = PutDataMapRequest.create(DataSyncObject.SCORE_PATH).apply {
             dataMap.putInt(DataSyncObject.TEAM1_SCORE_KEY, team1Score.value ?: 0)
             dataMap.putInt(DataSyncObject.TEAM2_SCORE_KEY, team2Score.value ?: 0)
-            dataMap.putLong(DataSyncObject.TIMER_KEY, _timerValue.value ?: 0)
-            dataMap.putBoolean(DataSyncObject.TIMER_STATE_KEY, _isTimerRunning.value ?: false)
+            dataMap.putLong(DataSyncObject.TIMER_KEY, timerValue.value ?: 0)
+            dataMap.putBoolean(DataSyncObject.TIMER_STATE_KEY, isTimerRunning.value ?: false)
         }
         val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
         dataClient.putDataItem(putDataReq).addOnSuccessListener {
@@ -230,7 +220,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Sends the current timer value to the Wear OS device.
     private fun sendSetTimerUpdate() {
         val putDataMapReq = PutDataMapRequest.create(DataSyncObject.SCORE_PATH).apply {
-            dataMap.putLong(DataSyncObject.SET_TIMER_KEY, _timerValue.value ?: 0)
+            dataMap.putLong(DataSyncObject.SET_TIMER_KEY, timerValue.value ?: 0)
         }
         val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
         dataClient.putDataItem(putDataReq)
