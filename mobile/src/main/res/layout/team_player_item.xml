@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/player_card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginVertical="4dp"
+    android:layout_marginHorizontal="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/surface_variant_dark">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/player_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Player Name"
+            android:textColor="@color/on_surface_light"
+            android:textSize="14sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/player_role"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Role"
+            android:textColor="@color/on_surface_variant_light"
+            android:textSize="12sp"
+            android:layout_marginTop="2dp"/>
+
+        <TextView
+            android:id="@+id/player_stats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Goals: 0"
+            android:textColor="@color/action_blue"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_marginTop="4dp"/>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

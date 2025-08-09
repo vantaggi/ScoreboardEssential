@@ -1,227 +1,512 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
+    android:background="@color/surface_dark"
+    android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/team1_score_textview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="0"
-        android:textAppearance="@style/TextAppearance.Scoreboard.Score"
-        app:layout_constraintBottom_toTopOf="@+id/guideline_middle"
-        app:layout_constraintEnd_toStartOf="@+id/guideline_vertical"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/team2_score_textview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="0"
-        android:textAppearance="@style/TextAppearance.Scoreboard.Score"
-        app:layout_constraintBottom_toTopOf="@+id/guideline_middle"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/guideline_vertical"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/team1_add_button"
-        style="@style/Widget.Scoreboard.Button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="+"
-        app:layout_constraintEnd_toEndOf="@id/team1_score_textview"
-        app:layout_constraintStart_toStartOf="@id/team1_score_textview"
-        app:layout_constraintTop_toBottomOf="@id/team1_score_textview" />
-
-    <Button
-        android:id="@+id/team1_subtract_button"
-        style="@style/Widget.Scoreboard.Button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="-"
-        app:layout_constraintEnd_toEndOf="@id/team1_add_button"
-        app:layout_constraintStart_toStartOf="@id/team1_add_button"
-        app:layout_constraintTop_toBottomOf="@id/team1_add_button" />
-
-    <Button
-        android:id="@+id/team2_add_button"
-        style="@style/Widget.Scoreboard.Button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="+"
-        app:layout_constraintEnd_toEndOf="@id/team2_score_textview"
-        app:layout_constraintStart_toStartOf="@id/team2_score_textview"
-        app:layout_constraintTop_toBottomOf="@id/team2_score_textview" />
-
-    <Button
-        android:id="@+id/team2_subtract_button"
-        style="@style/Widget.Scoreboard.Button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="-"
-        app:layout_constraintEnd_toEndOf="@id/team2_add_button"
-        app:layout_constraintStart_toStartOf="@id/team2_add_button"
-        app:layout_constraintTop_toBottomOf="@id/team2_add_button" />
-
-
-    <TextView
-        android:id="@+id/timer_textview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="00:00"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="34sp"
-        app:layout_constraintBottom_toTopOf="@id/timer_buttons_layout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/guideline_middle" />
-
-    <LinearLayout
-        android:id="@+id/timer_buttons_layout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@id/set_timer_layout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/timer_textview">
-
-        <Button
-            android:id="@+id/timer_start_button"
-            style="@style/Widget.Scoreboard.Button"
-            android:layout_width="wrap_content"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:onClick="startStopTimer"
-            android:text="Start" />
+            android:padding="16dp">
 
-        <Button
-            android:id="@+id/timer_reset_button"
-            style="@style/Widget.Scoreboard.Button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="resetTimer"
-            android:text="Reset" />
-    </LinearLayout>
+            <!-- Match Timer Section -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/timer_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/surface_variant_dark"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
 
-    <LinearLayout
-        android:id="@+id/set_timer_layout"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MATCH TIME"
+                        android:textColor="@color/on_surface_variant_light"
+                        android:textSize="12sp"
+                        android:letterSpacing="0.1"/>
+
+                    <TextView
+                        android:id="@+id/timer_textview"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="00:00"
+                        android:textAppearance="@style/TextAppearance.Scoreboard.Timer"
+                        android:layout_marginTop="4dp"/>
+
+                    <TextView
+                        android:id="@+id/keeper_timer_textview"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="05:00"
+                        android:textColor="@color/team1_orange"
+                        android:textSize="24sp"
+                        android:fontFamily="@font/robotocondensed_bold"
+                        android:layout_marginTop="8dp"
+                        android:visibility="gone"/>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="12dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/timer_start_button"
+                            style="@style/Widget.Scoreboard.Button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="START"
+                            android:onClick="startStopTimer"
+                            android:layout_marginEnd="8dp"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/timer_reset_button"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="RESET"
+                            android:onClick="resetTimer"
+                            android:textColor="@color/action_blue"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Score Section - Non scrollable replica of Wear OS -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/score_section"
+                android:layout_width="0dp"
+                android:layout_height="280dp"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/timer_card"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <!-- Team 1 Side -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/team1_card"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    app:cardBackgroundColor="@color/team1_orange_dark"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    android:layout_marginEnd="8dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/guideline_center">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="16dp"
+                            android:layout_marginTop="16dp"
+                            app:boxBackgroundMode="none"
+                            app:hintEnabled="false">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/team1_name_edittext"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="TEAM 1"
+                                android:textAlignment="center"
+                                android:textColor="@color/white"
+                                android:textStyle="bold"
+                                android:textSize="18sp"
+                                android:background="@android:color/transparent"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <TextView
+                            android:id="@+id/team1_score_textview"
+                            android:layout_width="wrap_content"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:text="0"
+                            android:gravity="center"
+                            android:textColor="@color/team1_orange"
+                            android:textSize="72sp"
+                            android:fontFamily="@font/robotocondensed_bold"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center"
+                            android:padding="16dp">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/team1_subtract_button"
+                                style="@style/Widget.Material3.Button.IconButton"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                app:icon="@drawable/ic_minus"
+                                app:iconTint="@color/white"
+                                android:layout_marginEnd="16dp"/>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/team1_add_button"
+                                style="@style/Widget.Material3.Button.IconButton.Filled"
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                app:icon="@drawable/ic_plus"
+                                app:iconTint="@color/team1_orange_dark"
+                                app:backgroundTint="@color/team1_orange"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Team 2 Side -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/team2_card"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    app:cardBackgroundColor="@color/team2_lime_dark"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    android:layout_marginStart="8dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/guideline_center"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="16dp"
+                            android:layout_marginTop="16dp"
+                            app:boxBackgroundMode="none"
+                            app:hintEnabled="false">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/team2_name_edittext"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="TEAM 2"
+                                android:textAlignment="center"
+                                android:textColor="@color/surface_dark"
+                                android:textStyle="bold"
+                                android:textSize="18sp"
+                                android:background="@android:color/transparent"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <TextView
+                            android:id="@+id/team2_score_textview"
+                            android:layout_width="wrap_content"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:text="0"
+                            android:gravity="center"
+                            android:textColor="@color/team2_lime"
+                            android:textSize="72sp"
+                            android:fontFamily="@font/robotocondensed_bold"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center"
+                            android:padding="16dp">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/team2_subtract_button"
+                                style="@style/Widget.Material3.Button.IconButton"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                app:icon="@drawable/ic_minus"
+                                app:iconTint="@color/surface_dark"
+                                android:layout_marginEnd="16dp"/>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/team2_add_button"
+                                style="@style/Widget.Material3.Button.IconButton.Filled"
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                app:icon="@drawable/ic_plus"
+                                app:iconTint="@color/surface_dark"
+                                app:backgroundTint="@color/team2_lime"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guideline_center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintGuide_percent="0.5"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Keeper Timer Section -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/keeper_timer_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/surface_variant_dark"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:layout_constraintTop_toBottomOf="@id/score_section"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:gravity="center_vertical">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="KEEPER TIMER"
+                            android:textColor="@color/on_surface_variant_light"
+                            android:textSize="12sp"
+                            android:letterSpacing="0.1"/>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="120dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            app:suffixText="sec"
+                            app:boxBackgroundMode="outline">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/timer_edittext"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="300"
+                                android:inputType="number"
+                                android:textColor="@color/on_surface_light"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/set_timer_button"
+                        style="@style/Widget.Scoreboard.Button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SET TIMER"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Team Rosters Section (Scrollable) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/rosters_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/surface_variant_dark"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:layout_constraintTop_toBottomOf="@id/keeper_timer_card"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TEAM ROSTERS"
+                        android:textColor="@color/on_surface_variant_light"
+                        android:textSize="12sp"
+                        android:letterSpacing="0.1"
+                        android:layout_marginBottom="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <!-- Team 1 Roster -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="8dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Team 1"
+                                android:textColor="@color/team1_orange"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="8dp"/>
+
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/team1_roster_recyclerview"
+                                android:layout_width="match_parent"
+                                android:layout_height="150dp"
+                                android:nestedScrollingEnabled="false"/>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/add_team1_player_button"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Add Player"
+                                android:textColor="@color/team1_orange"
+                                android:layout_marginTop="8dp"/>
+                        </LinearLayout>
+
+                        <!-- Team 2 Roster -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="8dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Team 2"
+                                android:textColor="@color/team2_lime"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="8dp"/>
+
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/team2_roster_recyclerview"
+                                android:layout_width="match_parent"
+                                android:layout_height="150dp"
+                                android:nestedScrollingEnabled="false"/>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/add_team2_player_button"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Add Player"
+                                android:textColor="@color/team2_lime"
+                                android:layout_marginTop="8dp"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Match Log Section -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/match_log_card"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/surface_variant_dark"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:layout_constraintTop_toBottomOf="@id/rosters_card"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MATCH LOG"
+                        android:textColor="@color/on_surface_variant_light"
+                        android:textSize="12sp"
+                        android:letterSpacing="0.1"
+                        android:layout_marginBottom="12dp"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/match_log_recyclerview"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:nestedScrollingEnabled="false"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Action Buttons -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="16dp"
+                app:layout_constraintTop_toBottomOf="@id/match_log_card"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/match_history_button"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="HISTORY"
+                    android:textColor="@color/action_blue"
+                    android:layout_marginEnd="8dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/reset_scores_button"
+                    style="@style/Widget.Scoreboard.Button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="END MATCH"
+                    android:layout_marginStart="8dp"/>
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- FAB for Player Management -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/players_fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/timer_buttons_layout">
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        app:backgroundTint="@color/action_blue"
+        app:tint="@color/surface_dark"
+        app:srcCompat="@drawable/ic_person_add"/>
 
-        <EditText
-            android:id="@+id/timer_edittext"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:hint="Set timer (seconds)"
-            android:inputType="number" />
-
-        <Button
-            android:id="@+id/set_timer_button"
-            style="@style/Widget.Scoreboard.Button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Set" />
-    </LinearLayout>
-
-    <EditText
-        android:id="@+id/team1_name_edittext"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:hint="Team 1 Name"
-        android:textAppearance="@style/TextAppearance.Scoreboard.TeamName"
-        app:layout_constraintBottom_toTopOf="@+id/team1_score_textview"
-        app:layout_constraintEnd_toStartOf="@+id/team1_customize_button"
-        app:layout_constraintStart_toStartOf="@+id/team1_score_textview" />
-
-    <ImageButton
-        android:id="@+id/team1_customize_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@android:drawable/ic_menu_preferences"
-        app:layout_constraintStart_toEndOf="@id/team1_name_edittext"
-        app:layout_constraintTop_toTopOf="@id/team1_name_edittext"
-        app:layout_constraintBottom_toBottomOf="@id/team1_name_edittext" />
-
-    <ImageButton
-        android:id="@+id/team1_logo_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@android:drawable/ic_menu_gallery"
-        app:layout_constraintStart_toEndOf="@id/team1_customize_button"
-        app:layout_constraintTop_toTopOf="@id/team1_customize_button"
-        app:layout_constraintBottom_toBottomOf="@id/team1_customize_button" />
-    <EditText
-        android:id="@+id/team2_name_edittext"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:hint="Team 2 Name"
-        android:textAppearance="@style/TextAppearance.Scoreboard.TeamName"
-        app:layout_constraintBottom_toTopOf="@+id/team2_score_textview"
-        app:layout_constraintEnd_toStartOf="@+id/team2_customize_button"
-        app:layout_constraintStart_toStartOf="@+id/team2_score_textview" />
-
-    <ImageButton
-        android:id="@+id/team2_customize_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@android:drawable/ic_menu_preferences"
-        app:layout_constraintStart_toEndOf="@id/team2_name_edittext"
-        app:layout_constraintTop_toTopOf="@id/team2_name_edittext"
-        app:layout_constraintBottom_toBottomOf="@id/team2_name_edittext" />
-
-    <ImageButton
-        android:id="@+id/team2_logo_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@android:drawable/ic_menu_gallery"
-        app:layout_constraintStart_toEndOf="@id/team2_customize_button"
-        app:layout_constraintTop_toTopOf="@id/team2_customize_button"
-        app:layout_constraintBottom_toBottomOf="@id/team2_customize_button" />
-    <Button
-        android:id="@+id/match_history_button"
-        style="@style/Widget.Scoreboard.Button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Match History"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/reset_scores_button"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/set_timer_layout" />
-
-    <Button
-        android:id="@+id/reset_scores_button"
-        style="@style/Widget.Scoreboard.Button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Reset Scores"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/match_history_button"
-        app:layout_constraintTop_toBottomOf="@id/set_timer_layout" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline_vertical"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.5" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline_middle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.5" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

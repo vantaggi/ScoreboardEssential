@@ -1,11 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ScoreboardEssential" parent="Theme.Material3.Dark.NoActionBar">
+    <!-- Dark Theme per Scoreboard seguendo le specifiche del documento -->
+    <style name="Theme.ScoreboardEssential" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Colori primari secondo le specifiche -->
         <item name="colorPrimary">@color/action_blue</item>
+        <item name="colorPrimaryVariant">@color/action_blue</item>
+        <item name="colorOnPrimary">@color/surface_dark</item>
+
+        <!-- Colori secondari -->
+        <item name="colorSecondary">@color/team1_orange</item>
+        <item name="colorSecondaryVariant">@color/team1_orange_dark</item>
+        <item name="colorOnSecondary">@color/surface_dark</item>
+
+        <!-- Background e Surface -->
         <item name="android:colorBackground">@color/surface_dark</item>
         <item name="colorSurface">@color/surface_dark</item>
+        <item name="colorSurfaceVariant">@color/surface_variant_dark</item>
         <item name="colorOnSurface">@color/on_surface_light</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant_light</item>
+
+        <!-- Status bar -->
+        <item name="android:statusBarColor">@color/surface_variant_dark</item>
+        <item name="android:navigationBarColor">@color/surface_dark</item>
+
+        <!-- Text colors -->
         <item name="android:textColorPrimary">@color/on_surface_light</item>
         <item name="android:textColorSecondary">@color/on_surface_variant_light</item>
-        <item name="android:statusBarColor">@color/surface_variant_dark</item>
+
+        <!-- Material You Dynamic Colors disabled for consistent branding -->
+        <item name="dynamicColorThemeOverlay">@null</item>
+    </style>
+
+    <!-- Stili per i componenti -->
+    <!-- Se hai roboto_condensed_bold.ttf nella cartella res/font, usa @font/roboto_condensed_bold -->
+    <!-- Altrimenti usa sans-serif-condensed come fallback di sistema -->
+    <style name="TextAppearance.Scoreboard.Score" parent="TextAppearance.Material3.DisplayLarge">
+        <item name="android:fontFamily">@font/robotocondensed_bold</item>
+        <item name="android:textSize">96sp</item>
+        <item name="android:textColor">@color/on_surface_light</item>
+    </style>
+
+    <style name="TextAppearance.Scoreboard.TeamName" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:fontFamily">@font/robotocondensed_bold</item>
+        <item name="android:textColor">@color/on_surface_light</item>
+    </style>
+
+    <style name="TextAppearance.Scoreboard.Timer" parent="TextAppearance.Material3.DisplayMedium">
+        <item name="android:fontFamily">@font/robotocondensed_bold</item>
+        <item name="android:textSize">48sp</item>
+        <item name="android:textColor">@color/action_blue</item>
+    </style>
+
+    <style name="Widget.Scoreboard.Button" parent="Widget.Material3.Button.TonalButton">
+        <item name="android:backgroundTint">@color/action_blue</item>
+        <item name="android:textColor">@color/surface_dark</item>
+        <item name="android:textStyle">bold</item>
+        <item name="rippleColor">@color/on_surface_light</item>
+    </style>
+
+    <style name="Widget.Scoreboard.Button.Team1" parent="Widget.Scoreboard.Button">
+        <item name="android:backgroundTint">@color/team1_orange</item>
+    </style>
+
+    <style name="Widget.Scoreboard.Button.Team2" parent="Widget.Scoreboard.Button">
+        <item name="android:backgroundTint">@color/team2_lime</item>
     </style>
 </resources>
