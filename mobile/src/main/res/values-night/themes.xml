@@ -35,18 +35,18 @@
     <!-- Se hai roboto_condensed_bold.ttf nella cartella res/font, usa @font/roboto_condensed_bold -->
     <!-- Altrimenti usa sans-serif-condensed come fallback di sistema -->
     <style name="TextAppearance.Scoreboard.Score" parent="TextAppearance.Material3.DisplayLarge">
-        <item name="android:fontFamily">@font/robotocondensed_bold</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
         <item name="android:textSize">96sp</item>
         <item name="android:textColor">@color/on_surface_light</item>
     </style>
 
     <style name="TextAppearance.Scoreboard.TeamName" parent="TextAppearance.Material3.HeadlineMedium">
-        <item name="android:fontFamily">@font/robotocondensed_bold</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
         <item name="android:textColor">@color/on_surface_light</item>
     </style>
 
     <style name="TextAppearance.Scoreboard.Timer" parent="TextAppearance.Material3.DisplayMedium">
-        <item name="android:fontFamily">@font/robotocondensed_bold</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
         <item name="android:textSize">48sp</item>
         <item name="android:textColor">@color/action_blue</item>
     </style>
