@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <style name="Theme.ScoreboardEssential" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">@color/action_blue</item>
         <item name="android:colorBackground">@color/surface_dark</item>

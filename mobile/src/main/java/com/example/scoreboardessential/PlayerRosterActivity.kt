@@ -1,15 +1,10 @@
 package com.example.scoreboardessential
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.asLiveData
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.scoreboardessential.database.Player
 import com.example.scoreboardessential.databinding.ActivityPlayerRosterBinding
 import com.example.scoreboardessential.repository.PlayerRepository
