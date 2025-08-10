@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer-array name="avatar_colors">
+        <item>0xFFFFA726</item> <!-- Orange -->
+        <item>0xFFAEEA00</item> <!-- Lime -->
+        <item>0xFF4FC3F7</item> <!-- Blue -->
+        <item>0xFFD81B60</item> <!-- Pink -->
+        <item>0xFFFF6B6B</item> <!-- Red -->
+        <item>0xFF4ECDC4</item> <!-- Cyan -->
+        <item>0xFF95E77E</item> <!-- Green -->
+        <item>0xFFFFD93D</item> <!-- Yellow -->
+        <item>0xFFA8E6CF</item> <!-- Mint -->
+        <item>0xFFFFB6C1</item> <!-- Light Pink -->
+        <item>0xFFC9B1FF</item> <!-- Purple -->
+        <item>0xFF87CEEB</item> <!-- Sky Blue -->
+    </integer-array>
+</resources>
