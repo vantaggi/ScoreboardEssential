@@ -61,6 +61,27 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                // Observe Team 1 Name
+                launch {
+                    viewModel.team1Name.collect { name ->
+                        binding.team1Name.text = name
+                    }
+                }
+
+                // Observe Team 2 Name
+                launch {
+                    viewModel.team2Name.collect { name ->
+                        binding.team2Name.text = name
+                    }
+                }
+
+                // Observe Team 1 Score
+                launch {
+                    viewModel.team1Score.collect { score ->
+                        binding.team1Score.text = score.toString()
+                    }
+                }
+
                 // Observe Team 2 Score
                 launch {
                     viewModel.team2Score.collect { score ->
@@ -93,6 +114,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+
             }
         }
     }

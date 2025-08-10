@@ -24,6 +24,12 @@ sealed class KeeperTimerState {
 
 class WearViewModel(application: Application) : AndroidViewModel(application) {
 
+    // Team Names
+    private val _team1Name = MutableStateFlow("TEAM 1")
+    val team1Name = _team1Name.asStateFlow()
+    private val _team2Name = MutableStateFlow("TEAM 2")
+    val team2Name = _team2Name.asStateFlow()
+
     // Team Scores
     private val _team1Score = MutableStateFlow(0)
     val team1Score = _team1Score.asStateFlow()
@@ -51,6 +57,16 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // --- Score Management ---
+    fun setTeamNames(team1Name: String, team2Name: String) {
+        _team1Name.value = team1Name
+        _team2Name.value = team2Name
+    }
+
+    fun setScores(team1Score: Int, team2Score: Int) {
+        _team1Score.value = team1Score
+        _team2Score.value = team2Score
+    }
+
     fun incrementTeam1Score() {
         _team1Score.value++
         triggerShortVibration()
@@ -80,6 +96,11 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // --- Match Timer Management ---
+    fun setMatchTimer(time: String) {
+        matchTimerJob?.cancel() // Stop the internal timer
+        _matchTimer.value = time
+    }
+
     private fun startMatchTimer() {
         matchTimerJob?.cancel()
         matchTimerJob = viewModelScope.launch {
@@ -94,6 +115,26 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // --- Keeper Timer Management ---
+    fun setKeeperTimerState(newState: KeeperTimerState) {
+        keeperCountDownTimer?.cancel()
+        vibrator?.cancel()
+        _keeperTimer.value = newState
+        // If the new state is Running, we need to start a countdown
+        if (newState is KeeperTimerState.Running) {
+            val duration = newState.secondsRemaining * 1000L
+            keeperCountDownTimer = object : CountDownTimer(duration, 1000) {
+                override fun onTick(millisUntilFinished: Long) {
+                    _keeperTimer.value = KeeperTimerState.Running((millisUntilFinished / 1000).toInt())
+                }
+
+                override fun onFinish() {
+                    _keeperTimer.value = KeeperTimerState.Finished
+                    triggerStrongContinuousVibration()
+                }
+            }.start()
+        }
+    }
+
     fun handleKeeperTimer() {
         if (keeperTimer.value is KeeperTimerState.Running) {
             // If running, a long press should reset it.
@@ -125,6 +166,19 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         vibrator?.cancel() // Stop the continuous vibration if it's active
         _keeperTimer.value = KeeperTimerState.Hidden // Or decide if it should restart immediately
         triggerShortVibration()
+    }
+
+    // --- Reset ---
+    fun resetMatch() {
+        _team1Score.value = 0
+        _team2Score.value = 0
+
+        matchTimerJob?.cancel()
+        matchTimeInSeconds = 0L
+        _matchTimer.value = "00:00"
+        startMatchTimer() // Restart the timer from 0
+
+        resetKeeperTimer()
     }
 
     // --- Haptic Feedback ---
