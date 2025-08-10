@@ -388,8 +388,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun sendTeamNamesUpdate() {
         val putDataMapReq = PutDataMapRequest.create("/team_names").apply {
-            dataMap.putString("team1_name", _team1Name.value)
-            dataMap.putString("team2_name", _team2Name.value)
+            // Use the Elvis operator (?:) to provide a default value if .value is null
+            dataMap.putString("team1_name", _team1Name.value ?: "TEAM 1")
+            dataMap.putString("team2_name", _team2Name.value ?: "TEAM 2")
         }
         val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
         dataClient.putDataItem(putDataReq)
