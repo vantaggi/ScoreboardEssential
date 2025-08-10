@@ -1,26 +1,35 @@
 # ScoreboardEssential
 
-ScoreboardEssential is a simple and intuitive Android and Wear OS application for keeping track of scores in a football game. The app allows you to easily increment and decrement scores for two teams, and it features a synchronized timer on both the mobile and wearable devices.
+ScoreboardEssential è un'applicazione semplice e intuitiva per Android e Wear OS per tenere traccia dei punteggi in una partita di calcio. L'app consente di aumentare e diminuire facilmente i punteggi di due squadre e presenta un timer sincronizzato su entrambi i dispositivi, mobile e smartwatch.
 
-## Features
+## Struttura del Progetto
 
-*   **Real-time Score-keeping:** Easily add or subtract points for each team.
-*   **Synchronized Timer:** A countdown timer that is synchronized between your mobile and Wear OS devices.
-*   **Two-way Data Sync:** Changes made on either the mobile or the wearable device are instantly reflected on the other.
-*   **Simple and Clean UI:** A straightforward and easy-to-use interface.
+Il progetto è suddiviso in tre moduli:
 
-## How to Use
+*   `mobile`: L'applicazione Android per dispositivi palmari.
+*   `wear`: L'applicazione Wear OS per dispositivi indossabili.
+*   `shared`: Un modulo comune che contiene la logica di sincronizzazione dei dati utilizzata da entrambi i moduli `mobile` e `wear`.
 
-1.  Install the application on your Android smartphone and your Wear OS watch.
-2.  Open the app on either device to start keeping score.
-3.  Use the `+` and `-` buttons to adjust the scores for each team.
-4.  Use the timer controls to start, stop, and reset the game timer.
-5.  The scores and timer will automatically stay in sync across both devices.
+## Stato dell'Implementazione
 
-## Project Structure
+Le seguenti funzionalità sono state implementate e sono funzionanti:
 
-The project is divided into three modules:
+*   **Gestione Punteggio:** È possibile aggiungere o sottrarre punti per ogni squadra.
+*   **Nomi Squadra Personalizzabili:** Gli utenti possono inserire i nomi per le due squadre.
+*   **Timer Partita:** Un timer principale per la partita che può essere avviato, fermato e resettato.
+*   **Timer Portiere:** Un timer secondario, utile per la rotazione dei portieri, che mostra un avviso alla scadenza.
+*   **Gestione Giocatori:**
+    *   Creazione di nuovi giocatori con nome e ruolo.
+    *   Assegnazione dei giocatori alle squadre.
+    *   Rimozione dei giocatori dalle squadre.
+*   **Cronologia Partite:** I risultati delle partite vengono salvati e possono essere visualizzati in una schermata dedicata.
+*   **Sincronizzazione Mobile -> Wear:** Le modifiche effettuate sul dispositivo mobile (punteggi, nomi, timer) si riflettono sullo smartwatch.
+*   **Controlli Base su Wear OS:** L'app per smartwatch permette di modificare il punteggio e di interagire con il timer del portiere.
 
-*   `mobile`: The Android application for handheld devices.
-*   `wear`: The Wear OS application for wearable devices.
-*   `shared`: A common module that contains the data synchronization logic used by both the `mobile` and `wear` modules.
+## Elenco delle Funzionalità non Complete o Mancanti
+
+*   **Sincronizzazione Completa Wear -> Mobile:** La sincronizzazione dallo smartwatch al telefono non è completa. Ad esempio, non è possibile avviare o fermare il timer principale dallo smartwatch.
+*   **Ruoli dei Giocatori:** È possibile assegnare dei "ruoli" ai giocatori, ma questa informazione non viene attualmente utilizzata o visualizzata in nessuna parte dell'applicazione.
+*   **Colori delle Squadre:** Il codice sorgente prevede la possibilità di impostare colori personalizzati per le squadre, ma non è presente un'interfaccia utente per selezionarli.
+*   **Configurazione del Backup:** Le regole per il backup automatico dei dati su Android non sono state definite.
+*   **Nome del Pacchetto:** Il nome del pacchetto dell'applicazione (`com.example.scoreboardessential`) è quello di default e andrebbe modificato per una versione di produzione.
