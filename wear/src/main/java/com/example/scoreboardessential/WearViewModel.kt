@@ -24,6 +24,12 @@ sealed class KeeperTimerState {
 
 class WearViewModel(application: Application) : AndroidViewModel(application) {
 
+    // Team Names
+    private val _team1Name = MutableStateFlow("TEAM 1")
+    val team1Name = _team1Name.asStateFlow()
+    private val _team2Name = MutableStateFlow("TEAM 2")
+    val team2Name = _team2Name.asStateFlow()
+
     // Team Scores
     private val _team1Score = MutableStateFlow(0)
     val team1Score = _team1Score.asStateFlow()
