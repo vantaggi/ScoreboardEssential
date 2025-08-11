@@ -13,6 +13,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.scoreboardessential.database.Player
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -31,6 +33,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var timerEditText: EditText
     private lateinit var team1NameEditText: EditText
     private lateinit var team2NameEditText: EditText
+
+    // Team roster recycler views
+    private lateinit var team1RosterRecyclerView: RecyclerView
+    private lateinit var team2RosterRecyclerView: RecyclerView
+    private lateinit var matchLogRecyclerView: RecyclerView
+
+    // Adapters
+    private lateinit var team1RosterAdapter: TeamRosterAdapter
+    private lateinit var team2RosterAdapter: TeamRosterAdapter
+    private lateinit var matchLogAdapter: MatchLogAdapter
 
     private var vibrator: Vibrator? = null
 
@@ -54,6 +66,7 @@ class MainActivity : AppCompatActivity() {
         vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
 
         initializeViews()
+        setupRecyclerViews()
         observeViewModel()
         setupClickListeners()
         requestNotificationPermission()
@@ -67,6 +80,38 @@ class MainActivity : AppCompatActivity() {
         timerEditText = findViewById(R.id.timer_edittext)
         team1NameEditText = findViewById(R.id.team1_name_edittext)
         team2NameEditText = findViewById(R.id.team2_name_edittext)
+
+        // Roster RecyclerViews
+        team1RosterRecyclerView = findViewById(R.id.team1_roster_recyclerview)
+        team2RosterRecyclerView = findViewById(R.id.team2_roster_recyclerview)
+        matchLogRecyclerView = findViewById(R.id.match_log_recyclerview)
+    }
+
+    private fun setupRecyclerViews() {
+        // Team 1 Roster
+        team1RosterAdapter = TeamRosterAdapter { player ->
+            showRemovePlayerDialog(player, 1)
+        }
+        team1RosterRecyclerView.apply {
+            adapter = team1RosterAdapter
+            layoutManager = LinearLayoutManager(this@MainActivity)
+        }
+
+        // Team 2 Roster
+        team2RosterAdapter = TeamRosterAdapter { player ->
+            showRemovePlayerDialog(player, 2)
+        }
+        team2RosterRecyclerView.apply {
+            adapter = team2RosterAdapter
+            layoutManager = LinearLayoutManager(this@MainActivity)
+        }
+
+        // Match Log
+        matchLogAdapter = MatchLogAdapter()
+        matchLogRecyclerView.apply {
+            adapter = matchLogAdapter
+            layoutManager = LinearLayoutManager(this@MainActivity)
+        }
     }
 
     private fun observeViewModel() {
@@ -104,6 +149,20 @@ class MainActivity : AppCompatActivity() {
         // Match Timer
         viewModel.matchTimerValue.observe(this) { timeInMillis ->
             updateTimerTextView(timeInMillis)
+        }
+
+        // Team Players
+        viewModel.team1Players.observe(this) { players ->
+            team1RosterAdapter.submitList(players)
+        }
+
+        viewModel.team2Players.observe(this) { players ->
+            team2RosterAdapter.submitList(players)
+        }
+
+        // Match Events
+        viewModel.matchEvents.observe(this) { events ->
+            matchLogAdapter.submitList(events)
         }
 
         // UI Events
@@ -175,51 +234,100 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, MatchHistoryActivity::class.java))
         }
 
-        // Players management button (if exists)
-        findViewById<Button>(R.id.players_management_button)?.setOnClickListener {
-            startActivity(Intent(this, PlayersManagementActivity::class.java))
+        // Add player buttons
+        findViewById<Button>(R.id.add_team1_player_button).setOnClickListener {
+            showAddPlayerToTeamDialog(1)
         }
 
-        // Color customization buttons (if they exist)
-        findViewById<ImageButton>(R.id.team1_customize_button)?.setOnClickListener {
-            showColorPicker(1)
+        findViewById<Button>(R.id.add_team2_player_button).setOnClickListener {
+            showAddPlayerToTeamDialog(2)
         }
 
-        findViewById<ImageButton>(R.id.team2_customize_button)?.setOnClickListener {
-            showColorPicker(2)
-        }
-
-        // Players management button (if exists in layout)
-        findViewById<Button>(R.id.players_management_button)?.setOnClickListener {
+        // FAB for Players Management
+        findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.players_fab).setOnClickListener {
             startActivity(Intent(this, PlayersManagementActivity::class.java))
         }
     }
 
-    private fun showColorPicker(team: Int) {
-        ColorPickerDialog.Builder(this)
-            .setTitle("Team $team Color")
-            .setPreferenceName("Team${team}ColorPicker")
-            .setPositiveButton(getString(R.string.confirm),
-                ColorEnvelopeListener { envelope, _ ->
-                    viewModel.setTeamColor(team, envelope.color)
-                })
-            .setNegativeButton(getString(R.string.cancel)) { dialogInterface, _ ->
-                dialogInterface.dismiss()
+    private fun showAddPlayerToTeamDialog(team: Int) {
+        val allPlayers = viewModel.allPlayers.value ?: emptyList()
+        val teamPlayers = if (team == 1) viewModel.team1Players.value else viewModel.team2Players.value
+        val availablePlayers = allPlayers.filter { player ->
+            teamPlayers?.none { it.playerId == player.playerId } ?: true
+        }
+
+        if (availablePlayers.isEmpty()) {
+            Snackbar.make(
+                findViewById(android.R.id.content),
+                "No available players. Create new players in Player Management.",
+                Snackbar.LENGTH_LONG
+            ).setAction("MANAGE") {
+                startActivity(Intent(this, PlayersManagementActivity::class.java))
+            }.show()
+            return
+        }
+
+        val playerNames = availablePlayers.map { it.playerName }.toTypedArray()
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Add Player to Team $team")
+            .setItems(playerNames) { _, which ->
+                val selectedPlayer = availablePlayers[which]
+                viewModel.addPlayerToTeam(selectedPlayer, team)
+                val teamName = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
+                Snackbar.make(
+                    findViewById(android.R.id.content),
+                    "${selectedPlayer.playerName} added to $teamName",
+                    Snackbar.LENGTH_SHORT
+                ).show()
             }
-            .attachAlphaSlideBar(true)
-            .attachBrightnessSlideBar(true)
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showRemovePlayerDialog(player: Player, team: Int) {
+        val teamName = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Remove Player?")
+            .setMessage("Remove ${player.playerName} from $teamName?")
+            .setPositiveButton("Remove") { _, _ ->
+                viewModel.removePlayerFromTeam(player, team)
+                Snackbar.make(
+                    findViewById(android.R.id.content),
+                    "${player.playerName} removed from $teamName",
+                    Snackbar.LENGTH_SHORT
+                ).show()
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
     private fun showSelectScorerDialog(team: Int) {
-        // For now, just add the goal without selecting scorer
-        // since we don't have player management in base layout
-        val teamName = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
-        Snackbar.make(
-            findViewById(android.R.id.content),
-            "Goal scored by $teamName!",
-            Snackbar.LENGTH_SHORT
-        ).show()
+        val players = if (team == 1) viewModel.team1Players.value else viewModel.team2Players.value
+
+        if (players.isNullOrEmpty()) {
+            val teamName = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
+            Snackbar.make(
+                findViewById(android.R.id.content),
+                "Goal scored by $teamName!",
+                Snackbar.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        val playerNames = players.map { it.playerName }.toTypedArray()
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Who scored?")
+            .setItems(playerNames) { _, which ->
+                val scorer = players[which]
+                viewModel.addScorer(team, scorer.playerName)
+                Snackbar.make(
+                    findViewById(android.R.id.content),
+                    "⚽ Goal by ${scorer.playerName}!",
+                    Snackbar.LENGTH_SHORT
+                ).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun showEndMatchConfirmation() {
