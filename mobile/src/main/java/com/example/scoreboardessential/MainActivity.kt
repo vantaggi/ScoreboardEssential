@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.View
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,9 +19,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.scoreboardessential.database.Player
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.textfield.TextInputEditText
-import com.skydoves.colorpickerview.ColorPickerDialog
-import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
+import com.skydoves.colorpickerview.ColorPickerView
+import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -63,7 +64,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
+        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager =
+                getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vibratorManager.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(VIBRATOR_SERVICE) as Vibrator
+        }
 
         initializeViews()
         setupRecyclerViews()
@@ -167,9 +175,7 @@ class MainActivity : AppCompatActivity() {
 
         // UI Events
         viewModel.showSelectScorerDialog.observe(this) { team ->
-            if (team != null) {
-                showSelectScorerDialog(team)
-            }
+            showSelectScorerDialog(team)
         }
 
         viewModel.showKeeperTimerExpired.observe(this) {
@@ -247,6 +253,34 @@ class MainActivity : AppCompatActivity() {
         findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.players_fab).setOnClickListener {
             startActivity(Intent(this, PlayersManagementActivity::class.java))
         }
+
+        // Team card long click listeners for changing color
+        findViewById<View>(R.id.team1_card).setOnLongClickListener {
+            showColorPickerDialog(1)
+            true
+        }
+        findViewById<View>(R.id.team2_card).setOnLongClickListener {
+            showColorPickerDialog(2)
+            true
+        }
+    }
+
+    private fun showColorPickerDialog(team: Int) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_color_picker, null)
+        val colorPickerView = dialogView.findViewById<ColorPickerView>(R.id.colorPickerView)
+        val brightnessSlideBar = dialogView.findViewById<BrightnessSlideBar>(R.id.brightnessSlide)
+
+        colorPickerView.attachBrightnessSlider(brightnessSlideBar)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Choose Team $team Color")
+            .setView(dialogView)
+            .setPositiveButton("Select") { _, _ ->
+                val selectedColor = colorPickerView.color
+                viewModel.setTeamColor(team, selectedColor)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun showAddPlayerToTeamDialog(team: Int) {
@@ -369,27 +403,16 @@ class MainActivity : AppCompatActivity() {
     private fun updateTimerTextView(timeInMillis: Long) {
         val minutes = (timeInMillis / 1000) / 60
         val seconds = (timeInMillis / 1000) % 60
-        timerTextView.text = String.format("%02d:%02d", minutes, seconds)
+        timerTextView.text = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
     }
 
     private fun triggerHapticFeedback() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator?.vibrate(50)
-        }
+        vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 
     private fun triggerStrongVibration() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val pattern = longArrayOf(0, 500, 200, 500, 200, 500)
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
-        } else {
-            @Suppress("DEPRECATION")
-            val pattern = longArrayOf(0, 500, 200, 500, 200, 500)
-            vibrator?.vibrate(pattern, -1)
-        }
+        val pattern = longArrayOf(0, 500, 200, 500, 200, 500)
+        vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
     }
 
     private fun requestNotificationPermission() {
@@ -407,10 +430,11 @@ class MainActivity : AppCompatActivity() {
     // Activity method overrides for onClick in XML
     fun startStopTimer(view: View) {
         viewModel.startStopMatchTimer()
-        val button = view as? Button
-        button?.text = if (button?.text == "Start") "Pause" else "Start"
+        val button = view as Button
+        button.text = if (button.text == "Start") "Pause" else "Start"
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun resetTimer(view: View) {
         MaterialAlertDialogBuilder(this)
             .setTitle("Reset Timer?")

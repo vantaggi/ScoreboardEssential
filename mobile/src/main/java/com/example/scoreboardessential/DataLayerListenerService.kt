@@ -2,6 +2,7 @@ package com.example.scoreboardessential
 
 import com.example.scoreboardessential.utils.ScoreUpdateEvent
 import com.example.scoreboardessential.utils.ScoreUpdateEventBus
+import com.example.scoreboardessential.utils.TimerEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
@@ -20,6 +21,14 @@ class DataLayerListenerService : WearableListenerService() {
     override fun onMessageReceived(messageEvent: MessageEvent) {
         coroutineScope.launch {
             when (messageEvent.path) {
+                "/timer-control" -> {
+                    val action = String(messageEvent.data)
+                    when (action) {
+                        "START" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Start)
+                        "PAUSE" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Pause)
+                        "RESET" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Reset)
+                    }
+                }
                 "/update-score" -> {
                     val data = String(messageEvent.data)
                     val scores = data.split(",").mapNotNull { it.toIntOrNull() }

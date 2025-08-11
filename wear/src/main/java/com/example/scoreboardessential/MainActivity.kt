@@ -50,7 +50,25 @@ class MainActivity : ComponentActivity() {
             true
         }
     }
-
+    private fun showTeamNameInput(team: Int) {
+        val intent = RemoteIntent()
+            .setAction(RemoteIntent.ACTION_REMOTE_INTENT)
+            .setPackage("com.google.android.wearable.app")
+            .putExtra(RemoteIntent.EXTRA_INTENT,
+                Intent(RemoteIntent.ACTION_INPUT_TEXT).apply {
+                    putExtra(RemoteIntent.EXTRA_PROMPT, "Team $team name:")
+                })
+            .putExtra(RemoteIntent.EXTRA_RESULT_RECEIVER,
+                object : ResultReceiver(Handler(Looper.getMainLooper())) {
+                    override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
+                        val newName = resultData?.getString(RemoteIntent.EXTRA_INPUT_TEXT)
+                        newName?.let {
+                            viewModel.updateTeamName(team, it)
+                        }
+                    }
+                })
+        RemoteIntent.startRemoteActivity(this, intent, null)
+    }
     private fun observeViewModel() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {

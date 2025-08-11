@@ -242,9 +242,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 playerDao.update(player)
 
                 val teamName = if (team == 1) _team1Name.value else _team2Name.value
-                addMatchEvent("GOAL! $playerName (${teamName})", team = team, player = playerName)
+                val roleText = if (player.roles.isNotEmpty()) " (${player.roles})" else ""
+                addMatchEvent("GOAL! $playerName$roleText (${teamName})", team = team, player = playerName)
+
+                // Invia info al Wear con ruolo
+                sendScorerToWear(playerName, player.roles, team)
             }
         }
+    }
+    private fun sendScorerToWear(name: String, role: String, team: Int) {
+        val putDataMapReq = PutDataMapRequest.create("/scorer_info").apply {
+            dataMap.putString("scorer_name", name)
+            dataMap.putString("scorer_role", role)
+            dataMap.putInt("team", team)
+            dataMap.putLong("timestamp", System.currentTimeMillis())
+        }
+        val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
+        dataClient.putDataItem(putDataReq)
     }
 
     // --- Match Timer Management ---

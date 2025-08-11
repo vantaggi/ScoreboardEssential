@@ -208,7 +208,28 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+    fun startStopMatchTimer() {
+        isMatchTimerRunning = !isMatchTimerRunning
+        sendTimerControlMessage(if (isMatchTimerRunning) "START" else "PAUSE")
+    }
 
+    fun resetMatchTimer() {
+        matchTimeInSeconds = 0L
+        isMatchTimerRunning = false
+        sendTimerControlMessage("RESET")
+    }
+
+    private fun sendTimerControlMessage(action: String) {
+        val dataClient = Wearable.getMessageClient(getApplication())
+        val messagePath = "/timer-control"
+        val data = action.toByteArray()
+
+        Wearable.getNodeClient(getApplication()).connectedNodes.addOnSuccessListener { nodes ->
+            nodes.forEach { node ->
+                dataClient.sendMessage(node.id, messagePath, data)
+            }
+        }
+    }
     override fun onCleared() {
         super.onCleared()
         matchTimerJob?.cancel()

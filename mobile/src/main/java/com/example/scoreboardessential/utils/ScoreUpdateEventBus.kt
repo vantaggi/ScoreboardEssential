@@ -9,7 +9,14 @@ object ScoreUpdateEventBus {
     private val _events = MutableSharedFlow<ScoreUpdateEvent>()
     val events = _events.asSharedFlow()
 
+    private val _timerEvents = MutableSharedFlow<TimerEvent>()
+    val timerEvents = _timerEvents.asSharedFlow()
+
     suspend fun postEvent(event: ScoreUpdateEvent) {
         _events.emit(event)
+    }
+
+    suspend fun postTimerEvent(event: TimerEvent) {
+        _timerEvents.emit(event)
     }
 }
