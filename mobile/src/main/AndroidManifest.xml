@@ -28,11 +28,18 @@
         </activity>
         <activity
             android:name=".MatchHistoryActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:label="Match History"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
 
         <activity
             android:name=".PlayersManagementActivity"
             android:exported="false"
+            android:label="Players"
             android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

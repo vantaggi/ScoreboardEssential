@@ -161,7 +161,7 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         triggerShortVibration()
     }
 
-    private fun resetKeeperTimer() {
+    fun resetKeeperTimer() {
         keeperCountDownTimer?.cancel()
         vibrator?.cancel() // Stop the continuous vibration if it's active
         _keeperTimer.value = KeeperTimerState.Hidden // Or decide if it should restart immediately
