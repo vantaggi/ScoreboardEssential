@@ -37,6 +37,25 @@ class DataLayerListenerService : WearableListenerService() {
                         ScoreUpdateEventBus.postEvent(ScoreUpdateEvent(scores[0], scores[1]))
                     }
                 }
+                "/start_match" -> {
+                    ScoreUpdateEventBus.postTimerEvent(TimerEvent.StartNewMatch)
+                }
+                "/end_match" -> {
+                    ScoreUpdateEventBus.postTimerEvent(TimerEvent.EndMatch)
+                }
+                "/reset_timer" -> {
+                    ScoreUpdateEventBus.postTimerEvent(TimerEvent.Reset)
+                }
+                "/scorer_selected" -> {
+                    val data = String(messageEvent.data)
+                    val parts = data.split("|")
+                    if (parts.size == 3) {
+                        val playerName = parts[0]
+                        val role = parts[1]
+                        val team = parts[2].toIntOrNull() ?: 1
+                        // Handle scorer selection - this could trigger a notification or update UI
+                    }
+                }
                 // The other paths are no longer sent by the new watch face,
                 // but we can leave them for now in case an older version is used.
             }

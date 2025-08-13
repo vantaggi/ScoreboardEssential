@@ -56,8 +56,44 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     // Haptics
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
 
+    // Player selection events
+    private val _showPlayerSelection = MutableStateFlow<Int?>(null)
+    val showPlayerSelection = _showPlayerSelection.asStateFlow()
+
+    fun clearPlayerSelectionEvent() {
+        _showPlayerSelection.value = null
+    }
+
     init {
         startMatchTimer()
+        listenForSyncEvents()
+    }
+
+    private fun listenForSyncEvents() {
+        viewModelScope.launch {
+            WearSyncManager.syncEvents.collect { event ->
+                when (event) {
+                    is WearSyncEvent.ScoreUpdate -> {
+                        _team1Score.value = event.team1Score
+                        _team2Score.value = event.team2Score
+                    }
+                    is WearSyncEvent.TeamNamesUpdate -> {
+                        _team1Name.value = event.team1Name
+                        _team2Name.value = event.team2Name
+                    }
+                    is WearSyncEvent.KeeperTimerUpdate -> {
+                        if (event.isRunning) {
+                            setKeeperTimerState(KeeperTimerState.Running((event.duration / 1000).toInt()))
+                        } else {
+                            setKeeperTimerState(KeeperTimerState.Hidden)
+                        }
+                    }
+                    is WearSyncEvent.MatchReset -> {
+                        resetMatch()
+                    }
+                }
+            }
+        }
     }
 
     // --- Score Management ---
@@ -75,6 +111,8 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         _team1Score.value++
         triggerShortVibration()
         sendScoreUpdate()
+        // Trigger player selection for team 1
+        _showPlayerSelection.value = 1
     }
 
     fun decrementTeam1Score() {
@@ -89,6 +127,8 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         _team2Score.value++
         triggerShortVibration()
         sendScoreUpdate()
+        // Trigger player selection for team 2
+        _showPlayerSelection.value = 2
     }
 
     fun decrementTeam2Score() {
