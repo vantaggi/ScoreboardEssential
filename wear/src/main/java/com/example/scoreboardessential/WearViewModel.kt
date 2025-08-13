@@ -8,6 +8,9 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.DataMap
+import com.google.android.gms.wearable.PutDataRequest
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -221,15 +224,27 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun sendTimerControlMessage(action: String) {
-        val dataClient = Wearable.getMessageClient(getApplication())
+        // Send via message for immediate response
+        val messageClient = Wearable.getMessageClient(getApplication())
         val messagePath = "/timer-control"
         val data = action.toByteArray()
 
         Wearable.getNodeClient(getApplication()).connectedNodes.addOnSuccessListener { nodes ->
             nodes.forEach { node ->
-                dataClient.sendMessage(node.id, messagePath, data)
+                messageClient.sendMessage(node.id, messagePath, data)
             }
         }
+
+        // Also send via Data Layer for persistent sync
+        val dataClient = Wearable.getDataClient(getApplication())
+        val dataMap = DataMap().apply {
+            putString(DataSyncObject.TIMER_STATE_KEY, action)
+            putLong("timestamp", System.currentTimeMillis())
+        }
+        val request = PutDataRequest.create(DataSyncObject.SCORE_PATH).apply {
+            this.data = dataMap.toByteArray()
+        }
+        dataClient.putDataItem(request)
     }
     override fun onCleared() {
         super.onCleared()
