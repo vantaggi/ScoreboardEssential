@@ -417,7 +417,7 @@ class MainActivity : AppCompatActivity() {
         if (timeInMillis > 0) {
             val minutes = (timeInMillis / 1000) / 60
             val seconds = (timeInMillis / 1000) % 60
-            keeperTimerTextView.text = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
+            keeperTimerTextView.text = String.format(Locale.getDefault(), "⏰ %02d:%02d", minutes, seconds)
             keeperTimerTextView.visibility = View.VISIBLE
         } else {
             keeperTimerTextView.visibility = View.GONE

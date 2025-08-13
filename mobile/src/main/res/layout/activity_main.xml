@@ -152,6 +152,11 @@
                             android:textColor="@color/white"
                             android:textSize="72sp"
                             android:fontFamily="sans-serif-condensed"
+                            android:textStyle="bold"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="2"
+                            android:shadowDy="2"
+                            android:shadowRadius="4"
                             android:visibility="visible"/>
 
                         <LinearLayout
@@ -232,6 +237,11 @@
                             android:textColor="@color/surface_dark"
                             android:textSize="72sp"
                             android:fontFamily="sans-serif-condensed"
+                            android:textStyle="bold"
+                            android:shadowColor="@color/white"
+                            android:shadowDx="1"
+                            android:shadowDy="1"
+                            android:shadowRadius="2"
                             android:visibility="visible"/>
 
                         <LinearLayout

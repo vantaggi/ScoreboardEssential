@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.delay
 
 data class MatchEvent(
     val timestamp: String,
@@ -33,6 +34,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val playerDao: PlayerDao
     private val matchDao: MatchDao
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
+
+    private val wearDataSync = WearDataSync(application)
 
     // Scores
     private val _team1Score = MutableLiveData(0)
@@ -99,11 +102,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val db = AppDatabase.getDatabase(application)
         matchDao = db.matchDao()
         playerDao = db.playerDao()
+        _keeperTimerValue.value = 0L  // Start with 0 to hide it
 
         listenForScoreUpdates()
         listenForTimerEvents()
         loadAllPlayers()
         startNewMatch()
+        viewModelScope.launch {
+            delay(500)
+            wearDataSync.syncFullState(
+                team1Score = _team1Score.value ?: 0,
+                team2Score = _team2Score.value ?: 0,
+                team1Name = _team1Name.value ?: "TEAM 1",
+                team2Name = _team2Name.value ?: "TEAM 2",
+                timerMillis = _matchTimerValue.value ?: 0L,
+                timerRunning = isMatchTimerRunning,
+                keeperMillis = _keeperTimerValue.value ?: 0L,
+                keeperRunning = isKeeperTimerRunning,
+                matchActive = currentMatchId != null
+            )
+        }
     }
 
     private fun listenForScoreUpdates() {
@@ -154,14 +172,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun startNewMatch() {
-        // Reset everything for a new match
         _team1Score.value = 0
         _team2Score.value = 0
         _matchEvents.value = emptyList()
         matchStartTime = System.currentTimeMillis()
         _matchTimerValue.value = 0L
-        // Don't auto-start timer - let user control it
-        addMatchEvent("New match ready - press start to begin timer")
+
+        matchTimer?.cancel()
+        isMatchTimerRunning = false
+
+        addMatchEvent("New match ready - press START to begin")
+        sendMatchStateUpdate(true)  // Sync match started
+        sendScoreUpdate()  // Sync initial scores
     }
 
     // --- Team Management ---
@@ -283,14 +305,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     private fun sendScorerToWear(name: String, role: String, team: Int) {
-        val putDataMapReq = PutDataMapRequest.create("/scorer_info").apply {
-            dataMap.putString("scorer_name", name)
-            dataMap.putString("scorer_role", role)
-            dataMap.putInt("team", team)
-            dataMap.putLong("timestamp", System.currentTimeMillis())
-        }
-        val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
-        dataClient.putDataItem(putDataReq)
+        wearDataSync.syncScorerSelected(name, role, team)
     }
 
     // --- Match Timer Management ---
@@ -303,25 +318,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun startMatchTimer() {
+        if (isMatchTimerRunning) return
+
         matchTimer?.cancel()
         isMatchTimerRunning = true
 
+        if (_matchTimerValue.value == 0L) {
+            matchStartTime = System.currentTimeMillis()
+        }
+
         matchTimer = object : CountDownTimer(Long.MAX_VALUE, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                val elapsedTime = System.currentTimeMillis() - matchStartTime
-                _matchTimerValue.postValue(elapsedTime)
+                if (isMatchTimerRunning) {
+                    val elapsedTime = System.currentTimeMillis() - matchStartTime
+                    _matchTimerValue.postValue(elapsedTime)
+                }
             }
 
-            override fun onFinish() {
-                // Won't finish as we use MAX_VALUE
-            }
+            override fun onFinish() {}
         }.start()
+
+        addMatchEvent("Match timer started")
+        sendTimerUpdate()  // Sync with Wear
     }
 
     private fun pauseMatchTimer() {
         matchTimer?.cancel()
         isMatchTimerRunning = false
         addMatchEvent("Match paused")
+        sendTimerUpdate()  // Sync with Wear
     }
 
     fun resetMatchTimer() {
@@ -330,17 +355,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         matchStartTime = System.currentTimeMillis()
         _matchTimerValue.value = 0L
         addMatchEvent("Match timer reset")
+        sendTimerUpdate()  // Sync with Wear
     }
 
     // --- Keeper Timer Management ---
     fun setKeeperTimer(seconds: Long) {
         keeperTimerDuration = seconds * 1000
-        _keeperTimerValue.value = keeperTimerDuration
+        _keeperTimerValue.value = keeperTimerDuration  // This will make it visible
+        addMatchEvent("Keeper timer set to ${seconds} seconds")
     }
 
     fun startKeeperTimer() {
         keeperTimer?.cancel()
         isKeeperTimerRunning = true
+
+        // Ensure the timer value is set so it becomes visible
+        _keeperTimerValue.value = keeperTimerDuration
 
         keeperTimer = object : CountDownTimer(keeperTimerDuration, 1000) {
             override fun onTick(millisUntilFinished: Long) {
@@ -363,9 +393,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun resetKeeperTimer() {
         keeperTimer?.cancel()
         isKeeperTimerRunning = false
-        _keeperTimerValue.value = keeperTimerDuration
+        _keeperTimerValue.value = 0L  // Set to 0 to hide
         vibrator?.cancel()
         sendKeeperTimerUpdate(false)
+        addMatchEvent("Keeper timer reset")
     }
 
     // --- Match Events ---
@@ -382,7 +413,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // --- End Match ---
     fun endMatch() {
         viewModelScope.launch {
-            // Save match to database
+            matchTimer?.cancel()
+            isMatchTimerRunning = false
+
             val matchId = matchDao.insert(
                 Match(
                     team1Score = _team1Score.value ?: 0,
@@ -391,7 +424,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
             )
 
-            // Update player statistics
             val allMatchPlayers = (_team1Players.value ?: emptyList()) + (_team2Players.value ?: emptyList())
             for (player in allMatchPlayers) {
                 player.appearances++
@@ -399,12 +431,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 matchDao.insertMatchPlayerCrossRef(MatchPlayerCrossRef(matchId.toInt(), player.playerId))
             }
 
-            // Notify about match end
             addMatchEvent("Match ended - Final Score: ${_team1Score.value} - ${_team2Score.value}")
 
-            // Reset for new match
+            sendMatchStateUpdate(false)  // Sync match ended
             startNewMatch()
-            sendResetUpdate()
+            sendResetUpdate()  // Sync full reset
         }
     }
 
@@ -423,41 +454,48 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Data Synchronization with Wear OS ---
     private fun sendScoreUpdate() {
-        val putDataMapReq = PutDataMapRequest.create("/score_update").apply {
-            dataMap.putInt("team1_score", _team1Score.value ?: 0)
-            dataMap.putInt("team2_score", _team2Score.value ?: 0)
-            dataMap.putLong("timestamp", System.currentTimeMillis())
-        }
-        val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
-        dataClient.putDataItem(putDataReq)
+        wearDataSync.syncScores(
+            _team1Score.value ?: 0,
+            _team2Score.value ?: 0
+        )
     }
 
     private fun sendTeamNamesUpdate() {
-        val putDataMapReq = PutDataMapRequest.create("/team_names").apply {
-            // Use the Elvis operator (?:) to provide a default value if .value is null
-            dataMap.putString("team1_name", _team1Name.value ?: "TEAM 1")
-            dataMap.putString("team2_name", _team2Name.value ?: "TEAM 2")
-        }
-        val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
-        dataClient.putDataItem(putDataReq)
+        wearDataSync.syncTeamNames(
+            _team1Name.value ?: "TEAM 1",
+            _team2Name.value ?: "TEAM 2"
+        )
     }
 
     private fun sendKeeperTimerUpdate(isRunning: Boolean) {
-        val putDataMapReq = PutDataMapRequest.create("/keeper_timer").apply {
-            dataMap.putBoolean("is_running", isRunning)
-            dataMap.putLong("duration", keeperTimerDuration)
-        }
-        val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
-        dataClient.putDataItem(putDataReq)
+        wearDataSync.syncKeeperTimer(
+            _keeperTimerValue.value ?: 0L,
+            isRunning
+        )
     }
 
+    private fun sendTimerUpdate() {
+        wearDataSync.syncTimerState(
+            _matchTimerValue.value ?: 0L,
+            isMatchTimerRunning
+        )
+    }
+    private fun sendMatchStateUpdate(isActive: Boolean) {
+        wearDataSync.syncMatchState(isActive)
+    }
     private fun sendResetUpdate() {
-        val putDataMapReq = PutDataMapRequest.create("/reset_match").apply {
-            dataMap.putBoolean("reset", true)
-            dataMap.putLong("timestamp", System.currentTimeMillis())
-        }
-        val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
-        dataClient.putDataItem(putDataReq)
+        // Send full state reset
+        wearDataSync.syncFullState(
+            team1Score = 0,
+            team2Score = 0,
+            team1Name = _team1Name.value ?: "TEAM 1",
+            team2Name = _team2Name.value ?: "TEAM 2",
+            timerMillis = 0L,
+            timerRunning = false,
+            keeperMillis = 0L,
+            keeperRunning = false,
+            matchActive = false
+        )
     }
 
     override fun onCleared() {

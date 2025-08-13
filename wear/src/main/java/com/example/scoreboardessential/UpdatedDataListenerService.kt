@@ -15,8 +15,10 @@ class UpdatedDataListenerService : WearableListenerService() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
+        val events = dataEvents.map { it.freeze() }
+        dataEvents.release()
         coroutineScope.launch {
-            dataEvents.forEach { event ->
+            events.forEach { event ->
                 if (event.type == DataEvent.TYPE_CHANGED) {
                     event.dataItem.also { item ->
                         when (item.uri.path) {
@@ -36,7 +38,7 @@ class UpdatedDataListenerService : WearableListenerService() {
                                     WearSyncManager.postSyncEvent(
                                         WearSyncEvent.TeamNamesUpdate(team1Name, team2Name)
                                     )
-                                }
+                                 }
                             }
                             "/keeper_timer" -> {
                                 DataMapItem.fromDataItem(item).dataMap.apply {

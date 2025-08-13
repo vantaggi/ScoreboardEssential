@@ -17,6 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 // Sealed class to represent the state of the keeper timer
 sealed class KeeperTimerState {
@@ -33,6 +34,8 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     private val _team2Name = MutableStateFlow("TEAM 2")
     val team2Name = _team2Name.asStateFlow()
 
+
+    private val wearDataSync = WearDataSync(application)
     // Team Scores
     private val _team1Score = MutableStateFlow(0)
     val team1Score = _team1Score.asStateFlow()
@@ -67,6 +70,22 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     init {
         startMatchTimer()
         listenForSyncEvents()
+
+        // Perform initial sync after a short delay
+        viewModelScope.launch {
+            delay(1000)  // Wait for connection
+            wearDataSync.syncFullState(
+                team1Score = _team1Score.value,
+                team2Score = _team2Score.value,
+                team1Name = _team1Name.value,
+                team2Name = _team2Name.value,
+                timerMillis = matchTimeInSeconds * 1000,
+                timerRunning = isMatchTimerRunning,
+                keeperMillis = 0L,
+                keeperRunning = false,
+                matchActive = true
+            )
+        }
     }
 
     private fun listenForSyncEvents() {
@@ -110,8 +129,7 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     fun incrementTeam1Score() {
         _team1Score.value++
         triggerShortVibration()
-        sendScoreUpdate()
-        // Trigger player selection for team 1
+        sendScoreUpdateProper()  // Use new method
         _showPlayerSelection.value = 1
     }
 
@@ -119,15 +137,14 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         if (_team1Score.value > 0) {
             _team1Score.value--
             triggerShortVibration()
-            sendScoreUpdate()
+            sendScoreUpdateProper()  // Use new method
         }
     }
 
     fun incrementTeam2Score() {
         _team2Score.value++
         triggerShortVibration()
-        sendScoreUpdate()
-        // Trigger player selection for team 2
+        sendScoreUpdateProper()  // Use new method
         _showPlayerSelection.value = 2
     }
 
@@ -135,10 +152,16 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         if (_team2Score.value > 0) {
             _team2Score.value--
             triggerShortVibration()
-            sendScoreUpdate()
+            sendScoreUpdateProper()  // Use new method
         }
     }
 
+    private fun sendScoreUpdateProper() {
+        wearDataSync.syncScores(
+            _team1Score.value,
+            _team2Score.value
+        )
+    }
     // --- Match Timer Management ---
     fun setMatchTimer(time: String) {
         matchTimerJob?.cancel() // Stop the internal timer
@@ -181,10 +204,8 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
 
     fun handleKeeperTimer() {
         if (keeperTimer.value is KeeperTimerState.Running) {
-            // If running, a long press should reset it.
             resetKeeperTimer()
         } else {
-            // If hidden or finished, start it.
             startKeeperTimer()
         }
     }
@@ -192,6 +213,7 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     private fun startKeeperTimer() {
         keeperCountDownTimer?.cancel()
         _keeperTimer.value = KeeperTimerState.Running((keeperTimerDuration / 1000).toInt())
+
         keeperCountDownTimer = object : CountDownTimer(keeperTimerDuration, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 _keeperTimer.value = KeeperTimerState.Running((millisUntilFinished / 1000).toInt())
@@ -202,14 +224,21 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                 triggerStrongContinuousVibration()
             }
         }.start()
+
         triggerShortVibration()
+
+        // Sync keeper timer start
+        wearDataSync.syncKeeperTimer(keeperTimerDuration, true)
     }
 
     fun resetKeeperTimer() {
         keeperCountDownTimer?.cancel()
-        vibrator?.cancel() // Stop the continuous vibration if it's active
-        _keeperTimer.value = KeeperTimerState.Hidden // Or decide if it should restart immediately
+        vibrator?.cancel()
+        _keeperTimer.value = KeeperTimerState.Hidden
         triggerShortVibration()
+
+        // Sync keeper timer reset
+        wearDataSync.syncKeeperTimer(0L, false)
     }
 
     // --- Reset ---
@@ -220,9 +249,22 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         matchTimerJob?.cancel()
         matchTimeInSeconds = 0L
         _matchTimer.value = "00:00"
-        startMatchTimer() // Restart the timer from 0
+        isMatchTimerRunning = false
 
         resetKeeperTimer()
+
+        // Sync full reset
+        wearDataSync.syncFullState(
+            team1Score = 0,
+            team2Score = 0,
+            team1Name = _team1Name.value,
+            team2Name = _team2Name.value,
+            timerMillis = 0L,
+            timerRunning = false,
+            keeperMillis = 0L,
+            keeperRunning = false,
+            matchActive = false
+        )
     }
 
     // --- Haptic Feedback ---
@@ -254,13 +296,51 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     }
     fun startStopMatchTimer() {
         isMatchTimerRunning = !isMatchTimerRunning
-        sendTimerControlMessage(if (isMatchTimerRunning) "START" else "PAUSE")
+
+        if (isMatchTimerRunning) {
+            if (matchTimeInSeconds == 0L) {
+                // Starting fresh
+                matchTimeInSeconds = 0L
+            }
+            startMatchTimerInternal()
+        } else {
+            pauseMatchTimerInternal()
+        }
+
+        // Sync timer state
+        wearDataSync.syncTimerState(
+            matchTimeInSeconds * 1000,
+            isMatchTimerRunning
+        )
+    }
+
+    private fun startMatchTimerInternal() {
+        matchTimerJob?.cancel()
+        matchTimerJob = viewModelScope.launch {
+            while (isMatchTimerRunning) {
+                val minutes = matchTimeInSeconds / 60
+                val seconds = matchTimeInSeconds % 60
+                _matchTimer.value = String.format("%02d:%02d", minutes, seconds)
+                delay(1000)
+                if (isMatchTimerRunning) {
+                    matchTimeInSeconds++
+                }
+            }
+        }
+    }
+
+    private fun pauseMatchTimerInternal() {
+        matchTimerJob?.cancel()
     }
 
     fun resetMatchTimer() {
         matchTimeInSeconds = 0L
         isMatchTimerRunning = false
-        sendTimerControlMessage("RESET")
+        matchTimerJob?.cancel()
+        _matchTimer.value = "00:00"
+
+        // Sync reset
+        wearDataSync.syncTimerState(0L, false)
     }
 
     private fun sendTimerControlMessage(action: String) {
