@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var team1ScoreTextView: TextView
     private lateinit var team2ScoreTextView: TextView
     private lateinit var timerTextView: TextView
+    private lateinit var keeperTimerTextView: TextView
     private lateinit var timerEditText: EditText
     private lateinit var team1NameEditText: EditText
     private lateinit var team2NameEditText: EditText
@@ -85,6 +86,7 @@ class MainActivity : AppCompatActivity() {
         team1ScoreTextView = findViewById(R.id.team1_score_textview)
         team2ScoreTextView = findViewById(R.id.team2_score_textview)
         timerTextView = findViewById(R.id.timer_textview)
+        keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
         timerEditText = findViewById(R.id.timer_edittext)
         team1NameEditText = findViewById(R.id.team1_name_edittext)
         team2NameEditText = findViewById(R.id.team2_name_edittext)
@@ -157,6 +159,11 @@ class MainActivity : AppCompatActivity() {
         // Match Timer
         viewModel.matchTimerValue.observe(this) { timeInMillis ->
             updateTimerTextView(timeInMillis)
+        }
+
+        // Keeper Timer
+        viewModel.keeperTimerValue.observe(this) { timeInMillis ->
+            updateKeeperTimerTextView(timeInMillis)
         }
 
         // Team Players
@@ -404,6 +411,17 @@ class MainActivity : AppCompatActivity() {
         val minutes = (timeInMillis / 1000) / 60
         val seconds = (timeInMillis / 1000) % 60
         timerTextView.text = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
+    }
+
+    private fun updateKeeperTimerTextView(timeInMillis: Long) {
+        if (timeInMillis > 0) {
+            val minutes = (timeInMillis / 1000) / 60
+            val seconds = (timeInMillis / 1000) % 60
+            keeperTimerTextView.text = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
+            keeperTimerTextView.visibility = View.VISIBLE
+        } else {
+            keeperTimerTextView.visibility = View.GONE
+        }
     }
 
     private fun triggerHapticFeedback() {

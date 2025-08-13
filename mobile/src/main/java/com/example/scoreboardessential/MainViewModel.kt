@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.scoreboardessential.database.*
 import com.example.scoreboardessential.utils.ScoreUpdateEventBus
 import com.example.scoreboardessential.utils.SingleLiveEvent
+import com.example.scoreboardessential.utils.TimerEvent
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
@@ -100,6 +101,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         playerDao = db.playerDao()
 
         listenForScoreUpdates()
+        listenForTimerEvents()
         loadAllPlayers()
         startNewMatch()
     }
@@ -110,6 +112,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _team1Score.postValue(event.team1Score)
                 _team2Score.postValue(event.team2Score)
                 addMatchEvent("Score updated from Wear OS")
+            }
+        }
+    }
+
+    private fun listenForTimerEvents() {
+        viewModelScope.launch {
+            ScoreUpdateEventBus.timerEvents.collect { event ->
+                when (event) {
+                    is TimerEvent.Start -> {
+                        startMatchTimer()
+                        addMatchEvent("Timer started from Wear OS")
+                    }
+                    is TimerEvent.Pause -> {
+                        pauseMatchTimer()
+                        addMatchEvent("Timer paused from Wear OS")
+                    }
+                    is TimerEvent.Reset -> {
+                        resetMatchTimer()
+                        addMatchEvent("Timer reset from Wear OS")
+                    }
+                    is TimerEvent.StartNewMatch -> {
+                        startNewMatch()
+                        addMatchEvent("New match started from Wear OS")
+                    }
+                    is TimerEvent.EndMatch -> {
+                        endMatch()
+                        addMatchEvent("Match ended from Wear OS")
+                    }
+                }
             }
         }
     }
@@ -128,8 +159,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _team2Score.value = 0
         _matchEvents.value = emptyList()
         matchStartTime = System.currentTimeMillis()
-        startMatchTimer()
-        addMatchEvent("Match started")
+        _matchTimerValue.value = 0L
+        // Don't auto-start timer - let user control it
+        addMatchEvent("New match ready - press start to begin timer")
     }
 
     // --- Team Management ---

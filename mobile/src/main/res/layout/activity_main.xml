@@ -63,7 +63,7 @@
                         android:textSize="24sp"
                         android:fontFamily="sans-serif-condensed"
                         android:layout_marginTop="8dp"
-                        android:visibility="gone"/>
+                        android:visibility="visible"/>
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -149,9 +149,10 @@
                             android:layout_weight="1"
                             android:text="0"
                             android:gravity="center"
-                            android:textColor="@color/team1_orange"
+                            android:textColor="@color/white"
                             android:textSize="72sp"
-                            android:fontFamily="sans-serif-condensed"/>
+                            android:fontFamily="sans-serif-condensed"
+                            android:visibility="visible"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -228,9 +229,10 @@
                             android:layout_weight="1"
                             android:text="0"
                             android:gravity="center"
-                            android:textColor="@color/team2_lime"
+                            android:textColor="@color/surface_dark"
                             android:textSize="72sp"
-                            android:fontFamily="sans-serif-condensed"/>
+                            android:fontFamily="sans-serif-condensed"
+                            android:visibility="visible"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"
