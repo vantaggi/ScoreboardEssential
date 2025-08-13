@@ -54,7 +54,7 @@
                 android:layout_width="120dp"
                 android:layout_height="120dp"
                 android:src="@drawable/ic_person_add"
-                android:tint="@color/on_surface_variant_light"
+                app:tint="@color/on_surface_variant_light"
                 android:alpha="0.5"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

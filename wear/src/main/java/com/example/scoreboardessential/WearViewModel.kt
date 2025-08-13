@@ -37,11 +37,12 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     private val _team2Score = MutableStateFlow(0)
     val team2Score = _team2Score.asStateFlow()
 
-    // Match Timer
     private val _matchTimer = MutableStateFlow("00:00")
     val matchTimer = _matchTimer.asStateFlow()
     private var matchTimerJob: Job? = null
     private var matchTimeInSeconds = 0L
+    // Stato timer partita
+    private var isMatchTimerRunning: Boolean = false
 
     // Keeper Timer
     private val _keeperTimer = MutableStateFlow<KeeperTimerState>(KeeperTimerState.Hidden)

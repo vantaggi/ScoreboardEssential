@@ -2,6 +2,11 @@ package com.example.scoreboardessential
 
 import android.os.Bundle
 import android.view.View
+import android.content.Intent
+import androidx.wear.remote.interactions.RemoteActivityHelper
+import android.os.ResultReceiver
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.lifecycle.Lifecycle
@@ -51,23 +56,11 @@ class MainActivity : ComponentActivity() {
         }
     }
     private fun showTeamNameInput(team: Int) {
-        val intent = RemoteIntent()
-            .setAction(RemoteIntent.ACTION_REMOTE_INTENT)
-            .setPackage("com.google.android.wearable.app")
-            .putExtra(RemoteIntent.EXTRA_INTENT,
-                Intent(RemoteIntent.ACTION_INPUT_TEXT).apply {
-                    putExtra(RemoteIntent.EXTRA_PROMPT, "Team $team name:")
-                })
-            .putExtra(RemoteIntent.EXTRA_RESULT_RECEIVER,
-                object : ResultReceiver(Handler(Looper.getMainLooper())) {
-                    override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
-                        val newName = resultData?.getString(RemoteIntent.EXTRA_INPUT_TEXT)
-                        newName?.let {
-                            viewModel.updateTeamName(team, it)
-                        }
-                    }
-                })
-        RemoteIntent.startRemoteActivity(this, intent, null)
+        val intent = Intent(Intent.ACTION_MAIN).apply {
+            action = "com.google.android.wearable.action.INPUT_TEXT"
+            putExtra("com.google.android.wearable.extra.PROMPT", "Team $team name:")
+        }
+        RemoteActivityHelper(this).startRemoteActivity(intent)
     }
     private fun observeViewModel() {
         lifecycleScope.launch {
