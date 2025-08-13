@@ -4,6 +4,7 @@ import com.example.scoreboardessential.utils.ScoreUpdateEvent
 import com.example.scoreboardessential.utils.ScoreUpdateEventBus
 import com.example.scoreboardessential.utils.TimerEvent
 import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +45,22 @@ class DataLayerListenerService : WearableListenerService() {
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         super.onDataChanged(dataEvents)
-        // TODO: Handle data changes from the wear app if necessary (e.g., timer sync)
+        coroutineScope.launch {
+            dataEvents.forEach { dataEvent ->
+                when (dataEvent.dataItem.uri.path) {
+                    DataSyncObject.SCORE_PATH -> {
+                        val dataMapItem = DataMapItem.fromDataItem(dataEvent.dataItem)
+                        val dataMap = dataMapItem.dataMap
+                        val timerState = dataMap.getString(DataSyncObject.TIMER_STATE_KEY)
+                        when (timerState) {
+                            "START" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Start)
+                            "PAUSE" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Pause)
+                            "RESET" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Reset)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     override fun onDestroy() {

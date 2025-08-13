@@ -5,10 +5,12 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <!-- Include app data that should be backed up -->
+        <include domain="database" path="."/>
+        <include domain="sharedpref" path="."/>
+        <!-- Exclude temporary or sensitive data -->
+        <exclude domain="cache" path="."/>
+        <exclude domain="external" path="."/>
     </cloud-backup>
     <!--
     <device-transfer>

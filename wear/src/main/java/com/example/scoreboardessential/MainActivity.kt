@@ -54,6 +54,16 @@ class MainActivity : ComponentActivity() {
             viewModel.handleKeeperTimer()
             true
         }
+
+        // Add timer controls via long press on match timer
+        binding.matchTimer.setOnLongClickListener {
+            viewModel.startStopMatchTimer()
+            true
+        }
+
+        binding.matchTimer.setOnClickListener {
+            viewModel.resetMatchTimer()
+        }
     }
     private fun showTeamNameInput(team: Int) {
         val intent = Intent(Intent.ACTION_MAIN).apply {
