@@ -50,20 +50,15 @@
             app:layout_constraintTop_toTopOf="@id/player_avatar"
             tools:text="John Doe" />
 
-        <TextView
-            android:id="@+id/player_role"
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/player_roles_group"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="Role"
-            android:textColor="@color/on_surface_variant_light"
-            android:textSize="12sp"
-            android:maxLines="1"
-            android:ellipsize="end"
+            app:chipSpacing="4dp"
             app:layout_constraintStart_toStartOf="@id/player_name"
             app:layout_constraintEnd_toStartOf="@id/stats_button"
-            app:layout_constraintTop_toBottomOf="@id/player_name"
-            tools:text="Striker, Midfielder" />
+            app:layout_constraintTop_toBottomOf="@id/player_name" />
 
         <!-- Stats -->
         <LinearLayout
@@ -72,7 +67,7 @@
             android:orientation="horizontal"
             android:layout_marginTop="4dp"
             app:layout_constraintStart_toStartOf="@id/player_name"
-            app:layout_constraintTop_toBottomOf="@id/player_role">
+            app:layout_constraintTop_toBottomOf="@id/player_roles_group">
 
             <TextView
                 android:id="@+id/player_goals"

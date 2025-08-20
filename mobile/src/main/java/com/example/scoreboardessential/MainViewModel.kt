@@ -26,7 +26,8 @@ data class MatchEvent(
     val timestamp: String,
     val event: String,
     val team: Int? = null,
-    val player: String? = null
+    val player: String? = null,
+    val playerRole: String? = null
 )
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -91,6 +92,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val showSelectScorerDialog = SingleLiveEvent<Int>()
     val showPlayerSelectionDialog = SingleLiveEvent<Int>()
     val showKeeperTimerExpired = SingleLiveEvent<Unit>()
+    val showColorPickerDialog = SingleLiveEvent<Int>()
 
     // Data Client for Wear OS sync
     private val dataClient: DataClient = Wearable.getDataClient(application)
@@ -203,6 +205,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             _team2Color.value = color
         }
+        sendTeamColorUpdate(team, color)
+    }
+
+    fun requestTeamColorChange(team: Int) {
+        val teamId = if (team == 1) 1 else 2
+        showColorPickerDialog.postValue(teamId)
     }
 
     // --- Player Management ---
@@ -296,8 +304,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 playerDao.update(player)
 
                 val teamName = if (team == 1) _team1Name.value else _team2Name.value
-                val roleText = if (player.roles.isNotEmpty()) " (${player.roles})" else ""
-                addMatchEvent("GOAL! $playerName$roleText (${teamName})", team = team, player = playerName)
+                addMatchEvent("GOAL! $playerName (${teamName})", team = team, player = playerName, playerRole = player.roles)
 
                 // Invia info al Wear con ruolo
                 sendScorerToWear(playerName, player.roles, team)
@@ -400,11 +407,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // --- Match Events ---
-    private fun addMatchEvent(event: String, team: Int? = null, player: String? = null) {
+    private fun addMatchEvent(event: String, team: Int? = null, player: String? = null, playerRole: String? = null) {
         val timeFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
         val timestamp = timeFormat.format(Date(System.currentTimeMillis() - matchStartTime))
 
-        val matchEvent = MatchEvent(timestamp, event, team, player)
+        val matchEvent = MatchEvent(timestamp, event, team, player, playerRole)
         val currentEvents = _matchEvents.value?.toMutableList() ?: mutableListOf()
         currentEvents.add(0, matchEvent) // Add to beginning for reverse chronological order
         _matchEvents.postValue(currentEvents)
@@ -452,7 +459,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         vibrator?.vibrate(effect)
     }
 
-    // --- Data Synchronization with Wear OS ---
+    
+// --- Data Synchronization with Wear OS ---
     private fun sendScoreUpdate() {
         wearDataSync.syncScores(
             _team1Score.value ?: 0,
@@ -483,25 +491,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun sendMatchStateUpdate(isActive: Boolean) {
         wearDataSync.syncMatchState(isActive)
     }
+
+    private fun sendTeamColorUpdate(team: Int, color: Int) {
+        val teamName = if (team == 1) _team1Name.value else _team2Name.value
+        wearDataSync.syncTeamColor(team, color)
+    }
+
     private fun sendResetUpdate() {
-        // Send full state reset
         wearDataSync.syncFullState(
             team1Score = 0,
             team2Score = 0,
-            team1Name = _team1Name.value ?: "TEAM 1",
-            team2Name = _team2Name.value ?: "TEAM 2",
+            team1Name = "TEAM 1",
+            team2Name = "TEAM 2",
             timerMillis = 0L,
             timerRunning = false,
             keeperMillis = 0L,
             keeperRunning = false,
-            matchActive = false
+            matchActive = true
         )
     }
 
+    // --- Match Events ---
+
     override fun onCleared() {
-        super.onCleared()
         matchTimer?.cancel()
         keeperTimer?.cancel()
         vibrator?.cancel()
+        super.onCleared()
     }
 }

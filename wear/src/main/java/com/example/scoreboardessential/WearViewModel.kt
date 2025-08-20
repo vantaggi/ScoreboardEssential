@@ -303,8 +303,10 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                 matchTimeInSeconds = 0L
             }
             startMatchTimerInternal()
+            sendTimerControlMessage("START")
         } else {
             pauseMatchTimerInternal()
+            sendTimerControlMessage("PAUSE")
         }
 
         // Sync timer state
@@ -338,6 +340,8 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         isMatchTimerRunning = false
         matchTimerJob?.cancel()
         _matchTimer.value = "00:00"
+
+        sendTimerControlMessage("RESET")
 
         // Sync reset
         wearDataSync.syncTimerState(0L, false)

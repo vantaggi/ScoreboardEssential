@@ -7,4 +7,11 @@
     <color name="teal_700">#FF03DAC5</color> <!-- Lighter teal for dark theme -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="accent">#4FC3F7</color>
+    <color name="surface_dark">#121212</color>
+    <color name="team1_orange">#FFA726</color>
+    <color name="team1_orange_dark">#CC8622</color>
+    <color name="team2_lime">#AEEA00</color>
+    <color name="team2_lime_dark">#82AB00</color>
 </resources>

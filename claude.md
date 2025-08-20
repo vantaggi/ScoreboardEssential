@@ -1,62 +1,46 @@
-# Scoreboard Flutter Project Guidelines
+# CLAUDE.md
 
-This document provides a set of guidelines for AI assistants interacting with the Scoreboard Flutter repository. Adhering to these rules is mandatory to ensure code quality, consistency, and alignment with the project's vision.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 1. Project Mission & Vision
+## High-Level Architecture
 
-**Mission: "Professionalize the Passion"**
+This is a native Android application written in Kotlin. The project follows a multi-module architecture:
 
-The app's goal is to elevate the amateur sports experience. It's not just a scoreboard; it's a tool to organize, track, and create a memorable history of informal matches. All features and suggestions should align with this core mission.
+*   **`mobile`**: The main Android application module for handheld devices. It uses:
+    *   **UI**: Android Views with Data Binding.
+    *   **Lifecycle**: `ViewModel` and `LiveData` for managing UI-related data in a lifecycle-conscious way.
+    *   **Database**: Room for local data persistence.
+    *   **Wear OS Communication**: Google Play Services for Wearable to sync data with the `wear` module.
+*   **`wear`**: The Wear OS application module for wearable devices.
+*   **`shared`**: A common library module containing shared logic for data synchronization between the `mobile` and `wear` modules, utilizing the Google Play Services Wearable Data Layer API.
 
-**Target UI/UX: "Digital Stadium"**
+The `README.md` file is written in Italian and provides more details on the specific features implemented.
 
-The visual identity is inspired by modern, luminous stadium scoreboards. It must be energetic, clear, and highly functional.
+## Common Development Commands
 
-- **Style System:** **Material 3 Expressive** is the required design system.
-- **Default Theme:** **Dark Mode is the primary and default theme.** All UI components must be designed and implemented for a dark, high-contrast aesthetic first.
-- **Color Palette:**
-    - **Background (`Surface`):** Dark Gray (`#1A1B1E`)
-    - **Primary Action (`Action Blue`):** Vibrant Blue (`#4FC3F7`)
-    - **Team 1 (`Vibrant Orange`):** Energetic Orange (`#FFA726`)
-    - **Team 2 (`Electric Lime`):** Electric Lime (`#AEEA00`)
-- **Typography:** Use **Roboto Condensed (Bold)** for all scores and timers to maximize impact and readability.
+This is a standard Gradle-based Android project. Here are the common commands to be run from the root directory:
 
-## 2. Tech Stack & Architecture
+*   **Build the entire project**:
+    ```bash
+    ./gradlew build
+    ```
 
-- **Framework:** Flutter
-- **Language:** Dart
-- **State Management:** **BLoC (Business Logic Component)** is the standard for state management. Ensure a clear separation between UI (Widgets) and business logic (Blocs/Cubits).
-- **Database:** **Drift (Moor)** for local persistence, built on top of `sqflite`.
-- **Code Quality:** Use the official Flutter Linter rules (`flutter_lints`).
+*   **Run checks on the mobile app**:
+    ```bash
+    ./gradlew :mobile:check
+    ```
 
-## 3. Core Instructions for the AI Assistant
+*   **Assemble the mobile debug APK**:
+    ```bash
+    ./gradlew :mobile:assembleDebug
+    ```
 
-### When Writing Code:
+*   **Install the mobile debug app on a connected device/emulator**:
+    ```bash
+    ./gradlew :mobile:installDebug
+    ```
 
-1.  **Language:** All code, comments, logs, and documentation **must be written in English.**
-2.  **Architecture:** Strictly adhere to the **BLoC pattern**. Events are sent from the UI to the Bloc, which processes them and emits new states. Widgets rebuild based on these states.
-3.  **UI Implementation:**
-    - All new widgets must implement the **Material 3 Expressive** style.
-    - Colors must be sourced from the defined "Digital Stadium" palette. Do not use hardcoded or generic colors.
-    - Widgets should be as stateless as possible.
-4.  **Error Handling:** Implement clear and robust error handling within Blocs, emitting specific error states that the UI can display gracefully.
-5.  **Immutability:** States emitted by Blocs must be immutable.
-
-### When Analyzing or Reviewing Code:
-
-- Your primary focus should be on verifying adherence to the guidelines above.
-- Check for correct implementation of the BLoC pattern.
-- Verify that the UI/UX matches the "Digital Stadium" theme and correctly uses the color palette.
-- Identify any business logic present in the UI layer and suggest refactoring it into a Bloc.
-
-### When Suggesting New Features:
-
-- Propose features that align with the mission of "Professionalizing the Passion."
-- Good examples: advanced player statistics, match history timelines, shareable match summary cards.
-- Bad examples: generic social media integrations, mini-games, features unrelated to sports tracking.
-
-## 4. Project Commands
-
-- **Install dependencies:**
-  ```bash
-  flutter pub get
+*   **Run unit tests for the mobile module**:
+    ```bash
+    ./gradlew :mobile:testDebugUnitTest
+    ```

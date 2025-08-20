@@ -85,6 +85,22 @@ class WearDataSync(private val context: Context) {
         }
     }
 
+    // --- Team Color Synchronization ---
+    fun syncTeamColor(team: Int, color: Int) {
+        val path = if (team == 1) "/team1_color" else "/team2_color"
+        val dataMap = DataMap().apply {
+            putInt("color", color)
+            putLong(KEY_TIMESTAMP, System.currentTimeMillis())
+        }
+
+        val request = PutDataRequest.create(path).apply {
+            data = dataMap.toByteArray()
+            setUrgent()
+        }
+
+        dataClient.putDataItem(request)
+    }
+
     // --- Timer Synchronization ---
     fun syncTimerState(millis: Long, isRunning: Boolean) {
         val dataMap = DataMap().apply {

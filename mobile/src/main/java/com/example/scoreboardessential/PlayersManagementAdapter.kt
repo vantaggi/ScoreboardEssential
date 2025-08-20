@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.scoreboardessential.database.Player
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 
 class PlayersManagementAdapter(
     private val onPlayerClick: (Player) -> Unit,
@@ -34,7 +36,7 @@ class PlayersManagementAdapter(
 
         private val cardView: MaterialCardView = itemView.findViewById(R.id.player_card)
         private val nameTextView: TextView = itemView.findViewById(R.id.player_name)
-        private val roleTextView: TextView = itemView.findViewById(R.id.player_role)
+        private val rolesChipGroup: ChipGroup = itemView.findViewById(R.id.player_roles_group)
         private val goalsTextView: TextView = itemView.findViewById(R.id.player_goals)
         private val appearancesTextView: TextView = itemView.findViewById(R.id.player_appearances)
         private val statsButton: ImageButton = itemView.findViewById(R.id.stats_button)
@@ -42,7 +44,22 @@ class PlayersManagementAdapter(
 
         fun bind(player: Player) {
             nameTextView.text = player.playerName
-            roleTextView.text = player.roles.ifEmpty { "No role specified" }
+
+            rolesChipGroup.removeAllViews()
+            if (player.roles.isNotBlank()) {
+                player.roles.split(",").map { it.trim() }.forEach { role ->
+                    val chip = Chip(itemView.context).apply {
+                        text = role
+                    }
+                    rolesChipGroup.addView(chip)
+                }
+            } else {
+                val chip = Chip(itemView.context).apply {
+                    text = itemView.context.getString(R.string.no_role_specified)
+                }
+                rolesChipGroup.addView(chip)
+            }
+            
             goalsTextView.text = "⚽ ${player.goals}"
             appearancesTextView.text = "🎮 ${player.appearances}"
 

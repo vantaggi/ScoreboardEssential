@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where java)",
+      "Bash(set JAVA_HOME=\"C:\\Program Files\\Android\\Android Studio\\jbr\")",
+      "Bash(./gradlew :mobile:testDebugUnitTest)",
+      "Bash(export JAVA_HOME=\"C:\\Program Files\\Android\\Android Studio\\jbr\")",
+      "Bash(./gradlew clean :mobile:testDebugUnitTest)",
+      "Bash(cat \"C:/Users/cioti/StudioProjects/ScoreboardEssential/mobile/build/test-results/testDebugUnitTest/TEST-Gradle Test Executor 2.xml\")",
+      "Bash(./gradlew :mobile:testDebugUnitTest --info)",
+      "Bash(./gradlew :mobile:testDebugUnitTest --no-daemon)",
+      "Bash(./gradlew :mobile:testDebugUnitTest --debug)",
+      "Bash(./gradlew :mobile:connectedAndroidTest)"
+    ],
+    "deny": [],
+    "ask": [],
+    "additionalDirectories": [
+      "C:\\Program Files\\Android\\Android Studio\\jbr"
+    ]
+  }
+}

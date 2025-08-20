@@ -28,7 +28,13 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
 
         fun bind(event: MatchEvent) {
             timestampTextView.text = event.timestamp
-            eventTextView.text = event.event
+
+            val description = if (event.event.startsWith("GOAL!") && event.player != null && event.playerRole?.isNotEmpty() == true) {
+                "GOAL! ${event.player} (${event.playerRole})"
+            } else {
+                event.event
+            }
+            eventTextView.text = description
 
             // Set team color indicator
             when (event.team) {

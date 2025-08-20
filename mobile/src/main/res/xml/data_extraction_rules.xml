@@ -6,9 +6,12 @@
 <data-extraction-rules>
     <cloud-backup>
         <!-- Include app data that should be backed up -->
-        <include domain="database" path="."/>
+        <include domain="database" path="match_database" />
+        <include domain="database" path="match_database-shm" />
+        <include domain="database" path="match_database-wal" />
         <include domain="sharedpref" path="."/>
         <!-- Exclude temporary or sensitive data -->
+        <exclude domain="no-backup" path="."/>
         <exclude domain="cache" path="."/>
         <exclude domain="external" path="."/>
     </cloud-backup>

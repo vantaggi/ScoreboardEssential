@@ -185,8 +185,8 @@ class MainActivity : AppCompatActivity() {
             showSelectScorerDialog(team)
         }
 
-        viewModel.showKeeperTimerExpired.observe(this) {
-            showKeeperTimerExpiredAlert()
+        viewModel.showColorPickerDialog.observe(this) { team ->
+            showColorPickerDialog(team)
         }
     }
 
@@ -263,11 +263,11 @@ class MainActivity : AppCompatActivity() {
 
         // Team card long click listeners for changing color
         findViewById<View>(R.id.team1_card).setOnLongClickListener {
-            showColorPickerDialog(1)
+            viewModel.requestTeamColorChange(1)
             true
         }
         findViewById<View>(R.id.team2_card).setOnLongClickListener {
-            showColorPickerDialog(2)
+            viewModel.requestTeamColorChange(2)
             true
         }
     }
@@ -283,8 +283,7 @@ class MainActivity : AppCompatActivity() {
             .setTitle("Choose Team $team Color")
             .setView(dialogView)
             .setPositiveButton("Select") { _, _ ->
-                val selectedColor = colorPickerView.color
-                viewModel.setTeamColor(team, selectedColor)
+                viewModel.setTeamColor(team, colorPickerView.color)
             }
             .setNegativeButton("Cancel", null)
             .show()

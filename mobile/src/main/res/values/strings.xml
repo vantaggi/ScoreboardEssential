@@ -5,4 +5,5 @@
     <string name="channel_name">Scoreboard Channel</string>
     <string name="channel_description">Notifications from Scoreboard Essential</string>
     <string name="appbar_scrolling_view_behavior" translatable="false">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
+    <string name="no_role_specified">No role specified</string>
 </resources>

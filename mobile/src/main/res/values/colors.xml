@@ -1,32 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- App Theme Colors -->
-    <color name="primary">#008577</color>
-    <color name="primary_dark">#00574B</color>
-    <color name="accent">#D81B60</color>
+    <!-- Digital Stadium Palette -->
+    <color name="surface">#1A1B1E</color>
+    <color name="action_blue">#4FC3F7</color>
+    <color name="vibrant_orange">#FFA726</color> <!-- Team 1 Default -->
+    <color name="electric_lime">#AEEA00</color> <!-- Team 2 Default -->
+
+    <color name="accent">@color/action_blue</color>
+    <color name="surface_dark">@color/surface</color>
+    <color name="team1_orange">@color/vibrant_orange</color>
+    <color name="team1_orange_dark">#CC8622</color>
+    <color name="team2_lime">@color/electric_lime</color>
+    <color name="team2_lime_dark">#82AB00</color>
+
 
     <!-- Generic Colors -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="transparent">#00000000</color>
 
-    <!-- UI Component Colors -->
-    <color name="surface_dark">#1A1B1E</color>
+    <!-- Legacy UI Component Colors (to be phased out) -->
     <color name="surface_variant_dark">#2F3033</color>
-    <color name="action_blue">#4FC3F7</color>
     <color name="on_surface_light">#E3E3E3</color>
     <color name="on_surface_variant_light">#B5B5B5</color>
-    <color name="team1_orange">#FFA726</color>
-    <color name="team1_orange_dark">#F57C00</color>
-    <color name="team1_orange_light">#FFE0B2</color>
-    <color name="team2_lime">#AEEA00</color>
-    <color name="team2_lime_dark">#76FF03</color>
-    <color name="team2_lime_light">#F0F4C3</color>
-
-    <!-- Fallback for colors defined only in night theme -->
-    <color name="purple_200">@color/primary</color>
-    <color name="purple_500">@color/primary</color>
-    <color name="purple_700">@color/primary_dark</color>
-    <color name="teal_200">@color/accent</color>
-    <color name="teal_700">@color/accent</color>
 </resources>
