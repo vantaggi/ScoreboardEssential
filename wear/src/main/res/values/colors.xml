@@ -6,6 +6,8 @@
     <color name="vibrant_orange">#FFA726</color> <!-- Team 1 Default -->
     <color name="electric_lime">#AEEA00</color> <!-- Team 2 Default -->
 
+    <color name="primary">@color/action_blue</color>
+    <color name="primary_dark">#0288D1</color> <!-- Darker version of action_blue -->
     <color name="accent">@color/action_blue</color>
     <color name="surface_dark">@color/surface</color>
     <color name="team1_orange">@color/vibrant_orange</color>
