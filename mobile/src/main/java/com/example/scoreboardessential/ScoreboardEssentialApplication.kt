@@ -11,8 +11,8 @@ import com.example.scoreboardessential.repository.PlayerRepository
 class ScoreboardEssentialApplication : Application() {
 
     val database by lazy { AppDatabase.getDatabase(this) }
-    val repository by lazy { PlayerRepository(database.playerDao()) }
-    val matchRepository: MatchRepository by lazy { MatchRepository(this) }
+    val colorRepository by lazy { ColorRepository(this) }
+    val matchRepository by lazy { MatchRepository(database.matchDao(), colorRepository) }
 
     override fun onCreate() {
         super.onCreate()

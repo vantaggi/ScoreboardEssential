@@ -22,6 +22,11 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.delay
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.asLiveData
+import com.example.scoreboardessential.repository.MatchRepository
+
 data class MatchEvent(
     val timestamp: String,
     val event: String,
@@ -30,13 +35,30 @@ data class MatchEvent(
     val playerRole: String? = null
 )
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+class MainViewModel(private val repository: MatchRepository, application: Application) : AndroidViewModel(application) {
 
     private val playerDao: PlayerDao
     private val matchDao: MatchDao
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
 
     private val wearDataSync = WearDataSync(application)
+    
+    val allMatches: LiveData<List<MatchWithPlayers>> = repository.allMatches.asLiveData()
+    
+    fun deleteMatch(match: Match) = viewModelScope.launch {
+        repository.deleteMatch(match)
+    }
+
+    class MainViewModelFactory(private val repository: MatchRepository, private val application: Application) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return MainViewModel(repository, application) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    }
+
 
     // Scores
     private val _team1Score = MutableLiveData(0)

@@ -23,59 +23,6 @@ class DataLayerListenerService : WearableListenerService() {
 
         coroutineScope.launch {
             when (messageEvent.path) {
-                // Timer control messages from Wear
-                "/timer-control" -> {
-                    val action = String(messageEvent.data)
-                    Log.d(TAG, "Timer action: $action")
-                    when (action) {
-                        "START" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Start)
-                        "PAUSE" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Pause)
-                        "RESET" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Reset)
-                    }
-                }
-
-                // Score updates from Wear
-                "/update-score", WearDataSync.MSG_SCORE_CHANGED -> {
-                    val data = String(messageEvent.data)
-                    val scores = data.split(",").mapNotNull { it.toIntOrNull() }
-                    if (scores.size == 2) {
-                        Log.d(TAG, "Score update: ${scores[0]} - ${scores[1]}")
-                        ScoreUpdateEventBus.postEvent(ScoreUpdateEvent(scores[0], scores[1]))
-                    }
-                }
-
-                // Match management from Wear
-                "/start_match", "/msg_match_action" -> {
-                    val action = String(messageEvent.data)
-                    Log.d(TAG, "Match action: $action")
-                    if (action.contains("START")) {
-                        ScoreUpdateEventBus.postTimerEvent(TimerEvent.StartNewMatch)
-                    }
-                }
-
-                "/end_match" -> {
-                    Log.d(TAG, "End match requested from Wear")
-                    ScoreUpdateEventBus.postTimerEvent(TimerEvent.EndMatch)
-                }
-
-                "/reset_timer" -> {
-                    Log.d(TAG, "Reset timer requested from Wear")
-                    ScoreUpdateEventBus.postTimerEvent(TimerEvent.Reset)
-                }
-
-                // Scorer selection from Wear
-                "/scorer_selected", WearDataSync.MSG_SCORER_SELECTED -> {
-                    val data = String(messageEvent.data)
-                    val parts = data.split("|")
-                    if (parts.size == 3) {
-                        val playerName = parts[0]
-                        val role = parts[1]
-                        val team = parts[2].toIntOrNull() ?: 1
-                        Log.d(TAG, "Scorer selected: $playerName ($role) for team $team")
-                        // TODO: Handle scorer selection in ViewModel
-                    }
-                }
-            }
         }
     }
 
@@ -91,20 +38,9 @@ class DataLayerListenerService : WearableListenerService() {
                     Log.d(TAG, "Data changed: $path")
 
                     when (path) {
-                        WearDataSync.PATH_SCORE, DataSyncObject.SCORE_PATH -> {
+                        WearDataSync.PATH_SCORE -> {
                             val dataMapItem = DataMapItem.fromDataItem(item)
                             val dataMap = dataMapItem.dataMap
-
-                            // Check for timer state in legacy path
-                            val timerState = dataMap.getString(DataSyncObject.TIMER_STATE_KEY)
-                            if (timerState != null) {
-                                Log.d(TAG, "Timer state from Wear: $timerState")
-                                when (timerState) {
-                                    "START" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Start)
-                                    "PAUSE" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Pause)
-                                    "RESET" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Reset)
-                                }
-                            }
 
                             // Check for score updates
                             if (dataMap.containsKey(WearDataSync.KEY_TEAM1_SCORE)) {

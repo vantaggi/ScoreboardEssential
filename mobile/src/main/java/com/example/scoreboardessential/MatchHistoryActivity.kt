@@ -1,8 +1,7 @@
 package com.example.scoreboardessential
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.scoreboardessential.database.AppDatabase
@@ -15,16 +14,18 @@ class MatchHistoryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_match_history)
 
+        val viewModelFactory = MainViewModel.MainViewModelFactory((application as ScoreboardEssentialApplication).matchRepository, application)
+        val viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
+
         val recyclerView = findViewById<RecyclerView>(R.id.match_history_recyclerview)
-        val adapter = MatchHistoryAdapter()
+        val adapter = MatchHistoryAdapter { match ->
+            viewModel.deleteMatch(match.match)
+        }
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        val matchDao = AppDatabase.getDatabase(this).matchDao()
-        lifecycleScope.launch {
-            matchDao.getAllMatchesWithPlayers().collectLatest { matches ->
-                adapter.submitList(matches)
-            }
+        viewModel.allMatches.observe(this) { matches ->
+            matches?.let { adapter.submitList(it) }
         }
     }
 }

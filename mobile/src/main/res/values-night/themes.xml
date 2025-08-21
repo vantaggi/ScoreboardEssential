@@ -3,14 +3,14 @@
     <!-- Dark Theme per Scoreboard seguendo le specifiche del documento -->
     <style name="Theme.ScoreboardEssential" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Colori primari secondo le specifiche -->
-        <item name="colorPrimary">@color/action_blue</item>
+        <item name="colorPrimary">@color/surface</item>
         <item name="colorPrimaryVariant">@color/action_blue</item>
-        <item name="colorOnPrimary">@color/surface_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
 
         <!-- Colori secondari -->
-        <item name="colorSecondary">@color/team1_orange</item>
+        <item name="colorSecondary">@color/action_blue</item>
         <item name="colorSecondaryVariant">@color/team1_orange_dark</item>
-        <item name="colorOnSecondary">@color/surface_dark</item>
+        <item name="colorOnSecondary">@color/white</item>
 
         <!-- Background e Surface -->
         <item name="android:colorBackground">@color/surface_dark</item>
@@ -37,12 +37,12 @@
     <style name="TextAppearance.Scoreboard.Score" parent="TextAppearance.Material3.DisplayLarge">
         <item name="android:fontFamily">sans-serif-condensed</item>
         <item name="android:textSize">96sp</item>
-        <item name="android:textColor">@color/on_surface_light</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
     <style name="TextAppearance.Scoreboard.TeamName" parent="TextAppearance.Material3.HeadlineMedium">
         <item name="android:fontFamily">sans-serif-condensed</item>
-        <item name="android:textColor">@color/on_surface_light</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
     <style name="TextAppearance.Scoreboard.Timer" parent="TextAppearance.Material3.DisplayMedium">
@@ -52,17 +52,19 @@
     </style>
 
     <style name="Widget.Scoreboard.Button" parent="Widget.Material3.Button.TonalButton">
-        <item name="android:backgroundTint">@color/action_blue</item>
-        <item name="android:textColor">@color/surface_dark</item>
+        <item name="android:backgroundTint">?attr/colorPrimary</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
         <item name="android:textStyle">bold</item>
         <item name="rippleColor">@color/on_surface_light</item>
     </style>
 
     <style name="Widget.Scoreboard.Button.Team1" parent="Widget.Scoreboard.Button">
-        <item name="android:backgroundTint">@color/team1_orange</item>
+        <item name="android:backgroundTint">?attr/colorSecondary</item>
+        <item name="android:textColor">?attr/colorOnSecondary</item>
     </style>
 
     <style name="Widget.Scoreboard.Button.Team2" parent="Widget.Scoreboard.Button">
-        <item name="android:backgroundTint">@color/team2_lime</item>
+        <item name="android:backgroundTint">?attr/colorSecondaryVariant</item>
+        <item name="android:textColor">?attr/colorOnSecondary</item>
     </style>
 </resources>
