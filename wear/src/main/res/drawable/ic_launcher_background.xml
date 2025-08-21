@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Dark gradient background (Stadium Night) -->
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="0"
+                android:endX="54"
+                android:endY="108"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF2F3033"/>
+                <item android:offset="0.5" android:color="#FF1A1B1E"/>
+                <item android:offset="1.0" android:color="#FF000000"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Stadium field lines -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:strokeAlpha="0.1"
+        android:pathData="M0,54 L108,54"/>
+
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:strokeAlpha="0.1"
+        android:fillColor="#00000000"
+        android:pathData="M54,39 A15,15 0 1,1 54,69 A15,15 0 1,1 54,39Z"/>
+
+    <!-- Corner arcs -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:strokeAlpha="0.1"
+        android:fillColor="#00000000"
+        android:pathData="M0,10 A10,10 0 0,0 10,0"/>
+
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:strokeAlpha="0.1"
+        android:fillColor="#00000000"
+        android:pathData="M98,0 A10,10 0 0,0 108,10"/>
+
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:strokeAlpha="0.1"
+        android:fillColor="#00000000"
+        android:pathData="M108,98 A10,10 0 0,0 98,108"/>
+
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:strokeAlpha="0.1"
+        android:fillColor="#00000000"
+        android:pathData="M10,108 A10,10 0 0,0 0,98"/>
+
+    <!-- Penalty areas -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:strokeAlpha="0.1"
+        android:fillColor="#00000000"
+        android:pathData="M30,0 L30,20 L78,20 L78,0"/>
+
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:strokeAlpha="0.1"
+        android:fillColor="#00000000"
+        android:pathData="M30,108 L30,88 L78,88 L78,108"/>
+</vector>

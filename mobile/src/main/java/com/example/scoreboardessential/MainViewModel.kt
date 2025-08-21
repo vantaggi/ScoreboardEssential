@@ -191,6 +191,8 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         viewModelScope.launch {
             playerDao.getAllPlayers().collect { players ->
                 _allPlayers.postValue(players)
+                // Sync players to wear whenever the player list updates
+                syncTeamPlayersToWear()
             }
         }
     }
@@ -244,6 +246,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
                     currentPlayers.add(player)
                     _team1Players.postValue(currentPlayers)
                     addMatchEvent("${player.playerName} added to ${_team1Name.value}", team = 1)
+                    syncTeamPlayersToWear()
                 }
             } else {
                 val currentPlayers = _team2Players.value?.toMutableList() ?: mutableListOf()
@@ -251,6 +254,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
                     currentPlayers.add(player)
                     _team2Players.postValue(currentPlayers)
                     addMatchEvent("${player.playerName} added to ${_team2Name.value}", team = 2)
+                    syncTeamPlayersToWear()
                 }
             }
         }
@@ -266,6 +270,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
             currentPlayers.remove(player)
             _team2Players.postValue(currentPlayers)
         }
+        syncTeamPlayersToWear()
     }
 
     fun createNewPlayer(name: String, roles: String) {
@@ -533,6 +538,43 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
             keeperRunning = false,
             matchActive = true
         )
+    }
+
+    private fun syncTeamPlayersToWear() {
+        val team1PlayerData = _team1Players.value?.map { player ->
+            PlayerData(
+                id = player.playerId,
+                name = player.playerName,
+                role = player.roles,
+                goals = player.goals,
+                appearances = player.appearances
+            )
+        } ?: emptyList()
+
+        val team2PlayerData = _team2Players.value?.map { player ->
+            PlayerData(
+                id = player.playerId,
+                name = player.playerName,
+                role = player.roles,
+                goals = player.goals,
+                appearances = player.appearances
+            )
+        } ?: emptyList()
+
+        wearDataSync.syncTeamPlayers(team1PlayerData, team2PlayerData)
+        
+        // Also sync all available players for player selection
+        val allPlayerData = _allPlayers.value?.map { player ->
+            PlayerData(
+                id = player.playerId,
+                name = player.playerName,
+                role = player.roles,
+                goals = player.goals,
+                appearances = player.appearances
+            )
+        } ?: emptyList()
+        
+        wearDataSync.syncPlayerList(allPlayerData)
     }
 
     // --- Match Events ---

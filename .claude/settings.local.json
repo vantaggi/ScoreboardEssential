@@ -18,7 +18,9 @@
       "Bash(echo:*)",
       "Bash(JAVA_HOME=\"C:\\Program Files\\Android\\Android Studio\\jbr\" ./gradlew:*)",
       "Bash(set:*)",
-      "Bash(export:*)"
+      "Bash(export:*)",
+      "Bash(cp:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": [],

@@ -160,6 +160,60 @@ class DataListenerService : WearableListenerService() {
                                     // Could display a toast or update UI
                                 }
                             }
+
+                            // Player list updates
+                            WearDataSync.PATH_PLAYERS -> {
+                                DataMapItem.fromDataItem(item).dataMap.apply {
+                                    val playerDataMaps = getDataMapArrayList("players") ?: arrayListOf()
+                                    val players = playerDataMaps.map { playerMap ->
+                                        PlayerData(
+                                            id = playerMap.getInt("id", 0),
+                                            name = playerMap.getString("name", ""),
+                                            role = playerMap.getString("role", ""),
+                                            goals = playerMap.getInt("goals", 0),
+                                            appearances = playerMap.getInt("appearances", 0)
+                                        )
+                                    }
+
+                                    Log.d(TAG, "Player list sync: ${players.size} players")
+                                    WearSyncManager.postSyncEvent(
+                                        WearSyncEvent.PlayerListUpdate(players)
+                                    )
+                                }
+                            }
+
+                            // Team players updates
+                            "/team_players" -> {
+                                DataMapItem.fromDataItem(item).dataMap.apply {
+                                    val team1DataMaps = getDataMapArrayList("team1_players") ?: arrayListOf()
+                                    val team2DataMaps = getDataMapArrayList("team2_players") ?: arrayListOf()
+                                    
+                                    val team1Players = team1DataMaps.map { playerMap ->
+                                        PlayerData(
+                                            id = playerMap.getInt("id", 0),
+                                            name = playerMap.getString("name", ""),
+                                            role = playerMap.getString("role", ""),
+                                            goals = playerMap.getInt("goals", 0),
+                                            appearances = playerMap.getInt("appearances", 0)
+                                        )
+                                    }
+                                    
+                                    val team2Players = team2DataMaps.map { playerMap ->
+                                        PlayerData(
+                                            id = playerMap.getInt("id", 0),
+                                            name = playerMap.getString("name", ""),
+                                            role = playerMap.getString("role", ""),
+                                            goals = playerMap.getInt("goals", 0),
+                                            appearances = playerMap.getInt("appearances", 0)
+                                        )
+                                    }
+
+                                    Log.d(TAG, "Team players sync: T1=${team1Players.size}, T2=${team2Players.size}")
+                                    WearSyncManager.postSyncEvent(
+                                        WearSyncEvent.TeamPlayersUpdate(team1Players, team2Players)
+                                    )
+                                }
+                            }
                         }
                     }
                 }

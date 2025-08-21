@@ -39,15 +39,13 @@ class MatchManagementActivity : ComponentActivity() {
     }
 
     private fun startNewMatch() {
-        // Send message to mobile app
-        sendMessageToMobile("/start_match", "START_NEW_MATCH")
-        // Also reset local state
-        viewModel.resetMatch()
+        // Use the new ViewModel function that handles sync
+        viewModel.startNewMatch()
     }
 
     private fun endCurrentMatch() {
-        // Send message to mobile app
-        sendMessageToMobile("/end_match", "END_CURRENT_MATCH")
+        // Use the new ViewModel function that handles sync
+        viewModel.endMatch()
     }
 
     private fun resetMatchTimer() {

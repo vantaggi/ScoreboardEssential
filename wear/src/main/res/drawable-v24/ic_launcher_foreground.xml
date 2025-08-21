@@ -1,0 +1,70 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Soccer Ball Background Circle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,24 A30,30 0 1,1 54,84 A30,30 0 1,1 54,24 Z"/>
+
+    <!-- Pentagon Pattern (like soccer ball) -->
+    <path
+        android:fillColor="#1A1B1E"
+        android:pathData="M54,30 L44,38 L48,50 L60,50 L64,38 Z"/>
+
+    <path
+        android:fillColor="#1A1B1E"
+        android:pathData="M38,45 L30,50 L30,62 L38,67 L46,62 Z"/>
+
+
+
+    <path
+        android:fillColor="#1A1B1E"
+        android:pathData="M70,45 L62,50 L62,62 L70,67 L78,62 Z"/>
+
+    <path
+        android:fillColor="#1A1B1E"
+        android:pathData="M54,68 L44,60 L48,72 L60,72 L64,60 Z"/>
+
+    <!-- Score Numbers in the center -->
+    <path
+        android:fillColor="#FFA726"
+        android:strokeWidth="2"
+        android:strokeColor="#1A1B1E"
+        android:pathData="M40,52 L40,56 L44,56 L44,52 M44,52 L44,48 L40,48 L40,52 Z"/>
+
+    <path
+        android:fillColor="#AEEA00"
+        android:strokeWidth="2"
+        android:strokeColor="#1A1B1E"
+        android:pathData="M64,48 L68,48 L68,52 L64,52 L64,56 L68,56 M68,52 L64,52 M64,48 L64,56"/>
+
+    <!-- Center divider line -->
+    <path
+        android:strokeColor="#4FC3F7"
+        android:strokeWidth="3"
+        android:pathData="M54,42 L54,66"/>
+
+    <!-- Stadium lights effect (top corners) - CONVERTED TO PATHS -->
+    <path
+        android:fillColor="#FFD93D"
+        android:fillAlpha="0.8"
+        android:pathData="M35,32 A3,3 0 1,1 35,38 A3,3 0 1,1 35,32 Z"/>
+
+    <path
+        android:fillColor="#FFD93D"
+        android:fillAlpha="0.8"
+        android:pathData="M73,32 A3,3 0 1,1 73,38 A3,3 0 1,1 73,32 Z"/>
+
+    <path
+        android:fillColor="#FFD93D"
+        android:fillAlpha="0.8"
+        android:pathData="M35,70 A3,3 0 1,1 35,76 A3,3 0 1,1 35,70 Z"/>
+
+    <path
+        android:fillColor="#FFD93D"
+        android:fillAlpha="0.8"
+        android:pathData="M73,70 A3,3 0 1,1 73,76 A3,3 0 1,1 73,70 Z"/>
+</vector>

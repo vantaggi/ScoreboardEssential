@@ -63,6 +63,16 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     private val _showPlayerSelection = MutableStateFlow<Int?>(null)
     val showPlayerSelection = _showPlayerSelection.asStateFlow()
 
+    // Player data
+    private val _allPlayers = MutableStateFlow<List<PlayerData>>(emptyList())
+    val allPlayers = _allPlayers.asStateFlow()
+
+    private val _team1Players = MutableStateFlow<List<PlayerData>>(emptyList())
+    val team1Players = _team1Players.asStateFlow()
+
+    private val _team2Players = MutableStateFlow<List<PlayerData>>(emptyList())
+    val team2Players = _team2Players.asStateFlow()
+
     fun clearPlayerSelectionEvent() {
         _showPlayerSelection.value = null
     }
@@ -109,6 +119,15 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     is WearSyncEvent.MatchReset -> {
                         resetMatch()
+                    }
+                    is WearSyncEvent.PlayerListUpdate -> {
+                        _allPlayers.value = event.players
+                        Log.d("WearViewModel", "Updated player list: ${event.players.size} players")
+                    }
+                    is WearSyncEvent.TeamPlayersUpdate -> {
+                        _team1Players.value = event.team1Players
+                        _team2Players.value = event.team2Players
+                        Log.d("WearViewModel", "Updated team players: T1=${event.team1Players.size}, T2=${event.team2Players.size}")
                     }
                 }
             }
@@ -242,6 +261,43 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // --- Reset ---
+    fun startNewMatch() {
+        _team1Score.value = 0
+        _team2Score.value = 0
+
+        matchTimerJob?.cancel()
+        matchTimeInSeconds = 0L
+        _matchTimer.value = "00:00"
+        isMatchTimerRunning = false
+
+        resetKeeperTimer()
+
+        // Send match start message to mobile
+        sendMatchControlMessage("START_MATCH")
+
+        // Sync new match state
+        wearDataSync.syncMatchState(true)
+        wearDataSync.syncFullState(
+            team1Score = 0,
+            team2Score = 0,
+            team1Name = _team1Name.value,
+            team2Name = _team2Name.value,
+            timerMillis = 0L,
+            timerRunning = false,
+            keeperMillis = 0L,
+            keeperRunning = false,
+            matchActive = true
+        )
+    }
+
+    fun endMatch() {
+        // Send match end message to mobile
+        sendMatchControlMessage("END_MATCH")
+
+        // Sync match ended
+        wearDataSync.syncMatchState(false)
+    }
+
     fun resetMatch() {
         _team1Score.value = 0
         _team2Score.value = 0
@@ -358,17 +414,21 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                 messageClient.sendMessage(node.id, messagePath, data)
             }
         }
+    }
 
-        // Also send via Data Layer for persistent sync
-        val dataClient = Wearable.getDataClient(getApplication())
-        val dataMap = DataMap().apply {
-            putString(DataSyncObject.TIMER_STATE_KEY, action)
-            putLong("timestamp", System.currentTimeMillis())
+    private fun sendMatchControlMessage(action: String) {
+        // Send via message for immediate response
+        val messageClient = Wearable.getMessageClient(getApplication())
+        val messagePath = "/match-control"
+        val data = action.toByteArray()
+
+        Wearable.getNodeClient(getApplication()).connectedNodes.addOnSuccessListener { nodes ->
+            nodes.forEach { node ->
+                messageClient.sendMessage(node.id, messagePath, data)
+                Log.d("WearViewModel", "Sent match control: $action to ${node.displayName}")
+            }
         }
-        val request = PutDataRequest.create(DataSyncObject.SCORE_PATH).apply {
-            this.data = dataMap.toByteArray()
-        }
-        dataClient.putDataItem(request)
+
     }
     override fun onCleared() {
         super.onCleared()

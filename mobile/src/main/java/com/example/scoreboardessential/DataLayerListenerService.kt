@@ -30,6 +30,27 @@ class DataLayerListenerService : WearableListenerService() {
                 WearDataSync.MSG_TIMER_ACTION -> {
                     Log.d(TAG, "Timer action message received from Wear")
                 }
+                
+                "/timer-control" -> {
+                    val action = String(messageEvent.data)
+                    Log.d(TAG, "Timer control from Wear: $action")
+                    
+                    when (action) {
+                        "START" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Start)
+                        "PAUSE" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Pause)
+                        "RESET" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.Reset)
+                    }
+                }
+                
+                "/match-control" -> {
+                    val action = String(messageEvent.data)
+                    Log.d(TAG, "Match control from Wear: $action")
+                    
+                    when (action) {
+                        "START_MATCH" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.StartNewMatch)
+                        "END_MATCH" -> ScoreUpdateEventBus.postTimerEvent(TimerEvent.EndMatch)
+                    }
+                }
             }
         }
     }
@@ -90,6 +111,13 @@ class DataLayerListenerService : WearableListenerService() {
                             } else {
                                 ScoreUpdateEventBus.postTimerEvent(TimerEvent.EndMatch)
                             }
+                        }
+                        
+                        WearDataSync.MSG_SCORER_SELECTED -> {
+                            val dataMapItem = DataMapItem.fromDataItem(item)
+                            val dataMap = dataMapItem.dataMap
+                            Log.d(TAG, "Scorer selected message from Wear")
+                            // Handle scorer selection message if needed
                         }
                     }
                 }

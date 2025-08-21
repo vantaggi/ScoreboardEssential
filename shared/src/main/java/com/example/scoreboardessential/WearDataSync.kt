@@ -11,6 +11,17 @@ import android.content.Context
 import android.util.Log
 
 /**
+ * Data class for player information shared between mobile and wear
+ */
+data class PlayerData(
+    val id: Int,
+    val name: String,
+    val role: String,
+    val goals: Int = 0,
+    val appearances: Int = 0
+)
+
+/**
  * Centralized data synchronization manager for Mobile <-> Wear communication
  */
 class WearDataSync(private val context: Context) {
@@ -164,6 +175,79 @@ class WearDataSync(private val context: Context) {
     fun syncScorerSelected(playerName: String, role: String, team: Int) {
         val message = "$playerName|$role|$team"
         sendImmediateMessage(MSG_SCORER_SELECTED, message)
+    }
+
+    // --- Player List Synchronization ---
+    fun syncPlayerList(players: List<PlayerData>) {
+        val dataMap = DataMap()
+        val playerArrayList = ArrayList<DataMap>()
+        
+        players.forEach { player ->
+            val playerMap = DataMap().apply {
+                putString("name", player.name)
+                putString("role", player.role)
+                putInt("id", player.id)
+                putInt("goals", player.goals)
+                putInt("appearances", player.appearances)
+            }
+            playerArrayList.add(playerMap)
+        }
+        
+        dataMap.putDataMapArrayList("players", playerArrayList)
+        dataMap.putLong(KEY_TIMESTAMP, System.currentTimeMillis())
+
+        val request = PutDataRequest.create(PATH_PLAYERS).apply {
+            data = dataMap.toByteArray()
+            setUrgent()
+        }
+
+        dataClient.putDataItem(request).addOnSuccessListener {
+            Log.d("WearDataSync", "Player list synced: ${players.size} players")
+        }
+    }
+
+    // --- Team Players Synchronization ---
+    fun syncTeamPlayers(team1Players: List<PlayerData>, team2Players: List<PlayerData>) {
+        val dataMap = DataMap()
+        
+        // Team 1 players
+        val team1ArrayList = ArrayList<DataMap>()
+        team1Players.forEach { player ->
+            val playerMap = DataMap().apply {
+                putString("name", player.name)
+                putString("role", player.role)
+                putInt("id", player.id)
+                putInt("goals", player.goals)
+                putInt("appearances", player.appearances)
+            }
+            team1ArrayList.add(playerMap)
+        }
+        
+        // Team 2 players
+        val team2ArrayList = ArrayList<DataMap>()
+        team2Players.forEach { player ->
+            val playerMap = DataMap().apply {
+                putString("name", player.name)
+                putString("role", player.role)
+                putInt("id", player.id)
+                putInt("goals", player.goals)
+                putInt("appearances", player.appearances)
+            }
+            team2ArrayList.add(playerMap)
+        }
+        
+        dataMap.putDataMapArrayList("team1_players", team1ArrayList)
+        dataMap.putDataMapArrayList("team2_players", team2ArrayList)
+        dataMap.putLong(KEY_TIMESTAMP, System.currentTimeMillis())
+
+        val request = PutDataRequest.create("/team_players").apply {
+            data = dataMap.toByteArray()
+            setUrgent()
+        }
+
+        dataClient.putDataItem(request).addOnSuccessListener {
+            Log.d("WearDataSync", "Team players synced: T1=${team1Players.size}, T2=${team2Players.size}")
+        }
     }
 
     // --- Helper for immediate messages ---

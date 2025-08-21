@@ -1,17 +1,22 @@
 package com.example.scoreboardessential
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
 import androidx.wear.widget.WearableLinearLayoutManager
 import androidx.wear.widget.WearableRecyclerView
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.launch
 
 data class WearPlayer(
     val name: String,
@@ -34,7 +39,7 @@ class PlayerSelectionActivity : ComponentActivity() {
         teamNumber = intent.getIntExtra("team_number", 1)
 
         setupRecyclerView()
-        loadPlayers()
+        observeViewModel()
     }
 
     private fun setupRecyclerView() {
@@ -50,17 +55,21 @@ class PlayerSelectionActivity : ComponentActivity() {
         playerList.isEdgeItemsCenteringEnabled = true
     }
 
-    private fun loadPlayers() {
-        // Mock players for now - in a real implementation, this would come from sync with mobile app
-        val players = listOf(
-            WearPlayer("John Doe", "Forward"),
-            WearPlayer("Jane Smith", "Midfielder"),
-            WearPlayer("Mike Johnson", "Defender"),
-            WearPlayer("Sarah Wilson", "Goalkeeper"),
-            WearPlayer("Tom Brown", "Forward"),
-            WearPlayer("Lisa Davis", "Midfielder")
-        )
-        adapter.submitList(players)
+    private fun observeViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.allPlayers.collect { playerData ->
+                    // Convert PlayerData to WearPlayer for compatibility with existing adapter
+                    val wearPlayers = playerData.map { player ->
+                        WearPlayer(player.name, player.role)
+                    }
+                    adapter.submitList(wearPlayers)
+                    
+                    // Log for debugging
+                    Log.d("PlayerSelection", "Loaded ${wearPlayers.size} players from mobile app")
+                }
+            }
+        }
     }
 
     private fun selectPlayer(player: WearPlayer) {
