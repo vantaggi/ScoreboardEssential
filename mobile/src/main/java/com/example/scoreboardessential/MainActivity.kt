@@ -25,7 +25,12 @@ import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
-    private val viewModel: MainViewModel by viewModels()
+    private val viewModel: MainViewModel by viewModels { 
+        MainViewModel.MainViewModelFactory(
+            (application as ScoreboardEssentialApplication).matchRepository,
+            application
+        )
+    }
 
     // Core view references that exist in base layout
     private lateinit var team1ScoreTextView: TextView

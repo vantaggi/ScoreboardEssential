@@ -3,11 +3,13 @@ package com.example.scoreboardessential
 import android.graphics.Color
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
+import com.example.scoreboardessential.repository.MatchRepository
 import com.example.scoreboardessential.utils.ScoreUpdateEventBus
 import com.example.scoreboardessential.utils.TimerEvent
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Before
@@ -32,7 +34,10 @@ class MainViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         val application = RuntimeEnvironment.application
-        viewModel = MainViewModel(application)
+        val mockRepository = mock(MatchRepository::class.java).apply {
+            `when`(allMatches).thenReturn(emptyFlow())
+        }
+        viewModel = MainViewModel(mockRepository, application)
     }
 
     @After
