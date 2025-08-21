@@ -7,12 +7,12 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.scoreboardessential.database.MatchWithPlayers
+import com.example.scoreboardessential.database.MatchWithTeams
 import java.util.Date
 
 class MatchHistoryAdapter(
-    private val onDeleteClicked: (MatchWithPlayers) -> Unit
-) : ListAdapter<MatchWithPlayers, MatchHistoryAdapter.MatchViewHolder>(MatchDiffCallback()) {
+    private val onDeleteClicked: (MatchWithTeams) -> Unit
+) : ListAdapter<MatchWithTeams, MatchHistoryAdapter.MatchViewHolder>(MatchDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MatchViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -27,7 +27,7 @@ class MatchHistoryAdapter(
 
     class MatchViewHolder(
         itemView: View,
-        private val onDeleteClicked: (MatchWithPlayers) -> Unit
+        private val onDeleteClicked: (MatchWithTeams) -> Unit
         ) : RecyclerView.ViewHolder(itemView) {
         private val team1NameTextView: TextView = itemView.findViewById(R.id.team1_name_textview)
         private val team2NameTextView: TextView = itemView.findViewById(R.id.team2_name_textview)
@@ -38,26 +38,26 @@ class MatchHistoryAdapter(
         private val deleteButton: View = itemView.findViewById(R.id.delete_match_button)
 
 
-        fun bind(matchWithPlayers: MatchWithPlayers) {
-            team1NameTextView.text = matchWithPlayers.teams.find { it.teamId == matchWithPlayers.match.team1Id }?.teamName
-            team2NameTextView.text = matchWithPlayers.teams.find { it.teamId == matchWithPlayers.match.team2Id }?.teamName
-            team1ScoreTextView.text = matchWithPlayers.match.team1Score.toString()
-            team2ScoreTextView.text = matchWithPlayers.match.team2Score.toString()
-            timestampTextView.text = Date(matchWithPlayers.match.timestamp).toString()
-            playersTextView.text = matchWithPlayers.players.joinToString(", ") { it.playerName }
+        fun bind(matchWithTeams: MatchWithTeams) {
+            team1NameTextView.text = matchWithTeams.team1?.name ?: "Team 1"
+            team2NameTextView.text = matchWithTeams.team2?.name ?: "Team 2"
+            team1ScoreTextView.text = matchWithTeams.match.team1Score.toString()
+            team2ScoreTextView.text = matchWithTeams.match.team2Score.toString()
+            timestampTextView.text = Date(matchWithTeams.match.timestamp).toString()
+            playersTextView.text = matchWithTeams.players.joinToString(", ") { it.playerName }
             deleteButton.setOnClickListener {
-                onDeleteClicked(matchWithPlayers)
+                onDeleteClicked(matchWithTeams)
             }
         }
     }
 }
 
-class MatchDiffCallback : DiffUtil.ItemCallback<MatchWithPlayers>() {
-    override fun areItemsTheSame(oldItem: MatchWithPlayers, newItem: MatchWithPlayers): Boolean {
+class MatchDiffCallback : DiffUtil.ItemCallback<MatchWithTeams>() {
+    override fun areItemsTheSame(oldItem: MatchWithTeams, newItem: MatchWithTeams): Boolean {
         return oldItem.match.matchId == newItem.match.matchId
     }
 
-    override fun areContentsTheSame(oldItem: MatchWithPlayers, newItem: MatchWithPlayers): Boolean {
+    override fun areContentsTheSame(oldItem: MatchWithTeams, newItem: MatchWithTeams): Boolean {
         return oldItem == newItem
     }
 }

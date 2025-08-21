@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
 import com.example.scoreboardessential.database.AppDatabase
+import com.example.scoreboardessential.repository.ColorRepository
 import com.example.scoreboardessential.repository.MatchRepository
 import com.example.scoreboardessential.repository.PlayerRepository
 
@@ -12,7 +13,8 @@ class ScoreboardEssentialApplication : Application() {
 
     val database by lazy { AppDatabase.getDatabase(this) }
     val colorRepository by lazy { ColorRepository(this) }
-    val matchRepository by lazy { MatchRepository(database.matchDao(), colorRepository) }
+    val playerRepository by lazy { PlayerRepository(database.playerDao()) }
+    val matchRepository by lazy { MatchRepository(database.matchDao(), this, colorRepository) }
 
     override fun onCreate() {
         super.onCreate()

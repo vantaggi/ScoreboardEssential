@@ -23,6 +23,14 @@ class DataLayerListenerService : WearableListenerService() {
 
         coroutineScope.launch {
             when (messageEvent.path) {
+                // Handle incoming messages from wear
+                WearDataSync.MSG_SCORE_CHANGED -> {
+                    Log.d(TAG, "Score change message received from Wear")
+                }
+                WearDataSync.MSG_TIMER_ACTION -> {
+                    Log.d(TAG, "Timer action message received from Wear")
+                }
+            }
         }
     }
 

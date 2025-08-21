@@ -20,6 +20,10 @@ interface MatchDao {
     @Query("SELECT * FROM matches ORDER BY timestamp DESC")
     fun getAllMatchesWithPlayers(): Flow<List<MatchWithPlayers>>
 
+    @Transaction
+    @Query("SELECT * FROM matches ORDER BY timestamp DESC")
+    fun getAllMatchesWithTeams(): Flow<List<MatchWithTeams>>
+
     @Delete
     suspend fun delete(match: Match)
 }

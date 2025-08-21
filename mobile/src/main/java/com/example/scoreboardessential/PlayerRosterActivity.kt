@@ -18,7 +18,7 @@ class PlayerRosterActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityPlayerRosterBinding
     private val playerViewModel: PlayerViewModel by viewModels {
-        PlayerViewModelFactory((application as ScoreboardEssentialApplication).repository)
+        PlayerViewModelFactory((application as ScoreboardEssentialApplication).playerRepository)
     }
     private var selectionMode = false
     private var teamId = -1

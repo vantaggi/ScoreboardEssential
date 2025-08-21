@@ -102,10 +102,11 @@
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/delete_match"
-            android:padding="8dp"
+            android:padding="12dp"
+            android:layout_marginEnd="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_delete" />
+            app:srcCompat="@drawable/ic_delete_stateful" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

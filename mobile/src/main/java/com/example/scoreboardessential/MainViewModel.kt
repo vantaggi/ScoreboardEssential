@@ -43,7 +43,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
 
     private val wearDataSync = WearDataSync(application)
     
-    val allMatches: LiveData<List<MatchWithPlayers>> = repository.allMatches.asLiveData()
+    val allMatches: LiveData<List<MatchWithTeams>> = repository.allMatches.asLiveData()
     
     fun deleteMatch(match: Match) = viewModelScope.launch {
         repository.deleteMatch(match)
@@ -447,6 +447,8 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
 
             val matchId = matchDao.insert(
                 Match(
+                    team1Id = 1, // Default team 1 ID
+                    team2Id = 2, // Default team 2 ID
                     team1Score = _team1Score.value ?: 0,
                     team2Score = _team2Score.value ?: 0,
                     timestamp = System.currentTimeMillis()

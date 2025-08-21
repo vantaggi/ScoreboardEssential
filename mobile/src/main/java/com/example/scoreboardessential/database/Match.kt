@@ -7,6 +7,8 @@ import androidx.room.PrimaryKey
 data class Match(
     @PrimaryKey(autoGenerate = true)
     val matchId: Int = 0,
+    val team1Id: Int,
+    val team2Id: Int,
     val team1Score: Int,
     val team2Score: Int,
     val timestamp: Long

@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.example.scoreboardessential.database.Match
 import com.example.scoreboardessential.database.MatchDao
 import com.example.scoreboardessential.database.MatchWithPlayers
+import com.example.scoreboardessential.database.MatchWithTeams
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -57,7 +58,7 @@ class MatchRepository(
         sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceChangeListener)
     }
 
-    val allMatches: Flow<List<MatchWithPlayers>> = matchDao.getAllMatchesWithPlayers()
+    val allMatches: Flow<List<MatchWithTeams>> = matchDao.getAllMatchesWithTeams()
 
     suspend fun deleteMatch(match: Match) {
         matchDao.delete(match)

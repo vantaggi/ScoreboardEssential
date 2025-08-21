@@ -10,7 +10,15 @@
       "Bash(./gradlew :mobile:testDebugUnitTest --info)",
       "Bash(./gradlew :mobile:testDebugUnitTest --no-daemon)",
       "Bash(./gradlew :mobile:testDebugUnitTest --debug)",
-      "Bash(./gradlew :mobile:connectedAndroidTest)"
+      "Bash(./gradlew :mobile:connectedAndroidTest)",
+      "Bash(./gradlew:*)",
+      "Bash(.gradlew:*)",
+      "Bash(dir:*)",
+      "Bash(gradlew.bat:*)",
+      "Bash(echo:*)",
+      "Bash(JAVA_HOME=\"C:\\Program Files\\Android\\Android Studio\\jbr\" ./gradlew:*)",
+      "Bash(set:*)",
+      "Bash(export:*)"
     ],
     "deny": [],
     "ask": [],

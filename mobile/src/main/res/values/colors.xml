@@ -5,6 +5,7 @@
     <color name="action_blue">#4FC3F7</color>
     <color name="vibrant_orange">#FFA726</color> <!-- Team 1 Default -->
     <color name="electric_lime">#AEEA00</color> <!-- Team 2 Default -->
+    <color name="error">#FF5252</color> <!-- Destructive actions -->
 
     <color name="accent">@color/action_blue</color>
     <color name="surface_dark">@color/surface</color>

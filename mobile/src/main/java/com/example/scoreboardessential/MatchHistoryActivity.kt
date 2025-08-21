@@ -1,6 +1,7 @@
 package com.example.scoreboardessential
 
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -18,8 +19,8 @@ class MatchHistoryActivity : AppCompatActivity() {
         val viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
 
         val recyclerView = findViewById<RecyclerView>(R.id.match_history_recyclerview)
-        val adapter = MatchHistoryAdapter { match ->
-            viewModel.deleteMatch(match.match)
+        val adapter = MatchHistoryAdapter { matchWithTeams ->
+            viewModel.deleteMatch(matchWithTeams.match)
         }
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
