@@ -5,43 +5,46 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingVertical="8dp"
-    android:paddingHorizontal="4dp">
+    android:paddingHorizontal="8dp"
+    android:minHeight="40dp">
 
     <View
         android:id="@+id/team_indicator"
         android:layout_width="4dp"
         android:layout_height="0dp"
-        android:background="@color/team_spray_yellow"
+        android:layout_marginEnd="8dp"
+        android:background="?attr/colorPrimary"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="@id/event_timestamp"
+        app:layout_constraintBottom_toBottomOf="@id/event_description"
         app:layout_constraintStart_toStartOf="parent"/>
 
     <TextView
         android:id="@+id/event_timestamp"
-        android:layout_width="wrap_content"
+        android:layout_width="50dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="16dp"
         android:text="00:00"
         android:textColor="?attr/colorOnSurfaceVariant"
         android:textSize="12sp"
         android:fontFamily="monospace"
+        android:gravity="start"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/team_indicator"/>
+        app:layout_constraintStart_toStartOf="parent"/>
 
     <TextView
         android:id="@+id/event_description"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="12dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginTop="2dp"
         android:text="Event description"
         android:textColor="?attr/colorOnSurface"
         android:textSize="14sp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/event_timestamp"
+        android:lineSpacingMultiplier="1.1"
+        app:layout_constraintTop_toBottomOf="@id/event_timestamp"
+        app:layout_constraintStart_toStartOf="@id/event_timestamp"
         app:layout_constraintEnd_toEndOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

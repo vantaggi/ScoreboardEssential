@@ -42,13 +42,13 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
                 1 -> {
                     teamIndicator.visibility = View.VISIBLE
                     teamIndicator.setBackgroundColor(
-                        ContextCompat.getColor(itemView.context, R.color.team_spray_yellow)
+                        MaterialColors.getColor(itemView.context, com.google.android.material.R.attr.colorPrimary, "Error")
                     )
                 }
                 2 -> {
                     teamIndicator.visibility = View.VISIBLE
                     teamIndicator.setBackgroundColor(
-                        ContextCompat.getColor(itemView.context, R.color.team_electric_green)
+                        MaterialColors.getColor(itemView.context, com.google.android.material.R.attr.colorSecondary, "Error")
                     )
                 }
                 else -> {
