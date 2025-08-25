@@ -8,4 +8,5 @@
     <string name="no_role_specified">No role specified</string>
     <string name="vs">-</string>
     <string name="delete_match">Delete Match</string>
+    <string name="comma_separator">, </string>
 </resources>

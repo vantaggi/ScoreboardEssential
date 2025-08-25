@@ -10,26 +10,32 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import android.app.AlertDialog
+import android.view.View
 import com.example.scoreboardessential.database.Player
+import com.example.scoreboardessential.database.PlayerWithRoles
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 
-class PlayersManagementActivity : AppCompatActivity() {
+class PlayersManagementActivity : AppCompatActivity(), RoleSelectionDialogFragment.RoleSelectionListener {
 
     private val viewModel: PlayersManagementViewModel by viewModels()
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: PlayersManagementAdapter
     private lateinit var fab: FloatingActionButton
     private var searchQuery: String = ""
+    private var selectedRoleIds = mutableListOf<Int>()
+    private var currentDialog: androidx.appcompat.app.AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_players_management)
 
-        // Setup Toolbar
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
@@ -45,27 +51,16 @@ class PlayersManagementActivity : AppCompatActivity() {
     private fun initViews() {
         recyclerView = findViewById(R.id.players_recyclerview)
         fab = findViewById(R.id.add_player_fab)
-
-        fab.setOnClickListener {
-            showCreatePlayerDialog()
-        }
+        fab.setOnClickListener { showCreatePlayerDialog() }
     }
 
     private fun setupRecyclerView() {
         adapter = PlayersManagementAdapter(
-            onPlayerClick = { player ->
-                showEditPlayerDialog(player)
-            },
-            onStatsClick = { player ->
-                showPlayerStatsDialog(player)
-            }
+            onPlayerClick = { playerWithRoles -> showEditPlayerDialog(playerWithRoles) },
+            onStatsClick = { playerWithRoles -> showPlayerStatsDialog(playerWithRoles) }
         )
-
-        recyclerView.apply {
-            layoutManager = LinearLayoutManager(this@PlayersManagementActivity)
-            adapter = this@PlayersManagementActivity.adapter
-            setHasFixedSize(true)
-        }
+        recyclerView.adapter = adapter
+        recyclerView.layoutManager = LinearLayoutManager(this)
     }
 
     private fun observeViewModel() {
@@ -74,69 +69,48 @@ class PlayersManagementActivity : AppCompatActivity() {
                 val filteredPlayers = if (searchQuery.isEmpty()) {
                     players
                 } else {
-                    players.filter {
-                        it.playerName.contains(searchQuery, ignoreCase = true) ||
-                                it.roles.contains(searchQuery, ignoreCase = true)
+                    players.filter { playerWithRoles ->
+                        playerWithRoles.player.playerName.contains(searchQuery, ignoreCase = true) ||
+                                playerWithRoles.roles.any { it.name.contains(searchQuery, ignoreCase = true) }
                     }
                 }
                 adapter.submitList(filteredPlayers)
-
-                // Show empty state if no players
-                if (filteredPlayers.isEmpty()) {
-                    showEmptyState()
-                } else {
-                    hideEmptyState()
-                }
+                findViewById<View>(R.id.empty_state).visibility = if (filteredPlayers.isEmpty()) View.VISIBLE else View.GONE
             }
         }
     }
 
     private fun setupSwipeToDelete() {
-        val swipeHandler = object : ItemTouchHelper.SimpleCallback(
-            0,
-            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
-        ) {
-            override fun onMove(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                target: RecyclerView.ViewHolder
-            ): Boolean = false
-
+        val swipeHandler = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            override fun onMove(r: RecyclerView, v: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder): Boolean = false
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val position = viewHolder.adapterPosition
-                val player = adapter.currentList[position]
-
-                // Delete the player
-                viewModel.deletePlayer(player)
-
-                // Show undo snackbar
-                Snackbar.make(
-                    recyclerView,
-                    "${player.playerName} deleted",
-                    Snackbar.LENGTH_LONG
-                ).setAction("UNDO") {
-                    viewModel.restorePlayer(player)
-                }.show()
+                val playerWithRoles = adapter.currentList[viewHolder.adapterPosition]
+                viewModel.deletePlayer(playerWithRoles)
+                Snackbar.make(recyclerView, "${playerWithRoles.player.playerName} deleted", Snackbar.LENGTH_LONG)
+                    .setAction("UNDO") {
+                        viewModel.restorePlayer(playerWithRoles.player, playerWithRoles.roles.map { it.roleId })
+                    }.show()
             }
         }
-
         ItemTouchHelper(swipeHandler).attachToRecyclerView(recyclerView)
     }
 
     private fun showCreatePlayerDialog() {
+        selectedRoleIds.clear()
         val dialogView = layoutInflater.inflate(R.layout.dialog_create_player, null)
         val nameInput = dialogView.findViewById<TextInputEditText>(R.id.player_name_input)
-        val rolesInput = dialogView.findViewById<TextInputEditText>(R.id.player_roles_input)
 
-        MaterialAlertDialogBuilder(this)
+        dialogView.findViewById<View>(R.id.select_roles_button).setOnClickListener {
+            RoleSelectionDialogFragment.newInstance(selectedRoleIds).show(supportFragmentManager, "RoleSelectionDialog")
+        }
+
+        currentDialog = MaterialAlertDialogBuilder(this)
             .setTitle("Create New Player")
             .setView(dialogView)
             .setPositiveButton("Create") { _, _ ->
                 val name = nameInput.text.toString().trim()
-                val roles = rolesInput.text.toString().trim()
-
                 if (name.isNotEmpty()) {
-                    viewModel.createPlayer(name, roles)
+                    viewModel.createPlayer(name, selectedRoleIds)
                     Snackbar.make(fab, "Player created!", Snackbar.LENGTH_SHORT).show()
                 } else {
                     Snackbar.make(fab, "Please enter a name", Snackbar.LENGTH_SHORT).show()
@@ -146,81 +120,96 @@ class PlayersManagementActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showEditPlayerDialog(player: Player) {
+    private fun showEditPlayerDialog(playerWithRoles: PlayerWithRoles) {
+        selectedRoleIds = playerWithRoles.roles.map { it.roleId }.toMutableList()
         val dialogView = layoutInflater.inflate(R.layout.dialog_create_player, null)
         val nameInput = dialogView.findViewById<TextInputEditText>(R.id.player_name_input)
-        val rolesInput = dialogView.findViewById<TextInputEditText>(R.id.player_roles_input)
+        nameInput.setText(playerWithRoles.player.playerName)
+        updateRolesChips(dialogView.findViewById(R.id.roles_chip_group))
 
-        // Pre-fill with current values
-        nameInput.setText(player.playerName)
-        rolesInput.setText(player.roles)
+        dialogView.findViewById<View>(R.id.select_roles_button).setOnClickListener {
+            RoleSelectionDialogFragment.newInstance(selectedRoleIds).show(supportFragmentManager, "RoleSelectionDialog")
+        }
 
-        MaterialAlertDialogBuilder(this)
+        currentDialog = MaterialAlertDialogBuilder(this)
             .setTitle("Edit Player")
             .setView(dialogView)
             .setPositiveButton("Save") { _, _ ->
                 val name = nameInput.text.toString().trim()
-                val roles = rolesInput.text.toString().trim()
-
                 if (name.isNotEmpty()) {
-                    val updatedPlayer = player.copy(
-                        playerName = name,
-                        roles = roles
-                    )
-                    viewModel.updatePlayer(updatedPlayer)
+                    val updatedPlayer = playerWithRoles.player.copy(playerName = name)
+                    viewModel.updatePlayer(updatedPlayer, selectedRoleIds)
                     Snackbar.make(fab, "Player updated!", Snackbar.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Cancel", null)
-            .setNeutralButton("Delete") { _, _ ->
-                showDeleteConfirmation(player)
-            }
+            .setNeutralButton("Delete") { _, _ -> showDeleteConfirmation(playerWithRoles) }
             .show()
     }
 
-    private fun showPlayerStatsDialog(player: Player) {
+    override fun onRolesSelected(selectedRoleIds: List<Int>) {
+        this.selectedRoleIds = selectedRoleIds.toMutableList()
+        currentDialog?.let {
+            updateRolesChips(it.findViewById(R.id.roles_chip_group))
+        }
+    }
+
+    private fun updateRolesChips(chipGroup: ChipGroup?) {
+        chipGroup?.removeAllViews()
+        lifecycleScope.launch {
+            viewModel.allRoles.collect { allRoles ->
+                val selectedRoles = allRoles.filter { selectedRoleIds.contains(it.roleId) }
+                if (selectedRoles.isEmpty()) {
+                    val chip = Chip(this@PlayersManagementActivity).apply { text = "No roles selected" }
+                    chipGroup?.addView(chip)
+                } else {
+                    selectedRoles.forEach { role ->
+                        val chip = Chip(this@PlayersManagementActivity).apply { text = role.name }
+                        chipGroup?.addView(chip)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showPlayerStatsDialog(playerWithRoles: PlayerWithRoles) {
+        val player = playerWithRoles.player
+        val rolesText = playerWithRoles.roles.joinToString(", ") { it.name }.ifEmpty { "Not specified" }
         val statsMessage = """
             Appearances: ${player.appearances}
             Goals Scored: ${player.goals}
-            Goals per Match: ${if (player.appearances > 0)
-            String.format("%.2f", player.goals.toFloat() / player.appearances)
-        else "0.00"}
+            Goals per Match: ${if (player.appearances > 0) String.format("%.2f", player.goals.toFloat() / player.appearances) else "0.00"}
             
-            Roles: ${player.roles.ifEmpty { "Not specified" }}
+            Roles: $rolesText
         """.trimIndent()
 
         MaterialAlertDialogBuilder(this)
             .setTitle("${player.playerName} - Statistics")
             .setMessage(statsMessage)
             .setPositiveButton("OK", null)
-            .setNeutralButton("Reset Stats") { _, _ ->
-                showResetStatsConfirmation(player)
-            }
+            .setNeutralButton("Reset Stats") { _, _ -> showResetStatsConfirmation(playerWithRoles) }
             .show()
     }
 
-    private fun showDeleteConfirmation(player: Player) {
+    private fun showDeleteConfirmation(playerWithRoles: PlayerWithRoles) {
         MaterialAlertDialogBuilder(this)
             .setTitle("Delete Player?")
-            .setMessage("Are you sure you want to delete ${player.playerName}? This action cannot be undone.")
+            .setMessage("Are you sure you want to delete ${playerWithRoles.player.playerName}? This action cannot be undone.")
             .setPositiveButton("Delete") { _, _ ->
-                viewModel.deletePlayer(player)
+                viewModel.deletePlayer(playerWithRoles)
                 Snackbar.make(fab, "Player deleted", Snackbar.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
-    private fun showResetStatsConfirmation(player: Player) {
+    private fun showResetStatsConfirmation(playerWithRoles: PlayerWithRoles) {
         MaterialAlertDialogBuilder(this)
             .setTitle("Reset Statistics?")
-            .setMessage("Reset all statistics for ${player.playerName}?")
+            .setMessage("Reset all statistics for ${playerWithRoles.player.playerName}?")
             .setPositiveButton("Reset") { _, _ ->
-                val resetPlayer = player.copy(
-                    appearances = 0,
-                    goals = 0
-                )
-                viewModel.updatePlayer(resetPlayer)
+                val resetPlayer = playerWithRoles.player.copy(appearances = 0, goals = 0)
+                viewModel.updatePlayer(resetPlayer, playerWithRoles.roles.map { it.roleId })
                 Snackbar.make(fab, "Stats reset", Snackbar.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)

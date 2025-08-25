@@ -8,10 +8,12 @@ import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
+import androidx.room.Transaction
+
 @Dao
 interface PlayerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(player: Player)
+    suspend fun insert(player: Player): Long
 
     @Update
     suspend fun update(player: Player)
@@ -19,6 +21,30 @@ interface PlayerDao {
     @Delete
     suspend fun delete(player: Player)
 
+    @Transaction
     @Query("SELECT * FROM players ORDER BY playerName ASC")
-    fun getAllPlayers(): Flow<List<Player>>
+    fun getAllPlayers(): Flow<List<PlayerWithRoles>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun addRoleToPlayer(crossRef: PlayerRoleCrossRef)
+
+    @Delete
+    suspend fun removeRoleFromPlayer(crossRef: PlayerRoleCrossRef)
+
+    @Query("SELECT * FROM roles ORDER BY category, name ASC")
+    fun getAllRoles(): Flow<List<Role>>
+
+    @Transaction
+    suspend fun updatePlayerWithRoles(player: Player, roleIds: List<Int>) {
+        update(player)
+        // First, remove all existing roles for the player
+        deleteAllRolesForPlayer(player.playerId)
+        // Then, add the new roles
+        roleIds.forEach { roleId ->
+            addRoleToPlayer(PlayerRoleCrossRef(player.playerId, roleId))
+        }
+    }
+
+    @Query("DELETE FROM player_role_cross_ref WHERE playerId = :playerId")
+    suspend fun deleteAllRolesForPlayer(playerId: Int)
 }

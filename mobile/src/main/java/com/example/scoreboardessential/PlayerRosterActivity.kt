@@ -59,22 +59,18 @@ class PlayerRosterActivity : AppCompatActivity() {
     private fun showAddPlayerDialog() {
         val nameEditText = TextInputEditText(this)
         nameEditText.hint = "Player Name"
-        val rolesEditText = TextInputEditText(this)
-        rolesEditText.hint = "Roles (comma-separated)"
 
         val layout = android.widget.LinearLayout(this)
         layout.orientation = android.widget.LinearLayout.VERTICAL
         layout.addView(nameEditText)
-        layout.addView(rolesEditText)
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Add New Player")
             .setView(layout)
             .setPositiveButton("Add") { _, _ ->
                 val name = nameEditText.text.toString()
-                val roles = rolesEditText.text.toString()
                 if (name.isNotBlank()) {
-                    playerViewModel.insert(Player(playerName = name, roles = roles, appearances = 0, goals = 0))
+                    playerViewModel.insert(Player(playerName = name, appearances = 0, goals = 0), emptyList())
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -86,8 +82,8 @@ class PlayerViewModel(private val repository: PlayerRepository) : ViewModel() {
 
     val allPlayers = repository.allPlayers
 
-    fun insert(player: Player) = CoroutineScope(Dispatchers.IO).launch {
-        repository.insert(player)
+    fun insert(player: Player, roleIds: List<Int>) = CoroutineScope(Dispatchers.IO).launch {
+        repository.insertPlayerWithRoles(player, roleIds)
     }
 }
 

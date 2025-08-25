@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
         <variable
             name="player"
-            type="com.example.scoreboardessential.database.Player" />
+            type="com.example.scoreboardessential.database.PlayerWithRoles" />
     </data>
 
     <LinearLayout
@@ -17,21 +18,21 @@
             android:id="@+id/player_name_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@{player.playerName}"
+            android:text="@{player.player.playerName}"
             android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
         <TextView
             android:id="@+id/player_roles_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@{player.roles}"
+            app:roles="@{player.roles}"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
         <TextView
             android:id="@+id/player_stats_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@{`Apps: ` + player.appearances + `, Goals: ` + player.goals}"
+            android:text="@{`Apps: ` + player.player.appearances + `, Goals: ` + player.player.goals}"
             android:textAppearance="@style/TextAppearance.AppCompat.Small" />
 
     </LinearLayout>

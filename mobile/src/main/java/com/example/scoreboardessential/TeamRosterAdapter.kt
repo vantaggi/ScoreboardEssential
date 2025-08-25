@@ -7,12 +7,12 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.scoreboardessential.database.Player
+import com.example.scoreboardessential.database.PlayerWithRoles
 import com.google.android.material.card.MaterialCardView
 
 class TeamRosterAdapter(
-    private val onPlayerClick: (Player) -> Unit
-) : ListAdapter<Player, TeamRosterAdapter.PlayerViewHolder>(PlayerDiffCallback()) {
+    private val onPlayerClick: (PlayerWithRoles) -> Unit
+) : ListAdapter<PlayerWithRoles, TeamRosterAdapter.PlayerViewHolder>(PlayerDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlayerViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -26,7 +26,7 @@ class TeamRosterAdapter(
 
     class PlayerViewHolder(
         itemView: View,
-        private val onPlayerClick: (Player) -> Unit
+        private val onPlayerClick: (PlayerWithRoles) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
 
         private val playerCard: MaterialCardView = itemView.findViewById(R.id.player_card)
@@ -34,24 +34,25 @@ class TeamRosterAdapter(
         private val playerRoleTextView: TextView = itemView.findViewById(R.id.player_role)
         private val playerStatsTextView: TextView = itemView.findViewById(R.id.player_stats)
 
-        fun bind(player: Player) {
+        fun bind(playerWithRoles: PlayerWithRoles) {
+            val player = playerWithRoles.player
             playerNameTextView.text = player.playerName
-            playerRoleTextView.text = player.roles.ifEmpty { "Player" }
+            playerRoleTextView.text = playerWithRoles.roles.joinToString(", ").ifEmpty { "Player" }
             playerStatsTextView.text = "Goals: ${player.goals}"
 
             playerCard.setOnLongClickListener {
-                onPlayerClick(player)
+                onPlayerClick(playerWithRoles)
                 true
             }
         }
     }
 
-    class PlayerDiffCallback : DiffUtil.ItemCallback<Player>() {
-        override fun areItemsTheSame(oldItem: Player, newItem: Player): Boolean {
-            return oldItem.playerId == newItem.playerId
+    class PlayerDiffCallback : DiffUtil.ItemCallback<PlayerWithRoles>() {
+        override fun areItemsTheSame(oldItem: PlayerWithRoles, newItem: PlayerWithRoles): Boolean {
+            return oldItem.player.playerId == newItem.player.playerId
         }
 
-        override fun areContentsTheSame(oldItem: Player, newItem: Player): Boolean {
+        override fun areContentsTheSame(oldItem: PlayerWithRoles, newItem: PlayerWithRoles): Boolean {
             return oldItem == newItem
         }
     }
