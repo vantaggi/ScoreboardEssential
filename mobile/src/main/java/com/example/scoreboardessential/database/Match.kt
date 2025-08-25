@@ -11,5 +11,6 @@ data class Match(
     val team2Id: Int,
     val team1Score: Int,
     val team2Score: Int,
-    val timestamp: Long
+    val timestamp: Long,
+    val isActive: Boolean = false
 )
