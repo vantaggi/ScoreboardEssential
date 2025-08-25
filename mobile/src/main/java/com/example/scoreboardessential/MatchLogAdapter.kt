@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.color.MaterialColors
 
 class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHolder>(MatchEventDiffCallback()) {
 
@@ -41,13 +42,13 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
                 1 -> {
                     teamIndicator.visibility = View.VISIBLE
                     teamIndicator.setBackgroundColor(
-                        ContextCompat.getColor(itemView.context, R.color.team1_orange)
+                        ContextCompat.getColor(itemView.context, R.color.team_spray_yellow)
                     )
                 }
                 2 -> {
                     teamIndicator.visibility = View.VISIBLE
                     teamIndicator.setBackgroundColor(
-                        ContextCompat.getColor(itemView.context, R.color.team2_lime)
+                        ContextCompat.getColor(itemView.context, R.color.team_electric_green)
                     )
                 }
                 else -> {
@@ -58,12 +59,12 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
             // Highlight goals
             if (event.event.contains("GOAL!")) {
                 eventTextView.setTextColor(
-                    ContextCompat.getColor(itemView.context, R.color.action_blue)
+                    MaterialColors.getColor(itemView.context, com.google.android.material.R.attr.colorSecondary, "Error")
                 )
                 eventTextView.textSize = 16f
             } else {
                 eventTextView.setTextColor(
-                    ContextCompat.getColor(itemView.context, R.color.on_surface_light)
+                    MaterialColors.getColor(itemView.context, com.google.android.material.R.attr.colorOnSurface, "Error")
                 )
                 eventTextView.textSize = 14f
             }

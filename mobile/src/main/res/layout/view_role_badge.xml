@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:paddingHorizontal="6dp"
         android:paddingVertical="2dp"
-        android:textColor="@color/white"
+        android:textColor="@color/stencil_white"
         android:textSize="10sp"
         android:textStyle="bold"
         android:fontFamily="sans-serif-condensed"

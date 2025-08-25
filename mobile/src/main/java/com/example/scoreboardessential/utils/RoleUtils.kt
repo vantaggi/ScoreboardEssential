@@ -8,11 +8,11 @@ object RoleUtils {
 
     fun getCategoryColor(context: Context, category: String): Int {
         return when (category.uppercase()) {
-            "ATTACCO" -> ContextCompat.getColor(context, R.color.role_attack)
-            "CENTROCAMPO" -> ContextCompat.getColor(context, R.color.role_midfield)
-            "DIFESA" -> ContextCompat.getColor(context, R.color.role_defense)
-            "PORTA" -> ContextCompat.getColor(context, R.color.role_goalkeeper)
-            else -> ContextCompat.getColor(context, R.color.on_surface_variant_light)
+            "ATTACCO" -> ContextCompat.getColor(context, R.color.graffiti_pink)
+            "CENTROCAMPO" -> ContextCompat.getColor(context, R.color.neon_cyan)
+            "DIFESA" -> ContextCompat.getColor(context, R.color.team_spray_yellow)
+            "PORTA" -> ContextCompat.getColor(context, R.color.team_electric_green)
+            else -> ContextCompat.getColor(context, R.color.sidewalk_gray)
         }
     }
 

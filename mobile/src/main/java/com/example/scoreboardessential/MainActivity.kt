@@ -23,6 +23,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
 import com.google.android.material.card.MaterialCardView
+import com.example.scoreboardessential.utils.playScoreChangeAnimation
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
@@ -139,10 +140,16 @@ class MainActivity : AppCompatActivity() {
         // Scores
         viewModel.team1Score.observe(this) { score ->
             team1ScoreTextView.text = score.toString()
+            if (score > 0) {
+                team1ScoreTextView.playScoreChangeAnimation()
+            }
         }
 
         viewModel.team2Score.observe(this) { score ->
             team2ScoreTextView.text = score.toString()
+            if (score > 0) {
+                team2ScoreTextView.playScoreChangeAnimation()
+            }
         }
 
         // Team Names

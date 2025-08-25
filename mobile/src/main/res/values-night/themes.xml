@@ -1,70 +1,54 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Dark Theme per Scoreboard seguendo le specifiche del documento -->
+    <!-- Base application theme. -->
     <style name="Theme.ScoreboardEssential" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Colori primari secondo le specifiche -->
-        <item name="colorPrimary">@color/surface</item>
-        <item name="colorPrimaryVariant">@color/action_blue</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <!-- Street Vibe Color Palette -->
+        <item name="colorPrimary">@color/graffiti_pink</item>
+        <item name="colorOnPrimary">@color/stencil_white</item>
+        <item name="colorSecondary">@color/neon_cyan</item>
+        <item name="colorOnSecondary">@color/stencil_white</item>
+        <item name="colorError">@color/error_red</item>
+        <item name="colorOnError">@color/stencil_white</item>
+        <item name="android:colorBackground">@color/asphalt_dark</item>
+        <item name="colorSurface">@color/concrete_gray</item>
+        <item name="colorOnSurface">@color/stencil_white</item>
+        <item name="colorOnSurfaceVariant">@color/sidewalk_gray</item>
 
-        <!-- Colori secondari -->
-        <item name="colorSecondary">@color/action_blue</item>
-        <item name="colorSecondaryVariant">@color/team1_orange_dark</item>
-        <item name="colorOnSecondary">@color/white</item>
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">@color/asphalt_dark</item>
 
-        <!-- Background e Surface -->
-        <item name="android:colorBackground">@color/surface_dark</item>
-        <item name="colorSurface">@color/surface_dark</item>
-        <item name="colorSurfaceVariant">@color/surface_variant_dark</item>
-        <item name="colorOnSurface">@color/on_surface_light</item>
-        <item name="colorOnSurfaceVariant">@color/on_surface_variant_light</item>
+        <!-- Street Vibe Typeface References -->
+        <item name="textAppearanceDisplayLarge">@style/TextAppearance.App.DisplayLarge.Street</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.App.HeadlineMedium.Street</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.App.BodyLarge.Street</item>
 
-        <!-- Status bar -->
-        <item name="android:statusBarColor">@color/surface_variant_dark</item>
-        <item name="android:navigationBarColor">@color/surface_dark</item>
-
-        <!-- Text colors -->
-        <item name="android:textColorPrimary">@color/on_surface_light</item>
-        <item name="android:textColorSecondary">@color/on_surface_variant_light</item>
-
-        <!-- Material You Dynamic Colors disabled for consistent branding -->
-        <item name="dynamicColorThemeOverlay">@null</item>
+        <!-- Street Vibe Shape References -->
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.App.StreetCard</item>
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.App.StreetButton</item>
     </style>
 
-    <!-- Stili per i componenti -->
-    <!-- Se hai roboto_condensed_bold.ttf nella cartella res/font, usa @font/roboto_condensed_bold -->
-    <!-- Altrimenti usa sans-serif-condensed come fallback di sistema -->
-    <style name="TextAppearance.Scoreboard.Score" parent="TextAppearance.Material3.DisplayLarge">
+    <style name="Theme.ScoreboardEssential.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <!-- Street Vibe Type and Shape -->
+    <style name="TextAppearance.App.DisplayLarge.Street" parent="TextAppearance.Material3.DisplayLarge">
         <item name="android:fontFamily">sans-serif-condensed</item>
-        <item name="android:textSize">96sp</item>
-        <item name="android:textColor">?attr/colorOnSurface</item>
-    </style>
-
-    <style name="TextAppearance.Scoreboard.TeamName" parent="TextAppearance.Material3.HeadlineMedium">
-        <item name="android:fontFamily">sans-serif-condensed</item>
-        <item name="android:textColor">?attr/colorOnSurface</item>
-    </style>
-
-    <style name="TextAppearance.Scoreboard.Timer" parent="TextAppearance.Material3.DisplayMedium">
-        <item name="android:fontFamily">sans-serif-condensed</item>
-        <item name="android:textSize">48sp</item>
-        <item name="android:textColor">@color/action_blue</item>
-    </style>
-
-    <style name="Widget.Scoreboard.Button" parent="Widget.Material3.Button.TonalButton">
-        <item name="android:backgroundTint">?attr/colorPrimary</item>
-        <item name="android:textColor">?attr/colorOnPrimary</item>
         <item name="android:textStyle">bold</item>
-        <item name="rippleColor">@color/on_surface_light</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+    <style name="TextAppearance.App.HeadlineMedium.Street" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+    <style name="TextAppearance.App.BodyLarge.Street" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">sans-serif-condensed</item>
     </style>
 
-    <style name="Widget.Scoreboard.Button.Team1" parent="Widget.Scoreboard.Button">
-        <item name="android:backgroundTint">?attr/colorSecondary</item>
-        <item name="android:textColor">?attr/colorOnSecondary</item>
+    <style name="ShapeAppearance.App.StreetCard" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">cut</item>
+        <item name="cornerSize">12dp</item>
     </style>
-
-    <style name="Widget.Scoreboard.Button.Team2" parent="Widget.Scoreboard.Button">
-        <item name="android:backgroundTint">?attr/colorSecondaryVariant</item>
-        <item name="android:textColor">?attr/colorOnSecondary</item>
+    <style name="ShapeAppearance.App.StreetButton" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerFamily">cut</item>
+        <item name="cornerSize">8dp</item>
     </style>
 </resources>

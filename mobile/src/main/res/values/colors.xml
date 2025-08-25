@@ -1,33 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Digital Stadium Palette -->
-    <color name="surface">#1A1B1E</color>
-    <color name="action_blue">#4FC3F7</color>
-    <color name="vibrant_orange">#FFA726</color> <!-- Team 1 Default -->
-    <color name="electric_lime">#AEEA00</color> <!-- Team 2 Default -->
-    <color name="error">#FF5252</color> <!-- Destructive actions -->
-
-    <color name="accent">@color/action_blue</color>
-    <color name="surface_dark">@color/surface</color>
-    <color name="team1_orange">@color/vibrant_orange</color>
-    <color name="team1_orange_dark">#CC8622</color>
-    <color name="team2_lime">@color/electric_lime</color>
-    <color name="team2_lime_dark">#82AB00</color>
-
-
-    <!-- Generic Colors -->
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="transparent">#00000000</color>
-
-    <!-- Legacy UI Component Colors (to be phased out) -->
-    <color name="surface_variant_dark">#2F3033</color>
-    <color name="on_surface_light">#E3E3E3</color>
-    <color name="on_surface_variant_light">#B5B5B5</color>
-
-    <!-- Role Category Colors (FC25 style) -->
-    <color name="role_attack">#FF5252</color>
-    <color name="role_midfield">#4CAF50</color>
-    <color name="role_defense">#2196F3</color>
-    <color name="role_goalkeeper">#FF9800</color>
+    <color name="asphalt_dark">#121212</color>
+    <color name="concrete_gray">#1E1E1E</color>
+    <color name="stencil_white">#E0E0E0</color>
+    <color name="sidewalk_gray">#9E9E9E</color>
+    <color name="graffiti_pink">#F50057</color>
+    <color name="neon_cyan">#00E5FF</color>
+    <color name="team_spray_yellow">#FFD600</color>
+    <color name="team_electric_green">#76FF03</color>
+    <color name="error_red">#FF1744</color>
 </resources>

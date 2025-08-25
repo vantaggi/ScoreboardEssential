@@ -9,6 +9,7 @@ import com.example.scoreboardessential.database.Role
 import com.example.scoreboardessential.utils.RoleUtils
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.color.MaterialColors
 
 class RoleBadgeGroup @JvmOverloads constructor(
     context: Context,
@@ -55,7 +56,7 @@ class RoleBadgeGroup @JvmOverloads constructor(
         textView.text = "N/A"
 
         badge.setCardBackgroundColor(
-            context.getColor(R.color.surface_variant_dark)
+            MaterialColors.getColor(context, com.google.android.material.R.attr.colorSurface, "Error")
         )
 
         return badge

@@ -11,8 +11,8 @@
         android:layout_height="wrap_content"
         android:hint="Player Name"
         app:boxBackgroundMode="outline"
-        app:boxStrokeColor="@color/action_blue"
-        app:hintTextColor="@color/action_blue">
+        app:boxStrokeColor="?attr/colorSecondary"
+        app:hintTextColor="?attr/colorSecondary">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/player_name_input"
