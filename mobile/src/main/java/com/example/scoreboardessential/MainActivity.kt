@@ -22,11 +22,12 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
+import com.google.android.material.card.MaterialCardView
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
-    private val viewModel: MainViewModel by viewModels { 
+    private val viewModel: MainViewModel by viewModels {
         MainViewModel.MainViewModelFactory(
             (application as ScoreboardEssentialApplication).matchRepository,
             application
@@ -37,6 +38,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var team1ScoreTextView: TextView
     private lateinit var team2ScoreTextView: TextView
     private lateinit var timerTextView: TextView
+    private lateinit var team1Card: MaterialCardView
+    private lateinit var team2Card: MaterialCardView
     private lateinit var keeperTimerTextView: TextView
     private lateinit var timerEditText: EditText
     private lateinit var team1NameEditText: EditText
@@ -92,6 +95,8 @@ class MainActivity : AppCompatActivity() {
         team1ScoreTextView = findViewById(R.id.team1_score_textview)
         team2ScoreTextView = findViewById(R.id.team2_score_textview)
         timerTextView = findViewById(R.id.timer_textview)
+        team1Card = findViewById(R.id.team1_card)
+        team2Card = findViewById(R.id.team2_card)
         keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
         timerEditText = findViewById(R.id.timer_edittext)
         team1NameEditText = findViewById(R.id.team1_name_edittext)
@@ -155,11 +160,11 @@ class MainActivity : AppCompatActivity() {
 
         // Team Colors - apply to score text views
         viewModel.team1Color.observe(this) { color ->
-            team1ScoreTextView.setBackgroundColor(color)
+            team1Card.setCardBackgroundColor(color)
         }
 
         viewModel.team2Color.observe(this) { color ->
-            team2ScoreTextView.setBackgroundColor(color)
+            team2Card.setCardBackgroundColor(color)
         }
 
         // Match Timer

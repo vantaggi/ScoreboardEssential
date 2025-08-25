@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface_dark"
+    android:background="?attr/colorSurface"
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
@@ -24,7 +24,7 @@
                 android:id="@+id/timer_card"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/surface_variant_dark"
+                app:cardBackgroundColor="?attr/colorSurfaceVariant"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
                 app:layout_constraintTop_toTopOf="parent"
@@ -42,7 +42,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="MATCH TIME"
-                        android:textColor="@color/on_surface_variant_light"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="12sp"
                         android:letterSpacing="0.1"/>
 
@@ -59,7 +59,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="05:00"
-                        android:textColor="@color/team1_orange"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="24sp"
                         android:fontFamily="sans-serif-condensed"
                         android:layout_marginTop="8dp"
@@ -87,7 +87,7 @@
                             android:layout_height="wrap_content"
                             android:text="RESET"
                             android:onClick="resetTimer"
-                            android:textColor="@color/action_blue"/>
+                            android:textColor="?attr/colorSecondary"/>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -107,7 +107,7 @@
                     android:id="@+id/team1_card"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    app:cardBackgroundColor="@color/team1_orange_dark"
+                    app:cardBackgroundColor="?attr/colorPrimaryContainer"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="8dp"
                     android:layout_marginEnd="8dp"
@@ -136,10 +136,10 @@
                                 android:layout_height="wrap_content"
                                 android:text="TEAM 1"
                                 android:textAlignment="center"
-                                android:textColor="@color/white"
+                                android:textColor="?attr/colorOnPrimaryContainer"
                                 android:textStyle="bold"
                                 android:textSize="18sp"
-                                android:background="@android:color/transparent"/>
+                                android:background="?android:attr/colorBackground"/>
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <TextView
@@ -149,11 +149,11 @@
                             android:layout_weight="1"
                             android:text="0"
                             android:gravity="center"
-                            android:textColor="@color/white"
+                            android:textColor="?attr/colorOnPrimaryContainer"
                             android:textSize="72sp"
                             android:fontFamily="sans-serif-condensed"
                             android:textStyle="bold"
-                            android:shadowColor="@color/black"
+                            android:shadowColor="?attr/colorOnSurface"
                             android:shadowDx="2"
                             android:shadowDy="2"
                             android:shadowRadius="4"
@@ -172,7 +172,7 @@
                                 android:layout_width="48dp"
                                 android:layout_height="48dp"
                                 app:icon="@drawable/ic_minus"
-                                app:iconTint="@color/white"
+                                app:iconTint="?attr/colorOnPrimaryContainer"
                                 android:layout_marginEnd="16dp"/>
 
                             <com.google.android.material.button.MaterialButton
@@ -181,8 +181,8 @@
                                 android:layout_width="56dp"
                                 android:layout_height="56dp"
                                 app:icon="@drawable/ic_plus"
-                                app:iconTint="@color/team1_orange_dark"
-                                app:backgroundTint="@color/team1_orange"/>
+                                app:iconTint="?attr/colorPrimaryContainer"
+                                app:backgroundTint="?attr/colorPrimary"/>
                         </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -192,7 +192,7 @@
                     android:id="@+id/team2_card"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    app:cardBackgroundColor="@color/team2_lime_dark"
+                    app:cardBackgroundColor="?attr/colorSecondaryContainer"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="8dp"
                     android:layout_marginStart="8dp"
@@ -221,10 +221,10 @@
                                 android:layout_height="wrap_content"
                                 android:text="TEAM 2"
                                 android:textAlignment="center"
-                                android:textColor="@color/surface_dark"
+                                android:textColor="?attr/colorOnSecondaryContainer"
                                 android:textStyle="bold"
                                 android:textSize="18sp"
-                                android:background="@android:color/transparent"/>
+                                android:background="?android:attr/colorBackground"/>
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <TextView
@@ -234,11 +234,11 @@
                             android:layout_weight="1"
                             android:text="0"
                             android:gravity="center"
-                            android:textColor="@color/surface_dark"
+                            android:textColor="?attr/colorOnSecondaryContainer"
                             android:textSize="72sp"
                             android:fontFamily="sans-serif-condensed"
                             android:textStyle="bold"
-                            android:shadowColor="@color/white"
+                            android:shadowColor="?attr/colorOnSecondary"
                             android:shadowDx="1"
                             android:shadowDy="1"
                             android:shadowRadius="2"
@@ -257,7 +257,7 @@
                                 android:layout_width="48dp"
                                 android:layout_height="48dp"
                                 app:icon="@drawable/ic_minus"
-                                app:iconTint="@color/surface_dark"
+                                app:iconTint="?attr/colorOnSecondaryContainer"
                                 android:layout_marginEnd="16dp"/>
 
                             <com.google.android.material.button.MaterialButton
@@ -266,8 +266,8 @@
                                 android:layout_width="56dp"
                                 android:layout_height="56dp"
                                 app:icon="@drawable/ic_plus"
-                                app:iconTint="@color/surface_dark"
-                                app:backgroundTint="@color/team2_lime"/>
+                                app:iconTint="?attr/colorOnSecondaryContainer"
+                                app:backgroundTint="?attr/colorSecondary"/>
                         </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -286,7 +286,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@color/surface_variant_dark"
+                app:cardBackgroundColor="?attr/colorSurfaceVariant"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
                 app:layout_constraintTop_toBottomOf="@id/score_section"
@@ -310,7 +310,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="KEEPER TIMER"
-                            android:textColor="@color/on_surface_variant_light"
+                            android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="12sp"
                             android:letterSpacing="0.1"/>
 
@@ -327,7 +327,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="300"
                                 android:inputType="number"
-                                android:textColor="@color/on_surface_light"/>
+                                android:textColor="?attr/colorOnSurface"/>
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
 
@@ -346,7 +346,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@color/surface_variant_dark"
+                app:cardBackgroundColor="?attr/colorSurfaceVariant"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
                 app:layout_constraintTop_toBottomOf="@id/keeper_timer_card"
@@ -363,7 +363,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="TEAM ROSTERS"
-                        android:textColor="@color/on_surface_variant_light"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="12sp"
                         android:letterSpacing="0.1"
                         android:layout_marginBottom="12dp"/>
@@ -385,7 +385,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Team 1"
-                                android:textColor="@color/team1_orange"
+                                android:textColor="?attr/colorPrimary"
                                 android:textStyle="bold"
                                 android:layout_marginBottom="8dp"/>
 
@@ -401,7 +401,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Add Player"
-                                android:textColor="@color/team1_orange"
+                                android:textColor="?attr/colorPrimary"
                                 android:layout_marginTop="8dp"/>
                         </LinearLayout>
 
@@ -417,7 +417,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Team 2"
-                                android:textColor="@color/team2_lime"
+                                android:textColor="?attr/colorSecondary"
                                 android:textStyle="bold"
                                 android:layout_marginBottom="8dp"/>
 
@@ -433,7 +433,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Add Player"
-                                android:textColor="@color/team2_lime"
+                                android:textColor="?attr/colorSecondary"
                                 android:layout_marginTop="8dp"/>
                         </LinearLayout>
                     </LinearLayout>
@@ -446,7 +446,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@color/surface_variant_dark"
+                app:cardBackgroundColor="?attr/colorSurfaceVariant"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
                 app:layout_constraintTop_toBottomOf="@id/rosters_card"
@@ -463,7 +463,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="MATCH LOG"
-                        android:textColor="@color/on_surface_variant_light"
+                        android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="12sp"
                         android:letterSpacing="0.1"
                         android:layout_marginBottom="12dp"/>
@@ -495,7 +495,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="HISTORY"
-                    android:textColor="@color/action_blue"
+                    android:textColor="?attr/colorSecondary"
                     android:layout_marginEnd="8dp"/>
 
                 <com.google.android.material.button.MaterialButton
@@ -517,8 +517,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        app:backgroundTint="@color/action_blue"
-        app:tint="@color/surface_dark"
+        app:backgroundTint="?attr/colorSecondary"
+        app:tint="?attr/colorOnSecondary"
         app:srcCompat="@drawable/ic_person_add"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
