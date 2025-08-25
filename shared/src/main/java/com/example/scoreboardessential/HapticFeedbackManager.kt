@@ -1,11 +1,12 @@
-package com.example.scoreboardessential.shared
+package com.example.scoreboardessential
 
 object HapticFeedbackManager {
-    const val HAPTIC_TAP = 50L
-    const val HAPTIC_DOUBLE_TAP = 100L
-    const val HAPTIC_LONG = 200L
+    // Pattern for a light tap (e.g., score change)
+    val PATTERN_TICK = longArrayOf(0, 50)
 
-    val PATTERN_SUCCESS = longArrayOf(0, 50, 50, 50)
-    val PATTERN_WARNING = longArrayOf(0, 200, 100, 200)
-    val PATTERN_ALERT = longArrayOf(0, 500, 200, 500, 200, 500)
+    // Pattern for an important action (e.g., start timer)
+    val PATTERN_CONFIRM = longArrayOf(0, 120)
+
+    // Pattern for an alert (e.g., keeper timer end)
+    val PATTERN_ALERT = longArrayOf(0, 200, 100, 200)
 }

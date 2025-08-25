@@ -1,16 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Theme.ScoreboardEssential" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Primary brand color. -->
         <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryVariant">@color/primary_dark</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/accent</item>
-        <item name="colorOnSecondary">@color/black</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+        <item name="android:colorBackground">@color/background</item>
     </style>
 
     <style name="TextAppearance.Scoreboard.Score" parent="TextAppearance.Material3.DisplayLarge">
@@ -23,7 +17,7 @@
     </style>
 
     <style name="Widget.Scoreboard.Button" parent="Widget.Material3.Button">
-        <item name="android:backgroundTint">@color/accent</item>
-        <item name="android:textColor">@color/white</item>
+        <item name="android:backgroundTint">@color/primary</item>
+        <item name="android:textColor">@color/on_primary</item>
     </style>
 </resources>

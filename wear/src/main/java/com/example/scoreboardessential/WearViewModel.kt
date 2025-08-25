@@ -325,13 +325,12 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Haptic Feedback ---
     private fun triggerShortVibration() {
-        val effect = VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE)
+        val effect = VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_CONFIRM, -1)
         vibrator?.vibrate(effect)
     }
 
     private fun triggerStrongContinuousVibration() {
-        val pattern = longArrayOf(0, 500, 500) // Vibrate for 500ms, pause for 500ms
-        val effect = VibrationEffect.createWaveform(pattern, 0) // Repeat from the start
+        val effect = VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_ALERT, -1)
         vibrator?.vibrate(effect)
     }
 

@@ -480,14 +480,13 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
 
     // --- Haptic Feedback ---
     private fun triggerHapticFeedback() {
-        val effect = VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE)
+        val effect = VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_TICK, -1)
         vibrator?.vibrate(effect)
     }
 
     private fun triggerKeeperTimerExpired() {
         // Strong pattern vibration for keeper timer
-        val pattern = longArrayOf(0, 500, 200, 500, 200, 500)
-        val effect = VibrationEffect.createWaveform(pattern, -1)
+        val effect = VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_ALERT, -1)
         vibrator?.vibrate(effect)
     }
 

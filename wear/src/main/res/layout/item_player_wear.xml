@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Player Name"
-        android:textColor="@color/white"
+        android:textColor="?android:attr/textColorPrimary"
         android:textSize="16sp"
         android:textStyle="bold"
         android:gravity="center" />
@@ -23,7 +23,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Position"
-        android:textColor="@color/on_surface_variant_light"
+        android:textColor="?android:attr/textColorSecondary"
         android:textSize="12sp"
         android:gravity="center"
         android:layout_marginTop="4dp" />
