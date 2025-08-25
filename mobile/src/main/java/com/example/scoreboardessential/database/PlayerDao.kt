@@ -44,4 +44,12 @@ interface PlayerDao {
 
     @Query("DELETE FROM player_role_cross_ref WHERE playerId = :playerId")
     suspend fun deleteAllRolesForPlayer(playerId: Int)
+
+    @Transaction
+    @Query("""
+        SELECT * FROM players
+        INNER JOIN MatchPlayerCrossRef ON players.playerId = MatchPlayerCrossRef.playerId
+        WHERE MatchPlayerCrossRef.matchId = :matchId AND MatchPlayerCrossRef.teamId = :teamId
+    """)
+    fun getPlayersForTeamInMatch(matchId: Long, teamId: Int): Flow<List<PlayerWithRoles>>
 }

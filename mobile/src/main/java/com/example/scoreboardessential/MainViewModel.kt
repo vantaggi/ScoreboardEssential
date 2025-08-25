@@ -132,21 +132,63 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         listenForScoreUpdates()
         listenForTimerEvents()
         loadAllPlayers()
-        startNewMatch()
+        loadActiveMatch()
+    }
+
+    private fun loadActiveMatch() {
         viewModelScope.launch {
-            delay(500)
-            wearDataSync.syncFullState(
-                team1Score = _team1Score.value ?: 0,
-                team2Score = _team2Score.value ?: 0,
-                team1Name = _team1Name.value ?: "TEAM 1",
-                team2Name = _team2Name.value ?: "TEAM 2",
-                timerMillis = _matchTimerValue.value ?: 0L,
-                timerRunning = isMatchTimerRunning,
-                keeperMillis = _keeperTimerValue.value ?: 0L,
-                keeperRunning = isKeeperTimerRunning,
-                matchActive = currentMatchId != null
-            )
+            repository.getActiveMatch().first().let { matchWithTeams ->
+                if (matchWithTeams != null) {
+                    restoreMatchState(matchWithTeams)
+                } else {
+                    prepareNewMatch()
+                }
+                // Sync with Wear OS after loading state
+                wearDataSync.syncFullState(
+                    team1Score = _team1Score.value ?: 0,
+                    team2Score = _team2Score.value ?: 0,
+                    team1Name = _team1Name.value ?: "TEAM 1",
+                    team2Name = _team2Name.value ?: "TEAM 2",
+                    timerMillis = _matchTimerValue.value ?: 0L,
+                    timerRunning = isMatchTimerRunning,
+                    keeperMillis = _keeperTimerValue.value ?: 0L,
+                    keeperRunning = isKeeperTimerRunning,
+                    matchActive = currentMatchId != null
+                )
+            }
         }
+    }
+
+    private fun restoreMatchState(matchWithTeams: MatchWithTeams) {
+        viewModelScope.launch {
+            val match = matchWithTeams.match
+            currentMatchId = match.matchId
+            _team1Score.value = match.team1Score
+            _team2Score.value = match.team2Score
+            _team1Name.value = matchWithTeams.team1?.name ?: "TEAM 1"
+            _team2Name.value = matchWithTeams.team2?.name ?: "TEAM 2"
+
+            _team1Players.value = playerDao.getPlayersForTeamInMatch(match.matchId, match.team1Id).first()
+            _team2Players.value = playerDao.getPlayersForTeamInMatch(match.matchId, match.team2Id).first()
+
+            addMatchEvent("Partita in corso ripristinata")
+        }
+    }
+
+    private fun prepareNewMatch() {
+        _team1Score.value = 0
+        _team2Score.value = 0
+        _team1Name.value = "TEAM 1"
+        _team2Name.value = "TEAM 2"
+        _matchEvents.value = emptyList()
+        _matchTimerValue.value = 0L
+        matchTimer?.cancel()
+        isMatchTimerRunning = false
+        currentMatchId = null
+
+        addMatchEvent("Pronto per una nuova partita")
+        sendMatchStateUpdate(false)
+        sendScoreUpdate()
     }
 
     private fun listenForScoreUpdates() {
