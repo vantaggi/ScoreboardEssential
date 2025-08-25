@@ -30,7 +30,6 @@ class PlayersManagementActivity : AppCompatActivity() {
     private lateinit var fab: FloatingActionButton
     private var searchQuery: String = ""
     private var selectedRoleIds = mutableListOf<Int>()
-    private var currentDialog: androidx.appcompat.app.AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,24 +100,21 @@ class PlayersManagementActivity : AppCompatActivity() {
         val nameInput = dialogView.findViewById<TextInputEditText>(R.id.player_name_input)
         val rolesChipGroup = dialogView.findViewById<ChipGroup>(R.id.roles_chip_group)
 
-        // Initialize chips
         updateRolesChipsInView(rolesChipGroup)
 
         dialogView.findViewById<View>(R.id.select_roles_button).setOnClickListener {
-            // Save the dialog reference before showing the fragment
-            val dialogToUpdate = currentDialog
-            RoleSelectionDialogFragment.newInstance(selectedRoleIds).apply {
-                setOnRolesSelectedListener { roles ->
-                    selectedRoleIds = roles.toMutableList()
-                    // Update chips in the saved dialog
-                    dialogToUpdate?.findViewById<ChipGroup>(R.id.roles_chip_group)?.let { chipGroup ->
-                        updateRolesChipsInView(chipGroup)
-                    }
-                }
-            }.show(supportFragmentManager, "RoleSelectionDialog")
+            val roleDialog = RoleSelectionDialogFragment.newInstance(ArrayList(selectedRoleIds))
+
+            roleDialog.setOnRolesSelectedListener { newSelectedIds ->
+                selectedRoleIds.clear()
+                selectedRoleIds.addAll(newSelectedIds)
+                updateRolesChipsInView(rolesChipGroup)
+            }
+
+            roleDialog.show(supportFragmentManager, "RoleSelectionDialog")
         }
 
-        currentDialog = MaterialAlertDialogBuilder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("Create New Player")
             .setView(dialogView)
             .setPositiveButton("Create") { _, _ ->
@@ -141,20 +137,18 @@ class PlayersManagementActivity : AppCompatActivity() {
         updateRolesChipsInView(rolesChipGroup)
 
         dialogView.findViewById<View>(R.id.select_roles_button).setOnClickListener {
-            // Save the dialog reference before showing the fragment
-            val dialogToUpdate = currentDialog
-            RoleSelectionDialogFragment.newInstance(selectedRoleIds).apply {
-                setOnRolesSelectedListener { roles ->
-                    selectedRoleIds = roles.toMutableList()
-                    // Update chips in the saved dialog
-                    dialogToUpdate?.findViewById<ChipGroup>(R.id.roles_chip_group)?.let { chipGroup ->
-                        updateRolesChipsInView(chipGroup)
-                    }
-                }
-            }.show(supportFragmentManager, "RoleSelectionDialog")
+            val roleDialog = RoleSelectionDialogFragment.newInstance(ArrayList(selectedRoleIds))
+
+            roleDialog.setOnRolesSelectedListener { newSelectedIds ->
+                selectedRoleIds.clear()
+                selectedRoleIds.addAll(newSelectedIds)
+                updateRolesChipsInView(rolesChipGroup)
+            }
+
+            roleDialog.show(supportFragmentManager, "RoleSelectionDialog")
         }
 
-        currentDialog = MaterialAlertDialogBuilder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("Edit Player")
             .setView(dialogView)
             .setPositiveButton("Save") { _, _ ->
