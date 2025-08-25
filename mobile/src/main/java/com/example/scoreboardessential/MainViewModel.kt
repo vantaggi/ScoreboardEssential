@@ -27,6 +27,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import com.example.scoreboardessential.repository.MatchRepository
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.IBinder
+import com.example.scoreboardessential.service.MatchTimerService
+import kotlinx.coroutines.flow.collect
 
 data class MatchEvent(
     val timestamp: String,
@@ -40,6 +47,31 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
 
     private val playerDao: PlayerDao
     private val matchDao: MatchDao
+    private var matchTimerService: MatchTimerService? = null
+    private var isServiceBound = false
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as MatchTimerService.MatchTimerBinder
+            matchTimerService = binder.getService()
+            isServiceBound = true
+            viewModelScope.launch {
+                matchTimerService?.timerValue?.collect {
+                    _matchTimerValue.value = it
+                }
+            }
+            viewModelScope.launch {
+                matchTimerService?.isRunning?.collect {
+                    isMatchTimerRunning = it
+                }
+            }
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            matchTimerService = null
+            isServiceBound = false
+        }
+    }
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
 
     private val wearDataSync = WearDataSync(application)
@@ -85,9 +117,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     // Match Timer
     private val _matchTimerValue = MutableLiveData(0L)
     val matchTimerValue: LiveData<Long> = _matchTimerValue
-    private var matchTimer: CountDownTimer? = null
     private var isMatchTimerRunning = false
-    private var matchStartTime = 0L
 
     // Keeper Timer
     private val _keeperTimerValue = MutableLiveData(0L)
@@ -133,19 +163,19 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         listenForTimerEvents()
         loadAllPlayers()
         startNewMatch()
-        viewModelScope.launch {
-            delay(500)
-            wearDataSync.syncFullState(
-                team1Score = _team1Score.value ?: 0,
-                team2Score = _team2Score.value ?: 0,
-                team1Name = _team1Name.value ?: "TEAM 1",
-                team2Name = _team2Name.value ?: "TEAM 2",
-                timerMillis = _matchTimerValue.value ?: 0L,
-                timerRunning = isMatchTimerRunning,
-                keeperMillis = _keeperTimerValue.value ?: 0L,
-                keeperRunning = isKeeperTimerRunning,
-                matchActive = currentMatchId != null
-            )
+        bindService()
+    }
+
+    private fun bindService() {
+        Intent(getApplication(), MatchTimerService::class.java).also { intent ->
+            getApplication<Application>().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    private fun unbindService() {
+        if (isServiceBound) {
+            getApplication<Application>().unbindService(serviceConnection)
+            isServiceBound = false
         }
     }
 
@@ -164,11 +194,11 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
             ScoreUpdateEventBus.timerEvents.collect { event ->
                 when (event) {
                     is TimerEvent.Start -> {
-                        startMatchTimer()
+                        startStopMatchTimer()
                         addMatchEvent("Timer started from Wear OS")
                     }
                     is TimerEvent.Pause -> {
-                        pauseMatchTimer()
+                        startStopMatchTimer()
                         addMatchEvent("Timer paused from Wear OS")
                     }
                     is TimerEvent.Reset -> {
@@ -202,11 +232,9 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         _team1Score.value = 0
         _team2Score.value = 0
         _matchEvents.value = emptyList()
-        matchStartTime = System.currentTimeMillis()
         _matchTimerValue.value = 0L
-
-        matchTimer?.cancel()
         isMatchTimerRunning = false
+        matchTimerService?.stopTimer()
 
         addMatchEvent("New match ready - press START to begin")
         sendMatchStateUpdate(true)  // Sync match started
@@ -347,52 +375,19 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
 
     // --- Match Timer Management ---
     fun startStopMatchTimer() {
-        if (isMatchTimerRunning) {
-            pauseMatchTimer()
-        } else {
-            startMatchTimer()
-        }
-    }
-
-    private fun startMatchTimer() {
-        if (isMatchTimerRunning) return
-
-        matchTimer?.cancel()
-        isMatchTimerRunning = true
-
-        if (_matchTimerValue.value == 0L) {
-            matchStartTime = System.currentTimeMillis()
-        }
-
-        matchTimer = object : CountDownTimer(Long.MAX_VALUE, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                if (isMatchTimerRunning) {
-                    val elapsedTime = System.currentTimeMillis() - matchStartTime
-                    _matchTimerValue.postValue(elapsedTime)
-                }
+        if (isServiceBound) {
+            if (isMatchTimerRunning) {
+                matchTimerService?.pauseTimer()
+            } else {
+                matchTimerService?.startTimer()
             }
-
-            override fun onFinish() {}
-        }.start()
-
-        addMatchEvent("Match timer started")
-        sendTimerUpdate()  // Sync with Wear
-    }
-
-    private fun pauseMatchTimer() {
-        matchTimer?.cancel()
-        isMatchTimerRunning = false
-        addMatchEvent("Match paused")
-        sendTimerUpdate()  // Sync with Wear
+        }
     }
 
     fun resetMatchTimer() {
-        matchTimer?.cancel()
-        isMatchTimerRunning = false
-        matchStartTime = System.currentTimeMillis()
-        _matchTimerValue.value = 0L
-        addMatchEvent("Match timer reset")
-        sendTimerUpdate()  // Sync with Wear
+        if (isServiceBound) {
+            matchTimerService?.stopTimer()
+        }
     }
 
     // --- Keeper Timer Management ---
@@ -439,7 +434,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     // --- Match Events ---
     private fun addMatchEvent(event: String, team: Int? = null, player: String? = null, playerRole: String? = null) {
         val timeFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
-        val timestamp = timeFormat.format(Date(System.currentTimeMillis() - matchStartTime))
+        val timestamp = timeFormat.format(Date(_matchTimerValue.value ?: 0L))
 
         val matchEvent = MatchEvent(timestamp, event, team, player, playerRole)
         val currentEvents = _matchEvents.value?.toMutableList() ?: mutableListOf()
@@ -450,8 +445,8 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     // --- End Match ---
     fun endMatch() {
         viewModelScope.launch {
-            matchTimer?.cancel()
             isMatchTimerRunning = false
+            matchTimerService?.stopTimer()
 
             val matchId = matchDao.insert(
                 Match(
@@ -513,12 +508,6 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         )
     }
 
-    private fun sendTimerUpdate() {
-        wearDataSync.syncTimerState(
-            _matchTimerValue.value ?: 0L,
-            isMatchTimerRunning
-        )
-    }
     private fun sendMatchStateUpdate(isActive: Boolean) {
         wearDataSync.syncMatchState(isActive)
     }
@@ -582,9 +571,9 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     // --- Match Events ---
 
     override fun onCleared() {
-        matchTimer?.cancel()
         keeperTimer?.cancel()
         vibrator?.cancel()
+        unbindService()
         super.onCleared()
     }
 }
