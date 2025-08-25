@@ -9,7 +9,7 @@
     android:layout_margin="8dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="4dp"
-    app:cardBackgroundColor="@color/surface_variant_dark">
+    app:cardBackgroundColor="?attr/colorSurface">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -24,7 +24,7 @@
             android:background="@drawable/circle_background"
             android:gravity="center"
             android:text="A"
-            android:textColor="@color/white"
+            android:textColor="@color/stencil_white"
             android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -40,7 +40,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="8dp"
             android:text="Player Name"
-            android:textColor="@color/on_surface_light"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="16sp"
             android:textStyle="bold"
             android:maxLines="1"
@@ -74,7 +74,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="⚽ 0"
-                android:textColor="@color/team1_orange"
+                android:textColor="@color/team_spray_yellow"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 tools:text="⚽ 15" />
@@ -85,7 +85,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:text="🎮 0"
-                android:textColor="@color/team2_lime"
+                android:textColor="@color/team_electric_green"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 tools:text="🎮 10" />
@@ -99,7 +99,7 @@
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_stats"
-            app:tint="@color/action_blue"
+            app:tint="?attr/colorSecondary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />

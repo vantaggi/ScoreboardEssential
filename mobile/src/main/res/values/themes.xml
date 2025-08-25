@@ -1,32 +1,54 @@
 <resources>
     <!-- Base application theme. -->
     <style name="Theme.ScoreboardEssential" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/surface</item>
-        <item name="colorPrimaryVariant">@color/surface_dark</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/action_blue</item>
-        <item name="colorSecondaryVariant">@color/action_blue</item>
-        <item name="colorOnSecondary">@color/white</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+        <!-- Street Vibe Color Palette -->
+        <item name="colorPrimary">@color/graffiti_pink</item>
+        <item name="colorOnPrimary">@color/stencil_white</item>
+        <item name="colorSecondary">@color/neon_cyan</item>
+        <item name="colorOnSecondary">@color/stencil_white</item>
+        <item name="colorError">@color/error_red</item>
+        <item name="colorOnError">@color/stencil_white</item>
+        <item name="android:colorBackground">@color/asphalt_dark</item>
+        <item name="colorSurface">@color/concrete_gray</item>
+        <item name="colorOnSurface">@color/stencil_white</item>
+        <item name="colorOnSurfaceVariant">@color/sidewalk_gray</item>
+
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">@color/asphalt_dark</item>
+
+        <!-- Street Vibe Typeface References -->
+        <item name="textAppearanceDisplayLarge">@style/TextAppearance.App.DisplayLarge.Street</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.App.HeadlineMedium.Street</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.App.BodyLarge.Street</item>
+
+        <!-- Street Vibe Shape References -->
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.App.StreetCard</item>
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.App.StreetButton</item>
     </style>
 
     <style name="Theme.ScoreboardEssential.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-    <style name="TextAppearance.Scoreboard.Score" parent="TextAppearance.Material3.DisplayLarge">
+    <!-- Street Vibe Type and Shape -->
+    <style name="TextAppearance.App.DisplayLarge.Street" parent="TextAppearance.Material3.DisplayLarge">
         <item name="android:fontFamily">sans-serif-condensed</item>
-        <item name="android:textSize">96sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+    <style name="TextAppearance.App.HeadlineMedium.Street" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+    <style name="TextAppearance.App.BodyLarge.Street" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">sans-serif-condensed</item>
     </style>
 
-    <style name="TextAppearance.Scoreboard.TeamName" parent="TextAppearance.Material3.HeadlineMedium">
-        <item name="android:fontFamily">sans-serif-condensed</item>
+    <style name="ShapeAppearance.App.StreetCard" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">cut</item>
+        <item name="cornerSize">12dp</item>
     </style>
-
-    <style name="Widget.Scoreboard.Button" parent="Widget.Material3.Button">
-        <item name="android:backgroundTint">@color/accent</item>
-        <item name="android:textColor">@color/white</item>
+    <style name="ShapeAppearance.App.StreetButton" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerFamily">cut</item>
+        <item name="cornerSize">8dp</item>
     </style>
 </resources>

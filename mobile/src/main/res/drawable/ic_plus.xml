@@ -1,10 +1,9 @@
-<!-- mobile/src/main/res/drawable/ic_plus.xml -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <path
-        android:fillColor="@android:color/white"
-        android:pathData="M19,13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+  <path
+      android:fillColor="?attr/colorOnSurface"
+      android:pathData="M19,13h-5.5v5.5h-3V13H5v-3h5.5V4.5h3V10H19v3z"/>
 </vector>

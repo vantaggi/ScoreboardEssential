@@ -9,7 +9,7 @@
     android:layout_marginHorizontal="4dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp"
-    app:cardBackgroundColor="@color/surface_variant_dark">
+    app:cardBackgroundColor="?attr/colorSurface">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,7 +22,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Player Name"
-            android:textColor="@color/on_surface_light"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="14sp"
             android:textStyle="bold"/>
 
@@ -37,7 +37,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Goals: 0"
-            android:textColor="@color/action_blue"
+            android:textColor="?attr/colorSecondary"
             android:textSize="12sp"
             android:textStyle="bold"
             android:layout_marginTop="4dp"/>
