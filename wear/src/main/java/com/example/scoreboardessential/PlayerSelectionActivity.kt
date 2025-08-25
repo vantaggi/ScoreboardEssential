@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 
 data class WearPlayer(
     val name: String,
-    val role: String
+    val roles: List<String>
 )
 
 class PlayerSelectionActivity : ComponentActivity() {
@@ -47,11 +47,10 @@ class PlayerSelectionActivity : ComponentActivity() {
         adapter = PlayerAdapter { player ->
             selectPlayer(player)
         }
-        
+
         playerList.layoutManager = WearableLinearLayoutManager(this)
         playerList.adapter = adapter
-        
-        // Enable edge items scaling for better Wear OS experience
+
         playerList.isEdgeItemsCenteringEnabled = true
     }
 
@@ -59,13 +58,10 @@ class PlayerSelectionActivity : ComponentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.allPlayers.collect { playerData ->
-                    // Convert PlayerData to WearPlayer for compatibility with existing adapter
                     val wearPlayers = playerData.map { player ->
-                        WearPlayer(player.name, player.role)
+                        WearPlayer(player.name, player.roles)
                     }
                     adapter.submitList(wearPlayers)
-                    
-                    // Log for debugging
                     Log.d("PlayerSelection", "Loaded ${wearPlayers.size} players from mobile app")
                 }
             }
@@ -73,8 +69,8 @@ class PlayerSelectionActivity : ComponentActivity() {
     }
 
     private fun selectPlayer(player: WearPlayer) {
-        // Send scorer information to mobile app
-        val message = "${player.name}|${player.role}|$teamNumber"
+        val rolesString = player.roles.joinToString(",")
+        val message = "${player.name}|$rolesString|$teamNumber"
         sendMessageToMobile("/scorer_selected", message)
         finish()
     }
@@ -89,36 +85,36 @@ class PlayerSelectionActivity : ComponentActivity() {
     }
 }
 
-class PlayerAdapter(private val onPlayerClick: (WearPlayer) -> Unit) : 
+class PlayerAdapter(private val onPlayerClick: (WearPlayer) -> Unit) :
     RecyclerView.Adapter<PlayerAdapter.PlayerViewHolder>() {
-    
+
     private var players: List<WearPlayer> = emptyList()
-    
+
     fun submitList(newPlayers: List<WearPlayer>) {
         players = newPlayers
         notifyDataSetChanged()
     }
-    
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlayerViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_player_wear, parent, false)
         return PlayerViewHolder(view)
     }
-    
+
     override fun onBindViewHolder(holder: PlayerViewHolder, position: Int) {
         holder.bind(players[position], onPlayerClick)
     }
-    
+
     override fun getItemCount() = players.size
-    
+
     class PlayerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val playerName: TextView = itemView.findViewById(R.id.player_name)
         private val playerRole: TextView = itemView.findViewById(R.id.player_role)
-        
+
         fun bind(player: WearPlayer, onPlayerClick: (WearPlayer) -> Unit) {
             playerName.text = player.name
-            playerRole.text = player.role
-            
+            playerRole.text = player.roles.joinToString(", ").ifEmpty { "No role" }
+
             itemView.setOnClickListener {
                 onPlayerClick(player)
             }

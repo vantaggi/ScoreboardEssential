@@ -11,7 +11,6 @@ data class Player(
     @PrimaryKey(autoGenerate = true)
     val playerId: Int = 0,
     val playerName: String,
-    val roles: String,
     var appearances: Int,
     var goals: Int
 ) : Parcelable

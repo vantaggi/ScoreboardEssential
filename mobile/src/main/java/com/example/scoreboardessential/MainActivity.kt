@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.scoreboardessential.database.Player
+import com.example.scoreboardessential.database.PlayerWithRoles
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.skydoves.colorpickerview.ColorPickerView
@@ -104,8 +105,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupRecyclerViews() {
         // Team 1 Roster
-        team1RosterAdapter = TeamRosterAdapter { player ->
-            showRemovePlayerDialog(player, 1)
+        team1RosterAdapter = TeamRosterAdapter { playerWithRoles ->
+            showRemovePlayerDialog(playerWithRoles, 1)
         }
         team1RosterRecyclerView.apply {
             adapter = team1RosterAdapter
@@ -113,8 +114,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Team 2 Roster
-        team2RosterAdapter = TeamRosterAdapter { player ->
-            showRemovePlayerDialog(player, 2)
+        team2RosterAdapter = TeamRosterAdapter { playerWithRoles ->
+            showRemovePlayerDialog(playerWithRoles, 2)
         }
         team2RosterRecyclerView.apply {
             adapter = team2RosterAdapter
@@ -297,8 +298,8 @@ class MainActivity : AppCompatActivity() {
     private fun showAddPlayerToTeamDialog(team: Int) {
         val allPlayers = viewModel.allPlayers.value ?: emptyList()
         val teamPlayers = if (team == 1) viewModel.team1Players.value else viewModel.team2Players.value
-        val availablePlayers = allPlayers.filter { player ->
-            teamPlayers?.none { it.playerId == player.playerId } ?: true
+        val availablePlayers = allPlayers.filter { playerWithRoles ->
+            teamPlayers?.none { it.player.playerId == playerWithRoles.player.playerId } ?: true
         }
 
         if (availablePlayers.isEmpty()) {
@@ -312,7 +313,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val playerNames = availablePlayers.map { it.playerName }.toTypedArray()
+        val playerNames = availablePlayers.map { it.player.playerName }.toTypedArray()
         MaterialAlertDialogBuilder(this)
             .setTitle("Add Player to Team $team")
             .setItems(playerNames) { _, which ->
@@ -321,7 +322,7 @@ class MainActivity : AppCompatActivity() {
                 val teamName = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
                 Snackbar.make(
                     findViewById(android.R.id.content),
-                    "${selectedPlayer.playerName} added to $teamName",
+                    "${selectedPlayer.player.playerName} added to $teamName",
                     Snackbar.LENGTH_SHORT
                 ).show()
             }
@@ -329,16 +330,16 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showRemovePlayerDialog(player: Player, team: Int) {
+    private fun showRemovePlayerDialog(playerWithRoles: PlayerWithRoles, team: Int) {
         val teamName = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
         MaterialAlertDialogBuilder(this)
             .setTitle("Remove Player?")
-            .setMessage("Remove ${player.playerName} from $teamName?")
+            .setMessage("Remove ${playerWithRoles.player.playerName} from $teamName?")
             .setPositiveButton("Remove") { _, _ ->
-                viewModel.removePlayerFromTeam(player, team)
+                viewModel.removePlayerFromTeam(playerWithRoles, team)
                 Snackbar.make(
                     findViewById(android.R.id.content),
-                    "${player.playerName} removed from $teamName",
+                    "${playerWithRoles.player.playerName} removed from $teamName",
                     Snackbar.LENGTH_SHORT
                 ).show()
             }
@@ -359,15 +360,15 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val playerNames = players.map { it.playerName }.toTypedArray()
+        val playerNames = players.map { it.player.playerName }.toTypedArray()
         MaterialAlertDialogBuilder(this)
             .setTitle("Who scored?")
             .setItems(playerNames) { _, which ->
                 val scorer = players[which]
-                viewModel.addScorer(team, scorer.playerName)
+                viewModel.addScorer(team, scorer.player.playerName)
                 Snackbar.make(
                     findViewById(android.R.id.content),
-                    "⚽ Goal by ${scorer.playerName}!",
+                    "⚽ Goal by ${scorer.player.playerName}!",
                     Snackbar.LENGTH_SHORT
                 ).show()
             }

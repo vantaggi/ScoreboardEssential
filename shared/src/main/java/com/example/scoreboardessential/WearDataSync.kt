@@ -16,7 +16,7 @@ import android.util.Log
 data class PlayerData(
     val id: Int,
     val name: String,
-    val role: String,
+    val roles: List<String>,
     val goals: Int = 0,
     val appearances: Int = 0
 )
@@ -172,8 +172,9 @@ class WearDataSync(private val context: Context) {
     }
 
     // --- Player/Scorer Synchronization ---
-    fun syncScorerSelected(playerName: String, role: String, team: Int) {
-        val message = "$playerName|$role|$team"
+    fun syncScorerSelected(playerName: String, roles: List<String>, team: Int) {
+        val rolesString = roles.joinToString(",")
+        val message = "$playerName|$rolesString|$team"
         sendImmediateMessage(MSG_SCORER_SELECTED, message)
     }
 
@@ -185,7 +186,7 @@ class WearDataSync(private val context: Context) {
         players.forEach { player ->
             val playerMap = DataMap().apply {
                 putString("name", player.name)
-                putString("role", player.role)
+                putStringArrayList("roles", ArrayList(player.roles))
                 putInt("id", player.id)
                 putInt("goals", player.goals)
                 putInt("appearances", player.appearances)
@@ -215,7 +216,7 @@ class WearDataSync(private val context: Context) {
         team1Players.forEach { player ->
             val playerMap = DataMap().apply {
                 putString("name", player.name)
-                putString("role", player.role)
+                putStringArrayList("roles", ArrayList(player.roles))
                 putInt("id", player.id)
                 putInt("goals", player.goals)
                 putInt("appearances", player.appearances)
@@ -228,7 +229,7 @@ class WearDataSync(private val context: Context) {
         team2Players.forEach { player ->
             val playerMap = DataMap().apply {
                 putString("name", player.name)
-                putString("role", player.role)
+                putStringArrayList("roles", ArrayList(player.roles))
                 putInt("id", player.id)
                 putInt("goals", player.goals)
                 putInt("appearances", player.appearances)

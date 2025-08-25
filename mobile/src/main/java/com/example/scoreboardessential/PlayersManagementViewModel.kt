@@ -5,7 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.scoreboardessential.database.AppDatabase
 import com.example.scoreboardessential.database.Player
-import com.example.scoreboardessential.database.PlayerDao
+import com.example.scoreboardessential.database.PlayerWithRoles
+import com.example.scoreboardessential.database.Role
+import com.example.scoreboardessential.repository.PlayerRepository
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,22 +22,27 @@ enum class SortOrder {
 
 class PlayersManagementViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val playerDao: PlayerDao = AppDatabase.getDatabase(application).playerDao()
+    private val playerRepository: PlayerRepository
 
-    private val _players = MutableStateFlow<List<Player>>(emptyList())
-    val players: StateFlow<List<Player>> = _players.asStateFlow()
+    private val _players = MutableStateFlow<List<PlayerWithRoles>>(emptyList())
+    val players: StateFlow<List<PlayerWithRoles>> = _players.asStateFlow()
+
+    val allRoles: Flow<List<Role>>
 
     private var currentSortOrder = SortOrder.NAME_ASC
-    private var allPlayers: List<Player> = emptyList()
+    private var allPlayersInternal: List<PlayerWithRoles> = emptyList()
 
     init {
+        val playerDao = AppDatabase.getDatabase(application).playerDao()
+        playerRepository = PlayerRepository(playerDao)
+        allRoles = playerRepository.allRoles
         loadPlayers()
     }
 
     private fun loadPlayers() {
         viewModelScope.launch {
-            playerDao.getAllPlayers().collect { playersList ->
-                allPlayers = playersList
+            playerRepository.allPlayers.collect { playersList ->
+                allPlayersInternal = playersList
                 applySorting()
             }
         }
@@ -42,39 +50,38 @@ class PlayersManagementViewModel(application: Application) : AndroidViewModel(ap
 
     private fun applySorting() {
         _players.value = when (currentSortOrder) {
-            SortOrder.NAME_ASC -> allPlayers.sortedBy { it.playerName.lowercase() }
-            SortOrder.GOALS_DESC -> allPlayers.sortedByDescending { it.goals }
-            SortOrder.APPEARANCES_DESC -> allPlayers.sortedByDescending { it.appearances }
+            SortOrder.NAME_ASC -> allPlayersInternal.sortedBy { it.player.playerName.lowercase() }
+            SortOrder.GOALS_DESC -> allPlayersInternal.sortedByDescending { it.player.goals }
+            SortOrder.APPEARANCES_DESC -> allPlayersInternal.sortedByDescending { it.player.appearances }
         }
     }
 
-    fun createPlayer(name: String, roles: String) {
+    fun createPlayer(name: String, roleIds: List<Int>) {
         viewModelScope.launch {
             val player = Player(
                 playerName = name,
-                roles = roles,
                 appearances = 0,
                 goals = 0
             )
-            playerDao.insert(player)
+            playerRepository.insertPlayerWithRoles(player, roleIds)
         }
     }
 
-    fun updatePlayer(player: Player) {
+    fun updatePlayer(player: Player, roleIds: List<Int>) {
         viewModelScope.launch {
-            playerDao.update(player)
+            playerRepository.updatePlayerWithRoles(player, roleIds)
         }
     }
 
-    fun deletePlayer(player: Player) {
+    fun deletePlayer(playerWithRoles: PlayerWithRoles) {
         viewModelScope.launch {
-            playerDao.delete(player)
+            playerRepository.deletePlayer(playerWithRoles.player)
         }
     }
 
-    fun restorePlayer(player: Player) {
+    fun restorePlayer(player: Player, roleIds: List<Int>) {
         viewModelScope.launch {
-            playerDao.insert(player)
+            playerRepository.insertPlayerWithRoles(player, roleIds)
         }
     }
 

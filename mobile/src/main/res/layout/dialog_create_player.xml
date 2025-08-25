@@ -22,21 +22,33 @@
             android:maxLines="1"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <com.google.android.material.textfield.TextInputLayout
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Roles"
+        android:textAppearance="?attr/textAppearanceLabelLarge" />
+
+    <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:hint="Roles (e.g., Striker, Defender)"
-        app:boxBackgroundMode="outline"
-        app:boxStrokeColor="@color/action_blue"
-        app:hintTextColor="@color/action_blue">
+        android:layout_marginTop="8dp"
+        android:scrollbars="none">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/player_roles_input"
-            android:layout_width="match_parent"
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/roles_chip_group"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="text"
-            android:maxLines="1"/>
-    </com.google.android.material.textfield.TextInputLayout>
+            app:singleLine="true" />
+    </HorizontalScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/select_roles_button"
+        style="?attr/materialButtonOutlinedStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Select Roles"
+        app:icon="@drawable/ic_edit" />
 
 </LinearLayout>

@@ -8,15 +8,15 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.scoreboardessential.database.Player
+import com.example.scoreboardessential.database.PlayerWithRoles
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 
 class PlayersManagementAdapter(
-    private val onPlayerClick: (Player) -> Unit,
-    private val onStatsClick: (Player) -> Unit
-) : ListAdapter<Player, PlayersManagementAdapter.PlayerViewHolder>(PlayerDiffCallback()) {
+    private val onPlayerClick: (PlayerWithRoles) -> Unit,
+    private val onStatsClick: (PlayerWithRoles) -> Unit
+) : ListAdapter<PlayerWithRoles, PlayersManagementAdapter.PlayerViewHolder>(PlayerDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlayerViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -30,8 +30,8 @@ class PlayersManagementAdapter(
 
     class PlayerViewHolder(
         itemView: View,
-        private val onPlayerClick: (Player) -> Unit,
-        private val onStatsClick: (Player) -> Unit
+        private val onPlayerClick: (PlayerWithRoles) -> Unit,
+        private val onStatsClick: (PlayerWithRoles) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
 
         private val cardView: MaterialCardView = itemView.findViewById(R.id.player_card)
@@ -42,14 +42,15 @@ class PlayersManagementAdapter(
         private val statsButton: ImageButton = itemView.findViewById(R.id.stats_button)
         private val avatarTextView: TextView = itemView.findViewById(R.id.player_avatar)
 
-        fun bind(player: Player) {
+        fun bind(playerWithRoles: PlayerWithRoles) {
+            val player = playerWithRoles.player
             nameTextView.text = player.playerName
 
             rolesChipGroup.removeAllViews()
-            if (player.roles.isNotBlank()) {
-                player.roles.split(",").map { it.trim() }.forEach { role ->
+            if (playerWithRoles.roles.isNotEmpty()) {
+                playerWithRoles.roles.forEach { role ->
                     val chip = Chip(itemView.context).apply {
-                        text = role
+                        text = role.name
                     }
                     rolesChipGroup.addView(chip)
                 }
@@ -59,40 +60,32 @@ class PlayersManagementAdapter(
                 }
                 rolesChipGroup.addView(chip)
             }
-            
+
             goalsTextView.text = "⚽ ${player.goals}"
             appearancesTextView.text = "🎮 ${player.appearances}"
 
-            // Set avatar with first letter of name
             avatarTextView.text = player.playerName.firstOrNull()?.uppercase() ?: "?"
 
-            // Generate a color based on the name for the avatar background
             val colors = itemView.context.resources.getIntArray(R.array.avatar_colors)
             val colorIndex = Math.abs(player.playerName.hashCode()) % colors.size
             avatarTextView.setBackgroundColor(colors[colorIndex])
 
             cardView.setOnClickListener {
-                onPlayerClick(player)
+                onPlayerClick(playerWithRoles)
             }
 
             statsButton.setOnClickListener {
-                onStatsClick(player)
+                onStatsClick(playerWithRoles)
             }
         }
     }
 
-    class PlayerDiffCallback : DiffUtil.ItemCallback<Player>() {
-        override fun areItemsTheSame(
-            oldItem: Player,
-            newItem: Player
-        ): Boolean {
-            return oldItem.playerId == newItem.playerId
+    class PlayerDiffCallback : DiffUtil.ItemCallback<PlayerWithRoles>() {
+        override fun areItemsTheSame(oldItem: PlayerWithRoles, newItem: PlayerWithRoles): Boolean {
+            return oldItem.player.playerId == newItem.player.playerId
         }
 
-        override fun areContentsTheSame(
-            oldItem: Player,
-            newItem: Player
-        ): Boolean {
+        override fun areContentsTheSame(oldItem: PlayerWithRoles, newItem: PlayerWithRoles): Boolean {
             return oldItem == newItem
         }
     }

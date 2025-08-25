@@ -6,11 +6,11 @@ import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.scoreboardessential.database.Player
+import com.example.scoreboardessential.database.PlayerWithRoles
 import com.example.scoreboardessential.databinding.PlayerItemBinding
 
-class PlayerRosterAdapter(private val onPlayerClicked: (Player) -> Unit) :
-    ListAdapter<Player, PlayerRosterAdapter.PlayerViewHolder>(PlayerDiffCallback) {
+class PlayerRosterAdapter(private val onPlayerClicked: (PlayerWithRoles) -> Unit) :
+    ListAdapter<PlayerWithRoles, PlayerRosterAdapter.PlayerViewHolder>(PlayerDiffCallback) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlayerViewHolder {
         val binding: PlayerItemBinding = DataBindingUtil.inflate(
@@ -32,19 +32,19 @@ class PlayerRosterAdapter(private val onPlayerClicked: (Player) -> Unit) :
 
     class PlayerViewHolder(private val binding: PlayerItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
-        fun bind(player: Player) {
+        fun bind(player: PlayerWithRoles) {
             binding.player = player
             binding.executePendingBindings()
         }
     }
 }
 
-object PlayerDiffCallback : DiffUtil.ItemCallback<Player>() {
-    override fun areItemsTheSame(oldItem: Player, newItem: Player): Boolean {
-        return oldItem.playerId == newItem.playerId
+object PlayerDiffCallback : DiffUtil.ItemCallback<PlayerWithRoles>() {
+    override fun areItemsTheSame(oldItem: PlayerWithRoles, newItem: PlayerWithRoles): Boolean {
+        return oldItem.player.playerId == newItem.player.playerId
     }
 
-    override fun areContentsTheSame(oldItem: Player, newItem: Player): Boolean {
+    override fun areContentsTheSame(oldItem: PlayerWithRoles, newItem: PlayerWithRoles): Boolean {
         return oldItem == newItem
     }
 }
