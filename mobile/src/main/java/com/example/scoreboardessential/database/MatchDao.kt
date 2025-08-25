@@ -26,4 +26,7 @@ interface MatchDao {
 
     @Delete
     suspend fun delete(match: Match)
+
+    @Query("SELECT * FROM matches WHERE isActive = 1 LIMIT 1")
+    fun getActiveMatch(): Flow<Match?>
 }
