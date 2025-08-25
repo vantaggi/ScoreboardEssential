@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface_dark">
+    android:background="@color/background">
 
     <TextView
         android:id="@+id/title"
@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:text="MATCH CONTROL"
-        android:textColor="@color/action_blue"
+        android:textColor="?android:attr/textColorPrimary"
         android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
@@ -34,8 +34,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="START NEW MATCH"
-            android:textColor="@color/white"
-            android:backgroundTint="@color/team1_orange"
+            android:textColor="@color/on_primary"
+            android:backgroundTint="@color/primary"
             android:layout_marginBottom="16dp"
             style="@style/Widget.Material3.Button"/>
 
@@ -44,8 +44,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="END CURRENT MATCH"
-            android:textColor="@color/white"
-            android:backgroundTint="@color/team2_lime"
+            android:textColor="@color/on_secondary"
+            android:backgroundTint="@color/secondary"
             android:layout_marginBottom="16dp"
             style="@style/Widget.Material3.Button"/>
 
@@ -54,7 +54,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="RESET TIMER"
-            android:textColor="@color/action_blue"
             android:backgroundTint="@android:color/transparent"
             style="@style/Widget.Material3.Button.OutlinedButton"/>
 
@@ -65,7 +64,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:text="Swipe right to return"
-        android:textColor="@color/on_surface_variant_light"
+        android:textColor="?android:attr/textColorSecondary"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
