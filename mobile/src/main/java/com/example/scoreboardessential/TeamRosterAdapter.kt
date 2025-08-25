@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.scoreboardessential.database.PlayerWithRoles
 import com.google.android.material.card.MaterialCardView
 
+import com.example.scoreboardessential.views.RoleBadgeGroup
+
 class TeamRosterAdapter(
     private val onPlayerClick: (PlayerWithRoles) -> Unit
 ) : ListAdapter<PlayerWithRoles, TeamRosterAdapter.PlayerViewHolder>(PlayerDiffCallback()) {
@@ -31,14 +33,12 @@ class TeamRosterAdapter(
 
         private val playerCard: MaterialCardView = itemView.findViewById(R.id.player_card)
         private val playerNameTextView: TextView = itemView.findViewById(R.id.player_name)
-        private val playerRoleTextView: TextView = itemView.findViewById(R.id.player_role)
-        private val playerStatsTextView: TextView = itemView.findViewById(R.id.player_stats)
+        private val playerRolesGroup: RoleBadgeGroup = itemView.findViewById(R.id.player_roles)
 
         fun bind(playerWithRoles: PlayerWithRoles) {
             val player = playerWithRoles.player
             playerNameTextView.text = player.playerName
-            playerRoleTextView.text = playerWithRoles.roles.joinToString(", ").ifEmpty { "Player" }
-            playerStatsTextView.text = "Goals: ${player.goals}"
+            playerRolesGroup.setRoles(playerWithRoles.roles)
 
             playerCard.setOnLongClickListener {
                 onPlayerClick(playerWithRoles)
