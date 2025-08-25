@@ -24,4 +24,10 @@
     <color name="surface_variant_dark">#2F3033</color>
     <color name="on_surface_light">#E3E3E3</color>
     <color name="on_surface_variant_light">#B5B5B5</color>
+
+    <!-- Role Category Colors (FC25 style) -->
+    <color name="role_attack">#FF5252</color>
+    <color name="role_midfield">#4CAF50</color>
+    <color name="role_defense">#2196F3</color>
+    <color name="role_goalkeeper">#FF9800</color>
 </resources>

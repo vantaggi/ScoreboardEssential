@@ -18,9 +18,10 @@ class RoleSelectionDialogFragment : DialogFragment() {
     private lateinit var roleAdapter: RoleSelectionAdapter
 
     private var initialSelection: List<Int> = emptyList()
+    private var listener: ((List<Int>) -> Unit)? = null
 
-    interface RoleSelectionListener {
-        fun onRolesSelected(selectedRoleIds: List<Int>)
+    fun setOnRolesSelectedListener(listener: (List<Int>) -> Unit) {
+        this.listener = listener
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +48,7 @@ class RoleSelectionDialogFragment : DialogFragment() {
             .setTitle("Select Roles")
             .setView(view)
             .setPositiveButton("OK") { _, _ ->
-                (activity as? RoleSelectionListener)?.onRolesSelected(roleAdapter.getSelectedRoleIds())
+                listener?.invoke(roleAdapter.getSelectedRoleIds())
             }
             .setNegativeButton("Cancel", null)
             .create()

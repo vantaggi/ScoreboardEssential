@@ -26,13 +26,10 @@
             android:textSize="14sp"
             android:textStyle="bold"/>
 
-        <TextView
-            android:id="@+id/player_role"
+        <com.example.scoreboardessential.views.RoleBadgeGroup
+            android:id="@+id/player_roles"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Role"
-            android:textColor="@color/on_surface_variant_light"
-            android:textSize="12sp"
             android:layout_marginTop="2dp"/>
 
         <TextView
