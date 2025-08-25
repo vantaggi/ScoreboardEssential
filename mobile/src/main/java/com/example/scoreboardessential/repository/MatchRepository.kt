@@ -63,24 +63,4 @@ class MatchRepository(
     suspend fun deleteMatch(match: Match) {
         matchDao.delete(match)
     }
-
-    fun getActiveMatch(): Flow<MatchWithTeams?> {
-        return matchDao.getActiveMatch()
-    }
-
-    suspend fun updateActiveMatch(matchId: Long) {
-        matchDao.updateActiveMatch(matchId)
-    }
-
-    suspend fun deactivateMatch(matchId: Long) {
-        matchDao.deactivateMatch(matchId)
-    }
-
-    suspend fun insertMatch(match: Match): Long {
-        return matchDao.insert(match)
-    }
-
-    suspend fun updateMatch(match: Match) {
-        matchDao.update(match)
-    }
 }
