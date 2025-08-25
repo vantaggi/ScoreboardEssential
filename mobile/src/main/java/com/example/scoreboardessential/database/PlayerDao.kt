@@ -5,10 +5,9 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
-
-import androidx.room.Transaction
 
 @Dao
 interface PlayerDao {
@@ -37,9 +36,7 @@ interface PlayerDao {
     @Transaction
     suspend fun updatePlayerWithRoles(player: Player, roleIds: List<Int>) {
         update(player)
-        // First, remove all existing roles for the player
         deleteAllRolesForPlayer(player.playerId)
-        // Then, add the new roles
         roleIds.forEach { roleId ->
             addRoleToPlayer(PlayerRoleCrossRef(player.playerId, roleId))
         }

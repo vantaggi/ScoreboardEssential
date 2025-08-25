@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
         <variable
@@ -8,32 +8,75 @@
             type="com.example.scoreboardessential.database.PlayerWithRoles" />
     </data>
 
-    <LinearLayout
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="4dp"
+        app:cardElevation="2dp">
 
-        <TextView
-            android:id="@+id/player_name_textview"
-            android:layout_width="wrap_content"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@{player.player.playerName}"
-            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+            android:padding="12dp">
 
-        <TextView
-            android:id="@+id/player_roles_textview"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:roles="@{player.roles}"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+            <TextView
+                android:id="@+id/player_avatar_textview"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/circle_background"
+                android:gravity="center"
+                android:text="@{String.valueOf(player.player.playerName.charAt(0))}"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="P" />
 
-        <TextView
-            android:id="@+id/player_stats_textview"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@{`Apps: ` + player.player.appearances + `, Goals: ` + player.player.goals}"
-            android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+            <TextView
+                android:id="@+id/player_name_textview"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="@{player.player.playerName}"
+                android:textAppearance="?attr/textAppearanceListItem"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toStartOf="@+id/player_stats_textview"
+                app:layout_constraintStart_toEndOf="@id/player_avatar_textview"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Player Name" />
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/player_roles_textview"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@{player.getRolesText()}"
+                android:textAppearance="?attr/textAppearanceListItemSecondary"
+                android:textSize="14sp"
+                app:layout_constraintEnd_toEndOf="@+id/player_name_textview"
+                app:layout_constraintStart_toStartOf="@+id/player_name_textview"
+                app:layout_constraintTop_toBottomOf="@id/player_name_textview"
+                tools:text="Forward, Midfielder" />
+
+            <TextView
+                android:id="@+id/player_stats_textview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@{`Apps: ` + player.player.appearances + `, Goals: ` + player.player.goals}"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Apps: 10, Goals: 5" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
 </layout>

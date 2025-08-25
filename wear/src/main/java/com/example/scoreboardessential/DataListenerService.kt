@@ -169,7 +169,7 @@ class DataListenerService : WearableListenerService() {
                                         PlayerData(
                                             id = playerMap.getInt("id", 0),
                                             name = playerMap.getString("name", ""),
-                                            role = playerMap.getString("role", ""),
+                                            roles = playerMap.getStringArrayList("roles") ?: emptyList(),
                                             goals = playerMap.getInt("goals", 0),
                                             appearances = playerMap.getInt("appearances", 0)
                                         )
@@ -192,7 +192,7 @@ class DataListenerService : WearableListenerService() {
                                         PlayerData(
                                             id = playerMap.getInt("id", 0),
                                             name = playerMap.getString("name", ""),
-                                            role = playerMap.getString("role", ""),
+                                            roles = playerMap.getStringArrayList("roles") ?: emptyList(),
                                             goals = playerMap.getInt("goals", 0),
                                             appearances = playerMap.getInt("appearances", 0)
                                         )
@@ -202,7 +202,7 @@ class DataListenerService : WearableListenerService() {
                                         PlayerData(
                                             id = playerMap.getInt("id", 0),
                                             name = playerMap.getString("name", ""),
-                                            role = playerMap.getString("role", ""),
+                                            roles = playerMap.getStringArrayList("roles") ?: emptyList(),
                                             goals = playerMap.getInt("goals", 0),
                                             appearances = playerMap.getInt("appearances", 0)
                                         )
