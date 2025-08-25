@@ -11,9 +11,6 @@
         <include domain="database" path="match_database-wal" />
         <include domain="sharedpref" path="."/>
         <!-- Exclude temporary or sensitive data -->
-        <exclude domain="no-backup" path="."/>
-        <exclude domain="cache" path="."/>
-        <exclude domain="external" path="."/>
     </cloud-backup>
     <!--
     <device-transfer>
