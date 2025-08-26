@@ -5,13 +5,16 @@
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@drawable/bg_asphalt_main"
         tools:context=".PlayerRosterActivity">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/player_roster_recyclerview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            android:clipToPadding="false"
+            android:paddingBottom="88dp"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/add_player_fab"
@@ -19,7 +22,9 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
-            android:src="@android:drawable/ic_input_add"
+            app:srcCompat="@drawable/ic_person_add"
+            app:backgroundTint="?attr/colorSecondary"
+            app:tint="?attr/colorOnSecondary"
             app:layout_anchor="@id/player_roster_recyclerview"
             app:layout_anchorGravity="bottom|end" />
 

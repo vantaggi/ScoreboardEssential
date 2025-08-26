@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background">
+    android:background="@drawable/bg_asphalt_main">
 
     <TextView
         android:id="@+id/title"
@@ -11,9 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:text="MATCH CONTROL"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="16sp"
-        android:textStyle="bold"
+        android:textAppearance="?attr/textAppearanceHeadlineMedium"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -34,8 +32,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="START NEW MATCH"
-            android:textColor="@color/on_primary"
-            android:backgroundTint="@color/primary"
             android:layout_marginBottom="16dp"
             style="@style/Widget.Material3.Button"/>
 
@@ -44,8 +40,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="END CURRENT MATCH"
-            android:textColor="@color/on_secondary"
-            android:backgroundTint="@color/secondary"
             android:layout_marginBottom="16dp"
             style="@style/Widget.Material3.Button"/>
 
@@ -54,7 +48,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="RESET TIMER"
-            android:backgroundTint="@android:color/transparent"
             style="@style/Widget.Material3.Button.OutlinedButton"/>
 
     </LinearLayout>
@@ -64,8 +57,8 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:text="Swipe right to return"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="12sp"
+        android:textAppearance="?attr/textAppearanceLabelSmall"
+        android:textColor="?attr/colorOnSurfaceVariant"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

@@ -1,11 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background">#121212</color>
-    <color name="surface">#1E1E1E</color>
-    <color name="primary">#F50057</color>
-    <color name="on_primary">#E0E0E0</color>
-    <color name="secondary">#00E5FF</color>
-    <color name="on_secondary">#121212</color>
-    <color name="team1_color">#FFD600</color>
-    <color name="team2_color">#76FF03</color>
+    <color name="asphalt_dark">#121212</color>
+    <color name="concrete_gray">#1E1E1E</color>
+    <color name="stencil_white">#E0E0E0</color>
+    <color name="sidewalk_gray">#9E9E9E</color>
+    <color name="graffiti_pink">#F50057</color>
+    <color name="neon_cyan">#00E5FF</color>
+    <color name="team_spray_yellow">#FFD600</color>
+    <color name="team_electric_green">#76FF03</color>
+    <color name="error_red">#FF1744</color>
+
+    <!-- Previous semantic aliases for wear theme, now mapped to the new palette -->
+    <color name="background">@color/asphalt_dark</color>
+    <color name="surface">@color/concrete_gray</color>
+    <color name="primary">@color/graffiti_pink</color>
+    <color name="on_primary">@color/stencil_white</color>
+    <color name="secondary">@color/neon_cyan</color>
+    <color name="on_secondary">@color/asphalt_dark</color>
+    <color name="team1_color">@color/team_spray_yellow</color>
+    <color name="team2_color">@color/team_electric_green</color>
 </resources>

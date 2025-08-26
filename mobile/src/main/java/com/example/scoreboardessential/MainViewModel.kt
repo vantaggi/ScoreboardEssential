@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.delay
+import android.util.Log
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -571,9 +572,21 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     // --- Match Events ---
 
     override fun onCleared() {
+        // IMPORTANTE: Prima cancella i timer, poi unbind il service
         keeperTimer?.cancel()
         vibrator?.cancel()
-        unbindService()
+
+        // Fix: Assicurarsi che il service venga sempre unbind
+        try {
+            if (isServiceBound) {
+                matchTimerService?.stopTimer()
+                getApplication<Application>().unbindService(serviceConnection)
+                isServiceBound = false
+            }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Error unbinding service", e)
+        }
+
         super.onCleared()
     }
 }

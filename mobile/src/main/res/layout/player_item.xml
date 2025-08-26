@@ -9,17 +9,20 @@
     </data>
 
     <com.google.android.material.card.MaterialCardView
+        style="?attr/materialCardViewElevatedStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="4dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="4dp"
+        app:cardBackgroundColor="@android:color/transparent"
         app:cardElevation="2dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/bg_concrete_card"
             android:padding="12dp">
 
             <TextView
@@ -29,9 +32,8 @@
                 android:background="@drawable/circle_background"
                 android:gravity="center"
                 android:text="@{String.valueOf(player.player.playerName.charAt(0))}"
-                android:textColor="@android:color/white"
-                android:textSize="20sp"
-                android:textStyle="bold"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textColor="?attr/colorOnPrimary"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -43,9 +45,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:text="@{player.player.playerName}"
-                android:textAppearance="?attr/textAppearanceListItem"
-                android:textSize="16sp"
-                android:textStyle="bold"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
                 app:layout_constraintEnd_toStartOf="@+id/player_stats_textview"
                 app:layout_constraintStart_toEndOf="@id/player_avatar_textview"
                 app:layout_constraintTop_toTopOf="parent"
@@ -57,8 +57,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:text="@{player.getRolesText()}"
-                android:textAppearance="?attr/textAppearanceListItemSecondary"
-                android:textSize="14sp"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 app:layout_constraintEnd_toEndOf="@+id/player_name_textview"
                 app:layout_constraintStart_toStartOf="@+id/player_name_textview"
                 app:layout_constraintTop_toBottomOf="@id/player_name_textview"
@@ -69,9 +69,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@{`Apps: ` + player.player.appearances + `, Goals: ` + player.player.goals}"
-                android:textAppearance="?attr/textAppearanceBody2"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp"
+                android:textAppearance="?attr/textAppearanceLabelMedium"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"

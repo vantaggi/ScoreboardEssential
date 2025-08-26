@@ -24,8 +24,8 @@
                 android:id="@+id/timer_card"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                style="?attr/materialCardViewElevatedStyle"
                 app:cardBackgroundColor="@android:color/transparent"
-                app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -43,16 +43,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="MATCH TIME"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="12sp"
-                        android:letterSpacing="0.1"/>
+                        android:textAppearance="?attr/textAppearanceLabelMedium" />
 
                     <TextView
                         android:id="@+id/timer_textview"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="00:00"
-                        android:textAppearance="?attr/textAppearanceDisplayMedium"
+                        android:textAppearance="?attr/textAppearanceDisplayLarge"
                         android:layout_marginTop="4dp"/>
 
                     <TextView
@@ -60,9 +58,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="05:00"
+                        android:textAppearance="?attr/textAppearanceHeadlineSmall"
                         android:textColor="?attr/colorPrimary"
-                        android:textSize="24sp"
-                        android:fontFamily="sans-serif-condensed"
                         android:layout_marginTop="8dp"
                         android:visibility="visible"/>
 
@@ -86,8 +83,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="RESET"
-                            android:onClick="resetTimer"
-                            android:textColor="?attr/colorSecondary"/>
+                            android:onClick="resetTimer"/>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -96,7 +92,7 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/score_section"
                 android:layout_width="0dp"
-                android:layout_height="280dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:layout_constraintTop_toBottomOf="@id/timer_card"
                 app:layout_constraintStart_toStartOf="parent"
@@ -105,12 +101,13 @@
                 <!-- Team 1 Side -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/team1_card"
+                    style="?attr/materialCardViewElevatedStyle"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="0dp"
                     app:cardBackgroundColor="@android:color/transparent"
-                    app:cardCornerRadius="16dp"
                     app:cardElevation="8dp"
                     android:layout_marginEnd="8dp"
+                    app:layout_constraintDimensionRatio="1:1.2"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -137,10 +134,8 @@
                                 android:layout_height="wrap_content"
                                 android:text="TEAM 1"
                                 android:textAlignment="center"
-                                android:textColor="?attr/colorOnPrimaryContainer"
-                                android:textStyle="bold"
-                                android:textSize="18sp"
-                                android:background="?android:attr/colorBackground"/>
+                                android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                                android:background="@android:color/transparent"/>
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <TextView
@@ -150,15 +145,12 @@
                             android:layout_weight="1"
                             android:text="0"
                             android:gravity="center"
-                            android:textColor="?attr/colorOnPrimaryContainer"
-                            android:textSize="72sp"
-                            android:fontFamily="sans-serif-condensed"
-                            android:textStyle="bold"
+                            android:textAppearance="?attr/textAppearanceDisplayLarge"
+                            android:textColor="?attr/colorPrimary"
                             android:shadowColor="?attr/colorOnSurface"
                             android:shadowDx="2"
                             android:shadowDy="2"
-                            android:shadowRadius="4"
-                            android:visibility="visible"/>
+                            android:shadowRadius="4"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -173,7 +165,6 @@
                                 android:layout_width="48dp"
                                 android:layout_height="48dp"
                                 app:icon="@drawable/ic_minus"
-                                app:iconTint="?attr/colorOnPrimaryContainer"
                                 android:layout_marginEnd="16dp"/>
 
                             <com.google.android.material.button.MaterialButton
@@ -181,9 +172,7 @@
                                 style="@style/Widget.Material3.Button.IconButton.Filled"
                                 android:layout_width="56dp"
                                 android:layout_height="56dp"
-                                app:icon="@drawable/ic_plus"
-                                app:iconTint="?attr/colorPrimaryContainer"
-                                app:backgroundTint="?attr/colorPrimary"/>
+                                app:icon="@drawable/ic_plus"/>
                         </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -191,12 +180,13 @@
                 <!-- Team 2 Side -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/team2_card"
+                    style="?attr/materialCardViewElevatedStyle"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="0dp"
                     app:cardBackgroundColor="@android:color/transparent"
-                    app:cardCornerRadius="16dp"
                     app:cardElevation="8dp"
                     android:layout_marginStart="8dp"
+                    app:layout_constraintDimensionRatio="1:1.2"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toEndOf="@id/guideline_center"
@@ -223,10 +213,8 @@
                                 android:layout_height="wrap_content"
                                 android:text="TEAM 2"
                                 android:textAlignment="center"
-                                android:textColor="?attr/colorOnSecondaryContainer"
-                                android:textStyle="bold"
-                                android:textSize="18sp"
-                                android:background="?android:attr/colorBackground"/>
+                                android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                                android:background="@android:color/transparent"/>
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <TextView
@@ -236,15 +224,12 @@
                             android:layout_weight="1"
                             android:text="0"
                             android:gravity="center"
-                            android:textColor="?attr/colorOnSecondaryContainer"
-                            android:textSize="72sp"
-                            android:fontFamily="sans-serif-condensed"
-                            android:textStyle="bold"
-                            android:shadowColor="?attr/colorOnSecondary"
-                            android:shadowDx="1"
-                            android:shadowDy="1"
-                            android:shadowRadius="2"
-                            android:visibility="visible"/>
+                            android:textAppearance="?attr/textAppearanceDisplayLarge"
+                            android:textColor="?attr/colorSecondary"
+                            android:shadowColor="?attr/colorOnSurface"
+                            android:shadowDx="2"
+                            android:shadowDy="2"
+                            android:shadowRadius="4"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -259,7 +244,6 @@
                                 android:layout_width="48dp"
                                 android:layout_height="48dp"
                                 app:icon="@drawable/ic_minus"
-                                app:iconTint="?attr/colorOnSecondaryContainer"
                                 android:layout_marginEnd="16dp"/>
 
                             <com.google.android.material.button.MaterialButton
@@ -267,9 +251,7 @@
                                 style="@style/Widget.Material3.Button.IconButton.Filled"
                                 android:layout_width="56dp"
                                 android:layout_height="56dp"
-                                app:icon="@drawable/ic_plus"
-                                app:iconTint="?attr/colorOnSecondaryContainer"
-                                app:backgroundTint="?attr/colorSecondary"/>
+                                app:icon="@drawable/ic_plus"/>
                         </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -285,11 +267,11 @@
             <!-- Keeper Timer Section -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/keeper_timer_card"
+                style="?attr/materialCardViewElevatedStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:cardBackgroundColor="@android:color/transparent"
-                app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
                 app:layout_constraintTop_toBottomOf="@id/score_section"
                 app:layout_constraintStart_toStartOf="parent"
@@ -313,16 +295,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="KEEPER TIMER"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="12sp"
-                            android:letterSpacing="0.1"/>
+                            android:textAppearance="?attr/textAppearanceLabelMedium" />
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:layout_width="120dp"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
                             app:suffixText="sec"
-                            app:boxBackgroundMode="outline">
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/timer_edittext"
@@ -330,7 +310,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="300"
                                 android:inputType="number"
-                                android:textColor="?attr/colorOnSurface"/>
+                                android:textAppearance="?attr/textAppearanceBodyLarge"/>
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
 
@@ -345,11 +325,11 @@
             <!-- Team Rosters Section (Scrollable) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/rosters_card"
+                style="?attr/materialCardViewElevatedStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:cardBackgroundColor="@android:color/transparent"
-                app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
                 app:layout_constraintTop_toBottomOf="@id/keeper_timer_card"
                 app:layout_constraintStart_toStartOf="parent"
@@ -366,9 +346,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="TEAM ROSTERS"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="12sp"
-                        android:letterSpacing="0.1"
+                        android:textAppearance="?attr/textAppearanceLabelMedium"
                         android:layout_marginBottom="12dp"/>
 
                     <LinearLayout
@@ -388,8 +366,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Team 1"
+                                android:textAppearance="?attr/textAppearanceHeadlineSmall"
                                 android:textColor="?attr/colorPrimary"
-                                android:textStyle="bold"
                                 android:layout_marginBottom="8dp"/>
 
                             <androidx.recyclerview.widget.RecyclerView
@@ -404,7 +382,6 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Add Player"
-                                android:textColor="?attr/colorPrimary"
                                 android:layout_marginTop="8dp"/>
                         </LinearLayout>
 
@@ -420,8 +397,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Team 2"
+                                android:textAppearance="?attr/textAppearanceHeadlineSmall"
                                 android:textColor="?attr/colorSecondary"
-                                android:textStyle="bold"
                                 android:layout_marginBottom="8dp"/>
 
                             <androidx.recyclerview.widget.RecyclerView
@@ -436,7 +413,6 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Add Player"
-                                android:textColor="?attr/colorSecondary"
                                 android:layout_marginTop="8dp"/>
                         </LinearLayout>
                     </LinearLayout>
@@ -446,11 +422,11 @@
             <!-- Match Log Section -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/match_log_card"
+                style="?attr/materialCardViewElevatedStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:cardBackgroundColor="@android:color/transparent"
-                app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
                 app:layout_constraintTop_toBottomOf="@id/rosters_card"
                 app:layout_constraintStart_toStartOf="parent"
@@ -467,9 +443,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="MATCH LOG"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:textSize="12sp"
-                        android:letterSpacing="0.1"
+                        android:textAppearance="?attr/textAppearanceLabelMedium"
                         android:layout_marginBottom="12dp"/>
 
                     <androidx.recyclerview.widget.RecyclerView
@@ -499,7 +473,6 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="HISTORY"
-                    android:textColor="?attr/colorSecondary"
                     android:layout_marginEnd="8dp"/>
 
                 <com.google.android.material.button.MaterialButton

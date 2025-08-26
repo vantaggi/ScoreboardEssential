@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_asphalt_main"
     android:padding="@dimen/box_inset_layout_padding">
 
     <LinearLayout
@@ -16,12 +17,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Set Timer (min)"
-            android:textSize="14sp"/>
+            android:textAppearance="?attr/textAppearanceLabelLarge"/>
 
         <androidx.wear.widget.CircularProgressLayout
             android:id="@+id/circular_progress"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            app:colorSchemeColors="?attr/colorPrimary"
+            app:strokeWidth="4dp">
 
             <TextView
                 android:id="@+id/timer_minutes"
@@ -29,7 +32,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:text="5"
-                android:textSize="32sp"/>
+                android:textAppearance="?attr/textAppearanceDisplayMedium"/>
         </androidx.wear.widget.CircularProgressLayout>
 
         <Button
