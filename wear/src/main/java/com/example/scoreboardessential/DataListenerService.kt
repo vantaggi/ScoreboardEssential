@@ -2,6 +2,7 @@
 
 package com.example.scoreboardessential
 
+import com.example.scoreboardessential.communication.WearConstants
 import com.google.android.gms.wearable.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +22,7 @@ class DataListenerService : WearableListenerService() {
         coroutineScope.launch {
             when (messageEvent.path) {
                 // Score updates from mobile
-                WearDataSync.MSG_SCORE_CHANGED -> {
+                WearConstants.MSG_SCORE_CHANGED -> {
                     val data = String(messageEvent.data)
                     val scores = data.split(",").mapNotNull { it.toIntOrNull() }
                     if (scores.size == 2) {
@@ -33,14 +34,14 @@ class DataListenerService : WearableListenerService() {
                 }
 
                 // Timer actions from mobile
-                WearDataSync.MSG_TIMER_ACTION -> {
+                WearConstants.MSG_TIMER_ACTION -> {
                     val action = String(messageEvent.data)
                     Log.d(TAG, "Timer action from mobile: $action")
                     // Handle timer sync
                 }
 
                 // Match actions from mobile
-                WearDataSync.MSG_MATCH_ACTION -> {
+                WearConstants.MSG_MATCH_ACTION -> {
                     val action = String(messageEvent.data)
                     Log.d(TAG, "Match action from mobile: $action")
                     when (action) {
@@ -50,7 +51,7 @@ class DataListenerService : WearableListenerService() {
                 }
 
                 // Keeper timer actions from mobile
-                WearDataSync.MSG_KEEPER_ACTION -> {
+                WearConstants.MSG_KEEPER_ACTION -> {
                     val action = String(messageEvent.data)
                     Log.d(TAG, "Keeper action from mobile: $action")
                     // Handle keeper timer sync
@@ -71,12 +72,10 @@ class DataListenerService : WearableListenerService() {
 
                         when (path) {
                             // Score updates
-                            WearDataSync.PATH_SCORE, "/score_update" -> {
+                            WearConstants.PATH_SCORE -> {
                                 DataMapItem.fromDataItem(item).dataMap.apply {
-                                    val team1Score = getInt(WearDataSync.KEY_TEAM1_SCORE,
-                                        getInt("team1_score", 0))
-                                    val team2Score = getInt(WearDataSync.KEY_TEAM2_SCORE,
-                                        getInt("team2_score", 0))
+                                    val team1Score = getInt(WearConstants.KEY_TEAM1_SCORE)
+                                    val team2Score = getInt(WearConstants.KEY_TEAM2_SCORE)
 
                                     Log.d(TAG, "Score sync: $team1Score - $team2Score")
                                     WearSyncManager.postSyncEvent(
@@ -86,12 +85,10 @@ class DataListenerService : WearableListenerService() {
                             }
 
                             // Team names
-                            WearDataSync.PATH_TEAM_NAMES, "/team_names" -> {
+                            WearConstants.PATH_TEAM_NAMES -> {
                                 DataMapItem.fromDataItem(item).dataMap.apply {
-                                    val team1Name = getString(WearDataSync.KEY_TEAM1_NAME,
-                                        getString("team1_name", "TEAM 1"))
-                                    val team2Name = getString(WearDataSync.KEY_TEAM2_NAME,
-                                        getString("team2_name", "TEAM 2"))
+                                    val team1Name = getString(WearConstants.KEY_TEAM1_NAME, "TEAM 1")
+                                    val team2Name = getString(WearConstants.KEY_TEAM2_NAME, "TEAM 2")
 
                                     Log.d(TAG, "Team names sync: $team1Name vs $team2Name")
                                     WearSyncManager.postSyncEvent(
@@ -101,10 +98,10 @@ class DataListenerService : WearableListenerService() {
                             }
 
                             // Timer state
-                            WearDataSync.PATH_TIMER_STATE -> {
+                            WearConstants.PATH_TIMER_STATE -> {
                                 DataMapItem.fromDataItem(item).dataMap.apply {
-                                    val isRunning = getBoolean(WearDataSync.KEY_TIMER_RUNNING, false)
-                                    val millis = getLong(WearDataSync.KEY_TIMER_MILLIS, 0L)
+                                    val isRunning = getBoolean(WearConstants.KEY_TIMER_RUNNING, false)
+                                    val millis = getLong(WearConstants.KEY_TIMER_MILLIS, 0L)
 
                                     Log.d(TAG, "Timer sync: running=$isRunning, millis=$millis")
                                     // Update timer in ViewModel
@@ -112,12 +109,10 @@ class DataListenerService : WearableListenerService() {
                             }
 
                             // Keeper timer
-                            WearDataSync.PATH_KEEPER_TIMER, "/keeper_timer" -> {
+                            WearConstants.PATH_KEEPER_TIMER -> {
                                 DataMapItem.fromDataItem(item).dataMap.apply {
-                                    val isRunning = getBoolean(WearDataSync.KEY_KEEPER_RUNNING,
-                                        getBoolean("is_running", false))
-                                    val duration = getLong(WearDataSync.KEY_KEEPER_MILLIS,
-                                        getLong("duration", 300000L))
+                                    val isRunning = getBoolean(WearConstants.KEY_KEEPER_RUNNING, false)
+                                    val duration = getLong(WearConstants.KEY_KEEPER_MILLIS, 300000L)
 
                                     Log.d(TAG, "Keeper timer sync: running=$isRunning, duration=$duration")
                                     WearSyncManager.postSyncEvent(
@@ -127,9 +122,9 @@ class DataListenerService : WearableListenerService() {
                             }
 
                             // Match state
-                            WearDataSync.PATH_MATCH_STATE -> {
+                            WearConstants.PATH_MATCH_STATE -> {
                                 DataMapItem.fromDataItem(item).dataMap.apply {
-                                    val isActive = getBoolean(WearDataSync.KEY_MATCH_ACTIVE, false)
+                                    val isActive = getBoolean(WearConstants.KEY_MATCH_ACTIVE, false)
 
                                     Log.d(TAG, "Match state sync: active=$isActive")
                                     if (!isActive) {
@@ -138,31 +133,8 @@ class DataListenerService : WearableListenerService() {
                                  }
                             }
 
-                            // Reset match (legacy)
-                            "/reset_match" -> {
-                                DataMapItem.fromDataItem(item).dataMap.apply {
-                                    val reset = getBoolean("reset", false)
-                                    if (reset) {
-                                        Log.d(TAG, "Match reset requested")
-                                        WearSyncManager.postSyncEvent(WearSyncEvent.MatchReset)
-                                    }
-                                }
-                            }
-
-                            // Scorer info from mobile
-                            "/scorer_info" -> {
-                                DataMapItem.fromDataItem(item).dataMap.apply {
-                                    val scorerName = getString("scorer_name", "")
-                                    val scorerRole = getString("scorer_role", "")
-                                    val team = getInt("team", 0)
-
-                                    Log.d(TAG, "Scorer info: $scorerName ($scorerRole) - Team $team")
-                                    // Could display a toast or update UI
-                                }
-                            }
-
                             // Player list updates
-                            WearDataSync.PATH_PLAYERS -> {
+                            WearConstants.PATH_PLAYERS -> {
                                 DataMapItem.fromDataItem(item).dataMap.apply {
                                     val playerDataMaps = getDataMapArrayList("players") ?: arrayListOf()
                                     val players = playerDataMaps.map { playerMap ->
@@ -183,7 +155,7 @@ class DataListenerService : WearableListenerService() {
                             }
 
                             // Team players updates
-                            "/team_players" -> {
+                            WearConstants.PATH_TEAM_PLAYERS -> {
                                 DataMapItem.fromDataItem(item).dataMap.apply {
                                     val team1DataMaps = getDataMapArrayList("team1_players") ?: arrayListOf()
                                     val team2DataMaps = getDataMapArrayList("team2_players") ?: arrayListOf()

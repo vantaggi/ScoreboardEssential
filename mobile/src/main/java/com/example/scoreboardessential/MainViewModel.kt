@@ -33,6 +33,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
+import com.example.scoreboardessential.communication.OptimizedWearDataSync
 import com.example.scoreboardessential.service.MatchTimerService
 import kotlinx.coroutines.flow.collect
 
@@ -75,7 +76,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     }
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
 
-    private val wearDataSync = WearDataSync(application)
+    private val wearDataSync = OptimizedWearDataSync(application)
     
     val allMatches: LiveData<List<MatchWithTeams>> = repository.allMatches.asLiveData()
     

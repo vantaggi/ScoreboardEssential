@@ -15,6 +15,7 @@ import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import com.example.scoreboardessential.communication.OptimizedWearDataSync
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -35,7 +36,7 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     val team2Name = _team2Name.asStateFlow()
 
 
-    private val wearDataSync = WearDataSync(application)
+    private val wearDataSync = OptimizedWearDataSync(application)
     // Team Scores
     private val _team1Score = MutableStateFlow(0)
     val team1Score = _team1Score.asStateFlow()
