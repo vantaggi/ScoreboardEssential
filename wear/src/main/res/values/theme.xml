@@ -1,23 +1,43 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.ScoreboardEssential" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorOnPrimary">@color/on_primary</item>
-        <item name="colorSecondary">@color/secondary</item>
-        <item name="colorOnSecondary">@color/on_secondary</item>
-        <item name="android:colorBackground">@color/background</item>
+    <!-- Base application theme. -->
+    <style name="Theme.ScoreboardEssential" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Street Vibe Color Palette -->
+        <item name="colorPrimary">@color/graffiti_pink</item>
+        <item name="colorOnPrimary">@color/stencil_white</item>
+        <item name="colorSecondary">@color/neon_cyan</item>
+        <item name="colorOnSecondary">@color/asphalt_dark</item>
+        <item name="colorError">@color/error_red</item>
+        <item name="colorOnError">@color/stencil_white</item>
+        <item name="android:colorBackground">@color/asphalt_dark</item>
+        <item name="colorSurface">@color/concrete_gray</item>
+        <item name="colorOnSurface">@color/stencil_white</item>
+        <item name="colorOnSurfaceVariant">@color/sidewalk_gray</item>
+
+        <!-- Street Vibe Typeface References -->
+        <item name="textAppearanceDisplayLarge">@style/TextAppearance.App.DisplayLarge.Street</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.App.HeadlineMedium.Street</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.App.BodyLarge.Street</item>
+
+        <!-- Street Vibe Shape References for Wear OS -->
+        <!-- Wear OS uses different component styles, so we apply shapes directly or through widgets -->
     </style>
 
-    <style name="TextAppearance.Scoreboard.Score" parent="TextAppearance.Material3.DisplayLarge">
+    <!-- Street Vibe Type and Shape -->
+    <style name="TextAppearance.App.DisplayLarge.Street" parent="TextAppearance.Material3.DisplayLarge">
         <item name="android:fontFamily">sans-serif-condensed</item>
-        <item name="android:textSize">64sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
     </style>
-
-    <style name="TextAppearance.Scoreboard.TeamName" parent="TextAppearance.Material3.HeadlineMedium">
+    <style name="TextAppearance.App.HeadlineMedium.Street" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+    <style name="TextAppearance.App.BodyLarge.Street" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:fontFamily">sans-serif-condensed</item>
     </style>
 
-    <style name="Widget.Scoreboard.Button" parent="Widget.Material3.Button">
-        <item name="android:backgroundTint">@color/primary</item>
-        <item name="android:textColor">@color/on_primary</item>
-    </style>
+    <!-- Note: ShapeAppearance attributes like shapeAppearanceMediumComponent might not be respected
+         in the same way on Wear OS. It's often better to apply shapes directly to widgets
+         or create custom widget styles. We will apply shapes in the layouts. -->
 </resources>

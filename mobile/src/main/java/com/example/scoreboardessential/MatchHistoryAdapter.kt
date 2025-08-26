@@ -8,7 +8,9 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.scoreboardessential.database.MatchWithTeams
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 class MatchHistoryAdapter(
     private val onDeleteClicked: (MatchWithTeams) -> Unit
@@ -43,8 +45,17 @@ class MatchHistoryAdapter(
             team2NameTextView.text = matchWithTeams.team2?.name ?: "Team 2"
             team1ScoreTextView.text = matchWithTeams.match.team1Score.toString()
             team2ScoreTextView.text = matchWithTeams.match.team2Score.toString()
-            timestampTextView.text = Date(matchWithTeams.match.timestamp).toString()
-            playersTextView.text = matchWithTeams.players.joinToString(", ") { it.playerName }
+
+            val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+            timestampTextView.text = dateFormat.format(Date(matchWithTeams.match.timestamp))
+
+            if (matchWithTeams.players.isNotEmpty()) {
+                playersTextView.visibility = View.VISIBLE
+                playersTextView.text = "Players: ${matchWithTeams.players.joinToString(", ") { it.playerName }}"
+            } else {
+                playersTextView.visibility = View.GONE
+            }
+
             deleteButton.setOnClickListener {
                 onDeleteClicked(matchWithTeams)
             }

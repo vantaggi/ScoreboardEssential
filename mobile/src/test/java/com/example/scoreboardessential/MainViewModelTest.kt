@@ -20,6 +20,9 @@ import org.mockito.Mockito.*
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
+import android.app.Application
+import org.mockito.ArgumentMatchers.any
+
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
 class MainViewModelTest {
@@ -29,15 +32,17 @@ class MainViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var viewModel: MainViewModel
+    private lateinit var mockApplication: Application
+    private lateinit var mockRepository: MatchRepository
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        val application = RuntimeEnvironment.application
-        val mockRepository = mock(MatchRepository::class.java).apply {
+        mockApplication = mock(Application::class.java)
+        mockRepository = mock(MatchRepository::class.java).apply {
             `when`(allMatches).thenReturn(emptyFlow())
         }
-        viewModel = MainViewModel(mockRepository, application)
+        viewModel = MainViewModel(mockRepository, mockApplication)
     }
 
     @After
@@ -129,5 +134,23 @@ class MainViewModelTest {
         // Assert
         assertEquals(0L, viewModel.matchTimerValue.value)
         viewModel.matchTimerValue.removeObserver(timerObserver)
+    }
+
+    @Test
+    fun `service should unbind correctly on viewmodel clear`() {
+        // Arrange
+        // Use reflection to set isServiceBound to true
+        val isServiceBoundField = viewModel::class.java.getDeclaredField("isServiceBound")
+        isServiceBoundField.isAccessible = true
+        isServiceBoundField.set(viewModel, true)
+
+        // Act
+        // Call protected onCleared() method using reflection
+        val onClearedMethod = viewModel::class.java.superclass.getDeclaredMethod("onCleared")
+        onClearedMethod.isAccessible = true
+        onClearedMethod.invoke(viewModel)
+
+        // Assert
+        verify(mockApplication, times(1)).unbindService(any())
     }
 }

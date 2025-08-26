@@ -3,16 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="?attr/colorSurface"
     android:orientation="vertical"
     android:padding="24dp">
 
     <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Player Name"
-        app:boxBackgroundMode="outline"
-        app:boxStrokeColor="?attr/colorSecondary"
-        app:hintTextColor="?attr/colorSecondary">
+        android:hint="Player Name">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/player_name_input"

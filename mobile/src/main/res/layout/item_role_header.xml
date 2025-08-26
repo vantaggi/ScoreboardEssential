@@ -7,6 +7,5 @@
     android:paddingTop="16dp"
     android:paddingEnd="16dp"
     android:paddingBottom="8dp"
-    android:textAppearance="?attr/textAppearanceTitleMedium"
-    android:textColor="?attr/colorPrimary"
-    android:textStyle="bold" />
+    android:textAppearance="?attr/textAppearanceHeadlineSmall"
+    android:textColor="?attr/colorPrimary" />

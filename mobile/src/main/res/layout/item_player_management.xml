@@ -4,16 +4,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/player_card"
+    style="?attr/materialCardViewElevatedStyle"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp"
-    app:cardBackgroundColor="?attr/colorSurface">
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardElevation="4dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_concrete_card"
         android:padding="16dp">
 
         <!-- Player Avatar -->
@@ -24,9 +25,8 @@
             android:background="@drawable/circle_background"
             android:gravity="center"
             android:text="A"
-            android:textColor="@color/stencil_white"
-            android:textSize="20sp"
-            android:textStyle="bold"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="?attr/colorOnPrimary"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -40,9 +40,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="8dp"
             android:text="Player Name"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="16sp"
-            android:textStyle="bold"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
             android:maxLines="1"
             android:ellipsize="end"
             app:layout_constraintStart_toEndOf="@id/player_avatar"
@@ -74,9 +72,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="⚽ 0"
+                android:textAppearance="?attr/textAppearanceLabelMedium"
                 android:textColor="@color/team_spray_yellow"
-                android:textSize="12sp"
-                android:textStyle="bold"
                 tools:text="⚽ 15" />
 
             <TextView
@@ -85,9 +82,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:text="🎮 0"
+                android:textAppearance="?attr/textAppearanceLabelMedium"
                 android:textColor="@color/team_electric_green"
-                android:textSize="12sp"
-                android:textStyle="bold"
                 tools:text="🎮 10" />
 
         </LinearLayout>
