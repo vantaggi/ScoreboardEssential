@@ -20,7 +20,9 @@
       "Bash(set:*)",
       "Bash(export:*)",
       "Bash(cp:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(powershell -Command \"cd ''C:\\Users\\cioti\\StudioProjects\\ScoreboardEssential''; Set-Item -Path Env:JAVA_HOME -Value ''C:\\Program Files\\Android\\Android Studio\\jbr''; .\\gradlew.bat clean :mobile:assembleDebug\")",
+      "Bash(powershell -Command \"cd ''C:\\Users\\cioti\\StudioProjects\\ScoreboardEssential''; Set-Item -Path Env:JAVA_HOME -Value ''C:\\Program Files\\Android\\Android Studio\\jbr''; .\\gradlew.bat :mobile:installDebug\")"
     ],
     "deny": [],
     "ask": [],
