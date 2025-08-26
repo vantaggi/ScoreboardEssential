@@ -159,7 +159,7 @@
                         <FrameLayout
                             android:id="@+id/team1_score_container"
                             android:layout_width="match_parent"
-                            android:layout_height="0dp"
+                            android:layout_height="wrap_content"
                             app:layout_constraintTop_toBottomOf="@id/team1_name_container"
                             app:layout_constraintBottom_toTopOf="@id/team1_controls_container"
                             app:layout_constraintStart_toStartOf="parent"
@@ -180,16 +180,6 @@
                                 android:shadowDy="3"
                                 android:shadowRadius="6" />
 
-                            <!-- Indicatore animato per goal -->
-                            <com.airbnb.android.lottie.LottieAnimationView
-                                android:id="@+id/team1_goal_animation"
-                                android:layout_width="120dp"
-                                android:layout_height="120dp"
-                                android:layout_gravity="center"
-                                app:lottie_rawRes="@raw/goal_celebration"
-                                app:lottie_autoPlay="false"
-                                app:lottie_loop="false"
-                                android:visibility="gone" />
                         </FrameLayout>
 
                         <!-- Controlli migliorati con gesture -->
@@ -306,7 +296,7 @@
                         <FrameLayout
                             android:id="@+id/team2_score_container"
                             android:layout_width="match_parent"
-                            android:layout_height="0dp"
+                            android:layout_height="wrap_content"
                             app:layout_constraintTop_toBottomOf="@id/team2_name_container"
                             app:layout_constraintBottom_toTopOf="@id/team2_controls_container"
                             app:layout_constraintStart_toStartOf="parent"
@@ -327,16 +317,6 @@
                                 android:shadowDy="3"
                                 android:shadowRadius="6" />
 
-                            <!-- Indicatore animato per goal -->
-                            <com.airbnb.android.lottie.LottieAnimationView
-                                android:id="@+id/team2_goal_animation"
-                                android:layout_width="120dp"
-                                android:layout_height="120dp"
-                                android:layout_gravity="center"
-                                app:lottie_rawRes="@raw/goal_celebration"
-                                app:lottie_autoPlay="false"
-                                app:lottie_loop="false"
-                                android:visibility="gone" />
                         </FrameLayout>
 
                         <!-- Controlli migliorati con gesture -->

@@ -7,6 +7,7 @@ import android.animation.ValueAnimator
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.BounceInterpolator
+import android.view.animation.OvershootInterpolator
 import android.widget.TextView
 import com.example.scoreboardessential.R
 import com.google.android.material.card.MaterialCardView
@@ -58,6 +59,41 @@ fun TextView.playEnhancedScoreAnimation() {
     animatorSet.play(rotation).after(scaleDownX)
 
     animatorSet.start()
+}
+
+fun TextView.playNativeGoalAnimation() {
+    val context = this.context
+
+    // 1. Animazione "Pump" (ingrandisce e rimpicciolisce con effetto overshoot)
+    val scaleX = ObjectAnimator.ofFloat(this, "scaleX", 1f, 1.5f, 1f)
+    val scaleY = ObjectAnimator.ofFloat(this, "scaleY", 1f, 1.5f, 1f)
+    scaleX.duration = 400
+    scaleY.duration = 400
+    scaleX.interpolator = OvershootInterpolator()
+    scaleY.interpolator = OvershootInterpolator()
+
+    // 2. Animazione "Flash" del colore - più vivace
+    val originalColor = this.currentTextColor
+    val primaryColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorPrimary)
+    val secondaryColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSecondary)
+    
+    val colorAnimator = ValueAnimator.ofArgb(originalColor, primaryColor, secondaryColor, originalColor).apply {
+        duration = 400
+        addUpdateListener { animator ->
+            this@playNativeGoalAnimation.setTextColor(animator.animatedValue as Int)
+        }
+    }
+
+    // 3. Leggera rotazione per dinamismo
+    val rotation = ObjectAnimator.ofFloat(this, "rotation", 0f, -8f, 8f, 0f)
+    rotation.duration = 300
+
+    // 4. Combinare le animazioni con AnimatorSet
+    AnimatorSet().apply {
+        playTogether(scaleX, scaleY, colorAnimator)
+        play(rotation).after(100) // Rotazione leggermente ritardata
+        start()
+    }
 }
 
 fun MaterialCardView.pulseAnimation() {

@@ -17,6 +17,9 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Force enable multidex
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -36,12 +39,6 @@ android {
         dataBinding true
     }
 
-    // A lint baseline is used to suppress a persistent "MissingClass" error for LottieAnimationView.
-    // The lint task seems to have trouble resolving this class, even though the dependency is correctly
-    // added and the project compiles and runs without issues.
-    lint {
-        baseline = file("lint-baseline.xml")
-    }
 
     testOptions {
         unitTests {
@@ -72,8 +69,9 @@ dependencies {
     implementation 'com.google.android.gms:play-services-wearable:19.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
 
-    // Lottie for animations
-    implementation 'com.airbnb.android:lottie:6.6.0'
+    
+    // MultiDex support
+    implementation 'androidx.multidex:multidex:2.0.1'
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.robolectric:robolectric:4.16'

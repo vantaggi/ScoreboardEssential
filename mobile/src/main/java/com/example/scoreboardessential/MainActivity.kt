@@ -28,9 +28,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.airbnb.lottie.LottieAnimationView
 import com.example.scoreboardessential.database.PlayerWithRoles
 import com.example.scoreboardessential.utils.playEnhancedScoreAnimation
+import com.example.scoreboardessential.utils.playNativeGoalAnimation
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -60,8 +60,6 @@ class MainActivity : AppCompatActivity() {
     // New view references for refactored layout
     private lateinit var team1NameTextView: TextView
     private lateinit var team2NameTextView: TextView
-    private lateinit var team1GoalAnimation: LottieAnimationView
-    private lateinit var team2GoalAnimation: LottieAnimationView
     private lateinit var vsIndicator: View
 
     // Gesture detectors
@@ -126,8 +124,6 @@ class MainActivity : AppCompatActivity() {
         // New Views
         team1NameTextView = findViewById(R.id.team1_name_textview)
         team2NameTextView = findViewById(R.id.team2_name_textview)
-        team1GoalAnimation = findViewById(R.id.team1_goal_animation)
-        team2GoalAnimation = findViewById(R.id.team2_goal_animation)
         vsIndicator = findViewById(R.id.vs_indicator)
 
         // Roster RecyclerViews
@@ -414,25 +410,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun playGoalAnimation(team: Int) {
-        val animationView = if (team == 1) team1GoalAnimation else team2GoalAnimation
-        val scoreTextView = if (team == 1) team1ScoreTextView else team2ScoreTextView
-
-        animationView.visibility = View.VISIBLE
-        animationView.playAnimation()
-        animationView.addAnimatorListener(object : android.animation.Animator.AnimatorListener {
-            override fun onAnimationStart(animation: android.animation.Animator) {}
-            override fun onAnimationEnd(animation: android.animation.Animator) {
-                animationView.visibility = View.GONE
-            }
-            override fun onAnimationCancel(animation: android.animation.Animator) {}
-            override fun onAnimationRepeat(animation: android.animation.Animator) {}
-        })
-
-        scoreTextView.playEnhancedScoreAnimation()
-        animateVsIndicator()
-        playGoalVibrationPattern()
-    }
 
     private fun animateTextChange(textView: TextView, newText: String) {
         textView.animate()
@@ -449,6 +426,17 @@ class MainActivity : AppCompatActivity() {
                     .start()
             }
             .start()
+    }
+
+    private fun playGoalAnimation(team: Int) {
+        val scoreTextView = if (team == 1) team1ScoreTextView else team2ScoreTextView
+
+        // Chiama la nostra nuova animazione nativa!
+        scoreTextView.playNativeGoalAnimation() 
+
+        // Mantiene le altre animazioni e la vibrazione
+        animateVsIndicator()
+        playGoalVibrationPattern()
     }
 
     private fun animateVsIndicator() {
