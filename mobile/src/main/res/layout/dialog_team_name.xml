@@ -1,0 +1,93 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/bg_concrete_card">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TEAM NAME"
+        android:textColor="@color/sidewalk_gray"
+        android:textSize="12sp"
+        android:letterSpacing="0.1"
+        android:layout_marginBottom="16dp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="@color/neon_cyan"
+        app:boxStrokeWidth="2dp"
+        app:hintEnabled="false"
+        app:counterEnabled="true"
+        app:counterMaxLength="15">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/team_name_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textCapCharacters"
+            android:maxLength="15"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/stencil_white"
+            android:fontFamily="sans-serif-condensed" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Preview del nome con stile -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_marginTop="16dp"
+        app:cardBackgroundColor="@color/team_spray_yellow"
+        app:cardCornerRadius="12dp">
+
+        <TextView
+            android:id="@+id/preview_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="PREVIEW"
+            android:textSize="28sp"
+            android:textColor="@color/concrete_gray"
+            android:fontFamily="sans-serif-black"
+            android:textAllCaps="true" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Suggerimenti rapidi -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="QUICK PICKS"
+        android:textColor="@color/sidewalk_gray"
+        android:textSize="10sp"
+        android:letterSpacing="0.1"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp" />
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/suggestions_chips"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:singleSelection="false">
+
+        <com.google.android.material.chip.Chip
+            android:text="LIONS"
+            style="@style/Widget.Material3.Chip.Suggestion" />
+
+        <com.google.android.material.chip.Chip
+            android:text="EAGLES"
+            style="@style/Widget.Material3.Chip.Suggestion" />
+
+        <com.google.android.material.chip.Chip
+            android:text="WARRIORS"
+            style="@style/Widget.Material3.Chip.Suggestion" />
+
+        <com.google.android.material.chip.Chip
+            android:text="THUNDER"
+            style="@style/Widget.Material3.Chip.Suggestion" />
+    </com.google.android.material.chip.ChipGroup>
+</LinearLayout>
