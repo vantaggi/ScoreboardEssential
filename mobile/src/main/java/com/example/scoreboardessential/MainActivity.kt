@@ -1,29 +1,42 @@
 package com.example.scoreboardessential
 
 import android.Manifest
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
-import android.widget.*
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.OvershootInterpolator
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.scoreboardessential.database.Player
+import com.airbnb.lottie.LottieAnimationView
 import com.example.scoreboardessential.database.PlayerWithRoles
+import com.example.scoreboardessential.utils.playEnhancedScoreAnimation
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textfield.TextInputEditText
 import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
-import com.google.android.material.card.MaterialCardView
-import com.example.scoreboardessential.utils.playScoreChangeAnimation
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
@@ -35,7 +48,7 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    // Core view references that exist in base layout
+    // Core view references
     private lateinit var team1ScoreTextView: TextView
     private lateinit var team2ScoreTextView: TextView
     private lateinit var timerTextView: TextView
@@ -43,8 +56,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var team2Card: MaterialCardView
     private lateinit var keeperTimerTextView: TextView
     private lateinit var timerEditText: EditText
-    private lateinit var team1NameEditText: EditText
-    private lateinit var team2NameEditText: EditText
+
+    // New view references for refactored layout
+    private lateinit var team1NameTextView: TextView
+    private lateinit var team2NameTextView: TextView
+    private lateinit var team1GoalAnimation: LottieAnimationView
+    private lateinit var team2GoalAnimation: LottieAnimationView
+    private lateinit var vsIndicator: View
+
+    // Gesture detectors
+    private lateinit var team1GestureDetector: GestureDetector
+    private lateinit var team2GestureDetector: GestureDetector
 
     // Team roster recycler views
     private lateinit var team1RosterRecyclerView: RecyclerView
@@ -58,7 +80,6 @@ class MainActivity : AppCompatActivity() {
 
     private var vibrator: Vibrator? = null
 
-    // Permission launcher
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
@@ -87,12 +108,13 @@ class MainActivity : AppCompatActivity() {
         initializeViews()
         setupRecyclerViews()
         observeViewModel()
-        setupClickListeners()
+        setupImprovedViews() // Call new setup method
+        setupGestureControls() // Call gesture setup
         requestNotificationPermission()
     }
 
     private fun initializeViews() {
-        // Core views that exist in base layout
+        // Core views
         team1ScoreTextView = findViewById(R.id.team1_score_textview)
         team2ScoreTextView = findViewById(R.id.team2_score_textview)
         timerTextView = findViewById(R.id.timer_textview)
@@ -100,8 +122,13 @@ class MainActivity : AppCompatActivity() {
         team2Card = findViewById(R.id.team2_card)
         keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
         timerEditText = findViewById(R.id.timer_edittext)
-        team1NameEditText = findViewById(R.id.team1_name_edittext)
-        team2NameEditText = findViewById(R.id.team2_name_edittext)
+
+        // New Views
+        team1NameTextView = findViewById(R.id.team1_name_textview)
+        team2NameTextView = findViewById(R.id.team2_name_textview)
+        team1GoalAnimation = findViewById(R.id.team1_goal_animation)
+        team2GoalAnimation = findViewById(R.id.team2_goal_animation)
+        vsIndicator = findViewById(R.id.vs_indicator)
 
         // Roster RecyclerViews
         team1RosterRecyclerView = findViewById(R.id.team1_roster_recyclerview)
@@ -110,7 +137,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerViews() {
-        // Team 1 Roster
         team1RosterAdapter = TeamRosterAdapter { playerWithRoles ->
             showRemovePlayerDialog(playerWithRoles, 1)
         }
@@ -119,7 +145,6 @@ class MainActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
 
-        // Team 2 Roster
         team2RosterAdapter = TeamRosterAdapter { playerWithRoles ->
             showRemovePlayerDialog(playerWithRoles, 2)
         }
@@ -128,7 +153,6 @@ class MainActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
 
-        // Match Log
         matchLogAdapter = MatchLogAdapter()
         matchLogRecyclerView.apply {
             adapter = matchLogAdapter
@@ -137,35 +161,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
-        // Scores
         viewModel.team1Score.observe(this) { score ->
             team1ScoreTextView.text = score.toString()
-            if (score > 0) {
-                team1ScoreTextView.playScoreChangeAnimation()
-            }
         }
 
         viewModel.team2Score.observe(this) { score ->
             team2ScoreTextView.text = score.toString()
-            if (score > 0) {
-                team2ScoreTextView.playScoreChangeAnimation()
-            }
         }
 
-        // Team Names
         viewModel.team1Name.observe(this) { name ->
-            if (team1NameEditText.text.toString() != name) {
-                team1NameEditText.setText(name)
-            }
+            team1NameTextView.text = name.uppercase(Locale.getDefault())
         }
 
         viewModel.team2Name.observe(this) { name ->
-            if (team2NameEditText.text.toString() != name) {
-                team2NameEditText.setText(name)
-            }
+            team2NameTextView.text = name.uppercase(Locale.getDefault())
         }
 
-        // Team Colors - apply to score text views
         viewModel.team1Color.observe(this) { color ->
             team1Card.setCardBackgroundColor(color)
         }
@@ -174,17 +185,14 @@ class MainActivity : AppCompatActivity() {
             team2Card.setCardBackgroundColor(color)
         }
 
-        // Match Timer
         viewModel.matchTimerValue.observe(this) { timeInMillis ->
             updateTimerTextView(timeInMillis)
         }
 
-        // Keeper Timer
         viewModel.keeperTimerValue.observe(this) { timeInMillis ->
             updateKeeperTimerTextView(timeInMillis)
         }
 
-        // Team Players
         viewModel.team1Players.observe(this) { players ->
             team1RosterAdapter.submitList(players)
         }
@@ -193,12 +201,10 @@ class MainActivity : AppCompatActivity() {
             team2RosterAdapter.submitList(players)
         }
 
-        // Match Events
         viewModel.matchEvents.observe(this) { events ->
             matchLogAdapter.submitList(events)
         }
 
-        // UI Events
         viewModel.showSelectScorerDialog.observe(this) { team ->
             showSelectScorerDialog(team)
         }
@@ -208,29 +214,40 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupClickListeners() {
-        // Score buttons
-        findViewById<Button>(R.id.team1_add_button).setOnClickListener {
+    private fun setupImprovedViews() {
+        // Setup new TextView clickable for names
+        findViewById<View>(R.id.team1_name_container).setOnClickListener {
+            showTeamNameDialog(1)
+        }
+
+        findViewById<View>(R.id.team2_name_container).setOnClickListener {
+            showTeamNameDialog(2)
+        }
+
+        // New buttons with improved feedback
+        findViewById<View>(R.id.team1_add_button_card).setOnClickListener {
+            animateScoreButton(it)
             viewModel.addTeam1Score()
-            triggerHapticFeedback()
+            playGoalAnimation(1)
         }
 
-        findViewById<Button>(R.id.team1_subtract_button).setOnClickListener {
+        findViewById<View>(R.id.team1_subtract_button_card).setOnClickListener {
+            animateScoreButton(it, isSubtract = true)
             viewModel.subtractTeam1Score()
-            triggerHapticFeedback()
         }
 
-        findViewById<Button>(R.id.team2_add_button).setOnClickListener {
+        findViewById<View>(R.id.team2_add_button_card).setOnClickListener {
+            animateScoreButton(it)
             viewModel.addTeam2Score()
-            triggerHapticFeedback()
+            playGoalAnimation(2)
         }
 
-        findViewById<Button>(R.id.team2_subtract_button).setOnClickListener {
+        findViewById<View>(R.id.team2_subtract_button_card).setOnClickListener {
+            animateScoreButton(it, isSubtract = true)
             viewModel.subtractTeam2Score()
-            triggerHapticFeedback()
         }
 
-        // Timer button
+        // Keep other listeners from original setupClickListeners
         findViewById<Button>(R.id.set_timer_button).setOnClickListener {
             val seconds = timerEditText.text.toString().toLongOrNull()
             if (seconds != null && seconds > 0) {
@@ -242,30 +259,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Team name changes
-        team1NameEditText.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) {
-                viewModel.setTeam1Name(team1NameEditText.text.toString())
-            }
-        }
-
-        team2NameEditText.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) {
-                viewModel.setTeam2Name(team2NameEditText.text.toString())
-            }
-        }
-
-        // Reset scores button
         findViewById<Button>(R.id.reset_scores_button).setOnClickListener {
             showEndMatchConfirmation()
         }
 
-        // Match history button
         findViewById<Button>(R.id.match_history_button).setOnClickListener {
             startActivity(Intent(this, MatchHistoryActivity::class.java))
         }
 
-        // Add player buttons
         findViewById<Button>(R.id.add_team1_player_button).setOnClickListener {
             showAddPlayerToTeamDialog(1)
         }
@@ -274,12 +275,10 @@ class MainActivity : AppCompatActivity() {
             showAddPlayerToTeamDialog(2)
         }
 
-        // FAB for Players Management
         findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.players_fab).setOnClickListener {
             startActivity(Intent(this, PlayersManagementActivity::class.java))
         }
 
-        // Team card long click listeners for changing color
         findViewById<View>(R.id.team1_card).setOnLongClickListener {
             viewModel.requestTeamColorChange(1)
             true
@@ -287,6 +286,193 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.team2_card).setOnLongClickListener {
             viewModel.requestTeamColorChange(2)
             true
+        }
+    }
+
+    private fun setupGestureControls() {
+        // Swipe up to increase, swipe down to decrease for Team 1
+        team1GestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+                e1?.let {
+                    val diffY = e2.y - it.y
+                    if (Math.abs(diffY) > 100) {
+                        if (diffY < 0) {
+                            viewModel.addTeam1Score()
+                            playGoalAnimation(1)
+                        } else {
+                            viewModel.subtractTeam1Score()
+                        }
+                        return true
+                    }
+                }
+                return false
+            }
+
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                viewModel.addTeam1Score()
+                playGoalAnimation(1)
+                return true
+            }
+        })
+
+        findViewById<View>(R.id.team1_card).setOnTouchListener { _, event ->
+            team1GestureDetector.onTouchEvent(event)
+        }
+
+        // Swipe up to increase, swipe down to decrease for Team 2
+        team2GestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+                e1?.let {
+                    val diffY = e2.y - it.y
+                    if (Math.abs(diffY) > 100) {
+                        if (diffY < 0) {
+                            viewModel.addTeam2Score()
+                            playGoalAnimation(2)
+                        } else {
+                            viewModel.subtractTeam2Score()
+                        }
+                        return true
+                    }
+                }
+                return false
+            }
+
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                viewModel.addTeam2Score()
+                playGoalAnimation(2)
+                return true
+            }
+        })
+
+        findViewById<View>(R.id.team2_card).setOnTouchListener { _, event ->
+            team2GestureDetector.onTouchEvent(event)
+        }
+    }
+
+    internal fun showTeamNameDialog(teamNumber: Int) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_team_name, null)
+        val editText = dialogView.findViewById<TextInputEditText>(R.id.team_name_input)
+
+        val currentName = if (teamNumber == 1) viewModel.team1Name.value else viewModel.team2Name.value
+        editText.setText(currentName)
+
+        MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_App_MaterialAlertDialog)
+            .setTitle("Edit Team $teamNumber")
+            .setView(dialogView)
+            .setPositiveButton("SAVE") { _, _ ->
+                val newName = editText.text.toString().trim()
+                if (newName.isNotEmpty()) {
+                    if (teamNumber == 1) {
+                        viewModel.setTeam1Name(newName)
+                        animateTextChange(team1NameTextView, newName)
+                    } else {
+                        viewModel.setTeam2Name(newName)
+                        animateTextChange(team2NameTextView, newName)
+                    }
+                }
+            }
+            .setNeutralButton("CHANGE COLOR") { _, _ ->
+                viewModel.requestTeamColorChange(teamNumber)
+            }
+            .setNegativeButton("CANCEL", null)
+            .show()
+    }
+
+    private fun animateScoreButton(view: View, isSubtract: Boolean = false) {
+        val scaleX = ObjectAnimator.ofFloat(view, "scaleX", 1f, 0.9f, 1.1f, 1f)
+        val scaleY = ObjectAnimator.ofFloat(view, "scaleY", 1f, 0.9f, 1.1f, 1f)
+
+        AnimatorSet().apply {
+            playTogether(scaleX, scaleY)
+            duration = 200
+            interpolator = OvershootInterpolator()
+            start()
+        }
+
+        if (view is MaterialCardView) {
+            val originalColor = view.cardBackgroundColor
+            val targetColor = if (isSubtract)
+                ColorStateList.valueOf(Color.parseColor("#FF1744"))
+            else
+                ColorStateList.valueOf(Color.parseColor("#76FF03"))
+
+            ValueAnimator.ofArgb(originalColor.defaultColor, targetColor.defaultColor).apply {
+                duration = 300
+                addUpdateListener { animator ->
+                    view.setCardBackgroundColor(animator.animatedValue as Int)
+                }
+                addListener(object : android.animation.Animator.AnimatorListener {
+                    override fun onAnimationStart(animation: android.animation.Animator) {}
+                    override fun onAnimationEnd(animation: android.animation.Animator) {
+                        view.setCardBackgroundColor(originalColor)
+                    }
+                    override fun onAnimationCancel(animation: android.animation.Animator) {}
+                    override fun onAnimationRepeat(animation: android.animation.Animator) {}
+                })
+                start()
+            }
+        }
+    }
+
+    private fun playGoalAnimation(team: Int) {
+        val animationView = if (team == 1) team1GoalAnimation else team2GoalAnimation
+        val scoreTextView = if (team == 1) team1ScoreTextView else team2ScoreTextView
+
+        animationView.visibility = View.VISIBLE
+        animationView.playAnimation()
+        animationView.addAnimatorListener(object : android.animation.Animator.AnimatorListener {
+            override fun onAnimationStart(animation: android.animation.Animator) {}
+            override fun onAnimationEnd(animation: android.animation.Animator) {
+                animationView.visibility = View.GONE
+            }
+            override fun onAnimationCancel(animation: android.animation.Animator) {}
+            override fun onAnimationRepeat(animation: android.animation.Animator) {}
+        })
+
+        scoreTextView.playEnhancedScoreAnimation()
+        animateVsIndicator()
+        playGoalVibrationPattern()
+    }
+
+    private fun animateTextChange(textView: TextView, newText: String) {
+        textView.animate()
+            .alpha(0f)
+            .translationY(-20f)
+            .setDuration(150)
+            .withEndAction {
+                textView.text = newText.uppercase()
+                textView.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(150)
+                    .setInterpolator(OvershootInterpolator())
+                    .start()
+            }
+            .start()
+    }
+
+    private fun animateVsIndicator() {
+        vsIndicator.animate()
+            .rotationBy(360f)
+            .scaleX(1.3f)
+            .scaleY(1.3f)
+            .setDuration(300)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .withEndAction {
+                vsIndicator.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(200)
+                    .start()
+            }
+            .start()
+    }
+
+    private fun playGoalVibrationPattern() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val timings = longArrayOf(0, 100, 50, 100, 50, 200)
+            val amplitudes = intArrayOf(0, 128, 0, 255, 0, 128)
+            vibrator?.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
         }
     }
 
@@ -398,8 +584,6 @@ class MainActivity : AppCompatActivity() {
             .setTitle("End Match?")
             .setMessage("$team1Name: $team1Score\n$team2Name: $team2Score\n\nSave this match and start a new one?")
             .setPositiveButton("End Match") { _, _ ->
-                viewModel.setTeam1Name(team1NameEditText.text.toString())
-                viewModel.setTeam2Name(team2NameEditText.text.toString())
                 viewModel.endMatch()
                 Snackbar.make(
                     findViewById(android.R.id.content),
@@ -423,7 +607,6 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    // Helper Methods
     private fun updateTimerTextView(timeInMillis: Long) {
         val minutes = (timeInMillis / 1000) / 60
         val seconds = (timeInMillis / 1000) % 60
@@ -439,10 +622,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             keeperTimerTextView.visibility = View.GONE
         }
-    }
-
-    private fun triggerHapticFeedback() {
-        vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 
     private fun triggerStrongVibration() {
@@ -462,7 +641,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Activity method overrides for onClick in XML
     fun startStopTimer(view: View) {
         viewModel.startStopMatchTimer()
         val button = view as Button

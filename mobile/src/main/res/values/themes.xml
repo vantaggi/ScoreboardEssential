@@ -56,4 +56,17 @@
         <item name="cornerFamily">cut</item>
         <item name="cornerSize">4dp</item>
     </style>
+
+    <!-- Style for the team name editor dialog -->
+    <style name="ThemeOverlay.App.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorPrimary">@color/neon_cyan</item>
+        <item name="colorSurface">@color/concrete_gray</item>
+        <item name="colorOnSurface">@color/stencil_white</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.App.Dialog</item>
+    </style>
+
+    <style name="ThemeOverlay.App.Dialog" parent="Theme.Material3.Dark.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/bg_concrete_card</item>
+        <item name="dialogCornerRadius">16dp</item>
+    </style>
 </resources>
