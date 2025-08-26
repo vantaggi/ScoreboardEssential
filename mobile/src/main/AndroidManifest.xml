@@ -48,14 +48,18 @@
                 android:value=".MainActivity" />
         </activity>
         <service
-            android:name=".DataLayerListenerService"
+            android:name=".OptimizedDataLayerListenerService"
             android:exported="true">
             <intent-filter>
+                <!-- Filtro ottimizzato con path prefix per ridurre wake-ups -->
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
-                <data
-                    android:host="*"
-                    android:pathPrefix="/score_update"
-                    android:scheme="wear" />
+                <action android:name="com.google.android.gms.wearable.CHANNEL_EVENT" />
+
+                <!-- Path prefix filtering per efficienza batteria -->
+                <data android:scheme="wear"
+                      android:host="*"
+                      android:pathPrefix="/scoreboard" />
             </intent-filter>
         </service>
         <service
