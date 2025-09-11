@@ -63,8 +63,8 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
                 }
             }
             viewModelScope.launch {
-                matchTimerService?.isRunning?.collect {
-                    isMatchTimerRunning = it
+                matchTimerService?.isRunning?.collect { running ->
+                    _isMatchTimerRunning.postValue(running)
                 }
             }
         }
@@ -119,7 +119,8 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     // Match Timer
     private val _matchTimerValue = MutableLiveData(0L)
     val matchTimerValue: LiveData<Long> = _matchTimerValue
-    private var isMatchTimerRunning = false
+    private val _isMatchTimerRunning = MutableLiveData(false)
+    val isMatchTimerRunning: LiveData<Boolean> = _isMatchTimerRunning
 
     // Keeper Timer
     private val _keeperTimerValue = MutableLiveData(0L)
@@ -235,7 +236,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         _team2Score.value = 0
         _matchEvents.value = emptyList()
         _matchTimerValue.value = 0L
-        isMatchTimerRunning = false
+        _isMatchTimerRunning.value = false
         matchTimerService?.stopTimer()
 
         addMatchEvent("New match ready - press START to begin")
@@ -378,7 +379,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     // --- Match Timer Management ---
     fun startStopMatchTimer() {
         if (isServiceBound) {
-            if (isMatchTimerRunning) {
+            if (isMatchTimerRunning.value == true) {
                 matchTimerService?.pauseTimer()
             } else {
                 matchTimerService?.startTimer()
@@ -447,7 +448,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     // --- End Match ---
     fun endMatch() {
         viewModelScope.launch {
-            isMatchTimerRunning = false
+            _isMatchTimerRunning.value = false
             matchTimerService?.stopTimer()
 
             val matchId = matchDao.insert(

@@ -1,6 +1,7 @@
 package com.example.scoreboardessential
 
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.SearchView
@@ -115,9 +116,18 @@ class PlayersManagementActivity : AppCompatActivity() {
 
         updateRolesChipsInView(rolesChipGroup)
 
-        dialogView.findViewById<View>(R.id.select_roles_button).setOnClickListener {
-            RoleSelectionDialogFragment.newInstance(selectedRoleIds)
-                .show(supportFragmentManager, "RoleSelectionDialog")
+    val selectRolesButton = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.select_roles_button)
+
+    selectRolesButton.setOnClickListener {
+        Log.d("PlayerManagement", "Select Roles button clicked.")
+        try {
+            val dialogFragment = RoleSelectionDialogFragment.newInstance(selectedRoleIds)
+            dialogFragment.show(supportFragmentManager, "RoleSelectionDialog")
+            Log.d("PlayerManagement", "RoleSelectionDialogFragment shown.")
+        } catch (e: Exception) {
+            Log.e("PlayerManagement", "Error showing RoleSelectionDialogFragment", e)
+            Snackbar.make(fab, "Error opening roles selector.", Snackbar.LENGTH_LONG).show()
+        }
         }
 
         currentDialog = MaterialAlertDialogBuilder(this)
@@ -142,9 +152,18 @@ class PlayersManagementActivity : AppCompatActivity() {
         nameInput.setText(playerWithRoles.player.playerName)
         updateRolesChipsInView(rolesChipGroup)
 
-        dialogView.findViewById<View>(R.id.select_roles_button).setOnClickListener {
-            RoleSelectionDialogFragment.newInstance(selectedRoleIds)
-                .show(supportFragmentManager, "RoleSelectionDialog")
+    val selectRolesButton = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.select_roles_button)
+
+    selectRolesButton.setOnClickListener {
+        Log.d("PlayerManagement", "Select Roles button clicked.")
+        try {
+            val dialogFragment = RoleSelectionDialogFragment.newInstance(selectedRoleIds)
+            dialogFragment.show(supportFragmentManager, "RoleSelectionDialog")
+            Log.d("PlayerManagement", "RoleSelectionDialogFragment shown.")
+        } catch (e: Exception) {
+            Log.e("PlayerManagement", "Error showing RoleSelectionDialogFragment", e)
+            Snackbar.make(fab, "Error opening roles selector.", Snackbar.LENGTH_LONG).show()
+        }
         }
 
         currentDialog = MaterialAlertDialogBuilder(this)
