@@ -30,8 +30,9 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
         fun bind(event: MatchEvent) {
             timestampTextView.text = event.timestamp
 
-            val description = if (event.event.startsWith("GOAL!") && event.player != null && event.playerRole?.isNotEmpty() == true) {
-                "GOAL! ${event.player} (${event.playerRole})"
+            val description = if (event.event == "Goal" && event.player != null) {
+                val roleInfo = if (event.playerRole?.isNotEmpty() == true) " (${event.playerRole})" else ""
+                "GOAL! ${event.player}${roleInfo}"
             } else {
                 event.event
             }

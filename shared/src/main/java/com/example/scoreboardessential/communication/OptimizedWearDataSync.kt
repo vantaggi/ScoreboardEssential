@@ -215,6 +215,7 @@ class OptimizedWearDataSync(private val context: Context) {
 
         val team1ArrayList = ArrayList<DataMap>()
         team1Players.forEach { player ->
+            Log.d(TAG, "Syncing team 1 player ${player.name} with roles: ${player.roles.joinToString(",")}")
             val playerMap = DataMap().apply {
                 putString("name", player.name)
                 putStringArrayList("roles", ArrayList(player.roles))
@@ -227,6 +228,7 @@ class OptimizedWearDataSync(private val context: Context) {
 
         val team2ArrayList = ArrayList<DataMap>()
         team2Players.forEach { player ->
+            Log.d(TAG, "Syncing team 2 player ${player.name} with roles: ${player.roles.joinToString(",")}")
             val playerMap = DataMap().apply {
                 putString("name", player.name)
                 putStringArrayList("roles", ArrayList(player.roles))

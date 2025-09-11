@@ -363,7 +363,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
 
                 val teamName = if (team == 1) _team1Name.value else _team2Name.value
                 val rolesString = playerWithRoles.roles.joinToString(", ")
-                addMatchEvent("GOAL! $playerName (${teamName})", team = team, player = playerName, playerRole = rolesString)
+                addMatchEvent("Goal", team = team, player = playerName, playerRole = rolesString)
 
                 // Invia info al Wear con ruolo
                 sendScorerToWear(playerName, playerWithRoles.roles.map { it.name }, team)
