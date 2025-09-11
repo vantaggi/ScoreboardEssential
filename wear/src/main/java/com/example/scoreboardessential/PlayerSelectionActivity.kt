@@ -113,7 +113,17 @@ class PlayerAdapter(private val onPlayerClick: (WearPlayer) -> Unit) :
 
         fun bind(player: WearPlayer, onPlayerClick: (WearPlayer) -> Unit) {
             playerName.text = player.name
-            playerRole.text = player.roles.joinToString(", ").ifEmpty { "No role" }
+
+            val rolesText = player.roles.joinToString(", ")
+            Log.d("PlayerAdapter", "Binding player ${player.name} with roles: $rolesText")
+
+            if (rolesText.isEmpty()) {
+                playerRole.text = "No role"
+                playerRole.visibility = View.GONE
+            } else {
+                playerRole.text = rolesText
+                playerRole.visibility = View.VISIBLE
+            }
 
             itemView.setOnClickListener {
                 onPlayerClick(player)
