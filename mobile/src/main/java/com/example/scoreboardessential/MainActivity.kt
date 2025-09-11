@@ -22,6 +22,8 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
+import android.text.Editable
+import android.text.TextWatcher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -32,6 +34,8 @@ import com.example.scoreboardessential.database.PlayerWithRoles
 import com.example.scoreboardessential.utils.playEnhancedScoreAnimation
 import com.example.scoreboardessential.utils.playNativeGoalAnimation
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
@@ -56,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var team2Card: MaterialCardView
     private lateinit var keeperTimerTextView: TextView
     private lateinit var timerEditText: EditText
+    private lateinit var timerStartButton: Button
 
     // New view references for refactored layout
     private lateinit var team1NameTextView: TextView
@@ -120,6 +125,7 @@ class MainActivity : AppCompatActivity() {
         team2Card = findViewById(R.id.team2_card)
         keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
         timerEditText = findViewById(R.id.timer_edittext)
+        timerStartButton = findViewById(R.id.timer_start_button)
 
         // New Views
         team1NameTextView = findViewById(R.id.team1_name_textview)
@@ -207,6 +213,10 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.showColorPickerDialog.observe(this) { team ->
             showColorPickerDialog(team)
+        }
+
+        viewModel.isMatchTimerRunning.observe(this) { isRunning ->
+            timerStartButton.text = if (isRunning) "PAUSE" else "START"
         }
     }
 
@@ -346,15 +356,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun showTeamNameDialog(teamNumber: Int) {
+    // 1. Inflate the dialog view
         val dialogView = layoutInflater.inflate(R.layout.dialog_team_name, null)
+
+    // 2. Find views AFTER inflating the layout
         val editText = dialogView.findViewById<TextInputEditText>(R.id.team_name_input)
+    val previewText = dialogView.findViewById<TextView>(R.id.preview_text)
+    val suggestionsChipGroup = dialogView.findViewById<ChipGroup>(R.id.suggestions_chips)
 
         val currentName = if (teamNumber == 1) viewModel.team1Name.value else viewModel.team2Name.value
         editText.setText(currentName)
+    previewText.text = currentName // Set initial preview text
 
+    // Add a listener to update the preview in real-time
+    editText.addTextChangedListener(object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            previewText.text = s.toString().uppercase()
+        }
+        override fun afterTextChanged(s: Editable?) {}
+    })
+
+    // Add listeners for suggestion chips
+    for (i in 0 until suggestionsChipGroup.childCount) {
+        val chip = suggestionsChipGroup.getChildAt(i) as? Chip
+        chip?.setOnClickListener {
+            editText.setText(chip.text)
+        }
+    }
+
+    // 3. Build and show the dialog
         MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_App_MaterialAlertDialog)
             .setTitle("Edit Team $teamNumber")
-            .setView(dialogView)
+        .setView(dialogView) // Use the prepared view
             .setPositiveButton("SAVE") { _, _ ->
                 val newName = editText.text.toString().trim()
                 if (newName.isNotEmpty()) {
@@ -631,8 +665,6 @@ class MainActivity : AppCompatActivity() {
 
     fun startStopTimer(view: View) {
         viewModel.startStopMatchTimer()
-        val button = view as Button
-        button.text = if (button.text == "Start") "Pause" else "Start"
     }
 
     @Suppress("UNUSED_PARAMETER")
