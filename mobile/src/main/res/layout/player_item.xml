@@ -5,7 +5,7 @@
     <data>
         <variable
             name="player"
-            type="com.example.scoreboardessential.database.PlayerWithRoles" />
+            type="it.vantaggi.scoreboardessential.database.PlayerWithRoles" />
     </data>
 
     <com.google.android.material.card.MaterialCardView

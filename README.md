@@ -39,4 +39,4 @@ The following features have been implemented and are fully functional:
 
 *   **Player Roles:** It is possible to assign "roles" to players, but this information is not currently used or displayed anywhere in the application.
 *   **Backup Configuration:** The rules for automatic data backup on Android have not yet been defined.
-*   **Package Name:** The application's package name (`com.example.scoreboardessential`) is the default and should be changed for a production release.
+*   **Package Name:** The application's package name (`it.vantaggi.scoreboardessential`) is the default and should be changed for a production release.

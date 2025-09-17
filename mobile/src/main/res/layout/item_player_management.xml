@@ -48,7 +48,7 @@
             app:layout_constraintTop_toTopOf="@id/player_avatar"
             tools:text="John Doe" />
 
-        <com.example.scoreboardessential.views.RoleBadgeGroup
+        <it.vantaggi.scoreboardessential.views.RoleBadgeGroup
             android:id="@+id/player_roles_group"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

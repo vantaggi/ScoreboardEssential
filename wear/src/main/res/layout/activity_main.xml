@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_asphalt_main"
-    tools:context="com.example.scoreboardessential.MainActivity">
+    tools:context="it.vantaggi.scoreboardessential.wear.MainActivity">
 
     <!-- Guidelines -->
     <androidx.constraintlayout.widget.Guideline
