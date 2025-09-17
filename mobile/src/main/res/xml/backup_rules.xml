@@ -6,8 +6,12 @@
    See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
+    <!-- Include the main Room database file -->
     <include domain="database" path="match_database" />
+    <!-- Include the shared memory file for the database -->
     <include domain="database" path="match_database-shm" />
+    <!-- Include the write-ahead log for the database -->
     <include domain="database" path="match_database-wal" />
+    <!-- Include all shared preferences -->
     <include domain="sharedpref" path="."/>
 </full-backup-content>
