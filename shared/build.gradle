@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'com.example.scoreboardessential.shared'
+    namespace 'it.vantaggi.scoreboardessential.shared'
     compileSdk 36
 
     defaultConfig {

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.scoreboardessential'
+    namespace 'it.vantaggi.scoreboardessential.wear'
     compileSdk 36
 
     defaultConfig {
-        applicationId "com.example.scoreboardessential.wear"
+        applicationId "it.vantaggi.scoreboardessential.wear"
         minSdk 30
         targetSdk 36
         versionCode 1

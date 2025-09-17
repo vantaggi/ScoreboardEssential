@@ -1,0 +1,475 @@
+
+> Configure project :mobile
+ksp-2.2.0-2.0.2 is too old for kotlin-2.2.10. Please upgrade ksp or downgrade kotlin-gradle-plugin to 2.2.0.
+ksp-2.2.0-2.0.2 is too old for kotlin-2.2.10. Please upgrade ksp or downgrade kotlin-gradle-plugin to 2.2.0.
+ksp-2.2.0-2.0.2 is too old for kotlin-2.2.10. Please upgrade ksp or downgrade kotlin-gradle-plugin to 2.2.0.
+ksp-2.2.0-2.0.2 is too old for kotlin-2.2.10. Please upgrade ksp or downgrade kotlin-gradle-plugin to 2.2.0.
+ksp-2.2.0-2.0.2 is too old for kotlin-2.2.10. Please upgrade ksp or downgrade kotlin-gradle-plugin to 2.2.0.
+ksp-2.2.0-2.0.2 is too old for kotlin-2.2.10. Please upgrade ksp or downgrade kotlin-gradle-plugin to 2.2.0.
+ksp-2.2.0-2.0.2 is too old for kotlin-2.2.10. Please upgrade ksp or downgrade kotlin-gradle-plugin to 2.2.0.
+ksp-2.2.0-2.0.2 is too old for kotlin-2.2.10. Please upgrade ksp or downgrade kotlin-gradle-plugin to 2.2.0.
+ksp-2.2.0-2.0.2 is too old for kotlin-2.2.10. Please upgrade ksp or downgrade kotlin-gradle-plugin to 2.2.0.
+ksp-2.2.0-2.0.2 is too old for kotlin-2.2.10. Please upgrade ksp or downgrade kotlin-gradle-plugin to 2.2.0.
+
+> Task :mobile:preBuild UP-TO-DATE
+> Task :mobile:preDebugBuild UP-TO-DATE
+> Task :mobile:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :mobile:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :mobile:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :mobile:generateDebugResValues UP-TO-DATE
+> Task :mobile:generateDebugResources UP-TO-DATE
+> Task :shared:preBuild UP-TO-DATE
+> Task :shared:preDebugBuild UP-TO-DATE
+> Task :shared:generateDebugResValues UP-TO-DATE
+> Task :shared:generateDebugResources UP-TO-DATE
+> Task :shared:packageDebugResources UP-TO-DATE
+> Task :mobile:mergeDebugResources UP-TO-DATE
+> Task :mobile:packageDebugResources UP-TO-DATE
+> Task :mobile:parseDebugLocalResources UP-TO-DATE
+> Task :shared:parseDebugLocalResources UP-TO-DATE
+> Task :shared:generateDebugRFile UP-TO-DATE
+> Task :mobile:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :mobile:dataBindingTriggerDebug UP-TO-DATE
+> Task :shared:writeDebugAarMetadata UP-TO-DATE
+> Task :mobile:checkDebugAarMetadata UP-TO-DATE
+> Task :mobile:mapDebugSourceSetPaths UP-TO-DATE
+> Task :mobile:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :mobile:extractDeepLinksDebug UP-TO-DATE
+> Task :shared:extractDeepLinksDebug UP-TO-DATE
+> Task :shared:processDebugManifest UP-TO-DATE
+> Task :mobile:processDebugMainManifest UP-TO-DATE
+> Task :mobile:processDebugManifest UP-TO-DATE
+> Task :mobile:processDebugManifestForPackage UP-TO-DATE
+> Task :shared:compileDebugLibraryResources UP-TO-DATE
+> Task :mobile:processDebugResources UP-TO-DATE
+> Task :shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:compileDebugKotlin UP-TO-DATE
+> Task :shared:javaPreCompileDebug UP-TO-DATE
+> Task :shared:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :mobile:kspDebugKotlin UP-TO-DATE
+> Task :mobile:compileDebugKotlin UP-TO-DATE
+> Task :mobile:javaPreCompileDebug UP-TO-DATE
+
+> Task :mobile:compileDebugJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+
+> Task :mobile:mergeDebugShaders UP-TO-DATE
+> Task :mobile:compileDebugShaders NO-SOURCE
+> Task :mobile:generateDebugAssets UP-TO-DATE
+> Task :shared:mergeDebugShaders UP-TO-DATE
+> Task :shared:compileDebugShaders NO-SOURCE
+> Task :shared:generateDebugAssets UP-TO-DATE
+> Task :shared:mergeDebugAssets UP-TO-DATE
+> Task :mobile:mergeDebugAssets UP-TO-DATE
+> Task :mobile:compressDebugAssets UP-TO-DATE
+> Task :mobile:processDebugJavaRes
+> Task :shared:processDebugJavaRes UP-TO-DATE
+> Task :mobile:checkDebugDuplicateClasses UP-TO-DATE
+> Task :mobile:desugarDebugFileDependencies UP-TO-DATE
+> Task :mobile:mergeExtDexDebug UP-TO-DATE
+> Task :shared:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :mobile:dexBuilderDebug
+> Task :mobile:mergeLibDexDebug UP-TO-DATE
+> Task :mobile:mergeDebugJniLibFolders UP-TO-DATE
+> Task :shared:mergeDebugJniLibFolders UP-TO-DATE
+> Task :shared:mergeDebugNativeLibs NO-SOURCE
+> Task :shared:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :mobile:mergeDebugNativeLibs NO-SOURCE
+> Task :mobile:stripDebugDebugSymbols NO-SOURCE
+> Task :mobile:validateSigningDebug UP-TO-DATE
+> Task :mobile:writeDebugAppMetadata UP-TO-DATE
+> Task :mobile:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :mobile:preReleaseBuild UP-TO-DATE
+> Task :mobile:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :shared:preReleaseBuild UP-TO-DATE
+> Task :shared:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :shared:mergeReleaseNativeLibs NO-SOURCE
+> Task :shared:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :mobile:mergeReleaseNativeLibs NO-SOURCE
+> Task :mobile:stripReleaseDebugSymbols NO-SOURCE
+> Task :mobile:extractReleaseNativeSymbolTables NO-SOURCE
+> Task :mobile:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :shared:generateReleaseResValues UP-TO-DATE
+> Task :shared:generateReleaseResources UP-TO-DATE
+> Task :shared:packageReleaseResources UP-TO-DATE
+> Task :shared:parseReleaseLocalResources UP-TO-DATE
+> Task :shared:generateReleaseRFile UP-TO-DATE
+> Task :shared:compileReleaseKotlin UP-TO-DATE
+> Task :shared:javaPreCompileRelease UP-TO-DATE
+> Task :shared:compileReleaseJavaWithJavac NO-SOURCE
+> Task :shared:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :mobile:checkReleaseDuplicateClasses UP-TO-DATE
+> Task :mobile:buildKotlinToolingMetadata UP-TO-DATE
+> Task :mobile:dataBindingMergeDependencyArtifactsRelease UP-TO-DATE
+> Task :mobile:generateReleaseResValues UP-TO-DATE
+> Task :mobile:generateReleaseResources UP-TO-DATE
+> Task :mobile:mergeReleaseResources UP-TO-DATE
+> Task :mobile:packageReleaseResources UP-TO-DATE
+> Task :mobile:parseReleaseLocalResources UP-TO-DATE
+> Task :mobile:dataBindingGenBaseClassesRelease UP-TO-DATE
+> Task :mobile:dataBindingTriggerRelease UP-TO-DATE
+> Task :shared:writeReleaseAarMetadata UP-TO-DATE
+> Task :mobile:checkReleaseAarMetadata UP-TO-DATE
+> Task :mobile:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :mobile:createReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :mobile:extractDeepLinksRelease UP-TO-DATE
+> Task :shared:extractDeepLinksRelease UP-TO-DATE
+> Task :mobile:mergeDebugJavaResource
+> Task :shared:processReleaseManifest UP-TO-DATE
+> Task :mobile:processReleaseMainManifest UP-TO-DATE
+> Task :mobile:processReleaseManifest UP-TO-DATE
+> Task :mobile:processReleaseManifestForPackage UP-TO-DATE
+> Task :shared:compileReleaseLibraryResources UP-TO-DATE
+> Task :mobile:mergeProjectDexDebug
+> Task :mobile:processReleaseResources UP-TO-DATE
+> Task :shared:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :mobile:kspReleaseKotlin UP-TO-DATE
+> Task :mobile:compileReleaseKotlin UP-TO-DATE
+> Task :mobile:javaPreCompileRelease UP-TO-DATE
+
+> Task :mobile:compileReleaseJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+
+> Task :mobile:dexBuilderRelease
+> Task :mobile:desugarReleaseFileDependencies UP-TO-DATE
+> Task :mobile:mergeReleaseStartupProfile UP-TO-DATE
+> Task :mobile:mergeExtDexRelease UP-TO-DATE
+> Task :shared:prepareReleaseArtProfile UP-TO-DATE
+> Task :mobile:mergeReleaseArtProfile UP-TO-DATE
+> Task :shared:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :mobile:mergeReleaseShaders UP-TO-DATE
+> Task :mobile:compileReleaseShaders NO-SOURCE
+> Task :mobile:packageDebug
+> Task :mobile:createDebugApkListingFileRedirect
+> Task :mobile:assembleDebug
+> Task :mobile:generateReleaseAssets UP-TO-DATE
+> Task :shared:mergeReleaseShaders UP-TO-DATE
+> Task :shared:compileReleaseShaders NO-SOURCE
+> Task :shared:generateReleaseAssets UP-TO-DATE
+> Task :shared:mergeReleaseAssets UP-TO-DATE
+> Task :mobile:mergeReleaseGlobalSynthetics
+> Task :mobile:mergeReleaseAssets UP-TO-DATE
+> Task :mobile:compressReleaseAssets UP-TO-DATE
+> Task :mobile:extractReleaseVersionControlInfo
+> Task :mobile:extractProguardFiles UP-TO-DATE
+> Task :shared:processReleaseJavaRes UP-TO-DATE
+> Task :shared:createFullJarRelease UP-TO-DATE
+> Task :shared:extractProguardFiles UP-TO-DATE
+> Task :shared:generateReleaseLintModel UP-TO-DATE
+> Task :shared:prepareLintJarForPublish UP-TO-DATE
+> Task :mobile:generateReleaseLintVitalReportModel
+> Task :shared:stripReleaseDebugSymbols NO-SOURCE
+> Task :shared:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :shared:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :shared:extractReleaseAnnotations UP-TO-DATE
+> Task :shared:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :shared:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :shared:mergeReleaseJavaResource UP-TO-DATE
+> Task :shared:syncReleaseLibJars UP-TO-DATE
+> Task :shared:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :shared:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :shared:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :shared:generateReleaseLintVitalModel UP-TO-DATE
+> Task :mobile:processReleaseJavaRes
+> Task :mobile:optimizeReleaseResources UP-TO-DATE
+> Task :mobile:collectReleaseDependencies UP-TO-DATE
+> Task :mobile:sdkReleaseDependencyData UP-TO-DATE
+> Task :mobile:writeReleaseAppMetadata UP-TO-DATE
+> Task :mobile:writeReleaseSigningConfigVersions UP-TO-DATE
+> Task :shared:stripDebugDebugSymbols NO-SOURCE
+> Task :shared:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :shared:extractDebugAnnotations UP-TO-DATE
+> Task :shared:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :shared:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :shared:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :shared:prepareDebugArtProfile UP-TO-DATE
+> Task :shared:mergeDebugJavaResource UP-TO-DATE
+> Task :shared:syncDebugLibJars UP-TO-DATE
+> Task :shared:bundleDebugLocalLintAar UP-TO-DATE
+> Task :mobile:mergeReleaseJavaResource
+> Task :mobile:preDebugAndroidTestBuild SKIPPED
+> Task :mobile:generateDebugAndroidTestResValues UP-TO-DATE
+> Task :shared:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:createFullJarDebug UP-TO-DATE
+> Task :shared:writeDebugLintModelMetadata UP-TO-DATE
+> Task :shared:generateDebugLintModel UP-TO-DATE
+> Task :mobile:bundleDebugClassesToCompileJar
+> Task :mobile:generateDebugLintReportModel
+> Task :mobile:generateDebugAndroidTestLintModel
+> Task :mobile:preDebugUnitTestBuild UP-TO-DATE
+> Task :mobile:generateDebugUnitTestLintModel
+> Task :shared:lintAnalyzeDebug UP-TO-DATE
+> Task :mobile:mergeDexRelease
+> Task :mobile:compileReleaseArtProfile
+> Task :shared:preDebugAndroidTestBuild UP-TO-DATE
+> Task :shared:generateDebugAndroidTestResValues UP-TO-DATE
+> Task :shared:generateDebugAndroidTestLintModel UP-TO-DATE
+> Task :shared:preDebugUnitTestBuild UP-TO-DATE
+> Task :shared:generateDebugUnitTestLintModel UP-TO-DATE
+> Task :mobile:bundleDebugClassesToRuntimeJar
+> Task :mobile:kspDebugUnitTestKotlin UP-TO-DATE
+> Task :mobile:lintAnalyzeDebugAndroidTest
+> Task :mobile:compileDebugUnitTestKotlin
+> Task :mobile:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :mobile:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :mobile:packageDebugUnitTestForUnitTest UP-TO-DATE
+> Task :mobile:processDebugUnitTestManifest UP-TO-DATE
+> Task :mobile:generateDebugUnitTestConfig UP-TO-DATE
+> Task :mobile:processDebugUnitTestJavaRes
+> Task :mobile:testDebugUnitTest
+> Task :mobile:bundleReleaseClassesToRuntimeJar
+> Task :mobile:bundleReleaseClassesToCompileJar
+> Task :mobile:kspReleaseUnitTestKotlin UP-TO-DATE
+> Task :mobile:lintAnalyzeDebugUnitTest
+> Task :shared:lintAnalyzeDebugAndroidTest UP-TO-DATE
+> Task :shared:lintAnalyzeDebugUnitTest UP-TO-DATE
+> Task :mobile:preReleaseUnitTestBuild UP-TO-DATE
+> Task :mobile:javaPreCompileReleaseUnitTest UP-TO-DATE
+> Task :mobile:packageReleaseUnitTestForUnitTest UP-TO-DATE
+> Task :mobile:processReleaseUnitTestManifest UP-TO-DATE
+> Task :mobile:generateReleaseUnitTestConfig UP-TO-DATE
+> Task :shared:bundleDebugAar UP-TO-DATE
+> Task :shared:assembleDebug UP-TO-DATE
+> Task :shared:bundleReleaseAar UP-TO-DATE
+> Task :shared:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :shared:mergeReleaseResources UP-TO-DATE
+> Task :shared:verifyReleaseResources UP-TO-DATE
+> Task :shared:assembleRelease UP-TO-DATE
+> Task :shared:assemble UP-TO-DATE
+> Task :shared:generateDebugLintReportModel UP-TO-DATE
+> Task :shared:lintReportDebug UP-TO-DATE
+> Task :shared:lintDebug
+> Task :shared:lint
+> Task :shared:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :shared:compileDebugUnitTestKotlin NO-SOURCE
+> Task :shared:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :shared:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :shared:processDebugUnitTestJavaRes NO-SOURCE
+> Task :shared:testDebugUnitTest NO-SOURCE
+> Task :shared:preReleaseUnitTestBuild UP-TO-DATE
+> Task :shared:generateReleaseUnitTestStubRFile UP-TO-DATE
+> Task :shared:compileReleaseUnitTestKotlin NO-SOURCE
+> Task :shared:javaPreCompileReleaseUnitTest UP-TO-DATE
+> Task :shared:compileReleaseUnitTestJavaWithJavac NO-SOURCE
+> Task :shared:processReleaseUnitTestJavaRes NO-SOURCE
+> Task :shared:testReleaseUnitTest NO-SOURCE
+> Task :shared:test UP-TO-DATE
+> Task :shared:check
+> Task :shared:build
+> Task :wear:preBuild UP-TO-DATE
+> Task :wear:preDebugBuild UP-TO-DATE
+> Task :wear:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :wear:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :wear:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :wear:generateDebugResValues UP-TO-DATE
+> Task :wear:generateDebugResources UP-TO-DATE
+> Task :wear:mergeDebugResources UP-TO-DATE
+> Task :wear:packageDebugResources UP-TO-DATE
+> Task :wear:parseDebugLocalResources UP-TO-DATE
+> Task :wear:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :wear:checkDebugAarMetadata UP-TO-DATE
+> Task :wear:mapDebugSourceSetPaths UP-TO-DATE
+> Task :wear:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :wear:extractDeepLinksDebug UP-TO-DATE
+> Task :wear:processDebugMainManifest UP-TO-DATE
+> Task :wear:processDebugManifest UP-TO-DATE
+> Task :wear:processDebugManifestForPackage UP-TO-DATE
+> Task :wear:processDebugResources UP-TO-DATE
+> Task :mobile:compileReleaseUnitTestKotlin
+> Task :mobile:compileReleaseUnitTestJavaWithJavac NO-SOURCE
+> Task :mobile:processReleaseUnitTestJavaRes
+> Task :mobile:testReleaseUnitTest
+> Task :mobile:test
+> Task :wear:javaPreCompileDebug UP-TO-DATE
+> Task :wear:mergeDebugShaders UP-TO-DATE
+> Task :wear:compileDebugShaders NO-SOURCE
+> Task :wear:generateDebugAssets UP-TO-DATE
+> Task :wear:mergeDebugAssets UP-TO-DATE
+> Task :wear:compressDebugAssets UP-TO-DATE
+> Task :wear:checkDebugDuplicateClasses UP-TO-DATE
+> Task :wear:desugarDebugFileDependencies UP-TO-DATE
+> Task :wear:mergeExtDexDebug UP-TO-DATE
+> Task :wear:mergeLibDexDebug UP-TO-DATE
+> Task :wear:mergeDebugJniLibFolders UP-TO-DATE
+> Task :wear:mergeDebugNativeLibs NO-SOURCE
+> Task :wear:stripDebugDebugSymbols NO-SOURCE
+> Task :wear:validateSigningDebug UP-TO-DATE
+> Task :wear:writeDebugAppMetadata UP-TO-DATE
+> Task :wear:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :wear:preReleaseBuild UP-TO-DATE
+> Task :wear:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :wear:mergeReleaseNativeLibs NO-SOURCE
+> Task :wear:stripReleaseDebugSymbols NO-SOURCE
+> Task :wear:extractReleaseNativeSymbolTables NO-SOURCE
+> Task :wear:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :wear:checkReleaseDuplicateClasses UP-TO-DATE
+> Task :wear:buildKotlinToolingMetadata UP-TO-DATE
+> Task :wear:dataBindingMergeDependencyArtifactsRelease UP-TO-DATE
+> Task :wear:generateReleaseResValues UP-TO-DATE
+> Task :wear:generateReleaseResources UP-TO-DATE
+> Task :wear:mergeReleaseResources UP-TO-DATE
+> Task :wear:packageReleaseResources
+> Task :wear:compileDebugKotlin
+> Task :wear:parseReleaseLocalResources
+
+> Task :wear:compileDebugJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+
+> Task :wear:processDebugJavaRes
+> Task :wear:mergeDebugJavaResource
+> Task :wear:dexBuilderDebug
+> Task :wear:dataBindingGenBaseClassesRelease
+> Task :wear:mergeProjectDexDebug
+> Task :wear:checkReleaseAarMetadata
+> Task :wear:mapReleaseSourceSetPaths
+> Task :wear:createReleaseCompatibleScreenManifests
+> Task :wear:extractDeepLinksRelease
+
+> Task :wear:processReleaseMainManifest
+package="it.vantaggi.scoreboardessential.wear" found in source AndroidManifest.xml: /app/wear/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="it.vantaggi.scoreboardessential.wear" from the source AndroidManifest.xml: /app/wear/src/main/AndroidManifest.xml.
+
+> Task :wear:processReleaseManifest
+> Task :wear:processReleaseManifestForPackage
+> Task :wear:packageDebug
+> Task :wear:createDebugApkListingFileRedirect
+> Task :wear:assembleDebug
+> Task :wear:javaPreCompileRelease
+> Task :wear:desugarReleaseFileDependencies
+> Task :wear:mergeReleaseStartupProfile UP-TO-DATE
+> Task :wear:processReleaseResources
+> Task :wear:mergeExtDexRelease
+> Task :wear:mergeReleaseArtProfile
+> Task :wear:mergeReleaseShaders
+> Task :wear:compileReleaseShaders NO-SOURCE
+> Task :wear:generateReleaseAssets UP-TO-DATE
+> Task :wear:mergeReleaseAssets
+> Task :wear:compressReleaseAssets
+> Task :wear:extractReleaseVersionControlInfo
+> Task :wear:extractProguardFiles
+> Task :wear:optimizeReleaseResources
+> Task :wear:collectReleaseDependencies
+> Task :wear:sdkReleaseDependencyData
+> Task :wear:writeReleaseAppMetadata
+> Task :wear:writeReleaseSigningConfigVersions
+> Task :wear:bundleDebugClassesToCompileJar
+> Task :wear:preDebugAndroidTestBuild SKIPPED
+> Task :wear:generateDebugAndroidTestResValues
+> Task :wear:compileReleaseKotlin
+> Task :wear:generateDebugAndroidTestLintModel
+
+> Task :wear:compileReleaseJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+
+> Task :wear:dexBuilderRelease
+> Task :mobile:lintVitalAnalyzeRelease
+> Task :mobile:lintVitalReportRelease SKIPPED
+> Task :mobile:lintVitalRelease SKIPPED
+> Task :wear:mergeReleaseGlobalSynthetics
+> Task :wear:mergeDexRelease
+> Task :wear:generateReleaseLintVitalReportModel
+> Task :mobile:packageRelease
+> Task :mobile:createReleaseApkListingFileRedirect
+> Task :mobile:assembleRelease
+> Task :mobile:assemble
+> Task :wear:processReleaseJavaRes
+> Task :wear:compileReleaseArtProfile
+> Task :wear:generateDebugLintReportModel
+> Task :wear:preDebugUnitTestBuild UP-TO-DATE
+> Task :wear:generateDebugUnitTestLintModel
+> Task :wear:mergeReleaseJavaResource
+> Task :wear:bundleDebugClassesToRuntimeJar
+> Task :wear:compileDebugUnitTestKotlin NO-SOURCE
+> Task :wear:javaPreCompileDebugUnitTest
+> Task :wear:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :wear:processDebugUnitTestJavaRes NO-SOURCE
+> Task :wear:testDebugUnitTest NO-SOURCE
+> Task :wear:bundleReleaseClassesToRuntimeJar
+> Task :wear:bundleReleaseClassesToCompileJar
+> Task :wear:compileReleaseUnitTestKotlin NO-SOURCE
+> Task :wear:preReleaseUnitTestBuild UP-TO-DATE
+> Task :wear:javaPreCompileReleaseUnitTest
+> Task :wear:compileReleaseUnitTestJavaWithJavac NO-SOURCE
+> Task :wear:processReleaseUnitTestJavaRes NO-SOURCE
+> Task :wear:testReleaseUnitTest NO-SOURCE
+> Task :wear:test UP-TO-DATE
+> Task :mobile:lintAnalyzeDebug
+
+> Task :mobile:lintReportDebug
+Wrote HTML report to file:///app/mobile/build/reports/lint-results-debug.html
+
+> Task :mobile:lintDebug
+> Task :mobile:lint
+> Task :mobile:check
+> Task :mobile:build
+> Task :wear:lintAnalyzeDebugAndroidTest
+> Task :wear:lintAnalyzeDebugUnitTest
+> Task :wear:lintVitalAnalyzeRelease
+> Task :wear:lintVitalReportRelease SKIPPED
+> Task :wear:lintVitalRelease SKIPPED
+> Task :wear:packageRelease
+> Task :wear:createReleaseApkListingFileRedirect
+> Task :wear:assembleRelease
+> Task :wear:assemble
+> Task :wear:lintAnalyzeDebug
+
+> Task :wear:lintReportDebug
+Wrote HTML report to file:///app/wear/build/reports/lint-results-debug.html
+
+> Task :wear:lintDebug
+> Task :wear:lint
+> Task :wear:check
+> Task :wear:build
+
+[Incubating] Problems report is available at: file:///app/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.13/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 54s
+292 actionable tasks: 98 executed, 194 up-to-date

@@ -25,7 +25,7 @@
             android:text="Player Name"
             android:textAppearance="?attr/textAppearanceHeadlineSmall"/>
 
-        <com.example.scoreboardessential.views.RoleBadgeGroup
+        <it.vantaggi.scoreboardessential.views.RoleBadgeGroup
             android:id="@+id/player_roles"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
