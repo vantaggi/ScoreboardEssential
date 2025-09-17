@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 enum class SortOrder {
@@ -29,6 +30,10 @@ class PlayersManagementViewModel(application: Application) : AndroidViewModel(ap
 
     val allRoles: Flow<List<Role>>
 
+    // Holds the ID of the currently selected role for filtering, or null if no filter is active.
+    private val _selectedRoleFilter = MutableStateFlow<Int?>(null)
+    val selectedRoleFilter: StateFlow<Int?> = _selectedRoleFilter.asStateFlow()
+
     private var currentSortOrder = SortOrder.NAME_ASC
     private var allPlayersInternal: List<PlayerWithRoles> = emptyList()
 
@@ -43,17 +48,33 @@ class PlayersManagementViewModel(application: Application) : AndroidViewModel(ap
         viewModelScope.launch {
             playerRepository.allPlayers.collect { playersList ->
                 allPlayersInternal = playersList
-                applySorting()
+                applyFiltersAndSorting()
             }
         }
     }
 
-    private fun applySorting() {
-        _players.value = when (currentSortOrder) {
-            SortOrder.NAME_ASC -> allPlayersInternal.sortedBy { it.player.playerName.lowercase() }
-            SortOrder.GOALS_DESC -> allPlayersInternal.sortedByDescending { it.player.goals }
-            SortOrder.APPEARANCES_DESC -> allPlayersInternal.sortedByDescending { it.player.appearances }
+    private fun applyFiltersAndSorting() {
+        var filteredList = allPlayersInternal
+
+        // Apply role filter if one is selected
+        _selectedRoleFilter.value?.let { roleId ->
+            filteredList = filteredList.filter { playerWithRoles ->
+                playerWithRoles.roles.any { it.roleId == roleId }
+            }
         }
+
+        // Apply sorting (existing logic)
+        val sortedList = when (currentSortOrder) {
+            SortOrder.NAME_ASC -> filteredList.sortedBy { it.player.playerName.lowercase() }
+            SortOrder.GOALS_DESC -> filteredList.sortedByDescending { it.player.goals }
+            SortOrder.APPEARANCES_DESC -> filteredList.sortedByDescending { it.player.appearances }
+        }
+        _players.value = sortedList
+    }
+
+    fun setRoleFilter(roleId: Int?) {
+        _selectedRoleFilter.value = roleId
+        applyFiltersAndSorting()
     }
 
     fun createPlayer(name: String, roleIds: List<Int>) {
@@ -87,16 +108,16 @@ class PlayersManagementViewModel(application: Application) : AndroidViewModel(ap
 
     fun sortByName() {
         currentSortOrder = SortOrder.NAME_ASC
-        applySorting()
+        applyFiltersAndSorting()
     }
 
     fun sortByGoals() {
         currentSortOrder = SortOrder.GOALS_DESC
-        applySorting()
+        applyFiltersAndSorting()
     }
 
     fun sortByAppearances() {
         currentSortOrder = SortOrder.APPEARANCES_DESC
-        applySorting()
+        applyFiltersAndSorting()
     }
 }
