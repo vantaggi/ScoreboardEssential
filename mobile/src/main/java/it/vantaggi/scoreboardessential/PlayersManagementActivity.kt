@@ -29,6 +29,7 @@ class PlayersManagementActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: PlayersManagementAdapter
     private lateinit var fab: FloatingActionButton
+    private lateinit var rolesFilterChipGroup: ChipGroup
     private var searchQuery: String = ""
     private var selectedRoleIds = mutableListOf<Int>()
     private var currentDialog: AlertDialog? = null
@@ -64,6 +65,7 @@ class PlayersManagementActivity : AppCompatActivity() {
     private fun initViews() {
         recyclerView = findViewById(R.id.players_recyclerview)
         fab = findViewById(R.id.add_player_fab)
+        rolesFilterChipGroup = findViewById(R.id.roles_filter_chip_group)
         fab.setOnClickListener { showCreatePlayerDialog() }
     }
 
@@ -89,6 +91,47 @@ class PlayersManagementActivity : AppCompatActivity() {
                 }
                 adapter.submitList(filteredPlayers)
                 findViewById<View>(R.id.empty_state).visibility = if (filteredPlayers.isEmpty()) View.VISIBLE else View.GONE
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.allRoles.collect { roles ->
+                setupRoleFilterChips(roles)
+            }
+        }
+    }
+
+    private fun setupRoleFilterChips(roles: List<it.vantaggi.scoreboardessential.database.Role>) {
+        rolesFilterChipGroup.removeAllViews()
+
+        // Add "All" chip
+        val allChip = Chip(this).apply {
+            text = "All"
+            id = View.generateViewId()
+            isCheckable = true
+            isChecked = true
+            // The style is inherited from the theme, or can be set in the XML via `chipStyle`
+        }
+        rolesFilterChipGroup.addView(allChip)
+
+        // Add role chips
+        roles.forEach { role ->
+            val chip = Chip(this).apply {
+                text = role.name
+                id = View.generateViewId()
+                tag = role.roleId
+                isCheckable = true
+            }
+            rolesFilterChipGroup.addView(chip)
+        }
+
+        rolesFilterChipGroup.setOnCheckedChangeListener { group, checkedId ->
+            val chip = group.findViewById<Chip>(checkedId)
+            if (chip != null) {
+                val roleId = if (chip.text == "All") null else chip.tag as? Int
+                viewModel.setRoleFilter(roleId)
+            } else {
+                viewModel.setRoleFilter(null)
             }
         }
     }
