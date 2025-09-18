@@ -28,7 +28,8 @@ class PlayersManagementViewModel(application: Application) : AndroidViewModel(ap
     private val _players = MutableStateFlow<List<PlayerWithRoles>>(emptyList())
     val players: StateFlow<List<PlayerWithRoles>> = _players.asStateFlow()
 
-    val allRoles: Flow<List<Role>>
+    private val _allRoles = MutableStateFlow<List<Role>>(emptyList())
+    val allRoles: StateFlow<List<Role>> = _allRoles.asStateFlow()
 
     // Holds the ID of the currently selected role for filtering, or null if no filter is active.
     private val _selectedRoleFilter = MutableStateFlow<Int?>(null)
@@ -40,15 +41,20 @@ class PlayersManagementViewModel(application: Application) : AndroidViewModel(ap
     init {
         val playerDao = AppDatabase.getDatabase(application).playerDao()
         playerRepository = PlayerRepository(playerDao)
-        allRoles = playerRepository.allRoles
-        loadPlayers()
+        loadPlayersAndRoles() // Un nuovo metodo per caricare tutto
     }
 
-    private fun loadPlayers() {
+    private fun loadPlayersAndRoles() {
         viewModelScope.launch {
             playerRepository.allPlayers.collect { playersList ->
                 allPlayersInternal = playersList
                 applyFiltersAndSorting()
+            }
+        }
+        // Aggiungi questo nuovo blocco di raccolta per i ruoli
+        viewModelScope.launch {
+            playerRepository.allRoles.collect { rolesList ->
+                _allRoles.value = rolesList
             }
         }
     }

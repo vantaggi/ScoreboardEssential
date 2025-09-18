@@ -28,13 +28,18 @@ class RoleSelectionDialogFragment : DialogFragment() {
         val view = requireActivity().layoutInflater.inflate(R.layout.dialog_role_selection, null)
         val recyclerView = view.findViewById<RecyclerView>(R.id.roles_recycler_view)
 
-        roleAdapter = RoleSelectionAdapter { _, _ -> /* State is handled inside the adapter */ }
+        roleAdapter = RoleSelectionAdapter { _, _ -> /* Lo stato è gestito internamente all'adapter */ }
         recyclerView.adapter = roleAdapter
         recyclerView.layoutManager = LinearLayoutManager(context)
 
-        lifecycleScope.launch {
+        // **LA MODIFICA CHIAVE È QUI**
+        // Invece di lanciare una coroutine generica, usiamo viewLifecycleOwner
+        // per assicurarci che l'osservazione avvenga solo quando la UI è attiva.
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.allRoles.collectLatest { roles ->
-                roleAdapter.submitList(roles, initialSelection)
+                if (roles.isNotEmpty()) {
+                    roleAdapter.submitList(roles, initialSelection)
+                }
             }
         }
 
@@ -42,7 +47,6 @@ class RoleSelectionDialogFragment : DialogFragment() {
             .setTitle("Select Roles")
             .setView(view)
             .setPositiveButton("OK") { _, _ ->
-                // Invia il risultato all'activity che è in ascolto
                 setFragmentResult(REQUEST_KEY, bundleOf(
                     RESULT_KEY to ArrayList(roleAdapter.getSelectedRoleIds())
                 ))
