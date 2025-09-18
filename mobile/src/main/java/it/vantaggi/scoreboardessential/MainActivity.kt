@@ -218,6 +218,23 @@ class MainActivity : AppCompatActivity() {
         viewModel.isMatchTimerRunning.observe(this) { isRunning ->
             timerStartButton.text = if (isRunning) "PAUSE" else "START"
         }
+
+        viewModel.isWearConnected.observe(this) { isConnected ->
+            val statusIcon = findViewById<ImageView>(R.id.wear_status_icon)
+            if (isConnected) {
+                statusIcon.setImageResource(R.drawable.ic_watch_connected)
+                statusIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.team_electric_green))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    statusIcon.tooltipText = "Wear OS Connected"
+                }
+            } else {
+                statusIcon.setImageResource(R.drawable.ic_watch_disconnected)
+                statusIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.sidewalk_gray))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    statusIcon.tooltipText = "Wear OS Disconnected"
+                }
+            }
+        }
     }
 
     private fun setupImprovedViews() {

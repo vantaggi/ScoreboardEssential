@@ -39,6 +39,16 @@
                     android:padding="16dp"
                     android:gravity="center">
 
+                    <ImageView
+                        android:id="@+id/wear_status_icon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="end"
+                        android:layout_marginBottom="8dp"
+                        android:src="@drawable/ic_watch_disconnected"
+                        android:contentDescription="Wear OS Connection Status"
+                        tools:src="@drawable/ic_watch_connected"/>
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
