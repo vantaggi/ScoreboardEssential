@@ -80,6 +80,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
 
     private val wearDataSync = OptimizedWearDataSync(application)
+    val isWearConnected: LiveData<Boolean> = wearDataSync.isConnected.asLiveData()
     
     val allMatches: LiveData<List<MatchWithTeams>> = repository.allMatches.asLiveData()
     

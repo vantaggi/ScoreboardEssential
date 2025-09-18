@@ -37,11 +37,6 @@
         </activity>
 
         <activity
-            android:name=".MatchManagementActivity"
-            android:exported="false"
-            android:label="Match Control" />
-
-        <activity
             android:name=".PlayerSelectionActivity"
             android:exported="false"
             android:label="Select Scorer" />

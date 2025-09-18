@@ -7,56 +7,28 @@ import androidx.wear.remote.interactions.RemoteActivityHelper
 import android.os.ResultReceiver
 import android.os.Handler
 import android.os.Looper
-import android.view.GestureDetector
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: WearViewModel by viewModels()
-    private lateinit var gestureDetector: GestureDetector
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupGestureDetector()
         setupClickListeners()
         observeViewModel()
-    }
-
-    private fun setupGestureDetector() {
-        gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
-                if (e1 == null) return false
-                
-                val diffX = e2.x - e1.x
-                val diffY = e2.y - e1.y
-                
-                // Check if horizontal swipe is more significant than vertical
-                if (abs(diffX) > abs(diffY)) {
-                    // Swipe left to show match management
-                    if (diffX < -100 && abs(velocityX) > 100) {
-                        startActivity(Intent(this@MainActivity, MatchManagementActivity::class.java))
-                        return true
-                    }
-                }
-                return false
-            }
-        })
-    }
-
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        return gestureDetector.onTouchEvent(event) || super.onTouchEvent(event)
     }
 
     private fun setupClickListeners() {
@@ -80,9 +52,12 @@ class MainActivity : ComponentActivity() {
             true
         }
 
-        binding.keeperTimer.setOnLongClickListener {
+        binding.keeperTimer.setOnClickListener {
             viewModel.handleKeeperTimer()
-            true
+        }
+
+        binding.btnStartNewMatch.setOnClickListener {
+            viewModel.startNewMatch()
         }
 
         // Add timer controls via long press on match timer
@@ -150,17 +125,19 @@ class MainActivity : ComponentActivity() {
                 // Observe Keeper Timer
                 launch {
                     viewModel.keeperTimer.collect { state ->
+                        binding.keeperTimer.visibility = View.VISIBLE // SEMPRE VISIBILE
                         when (state) {
                             is KeeperTimerState.Hidden -> {
-                                binding.keeperTimer.visibility = View.GONE
+                                binding.keeperTimer.text = "KEEPER"
+                                binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.sidewalk_gray))
                             }
                             is KeeperTimerState.Running -> {
-                                binding.keeperTimer.visibility = View.VISIBLE
-                                binding.keeperTimer.text = state.secondsRemaining.toString()
+                                binding.keeperTimer.text = "K: ${state.secondsRemaining}"
+                                binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.team_spray_yellow))
                             }
                             is KeeperTimerState.Finished -> {
-                                binding.keeperTimer.visibility = View.VISIBLE
-                                binding.keeperTimer.text = "00"
+                                binding.keeperTimer.text = "K: 00"
+                                binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.error_red))
                             }
                         }
                     }

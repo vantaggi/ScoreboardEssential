@@ -138,6 +138,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         tools:text="12:34" />
 
+    <ImageButton
+        android:id="@+id/btn_start_new_match"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@drawable/ic_replay"
+        app:tint="@color/sidewalk_gray"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Start New Match"
+        app:layout_constraintTop_toBottomOf="@id/matchTimer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="4dp"/>
+
     <TextView
         android:id="@+id/keeperTimer"
         android:layout_width="wrap_content"
@@ -145,9 +158,11 @@
         android:layout_marginBottom="16dp"
         android:textAppearance="?attr/textAppearanceHeadlineSmall"
         android:textColor="?attr/colorOnSurfaceVariant"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:text="300" />
+        tools:visibility="visible"
+        tools:text="KEEPER" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
