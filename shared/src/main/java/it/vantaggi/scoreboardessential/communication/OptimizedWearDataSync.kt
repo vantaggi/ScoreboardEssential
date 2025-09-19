@@ -54,33 +54,41 @@ class OptimizedWearDataSync(private val context: Context) {
         val isUrgent: Boolean
     )
 
-    /**
-     * Monitora costantemente la connessione con i nodi
-     * Basato su "Verifica della Connessione dei Nodi" dalla documentazione
-     */
     private fun startConnectionMonitoring() {
         scope.launch {
             while (isActive) {
                 try {
-                    val nodes = Tasks.await(nodeClient.connectedNodes)
-                    _connectedNodes.value = nodes.toSet()
-                    _isConnected.value = nodes.isNotEmpty()
+                    // Cerca i nodi che hanno la nostra capability e sono raggiungibili
+                    val capabilityInfo = Tasks.await(
+                        capabilityClient.getCapability(
+                            WearConstants.CAPABILITY_SCOREBOARD_APP,
+                            CapabilityClient.FILTER_REACHABLE
+                        )
+                    )
 
-                    if (nodes.isNotEmpty()) {
-                        Log.d(TAG, "Connected nodes: ${nodes.joinToString { it.displayName }}")
+                    // Aggiorna la nostra lista di nodi attivi
+                    _connectedNodes.value = capabilityInfo.nodes
+
+                    // Lo stato della connessione è VERO solo se c'è almeno un nodo con la nostra app
+                    val isAppConnected = capabilityInfo.nodes.isNotEmpty()
+                    _isConnected.value = isAppConnected
+
+                    if (isAppConnected) {
+                        Log.d(TAG, "App connected on nodes: ${capabilityInfo.nodes.joinToString { it.displayName }}")
                         if (!isHeartbeatActive.get()) {
                             startHeartbeat()
                         }
                     } else {
-                        Log.w(TAG, "No connected nodes found")
+                        Log.w(TAG, "No connected nodes with the required capability found.")
                         stopHeartbeat()
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error checking connected nodes", e)
+                    Log.e(TAG, "Error checking for capable nodes", e)
                     _isConnected.value = false
+                    _connectedNodes.value = emptySet()
                 }
 
-                delay(10000) // Check ogni 10 secondi
+                delay(5000) // Controlla ogni 5 secondi
             }
         }
     }

@@ -6,6 +6,8 @@ package it.vantaggi.scoreboardessential.shared.communication
  * Basato sulla documentazione sezione "Silent Failures"
  */
 object WearConstants {
+    const val CAPABILITY_SCOREBOARD_APP = "scoreboard_essential_app"
+
     // Path prefissi per intent-filter optimization
     const val PATH_PREFIX = "/scoreboard"
 
