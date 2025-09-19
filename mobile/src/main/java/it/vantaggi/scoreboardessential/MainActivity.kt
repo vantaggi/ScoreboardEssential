@@ -181,10 +181,14 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.team1Color.observe(this) { color ->
             team1Card.setCardBackgroundColor(color)
+            matchLogAdapter.team1Color = color
+            matchLogAdapter.notifyDataSetChanged()
         }
 
         viewModel.team2Color.observe(this) { color ->
             team2Card.setCardBackgroundColor(color)
+            matchLogAdapter.team2Color = color
+            matchLogAdapter.notifyDataSetChanged()
         }
 
         viewModel.matchTimerValue.observe(this) { timeInMillis ->
@@ -234,6 +238,10 @@ class MainActivity : AppCompatActivity() {
                     statusIcon.tooltipText = "Wear OS Disconnected"
                 }
             }
+        }
+
+        viewModel.shareMatchEvent.observe(this) { intent ->
+            startActivity(Intent.createChooser(intent, "Share Match Results"))
         }
     }
 
@@ -309,6 +317,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.team2_card).setOnLongClickListener {
             viewModel.requestTeamColorChange(2)
             true
+        }
+
+        findViewById<Button>(R.id.share_match_button).setOnClickListener {
+            viewModel.shareMatchResults()
         }
     }
 

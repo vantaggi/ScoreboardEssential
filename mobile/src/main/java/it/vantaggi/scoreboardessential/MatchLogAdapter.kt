@@ -12,6 +12,9 @@ import com.google.android.material.color.MaterialColors
 
 class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHolder>(MatchEventDiffCallback()) {
 
+    var team1Color: Int = 0
+    var team2Color: Int = 0
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MatchEventViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.match_event_item, parent, false)
@@ -19,7 +22,7 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
     }
 
     override fun onBindViewHolder(holder: MatchEventViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        holder.bind(getItem(position), team1Color, team2Color)
     }
 
     class MatchEventViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -27,7 +30,7 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
         private val eventTextView: TextView = itemView.findViewById(R.id.event_description)
         private val teamIndicator: View = itemView.findViewById(R.id.team_indicator)
 
-        fun bind(event: MatchEvent) {
+        fun bind(event: MatchEvent, team1Color: Int, team2Color: Int) {
             timestampTextView.text = event.timestamp
 
             val description = if (event.event == "Goal" && event.player != null) {
@@ -42,15 +45,11 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
             when (event.team) {
                 1 -> {
                     teamIndicator.visibility = View.VISIBLE
-                    teamIndicator.setBackgroundColor(
-                        MaterialColors.getColor(itemView.context, com.google.android.material.R.attr.colorPrimary, "Error")
-                    )
+                    teamIndicator.setBackgroundColor(team1Color)
                 }
                 2 -> {
                     teamIndicator.visibility = View.VISIBLE
-                    teamIndicator.setBackgroundColor(
-                        MaterialColors.getColor(itemView.context, com.google.android.material.R.attr.colorSecondary, "Error")
-                    )
+                    teamIndicator.setBackgroundColor(team2Color)
                 }
                 else -> {
                     teamIndicator.visibility = View.GONE
@@ -59,9 +58,8 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
 
             // Highlight goals
             if (event.event.contains("GOAL!")) {
-                eventTextView.setTextColor(
-                    MaterialColors.getColor(itemView.context, com.google.android.material.R.attr.colorSecondary, "Error")
-                )
+                val goalColor = if (event.team == 1) team1Color else team2Color
+                eventTextView.setTextColor(goalColor)
                 eventTextView.textSize = 16f
             } else {
                 eventTextView.setTextColor(

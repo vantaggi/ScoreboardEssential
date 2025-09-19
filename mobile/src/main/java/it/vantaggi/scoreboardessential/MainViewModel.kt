@@ -153,6 +153,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     val showPlayerSelectionDialog = SingleLiveEvent<Int>()
     val showKeeperTimerExpired = SingleLiveEvent<Unit>()
     val showColorPickerDialog = SingleLiveEvent<Int>()
+    val shareMatchEvent = SingleLiveEvent<Intent>()
 
     // Data Client for Wear OS sync
     private val dataClient: DataClient = Wearable.getDataClient(application)
@@ -536,6 +537,64 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
             keeperRunning = false,
             matchActive = true
         )
+    }
+
+    fun shareMatchResults() {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val context = getApplication<Application>().applicationContext
+            // 1. Inflate del layout XML per il PDF.
+            val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as android.view.LayoutInflater
+            val view = inflater.inflate(R.layout.pdf_scoreboard, null)
+
+            // 2. Popola il layout con i dati correnti del ViewModel.
+            view.findViewById<android.widget.TextView>(R.id.pdf_team1_name).text = team1Name.value
+            view.findViewById<android.widget.TextView>(R.id.pdf_team1_score).text = team1Score.value?.toString() ?: "0"
+            view.findViewById<android.widget.TextView>(R.id.pdf_team2_name).text = team2Name.value
+            view.findViewById<android.widget.TextView>(R.id.pdf_team2_score).text = team2Score.value?.toString() ?: "0"
+            val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+            view.findViewById<android.widget.TextView>(R.id.pdf_date).text = dateFormat.format(Date())
+
+
+            // 3. Crea il PDF in memoria.
+            val pdfDocument = android.graphics.pdf.PdfDocument()
+
+            val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 size
+            val page = pdfDocument.startPage(pageInfo)
+            val canvas = page.canvas
+
+            val measureWidth = android.view.View.MeasureSpec.makeMeasureSpec(pageInfo.pageWidth, android.view.View.MeasureSpec.EXACTLY)
+            val measureHeight = android.view.View.MeasureSpec.makeMeasureSpec(pageInfo.pageHeight, android.view.View.MeasureSpec.UNSPECIFIED)
+            view.measure(measureWidth, measureHeight)
+            view.layout(0, 0, pageInfo.pageWidth, view.measuredHeight)
+
+            view.draw(canvas)
+            pdfDocument.finishPage(page)
+
+            // 4. Salva il PDF in una directory cache accessibile.
+            val pdfFile = java.io.File(context.cacheDir, "match_results.pdf")
+            try {
+                pdfDocument.writeTo(java.io.FileOutputStream(pdfFile))
+            } catch (e: java.io.IOException) {
+                e.printStackTrace()
+            }
+            pdfDocument.close()
+
+            // 5. Crea un Intent di condivisione (ACTION_SEND) con il FileProvider.
+            val pdfUri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.provider", pdfFile)
+
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/pdf"
+                putExtra(Intent.EXTRA_STREAM, pdfUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                putExtra(Intent.EXTRA_SUBJECT, "Match Results: ${team1Name.value} vs ${team2Name.value}")
+                val text = "Here are the results for the match between ${team1Name.value} and ${team2Name.value}."
+                putExtra(Intent.EXTRA_TEXT, text)
+            }
+
+
+            // 6. Invia l'intent all'Activity tramite il SingleLiveEvent.
+            shareMatchEvent.postValue(shareIntent)
+        }
     }
 
     private fun syncTeamPlayersToWear() {
