@@ -7,10 +7,11 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class RoleSelectionDialogFragment : DialogFragment() {
@@ -28,17 +29,18 @@ class RoleSelectionDialogFragment : DialogFragment() {
         val view = requireActivity().layoutInflater.inflate(R.layout.dialog_role_selection, null)
         val recyclerView = view.findViewById<RecyclerView>(R.id.roles_recycler_view)
 
-        roleAdapter = RoleSelectionAdapter { _, _ -> /* Lo stato è gestito internamente all'adapter */ }
+        roleAdapter = RoleSelectionAdapter { _, _ -> /* State is handled inside the adapter */ }
         recyclerView.adapter = roleAdapter
         recyclerView.layoutManager = LinearLayoutManager(context)
 
-        // **LA MODIFICA CHIAVE È QUI**
-        // Invece di lanciare una coroutine generica, usiamo viewLifecycleOwner
-        // per assicurarci che l'osservazione avvenga solo quando la UI è attiva.
+        // **USARE viewLifecycleOwner E repeatOnLifecycle È LA CORREZIONE FONDAMENTALE**
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.allRoles.collectLatest { roles ->
-                if (roles.isNotEmpty()) {
-                    roleAdapter.submitList(roles, initialSelection)
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.allRoles.collect { roles ->
+                    // Controlliamo che la lista non sia vuota prima di aggiornare l'adapter
+                    if (roles.isNotEmpty()) {
+                        roleAdapter.submitList(roles, initialSelection)
+                    }
                 }
             }
         }
