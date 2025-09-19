@@ -25,6 +25,10 @@
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
 
+        <meta-data
+            android:name="com.google.android.wearable.capabilities"
+            android:resource="@xml/wear" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

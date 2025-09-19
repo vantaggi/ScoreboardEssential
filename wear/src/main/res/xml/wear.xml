@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wearableApp xmlns:android="http://schemas.android.com/apk/res/android">
+    <capabilities>
+        <capability
+            android:name="scoreboard_essential_app" />
+    </capabilities>
+</wearableApp>
