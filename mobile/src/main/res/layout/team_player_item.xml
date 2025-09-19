@@ -1,45 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/player_card"
-    style="?attr/materialCardViewElevatedStyle"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="4dp"
-    android:layout_marginHorizontal="4dp"
-    app:cardElevation="2dp"
-    app:cardBackgroundColor="@android:color/transparent">
+    android:background="?attr/selectableItemBackground"
+    android:paddingVertical="8dp"
+    android:paddingHorizontal="12dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <!-- Player Avatar -->
+    <TextView
+        android:id="@+id/player_avatar"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="@drawable/circle_background"
+        android:gravity="center"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:textColor="?attr/colorOnPrimary"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:text="J"
+        tools:backgroundTint="?attr/colorPrimary"/>
+
+    <!-- Player Info -->
+    <TextView
+        android:id="@+id/player_name"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@drawable/bg_concrete_card"
-        android:padding="12dp">
+        android:layout_marginStart="12dp"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:maxLines="1"
+        android:ellipsize="end"
+        app:layout_constraintStart_toEndOf="@id/player_avatar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/player_roles"
+        app:layout_constraintVertical_chainStyle="packed"
+        tools:text="Johnathan Doe" />
 
-        <TextView
-            android:id="@+id/player_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Player Name"
-            android:textAppearance="?attr/textAppearanceHeadlineSmall"/>
+    <it.vantaggi.scoreboardessential.views.RoleBadgeGroup
+        android:id="@+id/player_roles"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        app:chipSpacing="2dp"
+        app:layout_constraintStart_toStartOf="@id/player_name"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/player_name"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
-        <it.vantaggi.scoreboardessential.views.RoleBadgeGroup
-            android:id="@+id/player_roles"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"/>
-
-        <TextView
-            android:id="@+id/player_stats"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Goals: 0"
-            android:textAppearance="?attr/textAppearanceLabelMedium"
-            android:textColor="?attr/colorSecondary"
-            android:layout_marginTop="4dp"/>
-
-    </LinearLayout>
-
-</com.google.android.material.card.MaterialCardView>
+</androidx.constraintlayout.widget.ConstraintLayout>
