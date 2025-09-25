@@ -160,7 +160,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     val matchEvents: LiveData<List<MatchEvent>> = _matchEvents
 
     // UI Events
-    val showSelectScorerDialog = SingleLiveEvent<Int>()
+    val showSelectScorerDialog = SingleLiveEvent<Pair<Int, List<PlayerWithRoles>>>()
     val showPlayerSelectionDialog = SingleLiveEvent<Int>()
     val showKeeperTimerExpired = SingleLiveEvent<Unit>()
     val showColorPickerDialog = SingleLiveEvent<Int>()
@@ -331,7 +331,12 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     fun addTeam1Score() {
         _team1Score.value = (_team1Score.value ?: 0) + 1
         triggerHapticFeedback()
-        showSelectScorerDialog.postValue(1)
+        val players = _team1Players.value
+        if (!players.isNullOrEmpty()) {
+            showSelectScorerDialog.postValue(Pair(1, players))
+        } else {
+            addScorer(1, null) // No player to select, just log the goal
+        }
         sendScoreUpdate()
     }
 
@@ -348,7 +353,12 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     fun addTeam2Score() {
         _team2Score.value = (_team2Score.value ?: 0) + 1
         triggerHapticFeedback()
-        showSelectScorerDialog.postValue(2)
+        val players = _team2Players.value
+        if (!players.isNullOrEmpty()) {
+            showSelectScorerDialog.postValue(Pair(2, players))
+        } else {
+            addScorer(2, null) // No player to select, just log the goal
+        }
         sendScoreUpdate()
     }
 
@@ -362,20 +372,20 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         }
     }
 
-    fun addScorer(team: Int, playerName: String) {
+    fun addScorer(team: Int, playerWithRoles: PlayerWithRoles?) {
         viewModelScope.launch {
-            val players = if (team == 1) _team1Players.value else _team2Players.value
-            val playerWithRoles = players?.find { it.player.playerName == playerName }
-
+            val teamName = if (team == 1) _team1Name.value else _team2Name.value
             if (playerWithRoles != null) {
+                // A specific player scored
                 playerWithRoles.player.goals++
                 playerDao.update(playerWithRoles.player)
 
-                val teamName = if (team == 1) _team1Name.value else _team2Name.value
-                val rolesString = playerWithRoles.roles.joinToString(", ")
-                addMatchEvent("Goal", team = team, player = playerName, playerRole = rolesString)
-
-                sendScorerToWear(playerName, playerWithRoles.roles.map { it.name }, team)
+                val rolesString = playerWithRoles.roles.joinToString(", ") { it.name }
+                addMatchEvent("Goal", team = team, player = playerWithRoles.player.playerName, playerRole = rolesString)
+                sendScorerToWear(playerWithRoles.player.playerName, playerWithRoles.roles.map { it.name }, team)
+            } else {
+                // No specific player, just log a goal for the team
+                addMatchEvent("Goal", team = team, player = teamName)
             }
         }
     }
