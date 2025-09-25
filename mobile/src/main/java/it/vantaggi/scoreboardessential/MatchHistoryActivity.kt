@@ -16,7 +16,12 @@ class MatchHistoryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_match_history)
 
-        val viewModelFactory = MainViewModel.MainViewModelFactory((application as ScoreboardEssentialApplication).matchRepository, application)
+        val application = application as ScoreboardEssentialApplication
+        val viewModelFactory = MainViewModel.MainViewModelFactory(
+            application.matchRepository,
+            application.userPreferencesRepository,
+            application
+        )
         val viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
 
         val summaryTextView = findViewById<TextView>(R.id.summary_textview)

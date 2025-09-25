@@ -47,8 +47,10 @@ import java.util.Locale
 class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialogListener {
 
     private val viewModel: MainViewModel by viewModels {
+        val application = application as ScoreboardEssentialApplication
         MainViewModel.MainViewModelFactory(
-            (application as ScoreboardEssentialApplication).matchRepository,
+            application.matchRepository,
+            application.userPreferencesRepository,
             application
         )
     }
@@ -261,6 +263,16 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
 
         viewModel.shareMatchEvent.observe(this) { intent ->
             startActivity(Intent.createChooser(intent, "Share Match Results"))
+        }
+
+        viewModel.showOnboardingTutorial.observe(this) {
+            Snackbar.make(
+                findViewById(android.R.id.content),
+                "Welcome to Scoreboard Essential! This is where the tutorial would be.",
+                Snackbar.LENGTH_INDEFINITE
+            ).setAction("GOT IT") {
+                viewModel.onOnboardingFinished()
+            }.show()
         }
     }
 
