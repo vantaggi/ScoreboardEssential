@@ -585,12 +585,19 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
             .setTitle("End Match?")
             .setMessage("$team1Name: $team1Score\n$team2Name: $team2Score\n\nSave this match and start a new one?")
             .setPositiveButton("End Match") { _, _ ->
-                viewModel.endMatch()
-                Snackbar.make(
-                    findViewById(android.R.id.content),
-                    "Match saved!",
-                    Snackbar.LENGTH_LONG
-                ).show()
+                if (viewModel.endMatch()) {
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        "Match saved!",
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                } else {
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        "Start the match or score a goal before ending it.",
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                }
             }
             .setNegativeButton("Continue", null)
             .show()

@@ -445,7 +445,11 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     }
 
     // --- End Match ---
-    fun endMatch() {
+    fun endMatch(): Boolean {
+        if (_team1Score.value == 0 && _team2Score.value == 0 && _matchTimerValue.value == 0L) {
+            return false // Match not started, do not save
+        }
+
         viewModelScope.launch {
             if (isServiceBound) {
                 matchTimerService?.stopTimer()
@@ -474,6 +478,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
             startNewMatch()
             sendResetUpdate()
         }
+        return true
     }
 
     // --- Haptic Feedback ---
