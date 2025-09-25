@@ -80,8 +80,8 @@ class PlayersManagementActivity : AppCompatActivity() {
         fab = findViewById(R.id.add_player_fab)
         rolesFilterChipGroup = findViewById(R.id.roles_filter_chip_group)
         fab.setOnClickListener {
-            val intent = Intent(this, AddEditPlayerActivity::class.java)
-            addEditPlayerResultLauncher.launch(intent)
+            val createPlayerDialog = CreatePlayerDialogFragment()
+            createPlayerDialog.show(supportFragmentManager, "CreatePlayerDialog")
         }
     }
 
