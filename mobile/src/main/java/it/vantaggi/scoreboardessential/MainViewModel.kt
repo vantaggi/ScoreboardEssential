@@ -1,7 +1,6 @@
 package it.vantaggi.scoreboardessential
 
 import android.app.Application
-import android.os.CountDownTimer
 import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.core.content.ContextCompat
@@ -15,15 +14,11 @@ import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import it.vantaggi.scoreboardessential.utils.TimerEvent
 import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlinx.coroutines.delay
 import android.util.Log
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
@@ -37,7 +32,6 @@ import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSyn
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
-import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.flow.collect
 
 data class MatchEvent(
@@ -60,14 +54,31 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
             val binder = service as MatchTimerService.MatchTimerBinder
             matchTimerService = binder.getService()
             isServiceBound = true
+
             viewModelScope.launch {
-                matchTimerService?.timerValue?.collect {
-                    _matchTimerValue.value = it
+                binder.getService().matchTimerValue.collect {
+                    _matchTimerValue.postValue(it)
                 }
             }
             viewModelScope.launch {
-                matchTimerService?.isRunning?.collect { running ->
+                binder.getService().isMatchTimerRunning.collect { running ->
                     _isMatchTimerRunning.postValue(running)
+                }
+            }
+            viewModelScope.launch {
+                binder.getService().keeperTimerValue.collect {
+                    _keeperTimerValue.postValue(it)
+                }
+            }
+            viewModelScope.launch {
+                var previousKeeperRunningState = _isKeeperTimerRunning.value ?: false
+                binder.getService().isKeeperTimerRunning.collect { isRunning ->
+                    if (!isRunning && previousKeeperRunningState) {
+                        showKeeperTimerExpired.postValue(Unit)
+                        addMatchEvent("Keeper timer expired!")
+                    }
+                    _isKeeperTimerRunning.postValue(isRunning)
+                    previousKeeperRunningState = isRunning
                 }
             }
         }
@@ -81,9 +92,9 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
 
     private val wearDataSync = OptimizedWearDataSync(application)
     val isWearConnected: LiveData<Boolean> = wearDataSync.isConnected.asLiveData()
-    
+
     val allMatches: LiveData<List<MatchWithTeams>> = repository.allMatches.asLiveData()
-    
+
     fun deleteMatch(match: Match) = viewModelScope.launch {
         repository.deleteMatch(match)
     }
@@ -129,8 +140,8 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     // Keeper Timer
     private val _keeperTimerValue = MutableLiveData(0L)
     val keeperTimerValue: LiveData<Long> = _keeperTimerValue
-    private var keeperTimer: CountDownTimer? = null
-    private var isKeeperTimerRunning = false
+    private val _isKeeperTimerRunning = MutableLiveData(false)
+    val isKeeperTimerRunning: LiveData<Boolean> = _isKeeperTimerRunning
     private var keeperTimerDuration = 300000L // 5 minutes default
 
     // Team Players
@@ -165,7 +176,6 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         val db = AppDatabase.getDatabase(application)
         matchDao = db.matchDao()
         playerDao = db.playerDao()
-        _keeperTimerValue.value = 0L  // Start with 0 to hide it
 
         listenForScoreUpdates()
         listenForTimerEvents()
@@ -176,14 +186,8 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
 
     private fun bindService() {
         Intent(getApplication(), MatchTimerService::class.java).also { intent ->
+            getApplication<Application>().startService(intent)
             getApplication<Application>().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-        }
-    }
-
-    private fun unbindService() {
-        if (isServiceBound) {
-            getApplication<Application>().unbindService(serviceConnection)
-            isServiceBound = false
         }
     }
 
@@ -230,7 +234,6 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         viewModelScope.launch {
             playerDao.getAllPlayers().collect { players ->
                 _allPlayers.postValue(players)
-                // Sync players to wear whenever the player list updates
                 syncTeamPlayersToWear()
             }
         }
@@ -240,13 +243,14 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         _team1Score.value = 0
         _team2Score.value = 0
         _matchEvents.value = emptyList()
-        _matchTimerValue.value = 0L
-        _isMatchTimerRunning.value = false
-        matchTimerService?.stopTimer()
+        if (isServiceBound) {
+            matchTimerService?.stopTimer()
+            matchTimerService?.resetKeeperTimer()
+        }
 
         addMatchEvent("New match ready - press START to begin")
-        sendMatchStateUpdate(true)  // Sync match started
-        sendScoreUpdate()  // Sync initial scores
+        sendMatchStateUpdate(true)
+        sendScoreUpdate()
     }
 
     // --- Team Management ---
@@ -371,7 +375,6 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
                 val rolesString = playerWithRoles.roles.joinToString(", ")
                 addMatchEvent("Goal", team = team, player = playerName, playerRole = rolesString)
 
-                // Invia info al Wear con ruolo
                 sendScorerToWear(playerName, playerWithRoles.roles.map { it.name }, team)
             }
         }
@@ -383,59 +386,40 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
 
     // --- Match Timer Management ---
     fun startStopMatchTimer() {
-        if (isServiceBound) {
-            if (isMatchTimerRunning.value == true) {
-                matchTimerService?.pauseTimer()
-            } else {
-                matchTimerService?.startTimer()
-            }
+        if (!isServiceBound) return
+        if (_isMatchTimerRunning.value == true) {
+            matchTimerService?.pauseTimer()
+        } else {
+            matchTimerService?.startTimer()
         }
     }
 
     fun resetMatchTimer() {
-        if (isServiceBound) {
-            matchTimerService?.stopTimer()
-        }
+        if (!isServiceBound) return
+        matchTimerService?.stopTimer()
     }
 
     // --- Keeper Timer Management ---
     fun setKeeperTimer(seconds: Long) {
         keeperTimerDuration = seconds * 1000
-        _keeperTimerValue.value = keeperTimerDuration  // This will make it visible
+        _keeperTimerValue.value = keeperTimerDuration
         addMatchEvent("Keeper timer set to ${seconds} seconds")
     }
 
     fun startKeeperTimer() {
-        keeperTimer?.cancel()
-        isKeeperTimerRunning = true
-
-        // Ensure the timer value is set so it becomes visible
-        _keeperTimerValue.value = keeperTimerDuration
-
-        keeperTimer = object : CountDownTimer(keeperTimerDuration, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                _keeperTimerValue.postValue(millisUntilFinished)
-            }
-
-            override fun onFinish() {
-                _keeperTimerValue.postValue(0L)
-                isKeeperTimerRunning = false
-                triggerKeeperTimerExpired()
-                showKeeperTimerExpired.postValue(Unit)
-                addMatchEvent("Keeper timer expired!")
-            }
-        }.start()
-
+        if (!isServiceBound) return
+        matchTimerService?.startKeeperTimer(keeperTimerDuration)
         addMatchEvent("Keeper timer started (${keeperTimerDuration / 1000}s)")
-        sendKeeperTimerUpdate(true)
+    }
+
+    fun pauseKeeperTimer() {
+        if (!isServiceBound) return
+        matchTimerService?.pauseKeeperTimer()
     }
 
     fun resetKeeperTimer() {
-        keeperTimer?.cancel()
-        isKeeperTimerRunning = false
-        _keeperTimerValue.value = 0L  // Set to 0 to hide
-        vibrator?.cancel()
-        sendKeeperTimerUpdate(false)
+        if (!isServiceBound) return
+        matchTimerService?.resetKeeperTimer()
         addMatchEvent("Keeper timer reset")
     }
 
@@ -453,8 +437,9 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     // --- End Match ---
     fun endMatch() {
         viewModelScope.launch {
-            _isMatchTimerRunning.value = false
-            matchTimerService?.stopTimer()
+            if (isServiceBound) {
+                matchTimerService?.stopTimer()
+            }
 
             val matchId = matchDao.insert(
                 Match(
@@ -475,9 +460,9 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
 
             addMatchEvent("Match ended - Final Score: ${_team1Score.value} - ${_team2Score.value}")
 
-            sendMatchStateUpdate(false)  // Sync match ended
+            sendMatchStateUpdate(false)
             startNewMatch()
-            sendResetUpdate()  // Sync full reset
+            sendResetUpdate()
         }
     }
 
@@ -487,13 +472,6 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         vibrator?.vibrate(effect)
     }
 
-    private fun triggerKeeperTimerExpired() {
-        // Strong pattern vibration for keeper timer
-        val effect = VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_ALERT, -1)
-        vibrator?.vibrate(effect)
-    }
-
-    
 // --- Data Synchronization with Wear OS ---
     private fun sendScoreUpdate() {
         wearDataSync.syncScores(
@@ -542,11 +520,9 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     fun shareMatchResults() {
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             val context = getApplication<Application>().applicationContext
-            // 1. Inflate del layout XML per il PDF.
             val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as android.view.LayoutInflater
             val view = inflater.inflate(R.layout.pdf_scoreboard, null)
 
-            // 2. Popola il layout con i dati correnti del ViewModel.
             view.findViewById<android.widget.TextView>(R.id.pdf_team1_name).text = team1Name.value
             view.findViewById<android.widget.TextView>(R.id.pdf_team1_score).text = team1Score.value?.toString() ?: "0"
             view.findViewById<android.widget.TextView>(R.id.pdf_team2_name).text = team2Name.value
@@ -555,7 +531,6 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
             view.findViewById<android.widget.TextView>(R.id.pdf_date).text = dateFormat.format(Date())
 
 
-            // 3. Crea il PDF in memoria.
             val pdfDocument = android.graphics.pdf.PdfDocument()
 
             val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 size
@@ -570,7 +545,6 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
             view.draw(canvas)
             pdfDocument.finishPage(page)
 
-            // 4. Salva il PDF in una directory cache accessibile.
             val pdfFile = java.io.File(context.cacheDir, "match_results.pdf")
             try {
                 pdfDocument.writeTo(java.io.FileOutputStream(pdfFile))
@@ -579,7 +553,6 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
             }
             pdfDocument.close()
 
-            // 5. Crea un Intent di condivisione (ACTION_SEND) con il FileProvider.
             val pdfUri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.provider", pdfFile)
 
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -591,8 +564,6 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
                 putExtra(Intent.EXTRA_TEXT, text)
             }
 
-
-            // 6. Invia l'intent all'Activity tramite il SingleLiveEvent.
             shareMatchEvent.postValue(shareIntent)
         }
     }
@@ -620,7 +591,6 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
 
         wearDataSync.syncTeamPlayers(team1PlayerData, team2PlayerData)
 
-        // Also sync all available players for player selection
         val allPlayerData = _allPlayers.value?.map { playerWithRoles ->
             PlayerData(
                 id = playerWithRoles.player.playerId,
@@ -634,24 +604,16 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         wearDataSync.syncPlayerList(allPlayerData)
     }
 
-    // --- Match Events ---
-
     override fun onCleared() {
-        // IMPORTANTE: Prima cancella i timer, poi unbind il service
-        keeperTimer?.cancel()
         vibrator?.cancel()
-
-        // Fix: Assicurarsi che il service venga sempre unbind
         try {
             if (isServiceBound) {
-                matchTimerService?.stopTimer()
                 getApplication<Application>().unbindService(serviceConnection)
                 isServiceBound = false
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Error unbinding service", e)
         }
-
         super.onCleared()
     }
 }
