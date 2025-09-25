@@ -33,6 +33,7 @@ import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
 import kotlinx.coroutines.flow.collect
+import android.content.SharedPreferences
 
 data class MatchEvent(
     val timestamp: String,
@@ -160,6 +161,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     val matchEvents: LiveData<List<MatchEvent>> = _matchEvents
 
     // UI Events
+    val showOnboarding = SingleLiveEvent<Unit>()
     val showSelectScorerDialog = SingleLiveEvent<Pair<Int, List<PlayerWithRoles>>>()
     val showPlayerSelectionDialog = SingleLiveEvent<Int>()
     val showKeeperTimerExpired = SingleLiveEvent<Unit>()
@@ -168,6 +170,8 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
 
     // Data Client for Wear OS sync
     private val dataClient: DataClient = Wearable.getDataClient(application)
+
+    private val sharedPreferences: SharedPreferences = application.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
     // Current Match ID
     private var currentMatchId: Long? = null
@@ -182,6 +186,18 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         loadAllPlayers()
         startNewMatch()
         bindService()
+        checkIfOnboardingIsNeeded()
+    }
+
+    private fun checkIfOnboardingIsNeeded() {
+        val onboardingCompleted = sharedPreferences.getBoolean("onboarding_completed", false)
+        if (!onboardingCompleted) {
+            showOnboarding.postValue(Unit)
+        }
+    }
+
+    fun onOnboardingFinished() {
+        sharedPreferences.edit().putBoolean("onboarding_completed", true).apply()
     }
 
     private fun bindService() {
