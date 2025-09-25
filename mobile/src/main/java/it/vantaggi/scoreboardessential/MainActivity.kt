@@ -28,6 +28,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.setFragmentResultListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
@@ -97,6 +98,23 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        supportFragmentManager.setFragmentResultListener(TeamNameDialogFragment.REQUEST_KEY, this) { _, bundle ->
+            val teamNumber = bundle.getInt(TeamNameDialogFragment.RESULT_TEAM_NUMBER)
+            bundle.getString(TeamNameDialogFragment.RESULT_NEW_NAME)?.let { newName ->
+                if (teamNumber == 1) {
+                    viewModel.setTeam1Name(newName)
+                } else {
+                    viewModel.setTeam2Name(newName)
+                }
+            }
+            bundle.getString(TeamNameDialogFragment.RESULT_ACTION)?.let { action ->
+                if (action == "CHANGE_COLOR") {
+                    viewModel.requestTeamColorChange(teamNumber)
+                }
+            }
+        }
+
         setContentView(R.layout.activity_main)
 
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -249,11 +267,15 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
     private fun setupImprovedViews() {
         // Setup new TextView clickable for names
         findViewById<View>(R.id.team1_name_container).setOnClickListener {
-            showTeamNameDialog(1)
+            val currentName = viewModel.team1Name.value ?: ""
+            TeamNameDialogFragment.newInstance(1, currentName)
+                .show(supportFragmentManager, TeamNameDialogFragment.TAG)
         }
 
         findViewById<View>(R.id.team2_name_container).setOnClickListener {
-            showTeamNameDialog(2)
+            val currentName = viewModel.team2Name.value ?: ""
+            TeamNameDialogFragment.newInstance(2, currentName)
+                .show(supportFragmentManager, TeamNameDialogFragment.TAG)
         }
 
         // New buttons with improved feedback
@@ -383,59 +405,6 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
         findViewById<View>(R.id.team2_card).setOnTouchListener { _, event ->
             team2GestureDetector.onTouchEvent(event)
         }
-    }
-
-    internal fun showTeamNameDialog(teamNumber: Int) {
-    // 1. Inflate the dialog view
-        val dialogView = layoutInflater.inflate(R.layout.dialog_team_name, null)
-
-    // 2. Find views AFTER inflating the layout
-        val editText = dialogView.findViewById<TextInputEditText>(R.id.team_name_input)
-    val previewText = dialogView.findViewById<TextView>(R.id.preview_text)
-    val suggestionsChipGroup = dialogView.findViewById<ChipGroup>(R.id.suggestions_chips)
-
-        val currentName = if (teamNumber == 1) viewModel.team1Name.value else viewModel.team2Name.value
-        editText.setText(currentName)
-    previewText.text = currentName // Set initial preview text
-
-    // Add a listener to update the preview in real-time
-    editText.addTextChangedListener(object : TextWatcher {
-        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-            previewText.text = s.toString().uppercase()
-        }
-        override fun afterTextChanged(s: Editable?) {}
-    })
-
-    // Add listeners for suggestion chips
-    for (i in 0 until suggestionsChipGroup.childCount) {
-        val chip = suggestionsChipGroup.getChildAt(i) as? Chip
-        chip?.setOnClickListener {
-            editText.setText(chip.text)
-        }
-    }
-
-    // 3. Build and show the dialog
-        MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_App_MaterialAlertDialog)
-            .setTitle("Edit Team $teamNumber")
-        .setView(dialogView) // Use the prepared view
-            .setPositiveButton("SAVE") { _, _ ->
-                val newName = editText.text.toString().trim()
-                if (newName.isNotEmpty()) {
-                    if (teamNumber == 1) {
-                        viewModel.setTeam1Name(newName)
-                        animateTextChange(team1NameTextView, newName)
-                    } else {
-                        viewModel.setTeam2Name(newName)
-                        animateTextChange(team2NameTextView, newName)
-                    }
-                }
-            }
-            .setNeutralButton("CHANGE COLOR") { _, _ ->
-                viewModel.requestTeamColorChange(teamNumber)
-            }
-            .setNegativeButton("CANCEL", null)
-            .show()
     }
 
     private fun animateScoreButton(view: View, isSubtract: Boolean = false) {
