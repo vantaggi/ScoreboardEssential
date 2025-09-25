@@ -61,22 +61,22 @@ class MainActivityLayoutTest {
     }
 
     @Test
-    fun `team name should update with animation`() {
+    fun `clicking team name should show TeamNameDialogFragment`() {
         val scenario = ActivityScenario.launch(MainActivity::class.java)
 
-        scenario.onActivity { act ->
-            val textView = act.findViewById<TextView>(R.id.team1_name_textview)
+        scenario.onActivity { activity ->
+            // Find the clickable container for team 1's name
+            val team1NameContainer = activity.findViewById<View>(R.id.team1_name_container)
+            assertNotNull("Team 1 name container should not be null", team1NameContainer)
 
-            // Trigger name change by calling the now-internal method
-            act.showTeamNameDialog(1)
+            // Simulate a click
+            team1NameContainer.performClick()
 
-            // Note: Verifying animations with Robolectric can be complex and flaky.
-            // The `animate()` method returns a ViewPropertyAnimator, which doesn't set the `animation` property of the view.
-            // A more robust test would use Espresso on a real device/emulator and check view properties (e.g., alpha, translationY)
-            // after the animation runs, but that is outside the scope of this unit test.
-            // For now, we are just ensuring the dialog can be triggered without crashing.
-            // A simple check is to see if the dialog is showing, but that requires more setup.
-            // We will trust that the animation is triggered by the method call.
+            // Verify that the DialogFragment is shown
+            val dialogFragment = activity.supportFragmentManager.findFragmentByTag(TeamNameDialogFragment.TAG)
+            assertNotNull("TeamNameDialogFragment should be shown", dialogFragment)
+            assertTrue("TeamNameDialogFragment should be a DialogFragment", dialogFragment is androidx.fragment.app.DialogFragment)
+            assertTrue("TeamNameDialogFragment should be visible", (dialogFragment as androidx.fragment.app.DialogFragment).isVisible)
         }
         scenario.close()
     }
