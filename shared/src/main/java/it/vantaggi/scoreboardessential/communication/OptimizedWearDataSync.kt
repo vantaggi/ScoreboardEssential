@@ -203,16 +203,16 @@ class OptimizedWearDataSync(private val context: Context) {
 
         players.forEach { player ->
             val playerMap = DataMap().apply {
-                putString("name", player.name)
-                putStringArrayList("roles", ArrayList(player.roles))
-                putInt("id", player.id)
-                putInt("goals", player.goals)
-                putInt("appearances", player.appearances)
+                putString(WearConstants.KEY_PLAYER_NAME, player.name)
+                putStringArrayList(WearConstants.KEY_PLAYER_ROLES, ArrayList(player.roles))
+                putInt(WearConstants.KEY_PLAYER_ID, player.id)
+                putInt(WearConstants.KEY_PLAYER_GOALS, player.goals)
+                putInt(WearConstants.KEY_PLAYER_APPEARANCES, player.appearances)
             }
             playerArrayList.add(playerMap)
         }
 
-        dataMap.putDataMapArrayList("players", playerArrayList)
+        dataMap.putDataMapArrayList(WearConstants.KEY_PLAYERS, playerArrayList)
         dataMap.putLong(WearConstants.KEY_TIMESTAMP, System.currentTimeMillis())
 
         sendDataImmediate(WearConstants.PATH_PLAYERS, dataMap, true)
@@ -225,11 +225,11 @@ class OptimizedWearDataSync(private val context: Context) {
         team1Players.forEach { player ->
             Log.d(TAG, "Syncing team 1 player ${player.name} with roles: ${player.roles.joinToString(",")}")
             val playerMap = DataMap().apply {
-                putString("name", player.name)
-                putStringArrayList("roles", ArrayList(player.roles))
-                putInt("id", player.id)
-                putInt("goals", player.goals)
-                putInt("appearances", player.appearances)
+                putString(WearConstants.KEY_PLAYER_NAME, player.name)
+                putStringArrayList(WearConstants.KEY_PLAYER_ROLES, ArrayList(player.roles))
+                putInt(WearConstants.KEY_PLAYER_ID, player.id)
+                putInt(WearConstants.KEY_PLAYER_GOALS, player.goals)
+                putInt(WearConstants.KEY_PLAYER_APPEARANCES, player.appearances)
             }
             team1ArrayList.add(playerMap)
         }
@@ -238,17 +238,17 @@ class OptimizedWearDataSync(private val context: Context) {
         team2Players.forEach { player ->
             Log.d(TAG, "Syncing team 2 player ${player.name} with roles: ${player.roles.joinToString(",")}")
             val playerMap = DataMap().apply {
-                putString("name", player.name)
-                putStringArrayList("roles", ArrayList(player.roles))
-                putInt("id", player.id)
-                putInt("goals", player.goals)
-                putInt("appearances", player.appearances)
+                putString(WearConstants.KEY_PLAYER_NAME, player.name)
+                putStringArrayList(WearConstants.KEY_PLAYER_ROLES, ArrayList(player.roles))
+                putInt(WearConstants.KEY_PLAYER_ID, player.id)
+                putInt(WearConstants.KEY_PLAYER_GOALS, player.goals)
+                putInt(WearConstants.KEY_PLAYER_APPEARANCES, player.appearances)
             }
             team2ArrayList.add(playerMap)
         }
 
-        dataMap.putDataMapArrayList("team1_players", team1ArrayList)
-        dataMap.putDataMapArrayList("team2_players", team2ArrayList)
+        dataMap.putDataMapArrayList(WearConstants.KEY_TEAM1_PLAYERS, team1ArrayList)
+        dataMap.putDataMapArrayList(WearConstants.KEY_TEAM2_PLAYERS, team2ArrayList)
         dataMap.putLong(WearConstants.KEY_TIMESTAMP, System.currentTimeMillis())
 
         sendDataImmediate(WearConstants.PATH_TEAM_PLAYERS, dataMap, true)

@@ -43,7 +43,7 @@ import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
 import java.util.Locale
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialogListener {
 
     private val viewModel: MainViewModel by viewModels {
         MainViewModel.MainViewModelFactory(
@@ -211,8 +211,9 @@ class MainActivity : AppCompatActivity() {
             matchLogAdapter.submitList(events)
         }
 
-        viewModel.showSelectScorerDialog.observe(this) { team ->
-            showSelectScorerDialog(team)
+        viewModel.showSelectScorerDialog.observe(this) { (teamId, players) ->
+            SelectScorerDialogFragment.newInstance(players, teamId)
+                .show(supportFragmentManager, SelectScorerDialogFragment.TAG)
         }
 
         viewModel.showColorPickerDialog.observe(this) { team ->
@@ -596,33 +597,13 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showSelectScorerDialog(team: Int) {
-        val players = if (team == 1) viewModel.team1Players.value else viewModel.team2Players.value
-
-        if (players.isNullOrEmpty()) {
-            val teamName = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
-            Snackbar.make(
-                findViewById(android.R.id.content),
-                "Goal scored by $teamName!",
-                Snackbar.LENGTH_SHORT
-            ).show()
-            return
-        }
-
-        val playerNames = players.map { it.player.playerName }.toTypedArray()
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Who scored?")
-            .setItems(playerNames) { _, which ->
-                val scorer = players[which]
-                viewModel.addScorer(team, scorer.player.playerName)
-                Snackbar.make(
-                    findViewById(android.R.id.content),
-                    "⚽ Goal by ${scorer.player.playerName}!",
-                    Snackbar.LENGTH_SHORT
-                ).show()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+    override fun onScorerSelected(playerWithRoles: PlayerWithRoles, teamId: Int) {
+        viewModel.addScorer(teamId, playerWithRoles)
+        Snackbar.make(
+            findViewById(android.R.id.content),
+            "⚽ Goal by ${playerWithRoles.player.playerName}!",
+            Snackbar.LENGTH_SHORT
+        ).show()
     }
 
     private fun showEndMatchConfirmation() {

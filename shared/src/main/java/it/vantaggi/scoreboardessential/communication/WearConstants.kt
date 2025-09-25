@@ -47,6 +47,14 @@ object WearConstants {
     const val KEY_KEEPER_MILLIS = "keeper_millis"
     const val KEY_KEEPER_RUNNING = "keeper_running"
     const val KEY_MATCH_ACTIVE = "match_active"
+    const val KEY_PLAYERS = "players"
+    const val KEY_TEAM1_PLAYERS = "team1_players"
+    const val KEY_TEAM2_PLAYERS = "team2_players"
+    const val KEY_PLAYER_ID = "id"
+    const val KEY_PLAYER_NAME = "name"
+    const val KEY_PLAYER_ROLES = "roles"
+    const val KEY_PLAYER_GOALS = "goals"
+    const val KEY_PLAYER_APPEARANCES = "appearances"
 
     // Timeouts e retry
     const val MESSAGE_TIMEOUT_MS = 5000L
