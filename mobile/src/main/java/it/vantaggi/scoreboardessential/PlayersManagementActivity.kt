@@ -11,8 +11,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.appcompat.app.AlertDialog
+import android.app.Activity
+import android.content.Intent
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import com.google.android.material.chip.Chip
@@ -20,8 +22,8 @@ import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 class PlayersManagementActivity : AppCompatActivity() {
 
@@ -31,8 +33,31 @@ class PlayersManagementActivity : AppCompatActivity() {
     private lateinit var fab: FloatingActionButton
     private lateinit var rolesFilterChipGroup: ChipGroup
     private var searchQuery: String = ""
-    private var selectedRoleIds = mutableListOf<Int>()
-    private var currentDialog: AlertDialog? = null
+
+    private val addEditPlayerResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            val playerName = data?.getStringExtra(AddEditPlayerActivity.EXTRA_PLAYER_NAME)
+            val selectedRoleIds = data?.getIntegerArrayListExtra(AddEditPlayerActivity.EXTRA_SELECTED_ROLES)
+            val playerId = data?.getIntExtra(AddEditPlayerActivity.EXTRA_PLAYER_ID, -1)
+
+            if (playerName != null && selectedRoleIds != null) {
+                if (playerId != null && playerId != -1) {
+                    // Editing existing player
+                    lifecycleScope.launch {
+                        val playerToUpdate = viewModel.getPlayer(playerId.toLong()).first()
+                        playerToUpdate?.let {
+                            val updatedPlayer = it.player.copy(playerName = playerName)
+                            viewModel.updatePlayer(updatedPlayer, selectedRoleIds)
+                        }
+                    }
+                } else {
+                    // Adding new player
+                    viewModel.createPlayer(playerName, selectedRoleIds)
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,18 +67,6 @@ class PlayersManagementActivity : AppCompatActivity() {
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             title = "Manage Players"
-        }
-
-        // Imposta il listener per i risultati del Fragment
-        supportFragmentManager.setFragmentResultListener(RoleSelectionDialogFragment.REQUEST_KEY, this) { _, bundle ->
-            val result = bundle.getIntegerArrayList(RoleSelectionDialogFragment.RESULT_KEY)
-            if (result != null) {
-                selectedRoleIds = result.toMutableList()
-                // Aggiorna la UI del dialogo corrente (se esiste)
-                currentDialog?.findViewById<ChipGroup>(R.id.roles_chip_group)?.let { chipGroup ->
-                    updateRolesChipsInView(chipGroup)
-                }
-            }
         }
 
         initViews()
@@ -66,12 +79,21 @@ class PlayersManagementActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.players_recyclerview)
         fab = findViewById(R.id.add_player_fab)
         rolesFilterChipGroup = findViewById(R.id.roles_filter_chip_group)
-        fab.setOnClickListener { showCreatePlayerDialog() }
+        fab.setOnClickListener {
+            val intent = Intent(this, AddEditPlayerActivity::class.java)
+            addEditPlayerResultLauncher.launch(intent)
+        }
     }
 
     private fun setupRecyclerView() {
         adapter = PlayersManagementAdapter(
-            onPlayerClick = { playerWithRoles -> showEditPlayerDialog(playerWithRoles) },
+            onPlayerClick = { playerWithRoles ->
+                val intent = Intent(this, AddEditPlayerActivity::class.java).apply {
+                    putExtra(AddEditPlayerActivity.EXTRA_PLAYER, playerWithRoles.player)
+                    putIntegerArrayListExtra(AddEditPlayerActivity.EXTRA_SELECTED_ROLES, ArrayList(playerWithRoles.roles.map { it.roleId }))
+                }
+                addEditPlayerResultLauncher.launch(intent)
+            },
             onStatsClick = { playerWithRoles -> showPlayerStatsDialog(playerWithRoles) }
         )
         recyclerView.adapter = adapter
@@ -151,105 +173,6 @@ class PlayersManagementActivity : AppCompatActivity() {
         ItemTouchHelper(swipeHandler).attachToRecyclerView(recyclerView)
     }
 
-    private fun showCreatePlayerDialog() {
-        selectedRoleIds.clear()
-        val dialogView = layoutInflater.inflate(R.layout.dialog_create_player, null)
-        val nameInput = dialogView.findViewById<TextInputEditText>(R.id.player_name_input)
-        val rolesChipGroup = dialogView.findViewById<ChipGroup>(R.id.roles_chip_group)
-
-        updateRolesChipsInView(rolesChipGroup)
-
-    val selectRolesButton = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.select_roles_button)
-
-    selectRolesButton.setOnClickListener {
-        Log.d("PlayerManagement", "Select Roles button clicked.")
-        try {
-            val dialogFragment = RoleSelectionDialogFragment.newInstance(selectedRoleIds)
-            dialogFragment.show(supportFragmentManager, "RoleSelectionDialog")
-            Log.d("PlayerManagement", "RoleSelectionDialogFragment shown.")
-        } catch (e: Exception) {
-            Log.e("PlayerManagement", "Error showing RoleSelectionDialogFragment", e)
-            Snackbar.make(fab, "Error opening roles selector.", Snackbar.LENGTH_LONG).show()
-        }
-        }
-
-        currentDialog = MaterialAlertDialogBuilder(this)
-            .setTitle("Create New Player")
-            .setView(dialogView)
-            .setPositiveButton("Create") { _, _ ->
-                val name = nameInput.text.toString().trim()
-                if (name.isNotEmpty()) {
-                    viewModel.createPlayer(name, selectedRoleIds)
-                    Snackbar.make(fab, "Player created!", Snackbar.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun showEditPlayerDialog(playerWithRoles: PlayerWithRoles) {
-        selectedRoleIds = playerWithRoles.roles.map { it.roleId }.toMutableList()
-        val dialogView = layoutInflater.inflate(R.layout.dialog_create_player, null)
-        val nameInput = dialogView.findViewById<TextInputEditText>(R.id.player_name_input)
-        val rolesChipGroup = dialogView.findViewById<ChipGroup>(R.id.roles_chip_group)
-        nameInput.setText(playerWithRoles.player.playerName)
-        updateRolesChipsInView(rolesChipGroup)
-
-    val selectRolesButton = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.select_roles_button)
-
-    selectRolesButton.setOnClickListener {
-        Log.d("PlayerManagement", "Select Roles button clicked.")
-        try {
-            val dialogFragment = RoleSelectionDialogFragment.newInstance(selectedRoleIds)
-            dialogFragment.show(supportFragmentManager, "RoleSelectionDialog")
-            Log.d("PlayerManagement", "RoleSelectionDialogFragment shown.")
-        } catch (e: Exception) {
-            Log.e("PlayerManagement", "Error showing RoleSelectionDialogFragment", e)
-            Snackbar.make(fab, "Error opening roles selector.", Snackbar.LENGTH_LONG).show()
-        }
-        }
-
-        currentDialog = MaterialAlertDialogBuilder(this)
-            .setTitle("Edit Player")
-            .setView(dialogView)
-            .setPositiveButton("Save") { _, _ ->
-                val name = nameInput.text.toString().trim()
-                if (name.isNotEmpty()) {
-                    val updatedPlayer = playerWithRoles.player.copy(playerName = name)
-                    viewModel.updatePlayer(updatedPlayer, selectedRoleIds)
-                    Snackbar.make(fab, "Player updated!", Snackbar.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .setNeutralButton("Delete") { _, _ -> showDeleteConfirmation(playerWithRoles) }
-            .show()
-    }
-
-    private fun updateRolesChipsInView(chipGroup: ChipGroup) {
-        chipGroup.removeAllViews()
-        lifecycleScope.launch {
-            viewModel.allRoles.collect { allRoles ->
-                val selectedRoles = allRoles.filter { selectedRoleIds.contains(it.roleId) }
-                runOnUiThread {
-                    if (selectedRoles.isEmpty()) {
-                        val chip = Chip(this@PlayersManagementActivity).apply {
-                            text = "No roles selected"
-                            isClickable = false
-                        }
-                        chipGroup.addView(chip)
-                    } else {
-                        selectedRoles.forEach { role ->
-                            val chip = Chip(this@PlayersManagementActivity).apply {
-                                text = role.name
-                                isClickable = false
-                            }
-                            chipGroup.addView(chip)
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     private fun showPlayerStatsDialog(playerWithRoles: PlayerWithRoles) {
         val player = playerWithRoles.player

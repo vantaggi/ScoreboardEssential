@@ -44,4 +44,8 @@ interface PlayerDao {
 
     @Query("DELETE FROM player_role_cross_ref WHERE playerId = :playerId")
     suspend fun deleteAllRolesForPlayer(playerId: Int)
+
+    @Transaction
+    @Query("SELECT * FROM players WHERE playerId = :playerId")
+    fun getPlayerWithRoles(playerId: Int): Flow<PlayerWithRoles?>
 }

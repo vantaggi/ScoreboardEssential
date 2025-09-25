@@ -100,6 +100,10 @@ class PlayersManagementViewModel(application: Application) : AndroidViewModel(ap
         }
     }
 
+    fun getPlayer(playerId: Long): Flow<PlayerWithRoles?> {
+        return playerRepository.getPlayerWithRoles(playerId)
+    }
+
     fun deletePlayer(playerWithRoles: PlayerWithRoles) {
         viewModelScope.launch {
             playerRepository.deletePlayer(playerWithRoles.player)
