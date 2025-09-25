@@ -1,38 +1,90 @@
 package it.vantaggi.scoreboardessential.service
 
+import android.Manifest
+import android.app.Notification
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
+import android.os.VibrationEffect
+import android.os.Vibrator
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import it.vantaggi.scoreboardessential.MainActivity
+import it.vantaggi.scoreboardessential.R
+import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
+import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
+import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.concurrent.TimeUnit
 
 class MatchTimerService : Service() {
 
     private val binder = MatchTimerBinder()
-    private var timerJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private lateinit var wearDataSync: OptimizedWearDataSync
+    private lateinit var vibrator: Vibrator
 
-    private val _timerValue = MutableStateFlow(0L)
-    val timerValue = _timerValue.asStateFlow()
-
-    private val _isRunning = MutableStateFlow(false)
-    val isRunning = _isRunning.asStateFlow()
-
+    // Match Timer
+    private var matchTimerJob: Job? = null
+    private val _matchTimerValue = MutableStateFlow(0L)
+    val matchTimerValue = _matchTimerValue.asStateFlow()
+    private val _isMatchTimerRunning = MutableStateFlow(false)
+    val isMatchTimerRunning = _isMatchTimerRunning.asStateFlow()
     private var matchStartTime = 0L
+    private var elapsedTimeOnPause = 0L
+
+    // Keeper Timer
+    private var keeperTimerJob: Job? = null
+    private val _keeperTimerValue = MutableStateFlow(0L)
+    val keeperTimerValue = _keeperTimerValue.asStateFlow()
+    private val _isKeeperTimerRunning = MutableStateFlow(false)
+    val isKeeperTimerRunning = _isKeeperTimerRunning.asStateFlow()
+    private var keeperTimerEndTime = 0L
+    private var keeperRemainingOnPause = 0L
+
 
     companion object {
+        private const val NOTIFICATION_ID = 1
+        private const val KEEPER_TIMER_EXPIRED_NOTIFICATION_ID = 2
+        const val ACTION_PAUSE = "it.vantaggi.scoreboardessential.service.PAUSE"
+        const val ACTION_STOP = "it.vantaggi.scoreboardessential.service.STOP"
+
         private const val PREFS_NAME = "MatchTimerPrefs"
-        private const val KEY_START_TIME = "start_time"
-        private const val KEY_IS_RUNNING = "is_running"
-        private const val KEY_ELAPSED_TIME = "elapsed_time"
+        private const val KEY_MATCH_START_TIME = "match_start_time"
+        private const val KEY_MATCH_ELAPSED_PAUSE = "match_elapsed_pause"
+        private const val KEY_MATCH_RUNNING = "match_running"
+        private const val KEY_KEEPER_END_TIME = "keeper_end_time"
+        private const val KEY_KEEPER_REMAINING_PAUSE = "keeper_remaining_pause"
+        private const val KEY_KEEPER_RUNNING = "keeper_running"
     }
 
     override fun onCreate() {
         super.onCreate()
-        restoreTimerState()
+        wearDataSync = OptimizedWearDataSync(applicationContext)
+        vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        restoreState()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            ACTION_PAUSE -> {
+                pauseTimer()
+                pauseKeeperTimer()
+            }
+            ACTION_STOP -> {
+                stopTimer()
+                resetKeeperTimer()
+            }
+        }
+        return START_STICKY
     }
 
     inner class MatchTimerBinder : Binder() {
@@ -41,58 +93,232 @@ class MatchTimerService : Service() {
 
     override fun onBind(intent: Intent?): IBinder = binder
 
+    // --- Match Timer Control ---
     fun startTimer() {
-        if (_isRunning.value) return
-
-        _isRunning.value = true
-        matchStartTime = System.currentTimeMillis() - _timerValue.value
-
-        timerJob = scope.launch {
+        if (_isMatchTimerRunning.value) return
+        _isMatchTimerRunning.value = true
+        matchStartTime = System.currentTimeMillis() - elapsedTimeOnPause
+        matchTimerJob = scope.launch {
             while (isActive) {
-                _timerValue.value = System.currentTimeMillis() - matchStartTime
-                delay(100) // Update every 100ms for smoother UI
+                val elapsed = System.currentTimeMillis() - matchStartTime
+                _matchTimerValue.value = elapsed
+                updateNotification(elapsed)
+                wearDataSync.syncTimerState(elapsed, true)
+                delay(1000)
             }
         }
-        saveTimerState()
+        startForegroundWithPermissionCheck()
+        saveState()
     }
 
     fun pauseTimer() {
-        _isRunning.value = false
-        timerJob?.cancel()
-        saveTimerState()
+        if (!_isMatchTimerRunning.value) return
+        _isMatchTimerRunning.value = false
+        matchTimerJob?.cancel()
+        elapsedTimeOnPause = _matchTimerValue.value
+        wearDataSync.syncTimerState(_matchTimerValue.value, false)
+        updateNotification(_matchTimerValue.value)
+        checkStopForeground()
+        saveState()
     }
 
     fun stopTimer() {
-        _isRunning.value = false
-        timerJob?.cancel()
-        _timerValue.value = 0L
-        saveTimerState()
+        _isMatchTimerRunning.value = false
+        matchTimerJob?.cancel()
+        _matchTimerValue.value = 0L
+        elapsedTimeOnPause = 0L
+        wearDataSync.syncTimerState(0, false)
+        updateNotification(0)
+        checkStopForeground()
+        saveState()
     }
 
-    private fun saveTimerState() {
+    // --- Keeper Timer Control ---
+    fun startKeeperTimer(durationMillis: Long) {
+        if (_isKeeperTimerRunning.value) return
+        val duration = if (keeperRemainingOnPause > 0) keeperRemainingOnPause else durationMillis
+        _isKeeperTimerRunning.value = true
+        keeperTimerEndTime = System.currentTimeMillis() + duration
+        keeperTimerJob = scope.launch {
+            while (isActive) {
+                val remaining = keeperTimerEndTime - System.currentTimeMillis()
+                if (remaining > 0) {
+                    _keeperTimerValue.value = remaining
+                } else {
+                    _keeperTimerValue.value = 0L
+                    _isKeeperTimerRunning.value = false
+                    keeperRemainingOnPause = 0L
+                    wearDataSync.syncKeeperTimer(0, false)
+                    showKeeperTimerExpiredNotification()
+                    triggerKeeperTimerExpiredVibration()
+                    this.cancel()
+                }
+                delay(1000)
+            }
+        }
+        wearDataSync.syncKeeperTimer(duration, true)
+        startForegroundWithPermissionCheck()
+        saveState()
+    }
+
+    fun pauseKeeperTimer() {
+        if (!_isKeeperTimerRunning.value) return
+        _isKeeperTimerRunning.value = false
+        keeperTimerJob?.cancel()
+        keeperRemainingOnPause = _keeperTimerValue.value
+        wearDataSync.syncKeeperTimer(_keeperTimerValue.value, false)
+        checkStopForeground()
+        saveState()
+    }
+
+    fun resetKeeperTimer() {
+        _isKeeperTimerRunning.value = false
+        keeperTimerJob?.cancel()
+        _keeperTimerValue.value = 0L
+        keeperTimerEndTime = 0L
+        keeperRemainingOnPause = 0L
+        wearDataSync.syncKeeperTimer(0, false)
+        checkStopForeground()
+        saveState()
+    }
+
+    private fun triggerKeeperTimerExpiredVibration() {
+        val effect = VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_ALERT, -1)
+        vibrator.vibrate(effect)
+    }
+
+    private fun checkStopForeground() {
+        if (!_isMatchTimerRunning.value && !_isKeeperTimerRunning.value) {
+            stopForeground(true)
+        }
+    }
+
+    private fun startForegroundWithPermissionCheck() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        startForeground(NOTIFICATION_ID, createNotification(_matchTimerValue.value))
+    }
+
+    // --- Foreground Service & Notifications ---
+    private fun createNotification(timeInMillis: Long): Notification {
+        val formattedTime = formatTime(timeInMillis)
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+
+        val pauseIntent = Intent(this, MatchTimerService::class.java).apply { action = ACTION_PAUSE }
+        val pausePendingIntent = PendingIntent.getService(this, 0, pauseIntent, PendingIntent.FLAG_IMMUTABLE)
+
+        val stopIntent = Intent(this, MatchTimerService::class.java).apply { action = ACTION_STOP }
+        val stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE)
+
+        return NotificationCompat.Builder(this, ScoreboardEssentialApplication.CHANNEL_ID)
+            .setContentTitle(getString(R.string.match_timer))
+            .setContentText(formattedTime)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentIntent(pendingIntent)
+            .addAction(android.R.drawable.ic_media_pause, getString(R.string.pause), pausePendingIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, getString(R.string.stop), stopPendingIntent)
+            .setOnlyAlertOnce(true)
+            .build()
+    }
+
+    private fun updateNotification(timeInMillis: Long) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        val notification = createNotification(timeInMillis)
+        with(NotificationManagerCompat.from(this)) {
+            notify(NOTIFICATION_ID, notification)
+        }
+    }
+
+    private fun showKeeperTimerExpiredNotification() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+
+        val notification = NotificationCompat.Builder(this, ScoreboardEssentialApplication.CHANNEL_ID)
+            .setContentTitle(getString(R.string.keeper_timer_expired_title))
+            .setContentText(getString(R.string.keeper_timer_expired_text))
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentIntent(pendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        with(NotificationManagerCompat.from(this)) {
+            notify(KEEPER_TIMER_EXPIRED_NOTIFICATION_ID, notification)
+        }
+    }
+
+    // --- State Persistence ---
+    private fun saveState() {
         getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().apply {
-            putLong(KEY_START_TIME, matchStartTime)
-            putBoolean(KEY_IS_RUNNING, _isRunning.value)
-            putLong(KEY_ELAPSED_TIME, _timerValue.value)
+            putBoolean(KEY_MATCH_RUNNING, _isMatchTimerRunning.value)
+            if (_isMatchTimerRunning.value) {
+                putLong(KEY_MATCH_START_TIME, matchStartTime)
+            } else {
+                putLong(KEY_MATCH_ELAPSED_PAUSE, elapsedTimeOnPause)
+            }
+
+            putBoolean(KEY_KEEPER_RUNNING, _isKeeperTimerRunning.value)
+            if (_isKeeperTimerRunning.value) {
+                putLong(KEY_KEEPER_END_TIME, keeperTimerEndTime)
+            } else {
+                putLong(KEY_KEEPER_REMAINING_PAUSE, keeperRemainingOnPause)
+            }
             apply()
         }
     }
 
-    private fun restoreTimerState() {
-        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).apply {
-            matchStartTime = getLong(KEY_START_TIME, 0L)
-            _isRunning.value = getBoolean(KEY_IS_RUNNING, false)
-            _timerValue.value = getLong(KEY_ELAPSED_TIME, 0L)
-
-            if (_isRunning.value) {
-                startTimer() // Riprendi il timer se era in esecuzione
-            }
+    private fun restoreState() {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val isMatchRunning = prefs.getBoolean(KEY_MATCH_RUNNING, false)
+        if (isMatchRunning) {
+            matchStartTime = prefs.getLong(KEY_MATCH_START_TIME, System.currentTimeMillis())
+            val elapsed = System.currentTimeMillis() - matchStartTime
+            _matchTimerValue.value = elapsed
+            elapsedTimeOnPause = elapsed
+            startTimer()
+        } else {
+            elapsedTimeOnPause = prefs.getLong(KEY_MATCH_ELAPSED_PAUSE, 0L)
+            _matchTimerValue.value = elapsedTimeOnPause
         }
+
+        val isKeeperRunning = prefs.getBoolean(KEY_KEEPER_RUNNING, false)
+        if (isKeeperRunning) {
+            keeperTimerEndTime = prefs.getLong(KEY_KEEPER_END_TIME, 0L)
+            val remaining = keeperTimerEndTime - System.currentTimeMillis()
+            if (remaining > 0) {
+                keeperRemainingOnPause = remaining
+                startKeeperTimer(remaining)
+            }
+        } else {
+            keeperRemainingOnPause = prefs.getLong(KEY_KEEPER_REMAINING_PAUSE, 0L)
+            _keeperTimerValue.value = keeperRemainingOnPause
+        }
+    }
+
+    private fun formatTime(millis: Long): String {
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(millis)
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % 60
+        return String.format("%02d:%02d", minutes, seconds)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        timerJob?.cancel()
+        saveState()
+        matchTimerJob?.cancel()
+        keeperTimerJob?.cancel()
         scope.cancel()
     }
 }

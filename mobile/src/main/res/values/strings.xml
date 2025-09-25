@@ -9,4 +9,9 @@
     <string name="vs">-</string>
     <string name="delete_match">Delete Match</string>
     <string name="comma_separator">, </string>
+    <string name="match_timer">Match Timer</string>
+    <string name="pause">Pause</string>
+    <string name="stop">Stop</string>
+    <string name="keeper_timer_expired_title">Keeper Timer Expired</string>
+    <string name="keeper_timer_expired_text">The keeper timer has expired.</string>
 </resources>
