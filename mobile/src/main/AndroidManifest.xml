@@ -40,6 +40,15 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
         </activity>
+        <activity
+            android:name=".AddEditPlayerActivity"
+            android:exported="false"
+            android:label="Add/Edit Player"
+            android:parentActivityName=".PlayersManagementActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".PlayersManagementActivity" />
+        </activity>
 
         <activity
             android:name=".PlayersManagementActivity"

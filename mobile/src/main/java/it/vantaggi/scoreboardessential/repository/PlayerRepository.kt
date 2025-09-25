@@ -22,6 +22,10 @@ class PlayerRepository(private val playerDao: PlayerDao) {
         playerDao.updatePlayerWithRoles(player, roleIds)
     }
 
+    fun getPlayerWithRoles(playerId: Long): Flow<PlayerWithRoles?> {
+        return playerDao.getPlayerWithRoles(playerId.toInt())
+    }
+
     suspend fun deletePlayer(player: Player) {
         playerDao.delete(player)
     }
