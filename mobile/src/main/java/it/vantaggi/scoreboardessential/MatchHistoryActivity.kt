@@ -20,6 +20,7 @@ class MatchHistoryActivity : AppCompatActivity() {
         val viewModelFactory = MainViewModel.MainViewModelFactory(
             application.matchRepository,
             application.userPreferencesRepository,
+            application.matchSettingsRepository,
             application
         )
         val viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]

@@ -17,6 +17,7 @@ class OnboardingActivity : AppCompatActivity() {
         MainViewModel.MainViewModelFactory(
             (application as ScoreboardEssentialApplication).matchRepository,
             (application as ScoreboardEssentialApplication).userPreferencesRepository,
+            (application as ScoreboardEssentialApplication).matchSettingsRepository,
             application
         )
     }

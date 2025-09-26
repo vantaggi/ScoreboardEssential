@@ -23,6 +23,7 @@ import org.robolectric.RuntimeEnvironment
 
 import android.app.Application
 import it.vantaggi.scoreboardessential.MatchEvent
+import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.service.MatchTimerService
@@ -42,6 +43,7 @@ class MainViewModelTest {
     private lateinit var mockApplication: Application
     private lateinit var mockRepository: MatchRepository
     private lateinit var mockUserPreferencesRepository: UserPreferencesRepository
+    private lateinit var mockMatchSettingsRepository: MatchSettingsRepository
     private lateinit var mockMatchTimerService: MatchTimerService
 
     @Before
@@ -54,7 +56,8 @@ class MainViewModelTest {
         mockUserPreferencesRepository = mock(UserPreferencesRepository::class.java).apply {
             `when`(hasSeenTutorial).thenReturn(emptyFlow())
         }
-        viewModel = MainViewModel(mockRepository, mockUserPreferencesRepository, mockApplication)
+        mockMatchSettingsRepository = mock(MatchSettingsRepository::class.java)
+        viewModel = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
         mockMatchTimerService = mock(MatchTimerService::class.java)
 
         // Use reflection to inject the mock service and set isServiceBound to true

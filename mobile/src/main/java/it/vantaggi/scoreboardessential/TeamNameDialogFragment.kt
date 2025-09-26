@@ -57,9 +57,6 @@ class TeamNameDialogFragment : DialogFragment() {
                     }
                 }
             }
-            .setNeutralButton("CHANGE COLOR") { _, _ ->
-                viewModel.requestTeamColorChange(teamNumber)
-            }
             .setNegativeButton("CANCEL", null)
             .create()
     }
