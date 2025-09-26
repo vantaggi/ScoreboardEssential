@@ -6,7 +6,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 class CreatePlayerDialogFragment : DialogFragment() {
 
-    private val viewModel: PlayersManagementViewModel by viewModels()
+    private val viewModel: PlayersManagementViewModel by activityViewModels()
     private var selectedRoleIds = mutableListOf<Int>()
     private lateinit var selectedRolesTextView: TextView
 

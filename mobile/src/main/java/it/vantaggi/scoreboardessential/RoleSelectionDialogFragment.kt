@@ -3,7 +3,7 @@ package it.vantaggi.scoreboardessential
 import android.app.Dialog
 import android.os.Bundle
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class RoleSelectionDialogFragment : DialogFragment() {
 
-    private val viewModel: PlayersManagementViewModel by viewModels()
+    private val viewModel: PlayersManagementViewModel by activityViewModels()
     private lateinit var rolesRecyclerView: RecyclerView
     private lateinit var roleAdapter: RoleSelectionAdapter
 

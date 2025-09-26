@@ -102,21 +102,6 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        supportFragmentManager.setFragmentResultListener(TeamNameDialogFragment.REQUEST_KEY, this) { _, bundle ->
-            val teamNumber = bundle.getInt(TeamNameDialogFragment.RESULT_TEAM_NUMBER)
-            bundle.getString(TeamNameDialogFragment.RESULT_NEW_NAME)?.let { newName ->
-                if (teamNumber == 1) {
-                    viewModel.setTeam1Name(newName)
-                } else {
-                    viewModel.setTeam2Name(newName)
-                }
-            }
-            bundle.getString(TeamNameDialogFragment.RESULT_ACTION)?.let { action ->
-                if (action == "CHANGE_COLOR") {
-                    viewModel.requestTeamColorChange(teamNumber)
-                }
-            }
-        }
 
         setContentView(R.layout.activity_main)
 
