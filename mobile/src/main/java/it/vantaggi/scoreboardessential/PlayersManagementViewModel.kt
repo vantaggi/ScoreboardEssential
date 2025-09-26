@@ -21,9 +21,10 @@ enum class SortOrder {
     APPEARANCES_DESC
 }
 
-class PlayersManagementViewModel(application: Application) : AndroidViewModel(application) {
-
+class PlayersManagementViewModel(
+    application: Application,
     private val playerRepository: PlayerRepository
+) : AndroidViewModel(application) {
 
     private val _players = MutableStateFlow<List<PlayerWithRoles>>(emptyList())
     val players: StateFlow<List<PlayerWithRoles>> = _players.asStateFlow()
@@ -39,9 +40,7 @@ class PlayersManagementViewModel(application: Application) : AndroidViewModel(ap
     private var allPlayersInternal: List<PlayerWithRoles> = emptyList()
 
     init {
-        val playerDao = AppDatabase.getDatabase(application).playerDao()
-        playerRepository = PlayerRepository(playerDao)
-        loadPlayersAndRoles() // Un nuovo metodo per caricare tutto
+        loadPlayersAndRoles()
     }
 
     private fun loadPlayersAndRoles() {
