@@ -615,9 +615,9 @@ class MainViewModel(
             // Populate Scorers
             val scorers = _matchEvents.value
                 ?.filter { it.event == "Goal" && it.player != null }
-                ?.groupBy { it.player!! }
-                ?.mapValues { it.value.size }
-
+                ?.map { it.player!! }
+                ?.groupingBy { it }
+                ?.eachCount()
             if (scorers != null && scorers.isNotEmpty()) {
                 scorers.forEach { (playerName, goalCount) ->
                     val scorerTextView = android.widget.TextView(context).apply {
