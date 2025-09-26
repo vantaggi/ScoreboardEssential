@@ -7,7 +7,11 @@ import android.view.MenuItem
 import android.widget.SearchView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import it.vantaggi.scoreboardessential.database.AppDatabase
+import it.vantaggi.scoreboardessential.repository.PlayerRepository
+import it.vantaggi.scoreboardessential.views.PlayersManagementViewModelFactory
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -27,7 +31,7 @@ import kotlinx.coroutines.flow.first
 
 class PlayersManagementActivity : AppCompatActivity() {
 
-    private val viewModel: PlayersManagementViewModel by viewModels()
+    private lateinit var viewModel: PlayersManagementViewModel
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: PlayersManagementAdapter
     private lateinit var fab: FloatingActionButton
@@ -62,6 +66,12 @@ class PlayersManagementActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_players_management)
+
+        // Setup ViewModel using the factory
+        val playerDao = AppDatabase.getDatabase(application).playerDao()
+        val playerRepository = PlayerRepository(playerDao)
+        val factory = PlayersManagementViewModelFactory(application, playerRepository)
+        viewModel = ViewModelProvider(this, factory).get(PlayersManagementViewModel::class.java)
 
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.apply {

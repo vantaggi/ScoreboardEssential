@@ -16,6 +16,7 @@ class OnboardingActivity : AppCompatActivity() {
     private val mainViewModel: MainViewModel by viewModels {
         MainViewModel.MainViewModelFactory(
             (application as ScoreboardEssentialApplication).matchRepository,
+            (application as ScoreboardEssentialApplication).userPreferencesRepository,
             application
         )
     }
