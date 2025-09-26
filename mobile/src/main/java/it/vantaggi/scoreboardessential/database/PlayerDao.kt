@@ -33,6 +33,9 @@ interface PlayerDao {
     @Query("SELECT * FROM roles ORDER BY category, name ASC")
     fun getAllRoles(): Flow<List<Role>>
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRole(role: Role)
+
     @Transaction
     suspend fun updatePlayerWithRoles(player: Player, roleIds: List<Int>) {
         update(player)
