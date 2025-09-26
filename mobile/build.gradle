@@ -82,6 +82,7 @@ dependencies {
     // Dependencies for coroutines testing and LiveData
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2"
     testImplementation "androidx.arch.core:core-testing:2.2.0"
+    testImplementation 'com.google.truth:truth:1.4.2'
 
     // JUnit 5 for useJUnitPlatform()
     def junit_version = "5.10.2"
