@@ -9,6 +9,7 @@ import it.vantaggi.scoreboardessential.repository.ColorRepository
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
+import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 
 class ScoreboardEssentialApplication : Application() {
 
@@ -17,6 +18,7 @@ class ScoreboardEssentialApplication : Application() {
     val playerRepository by lazy { PlayerRepository(database.playerDao()) }
     val matchRepository by lazy { MatchRepository(database.matchDao(), this, colorRepository) }
     val userPreferencesRepository by lazy { UserPreferencesRepository(this) }
+    val matchSettingsRepository by lazy { MatchSettingsRepository(this) }
 
     override fun onCreate() {
         super.onCreate()

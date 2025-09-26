@@ -32,6 +32,7 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.utils.playEnhancedScoreAnimation
 import it.vantaggi.scoreboardessential.utils.playNativeGoalAnimation
@@ -337,6 +338,10 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
 
         findViewById<Button>(R.id.share_match_button).setOnClickListener {
             viewModel.shareMatchResults()
+        }
+
+        findViewById<View>(R.id.settings_button).setOnClickListener {
+            startActivity(Intent(this, MatchSettingsActivity::class.java))
         }
     }
 
