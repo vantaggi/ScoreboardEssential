@@ -7,13 +7,15 @@ import android.text.TextWatcher
 import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.setFragmentResult
+import androidx.fragment.app.activityViewModels
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 
 class TeamNameDialogFragment : DialogFragment() {
+
+    private val viewModel: MainViewModel by activityViewModels()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val teamNumber = requireArguments().getInt(ARG_TEAM_NUMBER)
@@ -48,17 +50,15 @@ class TeamNameDialogFragment : DialogFragment() {
             .setPositiveButton("SAVE") { _, _ ->
                 val newName = editText.text.toString().trim()
                 if (newName.isNotEmpty()) {
-                    setFragmentResult(REQUEST_KEY, bundleOf(
-                        RESULT_TEAM_NUMBER to teamNumber,
-                        RESULT_NEW_NAME to newName
-                    ))
+                    if (teamNumber == 1) {
+                        viewModel.setTeam1Name(newName)
+                    } else {
+                        viewModel.setTeam2Name(newName)
+                    }
                 }
             }
             .setNeutralButton("CHANGE COLOR") { _, _ ->
-                 setFragmentResult(REQUEST_KEY, bundleOf(
-                    RESULT_TEAM_NUMBER to teamNumber,
-                    RESULT_ACTION to "CHANGE_COLOR"
-                ))
+                viewModel.requestTeamColorChange(teamNumber)
             }
             .setNegativeButton("CANCEL", null)
             .create()
@@ -66,15 +66,8 @@ class TeamNameDialogFragment : DialogFragment() {
 
     companion object {
         const val TAG = "TeamNameDialogFragment"
-        const val REQUEST_KEY = "TeamNameDialogRequest"
-        const val RESULT_TEAM_NUMBER = "teamNumber"
-        const val RESULT_NEW_NAME = "newName"
-        const val RESULT_ACTION = "action"
-
-
         private const val ARG_TEAM_NUMBER = "team_number"
         private const val ARG_CURRENT_NAME = "current_name"
-
 
         fun newInstance(teamNumber: Int, currentName: String): TeamNameDialogFragment {
             return TeamNameDialogFragment().apply {
