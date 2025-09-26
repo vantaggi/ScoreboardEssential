@@ -48,8 +48,10 @@ import java.util.Locale
 class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialogListener {
 
     private val viewModel: MainViewModel by viewModels {
+        val application = application as ScoreboardEssentialApplication
         MainViewModel.MainViewModelFactory(
-            (application as ScoreboardEssentialApplication).matchRepository,
+            application.matchRepository,
+            application.userPreferencesRepository,
             application
         )
     }

@@ -4,6 +4,7 @@ import android.graphics.Color
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import it.vantaggi.scoreboardessential.repository.MatchRepository
+import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.utils.ScoreUpdateEventBus
 import it.vantaggi.scoreboardessential.utils.TimerEvent
 import junit.framework.TestCase.assertEquals
@@ -34,6 +35,7 @@ class MainViewModelTest {
     private lateinit var viewModel: MainViewModel
     private lateinit var mockApplication: Application
     private lateinit var mockRepository: MatchRepository
+    private lateinit var mockUserPreferencesRepository: UserPreferencesRepository
 
     @Before
     fun setup() {
@@ -42,7 +44,10 @@ class MainViewModelTest {
         mockRepository = mock(MatchRepository::class.java).apply {
             `when`(allMatches).thenReturn(emptyFlow())
         }
-        viewModel = MainViewModel(mockRepository, mockApplication)
+        mockUserPreferencesRepository = mock(UserPreferencesRepository::class.java).apply {
+            `when`(hasSeenTutorial).thenReturn(emptyFlow())
+        }
+        viewModel = MainViewModel(mockRepository, mockUserPreferencesRepository, mockApplication)
     }
 
     @After

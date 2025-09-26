@@ -23,6 +23,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import it.vantaggi.scoreboardessential.repository.MatchRepository
+import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
+import kotlinx.coroutines.flow.first
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -43,7 +45,11 @@ data class MatchEvent(
     val playerRole: String? = null
 )
 
-class MainViewModel(private val repository: MatchRepository, application: Application) : AndroidViewModel(application) {
+class MainViewModel(
+    private val repository: MatchRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
+    application: Application
+) : AndroidViewModel(application) {
 
     private val playerDao: PlayerDao
     private val matchDao: MatchDao
@@ -100,11 +106,15 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
         repository.deleteMatch(match)
     }
 
-    class MainViewModelFactory(private val repository: MatchRepository, private val application: Application) : ViewModelProvider.Factory {
+    class MainViewModelFactory(
+        private val repository: MatchRepository,
+        private val userPreferencesRepository: UserPreferencesRepository,
+        private val application: Application
+    ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return MainViewModel(repository, application) as T
+                return MainViewModel(repository, userPreferencesRepository, application) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }
@@ -167,6 +177,7 @@ class MainViewModel(private val repository: MatchRepository, application: Applic
     val showKeeperTimerExpired = SingleLiveEvent<Unit>()
     val showColorPickerDialog = SingleLiveEvent<Int>()
     val shareMatchEvent = SingleLiveEvent<Intent>()
+    val showOnboardingTutorial = SingleLiveEvent<Unit>()
 
     // Data Client for Wear OS sync
     private val dataClient: DataClient = Wearable.getDataClient(application)
