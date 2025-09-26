@@ -37,6 +37,7 @@ import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
 import kotlinx.coroutines.flow.collect
 import android.content.SharedPreferences
+import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 
 data class MatchEvent(
     val timestamp: String,
@@ -49,6 +50,7 @@ data class MatchEvent(
 class MainViewModel(
     private val repository: MatchRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val matchSettingsRepository: MatchSettingsRepository,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -110,12 +112,13 @@ class MainViewModel(
     class MainViewModelFactory(
         private val repository: MatchRepository,
         private val userPreferencesRepository: UserPreferencesRepository,
+        private val matchSettingsRepository: MatchSettingsRepository,
         private val application: Application
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return MainViewModel(repository, userPreferencesRepository, application) as T
+                return MainViewModel(repository, userPreferencesRepository, matchSettingsRepository, application) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }
@@ -176,7 +179,6 @@ class MainViewModel(
     val showSelectScorerDialog = SingleLiveEvent<Pair<Int, List<PlayerWithRoles>>>()
     val showPlayerSelectionDialog = SingleLiveEvent<Int>()
     val showKeeperTimerExpired = SingleLiveEvent<Unit>()
-    val showColorPickerDialog = SingleLiveEvent<Int>()
     val shareMatchEvent = SingleLiveEvent<Intent>()
     val showOnboardingTutorial = SingleLiveEvent<Unit>()
 
@@ -193,12 +195,23 @@ class MainViewModel(
         matchDao = db.matchDao()
         playerDao = db.playerDao()
 
+        loadMatchSettings()
         listenForScoreUpdates()
         listenForTimerEvents()
         loadAllPlayers()
         startNewMatch()
         bindService()
         checkIfOnboardingIsNeeded()
+    }
+
+    private fun loadMatchSettings() {
+        viewModelScope.launch {
+            _team1Name.postValue(matchSettingsRepository.getTeam1Name())
+            _team2Name.postValue(matchSettingsRepository.getTeam2Name())
+            _team1Color.postValue(matchSettingsRepository.getTeam1Color())
+            _team2Color.postValue(matchSettingsRepository.getTeam2Color())
+            setKeeperTimer(matchSettingsRepository.getKeeperTimerDuration())
+        }
     }
 
     private fun checkIfOnboardingIsNeeded() {
@@ -301,10 +314,6 @@ class MainViewModel(
         sendTeamColorUpdate(team, color)
     }
 
-    fun requestTeamColorChange(team: Int) {
-        val teamId = if (team == 1) 1 else 2
-        showColorPickerDialog.postValue(teamId)
-    }
 
     // --- Player Management ---
     fun addPlayerToTeam(playerWithRoles: PlayerWithRoles, teamId: Int) {

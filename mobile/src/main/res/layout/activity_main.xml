@@ -171,14 +171,6 @@
                                 android:fontFamily="sans-serif-condensed"
                                 android:textAllCaps="true" />
 
-                            <ImageView
-                                android:id="@+id/team1_edit_icon"
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:layout_marginStart="8dp"
-                                android:src="@drawable/ic_edit"
-                                app:tint="@color/concrete_gray"
-                                android:alpha="0.7" />
                         </LinearLayout>
 
                         <!-- Score con animazione -->
@@ -308,14 +300,6 @@
                                 android:fontFamily="sans-serif-condensed"
                                 android:textAllCaps="true" />
 
-                            <ImageView
-                                android:id="@+id/team2_edit_icon"
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:layout_marginStart="8dp"
-                                android:src="@drawable/ic_edit"
-                                app:tint="@color/concrete_gray"
-                                android:alpha="0.7" />
                         </LinearLayout>
 
                         <!-- Score con animazione -->
@@ -430,63 +414,6 @@
                     app:layout_constraintGuide_percent="0.5" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Keeper Timer Section -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/keeper_timer_card"
-                style="?attr/materialCardViewElevatedStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@android:color/transparent"
-                app:cardElevation="4dp"
-                app:layout_constraintTop_toBottomOf="@id/score_section"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_concrete_card"
-                    android:orientation="horizontal"
-                    android:padding="16dp"
-                    android:gravity="center_vertical">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="KEEPER TIMER"
-                            android:textAppearance="?attr/textAppearanceLabelMedium" />
-
-                        <com.google.android.material.textfield.TextInputLayout
-                            android:layout_width="120dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            app:suffixText="sec"
-                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/timer_edittext"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="300"
-                                android:inputType="number"
-                                android:textAppearance="?attr/textAppearanceBodyLarge"/>
-                        </com.google.android.material.textfield.TextInputLayout>
-                    </LinearLayout>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/set_timer_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="SET TIMER"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
             <!-- Team Rosters Section (Scrollable) -->
             <com.google.android.material.card.MaterialCardView
@@ -497,7 +424,7 @@
                 android:layout_marginTop="16dp"
                 app:cardBackgroundColor="@android:color/transparent"
                 app:cardElevation="4dp"
-                app:layout_constraintTop_toBottomOf="@id/keeper_timer_card"
+                app:layout_constraintTop_toBottomOf="@id/score_section"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 

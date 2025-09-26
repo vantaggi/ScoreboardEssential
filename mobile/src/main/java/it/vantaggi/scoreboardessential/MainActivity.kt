@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
         MainViewModel.MainViewModelFactory(
             application.matchRepository,
             application.userPreferencesRepository,
+            application.matchSettingsRepository,
             application
         )
     }
@@ -64,7 +65,6 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
     private lateinit var team1Card: MaterialCardView
     private lateinit var team2Card: MaterialCardView
     private lateinit var keeperTimerTextView: TextView
-    private lateinit var timerEditText: EditText
     private lateinit var timerStartButton: Button
 
     // New view references for refactored layout
@@ -131,7 +131,6 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
         team1Card = findViewById(R.id.team1_card)
         team2Card = findViewById(R.id.team2_card)
         keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
-        timerEditText = findViewById(R.id.timer_edittext)
         timerStartButton = findViewById(R.id.timer_start_button)
 
         // New Views
@@ -223,9 +222,6 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
                 .show(supportFragmentManager, SelectScorerDialogFragment.TAG)
         }
 
-        viewModel.showColorPickerDialog.observe(this) { team ->
-            showColorPickerDialog(team)
-        }
 
         viewModel.isMatchTimerRunning.observe(this) { isRunning ->
             timerStartButton.text = if (isRunning) "PAUSE" else "START"
@@ -259,18 +255,7 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
     }
 
     private fun setupImprovedViews() {
-        // Setup new TextView clickable for names
-        findViewById<View>(R.id.team1_name_container).setOnClickListener {
-            val currentName = viewModel.team1Name.value ?: ""
-            TeamNameDialogFragment.newInstance(1, currentName)
-                .show(supportFragmentManager, TeamNameDialogFragment.TAG)
-        }
-
-        findViewById<View>(R.id.team2_name_container).setOnClickListener {
-            val currentName = viewModel.team2Name.value ?: ""
-            TeamNameDialogFragment.newInstance(2, currentName)
-                .show(supportFragmentManager, TeamNameDialogFragment.TAG)
-        }
+        // Team name containers are no longer clickable
 
         // New buttons with improved feedback
         findViewById<View>(R.id.team1_add_button_card).setOnClickListener {
@@ -295,17 +280,6 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
             viewModel.subtractTeam2Score()
         }
 
-        // Keep other listeners from original setupClickListeners
-        findViewById<Button>(R.id.set_timer_button).setOnClickListener {
-            val seconds = timerEditText.text.toString().toLongOrNull()
-            if (seconds != null && seconds > 0) {
-                viewModel.setKeeperTimer(seconds)
-                viewModel.startKeeperTimer()
-                Snackbar.make(it, "Keeper timer started: ${seconds}s", Snackbar.LENGTH_SHORT).show()
-            } else {
-                Snackbar.make(it, "Please enter a valid timer duration", Snackbar.LENGTH_SHORT).show()
-            }
-        }
 
         findViewById<Button>(R.id.reset_scores_button).setOnClickListener {
             showEndMatchConfirmation()
@@ -327,14 +301,6 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
             startActivity(Intent(this, PlayersManagementActivity::class.java))
         }
 
-        findViewById<View>(R.id.team1_card).setOnLongClickListener {
-            viewModel.requestTeamColorChange(1)
-            true
-        }
-        findViewById<View>(R.id.team2_card).setOnLongClickListener {
-            viewModel.requestTeamColorChange(2)
-            true
-        }
 
         findViewById<Button>(R.id.share_match_button).setOnClickListener {
             viewModel.shareMatchResults()
@@ -495,22 +461,6 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
         }
     }
 
-    private fun showColorPickerDialog(team: Int) {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_color_picker, null)
-        val colorPickerView = dialogView.findViewById<ColorPickerView>(R.id.colorPickerView)
-        val brightnessSlideBar = dialogView.findViewById<BrightnessSlideBar>(R.id.brightnessSlide)
-
-        colorPickerView.attachBrightnessSlider(brightnessSlideBar)
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Choose Team $team Color")
-            .setView(dialogView)
-            .setPositiveButton("Select") { _, _ ->
-                viewModel.setTeamColor(team, colorPickerView.color)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
 
     private fun showAddPlayerToTeamDialog(team: Int) {
         val allPlayers = viewModel.allPlayers.value ?: emptyList()
