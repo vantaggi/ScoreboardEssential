@@ -31,6 +31,10 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".ui.onboarding.OnboardingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ScoreboardEssential" />
+        <activity
             android:name=".MatchHistoryActivity"
             android:exported="false"
             android:label="Match History"

@@ -14,4 +14,21 @@
     <string name="stop">Stop</string>
     <string name="keeper_timer_expired_title">Keeper Timer Expired</string>
     <string name="keeper_timer_expired_text">The keeper timer has expired.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_finish">Finish</string>
+
+    <!-- Onboarding Step 1: Score Management -->
+    <string name="onboarding_score_title">EASY SCORE MANAGEMENT</string>
+    <string name="onboarding_score_description">Tap to add points. Swipe to remove. Long-press to change team colors and show your style.</string>
+
+    <!-- Onboarding Step 2: Timers and Players -->
+    <string name="onboarding_timers_title">MATCH AND KEEPER TIMERS</string>
+    <string name="onboarding_timers_description">Control the game with the main timer. Use the dedicated keeper timer. Add players to build your teams.</string>
+
+    <!-- Onboarding Step 3: Wear OS Sync -->
+    <string name="onboarding_wear_title">SYNC WITH WEAR OS</string>
+    <string name="onboarding_wear_description">Stay connected. Your score and timers are always synced with your Wear OS smartwatch.</string>
 </resources>

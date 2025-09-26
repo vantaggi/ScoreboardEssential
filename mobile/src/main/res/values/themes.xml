@@ -57,6 +57,24 @@
         <item name="cornerSize">4dp</item>
     </style>
 
+    <!-- Street Vibe Button Text -->
+    <style name="TextAppearance.App.Button" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Street Vibe Button Styles -->
+    <style name="Widget.App.Button.Street" parent="Widget.Material3.Button">
+        <item name="android:textAppearance">@style/TextAppearance.App.Button</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.StreetButton</item>
+    </style>
+
+    <style name="Widget.App.Button.TextButton.Street" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textAppearance">@style/TextAppearance.App.Button</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.StreetButton</item>
+    </style>
+
     <!-- Style for the team name editor dialog -->
     <style name="ThemeOverlay.App.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="colorPrimary">@color/neon_cyan</item>

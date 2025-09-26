@@ -32,6 +32,7 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.utils.playEnhancedScoreAnimation
 import it.vantaggi.scoreboardessential.utils.playNativeGoalAnimation
 import com.google.android.material.card.MaterialCardView
@@ -265,14 +266,9 @@ class MainActivity : AppCompatActivity(), SelectScorerDialogFragment.ScorerDialo
             startActivity(Intent.createChooser(intent, "Share Match Results"))
         }
 
-        viewModel.showOnboardingTutorial.observe(this) {
-            Snackbar.make(
-                findViewById(android.R.id.content),
-                "Welcome to Scoreboard Essential! This is where the tutorial would be.",
-                Snackbar.LENGTH_INDEFINITE
-            ).setAction("GOT IT") {
-                viewModel.onOnboardingFinished()
-            }.show()
+        viewModel.showOnboarding.observe(this) {
+            val intent = Intent(this, OnboardingActivity::class.java)
+            startActivity(intent)
         }
     }
 
