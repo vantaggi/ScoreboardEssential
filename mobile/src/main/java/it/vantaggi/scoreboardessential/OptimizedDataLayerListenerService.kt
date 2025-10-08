@@ -22,8 +22,7 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
     override fun onMessageReceived(messageEvent: MessageEvent) {
         super.onMessageReceived(messageEvent)
 
-        // Log per debugging
-        Log.d(TAG, "Message received: ${messageEvent.path} from ${messageEvent.sourceNodeId}")
+        Log.d(TAG, "Ricevuto messaggio: ${messageEvent.path}")
 
         scope.launch {
             when (messageEvent.path) {
@@ -56,6 +55,7 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
 
         scope.launch {
             events.forEach { event ->
+                Log.d(TAG, "Ricevuto evento dati: ${event.dataItem.uri.path}")
                 when (event.type) {
                     DataEvent.TYPE_CHANGED -> handleDataChange(event.dataItem)
                     DataEvent.TYPE_DELETED -> handleDataDeleted(event.dataItem)
@@ -83,6 +83,7 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
                 val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
                 val team1Score = dataMap.getInt(WearConstants.KEY_TEAM1_SCORE)
                 val team2Score = dataMap.getInt(WearConstants.KEY_TEAM2_SCORE)
+                Log.d(TAG, "Dati punteggio deserializzati: T1=${team1Score}, T2=${team2Score}")
 
                 // Post event to EventBus
                 scope.launch(Dispatchers.Main) {

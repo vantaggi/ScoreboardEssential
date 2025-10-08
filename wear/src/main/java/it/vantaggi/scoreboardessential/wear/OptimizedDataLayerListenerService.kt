@@ -17,7 +17,7 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
     private val TAG = "WearDataListener"
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        Log.d(TAG, "Message received: ${messageEvent.path}")
+        Log.d(TAG, "Ricevuto messaggio: ${messageEvent.path}")
 
         coroutineScope.launch {
             when (messageEvent.path) {
@@ -25,7 +25,7 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
                     val data = String(messageEvent.data)
                     val scores = data.split(",").mapNotNull { it.toIntOrNull() }
                     if (scores.size == 2) {
-                        Log.d(TAG, "Score update from mobile: ${scores[0]} - ${scores[1]}")
+                        Log.d(TAG, "Dati punteggio (da messaggio) deserializzati: ${scores[0]} - ${scores[1]}")
                         WearSyncManager.postSyncEvent(
                             WearSyncEvent.ScoreUpdate(scores[0], scores[1])
                         )
@@ -33,7 +33,7 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
                 }
                 WearConstants.MSG_MATCH_ACTION -> {
                     val action = String(messageEvent.data)
-                    Log.d(TAG, "Match action from mobile: $action")
+                    Log.d(TAG, "Azione partita (da messaggio): $action")
                     when (action) {
                         "START_MATCH", "END_MATCH" -> WearSyncManager.postSyncEvent(WearSyncEvent.MatchReset)
                     }
@@ -47,6 +47,7 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
         dataEvents.release()
         coroutineScope.launch {
             for (event in events) {
+                Log.d(TAG, "Ricevuto evento dati: ${event.dataItem.uri.path}")
                 if (event.type == DataEvent.TYPE_CHANGED) {
                     handleDataChangeEvent(event.dataItem)
                 }
@@ -56,14 +57,13 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
 
     private suspend fun handleDataChangeEvent(item: DataItem) {
         val path = item.uri.path ?: return
-        Log.d(TAG, "Data changed: $path")
 
         when (path) {
             WearConstants.PATH_SCORE -> {
                 DataMapItem.fromDataItem(item).dataMap.run {
                     val team1Score = getInt(WearConstants.KEY_TEAM1_SCORE)
                     val team2Score = getInt(WearConstants.KEY_TEAM2_SCORE)
-                    Log.d(TAG, "Score sync: $team1Score - $team2Score")
+                    Log.d(TAG, "Dati punteggio deserializzati: T1=${team1Score}, T2=${team2Score}")
                     WearSyncManager.postSyncEvent(WearSyncEvent.ScoreUpdate(team1Score, team2Score))
                 }
             }
@@ -71,7 +71,7 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
                 DataMapItem.fromDataItem(item).dataMap.run {
                     val team1Name = getString(WearConstants.KEY_TEAM1_NAME, "TEAM 1")
                     val team2Name = getString(WearConstants.KEY_TEAM2_NAME, "TEAM 2")
-                    Log.d(TAG, "Team names sync: $team1Name vs $team2Name")
+                    Log.d(TAG, "Nomi squadra sincronizzati: T1=${team1Name}, T2=${team2Name}")
                     WearSyncManager.postSyncEvent(WearSyncEvent.TeamNamesUpdate(team1Name, team2Name))
                 }
             }
@@ -82,14 +82,15 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
                 DataMapItem.fromDataItem(item).dataMap.run {
                     val isRunning = getBoolean(WearConstants.KEY_KEEPER_RUNNING, false)
                     val duration = getLong(WearConstants.KEY_KEEPER_MILLIS, 300000L)
-                    Log.d(TAG, "Keeper timer sync: running=$isRunning, duration=$duration")
+                    Log.d(TAG, "Dati Keeper Timer deserializzati: Running=${isRunning}, Duration=${duration}")
                     WearSyncManager.postSyncEvent(WearSyncEvent.KeeperTimerUpdate(isRunning, duration))
                 }
             }
             WearConstants.PATH_MATCH_STATE -> {
                 DataMapItem.fromDataItem(item).dataMap.run {
-                    if (!getBoolean(WearConstants.KEY_MATCH_ACTIVE, false)) {
-                        Log.d(TAG, "Match state sync: inactive")
+                    val isActive = getBoolean(WearConstants.KEY_MATCH_ACTIVE, false)
+                    Log.d(TAG, "Dati stato partita deserializzati: IsActive=${isActive}")
+                    if (!isActive) {
                         WearSyncManager.postSyncEvent(WearSyncEvent.MatchReset)
                     }
                 }
@@ -106,7 +107,7 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
                             appearances = it.getInt(WearConstants.KEY_PLAYER_APPEARANCES)
                         )
                     }
-                    Log.d(TAG, "Player list sync: ${players.size} players")
+                    Log.d(TAG, "Dati lista giocatori deserializzati: Count=${players.size}")
                     WearSyncManager.postSyncEvent(WearSyncEvent.PlayerListUpdate(players))
                 }
             }
@@ -132,7 +133,7 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
                             appearances = it.getInt(WearConstants.KEY_PLAYER_APPEARANCES)
                         )
                     }
-                    Log.d(TAG, "Team players sync: T1=${team1Players.size}, T2=${team2Players.size}")
+                    Log.d(TAG, "Dati giocatori squadra deserializzati: T1=${team1Players.size}, T2=${team2Players.size}")
                     WearSyncManager.postSyncEvent(WearSyncEvent.TeamPlayersUpdate(team1Players, team2Players))
                 }
             }

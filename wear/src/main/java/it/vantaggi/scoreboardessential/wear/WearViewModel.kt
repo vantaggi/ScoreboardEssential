@@ -31,6 +31,8 @@ sealed class KeeperTimerState {
 
 class WearViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val TAG = "WearViewModel"
+
     // Team Names
     private val _team1Name = MutableStateFlow("TEAM 1")
     val team1Name = _team1Name.asStateFlow()
@@ -104,6 +106,7 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
     private fun listenForSyncEvents() {
         viewModelScope.launch {
             WearSyncManager.syncEvents.collect { event ->
+                Log.d(TAG, "Evento ricevuto dal SyncManager: ${event::class.java.simpleName}")
                 when (event) {
                     is WearSyncEvent.ScoreUpdate -> {
                         _team1Score.value = event.team1Score
@@ -125,12 +128,12 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     is WearSyncEvent.PlayerListUpdate -> {
                         _allPlayers.value = event.players
-                        Log.d("WearViewModel", "Updated player list: ${event.players.size} players")
+                        Log.d(TAG, "Updated player list: ${event.players.size} players")
                     }
                     is WearSyncEvent.TeamPlayersUpdate -> {
                         _team1Players.value = event.team1Players
                         _team2Players.value = event.team2Players
-                        Log.d("WearViewModel", "Updated team players: T1=${event.team1Players.size}, T2=${event.team2Players.size}")
+                        Log.d(TAG, "Updated team players: T1=${event.team1Players.size}, T2=${event.team2Players.size}")
                     }
                 }
             }
@@ -347,8 +350,8 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         Wearable.getNodeClient(getApplication()).connectedNodes.addOnSuccessListener { nodes ->
             nodes.forEach { node ->
                 dataClient.sendMessage(node.id, messagePath, data)
-                    .addOnSuccessListener { Log.d("WearViewModel", "Score update sent to ${node.displayName}") }
-                    .addOnFailureListener { e -> Log.e("WearViewModel", "Failed to send score update", e) }
+                    .addOnSuccessListener { Log.d(TAG, "Score update sent to ${node.displayName}") }
+                    .addOnFailureListener { e -> Log.e(TAG, "Failed to send score update", e) }
             }
         }
     }
@@ -427,7 +430,7 @@ class WearViewModel(application: Application) : AndroidViewModel(application) {
         Wearable.getNodeClient(getApplication()).connectedNodes.addOnSuccessListener { nodes ->
             nodes.forEach { node ->
                 messageClient.sendMessage(node.id, messagePath, data)
-                Log.d("WearViewModel", "Sent match control: $action to ${node.displayName}")
+                Log.d(TAG, "Sent match control: $action to ${node.displayName}")
             }
         }
 

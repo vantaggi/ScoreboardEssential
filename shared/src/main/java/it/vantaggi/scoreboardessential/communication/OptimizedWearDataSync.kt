@@ -132,6 +132,7 @@ class OptimizedWearDataSync(private val context: Context) {
      * Sezione 4: "setUrgent() per dati critici"
      */
     fun syncScores(team1Score: Int, team2Score: Int, urgent: Boolean = true) {
+        Log.d(TAG, "Invio punteggi: T1=${team1Score}, T2=${team2Score}")
         val dataMap = DataMap().apply {
             putInt(WearConstants.KEY_TEAM1_SCORE, team1Score)
             putInt(WearConstants.KEY_TEAM2_SCORE, team2Score)
@@ -148,6 +149,7 @@ class OptimizedWearDataSync(private val context: Context) {
     }
 
     fun syncTeamNames(team1Name: String, team2Name: String) {
+        Log.d(TAG, "Invio nomi squadra: T1=${team1Name}, T2=${team2Name}")
         val dataMap = DataMap().apply {
             putString(WearConstants.KEY_TEAM1_NAME, team1Name)
             putString(WearConstants.KEY_TEAM2_NAME, team2Name)
@@ -158,6 +160,7 @@ class OptimizedWearDataSync(private val context: Context) {
 
     fun syncTeamColor(team: Int, color: Int) {
         val path = if (team == 1) WearConstants.PATH_TEAM1_COLOR else WearConstants.PATH_TEAM2_COLOR
+        Log.d(TAG, "Invio colore squadra: Team=${team}, Colore=${color}")
         val dataMap = DataMap().apply {
             putInt("color", color)
             putLong(WearConstants.KEY_TIMESTAMP, System.currentTimeMillis())
@@ -166,6 +169,7 @@ class OptimizedWearDataSync(private val context: Context) {
     }
 
     fun syncTimerState(millis: Long, isRunning: Boolean) {
+        Log.d(TAG, "Invio stato timer: Millis=${millis}, Running=${isRunning}")
         val dataMap = DataMap().apply {
             putLong(WearConstants.KEY_TIMER_MILLIS, millis)
             putBoolean(WearConstants.KEY_TIMER_RUNNING, isRunning)
@@ -175,6 +179,7 @@ class OptimizedWearDataSync(private val context: Context) {
     }
 
     fun syncKeeperTimer(millis: Long, isRunning: Boolean) {
+        Log.d(TAG, "Invio stato keeper timer: Millis=${millis}, Running=${isRunning}")
         val dataMap = DataMap().apply {
             putLong(WearConstants.KEY_KEEPER_MILLIS, millis)
             putBoolean(WearConstants.KEY_KEEPER_RUNNING, isRunning)
@@ -184,6 +189,7 @@ class OptimizedWearDataSync(private val context: Context) {
     }
 
     fun syncMatchState(isActive: Boolean) {
+        Log.d(TAG, "Invio stato partita: Active=${isActive}")
         val dataMap = DataMap().apply {
             putBoolean("match_active", isActive)
             putLong(WearConstants.KEY_TIMESTAMP, System.currentTimeMillis())
@@ -194,10 +200,12 @@ class OptimizedWearDataSync(private val context: Context) {
     fun syncScorerSelected(playerName: String, roles: List<String>, team: Int) {
         val rolesString = roles.joinToString(",")
         val message = "$playerName|$rolesString|$team"
+        Log.d(TAG, "Invio marcatore selezionato: $message")
         sendMessageWithRetry(WearConstants.MSG_SCORER_SELECTED, message.toByteArray())
     }
 
     fun syncPlayerList(players: List<it.vantaggi.scoreboardessential.shared.PlayerData>) {
+        Log.d(TAG, "Invio lista giocatori: Count=${players.size}")
         val dataMap = DataMap()
         val playerArrayList = ArrayList<DataMap>()
 
@@ -219,6 +227,7 @@ class OptimizedWearDataSync(private val context: Context) {
     }
 
     fun syncTeamPlayers(team1Players: List<it.vantaggi.scoreboardessential.shared.PlayerData>, team2Players: List<it.vantaggi.scoreboardessential.shared.PlayerData>) {
+        Log.d(TAG, "Invio giocatori squadra: T1=${team1Players.size}, T2=${team2Players.size}")
         val dataMap = DataMap()
 
         val team1ArrayList = ArrayList<DataMap>()
@@ -317,7 +326,7 @@ class OptimizedWearDataSync(private val context: Context) {
     private fun sendDataImmediate(path: String, dataMap: DataMap, urgent: Boolean) {
         scope.launch {
             if (!_isConnected.value) {
-                Log.w(TAG, "Cannot send data: no connected nodes")
+                Log.w(TAG, "Cannot send data for path $path: no connected nodes")
                 return@launch
             }
 
@@ -329,11 +338,10 @@ class OptimizedWearDataSync(private val context: Context) {
                     }
                 }
 
-                Tasks.await(dataClient.putDataItem(request))
-                Log.d(TAG, "Data sent successfully: $path")
+                val dataItem = Tasks.await(dataClient.putDataItem(request))
+                Log.d(TAG, "Dati inviati con successo per il path: ${dataItem.uri.path}")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to send data: $path", e)
-                // Potrebbe essere necessario un meccanismo di retry qui
+                Log.e(TAG, "Fallimento invio dati per il path: $path", e)
             }
         }
     }
