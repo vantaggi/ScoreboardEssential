@@ -60,4 +60,9 @@ object WearConstants {
     const val MESSAGE_TIMEOUT_MS = 5000L
     const val MAX_RETRY_ATTEMPTS = 3
     const val RETRY_DELAY_MS = 1000L
+
+    // Test constants
+    const val PATH_TEST_PING = "$PATH_PREFIX/test/ping"
+    const val PATH_TEST_PONG = "$PATH_PREFIX/test/pong"
+    const val KEY_TEST_DATA = "test_data"
 }

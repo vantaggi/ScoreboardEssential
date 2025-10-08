@@ -137,6 +137,21 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
                     WearSyncManager.postSyncEvent(WearSyncEvent.TeamPlayersUpdate(team1Players, team2Players))
                 }
             }
+            WearConstants.PATH_TEST_PING -> {
+                DataMapItem.fromDataItem(item).dataMap.run {
+                    val testData = getString(WearConstants.KEY_TEST_DATA)
+                    Log.d(TAG, "Ricevuto PING con dato: $testData")
+
+                    val request = PutDataMapRequest.create(WearConstants.PATH_TEST_PONG).run {
+                        dataMap.putString(WearConstants.KEY_TEST_DATA, testData ?: "")
+                        asPutDataRequest()
+                    }
+
+                    Wearable.getDataClient(this@OptimizedDataLayerListenerService).putDataItem(request)
+                        .addOnSuccessListener { Log.d(TAG, "Inviato PONG con successo") }
+                        .addOnFailureListener { e -> Log.e(TAG, "Errore invio PONG", e) }
+                }
+            }
         }
     }
 
