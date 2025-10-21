@@ -6,30 +6,28 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import it.vantaggi.scoreboardessential.database.AppDatabase
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 class MatchHistoryActivity : AppCompatActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_match_history)
 
         val application = application as ScoreboardEssentialApplication
-        val viewModelFactory = MainViewModel.MainViewModelFactory(
-            application.matchRepository,
-            application.userPreferencesRepository,
-            application.matchSettingsRepository,
-            application
-        )
+        val viewModelFactory =
+            MainViewModel.MainViewModelFactory(
+                application.matchRepository,
+                application.userPreferencesRepository,
+                application.matchSettingsRepository,
+                application,
+            )
         val viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
 
         val summaryTextView = findViewById<TextView>(R.id.summary_textview)
         val recyclerView = findViewById<RecyclerView>(R.id.match_history_recyclerview)
-        val adapter = MatchHistoryAdapter { matchWithTeams ->
-            viewModel.deleteMatch(matchWithTeams.match)
-        }
+        val adapter =
+            MatchHistoryAdapter { matchWithTeams ->
+                viewModel.deleteMatch(matchWithTeams.match)
+            }
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
 

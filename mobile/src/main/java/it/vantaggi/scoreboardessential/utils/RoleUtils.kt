@@ -5,19 +5,20 @@ import androidx.core.content.ContextCompat
 import it.vantaggi.scoreboardessential.R
 
 object RoleUtils {
-
-    fun getCategoryColor(context: Context, category: String): Int {
-        return when (category.uppercase()) {
+    fun getCategoryColor(
+        context: Context,
+        category: String,
+    ): Int =
+        when (category.uppercase()) {
             "ATTACCO" -> ContextCompat.getColor(context, R.color.graffiti_pink)
             "CENTROCAMPO" -> ContextCompat.getColor(context, R.color.neon_cyan)
             "DIFESA" -> ContextCompat.getColor(context, R.color.team_spray_yellow)
             "PORTA" -> ContextCompat.getColor(context, R.color.team_electric_green)
             else -> ContextCompat.getColor(context, R.color.sidewalk_gray)
         }
-    }
 
-    fun getRoleAbbreviation(roleName: String): String {
-        return when (roleName) {
+    fun getRoleAbbreviation(roleName: String): String =
+        when (roleName) {
             // PORTA
             "Portiere" -> "POR"
 
@@ -50,5 +51,4 @@ object RoleUtils {
                 }
             }
         }
-    }
 }

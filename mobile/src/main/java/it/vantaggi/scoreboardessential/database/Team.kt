@@ -9,5 +9,5 @@ data class Team(
     val id: Int = 0,
     val name: String,
     val color: Int,
-    val logoUri: String?
+    val logoUri: String?,
 )

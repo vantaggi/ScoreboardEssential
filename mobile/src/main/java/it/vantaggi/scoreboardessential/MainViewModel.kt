@@ -1,103 +1,113 @@
 package it.vantaggi.scoreboardessential
 
 import android.app.Application
-import android.os.VibrationEffect
-import android.os.Vibrator
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
-import it.vantaggi.scoreboardessential.database.*
-import it.vantaggi.scoreboardessential.utils.ScoreUpdateEventBus
-import it.vantaggi.scoreboardessential.repository.PlayerRepository
-import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
-import it.vantaggi.scoreboardessential.utils.TimerEvent
-import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.Wearable
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
-import android.util.Log
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.asLiveData
-import it.vantaggi.scoreboardessential.repository.MatchRepository
-import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
-import kotlinx.coroutines.flow.first
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.SharedPreferences
 import android.os.IBinder
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.util.Log
 import android.widget.LinearLayout
-import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
+import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.Wearable
+import it.vantaggi.scoreboardessential.database.AppDatabase
+import it.vantaggi.scoreboardessential.database.Match
+import it.vantaggi.scoreboardessential.database.MatchDao
+import it.vantaggi.scoreboardessential.database.MatchPlayerCrossRef
+import it.vantaggi.scoreboardessential.database.MatchWithTeams
+import it.vantaggi.scoreboardessential.database.Player
+import it.vantaggi.scoreboardessential.database.PlayerDao
+import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.repository.MatchRepository
+import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
+import it.vantaggi.scoreboardessential.repository.PlayerRepository
+import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
+import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import it.vantaggi.scoreboardessential.utils.ScoreUpdateEventBus
+import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
+import it.vantaggi.scoreboardessential.utils.TimerEvent
 import kotlinx.coroutines.flow.collect
-import android.content.SharedPreferences
-import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 data class MatchEvent(
     val timestamp: String,
     val event: String,
     val team: Int? = null,
     val player: String? = null,
-    val playerRole: String? = null
+    val playerRole: String? = null,
 )
 
 class MainViewModel(
     private val repository: MatchRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val matchSettingsRepository: MatchSettingsRepository,
-    application: Application
+    application: Application,
 ) : AndroidViewModel(application) {
-
     private val playerDao: PlayerDao
     private val matchDao: MatchDao
     private var matchTimerService: MatchTimerService? = null
     private var isServiceBound = false
 
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as MatchTimerService.MatchTimerBinder
-            matchTimerService = binder.getService()
-            isServiceBound = true
+    private val serviceConnection =
+        object : ServiceConnection {
+            override fun onServiceConnected(
+                name: ComponentName?,
+                service: IBinder?,
+            ) {
+                val binder = service as MatchTimerService.MatchTimerBinder
+                matchTimerService = binder.getService()
+                isServiceBound = true
 
-            viewModelScope.launch {
-                binder.getService().matchTimerValue.collect {
-                    _matchTimerValue.postValue(it)
-                }
-            }
-            viewModelScope.launch {
-                binder.getService().isMatchTimerRunning.collect { running ->
-                    _isMatchTimerRunning.postValue(running)
-                }
-            }
-            viewModelScope.launch {
-                binder.getService().keeperTimerValue.collect {
-                    _keeperTimerValue.postValue(it)
-                }
-            }
-            viewModelScope.launch {
-                var previousKeeperRunningState = _isKeeperTimerRunning.value ?: false
-                binder.getService().isKeeperTimerRunning.collect { isRunning ->
-                    if (!isRunning && previousKeeperRunningState) {
-                        showKeeperTimerExpired.postValue(Unit)
-                        addMatchEvent("Keeper timer expired!")
+                viewModelScope.launch {
+                    binder.getService().matchTimerValue.collect {
+                        _matchTimerValue.postValue(it)
                     }
-                    _isKeeperTimerRunning.postValue(isRunning)
-                    previousKeeperRunningState = isRunning
+                }
+                viewModelScope.launch {
+                    binder.getService().isMatchTimerRunning.collect { running ->
+                        _isMatchTimerRunning.postValue(running)
+                    }
+                }
+                viewModelScope.launch {
+                    binder.getService().keeperTimerValue.collect {
+                        _keeperTimerValue.postValue(it)
+                    }
+                }
+                viewModelScope.launch {
+                    var previousKeeperRunningState = _isKeeperTimerRunning.value ?: false
+                    binder.getService().isKeeperTimerRunning.collect { isRunning ->
+                        if (!isRunning && previousKeeperRunningState) {
+                            showKeeperTimerExpired.postValue(Unit)
+                            addMatchEvent("Keeper timer expired!")
+                        }
+                        _isKeeperTimerRunning.postValue(isRunning)
+                        previousKeeperRunningState = isRunning
+                    }
                 }
             }
-        }
 
-        override fun onServiceDisconnected(name: ComponentName?) {
-            matchTimerService = null
-            isServiceBound = false
+            override fun onServiceDisconnected(name: ComponentName?) {
+                matchTimerService = null
+                isServiceBound = false
+            }
         }
-    }
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
 
     private val wearDataSync = OptimizedWearDataSync(application)
@@ -105,15 +115,16 @@ class MainViewModel(
 
     val allMatches: LiveData<List<MatchWithTeams>> = repository.allMatches.asLiveData()
 
-    fun deleteMatch(match: Match) = viewModelScope.launch {
-        repository.deleteMatch(match)
-    }
+    fun deleteMatch(match: Match) =
+        viewModelScope.launch {
+            repository.deleteMatch(match)
+        }
 
     class MainViewModelFactory(
         private val repository: MatchRepository,
         private val userPreferencesRepository: UserPreferencesRepository,
         private val matchSettingsRepository: MatchSettingsRepository,
-        private val application: Application
+        private val application: Application,
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
@@ -123,7 +134,6 @@ class MainViewModel(
             throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
-
 
     // Scores
     private val _team1Score = MutableLiveData(0)
@@ -305,7 +315,10 @@ class MainViewModel(
         sendTeamNamesUpdate()
     }
 
-    fun setTeamColor(team: Int, color: Int) {
+    fun setTeamColor(
+        team: Int,
+        color: Int,
+    ) {
         if (team == 1) {
             _team1Color.value = color
         } else {
@@ -314,9 +327,11 @@ class MainViewModel(
         sendTeamColorUpdate(team, color)
     }
 
-
     // --- Player Management ---
-    fun addPlayerToTeam(playerWithRoles: PlayerWithRoles, teamId: Int) {
+    fun addPlayerToTeam(
+        playerWithRoles: PlayerWithRoles,
+        teamId: Int,
+    ) {
         viewModelScope.launch {
             if (teamId == 1) {
                 val currentPlayers = _team1Players.value?.toMutableList() ?: mutableListOf()
@@ -338,7 +353,10 @@ class MainViewModel(
         }
     }
 
-    fun removePlayerFromTeam(playerWithRoles: PlayerWithRoles, teamId: Int) {
+    fun removePlayerFromTeam(
+        playerWithRoles: PlayerWithRoles,
+        teamId: Int,
+    ) {
         if (teamId == 1) {
             val currentPlayers = _team1Players.value?.toMutableList() ?: mutableListOf()
             currentPlayers.removeAll { it.player.playerId == playerWithRoles.player.playerId }
@@ -351,13 +369,17 @@ class MainViewModel(
         syncTeamPlayersToWear()
     }
 
-    fun createNewPlayer(name: String, roleIds: List<Int>) {
+    fun createNewPlayer(
+        name: String,
+        roleIds: List<Int>,
+    ) {
         viewModelScope.launch {
-            val player = Player(
-                playerName = name,
-                appearances = 0,
-                goals = 0
-            )
+            val player =
+                Player(
+                    playerName = name,
+                    appearances = 0,
+                    goals = 0,
+                )
             val playerRepository = PlayerRepository(playerDao)
             playerRepository.insertPlayerWithRoles(player, roleIds)
             addMatchEvent("New player created: $name")
@@ -409,7 +431,10 @@ class MainViewModel(
         }
     }
 
-    fun addScorer(team: Int, playerWithRoles: PlayerWithRoles?) {
+    fun addScorer(
+        team: Int,
+        playerWithRoles: PlayerWithRoles?,
+    ) {
         viewModelScope.launch {
             val teamName = if (team == 1) _team1Name.value else _team2Name.value
             if (playerWithRoles != null) {
@@ -427,7 +452,11 @@ class MainViewModel(
         }
     }
 
-    private fun sendScorerToWear(name: String, roles: List<String>, team: Int) {
+    private fun sendScorerToWear(
+        name: String,
+        roles: List<String>,
+        team: Int,
+    ) {
         wearDataSync.syncScorerSelected(name, roles, team)
     }
 
@@ -450,7 +479,7 @@ class MainViewModel(
     fun setKeeperTimer(seconds: Long) {
         keeperTimerDuration = seconds * 1000
         _keeperTimerValue.value = keeperTimerDuration
-        addMatchEvent("Keeper timer set to ${seconds} seconds")
+        addMatchEvent("Keeper timer set to $seconds seconds")
     }
 
     fun startKeeperTimer() {
@@ -471,7 +500,12 @@ class MainViewModel(
     }
 
     // --- Match Events ---
-    private fun addMatchEvent(event: String, team: Int? = null, player: String? = null, playerRole: String? = null) {
+    private fun addMatchEvent(
+        event: String,
+        team: Int? = null,
+        player: String? = null,
+        playerRole: String? = null,
+    ) {
         val timeFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
         val timestamp = timeFormat.format(Date(_matchTimerValue.value ?: 0L))
 
@@ -492,15 +526,16 @@ class MainViewModel(
                 matchTimerService?.stopTimer()
             }
 
-            val matchId = matchDao.insert(
-                Match(
-                    team1Id = 1, // Default team 1 ID
-                    team2Id = 2, // Default team 2 ID
-                    team1Score = _team1Score.value ?: 0,
-                    team2Score = _team2Score.value ?: 0,
-                    timestamp = System.currentTimeMillis()
+            val matchId =
+                matchDao.insert(
+                    Match(
+                        team1Id = 1, // Default team 1 ID
+                        team2Id = 2, // Default team 2 ID
+                        team1Score = _team1Score.value ?: 0,
+                        team2Score = _team2Score.value ?: 0,
+                        timestamp = System.currentTimeMillis(),
+                    ),
                 )
-            )
 
             val allMatchPlayers = (_team1Players.value ?: emptyList()) + (_team2Players.value ?: emptyList())
             for (playerWithRoles in allMatchPlayers) {
@@ -528,21 +563,21 @@ class MainViewModel(
     private fun sendScoreUpdate() {
         wearDataSync.syncScores(
             _team1Score.value ?: 0,
-            _team2Score.value ?: 0
+            _team2Score.value ?: 0,
         )
     }
 
     private fun sendTeamNamesUpdate() {
         wearDataSync.syncTeamNames(
             _team1Name.value ?: "TEAM 1",
-            _team2Name.value ?: "TEAM 2"
+            _team2Name.value ?: "TEAM 2",
         )
     }
 
     private fun sendKeeperTimerUpdate(isRunning: Boolean) {
         wearDataSync.syncKeeperTimer(
             _keeperTimerValue.value ?: 0L,
-            isRunning
+            isRunning,
         )
     }
 
@@ -550,7 +585,10 @@ class MainViewModel(
         wearDataSync.syncMatchState(isActive)
     }
 
-    private fun sendTeamColorUpdate(team: Int, color: Int) {
+    private fun sendTeamColorUpdate(
+        team: Int,
+        color: Int,
+    ) {
         val teamName = if (team == 1) _team1Name.value else _team2Name.value
         wearDataSync.syncTeamColor(team, color)
     }
@@ -565,7 +603,7 @@ class MainViewModel(
             timerRunning = false,
             keeperMillis = 0L,
             keeperRunning = false,
-            matchActive = true
+            matchActive = true,
         )
     }
 
@@ -602,60 +640,73 @@ class MainViewModel(
 
             // Populate Formations
             _team1Players.value?.forEach { player ->
-                val playerTextView = android.widget.TextView(context).apply {
-                    text = player.player.playerName
-                    setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                    setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
-                    setPadding(0, 4, 0, 4)
-                }
-                team1PlayersList.addView(playerTextView)
-            }
-
-            _team2Players.value?.forEach { player ->
-                val playerTextView = android.widget.TextView(context).apply {
-                    text = player.player.playerName
-                    setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                    setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
-                    setPadding(0, 4, 0, 4)
-                }
-                team2PlayersList.addView(playerTextView)
-            }
-
-            // Populate Scorers
-            val scorers = _matchEvents.value
-                ?.filter { it.event == "Goal" && it.player != null }
-                ?.map { it.player!! }
-                ?.groupingBy { it }
-                ?.eachCount()
-            if (scorers != null && scorers.isNotEmpty()) {
-                scorers.forEach { (playerName, goalCount) ->
-                    val scorerTextView = android.widget.TextView(context).apply {
-                        text = "$playerName ($goalCount)"
+                val playerTextView =
+                    android.widget.TextView(context).apply {
+                        text = player.player.playerName
                         setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
                         setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
                         setPadding(0, 4, 0, 4)
                     }
+                team1PlayersList.addView(playerTextView)
+            }
+
+            _team2Players.value?.forEach { player ->
+                val playerTextView =
+                    android.widget.TextView(context).apply {
+                        text = player.player.playerName
+                        setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
+                        setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
+                        setPadding(0, 4, 0, 4)
+                    }
+                team2PlayersList.addView(playerTextView)
+            }
+
+            // Populate Scorers
+            val scorers =
+                _matchEvents.value
+                    ?.filter { it.event == "Goal" && it.player != null }
+                    ?.map { it.player!! }
+                    ?.groupingBy { it }
+                    ?.eachCount()
+            if (scorers != null && scorers.isNotEmpty()) {
+                scorers.forEach { (playerName, goalCount) ->
+                    val scorerTextView =
+                        android.widget.TextView(context).apply {
+                            text = "$playerName ($goalCount)"
+                            setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
+                            setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
+                            setPadding(0, 4, 0, 4)
+                        }
                     scorersList.addView(scorerTextView)
                 }
             } else {
-                 val noScorersTextView = android.widget.TextView(context).apply {
-                    text = "Nessun marcatore"
-                     setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                     setTextColor(ContextCompat.getColor(context, R.color.sidewalk_gray))
-                    setPadding(0, 4, 0, 4)
-                }
+                val noScorersTextView =
+                    android.widget.TextView(context).apply {
+                        text = "Nessun marcatore"
+                        setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
+                        setTextColor(ContextCompat.getColor(context, R.color.sidewalk_gray))
+                        setPadding(0, 4, 0, 4)
+                    }
                 scorersList.addView(noScorersTextView)
             }
 
-
             // PDF Generation
             val pdfDocument = android.graphics.pdf.PdfDocument()
-            val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 size
+            val pageInfo =
+                android.graphics.pdf.PdfDocument.PageInfo
+                    .Builder(595, 842, 1)
+                    .create() // A4 size
             val page = pdfDocument.startPage(pageInfo)
             val canvas = page.canvas
 
-            val measureWidth = android.view.View.MeasureSpec.makeMeasureSpec(pageInfo.pageWidth, android.view.View.MeasureSpec.EXACTLY)
-            val measureHeight = android.view.View.MeasureSpec.makeMeasureSpec(pageInfo.pageHeight, android.view.View.MeasureSpec.UNSPECIFIED)
+            val measureWidth =
+                android.view.View.MeasureSpec
+                    .makeMeasureSpec(pageInfo.pageWidth, android.view.View.MeasureSpec.EXACTLY)
+            val measureHeight =
+                android.view.View.MeasureSpec.makeMeasureSpec(
+                    pageInfo.pageHeight,
+                    android.view.View.MeasureSpec.UNSPECIFIED,
+                )
             view.measure(measureWidth, measureHeight)
             view.layout(0, 0, pageInfo.pageWidth, view.measuredHeight)
 
@@ -670,53 +721,59 @@ class MainViewModel(
             }
             pdfDocument.close()
 
-            val pdfUri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.provider", pdfFile)
+            val pdfUri =
+                androidx.core.content.FileProvider
+                    .getUriForFile(context, "${context.packageName}.provider", pdfFile)
 
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "application/pdf"
-                putExtra(Intent.EXTRA_STREAM, pdfUri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                putExtra(Intent.EXTRA_SUBJECT, "Match Report: ${team1Name.value} vs ${team2Name.value}")
-                val text = "Ecco il report del match tra ${team1Name.value} e ${team2Name.value}."
-                putExtra(Intent.EXTRA_TEXT, text)
-            }
+            val shareIntent =
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "application/pdf"
+                    putExtra(Intent.EXTRA_STREAM, pdfUri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    putExtra(Intent.EXTRA_SUBJECT, "Match Report: ${team1Name.value} vs ${team2Name.value}")
+                    val text = "Ecco il report del match tra ${team1Name.value} e ${team2Name.value}."
+                    putExtra(Intent.EXTRA_TEXT, text)
+                }
 
             shareMatchEvent.postValue(shareIntent)
         }
     }
 
     private fun syncTeamPlayersToWear() {
-        val team1PlayerData = _team1Players.value?.map { playerWithRoles ->
-            PlayerData(
-                id = playerWithRoles.player.playerId,
-                name = playerWithRoles.player.playerName,
-                roles = playerWithRoles.roles.map { it.name },
-                goals = playerWithRoles.player.goals,
-                appearances = playerWithRoles.player.appearances
-            )
-        } ?: emptyList()
+        val team1PlayerData =
+            _team1Players.value?.map { playerWithRoles ->
+                PlayerData(
+                    id = playerWithRoles.player.playerId,
+                    name = playerWithRoles.player.playerName,
+                    roles = playerWithRoles.roles.map { it.name },
+                    goals = playerWithRoles.player.goals,
+                    appearances = playerWithRoles.player.appearances,
+                )
+            } ?: emptyList()
 
-        val team2PlayerData = _team2Players.value?.map { playerWithRoles ->
-            PlayerData(
-                id = playerWithRoles.player.playerId,
-                name = playerWithRoles.player.playerName,
-                roles = playerWithRoles.roles.map { it.name },
-                goals = playerWithRoles.player.goals,
-                appearances = playerWithRoles.player.appearances
-            )
-        } ?: emptyList()
+        val team2PlayerData =
+            _team2Players.value?.map { playerWithRoles ->
+                PlayerData(
+                    id = playerWithRoles.player.playerId,
+                    name = playerWithRoles.player.playerName,
+                    roles = playerWithRoles.roles.map { it.name },
+                    goals = playerWithRoles.player.goals,
+                    appearances = playerWithRoles.player.appearances,
+                )
+            } ?: emptyList()
 
         wearDataSync.syncTeamPlayers(team1PlayerData, team2PlayerData)
 
-        val allPlayerData = _allPlayers.value?.map { playerWithRoles ->
-            PlayerData(
-                id = playerWithRoles.player.playerId,
-                name = playerWithRoles.player.playerName,
-                roles = playerWithRoles.roles.map { it.name },
-                goals = playerWithRoles.player.goals,
-                appearances = playerWithRoles.player.appearances
-            )
-        } ?: emptyList()
+        val allPlayerData =
+            _allPlayers.value?.map { playerWithRoles ->
+                PlayerData(
+                    id = playerWithRoles.player.playerId,
+                    name = playerWithRoles.player.playerName,
+                    roles = playerWithRoles.roles.map { it.name },
+                    goals = playerWithRoles.player.goals,
+                    appearances = playerWithRoles.player.appearances,
+                )
+            } ?: emptyList()
 
         wearDataSync.syncPlayerList(allPlayerData)
     }

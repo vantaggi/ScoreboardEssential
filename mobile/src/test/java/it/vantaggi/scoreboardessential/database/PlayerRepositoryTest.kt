@@ -18,7 +18,6 @@ import java.io.IOException
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.P])
 class PlayerRepositoryTest {
-
     private lateinit var db: AppDatabase
     private lateinit var playerDao: PlayerDao
     private lateinit var playerRepository: PlayerRepository
@@ -27,13 +26,15 @@ class PlayerRepositoryTest {
     fun createDb() {
         // Using an in-memory database because the information stored here disappears when the
         // process is killed.
-        db = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(),
-            AppDatabase::class.java
-        )
-        // Allowing main thread queries, just for testing.
-        .allowMainThreadQueries()
-        .build()
+        db =
+            Room
+                .inMemoryDatabaseBuilder(
+                    ApplicationProvider.getApplicationContext(),
+                    AppDatabase::class.java,
+                )
+                // Allowing main thread queries, just for testing.
+                .allowMainThreadQueries()
+                .build()
 
         playerDao = db.playerDao()
         playerRepository = PlayerRepository(playerDao)
@@ -53,55 +54,66 @@ class PlayerRepositoryTest {
     }
 
     @Test
-    fun insertPlayerWithRoles_insertsPlayerAndRolesCorrectly() = runTest {
-        // Arrange
-        val newPlayer = Player(playerName = "John Doe", appearances = 0, goals = 0)
-        val roleIds = listOf(1, 2)
+    fun insertPlayerWithRoles_insertsPlayerAndRolesCorrectly() =
+        runTest {
+            // Arrange
+            val newPlayer = Player(playerName = "John Doe", appearances = 0, goals = 0)
+            val roleIds = listOf(1, 2)
 
-        // Act
-        playerRepository.insertPlayerWithRoles(newPlayer, roleIds)
+            // Act
+            playerRepository.insertPlayerWithRoles(newPlayer, roleIds)
 
-        // Assert
-        val playersWithRoles = playerRepository.allPlayers.first()
-        assertThat(playersWithRoles).hasSize(1)
-        val insertedPlayerWithRoles = playersWithRoles.first()
-        assertThat(insertedPlayerWithRoles.player.playerName).isEqualTo("John Doe")
-        // Note: The retrieved player will have an auto-generated ID.
-        assertThat(insertedPlayerWithRoles.roles.map { it.roleId }).containsExactlyElementsIn(roleIds)
-    }
-
-    @Test
-    fun updatePlayerWithRoles_updatesNameAndChangesRoles() = runTest {
-        // Arrange
-        val initialPlayer = Player(playerName = "Jane Doe", appearances = 5, goals = 2)
-        val initialRoleIds = listOf(1, 2)
-        playerRepository.insertPlayerWithRoles(initialPlayer, initialRoleIds)
-        val insertedPlayerId = playerRepository.allPlayers.first().first().player.playerId
-
-        // Act
-        val updatedPlayer = Player(playerId = insertedPlayerId, playerName = "Jane Smith", appearances = 5, goals = 2)
-        val updatedRoleIds = listOf(2, 3)
-        playerRepository.updatePlayerWithRoles(updatedPlayer, updatedRoleIds)
-
-        // Assert
-        val playerWithRoles = playerRepository.getPlayerWithRoles(insertedPlayerId.toLong()).first()
-        assertThat(playerWithRoles).isNotNull()
-        assertThat(playerWithRoles!!.player.playerName).isEqualTo("Jane Smith")
-        assertThat(playerWithRoles.roles.map { it.roleId }).containsExactlyElementsIn(updatedRoleIds)
-    }
+            // Assert
+            val playersWithRoles = playerRepository.allPlayers.first()
+            assertThat(playersWithRoles).hasSize(1)
+            val insertedPlayerWithRoles = playersWithRoles.first()
+            assertThat(insertedPlayerWithRoles.player.playerName).isEqualTo("John Doe")
+            // Note: The retrieved player will have an auto-generated ID.
+            assertThat(insertedPlayerWithRoles.roles.map { it.roleId }).containsExactlyElementsIn(roleIds)
+        }
 
     @Test
-    fun deletePlayer_removesPlayerAndAssociations() = runTest {
-        // Arrange
-        val player = Player(playerName = "Sam Brown", appearances = 10, goals = 5)
-        playerRepository.insertPlayerWithRoles(player, listOf(1))
-        val insertedPlayer = playerRepository.allPlayers.first().first().player
+    fun updatePlayerWithRoles_updatesNameAndChangesRoles() =
+        runTest {
+            // Arrange
+            val initialPlayer = Player(playerName = "Jane Doe", appearances = 5, goals = 2)
+            val initialRoleIds = listOf(1, 2)
+            playerRepository.insertPlayerWithRoles(initialPlayer, initialRoleIds)
+            val insertedPlayerId =
+                playerRepository.allPlayers
+                    .first()
+                    .first()
+                    .player.playerId
 
-        // Act
-        playerRepository.deletePlayer(insertedPlayer)
+            // Act
+            val updatedPlayer = Player(playerId = insertedPlayerId, playerName = "Jane Smith", appearances = 5, goals = 2)
+            val updatedRoleIds = listOf(2, 3)
+            playerRepository.updatePlayerWithRoles(updatedPlayer, updatedRoleIds)
 
-        // Assert
-        val players = playerRepository.allPlayers.first()
-        assertThat(players).isEmpty()
-    }
+            // Assert
+            val playerWithRoles = playerRepository.getPlayerWithRoles(insertedPlayerId.toLong()).first()
+            assertThat(playerWithRoles).isNotNull()
+            assertThat(playerWithRoles!!.player.playerName).isEqualTo("Jane Smith")
+            assertThat(playerWithRoles.roles.map { it.roleId }).containsExactlyElementsIn(updatedRoleIds)
+        }
+
+    @Test
+    fun deletePlayer_removesPlayerAndAssociations() =
+        runTest {
+            // Arrange
+            val player = Player(playerName = "Sam Brown", appearances = 10, goals = 5)
+            playerRepository.insertPlayerWithRoles(player, listOf(1))
+            val insertedPlayer =
+                playerRepository.allPlayers
+                    .first()
+                    .first()
+                    .player
+
+            // Act
+            playerRepository.deletePlayer(insertedPlayer)
+
+            // Assert
+            val players = playerRepository.allPlayers.first()
+            assertThat(players).isEmpty()
+        }
 }

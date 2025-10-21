@@ -11,7 +11,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class RoleSelectionDialogFragment : DialogFragment() {
-
     private val viewModel: PlayersManagementViewModel by activityViewModels()
     private lateinit var rolesRecyclerView: RecyclerView
     private lateinit var roleAdapter: RoleSelectionAdapter
@@ -32,13 +31,13 @@ class RoleSelectionDialogFragment : DialogFragment() {
             .setView(view)
             .setPositiveButton("OK") { _, _ ->
                 listener?.invoke(roleAdapter.getSelectedRoleIds())
-            }
-            .setNegativeButton("Cancel", null)
+            }.setNegativeButton("Cancel", null)
             .create()
     }
 
     private fun setupRecyclerView() {
-        roleAdapter = RoleSelectionAdapter { _, _ -> /* No immediate action needed on selection */ }
+        // No immediate action needed on selection
+        roleAdapter = RoleSelectionAdapter { _, _ -> }
         rolesRecyclerView.adapter = roleAdapter
         rolesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
     }
@@ -56,10 +55,9 @@ class RoleSelectionDialogFragment : DialogFragment() {
     }
 
     companion object {
-        fun newInstance(selectedIds: List<Int> = emptyList()): RoleSelectionDialogFragment {
-            return RoleSelectionDialogFragment().apply {
+        fun newInstance(selectedIds: List<Int> = emptyList()): RoleSelectionDialogFragment =
+            RoleSelectionDialogFragment().apply {
                 initialSelectedRoleIds = selectedIds
             }
-        }
     }
 }

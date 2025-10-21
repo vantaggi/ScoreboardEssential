@@ -14,7 +14,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 
 class TeamNameDialogFragment : DialogFragment() {
-
     private val viewModel: MainViewModel by activityViewModels()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -29,13 +28,27 @@ class TeamNameDialogFragment : DialogFragment() {
         editText.setText(currentName)
         previewText.text = currentName.uppercase()
 
-        editText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                previewText.text = s.toString().uppercase()
-            }
-            override fun afterTextChanged(s: Editable?) {}
-        })
+        editText.addTextChangedListener(
+            object : TextWatcher {
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int,
+                ) {}
+
+                override fun onTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    before: Int,
+                    count: Int,
+                ) {
+                    previewText.text = s.toString().uppercase()
+                }
+
+                override fun afterTextChanged(s: Editable?) {}
+            },
+        )
 
         for (i in 0 until suggestionsChipGroup.childCount) {
             val chip = suggestionsChipGroup.getChildAt(i) as? Chip
@@ -56,8 +69,7 @@ class TeamNameDialogFragment : DialogFragment() {
                         viewModel.setTeam2Name(newName)
                     }
                 }
-            }
-            .setNegativeButton("CANCEL", null)
+            }.setNegativeButton("CANCEL", null)
             .create()
     }
 
@@ -66,13 +78,16 @@ class TeamNameDialogFragment : DialogFragment() {
         private const val ARG_TEAM_NUMBER = "team_number"
         private const val ARG_CURRENT_NAME = "current_name"
 
-        fun newInstance(teamNumber: Int, currentName: String): TeamNameDialogFragment {
-            return TeamNameDialogFragment().apply {
-                arguments = bundleOf(
-                    ARG_TEAM_NUMBER to teamNumber,
-                    ARG_CURRENT_NAME to currentName
-                )
+        fun newInstance(
+            teamNumber: Int,
+            currentName: String,
+        ): TeamNameDialogFragment =
+            TeamNameDialogFragment().apply {
+                arguments =
+                    bundleOf(
+                        ARG_TEAM_NUMBER to teamNumber,
+                        ARG_CURRENT_NAME to currentName,
+                    )
             }
-        }
     }
 }

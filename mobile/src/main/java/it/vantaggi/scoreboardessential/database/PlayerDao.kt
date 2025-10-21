@@ -37,7 +37,10 @@ interface PlayerDao {
     suspend fun insertRole(role: Role)
 
     @Transaction
-    suspend fun updatePlayerWithRoles(player: Player, roleIds: List<Int>) {
+    suspend fun updatePlayerWithRoles(
+        player: Player,
+        roleIds: List<Int>,
+    ) {
         update(player)
         deleteAllRolesForPlayer(player.playerId)
         roleIds.forEach { roleId ->

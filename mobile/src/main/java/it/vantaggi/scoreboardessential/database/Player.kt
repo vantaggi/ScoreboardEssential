@@ -12,5 +12,5 @@ data class Player(
     val playerId: Int = 0,
     val playerName: String,
     var appearances: Int,
-    var goals: Int
+    var goals: Int,
 ) : Parcelable

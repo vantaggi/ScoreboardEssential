@@ -17,7 +17,6 @@ import it.vantaggi.scoreboardessential.database.Player
 import kotlinx.coroutines.launch
 
 class AddEditPlayerActivity : AppCompatActivity() {
-
     private val viewModel: PlayersManagementViewModel by viewModels()
     private lateinit var roleAdapter: RoleSelectionAdapter
     private lateinit var playerNameInput: TextInputEditText
@@ -70,8 +69,8 @@ class AddEditPlayerActivity : AppCompatActivity() {
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+        when (item.itemId) {
             android.R.id.home -> {
                 finish()
                 true
@@ -82,7 +81,6 @@ class AddEditPlayerActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
-    }
 
     private fun savePlayer() {
         val playerName = playerNameInput.text.toString().trim()
@@ -93,13 +91,14 @@ class AddEditPlayerActivity : AppCompatActivity() {
 
         val selectedRoleIds = roleAdapter.getSelectedRoleIds()
 
-        val resultIntent = Intent().apply {
-            putExtra(EXTRA_PLAYER_NAME, playerName)
-            putIntegerArrayListExtra(EXTRA_SELECTED_ROLES, ArrayList(selectedRoleIds))
-            playerToEdit?.let {
-                putExtra(EXTRA_PLAYER_ID, it.playerId)
+        val resultIntent =
+            Intent().apply {
+                putExtra(EXTRA_PLAYER_NAME, playerName)
+                putIntegerArrayListExtra(EXTRA_SELECTED_ROLES, ArrayList(selectedRoleIds))
+                playerToEdit?.let {
+                    putExtra(EXTRA_PLAYER_ID, it.playerId)
+                }
             }
-        }
 
         setResult(Activity.RESULT_OK, resultIntent)
         finish()

@@ -11,9 +11,8 @@ import it.vantaggi.scoreboardessential.databinding.FragmentOnboardingStepBinding
 
 // Using open to allow extension
 open class OnboardingStepFragment : Fragment() {
-
     private var _binding: FragmentOnboardingStepBinding? = null
-    private val binding get() = _binding!!
+    val binding get() = _binding!!
 
     private var titleRes: Int = 0
     private var descriptionRes: Int = 0
@@ -29,14 +28,18 @@ open class OnboardingStepFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentOnboardingStepBinding.inflate(inflater, container, false)
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
         super.onViewCreated(view, savedInstanceState)
         binding.onboardingTitle.setText(titleRes)
         binding.onboardingDescription.setText(descriptionRes)
@@ -56,7 +59,7 @@ open class OnboardingStepFragment : Fragment() {
         fun newInstance(
             @StringRes titleRes: Int,
             @StringRes descriptionRes: Int,
-            @DrawableRes iconRes: Int
+            @DrawableRes iconRes: Int,
         ): OnboardingStepFragment {
             val fragment = OnboardingStepFragment()
             val args = Bundle()

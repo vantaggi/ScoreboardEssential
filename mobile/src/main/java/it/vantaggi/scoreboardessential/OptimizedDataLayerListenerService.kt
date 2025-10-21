@@ -2,22 +2,32 @@
 package it.vantaggi.scoreboardessential
 
 import android.util.Log
+import com.google.android.gms.tasks.Tasks
+import com.google.android.gms.wearable.Channel
+import com.google.android.gms.wearable.ChannelClient
+import com.google.android.gms.wearable.DataEvent
+import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.DataItem
+import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.Wearable
+import com.google.android.gms.wearable.WearableListenerService
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
-import com.google.android.gms.wearable.*
+import it.vantaggi.scoreboardessential.utils.ScoreUpdateEvent
+import it.vantaggi.scoreboardessential.utils.ScoreUpdateEventBus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import it.vantaggi.scoreboardessential.utils.ScoreUpdateEvent
-import it.vantaggi.scoreboardessential.utils.ScoreUpdateEventBus
-import com.google.android.gms.tasks.Tasks
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class OptimizedDataLayerListenerService : WearableListenerService() {
-
-    private val TAG = "OptimizedDataListener"
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    companion object {
+        private const val TAG = "OptimizedDataListener"
+    }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
         super.onMessageReceived(messageEvent)
@@ -83,12 +93,12 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
                 val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
                 val team1Score = dataMap.getInt(WearConstants.KEY_TEAM1_SCORE)
                 val team2Score = dataMap.getInt(WearConstants.KEY_TEAM2_SCORE)
-                Log.d(TAG, "Dati punteggio deserializzati: T1=${team1Score}, T2=${team2Score}")
+                Log.d(TAG, "Dati punteggio deserializzati: T1=$team1Score, T2=$team2Score")
 
                 // Post event to EventBus
                 scope.launch(Dispatchers.Main) {
                     ScoreUpdateEventBus.postEvent(
-                        ScoreUpdateEvent(team1Score, team2Score)
+                        ScoreUpdateEvent(team1Score, team2Score),
                     )
                 }
             }
@@ -106,7 +116,7 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
             messageClient.sendMessage(
                 nodeId,
                 WearConstants.MSG_HEARTBEAT,
-                "ACK".toByteArray()
+                "ACK".toByteArray(),
             )
         } catch (e: Exception) {
             Log.e(TAG, "Failed to respond to heartbeat", e)

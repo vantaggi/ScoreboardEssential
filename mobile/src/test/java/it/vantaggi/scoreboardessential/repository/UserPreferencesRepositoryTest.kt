@@ -6,7 +6,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -22,7 +25,6 @@ import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 class UserPreferencesRepositoryTest {
-
     private lateinit var repository: UserPreferencesRepository
     private lateinit var mockPrefs: SharedPreferences
     private lateinit var mockEditor: SharedPreferences.Editor
@@ -50,49 +52,57 @@ class UserPreferencesRepositoryTest {
     }
 
     @Test
-    fun `hasSeenTutorial returns false by default`() = runTest {
-        `when`(mockPrefs.getBoolean(eq("has_seen_tutorial"), eq(false))).thenReturn(false)
+    fun `hasSeenTutorial returns false by default`() =
+        runTest {
+            `when`(mockPrefs.getBoolean(eq("has_seen_tutorial"), eq(false))).thenReturn(false)
 
-        val result = repository.hasSeenTutorial.first()
+            val result = repository.hasSeenTutorial.first()
 
-        assertEquals(false, result)
-    }
-
-    @Test
-    fun `setHasSeenTutorial updates the preference`() = runTest {
-        repository.setHasSeenTutorial(true)
-        verify(mockEditor).putBoolean("has_seen_tutorial", true)
-        verify(mockEditor).apply()
-    }
-
-    @Test
-    fun `hasSeenTutorial returns true after being set`() = runTest {
-        `when`(mockPrefs.getBoolean(eq("has_seen_tutorial"), eq(false))).thenReturn(true)
-
-        val result = repository.hasSeenTutorial.first()
-
-        assertEquals(true, result)
-    }
-
-    @Test
-    fun `hasSeenTutorial flow emits new value when preference changes`() = runTest {
-        val listenerCaptor: ArgumentCaptor<SharedPreferences.OnSharedPreferenceChangeListener> = ArgumentCaptor.forClass(SharedPreferences.OnSharedPreferenceChangeListener::class.java)
-
-        val results = mutableListOf<Boolean>()
-        `when`(mockPrefs.getBoolean(eq("has_seen_tutorial"), eq(false))).thenReturn(false)
-
-        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
-            repository.hasSeenTutorial.collect { results.add(it) }
+            assertEquals(false, result)
         }
 
-        verify(mockPrefs).registerOnSharedPreferenceChangeListener(listenerCaptor.capture())
-        assertEquals(listOf(false), results)
+    @Test
+    fun `setHasSeenTutorial updates the preference`() =
+        runTest {
+            repository.setHasSeenTutorial(true)
+            verify(mockEditor).putBoolean("has_seen_tutorial", true)
+            verify(mockEditor).apply()
+        }
 
-        `when`(mockPrefs.getBoolean(eq("has_seen_tutorial"), eq(false))).thenReturn(true)
-        listenerCaptor.value.onSharedPreferenceChanged(mockPrefs, "has_seen_tutorial")
+    @Test
+    fun `hasSeenTutorial returns true after being set`() =
+        runTest {
+            `when`(mockPrefs.getBoolean(eq("has_seen_tutorial"), eq(false))).thenReturn(true)
 
-        assertEquals(listOf(false, true), results)
+            val result = repository.hasSeenTutorial.first()
 
-        job.cancel()
-    }
+            assertEquals(true, result)
+        }
+
+    @Test
+    fun `hasSeenTutorial flow emits new value when preference changes`() =
+        runTest {
+            val listenerCaptor: ArgumentCaptor<SharedPreferences.OnSharedPreferenceChangeListener> =
+                ArgumentCaptor.forClass(
+                    SharedPreferences.OnSharedPreferenceChangeListener::class.java,
+                )
+
+            val results = mutableListOf<Boolean>()
+            `when`(mockPrefs.getBoolean(eq("has_seen_tutorial"), eq(false))).thenReturn(false)
+
+            val job =
+                launch(UnconfinedTestDispatcher(testScheduler)) {
+                    repository.hasSeenTutorial.collect { results.add(it) }
+                }
+
+            verify(mockPrefs).registerOnSharedPreferenceChangeListener(listenerCaptor.capture())
+            assertEquals(listOf(false), results)
+
+            `when`(mockPrefs.getBoolean(eq("has_seen_tutorial"), eq(false))).thenReturn(true)
+            listenerCaptor.value.onSharedPreferenceChanged(mockPrefs, "has_seen_tutorial")
+
+            assertEquals(listOf(false, true), results)
+
+            job.cancel()
+        }
 }

@@ -8,9 +8,8 @@ import it.vantaggi.scoreboardessential.repository.PlayerRepository
 
 class PlayersManagementViewModelFactory(
     private val application: Application,
-    private val playerRepository: PlayerRepository
+    private val playerRepository: PlayerRepository,
 ) : ViewModelProvider.Factory {
-
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PlayersManagementViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")

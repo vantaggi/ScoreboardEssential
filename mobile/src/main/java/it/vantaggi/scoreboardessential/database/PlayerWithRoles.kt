@@ -13,15 +13,14 @@ data class PlayerWithRoles(
     @Relation(
         parentColumn = "playerId",
         entityColumn = "roleId",
-        associateBy = Junction(PlayerRoleCrossRef::class)
+        associateBy = Junction(PlayerRoleCrossRef::class),
     )
-    val roles: List<Role>
+    val roles: List<Role>,
 ) : Parcelable {
-    fun getRolesText(): String {
-        return if (roles.isEmpty()) {
+    fun getRolesText(): String =
+        if (roles.isEmpty()) {
             "No role specified"
         } else {
             roles.joinToString(", ") { it.name }
         }
-    }
 }
