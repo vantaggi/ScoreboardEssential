@@ -4,14 +4,13 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.animation.ValueAnimator
-import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.BounceInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.TextView
-import it.vantaggi.scoreboardessential.R
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.MaterialColors
+import it.vantaggi.scoreboardessential.R
 
 fun TextView.playEnhancedScoreAnimation() {
     val context = this.context
@@ -27,18 +26,20 @@ fun TextView.playEnhancedScoreAnimation() {
 
     // Step 2: Colore glitch
     val originalColor = this.currentTextColor
-    val colors = intArrayOf(
-        originalColor,
-        MaterialColors.getColor(context, com.google.android.material.R.attr.colorPrimary, "Error"),
-        MaterialColors.getColor(context, com.google.android.material.R.attr.colorSecondary, "Error"),
-        originalColor
-    )
-    val colorAnimator = ValueAnimator.ofArgb(*colors).apply {
-        duration = 400
-        addUpdateListener { animator ->
-            this@playEnhancedScoreAnimation.setTextColor(animator.animatedValue as Int)
+    val colors =
+        intArrayOf(
+            originalColor,
+            MaterialColors.getColor(context, com.google.android.material.R.attr.colorPrimary, "Error"),
+            MaterialColors.getColor(context, com.google.android.material.R.attr.colorSecondary, "Error"),
+            originalColor,
+        )
+    val colorAnimator =
+        ValueAnimator.ofArgb(*colors).apply {
+            duration = 400
+            addUpdateListener { animator ->
+                this@playEnhancedScoreAnimation.setTextColor(animator.animatedValue as Int)
+            }
         }
-    }
 
     // Step 3: Bounce back
     val scaleDownX = ObjectAnimator.ofFloat(this, "scaleX", 1.4f, 0.9f, 1.0f)
@@ -76,13 +77,14 @@ fun TextView.playNativeGoalAnimation() {
     val originalColor = this.currentTextColor
     val primaryColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorPrimary)
     val secondaryColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSecondary)
-    
-    val colorAnimator = ValueAnimator.ofArgb(originalColor, primaryColor, secondaryColor, originalColor).apply {
-        duration = 400
-        addUpdateListener { animator ->
-            this@playNativeGoalAnimation.setTextColor(animator.animatedValue as Int)
+
+    val colorAnimator =
+        ValueAnimator.ofArgb(originalColor, primaryColor, secondaryColor, originalColor).apply {
+            duration = 400
+            addUpdateListener { animator ->
+                this@playNativeGoalAnimation.setTextColor(animator.animatedValue as Int)
+            }
         }
-    }
 
     // 3. Leggera rotazione per dinamismo
     val rotation = ObjectAnimator.ofFloat(this, "rotation", 0f, -8f, 8f, 0f)
@@ -97,15 +99,18 @@ fun TextView.playNativeGoalAnimation() {
 }
 
 fun MaterialCardView.pulseAnimation() {
-    val animator = ObjectAnimator.ofPropertyValuesHolder(
-        this,
-        PropertyValuesHolder.ofFloat("scaleX", 1.0f, 1.05f, 1.0f),
-        PropertyValuesHolder.ofFloat("scaleY", 1.0f, 1.05f, 1.0f),
-        PropertyValuesHolder.ofFloat("cardElevation",
-            this.cardElevation,
-            this.cardElevation + 8f,
-            this.cardElevation)
-    )
+    val animator =
+        ObjectAnimator.ofPropertyValuesHolder(
+            this,
+            PropertyValuesHolder.ofFloat("scaleX", 1.0f, 1.05f, 1.0f),
+            PropertyValuesHolder.ofFloat("scaleY", 1.0f, 1.05f, 1.0f),
+            PropertyValuesHolder.ofFloat(
+                "cardElevation",
+                this.cardElevation,
+                this.cardElevation + 8f,
+                this.cardElevation,
+            ),
+        )
     animator.duration = 600
     animator.interpolator = AccelerateDecelerateInterpolator()
     animator.repeatCount = ValueAnimator.INFINITE

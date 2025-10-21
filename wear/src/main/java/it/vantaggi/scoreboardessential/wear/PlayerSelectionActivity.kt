@@ -16,17 +16,14 @@ import androidx.wear.widget.WearableLinearLayoutManager
 import androidx.wear.widget.WearableRecyclerView
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
-import it.vantaggi.scoreboardessential.shared.PlayerData
-import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.launch
 
 data class WearPlayer(
     val name: String,
-    val roles: List<String>
+    val roles: List<String>,
 )
 
 class PlayerSelectionActivity : ComponentActivity() {
-
     private lateinit var playerList: WearableRecyclerView
     private lateinit var adapter: PlayerAdapter
     private val viewModel: WearViewModel by viewModels()
@@ -46,9 +43,10 @@ class PlayerSelectionActivity : ComponentActivity() {
 
     private fun setupRecyclerView() {
         playerList = findViewById(R.id.player_list)
-        adapter = PlayerAdapter { player ->
-            selectPlayer(player)
-        }
+        adapter =
+            PlayerAdapter { player ->
+                selectPlayer(player)
+            }
 
         playerList.layoutManager = WearableLinearLayoutManager(this)
         playerList.adapter = adapter
@@ -60,9 +58,10 @@ class PlayerSelectionActivity : ComponentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.allPlayers.collect { playerData ->
-                    val wearPlayers = playerData.map { player ->
-                        WearPlayer(player.name, player.roles)
-                    }
+                    val wearPlayers =
+                        playerData.map { player ->
+                            WearPlayer(player.name, player.roles)
+                        }
                     adapter.submitList(wearPlayers)
                     Log.d("PlayerSelection", "Loaded ${wearPlayers.size} players from mobile app")
                 }
@@ -77,7 +76,10 @@ class PlayerSelectionActivity : ComponentActivity() {
         finish()
     }
 
-    private fun sendMessageToMobile(path: String, message: String) {
+    private fun sendMessageToMobile(
+        path: String,
+        message: String,
+    ) {
         val data = message.toByteArray()
         Wearable.getNodeClient(this).connectedNodes.addOnSuccessListener { nodes ->
             nodes.forEach { node ->
@@ -87,9 +89,9 @@ class PlayerSelectionActivity : ComponentActivity() {
     }
 }
 
-class PlayerAdapter(private val onPlayerClick: (WearPlayer) -> Unit) :
-    RecyclerView.Adapter<PlayerAdapter.PlayerViewHolder>() {
-
+class PlayerAdapter(
+    private val onPlayerClick: (WearPlayer) -> Unit,
+) : RecyclerView.Adapter<PlayerAdapter.PlayerViewHolder>() {
     private var players: List<WearPlayer> = emptyList()
 
     fun submitList(newPlayers: List<WearPlayer>) {
@@ -97,23 +99,36 @@ class PlayerAdapter(private val onPlayerClick: (WearPlayer) -> Unit) :
         notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlayerViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_player_wear, parent, false)
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int,
+    ): PlayerViewHolder {
+        val view =
+            LayoutInflater
+                .from(parent.context)
+                .inflate(R.layout.item_player_wear, parent, false)
         return PlayerViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: PlayerViewHolder, position: Int) {
+    override fun onBindViewHolder(
+        holder: PlayerViewHolder,
+        position: Int,
+    ) {
         holder.bind(players[position], onPlayerClick)
     }
 
     override fun getItemCount() = players.size
 
-    class PlayerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class PlayerViewHolder(
+        itemView: View,
+    ) : RecyclerView.ViewHolder(itemView) {
         private val playerName: TextView = itemView.findViewById(R.id.player_name)
         private val playerRole: TextView = itemView.findViewById(R.id.player_role)
 
-        fun bind(player: WearPlayer, onPlayerClick: (WearPlayer) -> Unit) {
+        fun bind(
+            player: WearPlayer,
+            onPlayerClick: (WearPlayer) -> Unit,
+        ) {
             playerName.text = player.name
 
             val rolesText = player.roles.joinToString(", ")

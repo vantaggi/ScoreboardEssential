@@ -20,13 +20,19 @@ import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 class MatchTimerService : Service() {
-
     private val binder = MatchTimerBinder()
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private lateinit var wearDataSync: OptimizedWearDataSync
@@ -50,7 +56,6 @@ class MatchTimerService : Service() {
     private var keeperTimerEndTime = 0L
     private var keeperRemainingOnPause = 0L
 
-
     companion object {
         private const val NOTIFICATION_ID = 1
         private const val KEEPER_TIMER_EXPIRED_NOTIFICATION_ID = 2
@@ -73,7 +78,11 @@ class MatchTimerService : Service() {
         restoreState()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         when (intent?.action) {
             ACTION_PAUSE -> {
                 pauseTimer()
@@ -98,15 +107,16 @@ class MatchTimerService : Service() {
         if (_isMatchTimerRunning.value) return
         _isMatchTimerRunning.value = true
         matchStartTime = System.currentTimeMillis() - elapsedTimeOnPause
-        matchTimerJob = scope.launch {
-            while (isActive) {
-                val elapsed = System.currentTimeMillis() - matchStartTime
-                _matchTimerValue.value = elapsed
-                updateNotification(elapsed)
-                wearDataSync.syncTimerState(elapsed, true)
-                delay(1000)
+        matchTimerJob =
+            scope.launch {
+                while (isActive) {
+                    val elapsed = System.currentTimeMillis() - matchStartTime
+                    _matchTimerValue.value = elapsed
+                    updateNotification(elapsed)
+                    wearDataSync.syncTimerState(elapsed, true)
+                    delay(1000)
+                }
             }
-        }
         startForegroundWithPermissionCheck()
         saveState()
     }
@@ -139,23 +149,24 @@ class MatchTimerService : Service() {
         val duration = if (keeperRemainingOnPause > 0) keeperRemainingOnPause else durationMillis
         _isKeeperTimerRunning.value = true
         keeperTimerEndTime = System.currentTimeMillis() + duration
-        keeperTimerJob = scope.launch {
-            while (isActive) {
-                val remaining = keeperTimerEndTime - System.currentTimeMillis()
-                if (remaining > 0) {
-                    _keeperTimerValue.value = remaining
-                } else {
-                    _keeperTimerValue.value = 0L
-                    _isKeeperTimerRunning.value = false
-                    keeperRemainingOnPause = 0L
-                    wearDataSync.syncKeeperTimer(0, false)
-                    showKeeperTimerExpiredNotification()
-                    triggerKeeperTimerExpiredVibration()
-                    this.cancel()
+        keeperTimerJob =
+            scope.launch {
+                while (isActive) {
+                    val remaining = keeperTimerEndTime - System.currentTimeMillis()
+                    if (remaining > 0) {
+                        _keeperTimerValue.value = remaining
+                    } else {
+                        _keeperTimerValue.value = 0L
+                        _isKeeperTimerRunning.value = false
+                        keeperRemainingOnPause = 0L
+                        wearDataSync.syncKeeperTimer(0, false)
+                        showKeeperTimerExpiredNotification()
+                        triggerKeeperTimerExpiredVibration()
+                        this.cancel()
+                    }
+                    delay(1000)
                 }
-                delay(1000)
             }
-        }
         wearDataSync.syncKeeperTimer(duration, true)
         startForegroundWithPermissionCheck()
         saveState()
@@ -214,7 +225,8 @@ class MatchTimerService : Service() {
         val stopIntent = Intent(this, MatchTimerService::class.java).apply { action = ACTION_STOP }
         val stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE)
 
-        return NotificationCompat.Builder(this, ScoreboardEssentialApplication.CHANNEL_ID)
+        return NotificationCompat
+            .Builder(this, ScoreboardEssentialApplication.CHANNEL_ID)
             .setContentTitle(getString(R.string.match_timer))
             .setContentText(formattedTime)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
@@ -246,14 +258,16 @@ class MatchTimerService : Service() {
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
 
-        val notification = NotificationCompat.Builder(this, ScoreboardEssentialApplication.CHANNEL_ID)
-            .setContentTitle(getString(R.string.keeper_timer_expired_title))
-            .setContentText(getString(R.string.keeper_timer_expired_text))
-            .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .setContentIntent(pendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .build()
+        val notification =
+            NotificationCompat
+                .Builder(this, ScoreboardEssentialApplication.CHANNEL_ID)
+                .setContentTitle(getString(R.string.keeper_timer_expired_title))
+                .setContentText(getString(R.string.keeper_timer_expired_text))
+                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .build()
 
         with(NotificationManagerCompat.from(this)) {
             notify(KEEPER_TIMER_EXPIRED_NOTIFICATION_ID, notification)

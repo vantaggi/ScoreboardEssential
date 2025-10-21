@@ -1,36 +1,32 @@
 package it.vantaggi.scoreboardessential
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.SearchView
-import androidx.activity.viewModels
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import it.vantaggi.scoreboardessential.database.AppDatabase
-import it.vantaggi.scoreboardessential.repository.PlayerRepository
-import it.vantaggi.scoreboardessential.views.PlayersManagementViewModelFactory
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import android.app.Activity
-import android.content.Intent
-import android.view.View
-import androidx.activity.result.contract.ActivityResultContracts
-import it.vantaggi.scoreboardessential.database.Player
-import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.launch
+import it.vantaggi.scoreboardessential.database.AppDatabase
+import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.repository.PlayerRepository
+import it.vantaggi.scoreboardessential.views.PlayersManagementViewModelFactory
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class PlayersManagementActivity : AppCompatActivity() {
-
     private lateinit var viewModel: PlayersManagementViewModel
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: PlayersManagementAdapter
@@ -38,30 +34,31 @@ class PlayersManagementActivity : AppCompatActivity() {
     private lateinit var rolesFilterChipGroup: ChipGroup
     private var searchQuery: String = ""
 
-    private val addEditPlayerResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val data = result.data
-            val playerName = data?.getStringExtra(AddEditPlayerActivity.EXTRA_PLAYER_NAME)
-            val selectedRoleIds = data?.getIntegerArrayListExtra(AddEditPlayerActivity.EXTRA_SELECTED_ROLES)
-            val playerId = data?.getIntExtra(AddEditPlayerActivity.EXTRA_PLAYER_ID, -1)
+    private val addEditPlayerResultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data = result.data
+                val playerName = data?.getStringExtra(AddEditPlayerActivity.EXTRA_PLAYER_NAME)
+                val selectedRoleIds = data?.getIntegerArrayListExtra(AddEditPlayerActivity.EXTRA_SELECTED_ROLES)
+                val playerId = data?.getIntExtra(AddEditPlayerActivity.EXTRA_PLAYER_ID, -1)
 
-            if (playerName != null && selectedRoleIds != null) {
-                if (playerId != null && playerId != -1) {
-                    // Editing existing player
-                    lifecycleScope.launch {
-                        val playerToUpdate = viewModel.getPlayer(playerId.toLong()).first()
-                        playerToUpdate?.let {
-                            val updatedPlayer = it.player.copy(playerName = playerName)
-                            viewModel.updatePlayer(updatedPlayer, selectedRoleIds)
+                if (playerName != null && selectedRoleIds != null) {
+                    if (playerId != null && playerId != -1) {
+                        // Editing existing player
+                        lifecycleScope.launch {
+                            val playerToUpdate = viewModel.getPlayer(playerId.toLong()).first()
+                            playerToUpdate?.let {
+                                val updatedPlayer = it.player.copy(playerName = playerName)
+                                viewModel.updatePlayer(updatedPlayer, selectedRoleIds)
+                            }
                         }
+                    } else {
+                        // Adding new player
+                        viewModel.createPlayer(playerName, selectedRoleIds)
                     }
-                } else {
-                    // Adding new player
-                    viewModel.createPlayer(playerName, selectedRoleIds)
                 }
             }
         }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,16 +93,21 @@ class PlayersManagementActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        adapter = PlayersManagementAdapter(
-            onPlayerClick = { playerWithRoles ->
-                val intent = Intent(this, AddEditPlayerActivity::class.java).apply {
-                    putExtra(AddEditPlayerActivity.EXTRA_PLAYER, playerWithRoles.player)
-                    putIntegerArrayListExtra(AddEditPlayerActivity.EXTRA_SELECTED_ROLES, ArrayList(playerWithRoles.roles.map { it.roleId }))
-                }
-                addEditPlayerResultLauncher.launch(intent)
-            },
-            onStatsClick = { playerWithRoles -> showPlayerStatsDialog(playerWithRoles) }
-        )
+        adapter =
+            PlayersManagementAdapter(
+                onPlayerClick = { playerWithRoles ->
+                    val intent =
+                        Intent(this, AddEditPlayerActivity::class.java).apply {
+                            putExtra(AddEditPlayerActivity.EXTRA_PLAYER, playerWithRoles.player)
+                            putIntegerArrayListExtra(
+                                AddEditPlayerActivity.EXTRA_SELECTED_ROLES,
+                                ArrayList(playerWithRoles.roles.map { it.roleId }),
+                            )
+                        }
+                    addEditPlayerResultLauncher.launch(intent)
+                },
+                onStatsClick = { playerWithRoles -> showPlayerStatsDialog(playerWithRoles) },
+            )
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
     }
@@ -113,14 +115,15 @@ class PlayersManagementActivity : AppCompatActivity() {
     private fun observeViewModel() {
         lifecycleScope.launch {
             viewModel.players.collect { players ->
-                val filteredPlayers = if (searchQuery.isEmpty()) {
-                    players
-                } else {
-                    players.filter { playerWithRoles ->
-                        playerWithRoles.player.playerName.contains(searchQuery, ignoreCase = true) ||
+                val filteredPlayers =
+                    if (searchQuery.isEmpty()) {
+                        players
+                    } else {
+                        players.filter { playerWithRoles ->
+                            playerWithRoles.player.playerName.contains(searchQuery, ignoreCase = true) ||
                                 playerWithRoles.roles.any { it.name.contains(searchQuery, ignoreCase = true) }
+                        }
                     }
-                }
                 adapter.submitList(filteredPlayers)
                 findViewById<View>(R.id.empty_state).visibility = if (filteredPlayers.isEmpty()) View.VISIBLE else View.GONE
             }
@@ -137,27 +140,35 @@ class PlayersManagementActivity : AppCompatActivity() {
         rolesFilterChipGroup.removeAllViews()
 
         // Add "All" chip
-        val allChip = Chip(this).apply {
-            text = "All"
-            id = View.generateViewId()
-            isCheckable = true
-            isChecked = true
-            // The style is inherited from the theme, or can be set in the XML via `chipStyle`
-        }
+        val allChip =
+            Chip(this).apply {
+                text = "All"
+                id = View.generateViewId()
+                isCheckable = true
+                isChecked = true
+                // The style is inherited from the theme, or can be set in the XML via `chipStyle`
+            }
         rolesFilterChipGroup.addView(allChip)
 
         // Add role chips
         roles.forEach { role ->
-            val chip = Chip(this).apply {
-                text = role.name
-                id = View.generateViewId()
-                tag = role.roleId
-                isCheckable = true
-            }
+            val chip =
+                Chip(this).apply {
+                    text = role.name
+                    id = View.generateViewId()
+                    tag = role.roleId
+                    isCheckable = true
+                }
             rolesFilterChipGroup.addView(chip)
         }
 
-        rolesFilterChipGroup.setOnCheckedChangeListener { group, checkedId ->
+        rolesFilterChipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
+            val checkedId = checkedIds.firstOrNull()
+            if (checkedId == null) {
+                viewModel.setRoleFilter(null)
+                return@setOnCheckedStateChangeListener
+            }
+
             val chip = group.findViewById<Chip>(checkedId)
             if (chip != null) {
                 val roleId = if (chip.text == "All") null else chip.tag as? Int
@@ -169,31 +180,41 @@ class PlayersManagementActivity : AppCompatActivity() {
     }
 
     private fun setupSwipeToDelete() {
-        val swipeHandler = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-            override fun onMove(r: RecyclerView, v: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder): Boolean = false
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val playerWithRoles = adapter.currentList[viewHolder.adapterPosition]
-                viewModel.deletePlayer(playerWithRoles)
-                Snackbar.make(recyclerView, "${playerWithRoles.player.playerName} deleted", Snackbar.LENGTH_LONG)
-                    .setAction("UNDO") {
-                        viewModel.restorePlayer(playerWithRoles.player, playerWithRoles.roles.map { it.roleId })
-                    }.show()
+        val swipeHandler =
+            object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+                override fun onMove(
+                    r: RecyclerView,
+                    v: RecyclerView.ViewHolder,
+                    t: RecyclerView.ViewHolder,
+                ): Boolean = false
+
+                override fun onSwiped(
+                    viewHolder: RecyclerView.ViewHolder,
+                    direction: Int,
+                ) {
+                    val playerWithRoles = adapter.currentList[viewHolder.adapterPosition]
+                    viewModel.deletePlayer(playerWithRoles)
+                    Snackbar
+                        .make(recyclerView, "${playerWithRoles.player.playerName} deleted", Snackbar.LENGTH_LONG)
+                        .setAction("UNDO") {
+                            viewModel.restorePlayer(playerWithRoles.player, playerWithRoles.roles.map { it.roleId })
+                        }.show()
+                }
             }
-        }
         ItemTouchHelper(swipeHandler).attachToRecyclerView(recyclerView)
     }
-
 
     private fun showPlayerStatsDialog(playerWithRoles: PlayerWithRoles) {
         val player = playerWithRoles.player
         val rolesText = playerWithRoles.roles.joinToString(", ") { it.name }.ifEmpty { "Not specified" }
-        val statsMessage = """
+        val statsMessage =
+            """
             Appearances: ${player.appearances}
             Goals Scored: ${player.goals}
             Goals per Match: ${if (player.appearances > 0) String.format("%.2f", player.goals.toFloat() / player.appearances) else "0.00"}
             
             Roles: $rolesText
-        """.trimIndent()
+            """.trimIndent()
 
         MaterialAlertDialogBuilder(this)
             .setTitle("${player.playerName} - Statistics")
@@ -210,8 +231,7 @@ class PlayersManagementActivity : AppCompatActivity() {
             .setPositiveButton("Delete") { _, _ ->
                 viewModel.deletePlayer(playerWithRoles)
                 Snackbar.make(fab, "Player deleted", Snackbar.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Cancel", null)
+            }.setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -223,8 +243,7 @@ class PlayersManagementActivity : AppCompatActivity() {
                 val resetPlayer = playerWithRoles.player.copy(appearances = 0, goals = 0)
                 viewModel.updatePlayer(resetPlayer, playerWithRoles.roles.map { it.roleId })
                 Snackbar.make(fab, "Stats reset", Snackbar.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Cancel", null)
+            }.setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -246,26 +265,26 @@ class PlayersManagementActivity : AppCompatActivity() {
 
         searchView?.apply {
             queryHint = "Search players..."
-            setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    return false
-                }
+            setOnQueryTextListener(
+                object : SearchView.OnQueryTextListener {
+                    override fun onQueryTextSubmit(query: String?): Boolean = false
 
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    searchQuery = newText ?: ""
-                    observeViewModel() // Re-filter the list
-                    return true
-                }
-            })
+                    override fun onQueryTextChange(newText: String?): Boolean {
+                        searchQuery = newText ?: ""
+                        observeViewModel() // Re-filter the list
+                        return true
+                    }
+                },
+            )
         }
 
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+        when (item.itemId) {
             android.R.id.home -> {
-                onBackPressed()
+                finish()
                 true
             }
             R.id.action_sort_name -> {
@@ -282,5 +301,4 @@ class PlayersManagementActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
-    }
 }

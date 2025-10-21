@@ -4,37 +4,35 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import android.view.View
-import android.widget.TextView
 import androidx.test.core.app.ActivityScenario
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.P])
 class MainActivityLayoutTest {
-
     @Test
     fun `score section should adapt to different screen sizes`() {
         // Test on different screen sizes
-        val configs = listOf(
-            Configuration().apply {
-                screenWidthDp = 320
-                screenHeightDp = 480
-            },
-            Configuration().apply {
-                screenWidthDp = 480
-                screenHeightDp = 800
-            },
-            Configuration().apply {
-                screenWidthDp = 600
-                screenHeightDp = 1024
-            }
-        )
+        val configs =
+            listOf(
+                Configuration().apply {
+                    screenWidthDp = 320
+                    screenHeightDp = 480
+                },
+                Configuration().apply {
+                    screenWidthDp = 480
+                    screenHeightDp = 800
+                },
+                Configuration().apply {
+                    screenWidthDp = 600
+                    screenHeightDp = 1024
+                },
+            )
 
         configs.forEach { config ->
             val scenario = ActivityScenario.launch<MainActivity>(Intent())

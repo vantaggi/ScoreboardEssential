@@ -28,7 +28,10 @@ jobs:
     - name: 4. Run tests for all modules
       run: ./gradlew test
 
-    - name: 5. Build debug APKs for all modules
+    - name: 5. Run Ktlint Check
+      run: ./gradlew ktlintCheck
+
+    - name: 6. Build debug APKs for all modules
       run: ./gradlew assembleDebug
 
     - name: 6. Upload Mobile App APK

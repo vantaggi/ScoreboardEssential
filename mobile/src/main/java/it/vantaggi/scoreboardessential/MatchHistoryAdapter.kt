@@ -13,24 +13,31 @@ import java.util.Date
 import java.util.Locale
 
 class MatchHistoryAdapter(
-    private val onDeleteClicked: (MatchWithTeams) -> Unit
+    private val onDeleteClicked: (MatchWithTeams) -> Unit,
 ) : ListAdapter<MatchWithTeams, MatchHistoryAdapter.MatchViewHolder>(MatchDiffCallback()) {
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MatchViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.match_item, parent, false)
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int,
+    ): MatchViewHolder {
+        val view =
+            LayoutInflater
+                .from(parent.context)
+                .inflate(R.layout.match_item, parent, false)
         return MatchViewHolder(view, onDeleteClicked)
     }
 
-    override fun onBindViewHolder(holder: MatchViewHolder, position: Int) {
+    override fun onBindViewHolder(
+        holder: MatchViewHolder,
+        position: Int,
+    ) {
         val match = getItem(position)
         holder.bind(match)
     }
 
     class MatchViewHolder(
         itemView: View,
-        private val onDeleteClicked: (MatchWithTeams) -> Unit
-        ) : RecyclerView.ViewHolder(itemView) {
+        private val onDeleteClicked: (MatchWithTeams) -> Unit,
+    ) : RecyclerView.ViewHolder(itemView) {
         private val team1NameTextView: TextView = itemView.findViewById(R.id.team1_name_textview)
         private val team2NameTextView: TextView = itemView.findViewById(R.id.team2_name_textview)
         private val team1ScoreTextView: TextView = itemView.findViewById(R.id.team1_score_textview)
@@ -38,7 +45,6 @@ class MatchHistoryAdapter(
         private val timestampTextView: TextView = itemView.findViewById(R.id.timestamp_textview)
         private val playersTextView: TextView = itemView.findViewById(R.id.players_textview)
         private val deleteButton: View = itemView.findViewById(R.id.delete_match_button)
-
 
         fun bind(matchWithTeams: MatchWithTeams) {
             team1NameTextView.text = matchWithTeams.team1?.name ?: "Team 1"
@@ -64,11 +70,13 @@ class MatchHistoryAdapter(
 }
 
 class MatchDiffCallback : DiffUtil.ItemCallback<MatchWithTeams>() {
-    override fun areItemsTheSame(oldItem: MatchWithTeams, newItem: MatchWithTeams): Boolean {
-        return oldItem.match.matchId == newItem.match.matchId
-    }
+    override fun areItemsTheSame(
+        oldItem: MatchWithTeams,
+        newItem: MatchWithTeams,
+    ): Boolean = oldItem.match.matchId == newItem.match.matchId
 
-    override fun areContentsTheSame(oldItem: MatchWithTeams, newItem: MatchWithTeams): Boolean {
-        return oldItem == newItem
-    }
+    override fun areContentsTheSame(
+        oldItem: MatchWithTeams,
+        newItem: MatchWithTeams,
+    ): Boolean = oldItem == newItem
 }

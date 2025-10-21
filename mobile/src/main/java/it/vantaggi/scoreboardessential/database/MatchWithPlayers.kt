@@ -9,7 +9,7 @@ data class MatchWithPlayers(
     @Relation(
         parentColumn = "matchId",
         entityColumn = "playerId",
-        associateBy = Junction(MatchPlayerCrossRef::class)
+        associateBy = Junction(MatchPlayerCrossRef::class),
     )
-    val players: List<Player>
+    val players: List<Player>,
 )

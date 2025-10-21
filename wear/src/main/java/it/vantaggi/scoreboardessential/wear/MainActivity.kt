@@ -1,24 +1,19 @@
 package it.vantaggi.scoreboardessential.wear
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.content.Intent
-import androidx.wear.remote.interactions.RemoteActivityHelper
-import android.os.ResultReceiver
-import android.os.Handler
-import android.os.Looper
-import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.wear.remote.interactions.RemoteActivityHelper
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-
     private lateinit var binding: ActivityMainBinding
     private val viewModel: WearViewModel by viewModels()
 
@@ -70,13 +65,16 @@ class MainActivity : ComponentActivity() {
             viewModel.resetMatchTimer()
         }
     }
+
     private fun showTeamNameInput(team: Int) {
-        val intent = Intent(Intent.ACTION_MAIN).apply {
-            action = "com.google.android.wearable.action.INPUT_TEXT"
-            putExtra("com.google.android.wearable.extra.PROMPT", "Team $team name:")
-        }
+        val intent =
+            Intent(Intent.ACTION_MAIN).apply {
+                action = "com.google.android.wearable.action.INPUT_TEXT"
+                putExtra("com.google.android.wearable.extra.PROMPT", "Team $team name:")
+            }
         RemoteActivityHelper(this).startRemoteActivity(intent)
     }
+
     private fun observeViewModel() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -154,7 +152,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-
             }
         }
     }

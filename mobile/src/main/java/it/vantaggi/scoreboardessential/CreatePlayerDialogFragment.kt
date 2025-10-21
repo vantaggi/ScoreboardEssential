@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class CreatePlayerDialogFragment : DialogFragment() {
-
     private val viewModel: PlayersManagementViewModel by activityViewModels()
     private var selectedRoleIds = mutableListOf<Int>()
     private lateinit var selectedRolesTextView: TextView
@@ -48,8 +47,7 @@ class CreatePlayerDialogFragment : DialogFragment() {
                 } else {
                     Toast.makeText(context, "Player name cannot be empty", Toast.LENGTH_SHORT).show()
                 }
-            }
-            .setNegativeButton("Cancel", null)
+            }.setNegativeButton("Cancel", null)
             .create()
     }
 

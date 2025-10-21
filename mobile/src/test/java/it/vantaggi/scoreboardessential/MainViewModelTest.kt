@@ -1,40 +1,44 @@
 package it.vantaggi.scoreboardessential
 
+import android.app.Application
 import android.graphics.Color
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
+import it.vantaggi.scoreboardessential.database.Player
+import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.repository.MatchRepository
+import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
+import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.utils.ScoreUpdateEventBus
 import it.vantaggi.scoreboardessential.utils.TimerEvent
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.*
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
-
-import android.app.Application
-import it.vantaggi.scoreboardessential.MatchEvent
-import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
-import it.vantaggi.scoreboardessential.database.Player
-import it.vantaggi.scoreboardessential.database.PlayerWithRoles
-import it.vantaggi.scoreboardessential.service.MatchTimerService
 import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
+import org.robolectric.RobolectricTestRunner
 import java.lang.reflect.Field
 
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
 class MainViewModelTest {
-
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
@@ -50,12 +54,14 @@ class MainViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         mockApplication = mock(Application::class.java)
-        mockRepository = mock(MatchRepository::class.java).apply {
-            `when`(allMatches).thenReturn(emptyFlow())
-        }
-        mockUserPreferencesRepository = mock(UserPreferencesRepository::class.java).apply {
-            `when`(hasSeenTutorial).thenReturn(emptyFlow())
-        }
+        mockRepository =
+            mock(MatchRepository::class.java).apply {
+                `when`(allMatches).thenReturn(emptyFlow())
+            }
+        mockUserPreferencesRepository =
+            mock(UserPreferencesRepository::class.java).apply {
+                `when`(hasSeenTutorial).thenReturn(emptyFlow())
+            }
         mockMatchSettingsRepository = mock(MatchSettingsRepository::class.java)
         viewModel = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
         mockMatchTimerService = mock(MatchTimerService::class.java)
@@ -106,60 +112,63 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `timer event Start starts match timer`() = runTest {
-        // Arrange
-        val timerObserver = Observer<Long> {}
-        viewModel.matchTimerValue.observeForever(timerObserver)
+    fun `timer event Start starts match timer`() =
+        runTest {
+            // Arrange
+            val timerObserver = Observer<Long> {}
+            viewModel.matchTimerValue.observeForever(timerObserver)
 
-        // Act
-        ScoreUpdateEventBus.postTimerEvent(TimerEvent.Start)
-        advanceTimeBy(1000) // Advance time to allow the timer to tick
-        advanceUntilIdle()
+            // Act
+            ScoreUpdateEventBus.postTimerEvent(TimerEvent.Start)
+            advanceTimeBy(1000) // Advance time to allow the timer to tick
+            advanceUntilIdle()
 
-        // Assert
-        assert(viewModel.matchTimerValue.value!! > 0)
-        viewModel.matchTimerValue.removeObserver(timerObserver)
-    }
-
-    @Test
-    fun `timer event Pause pauses match timer`() = runTest {
-        // Arrange
-        val timerObserver = Observer<Long> {}
-        viewModel.matchTimerValue.observeForever(timerObserver)
-
-        viewModel.startStopMatchTimer() // Start it first
-        advanceTimeBy(1000)
-        advanceUntilIdle()
-        val timeWhenPaused = viewModel.matchTimerValue.value
-
-        // Act
-        ScoreUpdateEventBus.postTimerEvent(TimerEvent.Pause)
-        advanceTimeBy(1000)
-        advanceUntilIdle()
-
-        // Assert
-        assertEquals(timeWhenPaused, viewModel.matchTimerValue.value)
-        viewModel.matchTimerValue.removeObserver(timerObserver)
-    }
+            // Assert
+            assert(viewModel.matchTimerValue.value!! > 0)
+            viewModel.matchTimerValue.removeObserver(timerObserver)
+        }
 
     @Test
-    fun `timer event Reset resets match timer`() = runTest {
-        // Arrange
-        val timerObserver = Observer<Long> {}
-        viewModel.matchTimerValue.observeForever(timerObserver)
+    fun `timer event Pause pauses match timer`() =
+        runTest {
+            // Arrange
+            val timerObserver = Observer<Long> {}
+            viewModel.matchTimerValue.observeForever(timerObserver)
 
-        viewModel.startStopMatchTimer() // Start it first
-        advanceTimeBy(1000)
-        advanceUntilIdle()
+            viewModel.startStopMatchTimer() // Start it first
+            advanceTimeBy(1000)
+            advanceUntilIdle()
+            val timeWhenPaused = viewModel.matchTimerValue.value
 
-        // Act
-        ScoreUpdateEventBus.postTimerEvent(TimerEvent.Reset)
-        advanceUntilIdle()
+            // Act
+            ScoreUpdateEventBus.postTimerEvent(TimerEvent.Pause)
+            advanceTimeBy(1000)
+            advanceUntilIdle()
 
-        // Assert
-        assertEquals(0L, viewModel.matchTimerValue.value)
-        viewModel.matchTimerValue.removeObserver(timerObserver)
-    }
+            // Assert
+            assertEquals(timeWhenPaused, viewModel.matchTimerValue.value)
+            viewModel.matchTimerValue.removeObserver(timerObserver)
+        }
+
+    @Test
+    fun `timer event Reset resets match timer`() =
+        runTest {
+            // Arrange
+            val timerObserver = Observer<Long> {}
+            viewModel.matchTimerValue.observeForever(timerObserver)
+
+            viewModel.startStopMatchTimer() // Start it first
+            advanceTimeBy(1000)
+            advanceUntilIdle()
+
+            // Act
+            ScoreUpdateEventBus.postTimerEvent(TimerEvent.Reset)
+            advanceUntilIdle()
+
+            // Assert
+            assertEquals(0L, viewModel.matchTimerValue.value)
+            viewModel.matchTimerValue.removeObserver(timerObserver)
+        }
 
     @Test
     fun `service should unbind correctly on viewmodel clear`() {
@@ -414,35 +423,36 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `endMatch resets scores and stops timer`() = runTest {
-        // Arrange
-        val score1Observer = Observer<Int> {}
-        val score2Observer = Observer<Int> {}
-        val eventsObserver = Observer<List<MatchEvent>> {}
-        viewModel.team1Score.observeForever(score1Observer)
-        viewModel.team2Score.observeForever(score2Observer)
-        viewModel.matchEvents.observeForever(eventsObserver)
+    fun `endMatch resets scores and stops timer`() =
+        runTest {
+            // Arrange
+            val score1Observer = Observer<Int> {}
+            val score2Observer = Observer<Int> {}
+            val eventsObserver = Observer<List<MatchEvent>> {}
+            viewModel.team1Score.observeForever(score1Observer)
+            viewModel.team2Score.observeForever(score2Observer)
+            viewModel.matchEvents.observeForever(eventsObserver)
 
-        // Set initial scores by calling add score methods
-        viewModel.addTeam1Score()
-        viewModel.addTeam2Score()
-        advanceUntilIdle() // Allow suspend functions in addScore to complete
+            // Set initial scores by calling add score methods
+            viewModel.addTeam1Score()
+            viewModel.addTeam2Score()
+            advanceUntilIdle() // Allow suspend functions in addScore to complete
 
-        // Act
-        viewModel.endMatch()
-        advanceUntilIdle() // Allow suspend functions in endMatch to complete
+            // Act
+            viewModel.endMatch()
+            advanceUntilIdle() // Allow suspend functions in endMatch to complete
 
-        // Assert
-        assertEquals(0, viewModel.team1Score.value)
-        assertEquals(0, viewModel.team2Score.value)
-        verify(mockMatchTimerService, atLeastOnce()).stopTimer()
+            // Assert
+            assertEquals(0, viewModel.team1Score.value)
+            assertEquals(0, viewModel.team2Score.value)
+            verify(mockMatchTimerService, atLeastOnce()).stopTimer()
 
-        val matchEndedEvent = viewModel.matchEvents.value?.find { it.event.contains("Match ended") }
-        assert(matchEndedEvent != null)
+            val matchEndedEvent = viewModel.matchEvents.value?.find { it.event.contains("Match ended") }
+            assert(matchEndedEvent != null)
 
-        // Cleanup
-        viewModel.team1Score.removeObserver(score1Observer)
-        viewModel.team2Score.removeObserver(score2Observer)
-        viewModel.matchEvents.removeObserver(eventsObserver)
-    }
+            // Cleanup
+            viewModel.team1Score.removeObserver(score1Observer)
+            viewModel.team2Score.removeObserver(score2Observer)
+            viewModel.matchEvents.removeObserver(eventsObserver)
+        }
 }

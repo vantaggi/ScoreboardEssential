@@ -8,8 +8,9 @@ import androidx.lifecycle.viewModelScope
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import kotlinx.coroutines.launch
 
-class MatchSettingsViewModel(private val repository: MatchSettingsRepository) : ViewModel() {
-
+class MatchSettingsViewModel(
+    private val repository: MatchSettingsRepository,
+) : ViewModel() {
     private val _team1Name = MutableLiveData<String>()
     val team1Name: LiveData<String> = _team1Name
 
@@ -75,7 +76,9 @@ class MatchSettingsViewModel(private val repository: MatchSettingsRepository) : 
     }
 }
 
-class MatchSettingsViewModelFactory(private val repository: MatchSettingsRepository) : ViewModelProvider.Factory {
+class MatchSettingsViewModelFactory(
+    private val repository: MatchSettingsRepository,
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MatchSettingsViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")

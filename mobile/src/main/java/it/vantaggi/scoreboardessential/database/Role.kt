@@ -11,5 +11,5 @@ data class Role(
     @PrimaryKey(autoGenerate = true)
     val roleId: Int = 0,
     val name: String,
-    val category: String  // PORTA, DIFESA, CENTROCAMPO, ATTACCO
+    val category: String, // PORTA, DIFESA, CENTROCAMPO, ATTACCO
 ) : Parcelable

@@ -7,12 +7,11 @@ import android.os.Build
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.repository.ColorRepository
 import it.vantaggi.scoreboardessential.repository.MatchRepository
+import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
-import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 
 class ScoreboardEssentialApplication : Application() {
-
     val database by lazy { AppDatabase.getDatabase(this) }
     val colorRepository by lazy { ColorRepository(this) }
     val playerRepository by lazy { PlayerRepository(database.playerDao()) }
@@ -30,9 +29,10 @@ class ScoreboardEssentialApplication : Application() {
             val name = getString(R.string.channel_name)
             val descriptionText = getString(R.string.channel_description)
             val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
-                description = descriptionText
-            }
+            val channel =
+                NotificationChannel(CHANNEL_ID, name, importance).apply {
+                    description = descriptionText
+                }
             val notificationManager: NotificationManager =
                 getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)

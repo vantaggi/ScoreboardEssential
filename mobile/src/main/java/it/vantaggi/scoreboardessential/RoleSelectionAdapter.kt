@@ -5,20 +5,22 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import it.vantaggi.scoreboardessential.database.Role
 import com.google.android.material.checkbox.MaterialCheckBox
+import it.vantaggi.scoreboardessential.database.Role
 
 private const val VIEW_TYPE_HEADER = 0
 private const val VIEW_TYPE_ROLE = 1
 
 class RoleSelectionAdapter(
-    private val onRoleSelected: (Int, Boolean) -> Unit
+    private val onRoleSelected: (Int, Boolean) -> Unit,
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-
     private val items = mutableListOf<Any>()
     private val selectedRoleIds = mutableSetOf<Int>()
 
-    fun submitList(roles: List<Role>, initiallySelectedIds: List<Int>) {
+    fun submitList(
+        roles: List<Role>,
+        initiallySelectedIds: List<Int>,
+    ) {
         selectedRoleIds.clear()
         selectedRoleIds.addAll(initiallySelectedIds)
 
@@ -33,11 +35,12 @@ class RoleSelectionAdapter(
 
     fun getSelectedRoleIds(): List<Int> = selectedRoleIds.toList()
 
-    override fun getItemViewType(position: Int): Int {
-        return if (items[position] is String) VIEW_TYPE_HEADER else VIEW_TYPE_ROLE
-    }
+    override fun getItemViewType(position: Int): Int = if (items[position] is String) VIEW_TYPE_HEADER else VIEW_TYPE_ROLE
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int,
+    ): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return if (viewType == VIEW_TYPE_HEADER) {
             val view = inflater.inflate(R.layout.item_role_header, parent, false)
@@ -48,7 +51,10 @@ class RoleSelectionAdapter(
         }
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+    override fun onBindViewHolder(
+        holder: RecyclerView.ViewHolder,
+        position: Int,
+    ) {
         when (holder) {
             is HeaderViewHolder -> holder.bind(items[position] as String)
             is RoleViewHolder -> {
@@ -67,16 +73,26 @@ class RoleSelectionAdapter(
 
     override fun getItemCount(): Int = items.size
 
-    class HeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class HeaderViewHolder(
+        itemView: View,
+    ) : RecyclerView.ViewHolder(itemView) {
         private val title: TextView = itemView.findViewById(R.id.header_title)
+
         fun bind(category: String) {
             title.text = category
         }
     }
 
-    class RoleViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class RoleViewHolder(
+        itemView: View,
+    ) : RecyclerView.ViewHolder(itemView) {
         private val checkBox: MaterialCheckBox = itemView.findViewById(R.id.role_checkbox)
-        fun bind(role: Role, isSelected: Boolean, onToggle: (Int, Boolean) -> Unit) {
+
+        fun bind(
+            role: Role,
+            isSelected: Boolean,
+            onToggle: (Int, Boolean) -> Unit,
+        ) {
             checkBox.text = role.name
             checkBox.isChecked = isSelected
             checkBox.setOnCheckedChangeListener { _, isChecked ->

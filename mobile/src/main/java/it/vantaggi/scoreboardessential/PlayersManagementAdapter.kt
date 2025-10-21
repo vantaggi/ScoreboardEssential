@@ -8,31 +8,37 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.card.MaterialCardView
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.views.RoleBadgeGroup
-import com.google.android.material.card.MaterialCardView
 
 class PlayersManagementAdapter(
     private val onPlayerClick: (PlayerWithRoles) -> Unit,
-    private val onStatsClick: (PlayerWithRoles) -> Unit
+    private val onStatsClick: (PlayerWithRoles) -> Unit,
 ) : ListAdapter<PlayerWithRoles, PlayersManagementAdapter.PlayerViewHolder>(PlayerDiffCallback()) {
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlayerViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_player_management, parent, false)
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int,
+    ): PlayerViewHolder {
+        val view =
+            LayoutInflater
+                .from(parent.context)
+                .inflate(R.layout.item_player_management, parent, false)
         return PlayerViewHolder(view, onPlayerClick, onStatsClick)
     }
 
-    override fun onBindViewHolder(holder: PlayerViewHolder, position: Int) {
+    override fun onBindViewHolder(
+        holder: PlayerViewHolder,
+        position: Int,
+    ) {
         holder.bind(getItem(position))
     }
 
     class PlayerViewHolder(
         itemView: View,
         private val onPlayerClick: (PlayerWithRoles) -> Unit,
-        private val onStatsClick: (PlayerWithRoles) -> Unit
+        private val onStatsClick: (PlayerWithRoles) -> Unit,
     ) : RecyclerView.ViewHolder(itemView) {
-
         private val cardView: MaterialCardView = itemView.findViewById(R.id.player_card)
         private val nameTextView: TextView = itemView.findViewById(R.id.player_name)
         private val rolesGroup: RoleBadgeGroup = itemView.findViewById(R.id.player_roles_group)
@@ -67,12 +73,14 @@ class PlayersManagementAdapter(
     }
 
     class PlayerDiffCallback : DiffUtil.ItemCallback<PlayerWithRoles>() {
-        override fun areItemsTheSame(oldItem: PlayerWithRoles, newItem: PlayerWithRoles): Boolean {
-            return oldItem.player.playerId == newItem.player.playerId
-        }
+        override fun areItemsTheSame(
+            oldItem: PlayerWithRoles,
+            newItem: PlayerWithRoles,
+        ): Boolean = oldItem.player.playerId == newItem.player.playerId
 
-        override fun areContentsTheSame(oldItem: PlayerWithRoles, newItem: PlayerWithRoles): Boolean {
-            return oldItem == newItem
-        }
+        override fun areContentsTheSame(
+            oldItem: PlayerWithRoles,
+            newItem: PlayerWithRoles,
+        ): Boolean = oldItem == newItem
     }
 }

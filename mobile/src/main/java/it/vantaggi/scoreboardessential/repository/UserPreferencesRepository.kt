@@ -7,23 +7,26 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-class UserPreferencesRepository(context: Context) {
-
+class UserPreferencesRepository(
+    context: Context,
+) {
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
-    val hasSeenTutorial: Flow<Boolean> = callbackFlow {
-        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == KEY_HAS_SEEN_TUTORIAL) {
-                trySend(hasSeenTutorial())
-            }
+    val hasSeenTutorial: Flow<Boolean> =
+        callbackFlow {
+            val listener =
+                SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+                    if (key == KEY_HAS_SEEN_TUTORIAL) {
+                        trySend(hasSeenTutorial())
+                    }
+                }
+            sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
+            // Emit the initial value
+            trySend(hasSeenTutorial())
+            // Unregister the listener when the flow is closed
+            awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
         }
-        sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
-        // Emit the initial value
-        trySend(hasSeenTutorial())
-        // Unregister the listener when the flow is closed
-        awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
-    }
 
     suspend fun setHasSeenTutorial(hasSeen: Boolean) {
         sharedPreferences.edit {
@@ -31,8 +34,7 @@ class UserPreferencesRepository(context: Context) {
         }
     }
 
-    private fun hasSeenTutorial(): Boolean =
-        sharedPreferences.getBoolean(KEY_HAS_SEEN_TUTORIAL, false)
+    private fun hasSeenTutorial(): Boolean = sharedPreferences.getBoolean(KEY_HAS_SEEN_TUTORIAL, false)
 
     companion object {
         private const val PREFERENCES_NAME = "user_preferences"

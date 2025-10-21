@@ -10,7 +10,6 @@ import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.databinding.ActivityOnboardingBinding
 
 class OnboardingActivity : AppCompatActivity() {
-
     private lateinit var binding: ActivityOnboardingBinding
     private lateinit var pagerAdapter: OnboardingPagerAdapter
     private val mainViewModel: MainViewModel by viewModels {
@@ -18,7 +17,7 @@ class OnboardingActivity : AppCompatActivity() {
             (application as ScoreboardEssentialApplication).matchRepository,
             (application as ScoreboardEssentialApplication).userPreferencesRepository,
             (application as ScoreboardEssentialApplication).matchSettingsRepository,
-            application
+            application,
         )
     }
 
@@ -48,20 +47,22 @@ class OnboardingActivity : AppCompatActivity() {
             }
         }
 
-        binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) {
-                super.onPageSelected(position)
-                if (position == pagerAdapter.itemCount - 1) {
-                    binding.nextButton.visibility = View.GONE
-                    binding.finishButton.visibility = View.VISIBLE
-                    binding.skipButton.visibility = View.INVISIBLE
-                } else {
-                    binding.nextButton.visibility = View.VISIBLE
-                    binding.finishButton.visibility = View.GONE
-                    binding.skipButton.visibility = View.VISIBLE
+        binding.viewPager.registerOnPageChangeCallback(
+            object : ViewPager2.OnPageChangeCallback() {
+                override fun onPageSelected(position: Int) {
+                    super.onPageSelected(position)
+                    if (position == pagerAdapter.itemCount - 1) {
+                        binding.nextButton.visibility = View.GONE
+                        binding.finishButton.visibility = View.VISIBLE
+                        binding.skipButton.visibility = View.INVISIBLE
+                    } else {
+                        binding.nextButton.visibility = View.VISIBLE
+                        binding.finishButton.visibility = View.GONE
+                        binding.skipButton.visibility = View.VISIBLE
+                    }
                 }
-            }
-        })
+            },
+        )
     }
 
     private fun finishOnboarding() {
