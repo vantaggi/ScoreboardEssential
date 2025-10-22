@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         Match::class, Player::class, MatchPlayerCrossRef::class,
         Team::class, Role::class, PlayerRoleCrossRef::class,
     ],
-    version = 8,
+    version = 9, // ✅ Cambia da 8 a 9
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -117,6 +117,28 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
 
+internal val MIGRATION_8_9 = object : Migration(8, 9) {
+override fun migrate(database: SupportSQLiteDatabase) {
+// Crea indice per playerId (migliora query quando cerchiamo ruoli per player)
+database.execSQL(
+"CREATE INDEX IF NOT EXISTS `index_player_role_cross_ref_playerId` " +
+"ON `player_role_cross_ref` (`playerId`)"
+)
+
+// L'indice su roleId esiste già dalla migrazione precedente, ma verifichiamo
+database.execSQL(
+"CREATE INDEX IF NOT EXISTS `index_player_role_cross_ref_roleId` " +
+"ON `player_role_cross_ref` (`roleId`)"
+)
+
+// Crea indice composito per ottimizzare i join
+database.execSQL(
+"CREATE INDEX IF NOT EXISTS `index_player_role_cross_ref_playerId_roleId` " +
+"ON `player_role_cross_ref` (`playerId`, `roleId`)"
+)
+}
+}
+
         fun getDatabase(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 val instance =
@@ -125,7 +147,7 @@ abstract class AppDatabase : RoomDatabase() {
                             context.applicationContext,
                             AppDatabase::class.java,
                             "match_database",
-                        ).addMigrations(MIGRATION_6_7, MIGRATION_7_8)
+                        ).addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9) // ✅ Aggiungi MIGRATION_8_9
                         .build()
                 this.instance = instance
                 instance

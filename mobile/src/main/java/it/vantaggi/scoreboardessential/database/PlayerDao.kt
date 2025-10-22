@@ -54,4 +54,25 @@ interface PlayerDao {
     @Transaction
     @Query("SELECT * FROM players WHERE playerId = :playerId")
     fun getPlayerWithRoles(playerId: Int): Flow<PlayerWithRoles?>
+
+    @Transaction
+    @Query(
+        """
+SELECT * FROM players
+WHERE playerId IN (
+SELECT playerId FROM player_role_cross_ref
+WHERE roleId = :roleId
+)
+ORDER BY playerName ASC
+""",
+    )
+    fun getPlayersByRole(roleId: Int): Flow<List<PlayerWithRoles>>
+
+    @Query(
+        """
+SELECT COUNT(*) FROM player_role_cross_ref
+WHERE playerId = :playerId
+""",
+    )
+    suspend fun getRoleCountForPlayer(playerId: Int): Int
 }
