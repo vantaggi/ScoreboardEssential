@@ -31,9 +31,11 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.utils.playNativeGoalAnimation
+import it.vantaggi.scoreboardessential.views.FormationView
 import java.util.Locale
 
 class MainActivity :
@@ -76,6 +78,11 @@ class MainActivity :
     private lateinit var team1RosterAdapter: TeamRosterAdapter
     private lateinit var team2RosterAdapter: TeamRosterAdapter
     private lateinit var matchLogAdapter: MatchLogAdapter
+
+    private lateinit var team1FormationView: FormationView
+    private lateinit var team2FormationView: FormationView
+    private lateinit var team1FormationLabel: TextView
+    private lateinit var team2FormationLabel: TextView
 
     private var vibrator: Vibrator? = null
 
@@ -135,6 +142,11 @@ class MainActivity :
         team1RosterRecyclerView = findViewById(R.id.team1_roster_recyclerview)
         team2RosterRecyclerView = findViewById(R.id.team2_roster_recyclerview)
         matchLogRecyclerView = findViewById(R.id.match_log_recyclerview)
+
+        team1FormationView = findViewById(R.id.team1_formation_view)
+        team2FormationView = findViewById(R.id.team2_formation_view)
+        team1FormationLabel = findViewById(R.id.team1_formation_label)
+        team2FormationLabel = findViewById(R.id.team2_formation_label)
     }
 
     private fun setupRecyclerViews() {
@@ -202,10 +214,12 @@ class MainActivity :
 
         viewModel.team1Players.observe(this) { players ->
             team1RosterAdapter.submitList(players)
+            updateFormation(1, players)
         }
 
         viewModel.team2Players.observe(this) { players ->
             team2RosterAdapter.submitList(players)
+            updateFormation(2, players)
         }
 
         viewModel.matchEvents.observe(this) { events ->
@@ -643,5 +657,33 @@ class MainActivity :
                 viewModel.resetMatchTimer()
             }.setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun updateFormation(
+        teamNumber: Int,
+        players: List<PlayerWithRoles>,
+    ) {
+        val formation = Formation.fromPlayers(players)
+
+        when (teamNumber) {
+            1 -> {
+                team1FormationView.setFormation(formation)
+                val teamName = viewModel.team1Name.value ?: "Team 1"
+                if (formation.isValid()) {
+                    team1FormationLabel.text = "$teamName (${formation.getFormationString()})"
+                } else {
+                    team1FormationLabel.text = "$teamName (No formation)"
+                }
+            }
+            2 -> {
+                team2FormationView.setFormation(formation)
+                val teamName = viewModel.team2Name.value ?: "Team 2"
+                if (formation.isValid()) {
+                    team2FormationLabel.text = "$teamName (${formation.getFormationString()})"
+                } else {
+                    team2FormationLabel.text = "$teamName (No formation)"
+                }
+            }
+        }
     }
 }
