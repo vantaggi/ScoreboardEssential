@@ -29,6 +29,9 @@ import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.domain.usecases.ManagePlayersUseCase
+import it.vantaggi.scoreboardessential.domain.usecases.ManageTimerUseCase
+import it.vantaggi.scoreboardessential.domain.usecases.UpdateScoreUseCase
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
@@ -41,6 +44,7 @@ import it.vantaggi.scoreboardessential.utils.ScoreUpdateEventBus
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import it.vantaggi.scoreboardessential.utils.TimerEvent
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -60,10 +64,42 @@ class MainViewModel(
     private val matchSettingsRepository: MatchSettingsRepository,
     application: Application,
 ) : AndroidViewModel(application) {
-    private val playerDao: PlayerDao
-    private val matchDao: MatchDao
+    private val playerDao: PlayerDao = AppDatabase.getDatabase(application).playerDao()
+    private val matchDao: MatchDao = AppDatabase.getDatabase(application).matchDao()
     private var matchTimerService: MatchTimerService? = null
     private var isServiceBound = false
+
+    // Use Cases
+    private val wearDataSync = OptimizedWearDataSync(application)
+    private val updateScoreUseCase = UpdateScoreUseCase(wearDataSync)
+    private val manageTimerUseCase = ManageTimerUseCase(matchTimerService)
+    private val managePlayersUseCase = ManagePlayersUseCase(playerDao, wearDataSync)
+
+    // Expose states from Use Cases
+    val team1Score = updateScoreUseCase.scoreState
+        .map { it.team1Score }
+        .asLiveData()
+
+    val team2Score = updateScoreUseCase.scoreState
+        .map { it.team2Score }
+        .asLiveData()
+
+    val matchTimerValue = manageTimerUseCase.timerState
+        .map { it.timeMillis }
+        .asLiveData()
+
+    val isMatchTimerRunning = manageTimerUseCase.timerState
+        .map { it.isRunning }
+        .asLiveData()
+
+    val team1Players = managePlayersUseCase.teamRoster
+        .map { it.team1Players }
+        .asLiveData()
+
+    val team2Players = managePlayersUseCase.teamRoster
+        .map { it.team2Players }
+        .asLiveData()
+
 
     private val serviceConnection =
         object : ServiceConnection {
@@ -77,12 +113,12 @@ class MainViewModel(
 
                 viewModelScope.launch {
                     binder.getService().matchTimerValue.collect {
-                        _matchTimerValue.postValue(it)
+                        manageTimerUseCase.updateTimerValue(it)
                     }
                 }
                 viewModelScope.launch {
                     binder.getService().isMatchTimerRunning.collect { running ->
-                        _isMatchTimerRunning.postValue(running)
+                        manageTimerUseCase.setTimerRunning(running)
                     }
                 }
                 viewModelScope.launch {
@@ -110,7 +146,7 @@ class MainViewModel(
         }
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
 
-    private val wearDataSync = OptimizedWearDataSync(application)
+
     val isWearConnected: LiveData<Boolean> = wearDataSync.isConnected.asLiveData()
 
     val allMatches: LiveData<List<MatchWithTeams>> = repository.allMatches.asLiveData()
@@ -135,13 +171,6 @@ class MainViewModel(
         }
     }
 
-    // Scores
-    private val _team1Score = MutableLiveData(0)
-    val team1Score: LiveData<Int> = _team1Score
-
-    private val _team2Score = MutableLiveData(0)
-    val team2Score: LiveData<Int> = _team2Score
-
     // Team Names
     private val _team1Name = MutableLiveData("TEAM 1")
     val team1Name: LiveData<String> = _team1Name
@@ -156,25 +185,12 @@ class MainViewModel(
     private val _team2Color = MutableLiveData(0xFFAEEA00.toInt())
     val team2Color: LiveData<Int> = _team2Color
 
-    // Match Timer
-    private val _matchTimerValue = MutableLiveData(0L)
-    val matchTimerValue: LiveData<Long> = _matchTimerValue
-    private val _isMatchTimerRunning = MutableLiveData(false)
-    val isMatchTimerRunning: LiveData<Boolean> = _isMatchTimerRunning
-
     // Keeper Timer
     private val _keeperTimerValue = MutableLiveData(0L)
     val keeperTimerValue: LiveData<Long> = _keeperTimerValue
     private val _isKeeperTimerRunning = MutableLiveData(false)
     val isKeeperTimerRunning: LiveData<Boolean> = _isKeeperTimerRunning
     private var keeperTimerDuration = 300000L // 5 minutes default
-
-    // Team Players
-    private val _team1Players = MutableLiveData<List<PlayerWithRoles>>(emptyList())
-    val team1Players: LiveData<List<PlayerWithRoles>> = _team1Players
-
-    private val _team2Players = MutableLiveData<List<PlayerWithRoles>>(emptyList())
-    val team2Players: LiveData<List<PlayerWithRoles>> = _team2Players
 
     // All Players (for selection)
     private val _allPlayers = MutableLiveData<List<PlayerWithRoles>>(emptyList())
@@ -201,10 +217,6 @@ class MainViewModel(
     private var currentMatchId: Long? = null
 
     init {
-        val db = AppDatabase.getDatabase(application)
-        matchDao = db.matchDao()
-        playerDao = db.playerDao()
-
         loadMatchSettings()
         listenForScoreUpdates()
         listenForTimerEvents()
@@ -245,8 +257,7 @@ class MainViewModel(
     private fun listenForScoreUpdates() {
         viewModelScope.launch {
             ScoreUpdateEventBus.events.collect { event ->
-                _team1Score.postValue(event.team1Score)
-                _team2Score.postValue(event.team2Score)
+                updateScoreUseCase.setScores(event.team1Score, event.team2Score)
                 addMatchEvent("Score updated from Wear OS")
             }
         }
@@ -285,23 +296,20 @@ class MainViewModel(
         viewModelScope.launch {
             playerDao.getAllPlayers().collect { players ->
                 _allPlayers.postValue(players)
-                syncTeamPlayersToWear()
             }
         }
     }
 
     private fun startNewMatch() {
-        _team1Score.value = 0
-        _team2Score.value = 0
+        updateScoreUseCase.resetScores()
         _matchEvents.value = emptyList()
+        manageTimerUseCase.resetTimer()
         if (isServiceBound) {
-            matchTimerService?.stopTimer()
             matchTimerService?.resetKeeperTimer()
         }
 
         addMatchEvent("New match ready - press START to begin")
         sendMatchStateUpdate(true)
-        sendScoreUpdate()
     }
 
     // --- Team Management ---
@@ -332,41 +340,16 @@ class MainViewModel(
         playerWithRoles: PlayerWithRoles,
         teamId: Int,
     ) {
-        viewModelScope.launch {
-            if (teamId == 1) {
-                val currentPlayers = _team1Players.value?.toMutableList() ?: mutableListOf()
-                if (!currentPlayers.any { it.player.playerId == playerWithRoles.player.playerId }) {
-                    currentPlayers.add(playerWithRoles)
-                    _team1Players.postValue(currentPlayers)
-                    addMatchEvent("${playerWithRoles.player.playerName} added to ${_team1Name.value}", team = 1)
-                    syncTeamPlayersToWear()
-                }
-            } else {
-                val currentPlayers = _team2Players.value?.toMutableList() ?: mutableListOf()
-                if (!currentPlayers.any { it.player.playerId == playerWithRoles.player.playerId }) {
-                    currentPlayers.add(playerWithRoles)
-                    _team2Players.postValue(currentPlayers)
-                    addMatchEvent("${playerWithRoles.player.playerName} added to ${_team2Name.value}", team = 2)
-                    syncTeamPlayersToWear()
-                }
-            }
-        }
+        managePlayersUseCase.addPlayerToTeam(playerWithRoles, teamId)
+        val teamName = if (teamId == 1) _team1Name.value else _team2Name.value
+        addMatchEvent("${playerWithRoles.player.playerName} added to $teamName", team = teamId)
     }
 
     fun removePlayerFromTeam(
         playerWithRoles: PlayerWithRoles,
         teamId: Int,
     ) {
-        if (teamId == 1) {
-            val currentPlayers = _team1Players.value?.toMutableList() ?: mutableListOf()
-            currentPlayers.removeAll { it.player.playerId == playerWithRoles.player.playerId }
-            _team1Players.postValue(currentPlayers)
-        } else {
-            val currentPlayers = _team2Players.value?.toMutableList() ?: mutableListOf()
-            currentPlayers.removeAll { it.player.playerId == playerWithRoles.player.playerId }
-            _team2Players.postValue(currentPlayers)
-        }
-        syncTeamPlayersToWear()
+        managePlayersUseCase.removePlayerFromTeam(playerWithRoles, teamId)
     }
 
     fun createNewPlayer(
@@ -388,46 +371,40 @@ class MainViewModel(
 
     // --- Score Management ---
     fun addTeam1Score() {
-        _team1Score.value = (_team1Score.value ?: 0) + 1
-        triggerHapticFeedback()
-        val players = _team1Players.value
-        if (!players.isNullOrEmpty()) {
-            showSelectScorerDialog.postValue(Pair(1, players))
-        } else {
-            addScorer(1, null) // No player to select, just log the goal
+        if (updateScoreUseCase.incrementScore(1)) {
+            triggerHapticFeedback()
+            val players = team1Players.value
+            if (!players.isNullOrEmpty()) {
+                showSelectScorerDialog.postValue(Pair(1, players))
+            } else {
+                addScorer(1, null) // No player to select, just log the goal
+            }
         }
-        sendScoreUpdate()
     }
 
     fun subtractTeam1Score() {
-        val currentScore = _team1Score.value ?: 0
-        if (currentScore > 0) {
-            _team1Score.value = currentScore - 1
+        if (updateScoreUseCase.decrementScore(1)) {
             triggerHapticFeedback()
             addMatchEvent("Score correction for ${_team1Name.value}", team = 1)
-            sendScoreUpdate()
         }
     }
 
     fun addTeam2Score() {
-        _team2Score.value = (_team2Score.value ?: 0) + 1
-        triggerHapticFeedback()
-        val players = _team2Players.value
-        if (!players.isNullOrEmpty()) {
-            showSelectScorerDialog.postValue(Pair(2, players))
-        } else {
-            addScorer(2, null) // No player to select, just log the goal
+        if (updateScoreUseCase.incrementScore(2)) {
+            triggerHapticFeedback()
+            val players = team2Players.value
+            if (!players.isNullOrEmpty()) {
+                showSelectScorerDialog.postValue(Pair(2, players))
+            } else {
+                addScorer(2, null) // No player to select, just log the goal
+            }
         }
-        sendScoreUpdate()
     }
 
     fun subtractTeam2Score() {
-        val currentScore = _team2Score.value ?: 0
-        if (currentScore > 0) {
-            _team2Score.value = currentScore - 1
+        if (updateScoreUseCase.decrementScore(2)) {
             triggerHapticFeedback()
             addMatchEvent("Score correction for ${_team2Name.value}", team = 2)
-            sendScoreUpdate()
         }
     }
 
@@ -462,17 +439,11 @@ class MainViewModel(
 
     // --- Match Timer Management ---
     fun startStopMatchTimer() {
-        if (!isServiceBound) return
-        if (_isMatchTimerRunning.value == true) {
-            matchTimerService?.pauseTimer()
-        } else {
-            matchTimerService?.startTimer()
-        }
+        manageTimerUseCase.startOrPauseTimer()
     }
 
     fun resetMatchTimer() {
-        if (!isServiceBound) return
-        matchTimerService?.stopTimer()
+        manageTimerUseCase.resetTimer()
     }
 
     // --- Keeper Timer Management ---
@@ -507,7 +478,7 @@ class MainViewModel(
         playerRole: String? = null,
     ) {
         val timeFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
-        val timestamp = timeFormat.format(Date(_matchTimerValue.value ?: 0L))
+        val timestamp = timeFormat.format(Date(matchTimerValue.value ?: 0L))
 
         val matchEvent = MatchEvent(timestamp, event, team, player, playerRole)
         val currentEvents = _matchEvents.value?.toMutableList() ?: mutableListOf()
@@ -517,7 +488,7 @@ class MainViewModel(
 
     // --- End Match ---
     fun endMatch(): Boolean {
-        if (_team1Score.value == 0 && _team2Score.value == 0 && _matchTimerValue.value == 0L) {
+        if (team1Score.value == 0 && team2Score.value == 0 && matchTimerValue.value == 0L) {
             return false // Match not started, do not save
         }
 
@@ -531,20 +502,20 @@ class MainViewModel(
                     Match(
                         team1Id = 1, // Default team 1 ID
                         team2Id = 2, // Default team 2 ID
-                        team1Score = _team1Score.value ?: 0,
-                        team2Score = _team2Score.value ?: 0,
+                        team1Score = team1Score.value ?: 0,
+                        team2Score = team2Score.value ?: 0,
                         timestamp = System.currentTimeMillis(),
                     ),
                 )
 
-            val allMatchPlayers = (_team1Players.value ?: emptyList()) + (_team2Players.value ?: emptyList())
+            val allMatchPlayers = (team1Players.value ?: emptyList()) + (team2Players.value ?: emptyList())
             for (playerWithRoles in allMatchPlayers) {
                 playerWithRoles.player.appearances++
                 playerDao.update(playerWithRoles.player)
                 matchDao.insertMatchPlayerCrossRef(MatchPlayerCrossRef(matchId.toInt(), playerWithRoles.player.playerId))
             }
 
-            addMatchEvent("Match ended - Final Score: ${_team1Score.value} - ${_team2Score.value}")
+            addMatchEvent("Match ended - Final Score: ${team1Score.value} - ${team2Score.value}")
 
             sendMatchStateUpdate(false)
             startNewMatch()
@@ -560,13 +531,6 @@ class MainViewModel(
     }
 
 // --- Data Synchronization with Wear OS ---
-    private fun sendScoreUpdate() {
-        wearDataSync.syncScores(
-            _team1Score.value ?: 0,
-            _team2Score.value ?: 0,
-        )
-    }
-
     private fun sendTeamNamesUpdate() {
         wearDataSync.syncTeamNames(
             _team1Name.value ?: "TEAM 1",
@@ -639,7 +603,7 @@ class MainViewModel(
             }
 
             // Populate Formations
-            _team1Players.value?.forEach { player ->
+            team1Players.value?.forEach { player ->
                 val playerTextView =
                     android.widget.TextView(context).apply {
                         text = player.player.playerName
@@ -650,7 +614,7 @@ class MainViewModel(
                 team1PlayersList.addView(playerTextView)
             }
 
-            _team2Players.value?.forEach { player ->
+            team2Players.value?.forEach { player ->
                 val playerTextView =
                     android.widget.TextView(context).apply {
                         text = player.player.playerName
@@ -737,45 +701,6 @@ class MainViewModel(
 
             shareMatchEvent.postValue(shareIntent)
         }
-    }
-
-    private fun syncTeamPlayersToWear() {
-        val team1PlayerData =
-            _team1Players.value?.map { playerWithRoles ->
-                PlayerData(
-                    id = playerWithRoles.player.playerId,
-                    name = playerWithRoles.player.playerName,
-                    roles = playerWithRoles.roles.map { it.name },
-                    goals = playerWithRoles.player.goals,
-                    appearances = playerWithRoles.player.appearances,
-                )
-            } ?: emptyList()
-
-        val team2PlayerData =
-            _team2Players.value?.map { playerWithRoles ->
-                PlayerData(
-                    id = playerWithRoles.player.playerId,
-                    name = playerWithRoles.player.playerName,
-                    roles = playerWithRoles.roles.map { it.name },
-                    goals = playerWithRoles.player.goals,
-                    appearances = playerWithRoles.player.appearances,
-                )
-            } ?: emptyList()
-
-        wearDataSync.syncTeamPlayers(team1PlayerData, team2PlayerData)
-
-        val allPlayerData =
-            _allPlayers.value?.map { playerWithRoles ->
-                PlayerData(
-                    id = playerWithRoles.player.playerId,
-                    name = playerWithRoles.player.playerName,
-                    roles = playerWithRoles.roles.map { it.name },
-                    goals = playerWithRoles.player.goals,
-                    appearances = playerWithRoles.player.appearances,
-                )
-            } ?: emptyList()
-
-        wearDataSync.syncPlayerList(allPlayerData)
     }
 
     override fun onCleared() {
