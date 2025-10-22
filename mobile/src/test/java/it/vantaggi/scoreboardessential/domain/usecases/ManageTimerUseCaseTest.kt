@@ -4,16 +4,16 @@ import it.vantaggi.scoreboardessential.service.MatchTimerService
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
-import org.mockito.kotlin.never
 
 @ExperimentalCoroutinesApi
 class ManageTimerUseCaseTest {
-
     private lateinit var timerService: MatchTimerService
     private lateinit var useCase: ManageTimerUseCase
 
@@ -24,54 +24,59 @@ class ManageTimerUseCaseTest {
     }
 
     @Test
-    fun `startOrPauseTimer starts timer when not running`() = runTest {
-        // When
-        useCase.startOrPauseTimer()
+    fun `startOrPauseTimer starts timer when not running`() =
+        runTest {
+            // When
+            useCase.startOrPauseTimer()
 
-        // Then
-        verify(timerService).startTimer()
-        assertTrue(useCase.timerState.first().isRunning)
-    }
-
-    @Test
-    fun `startOrPauseTimer pauses timer when running`() = runTest {
-        // Given
-        useCase.startOrPauseTimer() // Start the timer
-
-        // When
-        useCase.startOrPauseTimer() // Pause the timer
-
-        // Then
-        verify(timerService).pauseTimer()
-        assertFalse(useCase.timerState.first().isRunning)
-    }
+            // Then
+            verify(timerService).startTimer()
+            assertTrue(useCase.timerState.first().isRunning)
+        }
 
     @Test
-    fun `resetTimer stops timer and resets state`() = runTest {
-        // When
-        useCase.resetTimer()
+    fun `startOrPauseTimer pauses timer when running`() =
+        runTest {
+            // Given
+            useCase.startOrPauseTimer() // Start the timer
 
-        // Then
-        verify(timerService).stopTimer()
-        assertFalse(useCase.timerState.first().isRunning)
-        assertEquals(0L, useCase.timerState.first().timeMillis)
-    }
+            // When
+            useCase.startOrPauseTimer() // Pause the timer
 
-    @Test
-    fun `updateTimerValue updates timeMillis`() = runTest {
-        // When
-        useCase.updateTimerValue(1000L)
-
-        // Then
-        assertEquals(1000L, useCase.timerState.first().timeMillis)
-    }
+            // Then
+            verify(timerService).pauseTimer()
+            assertFalse(useCase.timerState.first().isRunning)
+        }
 
     @Test
-    fun `setTimerRunning updates isRunning`() = runTest {
-        // When
-        useCase.setTimerRunning(true)
+    fun `resetTimer stops timer and resets state`() =
+        runTest {
+            // When
+            useCase.resetTimer()
 
-        // Then
-        assertTrue(useCase.timerState.first().isRunning)
-    }
+            // Then
+            verify(timerService).stopTimer()
+            assertFalse(useCase.timerState.first().isRunning)
+            assertEquals(0L, useCase.timerState.first().timeMillis)
+        }
+
+    @Test
+    fun `updateTimerValue updates timeMillis`() =
+        runTest {
+            // When
+            useCase.updateTimerValue(1000L)
+
+            // Then
+            assertEquals(1000L, useCase.timerState.first().timeMillis)
+        }
+
+    @Test
+    fun `setTimerRunning updates isRunning`() =
+        runTest {
+            // When
+            useCase.setTimerRunning(true)
+
+            // Then
+            assertTrue(useCase.timerState.first().isRunning)
+        }
 }
