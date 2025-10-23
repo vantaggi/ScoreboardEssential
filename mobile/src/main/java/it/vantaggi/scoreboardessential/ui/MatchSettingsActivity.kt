@@ -89,14 +89,19 @@ class MatchSettingsActivity : AppCompatActivity() {
             viewModel.saveTeam1Name(binding.team1NameEdittext.text.toString())
             viewModel.saveTeam2Name(binding.team2NameEdittext.text.toString())
 
-            val keeperDuration = binding.keeperTimerEdittext.text.toString().toLongOrNull() ?: 30L
+            val keeperDuration =
+                binding.keeperTimerEdittext.text
+                    .toString()
+                    .toLongOrNull() ?: 30L
             viewModel.saveKeeperTimerDuration(keeperDuration)
 
-            com.google.android.material.snackbar.Snackbar.make(
-                binding.root,
-                "Settings saved successfully!",
-                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
-            ).show()
+            com.google.android.material.snackbar.Snackbar
+                .make(
+                    binding.root,
+                    "Settings saved successfully!",
+                    com.google.android.material.snackbar.Snackbar.LENGTH_SHORT,
+                )
+                .show()
         }
     }
 
@@ -116,7 +121,8 @@ class MatchSettingsActivity : AppCompatActivity() {
                 } else {
                     viewModel.saveTeam2Color(colorPickerView.color)
                 }
-            }.setNegativeButton("Cancel", null)
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 }
