@@ -111,10 +111,12 @@ class MainViewModel(
                 name: ComponentName?,
                 service: IBinder?,
             ) {
+                android.util.Log.d("MainViewModel", "Service connected!") // AGGIUNGI
                 val binder = service as MatchTimerService.MatchTimerBinder
                 matchTimerService = binder.getService()
                 isServiceBound = true
 
+                // ... resto del codice esistente ...
                 viewModelScope.launch {
                     binder.getService().matchTimerValue.collect {
                         manageTimerUseCase.updateTimerValue(it)
@@ -144,6 +146,7 @@ class MainViewModel(
             }
 
             override fun onServiceDisconnected(name: ComponentName?) {
+                android.util.Log.d("MainViewModel", "Service disconnected!") // AGGIUNGI
                 matchTimerService = null
                 isServiceBound = false
             }
@@ -251,6 +254,7 @@ class MainViewModel(
     }
 
     private fun bindService() {
+        android.util.Log.d("MainViewModel", "Attempting to bind MatchTimerService") // AGGIUNGI
         Intent(getApplication(), MatchTimerService::class.java).also { intent ->
             getApplication<Application>().startService(intent)
             getApplication<Application>().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
@@ -442,6 +446,11 @@ class MainViewModel(
 
     // --- Match Timer Management ---
     fun startStopMatchTimer() {
+        android.util.Log.d("MainViewModel", "startStopMatchTimer called, service bound: $isServiceBound")
+        if (!isServiceBound) {
+            android.util.Log.e("MainViewModel", "Timer service NOT bound! Cannot start timer.")
+            return
+        }
         manageTimerUseCase.startOrPauseTimer()
     }
 

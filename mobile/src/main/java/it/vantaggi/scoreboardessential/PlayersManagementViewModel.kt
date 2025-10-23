@@ -51,6 +51,7 @@ class PlayersManagementViewModel(
         viewModelScope.launch {
             playerRepository.allRoles.collect { rolesList ->
                 _allRoles.value = rolesList
+                android.util.Log.d("PlayersManagementVM", "Ruoli caricati: ${rolesList.size}") // AGGIUNGI QUESTA LINEA
             }
         }
     }

@@ -84,6 +84,20 @@ class MatchSettingsActivity : AppCompatActivity() {
         binding.team2ColorButton.setOnClickListener {
             showColorPickerDialog(2)
         }
+
+        binding.saveSettingsButton.setOnClickListener {
+            viewModel.saveTeam1Name(binding.team1NameEdittext.text.toString())
+            viewModel.saveTeam2Name(binding.team2NameEdittext.text.toString())
+
+            val keeperDuration = binding.keeperTimerEdittext.text.toString().toLongOrNull() ?: 30L
+            viewModel.saveKeeperTimerDuration(keeperDuration)
+
+            com.google.android.material.snackbar.Snackbar.make(
+                binding.root,
+                "Settings saved successfully!",
+                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
+            ).show()
+        }
     }
 
     private fun showColorPickerDialog(team: Int) {

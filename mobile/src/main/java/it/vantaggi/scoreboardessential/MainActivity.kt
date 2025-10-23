@@ -645,7 +645,14 @@ class MainActivity :
     }
 
     fun startStopTimer(view: View) {
+        android.util.Log.d("MainActivity", "START/STOP timer button clicked")
         viewModel.startStopMatchTimer()
+
+        // Verifica lo stato del timer dopo 1 secondo
+        view.postDelayed({
+            val isRunning = viewModel.isMatchTimerRunning.value ?: false
+            android.util.Log.d("MainActivity", "Timer running state: $isRunning")
+        }, 1000)
     }
 
     @Suppress("UNUSED_PARAMETER")

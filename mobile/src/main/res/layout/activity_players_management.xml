@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_asphalt_main"
+    android:fitsSystemWindows="true"
     tools:context=".PlayersManagementActivity">
 
     <com.google.android.material.appbar.AppBarLayout
