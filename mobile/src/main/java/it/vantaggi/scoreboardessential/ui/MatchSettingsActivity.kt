@@ -100,8 +100,7 @@ class MatchSettingsActivity : AppCompatActivity() {
                     binding.root,
                     "Settings saved successfully!",
                     com.google.android.material.snackbar.Snackbar.LENGTH_SHORT,
-                )
-                .show()
+                ).show()
         }
     }
 
@@ -121,8 +120,7 @@ class MatchSettingsActivity : AppCompatActivity() {
                 } else {
                     viewModel.saveTeam2Color(colorPickerView.color)
                 }
-            }
-            .setNegativeButton("Cancel", null)
+            }.setNegativeButton("Cancel", null)
             .show()
     }
 }
