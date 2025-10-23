@@ -16,12 +16,19 @@ class ManageTimerUseCase(
     val timerState: StateFlow<TimerState> = _timerState
 
     fun startOrPauseTimer() {
-        if (timerService == null) return
+        if (timerService == null) {
+            android.util.Log.e("ManageTimerUseCase", "Timer service is NULL!")
+            return
+        }
+
+        android.util.Log.d("ManageTimerUseCase", "Current timer running: ${_timerState.value.isRunning}")
 
         if (_timerState.value.isRunning) {
+            android.util.Log.d("ManageTimerUseCase", "Pausing timer")
             timerService.pauseTimer()
             _timerState.value = _timerState.value.copy(isRunning = false)
         } else {
+            android.util.Log.d("ManageTimerUseCase", "Starting timer")
             timerService.startTimer()
             _timerState.value = _timerState.value.copy(isRunning = true)
         }

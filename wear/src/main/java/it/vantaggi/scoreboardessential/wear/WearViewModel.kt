@@ -372,11 +372,11 @@ class WearViewModel(
     }
 
     fun startStopMatchTimer() {
+        android.util.Log.d("WearViewModel", "Timer toggle called, current state: $isMatchTimerRunning") // AGGIUNGI
         isMatchTimerRunning = !isMatchTimerRunning
 
         if (isMatchTimerRunning) {
             if (matchTimeInSeconds == 0L) {
-                // Starting fresh
                 matchTimeInSeconds = 0L
             }
             startMatchTimerInternal()

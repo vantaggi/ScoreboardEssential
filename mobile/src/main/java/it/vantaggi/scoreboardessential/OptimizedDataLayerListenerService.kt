@@ -34,6 +34,11 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
 
         Log.d(TAG, "Ricevuto messaggio: ${messageEvent.path}")
 
+        // AGGIUNGI QUESTO LOG SPECIFICO:
+        if (messageEvent.path.contains("timer")) {
+            Log.d(TAG, "Timer message received from Wear!")
+        }
+
         scope.launch {
             when (messageEvent.path) {
                 WearConstants.MSG_HEARTBEAT -> {

@@ -40,12 +40,16 @@ class RoleSelectionDialogFragment : DialogFragment() {
         roleAdapter = RoleSelectionAdapter { _, _ -> }
         rolesRecyclerView.adapter = roleAdapter
         rolesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        android.util.Log.d("RoleSelectionDialog", "RecyclerView setup completato")
     }
 
     private fun observeRoles() {
         lifecycleScope.launch {
+            // Aspetta che i ruoli siano caricati prima di mostrarli
             viewModel.allRoles.collect { roles ->
-                roleAdapter.submitList(roles, initialSelectedRoleIds)
+                if (roles.isNotEmpty()) {
+                    roleAdapter.submitList(roles, initialSelectedRoleIds)
+                }
             }
         }
     }
