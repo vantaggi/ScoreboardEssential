@@ -22,11 +22,11 @@ import androidx.room.Index
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-indices = [
-Index(value = ["playerId"]), // ✅ Nuovo: ottimizza query per player
-Index(value = ["roleId"]), // ✅ Già presente
-Index(value = ["playerId", "roleId"]) // ✅ Nuovo: ottimizza join
-]
+    indices = [
+        Index(value = ["playerId"]), // ✅ Nuovo: ottimizza query per player
+        Index(value = ["roleId"]), // ✅ Già presente
+        Index(value = ["playerId", "roleId"]), // ✅ Nuovo: ottimizza join
+    ],
 )
 data class PlayerRoleCrossRef(
     val playerId: Int,

@@ -38,7 +38,6 @@ import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
-import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.utils.ScoreUpdateEventBus
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
@@ -76,30 +75,35 @@ class MainViewModel(
     private val managePlayersUseCase = ManagePlayersUseCase(playerDao, wearDataSync)
 
     // Expose states from Use Cases
-    val team1Score = updateScoreUseCase.scoreState
-        .map { it.team1Score }
-        .asLiveData()
+    val team1Score =
+        updateScoreUseCase.scoreState
+            .map { it.team1Score }
+            .asLiveData()
 
-    val team2Score = updateScoreUseCase.scoreState
-        .map { it.team2Score }
-        .asLiveData()
+    val team2Score =
+        updateScoreUseCase.scoreState
+            .map { it.team2Score }
+            .asLiveData()
 
-    val matchTimerValue = manageTimerUseCase.timerState
-        .map { it.timeMillis }
-        .asLiveData()
+    val matchTimerValue =
+        manageTimerUseCase.timerState
+            .map { it.timeMillis }
+            .asLiveData()
 
-    val isMatchTimerRunning = manageTimerUseCase.timerState
-        .map { it.isRunning }
-        .asLiveData()
+    val isMatchTimerRunning =
+        manageTimerUseCase.timerState
+            .map { it.isRunning }
+            .asLiveData()
 
-    val team1Players = managePlayersUseCase.teamRoster
-        .map { it.team1Players }
-        .asLiveData()
+    val team1Players =
+        managePlayersUseCase.teamRoster
+            .map { it.team1Players }
+            .asLiveData()
 
-    val team2Players = managePlayersUseCase.teamRoster
-        .map { it.team2Players }
-        .asLiveData()
-
+    val team2Players =
+        managePlayersUseCase.teamRoster
+            .map { it.team2Players }
+            .asLiveData()
 
     private val serviceConnection =
         object : ServiceConnection {
@@ -145,7 +149,6 @@ class MainViewModel(
             }
         }
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
-
 
     val isWearConnected: LiveData<Boolean> = wearDataSync.isConnected.asLiveData()
 
