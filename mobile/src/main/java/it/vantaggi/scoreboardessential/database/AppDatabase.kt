@@ -117,27 +117,28 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
 
-internal val MIGRATION_8_9 = object : Migration(8, 9) {
-override fun migrate(database: SupportSQLiteDatabase) {
+        internal val MIGRATION_8_9 =
+            object : Migration(8, 9) {
+                override fun migrate(database: SupportSQLiteDatabase) {
 // Crea indice per playerId (migliora query quando cerchiamo ruoli per player)
-database.execSQL(
-"CREATE INDEX IF NOT EXISTS `index_player_role_cross_ref_playerId` " +
-"ON `player_role_cross_ref` (`playerId`)"
-)
+                    database.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_player_role_cross_ref_playerId` " +
+                            "ON `player_role_cross_ref` (`playerId`)",
+                    )
 
 // L'indice su roleId esiste già dalla migrazione precedente, ma verifichiamo
-database.execSQL(
-"CREATE INDEX IF NOT EXISTS `index_player_role_cross_ref_roleId` " +
-"ON `player_role_cross_ref` (`roleId`)"
-)
+                    database.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_player_role_cross_ref_roleId` " +
+                            "ON `player_role_cross_ref` (`roleId`)",
+                    )
 
 // Crea indice composito per ottimizzare i join
-database.execSQL(
-"CREATE INDEX IF NOT EXISTS `index_player_role_cross_ref_playerId_roleId` " +
-"ON `player_role_cross_ref` (`playerId`, `roleId`)"
-)
-}
-}
+                    database.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_player_role_cross_ref_playerId_roleId` " +
+                            "ON `player_role_cross_ref` (`playerId`, `roleId`)",
+                    )
+                }
+            }
 
         fun getDatabase(context: Context): AppDatabase =
             instance ?: synchronized(this) {
