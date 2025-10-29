@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class ManageTimerUseCase(
-    private val timerService: MatchTimerService?,
+    private var timerService: MatchTimerService?,
 ) {
     data class TimerState(
         val isRunning: Boolean = false,
@@ -14,6 +14,10 @@ class ManageTimerUseCase(
 
     private val _timerState = MutableStateFlow(TimerState())
     val timerState: StateFlow<TimerState> = _timerState
+
+    fun setTimerService(service: MatchTimerService?) {
+        this.timerService = service
+    }
 
     fun startOrPauseTimer() {
         if (timerService == null) {
@@ -25,11 +29,11 @@ class ManageTimerUseCase(
 
         if (_timerState.value.isRunning) {
             android.util.Log.d("ManageTimerUseCase", "Pausing timer")
-            timerService.pauseTimer()
+            timerService?.pauseTimer()
             _timerState.value = _timerState.value.copy(isRunning = false)
         } else {
             android.util.Log.d("ManageTimerUseCase", "Starting timer")
-            timerService.startTimer()
+            timerService?.startTimer()
             _timerState.value = _timerState.value.copy(isRunning = true)
         }
     }

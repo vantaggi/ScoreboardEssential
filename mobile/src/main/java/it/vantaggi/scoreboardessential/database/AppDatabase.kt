@@ -6,6 +6,9 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Database(
     entities = [
@@ -80,34 +83,6 @@ abstract class AppDatabase : RoomDatabase() {
                     // 6. Popola i ruoli predefiniti
                     populateRoles(database)
                 }
-
-                private fun populateRoles(database: SupportSQLiteDatabase) {
-                    val roles =
-                        listOf(
-                            // PORTA
-                            "Portiere" to "PORTA",
-                            // DIFESA
-                            "Difensore Centrale" to "DIFESA",
-                            "Terzino Sinistro" to "DIFESA",
-                            "Terzino Destro" to "DIFESA",
-                            "Libero" to "DIFESA",
-                            // CENTROCAMPO
-                            "Mediano" to "CENTROCAMPO",
-                            "Centrocampista Centrale" to "CENTROCAMPO",
-                            "Trequartista" to "CENTROCAMPO",
-                            "Esterno Sinistro" to "CENTROCAMPO",
-                            "Esterno Destro" to "CENTROCAMPO",
-                            // ATTACCO
-                            "Ala Sinistra" to "ATTACCO",
-                            "Ala Destra" to "ATTACCO",
-                            "Seconda Punta" to "ATTACCO",
-                            "Centravanti" to "ATTACCO",
-                        )
-
-                    roles.forEach { (name, category) ->
-                        database.execSQL("INSERT INTO `roles` (name, category) VALUES ('$name', '$category')")
-                    }
-                }
             }
 
         private val MIGRATION_7_8 =
@@ -148,10 +123,51 @@ abstract class AppDatabase : RoomDatabase() {
                             context.applicationContext,
                             AppDatabase::class.java,
                             "match_database",
-                        ).addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9) // ✅ Aggiungi MIGRATION_8_9
+                        ).addCallback(object : Callback() {
+                            override fun onOpen(db: SupportSQLiteDatabase) {
+                                super.onOpen(db)
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    val cursor = db.query("SELECT COUNT(*) FROM roles")
+                                    val count = if (cursor.moveToFirst()) cursor.getInt(0) else 0
+                                    cursor.close()
+                                    if (count == 0) {
+                                        populateRoles(db)
+                                    }
+                                }
+                            }
+                        })
+                        .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9) // ✅ Aggiungi MIGRATION_8_9
                         .build()
                 this.instance = instance
                 instance
             }
+
+        fun populateRoles(database: SupportSQLiteDatabase) {
+            val roles =
+                listOf(
+                    // PORTA
+                    "Portiere" to "PORTA",
+                    // DIFESA
+                    "Difensore Centrale" to "DIFESA",
+                    "Terzino Sinistro" to "DIFESA",
+                    "Terzino Destro" to "DIFESA",
+                    "Libero" to "DIFESA",
+                    // CENTROCAMPO
+                    "Mediano" to "CENTROCAMPO",
+                    "Centrocampista Centrale" to "CENTROCAMPO",
+                    "Trequartista" to "CENTROCAMPO",
+                    "Esterno Sinistro" to "CENTROCAMPO",
+                    "Esterno Destro" to "CENTROCAMPO",
+                    // ATTACCO
+                    "Ala Sinistra" to "ATTACCO",
+                    "Ala Destra" to "ATTACCO",
+                    "Seconda Punta" to "ATTACCO",
+                    "Centravanti" to "ATTACCO",
+                )
+
+            roles.forEach { (name, category) ->
+                database.execSQL("INSERT INTO `roles` (name, category) VALUES ('$name', '$category')")
+            }
+        }
     }
 }

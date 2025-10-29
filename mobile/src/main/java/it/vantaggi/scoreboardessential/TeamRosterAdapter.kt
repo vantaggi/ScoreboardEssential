@@ -7,7 +7,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.card.MaterialCardView
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.views.RoleBadgeGroup
 
@@ -36,7 +35,6 @@ class TeamRosterAdapter(
         itemView: View,
         private val onPlayerClick: (PlayerWithRoles) -> Unit,
     ) : RecyclerView.ViewHolder(itemView) {
-        private val playerCard: MaterialCardView = itemView.findViewById(R.id.player_card)
         private val playerNameTextView: TextView = itemView.findViewById(R.id.player_name)
         private val playerRolesGroup: RoleBadgeGroup = itemView.findViewById(R.id.player_roles)
 
@@ -45,7 +43,7 @@ class TeamRosterAdapter(
             playerNameTextView.text = player.playerName
             playerRolesGroup.setRoles(playerWithRoles.roles)
 
-            playerCard.setOnLongClickListener {
+            itemView.setOnLongClickListener {
                 onPlayerClick(playerWithRoles)
                 true
             }

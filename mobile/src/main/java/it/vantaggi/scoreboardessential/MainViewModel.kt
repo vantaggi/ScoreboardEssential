@@ -71,7 +71,7 @@ class MainViewModel(
     // Use Cases
     private val wearDataSync = OptimizedWearDataSync(application)
     private val updateScoreUseCase = UpdateScoreUseCase(wearDataSync)
-    private val manageTimerUseCase = ManageTimerUseCase(matchTimerService)
+    private val manageTimerUseCase = ManageTimerUseCase(null) // Initialize with null
     private val managePlayersUseCase = ManagePlayersUseCase(playerDao, wearDataSync)
 
     // Expose states from Use Cases
@@ -111,12 +111,12 @@ class MainViewModel(
                 name: ComponentName?,
                 service: IBinder?,
             ) {
-                android.util.Log.d("MainViewModel", "Service connected!") // AGGIUNGI
+                android.util.Log.d("MainViewModel", "Service connected!")
                 val binder = service as MatchTimerService.MatchTimerBinder
                 matchTimerService = binder.getService()
+                manageTimerUseCase.setTimerService(matchTimerService) // Update UseCase with service
                 isServiceBound = true
 
-                // ... resto del codice esistente ...
                 viewModelScope.launch {
                     binder.getService().matchTimerValue.collect {
                         manageTimerUseCase.updateTimerValue(it)
@@ -146,8 +146,9 @@ class MainViewModel(
             }
 
             override fun onServiceDisconnected(name: ComponentName?) {
-                android.util.Log.d("MainViewModel", "Service disconnected!") // AGGIUNGI
+                android.util.Log.d("MainViewModel", "Service disconnected!")
                 matchTimerService = null
+                manageTimerUseCase.setTimerService(null) // Clear service from UseCase
                 isServiceBound = false
             }
         }
@@ -254,7 +255,7 @@ class MainViewModel(
     }
 
     private fun bindService() {
-        android.util.Log.d("MainViewModel", "Attempting to bind MatchTimerService") // AGGIUNGI
+        android.util.Log.d("MainViewModel", "Attempting to bind MatchTimerService")
         Intent(getApplication(), MatchTimerService::class.java).also { intent ->
             getApplication<Application>().startService(intent)
             getApplication<Application>().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
