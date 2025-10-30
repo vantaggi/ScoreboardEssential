@@ -12,13 +12,13 @@ import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// Sealed class to represent the state of the keeper timer
 sealed class KeeperTimerState {
     object Hidden : KeeperTimerState()
 
@@ -87,7 +87,6 @@ class WearViewModel(
     }
 
     init {
-        startMatchTimer()
         listenForSyncEvents()
 
         // Perform initial sync after a short delay
@@ -138,6 +137,20 @@ class WearViewModel(
                         _team1Players.value = event.team1Players
                         _team2Players.value = event.team2Players
                         Log.d(TAG, "Updated team players: T1=${event.team1Players.size}, T2=${event.team2Players.size}")
+                    }
+                    is WearSyncEvent.TimerSync -> {
+                        Log.d(TAG, "TimerSync event received: millis=${event.millis}, isRunning=${event.isRunning}")
+                        isMatchTimerRunning = event.isRunning
+                        matchTimeInSeconds = event.millis / 1000
+
+                        if (isMatchTimerRunning) {
+                            startMatchTimerInternal()
+                        } else {
+                            pauseMatchTimerInternal()
+                            val minutes = matchTimeInSeconds / 60
+                            val seconds = matchTimeInSeconds % 60
+                            _matchTimer.value = String.format("%02d:%02d", minutes, seconds)
+                        }
                     }
                 }
             }
@@ -202,20 +215,6 @@ class WearViewModel(
     fun setMatchTimer(time: String) {
         matchTimerJob?.cancel() // Stop the internal timer
         _matchTimer.value = time
-    }
-
-    private fun startMatchTimer() {
-        matchTimerJob?.cancel()
-        matchTimerJob =
-            viewModelScope.launch {
-                while (true) {
-                    val minutes = matchTimeInSeconds / 60
-                    val seconds = matchTimeInSeconds % 60
-                    _matchTimer.value = String.format("%02d:%02d", minutes, seconds)
-                    delay(1000)
-                    matchTimeInSeconds++
-                }
-            }
     }
 
     // --- Keeper Timer Management ---
@@ -371,6 +370,26 @@ class WearViewModel(
         }
     }
 
+    private fun sendMatchControlMessage(action: String) {
+        viewModelScope.launch {
+            Log.d(TAG, "Sending match control message: $action")
+            wearDataSync.sendMessageWithRetry(
+                path = WearConstants.MSG_MATCH_ACTION,
+                data = action.toByteArray()
+            )
+        }
+    }
+
+    private fun sendTimerControlMessage(action: String) {
+        viewModelScope.launch {
+            Log.d(TAG, "Sending timer control message: $action")
+            wearDataSync.sendMessageWithRetry(
+                path = WearConstants.MSG_TIMER_ACTION,
+                data = action.toByteArray()
+            )
+        }
+    }
+
     fun startStopMatchTimer() {
         android.util.Log.d("WearViewModel", "Timer toggle called, current state: $isMatchTimerRunning") // AGGIUNGI
         isMatchTimerRunning = !isMatchTimerRunning
@@ -423,39 +442,5 @@ class WearViewModel(
 
         // Sync reset
         wearDataSync.syncTimerState(0L, false)
-    }
-
-    private fun sendTimerControlMessage(action: String) {
-        // Send via message for immediate response
-        val messageClient = Wearable.getMessageClient(getApplication())
-        val messagePath = "/timer-control"
-        val data = action.toByteArray()
-
-        Wearable.getNodeClient(getApplication()).connectedNodes.addOnSuccessListener { nodes ->
-            nodes.forEach { node ->
-                messageClient.sendMessage(node.id, messagePath, data)
-            }
-        }
-    }
-
-    private fun sendMatchControlMessage(action: String) {
-        // Send via message for immediate response
-        val messageClient = Wearable.getMessageClient(getApplication())
-        val messagePath = "/match-control"
-        val data = action.toByteArray()
-
-        Wearable.getNodeClient(getApplication()).connectedNodes.addOnSuccessListener { nodes ->
-            nodes.forEach { node ->
-                messageClient.sendMessage(node.id, messagePath, data)
-                Log.d(TAG, "Sent match control: $action to ${node.displayName}")
-            }
-        }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        matchTimerJob?.cancel()
-        keeperCountDownTimer?.cancel()
-        vibrator?.cancel()
     }
 }

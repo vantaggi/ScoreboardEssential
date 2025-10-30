@@ -85,7 +85,12 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
                 }
             }
             WearConstants.PATH_TIMER_STATE -> {
-                // Not implemented in the original file, can be added if needed
+                DataMapItem.fromDataItem(item).dataMap.run {
+                    val millis = getLong(WearConstants.KEY_TIMER_MILLIS, 0L)
+                    val isRunning = getBoolean(WearConstants.KEY_TIMER_RUNNING, false)
+                    Log.d(TAG, "Dati timer deserializzati: Millis=$millis, IsRunning=$isRunning")
+                    WearSyncManager.postSyncEvent(WearSyncEvent.TimerSync(millis, isRunning))
+                }
             }
             WearConstants.PATH_KEEPER_TIMER -> {
                 DataMapItem.fromDataItem(item).dataMap.run {

@@ -17,13 +17,9 @@
             android:name="com.google.android.wearable"
             android:required="true" />
 
-        <!--
-               Set to true if your app is Standalone, that is, it does not require the handheld
-               app to run.
-        -->
         <meta-data
             android:name="com.google.android.wearable.standalone"
-            android:value="true" />
+            android:value="false" />
 
         <meta-data
             android:name="com.google.android.wearable.capabilities"
@@ -49,12 +45,19 @@
             android:name=".OptimizedDataLayerListenerService"
             android:exported="true">
             <intent-filter>
+                <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.CAPABILITY_CHANGED" />
+            </intent-filter>
+            <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
-                <action android:name="com.google.android.gms.wearable.CAPABILITY_CHANGED" />
+                <action android:name="com.google.android.gms.wearable.CHANNEL_EVENT" />
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/scoreboard" />
             </intent-filter>
         </service>
+        
     </application>
 
 </manifest>
