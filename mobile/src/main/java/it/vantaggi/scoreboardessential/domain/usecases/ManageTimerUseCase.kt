@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 class ManageTimerUseCase(
     private var timerService: MatchTimerService?,
-    private val wearDataSync: OptimizedWearDataSync
+    private val wearDataSync: OptimizedWearDataSync,
 ) {
     data class TimerState(
         val isRunning: Boolean = false,
