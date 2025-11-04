@@ -41,7 +41,6 @@ import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.utils.ScoreUpdateEventBus
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
-import it.vantaggi.scoreboardessential.utils.TimerEvent
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch

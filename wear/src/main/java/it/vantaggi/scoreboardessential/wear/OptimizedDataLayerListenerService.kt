@@ -24,7 +24,6 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
         private const val TAG = "WearDataListener"
     }
 
-
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         val events = dataEvents.map { it.freeze() }
         dataEvents.release()

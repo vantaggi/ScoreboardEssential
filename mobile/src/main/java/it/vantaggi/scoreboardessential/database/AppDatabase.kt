@@ -123,20 +123,21 @@ abstract class AppDatabase : RoomDatabase() {
                             context.applicationContext,
                             AppDatabase::class.java,
                             "match_database",
-                        ).addCallback(object : Callback() {
-                            override fun onOpen(db: SupportSQLiteDatabase) {
-                                super.onOpen(db)
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    val cursor = db.query("SELECT COUNT(*) FROM roles")
-                                    val count = if (cursor.moveToFirst()) cursor.getInt(0) else 0
-                                    cursor.close()
-                                    if (count == 0) {
-                                        populateRoles(db)
+                        ).addCallback(
+                            object : Callback() {
+                                override fun onOpen(db: SupportSQLiteDatabase) {
+                                    super.onOpen(db)
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        val cursor = db.query("SELECT COUNT(*) FROM roles")
+                                        val count = if (cursor.moveToFirst()) cursor.getInt(0) else 0
+                                        cursor.close()
+                                        if (count == 0) {
+                                            populateRoles(db)
+                                        }
                                     }
                                 }
-                            }
-                        })
-                        .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9) // ✅ Aggiungi MIGRATION_8_9
+                            },
+                        ).addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9) // ✅ Aggiungi MIGRATION_8_9
                         .build()
                 this.instance = instance
                 instance

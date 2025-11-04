@@ -1,6 +1,7 @@
 package it.vantaggi.scoreboardessential.domain.usecases
 
 import it.vantaggi.scoreboardessential.service.MatchTimerService
+import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -11,8 +12,6 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
-
-import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 
 @ExperimentalCoroutinesApi
 class ManageTimerUseCaseTest {

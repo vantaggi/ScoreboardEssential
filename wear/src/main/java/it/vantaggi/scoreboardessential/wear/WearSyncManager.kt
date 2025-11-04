@@ -22,13 +22,20 @@ sealed class WearSyncEvent {
     ) : WearSyncEvent()
 
     object MatchReset : WearSyncEvent()
-    data class PlayerListUpdate(val players: List<PlayerData>) : WearSyncEvent()
-    data class TeamPlayersUpdate(
-        val team1Players: List<PlayerData>,
-        val team2Players: List<PlayerData>
+
+    data class PlayerListUpdate(
+        val players: List<PlayerData>,
     ) : WearSyncEvent()
 
-    data class TimerSync(val millis: Long, val isRunning: Boolean) : WearSyncEvent()
+    data class TeamPlayersUpdate(
+        val team1Players: List<PlayerData>,
+        val team2Players: List<PlayerData>,
+    ) : WearSyncEvent()
+
+    data class TimerSync(
+        val millis: Long,
+        val isRunning: Boolean,
+    ) : WearSyncEvent()
 }
 
 object WearSyncManager {
