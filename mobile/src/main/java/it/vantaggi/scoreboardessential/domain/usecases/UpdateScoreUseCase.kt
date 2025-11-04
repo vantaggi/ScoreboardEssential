@@ -99,4 +99,5 @@ class UpdateScoreUseCase(
                 team2Score = team2Score.coerceAtLeast(0),
             )
     }
+    // This is a test comment
 }

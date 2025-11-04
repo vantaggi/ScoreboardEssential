@@ -71,7 +71,7 @@ class MainViewModel(
     // Use Cases
     private val wearDataSync = OptimizedWearDataSync(application)
     private val updateScoreUseCase = UpdateScoreUseCase(wearDataSync)
-    private val manageTimerUseCase = ManageTimerUseCase(null) // Initialize with null
+    private val manageTimerUseCase = ManageTimerUseCase(null, wearDataSync)
     private val managePlayersUseCase = ManagePlayersUseCase(playerDao, wearDataSync)
 
     // Expose states from Use Cases
@@ -226,7 +226,7 @@ class MainViewModel(
     init {
         loadMatchSettings()
         listenForScoreUpdates()
-        listenForTimerEvents()
+        listenForTimerStateEvents()
         loadAllPlayers()
         startNewMatch()
         bindService()
@@ -271,31 +271,12 @@ class MainViewModel(
         }
     }
 
-    private fun listenForTimerEvents() {
+    private fun listenForTimerStateEvents() {
         viewModelScope.launch {
-            ScoreUpdateEventBus.timerEvents.collect { event ->
-                when (event) {
-                    is TimerEvent.Start -> {
-                        startStopMatchTimer()
-                        addMatchEvent("Timer started from Wear OS")
-                    }
-                    is TimerEvent.Pause -> {
-                        startStopMatchTimer()
-                        addMatchEvent("Timer paused from Wear OS")
-                    }
-                    is TimerEvent.Reset -> {
-                        resetMatchTimer()
-                        addMatchEvent("Timer reset from Wear OS")
-                    }
-                    is TimerEvent.StartNewMatch -> {
-                        startNewMatch()
-                        addMatchEvent("New match started from Wear OS")
-                    }
-                    is TimerEvent.EndMatch -> {
-                        endMatch()
-                        addMatchEvent("Match ended from Wear OS")
-                    }
-                }
+            ScoreUpdateEventBus.timerStateEvents.collect { event ->
+                manageTimerUseCase.updateTimerValue(event.millis)
+                manageTimerUseCase.setTimerRunning(event.isRunning)
+                addMatchEvent("Timer state updated from Wear OS")
             }
         }
     }
