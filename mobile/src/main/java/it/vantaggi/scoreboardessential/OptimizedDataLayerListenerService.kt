@@ -15,6 +15,7 @@ import com.google.android.gms.wearable.WearableListenerService
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.utils.ScoreUpdateEvent
 import it.vantaggi.scoreboardessential.utils.ScoreUpdateEventBus
+import it.vantaggi.scoreboardessential.utils.TimerStateEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -104,6 +105,18 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
                 scope.launch(Dispatchers.Main) {
                     ScoreUpdateEventBus.postEvent(
                         ScoreUpdateEvent(team1Score, team2Score),
+                    )
+                }
+            }
+            WearConstants.PATH_TIMER_STATE -> {
+                val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+                val millis = dataMap.getLong(WearConstants.KEY_TIMER_MILLIS)
+                val isRunning = dataMap.getBoolean(WearConstants.KEY_TIMER_RUNNING)
+                Log.d(TAG, "Dati timer deserializzati: millis=$millis, isRunning=$isRunning")
+
+                scope.launch(Dispatchers.Main) {
+                    ScoreUpdateEventBus.postTimerStateEvent(
+                        TimerStateEvent(millis, isRunning),
                     )
                 }
             }

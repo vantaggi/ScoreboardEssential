@@ -12,15 +12,19 @@ import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 
+import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+
 @ExperimentalCoroutinesApi
 class ManageTimerUseCaseTest {
     private lateinit var timerService: MatchTimerService
+    private lateinit var wearDataSync: OptimizedWearDataSync
     private lateinit var useCase: ManageTimerUseCase
 
     @Before
     fun setup() {
         timerService = mock()
-        useCase = ManageTimerUseCase(timerService)
+        wearDataSync = mock()
+        useCase = ManageTimerUseCase(timerService, wearDataSync)
     }
 
     @Test
