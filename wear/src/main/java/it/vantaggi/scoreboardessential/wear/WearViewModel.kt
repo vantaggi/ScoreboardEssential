@@ -8,7 +8,6 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
@@ -177,7 +176,7 @@ class WearViewModel(
     fun incrementTeam1Score() {
         _team1Score.value++
         triggerShortVibration()
-        sendScoreUpdateProper() // Use new method
+        wearDataSync.syncScores(_team1Score.value, _team2Score.value)
         _showPlayerSelection.value = 1
     }
 
@@ -185,14 +184,14 @@ class WearViewModel(
         if (_team1Score.value > 0) {
             _team1Score.value--
             triggerShortVibration()
-            sendScoreUpdateProper() // Use new method
+            wearDataSync.syncScores(_team1Score.value, _team2Score.value)
         }
     }
 
     fun incrementTeam2Score() {
         _team2Score.value++
         triggerShortVibration()
-        sendScoreUpdateProper() // Use new method
+        wearDataSync.syncScores(_team1Score.value, _team2Score.value)
         _showPlayerSelection.value = 2
     }
 
@@ -200,15 +199,8 @@ class WearViewModel(
         if (_team2Score.value > 0) {
             _team2Score.value--
             triggerShortVibration()
-            sendScoreUpdateProper() // Use new method
+            wearDataSync.syncScores(_team1Score.value, _team2Score.value)
         }
-    }
-
-    private fun sendScoreUpdateProper() {
-        wearDataSync.syncScores(
-            _team1Score.value,
-            _team2Score.value,
-        )
     }
 
     // --- Match Timer Management ---
@@ -291,9 +283,6 @@ class WearViewModel(
 
         resetKeeperTimer()
 
-        // Send match start message to mobile
-        sendMatchControlMessage("START_MATCH")
-
         // Sync new match state
         wearDataSync.syncMatchState(true)
         wearDataSync.syncFullState(
@@ -310,9 +299,6 @@ class WearViewModel(
     }
 
     fun endMatch() {
-        // Send match end message to mobile
-        sendMatchControlMessage("END_MATCH")
-
         // Sync match ended
         wearDataSync.syncMatchState(false)
     }
@@ -354,41 +340,6 @@ class WearViewModel(
     }
 
     // --- Data Synchronization ---
-    private fun sendScoreUpdate() {
-        val dataClient = Wearable.getMessageClient(getApplication())
-        val messagePath = "/update-score"
-        // Encode scores into a byte array. A simple format: "T1Score,T2Score"
-        val data = "${_team1Score.value},${_team2Score.value}".toByteArray()
-
-        Wearable.getNodeClient(getApplication()).connectedNodes.addOnSuccessListener { nodes ->
-            nodes.forEach { node ->
-                dataClient
-                    .sendMessage(node.id, messagePath, data)
-                    .addOnSuccessListener { Log.d(TAG, "Score update sent to ${node.displayName}") }
-                    .addOnFailureListener { e -> Log.e(TAG, "Failed to send score update", e) }
-            }
-        }
-    }
-
-    private fun sendMatchControlMessage(action: String) {
-        viewModelScope.launch {
-            Log.d(TAG, "Sending match control message: $action")
-            wearDataSync.sendMessageWithRetry(
-                path = WearConstants.MSG_MATCH_ACTION,
-                data = action.toByteArray()
-            )
-        }
-    }
-
-    private fun sendTimerControlMessage(action: String) {
-        viewModelScope.launch {
-            Log.d(TAG, "Sending timer control message: $action")
-            wearDataSync.sendMessageWithRetry(
-                path = WearConstants.MSG_TIMER_ACTION,
-                data = action.toByteArray()
-            )
-        }
-    }
 
     fun startStopMatchTimer() {
         android.util.Log.d("WearViewModel", "Timer toggle called, current state: $isMatchTimerRunning") // AGGIUNGI
@@ -399,10 +350,8 @@ class WearViewModel(
                 matchTimeInSeconds = 0L
             }
             startMatchTimerInternal()
-            sendTimerControlMessage("START")
         } else {
             pauseMatchTimerInternal()
-            sendTimerControlMessage("PAUSE")
         }
 
         // Sync timer state
@@ -437,8 +386,6 @@ class WearViewModel(
         isMatchTimerRunning = false
         matchTimerJob?.cancel()
         _matchTimer.value = "00:00"
-
-        sendTimerControlMessage("RESET")
 
         // Sync reset
         wearDataSync.syncTimerState(0L, false)

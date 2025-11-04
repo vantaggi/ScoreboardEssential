@@ -6,7 +6,6 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataItem
 import com.google.android.gms.wearable.DataMapItem
-import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
@@ -25,31 +24,6 @@ class OptimizedDataLayerListenerService : WearableListenerService() {
         private const val TAG = "WearDataListener"
     }
 
-    override fun onMessageReceived(messageEvent: MessageEvent) {
-        Log.d(TAG, "Ricevuto messaggio: ${messageEvent.path}")
-
-        coroutineScope.launch {
-            when (messageEvent.path) {
-                WearConstants.MSG_SCORE_CHANGED -> {
-                    val data = String(messageEvent.data)
-                    val scores = data.split(",").mapNotNull { it.toIntOrNull() }
-                    if (scores.size == 2) {
-                        Log.d(TAG, "Dati punteggio (da messaggio) deserializzati: ${scores[0]} - ${scores[1]}")
-                        WearSyncManager.postSyncEvent(
-                            WearSyncEvent.ScoreUpdate(scores[0], scores[1]),
-                        )
-                    }
-                }
-                WearConstants.MSG_MATCH_ACTION -> {
-                    val action = String(messageEvent.data)
-                    Log.d(TAG, "Azione partita (da messaggio): $action")
-                    when (action) {
-                        "START_MATCH", "END_MATCH" -> WearSyncManager.postSyncEvent(WearSyncEvent.MatchReset)
-                    }
-                }
-            }
-        }
-    }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         val events = dataEvents.map { it.freeze() }
