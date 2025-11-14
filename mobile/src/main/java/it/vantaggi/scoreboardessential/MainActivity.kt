@@ -21,13 +21,18 @@ import android.view.animation.OvershootInterpolator
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
@@ -121,6 +126,20 @@ class MainActivity :
         setupImprovedViews() // Call new setup method
         setupGestureControls() // Call gesture setup
         requestNotificationPermission()
+        viewModel.registerBroadcasts(this)
+
+        lifecycleScope.launch {
+            delay(2000) // Aspetta che il servizio si registri
+
+            val testResult = viewModel.connectionManager.testConnection()
+            if (testResult) {
+                Log.d("ConnectionTest", "✅ CONNECTION TEST PASSED")
+                Toast.makeText(this@MainActivity, "✓ Wear OS Connected", Toast.LENGTH_SHORT).show()
+            } else {
+                Log.e("ConnectionTest", "❌ CONNECTION TEST FAILED")
+                Toast.makeText(this@MainActivity, "✗ Wear OS Not Connected", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun initializeViews() {

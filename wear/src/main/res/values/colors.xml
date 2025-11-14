@@ -9,6 +9,9 @@
     <color name="team_spray_yellow">#FFD600</color>
     <color name="team_electric_green">#76FF03</color>
     <color name="error_red">#FF1744</color>
+    <color name="black">#000000</color>
+    <color name="orange_500">#FFA726</color>
+    <color name="lime_A200">#AEEA00</color>
 
     <!-- Previous semantic aliases for wear theme, now mapped to the new palette -->
     <color name="background">@color/asphalt_dark</color>

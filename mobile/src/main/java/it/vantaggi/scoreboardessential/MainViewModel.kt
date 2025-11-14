@@ -29,17 +29,13 @@ import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
-import it.vantaggi.scoreboardessential.domain.usecases.ManagePlayersUseCase
-import it.vantaggi.scoreboardessential.domain.usecases.ManageTimerUseCase
-import it.vantaggi.scoreboardessential.domain.usecases.UpdateScoreUseCase
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
-import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
-import it.vantaggi.scoreboardessential.utils.ScoreUpdateEventBus
+import it.vantaggi.scoreboardessential.shared.communication.WearConnectionManager
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
@@ -67,42 +63,28 @@ class MainViewModel(
     private var matchTimerService: MatchTimerService? = null
     private var isServiceBound = false
 
-    // Use Cases
-    private val wearDataSync = OptimizedWearDataSync(application)
-    private val updateScoreUseCase = UpdateScoreUseCase(wearDataSync)
-    private val manageTimerUseCase = ManageTimerUseCase(null, wearDataSync)
-    private val managePlayersUseCase = ManagePlayersUseCase(playerDao, wearDataSync)
+    val connectionManager = WearConnectionManager(application)
+    private val _isWearConnected = MutableLiveData(false)
+    val isWearConnected: LiveData<Boolean> = _isWearConnected
 
-    // Expose states from Use Cases
-    val team1Score =
-        updateScoreUseCase.scoreState
-            .map { it.team1Score }
-            .asLiveData()
+    // LiveData for scores
+    private val _team1Score = MutableLiveData(0)
+    val team1Score: LiveData<Int> = _team1Score
+    private val _team2Score = MutableLiveData(0)
+    val team2Score: LiveData<Int> = _team2Score
 
-    val team2Score =
-        updateScoreUseCase.scoreState
-            .map { it.team2Score }
-            .asLiveData()
+    // LiveData for timer
+    private val _matchTimerValue = MutableLiveData(0L)
+    val matchTimerValue: LiveData<Long> = _matchTimerValue
+    private val _isMatchTimerRunning = MutableLiveData(false)
+    val isMatchTimerRunning: LiveData<Boolean> = _isMatchTimerRunning
 
-    val matchTimerValue =
-        manageTimerUseCase.timerState
-            .map { it.timeMillis }
-            .asLiveData()
+    // LiveData for players
+    private val _team1Players = MutableLiveData<List<PlayerWithRoles>>(emptyList())
+    val team1Players: LiveData<List<PlayerWithRoles>> = _team1Players
+    private val _team2Players = MutableLiveData<List<PlayerWithRoles>>(emptyList())
+    val team2Players: LiveData<List<PlayerWithRoles>> = _team2Players
 
-    val isMatchTimerRunning =
-        manageTimerUseCase.timerState
-            .map { it.isRunning }
-            .asLiveData()
-
-    val team1Players =
-        managePlayersUseCase.teamRoster
-            .map { it.team1Players }
-            .asLiveData()
-
-    val team2Players =
-        managePlayersUseCase.teamRoster
-            .map { it.team2Players }
-            .asLiveData()
 
     private val serviceConnection =
         object : ServiceConnection {
@@ -113,17 +95,16 @@ class MainViewModel(
                 android.util.Log.d("MainViewModel", "Service connected!")
                 val binder = service as MatchTimerService.MatchTimerBinder
                 matchTimerService = binder.getService()
-                manageTimerUseCase.setTimerService(matchTimerService) // Update UseCase with service
                 isServiceBound = true
 
                 viewModelScope.launch {
                     binder.getService().matchTimerValue.collect {
-                        manageTimerUseCase.updateTimerValue(it)
+                        _matchTimerValue.postValue(it)
                     }
                 }
                 viewModelScope.launch {
                     binder.getService().isMatchTimerRunning.collect { running ->
-                        manageTimerUseCase.setTimerRunning(running)
+                        _isMatchTimerRunning.postValue(running)
                     }
                 }
                 viewModelScope.launch {
@@ -147,15 +128,42 @@ class MainViewModel(
             override fun onServiceDisconnected(name: ComponentName?) {
                 android.util.Log.d("MainViewModel", "Service disconnected!")
                 matchTimerService = null
-                manageTimerUseCase.setTimerService(null) // Clear service from UseCase
                 isServiceBound = false
             }
         }
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
 
-    val isWearConnected: LiveData<Boolean> = wearDataSync.isConnected.asLiveData()
-
     val allMatches: LiveData<List<MatchWithTeams>> = repository.allMatches.asLiveData()
+
+    private val broadcastReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE -> {
+                    val team1 = intent.getIntExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM1_SCORE, 0)
+                    val team2 = intent.getIntExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM2_SCORE, 0)
+                    Log.d("VM", "📥 Score from Wear: T1=$team1, T2=$team2")
+                    _team1Score.value = team1
+                    _team2Score.value = team2
+                }
+                SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE -> {
+                    val millis = intent.getLongExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_MILLIS, 0L)
+                    val running = intent.getBooleanExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_RUNNING, false)
+                    Log.d("VM", "📥 Timer from Wear: $millis ms, running=$running")
+                    // Aggiorna timer
+                }
+            }
+        }
+    }
+
+    fun registerBroadcasts(context: Context) {
+        val filter = android.content.IntentFilter().apply {
+            addAction(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE)
+            addAction(SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE)
+            addAction(SimplifiedDataLayerListenerService.ACTION_TEAM_NAMES_UPDATE)
+        }
+        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(context)
+            .registerReceiver(broadcastReceiver, filter)
+    }
 
     fun deleteMatch(match: Match) =
         viewModelScope.launch {
@@ -224,12 +232,29 @@ class MainViewModel(
 
     init {
         loadMatchSettings()
-        listenForScoreUpdates()
-        listenForTimerStateEvents()
         loadAllPlayers()
         startNewMatch()
         bindService()
         checkIfOnboardingIsNeeded()
+
+        viewModelScope.launch {
+            connectionManager.connectionState.collect { state ->
+                when (state) {
+                    is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Connected -> {
+                        Log.d("App", "✓ Connected to ${state.nodeCount} device(s)")
+                        _isWearConnected.value = true
+                    }
+                    is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Disconnected -> {
+                        Log.d("App", "✗ Not connected")
+                        _isWearConnected.value = false
+                    }
+                    is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Error -> {
+                        Log.e("App", "✗ Error: ${state.message}")
+                        _isWearConnected.value = false
+                    }
+                }
+            }
+        }
     }
 
     private fun loadMatchSettings() {
@@ -261,25 +286,6 @@ class MainViewModel(
         }
     }
 
-    private fun listenForScoreUpdates() {
-        viewModelScope.launch {
-            ScoreUpdateEventBus.events.collect { event ->
-                updateScoreUseCase.setScores(event.team1Score, event.team2Score)
-                addMatchEvent("Score updated from Wear OS")
-            }
-        }
-    }
-
-    private fun listenForTimerStateEvents() {
-        viewModelScope.launch {
-            ScoreUpdateEventBus.timerStateEvents.collect { event ->
-                manageTimerUseCase.updateTimerValue(event.millis)
-                manageTimerUseCase.setTimerRunning(event.isRunning)
-                addMatchEvent("Timer state updated from Wear OS")
-            }
-        }
-    }
-
     private fun loadAllPlayers() {
         viewModelScope.launch {
             playerDao.getAllPlayers().collect { players ->
@@ -289,9 +295,9 @@ class MainViewModel(
     }
 
     private fun startNewMatch() {
-        updateScoreUseCase.resetScores()
+        updateScore(0, 0)
         _matchEvents.value = emptyList()
-        manageTimerUseCase.resetTimer()
+        matchTimerService?.resetTimer()
         if (isServiceBound) {
             matchTimerService?.resetKeeperTimer()
         }
@@ -328,7 +334,11 @@ class MainViewModel(
         playerWithRoles: PlayerWithRoles,
         teamId: Int,
     ) {
-        managePlayersUseCase.addPlayerToTeam(playerWithRoles, teamId)
+        if (teamId == 1) {
+            _team1Players.value = _team1Players.value?.plus(playerWithRoles)
+        } else {
+            _team2Players.value = _team2Players.value?.plus(playerWithRoles)
+        }
         val teamName = if (teamId == 1) _team1Name.value else _team2Name.value
         addMatchEvent("${playerWithRoles.player.playerName} added to $teamName", team = teamId)
     }
@@ -337,7 +347,11 @@ class MainViewModel(
         playerWithRoles: PlayerWithRoles,
         teamId: Int,
     ) {
-        managePlayersUseCase.removePlayerFromTeam(playerWithRoles, teamId)
+        if (teamId == 1) {
+            _team1Players.value = _team1Players.value?.minus(playerWithRoles)
+        } else {
+            _team2Players.value = _team2Players.value?.minus(playerWithRoles)
+        }
     }
 
     fun createNewPlayer(
@@ -358,39 +372,60 @@ class MainViewModel(
     }
 
     // --- Score Management ---
+    fun updateScore(team1: Int, team2: Int) {
+        _team1Score.value = team1
+        _team2Score.value = team2
+
+        viewModelScope.launch {
+            val data = mapOf(
+                "team1_score" to team1,
+                "team2_score" to team2
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_SCORE,
+                data = data,
+                urgent = true
+            )
+        }
+    }
+
     fun addTeam1Score() {
-        if (updateScoreUseCase.incrementScore(1)) {
-            triggerHapticFeedback()
-            val players = team1Players.value
-            if (!players.isNullOrEmpty()) {
-                showSelectScorerDialog.postValue(Pair(1, players))
-            } else {
-                addScorer(1, null) // No player to select, just log the goal
-            }
+        val newScore = (_team1Score.value ?: 0) + 1
+        updateScore(newScore, _team2Score.value ?: 0)
+        triggerHapticFeedback()
+        val players = team1Players.value
+        if (!players.isNullOrEmpty()) {
+            showSelectScorerDialog.postValue(Pair(1, players))
+        } else {
+            addScorer(1, null) // No player to select, just log the goal
         }
     }
 
     fun subtractTeam1Score() {
-        if (updateScoreUseCase.decrementScore(1)) {
+        val newScore = (_team1Score.value ?: 0) - 1
+        if (newScore >= 0) {
+            updateScore(newScore, _team2Score.value ?: 0)
             triggerHapticFeedback()
             addMatchEvent("Score correction for ${_team1Name.value}", team = 1)
         }
     }
 
     fun addTeam2Score() {
-        if (updateScoreUseCase.incrementScore(2)) {
-            triggerHapticFeedback()
-            val players = team2Players.value
-            if (!players.isNullOrEmpty()) {
-                showSelectScorerDialog.postValue(Pair(2, players))
-            } else {
-                addScorer(2, null) // No player to select, just log the goal
-            }
+        val newScore = (_team2Score.value ?: 0) + 1
+        updateScore(_team1Score.value ?: 0, newScore)
+        triggerHapticFeedback()
+        val players = team2Players.value
+        if (!players.isNullOrEmpty()) {
+            showSelectScorerDialog.postValue(Pair(2, players))
+        } else {
+            addScorer(2, null) // No player to select, just log the goal
         }
     }
 
     fun subtractTeam2Score() {
-        if (updateScoreUseCase.decrementScore(2)) {
+        val newScore = (_team2Score.value ?: 0) - 1
+        if (newScore >= 0) {
+            updateScore(_team1Score.value ?: 0, newScore)
             triggerHapticFeedback()
             addMatchEvent("Score correction for ${_team2Name.value}", team = 2)
         }
@@ -409,20 +444,11 @@ class MainViewModel(
 
                 val rolesString = playerWithRoles.roles.joinToString(", ") { it.name }
                 addMatchEvent("Goal", team = team, player = playerWithRoles.player.playerName, playerRole = rolesString)
-                sendScorerToWear(playerWithRoles.player.playerName, playerWithRoles.roles.map { it.name }, team)
             } else {
                 // No specific player, just log a goal for the team
                 addMatchEvent("Goal", team = team, player = teamName)
             }
         }
-    }
-
-    private fun sendScorerToWear(
-        name: String,
-        roles: List<String>,
-        team: Int,
-    ) {
-        wearDataSync.syncScorerSelected(name, roles, team)
     }
 
     // --- Match Timer Management ---
@@ -432,11 +458,17 @@ class MainViewModel(
             android.util.Log.e("MainViewModel", "Timer service NOT bound! Cannot start timer.")
             return
         }
-        manageTimerUseCase.startOrPauseTimer()
+        matchTimerService?.let {
+            if (it.isMatchTimerRunning.value) {
+                it.pauseTimer()
+            } else {
+                it.startTimer()
+            }
+        }
     }
 
     fun resetMatchTimer() {
-        manageTimerUseCase.resetTimer()
+        matchTimerService?.resetTimer()
     }
 
     // --- Keeper Timer Management ---
@@ -525,43 +557,67 @@ class MainViewModel(
 
 // --- Data Synchronization with Wear OS ---
     private fun sendTeamNamesUpdate() {
-        wearDataSync.syncTeamNames(
-            _team1Name.value ?: "TEAM 1",
-            _team2Name.value ?: "TEAM 2",
-        )
+        viewModelScope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM1_NAME to (_team1Name.value ?: "TEAM 1"),
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM2_NAME to (_team2Name.value ?: "TEAM 2")
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TEAM_NAMES,
+                data = data
+            )
+        }
     }
 
     private fun sendKeeperTimerUpdate(isRunning: Boolean) {
-        wearDataSync.syncKeeperTimer(
-            _keeperTimerValue.value ?: 0L,
-            isRunning,
-        )
+        viewModelScope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to (_keeperTimerValue.value ?: 0L),
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to isRunning
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
+                data = data
+            )
+        }
     }
 
     private fun sendMatchStateUpdate(isActive: Boolean) {
-        wearDataSync.syncMatchState(isActive)
+        viewModelScope.launch {
+            val data = mapOf(
+                "match_active" to isActive
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_MATCH_STATE,
+                data = data
+            )
+        }
     }
 
     private fun sendTeamColorUpdate(
         team: Int,
         color: Int,
     ) {
-        val teamName = if (team == 1) _team1Name.value else _team2Name.value
-        wearDataSync.syncTeamColor(team, color)
+        viewModelScope.launch {
+            val path = if (team == 1) it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TEAM1_COLOR else it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TEAM2_COLOR
+            val data = mapOf("color" to color)
+            connectionManager.sendData(path = path, data = data)
+        }
     }
 
     private fun sendResetUpdate() {
-        wearDataSync.syncFullState(
-            team1Score = 0,
-            team2Score = 0,
-            team1Name = "TEAM 1",
-            team2Name = "TEAM 2",
-            timerMillis = 0L,
-            timerRunning = false,
-            keeperMillis = 0L,
-            keeperRunning = false,
-            matchActive = true,
-        )
+        updateScore(0, 0)
+        sendTeamNamesUpdate()
+        viewModelScope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to 0L,
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to false
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
+                data = data
+            )
+        }
     }
 
     fun shareMatchResults() {
