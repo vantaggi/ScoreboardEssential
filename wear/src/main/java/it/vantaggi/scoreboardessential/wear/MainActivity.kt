@@ -24,45 +24,53 @@ class MainActivity : ComponentActivity() {
 
         setupClickListeners()
         observeViewModel()
+        registerBroadcastReceiver()
+    }
+
+    private fun registerBroadcastReceiver() {
+        val receiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+                when (intent.action) {
+                    WearDataLayerService.ACTION_SCORE_UPDATE -> {
+                        val team1 = intent.getIntExtra(
+                            WearDataLayerService.EXTRA_TEAM1_SCORE, 0
+                        )
+                        val team2 = intent.getIntExtra(
+                            WearDataLayerService.EXTRA_TEAM2_SCORE, 0
+                        )
+                        viewModel.updateScoresFromMobile(team1, team2)
+                    }
+                }
+            }
+        }
+
+        val filter = android.content.IntentFilter(WearDataLayerService.ACTION_SCORE_UPDATE)
+        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this).registerReceiver(receiver, filter)
     }
 
     private fun setupClickListeners() {
-        binding.team1IncrementArea.setOnLongClickListener {
+        // Long press per incrementare/decrementare
+        binding.team1Container.setOnLongClickListener {
             viewModel.incrementTeam1Score()
-            true // Consume the event
-        }
-
-        binding.team1DecrementArea.setOnLongClickListener {
-            viewModel.decrementTeam1Score()
             true
         }
 
-        binding.team2IncrementArea.setOnLongClickListener {
+        binding.team2Container.setOnLongClickListener {
             viewModel.incrementTeam2Score()
             true
         }
 
-        binding.team2DecrementArea.setOnLongClickListener {
-            viewModel.decrementTeam2Score()
-            true
+        // Timer controls
+        binding.matchTimer.setOnClickListener {
+            viewModel.toggleTimer()
         }
 
         binding.keeperTimer.setOnClickListener {
-            viewModel.handleKeeperTimer()
+            viewModel.toggleKeeperTimer()
         }
 
         binding.btnStartNewMatch.setOnClickListener {
-            viewModel.startNewMatch()
-        }
-
-        // Add timer controls via long press on match timer
-        binding.matchTimer.setOnLongClickListener {
-            viewModel.startStopMatchTimer()
-            true
-        }
-
-        binding.matchTimer.setOnClickListener {
-            viewModel.resetMatchTimer()
+            viewModel.resetMatch()
         }
     }
 
@@ -78,27 +86,6 @@ class MainActivity : ComponentActivity() {
     private fun observeViewModel() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Observe Team 1 Score
-                launch {
-                    viewModel.team1Score.collect { score ->
-                        binding.team1Score.text = score.toString()
-                    }
-                }
-
-                // Observe Team 1 Name
-                launch {
-                    viewModel.team1Name.collect { name ->
-                        binding.team1Name.text = name
-                    }
-                }
-
-                // Observe Team 2 Name
-                launch {
-                    viewModel.team2Name.collect { name ->
-                        binding.team2Name.text = name
-                    }
-                }
-
                 // Observe Team 1 Score
                 launch {
                     viewModel.team1Score.collect { score ->

@@ -10,7 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
-import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import it.vantaggi.scoreboardessential.shared.communication.WearConnectionManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +40,7 @@ class WearViewModel(
     private val _team2Name = MutableStateFlow("TEAM 2")
     val team2Name = _team2Name.asStateFlow()
 
-    private val wearDataSync = OptimizedWearDataSync(application)
+    private val connectionManager = WearConnectionManager(application)
 
     // Team Scores
     private val _team1Score = MutableStateFlow(0)
@@ -84,75 +84,9 @@ class WearViewModel(
         _showPlayerSelection.value = null
     }
 
-    init {
-        listenForSyncEvents()
-
-        // Perform initial sync after a short delay
-        viewModelScope.launch {
-            delay(1000) // Wait for connection
-            wearDataSync.syncFullState(
-                team1Score = _team1Score.value,
-                team2Score = _team2Score.value,
-                team1Name = _team1Name.value,
-                team2Name = _team2Name.value,
-                timerMillis = matchTimeInSeconds * 1000,
-                timerRunning = isMatchTimerRunning,
-                keeperMillis = 0L,
-                keeperRunning = false,
-                matchActive = true,
-            )
-        }
-    }
-
-    private fun listenForSyncEvents() {
-        viewModelScope.launch {
-            WearSyncManager.syncEvents.collect { event ->
-                Log.d(TAG, "Evento ricevuto dal SyncManager: ${event::class.java.simpleName}")
-                when (event) {
-                    is WearSyncEvent.ScoreUpdate -> {
-                        _team1Score.value = event.team1Score
-                        _team2Score.value = event.team2Score
-                    }
-                    is WearSyncEvent.TeamNamesUpdate -> {
-                        _team1Name.value = event.team1Name
-                        _team2Name.value = event.team2Name
-                    }
-                    is WearSyncEvent.KeeperTimerUpdate -> {
-                        if (event.isRunning) {
-                            setKeeperTimerState(KeeperTimerState.Running((event.duration / 1000).toInt()))
-                        } else {
-                            setKeeperTimerState(KeeperTimerState.Hidden)
-                        }
-                    }
-                    is WearSyncEvent.MatchReset -> {
-                        resetMatch()
-                    }
-                    is WearSyncEvent.PlayerListUpdate -> {
-                        _allPlayers.value = event.players
-                        Log.d(TAG, "Updated player list: ${event.players.size} players")
-                    }
-                    is WearSyncEvent.TeamPlayersUpdate -> {
-                        _team1Players.value = event.team1Players
-                        _team2Players.value = event.team2Players
-                        Log.d(TAG, "Updated team players: T1=${event.team1Players.size}, T2=${event.team2Players.size}")
-                    }
-                    is WearSyncEvent.TimerSync -> {
-                        Log.d(TAG, "TimerSync event received: millis=${event.millis}, isRunning=${event.isRunning}")
-                        isMatchTimerRunning = event.isRunning
-                        matchTimeInSeconds = event.millis / 1000
-
-                        if (isMatchTimerRunning) {
-                            startMatchTimerInternal()
-                        } else {
-                            pauseMatchTimerInternal()
-                            val minutes = matchTimeInSeconds / 60
-                            val seconds = matchTimeInSeconds % 60
-                            _matchTimer.value = String.format("%02d:%02d", minutes, seconds)
-                        }
-                    }
-                }
-            }
-        }
+    fun updateScoresFromMobile(team1Score: Int, team2Score: Int) {
+        _team1Score.value = team1Score
+        _team2Score.value = team2Score
     }
 
     // --- Score Management ---
@@ -172,33 +106,47 @@ class WearViewModel(
         _team2Score.value = team2Score
     }
 
+    fun updateScore(team1: Int, team2: Int) {
+        _team1Score.value = team1
+        _team2Score.value = team2
+        viewModelScope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM1_SCORE to team1,
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM2_SCORE to team2
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_SCORE,
+                data = data,
+                urgent = true
+            )
+        }
+    }
+
     fun incrementTeam1Score() {
-        _team1Score.value++
+        val newScore = _team1Score.value + 1
+        updateScore(newScore, _team2Score.value)
         triggerShortVibration()
-        wearDataSync.syncScores(_team1Score.value, _team2Score.value)
-        _showPlayerSelection.value = 1
     }
 
     fun decrementTeam1Score() {
         if (_team1Score.value > 0) {
-            _team1Score.value--
+            val newScore = _team1Score.value - 1
+            updateScore(newScore, _team2Score.value)
             triggerShortVibration()
-            wearDataSync.syncScores(_team1Score.value, _team2Score.value)
         }
     }
 
     fun incrementTeam2Score() {
-        _team2Score.value++
+        val newScore = _team2Score.value + 1
+        updateScore(_team1Score.value, newScore)
         triggerShortVibration()
-        wearDataSync.syncScores(_team1Score.value, _team2Score.value)
-        _showPlayerSelection.value = 2
     }
 
     fun decrementTeam2Score() {
         if (_team2Score.value > 0) {
-            _team2Score.value--
+            val newScore = _team2Score.value - 1
+            updateScore(_team1Score.value, newScore)
             triggerShortVibration()
-            wearDataSync.syncScores(_team1Score.value, _team2Score.value)
         }
     }
 
@@ -230,7 +178,7 @@ class WearViewModel(
         }
     }
 
-    fun handleKeeperTimer() {
+    fun toggleKeeperTimer() {
         if (keeperTimer.value is KeeperTimerState.Running) {
             resetKeeperTimer()
         } else {
@@ -238,74 +186,10 @@ class WearViewModel(
         }
     }
 
-    private fun startKeeperTimer() {
-        keeperCountDownTimer?.cancel()
-        _keeperTimer.value = KeeperTimerState.Running((keeperTimerDuration / 1000).toInt())
-
-        keeperCountDownTimer =
-            object : CountDownTimer(keeperTimerDuration, 1000) {
-                override fun onTick(millisUntilFinished: Long) {
-                    _keeperTimer.value = KeeperTimerState.Running((millisUntilFinished / 1000).toInt())
-                }
-
-                override fun onFinish() {
-                    _keeperTimer.value = KeeperTimerState.Finished
-                    triggerStrongContinuousVibration()
-                }
-            }.start()
-
-        triggerShortVibration()
-
-        // Sync keeper timer start
-        wearDataSync.syncKeeperTimer(keeperTimerDuration, true)
-    }
-
-    fun resetKeeperTimer() {
-        keeperCountDownTimer?.cancel()
-        vibrator?.cancel()
-        _keeperTimer.value = KeeperTimerState.Hidden
-        triggerShortVibration()
-
-        // Sync keeper timer reset
-        wearDataSync.syncKeeperTimer(0L, false)
-    }
-
     // --- Reset ---
-    fun startNewMatch() {
-        _team1Score.value = 0
-        _team2Score.value = 0
-
-        matchTimerJob?.cancel()
-        matchTimeInSeconds = 0L
-        _matchTimer.value = "00:00"
-        isMatchTimerRunning = false
-
-        resetKeeperTimer()
-
-        // Sync new match state
-        wearDataSync.syncMatchState(true)
-        wearDataSync.syncFullState(
-            team1Score = 0,
-            team2Score = 0,
-            team1Name = _team1Name.value,
-            team2Name = _team2Name.value,
-            timerMillis = 0L,
-            timerRunning = false,
-            keeperMillis = 0L,
-            keeperRunning = false,
-            matchActive = true,
-        )
-    }
-
-    fun endMatch() {
-        // Sync match ended
-        wearDataSync.syncMatchState(false)
-    }
 
     fun resetMatch() {
-        _team1Score.value = 0
-        _team2Score.value = 0
-
+        updateScore(0, 0)
         matchTimerJob?.cancel()
         matchTimeInSeconds = 0L
         _matchTimer.value = "00:00"
@@ -313,18 +197,16 @@ class WearViewModel(
 
         resetKeeperTimer()
 
-        // Sync full reset
-        wearDataSync.syncFullState(
-            team1Score = 0,
-            team2Score = 0,
-            team1Name = _team1Name.value,
-            team2Name = _team2Name.value,
-            timerMillis = 0L,
-            timerRunning = false,
-            keeperMillis = 0L,
-            keeperRunning = false,
-            matchActive = false,
-        )
+        viewModelScope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to 0L,
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to false
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
+                data = data
+            )
+        }
     }
 
     // --- Haptic Feedback ---
@@ -340,24 +222,23 @@ class WearViewModel(
 
     // --- Data Synchronization ---
 
-    fun startStopMatchTimer() {
-        android.util.Log.d("WearViewModel", "Timer toggle called, current state: $isMatchTimerRunning") // AGGIUNGI
+    fun toggleTimer() {
         isMatchTimerRunning = !isMatchTimerRunning
-
         if (isMatchTimerRunning) {
-            if (matchTimeInSeconds == 0L) {
-                matchTimeInSeconds = 0L
-            }
             startMatchTimerInternal()
         } else {
             pauseMatchTimerInternal()
         }
-
-        // Sync timer state
-        wearDataSync.syncTimerState(
-            matchTimeInSeconds * 1000,
-            isMatchTimerRunning,
-        )
+        viewModelScope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to matchTimeInSeconds * 1000,
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to isMatchTimerRunning
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
+                data = data
+            )
+        }
     }
 
     private fun startMatchTimerInternal() {
@@ -386,7 +267,65 @@ class WearViewModel(
         matchTimerJob?.cancel()
         _matchTimer.value = "00:00"
 
-        // Sync reset
-        wearDataSync.syncTimerState(0L, false)
+        viewModelScope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to 0L,
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to false
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
+                data = data
+            )
+        }
+    }
+
+    private fun startKeeperTimer() {
+        keeperCountDownTimer?.cancel()
+        _keeperTimer.value = KeeperTimerState.Running((keeperTimerDuration / 1000).toInt())
+
+        keeperCountDownTimer =
+            object : CountDownTimer(keeperTimerDuration, 1000) {
+                override fun onTick(millisUntilFinished: Long) {
+                    _keeperTimer.value = KeeperTimerState.Running((millisUntilFinished / 1000).toInt())
+                }
+
+                override fun onFinish() {
+                    _keeperTimer.value = KeeperTimerState.Finished
+                    triggerStrongContinuousVibration()
+                }
+            }.start()
+
+        triggerShortVibration()
+
+        // Sync keeper timer start
+        viewModelScope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to keeperTimerDuration,
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to true
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
+                data = data
+            )
+        }
+    }
+
+    fun resetKeeperTimer() {
+        keeperCountDownTimer?.cancel()
+        vibrator?.cancel()
+        _keeperTimer.value = KeeperTimerState.Hidden
+        triggerShortVibration()
+
+        // Sync keeper timer reset
+        viewModelScope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to 0L,
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to false
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
+                data = data
+            )
+        }
     }
 }

@@ -19,7 +19,7 @@ import it.vantaggi.scoreboardessential.MainActivity
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
-import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import it.vantaggi.scoreboardessential.shared.communication.WearConnectionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
 class MatchTimerService : Service() {
     private val binder = MatchTimerBinder()
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private lateinit var wearDataSync: OptimizedWearDataSync
+    private lateinit var connectionManager: WearConnectionManager
     private lateinit var vibrator: Vibrator
 
     // Match Timer
@@ -73,7 +73,7 @@ class MatchTimerService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        wearDataSync = OptimizedWearDataSync(applicationContext)
+        connectionManager = WearConnectionManager(applicationContext)
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         restoreState()
     }
@@ -113,7 +113,14 @@ class MatchTimerService : Service() {
                     val elapsed = System.currentTimeMillis() - matchStartTime
                     _matchTimerValue.value = elapsed
                     updateNotification(elapsed)
-                    wearDataSync.syncTimerState(elapsed, true)
+                    val data = mapOf(
+                        it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to elapsed,
+                        it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to true
+                    )
+                    connectionManager.sendData(
+                        path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
+                        data = data
+                    )
                     delay(1000)
                 }
             }
@@ -126,7 +133,16 @@ class MatchTimerService : Service() {
         _isMatchTimerRunning.value = false
         matchTimerJob?.cancel()
         elapsedTimeOnPause = _matchTimerValue.value
-        wearDataSync.syncTimerState(_matchTimerValue.value, false)
+        scope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to _matchTimerValue.value,
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to false
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
+                data = data
+            )
+        }
         updateNotification(_matchTimerValue.value)
         checkStopForeground()
         saveState()
@@ -137,7 +153,16 @@ class MatchTimerService : Service() {
         matchTimerJob?.cancel()
         _matchTimerValue.value = 0L
         elapsedTimeOnPause = 0L
-        wearDataSync.syncTimerState(0, false)
+        scope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to 0L,
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to false
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
+                data = data
+            )
+        }
         updateNotification(0)
         checkStopForeground()
         saveState()
@@ -159,7 +184,16 @@ class MatchTimerService : Service() {
                         _keeperTimerValue.value = 0L
                         _isKeeperTimerRunning.value = false
                         keeperRemainingOnPause = 0L
-                        wearDataSync.syncKeeperTimer(0, false)
+                        scope.launch {
+                            val data = mapOf(
+                                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to 0L,
+                                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to false
+                            )
+                            connectionManager.sendData(
+                                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
+                                data = data
+                            )
+                        }
                         showKeeperTimerExpiredNotification()
                         triggerKeeperTimerExpiredVibration()
                         this.cancel()
@@ -167,7 +201,16 @@ class MatchTimerService : Service() {
                     delay(1000)
                 }
             }
-        wearDataSync.syncKeeperTimer(duration, true)
+        scope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to duration,
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to true
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
+                data = data
+            )
+        }
         startForegroundWithPermissionCheck()
         saveState()
     }
@@ -177,7 +220,16 @@ class MatchTimerService : Service() {
         _isKeeperTimerRunning.value = false
         keeperTimerJob?.cancel()
         keeperRemainingOnPause = _keeperTimerValue.value
-        wearDataSync.syncKeeperTimer(_keeperTimerValue.value, false)
+        scope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to _keeperTimerValue.value,
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to false
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
+                data = data
+            )
+        }
         checkStopForeground()
         saveState()
     }
@@ -188,7 +240,16 @@ class MatchTimerService : Service() {
         _keeperTimerValue.value = 0L
         keeperTimerEndTime = 0L
         keeperRemainingOnPause = 0L
-        wearDataSync.syncKeeperTimer(0, false)
+        scope.launch {
+            val data = mapOf(
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to 0L,
+                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to false
+            )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
+                data = data
+            )
+        }
         checkStopForeground()
         saveState()
     }
