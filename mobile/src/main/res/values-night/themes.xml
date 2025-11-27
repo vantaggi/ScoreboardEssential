@@ -26,8 +26,6 @@
         <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.App.StreetButton</item>
     </style>
 
-    <style name="Theme.ScoreboardEssential.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
-
     <!-- Street Vibe Type and Shape -->
     <style name="TextAppearance.App.DisplayLarge.Street" parent="TextAppearance.Material3.DisplayLarge">
         <item name="android:fontFamily">sans-serif-condensed</item>

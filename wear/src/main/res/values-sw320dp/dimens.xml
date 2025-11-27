@@ -5,7 +5,4 @@
     <dimen name="wear_timer_text_size">22sp</dimen>
     <dimen name="wear_keeper_timer_text_size">13sp</dimen>
     <dimen name="wear_button_text_size">12sp</dimen>
-    <dimen name="wear_separator_height">55dp</dimen>
-    <dimen name="wear_score_spacing">8dp</dimen>
-    <dimen name="wear_timer_spacing">8dp</dimen>
 </resources>

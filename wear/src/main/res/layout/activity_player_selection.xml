@@ -13,7 +13,6 @@
         app:layout_boxedEdges="all">
 
         <TextView
-            android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="WHO SCORED?"

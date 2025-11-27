@@ -11,14 +11,10 @@
     and the window insets is box_inset_layout_padding (above variable) on square screens and
     inner_frame_layout_padding (below variable) on round screens.
     -->
-    <dimen name="inner_frame_layout_padding">5dp</dimen>
-    
+
     <!-- Wear OS Scoreboard Dimensions - Base (Small screens) -->
     <dimen name="wear_score_text_size">52sp</dimen>
     <dimen name="wear_timer_text_size">18sp</dimen>
     <dimen name="wear_keeper_timer_text_size">11sp</dimen>
     <dimen name="wear_button_text_size">10sp</dimen>
-    <dimen name="wear_separator_height">45dp</dimen>
-    <dimen name="wear_score_spacing">6dp</dimen>
-    <dimen name="wear_timer_spacing">6dp</dimen>
 </resources>

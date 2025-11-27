@@ -29,20 +29,17 @@
                 android:padding="16dp">
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/team1_name_layout"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Team 1 Name">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/team1_name_edittext"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/team1_color_button"
                     style="@style/Widget.App.Button.Street"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -70,20 +67,17 @@
                 android:padding="16dp">
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/team2_name_layout"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Team 2 Name">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/team2_name_edittext"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/team2_color_button"
                     style="@style/Widget.App.Button.Street"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -111,14 +105,12 @@
                 android:padding="16dp">
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/keeper_timer_layout"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Keeper Timer (seconds)">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/keeper_timer_edittext"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="number" />
@@ -128,7 +120,6 @@
         </com.google.android.material.card.MaterialCardView>
 
         <Button
-            android:id="@+id/save_settings_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"

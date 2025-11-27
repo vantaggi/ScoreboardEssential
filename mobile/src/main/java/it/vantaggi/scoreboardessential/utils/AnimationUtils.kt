@@ -10,7 +10,6 @@ import android.view.animation.OvershootInterpolator
 import android.widget.TextView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.MaterialColors
-import it.vantaggi.scoreboardessential.R
 
 fun TextView.playEnhancedScoreAnimation() {
     val context = this.context

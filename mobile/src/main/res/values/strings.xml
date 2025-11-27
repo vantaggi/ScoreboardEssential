@@ -1,14 +1,9 @@
 <resources>
     <string name="app_name">Scoreboard Essential</string>
-    <string name="confirm">Confirm</string>
-    <string name="cancel">Cancel</string>
     <string name="channel_name">Scoreboard Channel</string>
     <string name="channel_description">Notifications from Scoreboard Essential</string>
     <string name="appbar_scrolling_view_behavior" translatable="false">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
-    <string name="no_role_specified">No role specified</string>
-    <string name="vs">-</string>
     <string name="delete_match">Delete Match</string>
-    <string name="comma_separator">, </string>
     <string name="match_timer">Match Timer</string>
     <string name="pause">Pause</string>
     <string name="stop">Stop</string>

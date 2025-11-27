@@ -41,7 +41,6 @@
 
         <!-- Match Timer - Top Center -->
         <TextView
-            android:id="@+id/match_timer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="00:00"
@@ -65,7 +64,6 @@
             app:layout_constraintEnd_toStartOf="@id/guideline_center">
 
             <TextView
-                android:id="@+id/team1_score"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -86,7 +84,6 @@
             app:layout_constraintEnd_toEndOf="parent">
 
             <TextView
-                android:id="@+id/team2_score"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -98,7 +95,6 @@
 
         <!-- Vertical Separator between scores -->
         <View
-            android:id="@+id/score_separator"
             android:layout_width="2dp"
             android:layout_height="0dp"
             android:background="@color/sidewalk_gray"
@@ -109,7 +105,6 @@
 
         <!-- Keeper Timer - Above Reset Button -->
         <TextView
-            android:id="@+id/keeper_timer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="KEEPER"

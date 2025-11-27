@@ -108,7 +108,6 @@
                             android:layout_marginEnd="8dp"/>
 
                         <com.google.android.material.button.MaterialButton
-                            android:id="@+id/timer_reset_button"
                             style="@style/Widget.App.Button.TextButton.Street"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -177,7 +176,6 @@
 
                         <!-- Score con animazione -->
                         <FrameLayout
-                            android:id="@+id/team1_score_container"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             app:layout_constraintTop_toBottomOf="@id/team1_name_container"
@@ -227,7 +225,6 @@
                                 app:rippleColor="@color/error_red">
 
                                 <ImageView
-                                    android:id="@+id/team1_subtract_button"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:padding="16dp"
@@ -246,7 +243,6 @@
                                 app:rippleColor="@color/stencil_white">
 
                                 <ImageView
-                                    android:id="@+id/team1_add_button"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:padding="18dp"
@@ -305,7 +301,6 @@
 
                         <!-- Score con animazione -->
                         <FrameLayout
-                            android:id="@+id/team2_score_container"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             app:layout_constraintTop_toBottomOf="@id/team2_name_container"
@@ -355,7 +350,6 @@
                                 app:rippleColor="@color/error_red">
 
                                 <ImageView
-                                    android:id="@+id/team2_subtract_button"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:padding="16dp"
@@ -374,7 +368,6 @@
                                 app:rippleColor="@color/stencil_white">
 
                                 <ImageView
-                                    android:id="@+id/team2_add_button"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:padding="18dp"
@@ -638,7 +631,6 @@
 
             <!-- Action Buttons -->
             <LinearLayout
-                android:id="@+id/actions_container"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"

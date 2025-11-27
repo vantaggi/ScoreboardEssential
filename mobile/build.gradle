@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace 'it.vantaggi.scoreboardessential'
-    compileSdk 36
+    compileSdk 34
 
     defaultConfig {
         applicationId "it.vantaggi.scoreboardessential"
