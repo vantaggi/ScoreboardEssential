@@ -22,17 +22,13 @@
             android:pathData="M16,5 C13,5 12,6.5 12,8.5 C12,10.5 13,11.5 16,11.5 L18,11.5 L18,13.5 C18,16 17,17 15,17 C13,17 11,16.5 11,14 L8,14 C8,18 11,20 15,20 C19,20 21,18 21,13.5 L21,11.5 L21,8.5 C21,6 19,5 16,5 Z M16,8 C17.5,8 18,8.5 18,9.5 L16,9.5 C14.5,9.5 14,9 14,8.5 C14,7.5 14.5,7 16,7 C17.5,7 18,7.5 18,8.5" />
         
         <!-- Spray paint effect dots -->
-        <circle
+        <path
             android:fillColor="@color/graffiti_pink"
-            android:cx="6"
-            android:cy="18"
-            android:r="0.8"
+            android:pathData="M5.2,18 a0.8,0.8 0 1,0 1.6,0 a0.8,0.8 0 1,0 -1.6,0"
             android:alpha="0.6"/>
-        <circle
+        <path
             android:fillColor="@color/neon_cyan"
-            android:cx="18"
-            android:cy="19"
-            android:r="0.6"
+            android:pathData="M17.4,19 a0.6,0.6 0 1,0 1.2,0 a0.6,0.6 0 1,0 -1.2,0"
             android:alpha="0.5"/>
     </group>
   </group>
