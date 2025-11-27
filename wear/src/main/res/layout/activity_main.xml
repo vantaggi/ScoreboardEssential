@@ -5,96 +5,143 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
-    android:padding="15dp"
+    android:background="@drawable/bg_asphalt_main"
+    android:padding="@dimen/box_inset_layout_padding"
     tools:context=".MainActivity"
     tools:deviceIds="wear">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center"
+        android:padding="4dp"
         app:layout_boxedEdges="all">
 
-        <!-- Timer Section -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/match_timer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="00:00"
-                android:textSize="24sp"
-                android:textColor="@android:color/white"
-                android:layout_marginEnd="8dp"/>
-
-            <TextView
-                android:id="@+id/keeper_timer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="05:00"
-                android:textSize="18sp"
-                android:textColor="@color/sidewalk_gray"
-                android:visibility="gone"/>
-        </LinearLayout>
-
-        <!-- Score Section -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="2"
+        <!-- Horizontal Guidelines to define safe zones -->
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_top"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center">
+            app:layout_constraintGuide_percent="0.15" />
 
-            <!-- Team 1 -->
-            <FrameLayout
-                android:id="@+id/team1Container"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-                <TextView
-                    android:id="@+id/team1_score"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="0"
-                    android:textSize="60sp"
-                    android:gravity="center"
-                    android:textColor="@color/orange_500"/>
-            </FrameLayout>
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_bottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.85" />
 
-            <!-- Team 2 -->
-             <FrameLayout
-                android:id="@+id/team2Container"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-                <TextView
-                    android:id="@+id/team2_score"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="0"
-                    android:textSize="60sp"
-                    android:gravity="center"
-                    android:textColor="@color/lime_A200"/>
-            </FrameLayout>
+        <!-- Vertical Guideline to separate teams -->
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.5" />
 
-        </LinearLayout>
+        <!-- Match Timer - Top Center -->
+        <TextView
+            android:id="@+id/match_timer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00"
+            android:textSize="@dimen/wear_timer_text_size"
+            android:fontFamily="sans-serif-condensed"
+            android:textStyle="bold"
+            android:textColor="@color/stencil_white"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="2dp"/>
 
-        <!-- Reset Button -->
+        <!-- Team 1 Score - Left Side, Centered -->
+        <FrameLayout
+            android:id="@+id/team1Container"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toBottomOf="@id/guideline_top"
+            app:layout_constraintBottom_toTopOf="@id/guideline_bottom"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/guideline_center">
+
+            <TextView
+                android:id="@+id/team1_score"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="0"
+                android:textSize="@dimen/wear_score_text_size"
+                android:fontFamily="sans-serif-black"
+                android:textColor="@color/team_spray_yellow"/>
+        </FrameLayout>
+
+        <!-- Team 2 Score - Right Side, Centered -->
+        <FrameLayout
+            android:id="@+id/team2Container"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toBottomOf="@id/guideline_top"
+            app:layout_constraintBottom_toTopOf="@id/guideline_bottom"
+            app:layout_constraintStart_toEndOf="@id/guideline_center"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:id="@+id/team2_score"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="0"
+                android:textSize="@dimen/wear_score_text_size"
+                android:fontFamily="sans-serif-black"
+                android:textColor="@color/team_electric_green"/>
+        </FrameLayout>
+
+        <!-- Vertical Separator between scores -->
+        <View
+            android:id="@+id/score_separator"
+            android:layout_width="2dp"
+            android:layout_height="0dp"
+            android:background="@color/sidewalk_gray"
+            app:layout_constraintTop_toBottomOf="@id/guideline_top"
+            app:layout_constraintBottom_toTopOf="@id/guideline_bottom"
+            app:layout_constraintStart_toStartOf="@id/guideline_center"
+            app:layout_constraintEnd_toEndOf="@id/guideline_center"/>
+
+        <!-- Keeper Timer - Above Reset Button -->
+        <TextView
+            android:id="@+id/keeper_timer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="KEEPER"
+            android:textSize="@dimen/wear_keeper_timer_text_size"
+            android:fontFamily="sans-serif-condensed"
+            android:textColor="@color/graffiti_pink"
+            android:visibility="visible"
+            android:paddingVertical="2dp"
+            android:paddingHorizontal="8dp"
+            app:layout_constraintBottom_toTopOf="@id/btn_start_new_match"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Reset Button - Bottom Center -->
         <Button
             android:id="@+id/btn_start_new_match"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Reset"
+            android:text="RESET"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:textColor="@color/sidewalk_gray"
-            android:layout_marginTop="8dp"/>
+            android:fontFamily="sans-serif-condensed"
+            android:textStyle="bold"
+            android:textSize="@dimen/wear_button_text_size"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingVertical="2dp"
+            android:paddingHorizontal="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginBottom="2dp"/>
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.wear.widget.BoxInsetLayout>

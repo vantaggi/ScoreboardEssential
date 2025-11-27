@@ -35,7 +35,7 @@ import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
-import it.vantaggi.scoreboardessential.shared.communication.WearConnectionManager
+import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
@@ -63,7 +63,7 @@ class MainViewModel(
     private var matchTimerService: MatchTimerService? = null
     private var isServiceBound = false
 
-    val connectionManager = WearConnectionManager(application)
+    val connectionManager = OptimizedWearDataSync(application)
     private val _isWearConnected = MutableLiveData(false)
     val isWearConnected: LiveData<Boolean> = _isWearConnected
 
@@ -281,7 +281,6 @@ class MainViewModel(
     private fun bindService() {
         android.util.Log.d("MainViewModel", "Attempting to bind MatchTimerService")
         Intent(getApplication(), MatchTimerService::class.java).also { intent ->
-            getApplication<Application>().startService(intent)
             getApplication<Application>().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
         }
     }

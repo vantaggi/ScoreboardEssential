@@ -5,18 +5,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@drawable/bg_asphalt_main"
     android:fitsSystemWindows="true"
     tools:context=".AddEditPlayerActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_arrow_back"
+            app:titleTextColor="@color/stencil_white"
+            app:navigationIconTint="@color/stencil_white"
             app:title="Add Player" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -48,7 +52,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="Roles"
-                android:textAppearance="?attr/textAppearanceTitleMedium" />
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textColor="@color/sidewalk_gray"
+                android:fontFamily="sans-serif-condensed" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/roles_recycler_view"

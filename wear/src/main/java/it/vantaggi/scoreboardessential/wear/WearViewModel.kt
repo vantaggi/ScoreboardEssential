@@ -10,7 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
-import it.vantaggi.scoreboardessential.shared.communication.WearConnectionManager
+import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +40,7 @@ class WearViewModel(
     private val _team2Name = MutableStateFlow("TEAM 2")
     val team2Name = _team2Name.asStateFlow()
 
-    private val connectionManager = WearConnectionManager(application)
+    private val connectionManager = OptimizedWearDataSync(application)
 
     // Team Scores
     private val _team1Score = MutableStateFlow(0)

@@ -8,7 +8,7 @@ android {
     compileSdk 36
 
     defaultConfig {
-        applicationId "it.vantaggi.scoreboardessential.wear"
+        applicationId "it.vantaggi.scoreboardessential"
         minSdk 30
         targetSdk 36
         versionCode 1

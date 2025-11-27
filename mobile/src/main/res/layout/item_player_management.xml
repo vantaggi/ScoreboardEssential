@@ -8,13 +8,13 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    app:cardBackgroundColor="@android:color/transparent"
+    app:cardBackgroundColor="@color/concrete_gray"
+    app:shapeAppearance="@style/ShapeAppearance.App.StreetCard"
     app:cardElevation="4dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_concrete_card"
         android:padding="16dp">
 
         <!-- Player Avatar -->
@@ -26,7 +26,9 @@
             android:gravity="center"
             android:text="A"
             android:textAppearance="?attr/textAppearanceHeadlineSmall"
-            android:textColor="?attr/colorOnPrimary"
+            android:textColor="@color/stencil_white"
+            android:fontFamily="sans-serif-condensed"
+            android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -41,6 +43,8 @@
             android:layout_marginEnd="8dp"
             android:text="Player Name"
             android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="@color/stencil_white"
+            android:fontFamily="sans-serif-condensed"
             android:maxLines="1"
             android:ellipsize="end"
             app:layout_constraintStart_toEndOf="@id/player_avatar"
@@ -74,6 +78,7 @@
                 android:text="⚽ 0"
                 android:textAppearance="?attr/textAppearanceLabelMedium"
                 android:textColor="@color/team_spray_yellow"
+                android:fontFamily="sans-serif-condensed"
                 tools:text="⚽ 15" />
 
             <TextView
@@ -84,6 +89,7 @@
                 android:text="🎮 0"
                 android:textAppearance="?attr/textAppearanceLabelMedium"
                 android:textColor="@color/team_electric_green"
+                android:fontFamily="sans-serif-condensed"
                 tools:text="🎮 10" />
 
         </LinearLayout>
@@ -95,7 +101,7 @@
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_stats"
-            app:tint="?attr/colorSecondary"
+            app:tint="@color/neon_cyan"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />

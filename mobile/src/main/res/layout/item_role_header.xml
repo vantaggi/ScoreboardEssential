@@ -8,4 +8,6 @@
     android:paddingEnd="16dp"
     android:paddingBottom="8dp"
     android:textAppearance="?attr/textAppearanceHeadlineSmall"
-    android:textColor="?attr/colorPrimary" />
+    android:fontFamily="sans-serif-condensed"
+    android:textStyle="bold"
+    android:textColor="@color/team_spray_yellow" />

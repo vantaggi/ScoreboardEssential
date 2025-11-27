@@ -20,7 +20,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/select_roles_button"
-        style="@style/Widget.Material3.Button.OutlinedButton"
+        style="@style/Widget.App.Button.Street"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -34,6 +34,7 @@
         android:layout_marginTop="8dp"
         android:text="No roles selected"
         android:textAppearance="?attr/textAppearanceBodyMedium"
-        android:textColor="?attr/colorOnSurfaceVariant" />
+        android:textColor="@color/sidewalk_gray"
+        android:fontFamily="sans-serif-condensed" />
 
 </LinearLayout>

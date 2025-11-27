@@ -4,16 +4,11 @@ import android.content.Context
 import android.util.Log
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.wearable.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
+
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 
 sealed class ConnectionState {
     data class Connected(val nodeCount: Int) : ConnectionState()
@@ -21,7 +16,7 @@ sealed class ConnectionState {
     data class Error(val message: String) : ConnectionState()
 }
 
-class WearConnectionManager(private val context: Context) {
+class OptimizedWearDataSync(private val context: Context) {
 
     private val dataClient: DataClient = Wearable.getDataClient(context)
     private val messageClient: MessageClient = Wearable.getMessageClient(context)
@@ -34,9 +29,7 @@ class WearConnectionManager(private val context: Context) {
     val connectionState = _connectionState.asStateFlow()
 
     companion object {
-        private const val TAG = "WearConnectionManager"
-        private const val RETRY_DELAY_MS = 2000L
-        private const val CONNECTION_TIMEOUT_MS = 10000L
+        private const val TAG = "OptimizedWearDataSync"
     }
 
     init {
@@ -45,7 +38,7 @@ class WearConnectionManager(private val context: Context) {
 
     private fun startMonitoring() {
         coroutineScope.launch {
-            while (true) {
+            while (isActive) {
                 try {
                     val nodes = capabilityClient
                         .getCapability(WearConstants.CAPABILITY_SCOREBOARD_APP, CapabilityClient.FILTER_REACHABLE)
@@ -64,7 +57,7 @@ class WearConnectionManager(private val context: Context) {
                     Log.e(TAG, "Error monitoring connection", e)
                 } catch (e: Exception) {
                     _connectionState.value = ConnectionState.Error("Generic error: ${e.message}")
-                     Log.e(TAG, "An unexpected error occurred", e)
+                    Log.e(TAG, "An unexpected error occurred", e)
                 }
                 delay(5000) // Check every 5 seconds
             }
@@ -81,6 +74,8 @@ class WearConnectionManager(private val context: Context) {
                         is String -> dataMap.putString(key, value)
                         is Boolean -> dataMap.putBoolean(key, value)
                         is Long -> dataMap.putLong(key, value)
+                        is Double -> dataMap.putDouble(key, value)
+                        is Float -> dataMap.putFloat(key, value)
                         // Add other types as needed
                     }
                 }
@@ -101,6 +96,20 @@ class WearConnectionManager(private val context: Context) {
         }
     }
 
+    suspend fun sendMessage(path: String, data: ByteArray? = null) {
+        withContext(Dispatchers.IO) {
+            try {
+                val nodes = nodeClient.connectedNodes.await()
+                nodes.forEach { node ->
+                    messageClient.sendMessage(node.id, path, data).await()
+                }
+                Log.d(TAG, "Message sent to ${nodes.size} nodes: $path")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send message: $path", e)
+            }
+        }
+    }
+
     suspend fun testConnection(): Boolean {
         return withContext(Dispatchers.IO) {
             try {
@@ -111,7 +120,7 @@ class WearConnectionManager(private val context: Context) {
                 }
                 // Send a test message to the first available node
                 val testMessage = "ping".toByteArray()
-                messageClient.sendMessage(nodes.first().id, "/test_ping", testMessage).await()
+                messageClient.sendMessage(nodes.first().id, WearConstants.PATH_TEST_PING, testMessage).await()
                 Log.d(TAG, "Test Connection: Ping sent successfully.")
                 true
             } catch (e: Exception) {

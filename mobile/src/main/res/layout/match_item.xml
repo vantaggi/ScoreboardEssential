@@ -6,13 +6,13 @@
     android:layout_marginHorizontal="8dp"
     android:layout_marginVertical="4dp"
     style="?attr/materialCardViewElevatedStyle"
-    app:cardBackgroundColor="@android:color/transparent"
+    app:cardBackgroundColor="@color/concrete_gray"
+    app:shapeAppearance="@style/ShapeAppearance.App.StreetCard"
     app:cardElevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_concrete_card"
         android:orientation="vertical"
         android:padding="16dp">
 
@@ -22,6 +22,8 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:textColor="@color/sidewalk_gray"
+            android:fontFamily="sans-serif-condensed"
             android:layout_marginBottom="12dp"
             tools:text="12/12/2023 15:30" />
 
@@ -36,14 +38,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?attr/textAppearanceDisplayLarge"
-                android:textColor="?attr/colorPrimary"
+                android:textColor="@color/team_spray_yellow"
+                android:fontFamily="sans-serif-black"
                 tools:text="10" />
 
             <View
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1"
-                android:background="?attr/colorOnSurfaceVariant"
+                android:background="@color/sidewalk_gray"
                 android:layout_marginHorizontal="16dp"/>
 
             <TextView
@@ -51,7 +54,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?attr/textAppearanceDisplayLarge"
-                android:textColor="?attr/colorSecondary"
+                android:textColor="@color/team_electric_green"
+                android:fontFamily="sans-serif-black"
                 tools:text="8" />
         </LinearLayout>
 
@@ -68,7 +72,8 @@
                 android:layout_weight="1"
                 android:gravity="start"
                 android:textAppearance="?attr/textAppearanceHeadlineMedium"
-                android:textColor="?attr/colorPrimary"
+                android:textColor="@color/team_spray_yellow"
+                android:fontFamily="sans-serif-condensed"
                 tools:text="Team Alpha" />
 
             <TextView
@@ -78,7 +83,8 @@
                 android:layout_weight="1"
                 android:gravity="end"
                 android:textAppearance="?attr/textAppearanceHeadlineMedium"
-                android:textColor="?attr/colorSecondary"
+                android:textColor="@color/team_electric_green"
+                android:fontFamily="sans-serif-condensed"
                 tools:text="Team Beta" />
         </LinearLayout>
 
@@ -88,7 +94,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:textAppearance="?attr/textAppearanceBodyLarge"
-            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textColor="@color/sidewalk_gray"
+            android:fontFamily="sans-serif-condensed"
             tools:text="Players: John, Doe, Jane, Smith" />
 
         <ImageButton
@@ -98,6 +105,7 @@
             android:layout_gravity="end"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/delete_match"
+            app:tint="@color/error_red"
             app:srcCompat="@drawable/ic_delete" />
 
     </LinearLayout>

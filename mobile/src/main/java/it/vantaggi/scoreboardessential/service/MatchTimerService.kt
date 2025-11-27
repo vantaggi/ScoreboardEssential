@@ -19,7 +19,7 @@ import it.vantaggi.scoreboardessential.MainActivity
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
-import it.vantaggi.scoreboardessential.shared.communication.WearConnectionManager
+import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
 class MatchTimerService : Service() {
     private val binder = MatchTimerBinder()
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private lateinit var connectionManager: WearConnectionManager
+    private lateinit var connectionManager: OptimizedWearDataSync
     private lateinit var vibrator: Vibrator
 
     // Match Timer
@@ -73,7 +73,7 @@ class MatchTimerService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        connectionManager = WearConnectionManager(applicationContext)
+        connectionManager = OptimizedWearDataSync(applicationContext)
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         restoreState()
     }
@@ -166,6 +166,10 @@ class MatchTimerService : Service() {
         updateNotification(0)
         checkStopForeground()
         saveState()
+    }
+
+    fun resetTimer() {
+        stopTimer()
     }
 
     // --- Keeper Timer Control ---
