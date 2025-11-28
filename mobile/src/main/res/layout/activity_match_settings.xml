@@ -35,11 +35,13 @@
                     android:hint="Team 1 Name">
 
                     <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/team1NameEdittext"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/team1ColorButton"
                     style="@style/Widget.App.Button.Street"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -73,11 +75,13 @@
                     android:hint="Team 2 Name">
 
                     <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/team2NameEdittext"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/team2ColorButton"
                     style="@style/Widget.App.Button.Street"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -111,6 +115,7 @@
                     android:hint="Keeper Timer (seconds)">
 
                     <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/keeperTimerEdittext"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="number" />
@@ -120,6 +125,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <Button
+            android:id="@+id/saveSettingsButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"

@@ -82,7 +82,6 @@ class MainViewModel(
     private val _team2Players = MutableLiveData<List<PlayerWithRoles>>(emptyList())
     val team2Players: LiveData<List<PlayerWithRoles>> = _team2Players
 
-
     private val serviceConnection =
         object : ServiceConnection {
             override fun onServiceConnected(
@@ -132,33 +131,39 @@ class MainViewModel(
 
     val allMatches: LiveData<List<MatchWithTeams>> = repository.allMatches.asLiveData()
 
-    private val broadcastReceiver = object : android.content.BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            when (intent.action) {
-                SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE -> {
-                    val team1 = intent.getIntExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM1_SCORE, 0)
-                    val team2 = intent.getIntExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM2_SCORE, 0)
-                    Log.d("VM", "📥 Score from Wear: T1=$team1, T2=$team2")
-                    _team1Score.value = team1
-                    _team2Score.value = team2
-                }
-                SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE -> {
-                    val millis = intent.getLongExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_MILLIS, 0L)
-                    val running = intent.getBooleanExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_RUNNING, false)
-                    Log.d("VM", "📥 Timer from Wear: $millis ms, running=$running")
-                    // Aggiorna timer
+    private val broadcastReceiver =
+        object : android.content.BroadcastReceiver() {
+            override fun onReceive(
+                context: Context,
+                intent: Intent,
+            ) {
+                when (intent.action) {
+                    SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE -> {
+                        val team1 = intent.getIntExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM1_SCORE, 0)
+                        val team2 = intent.getIntExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM2_SCORE, 0)
+                        Log.d("VM", "📥 Score from Wear: T1=$team1, T2=$team2")
+                        _team1Score.value = team1
+                        _team2Score.value = team2
+                    }
+                    SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE -> {
+                        val millis = intent.getLongExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_MILLIS, 0L)
+                        val running = intent.getBooleanExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_RUNNING, false)
+                        Log.d("VM", "📥 Timer from Wear: $millis ms, running=$running")
+                        // Aggiorna timer
+                    }
                 }
             }
         }
-    }
 
     fun registerBroadcasts(context: Context) {
-        val filter = android.content.IntentFilter().apply {
-            addAction(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE)
-            addAction(SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE)
-            addAction(SimplifiedDataLayerListenerService.ACTION_TEAM_NAMES_UPDATE)
-        }
-        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(context)
+        val filter =
+            android.content.IntentFilter().apply {
+                addAction(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE)
+                addAction(SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE)
+                addAction(SimplifiedDataLayerListenerService.ACTION_TEAM_NAMES_UPDATE)
+            }
+        androidx.localbroadcastmanager.content.LocalBroadcastManager
+            .getInstance(context)
             .registerReceiver(broadcastReceiver, filter)
     }
 
@@ -368,19 +373,23 @@ class MainViewModel(
     }
 
     // --- Score Management ---
-    fun updateScore(team1: Int, team2: Int) {
+    fun updateScore(
+        team1: Int,
+        team2: Int,
+    ) {
         _team1Score.value = team1
         _team2Score.value = team2
 
         viewModelScope.launch {
-            val data = mapOf(
-                "team1_score" to team1,
-                "team2_score" to team2
-            )
+            val data =
+                mapOf(
+                    "team1_score" to team1,
+                    "team2_score" to team2,
+                )
             connectionManager.sendData(
                 path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_SCORE,
                 data = data,
-                urgent = true
+                urgent = true,
             )
         }
     }
@@ -554,38 +563,41 @@ class MainViewModel(
 // --- Data Synchronization with Wear OS ---
     private fun sendTeamNamesUpdate() {
         viewModelScope.launch {
-            val data = mapOf(
-                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM1_NAME to (_team1Name.value ?: "TEAM 1"),
-                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM2_NAME to (_team2Name.value ?: "TEAM 2")
-            )
+            val data =
+                mapOf(
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM1_NAME to (_team1Name.value ?: "TEAM 1"),
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM2_NAME to (_team2Name.value ?: "TEAM 2"),
+                )
             connectionManager.sendData(
                 path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TEAM_NAMES,
-                data = data
+                data = data,
             )
         }
     }
 
     private fun sendKeeperTimerUpdate(isRunning: Boolean) {
         viewModelScope.launch {
-            val data = mapOf(
-                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to (_keeperTimerValue.value ?: 0L),
-                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to isRunning
-            )
+            val data =
+                mapOf(
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to (_keeperTimerValue.value ?: 0L),
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to isRunning,
+                )
             connectionManager.sendData(
                 path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
-                data = data
+                data = data,
             )
         }
     }
 
     private fun sendMatchStateUpdate(isActive: Boolean) {
         viewModelScope.launch {
-            val data = mapOf(
-                "match_active" to isActive
-            )
+            val data =
+                mapOf(
+                    "match_active" to isActive,
+                )
             connectionManager.sendData(
                 path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_MATCH_STATE,
-                data = data
+                data = data,
             )
         }
     }
@@ -595,7 +607,14 @@ class MainViewModel(
         color: Int,
     ) {
         viewModelScope.launch {
-            val path = if (team == 1) it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TEAM1_COLOR else it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TEAM2_COLOR
+            val path =
+                if (team ==
+                    1
+                ) {
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TEAM1_COLOR
+                } else {
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TEAM2_COLOR
+                }
             val data = mapOf("color" to color)
             connectionManager.sendData(path = path, data = data)
         }
@@ -605,13 +624,14 @@ class MainViewModel(
         updateScore(0, 0)
         sendTeamNamesUpdate()
         viewModelScope.launch {
-            val data = mapOf(
-                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to 0L,
-                it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to false
-            )
+            val data =
+                mapOf(
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to 0L,
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to false,
+                )
             connectionManager.sendData(
                 path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
-                data = data
+                data = data,
             )
         }
     }
