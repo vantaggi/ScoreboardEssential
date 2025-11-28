@@ -12,10 +12,9 @@ import com.google.android.gms.wearable.WearableListenerService
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 
 class WearDataLayerService : WearableListenerService() {
-
     companion object {
         private const val TAG = "WearDataLayerService"
-        
+
         // Broadcast Actions
         const val ACTION_SCORE_UPDATE = "it.vantaggi.scoreboardessential.wear.SCORE_UPDATE"
         const val ACTION_TEAM_NAMES_UPDATE = "it.vantaggi.scoreboardessential.wear.TEAM_NAMES_UPDATE"
@@ -57,67 +56,74 @@ class WearDataLayerService : WearableListenerService() {
 
     private fun handleData(dataItem: DataItem) {
         val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
-        
+
         when (dataItem.uri.path) {
             WearConstants.PATH_SCORE -> {
                 val team1 = dataMap.getInt(WearConstants.KEY_TEAM1_SCORE, 0)
                 val team2 = dataMap.getInt(WearConstants.KEY_TEAM2_SCORE, 0)
-                val intent = Intent(ACTION_SCORE_UPDATE).apply {
-                    putExtra(EXTRA_TEAM1_SCORE, team1)
-                    putExtra(EXTRA_TEAM2_SCORE, team2)
-                }
+                val intent =
+                    Intent(ACTION_SCORE_UPDATE).apply {
+                        putExtra(EXTRA_TEAM1_SCORE, team1)
+                        putExtra(EXTRA_TEAM2_SCORE, team2)
+                    }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
                 Log.d(TAG, "Broadcasted score update: T1=$team1, T2=$team2")
             }
             WearConstants.PATH_TEAM_NAMES -> {
                 val team1Name = dataMap.getString(WearConstants.KEY_TEAM1_NAME, "Team 1")
                 val team2Name = dataMap.getString(WearConstants.KEY_TEAM2_NAME, "Team 2")
-                val intent = Intent(ACTION_TEAM_NAMES_UPDATE).apply {
-                    putExtra(EXTRA_TEAM1_NAME, team1Name)
-                    putExtra(EXTRA_TEAM2_NAME, team2Name)
-                }
+                val intent =
+                    Intent(ACTION_TEAM_NAMES_UPDATE).apply {
+                        putExtra(EXTRA_TEAM1_NAME, team1Name)
+                        putExtra(EXTRA_TEAM2_NAME, team2Name)
+                    }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
                 Log.d(TAG, "Broadcasted team names: $team1Name vs $team2Name")
             }
             WearConstants.PATH_TEAM1_COLOR -> {
                 val color = dataMap.getInt("color", 0)
-                val intent = Intent(ACTION_TEAM_COLOR_UPDATE).apply {
-                    putExtra(EXTRA_TEAM_ID, 1)
-                    putExtra(EXTRA_COLOR, color)
-                }
+                val intent =
+                    Intent(ACTION_TEAM_COLOR_UPDATE).apply {
+                        putExtra(EXTRA_TEAM_ID, 1)
+                        putExtra(EXTRA_COLOR, color)
+                    }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
             WearConstants.PATH_TEAM2_COLOR -> {
                 val color = dataMap.getInt("color", 0)
-                val intent = Intent(ACTION_TEAM_COLOR_UPDATE).apply {
-                    putExtra(EXTRA_TEAM_ID, 2)
-                    putExtra(EXTRA_COLOR, color)
-                }
+                val intent =
+                    Intent(ACTION_TEAM_COLOR_UPDATE).apply {
+                        putExtra(EXTRA_TEAM_ID, 2)
+                        putExtra(EXTRA_COLOR, color)
+                    }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
             WearConstants.PATH_TIMER_STATE -> {
                 val millis = dataMap.getLong(WearConstants.KEY_TIMER_MILLIS, 0L)
                 val running = dataMap.getBoolean(WearConstants.KEY_TIMER_RUNNING, false)
-                val intent = Intent(ACTION_TIMER_UPDATE).apply {
-                    putExtra(EXTRA_TIMER_MILLIS, millis)
-                    putExtra(EXTRA_TIMER_RUNNING, running)
-                }
+                val intent =
+                    Intent(ACTION_TIMER_UPDATE).apply {
+                        putExtra(EXTRA_TIMER_MILLIS, millis)
+                        putExtra(EXTRA_TIMER_RUNNING, running)
+                    }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
             WearConstants.PATH_KEEPER_TIMER -> {
                 val millis = dataMap.getLong(WearConstants.KEY_KEEPER_MILLIS, 0L)
                 val running = dataMap.getBoolean(WearConstants.KEY_KEEPER_RUNNING, false)
-                val intent = Intent(ACTION_KEEPER_TIMER_UPDATE).apply {
-                    putExtra(EXTRA_KEEPER_MILLIS, millis)
-                    putExtra(EXTRA_KEEPER_RUNNING, running)
-                }
+                val intent =
+                    Intent(ACTION_KEEPER_TIMER_UPDATE).apply {
+                        putExtra(EXTRA_KEEPER_MILLIS, millis)
+                        putExtra(EXTRA_KEEPER_RUNNING, running)
+                    }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
             WearConstants.PATH_MATCH_STATE -> {
                 val active = dataMap.getBoolean(WearConstants.KEY_MATCH_ACTIVE, true)
-                val intent = Intent(ACTION_MATCH_STATE_UPDATE).apply {
-                    putExtra(EXTRA_MATCH_ACTIVE, active)
-                }
+                val intent =
+                    Intent(ACTION_MATCH_STATE_UPDATE).apply {
+                        putExtra(EXTRA_MATCH_ACTIVE, active)
+                    }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
         }

@@ -3,21 +3,40 @@ package it.vantaggi.scoreboardessential.shared.communication
 import android.content.Context
 import android.util.Log
 import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.wearable.*
-
-import kotlinx.coroutines.*
+import com.google.android.gms.wearable.CapabilityClient
+import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.DataMap
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.NodeClient
+import com.google.android.gms.wearable.PutDataRequest
+import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 sealed class ConnectionState {
-    data class Connected(val nodeCount: Int) : ConnectionState()
+    data class Connected(
+        val nodeCount: Int,
+    ) : ConnectionState()
+
     object Disconnected : ConnectionState()
-    data class Error(val message: String) : ConnectionState()
+
+    data class Error(
+        val message: String,
+    ) : ConnectionState()
 }
 
-class OptimizedWearDataSync(private val context: Context) {
-
+class OptimizedWearDataSync(
+    private val context: Context,
+) {
     private val dataClient: DataClient = Wearable.getDataClient(context)
     private val messageClient: MessageClient = Wearable.getMessageClient(context)
     private val capabilityClient: CapabilityClient = Wearable.getCapabilityClient(context)
@@ -40,10 +59,11 @@ class OptimizedWearDataSync(private val context: Context) {
         coroutineScope.launch {
             while (isActive) {
                 try {
-                    val nodes = capabilityClient
-                        .getCapability(WearConstants.CAPABILITY_SCOREBOARD_APP, CapabilityClient.FILTER_REACHABLE)
-                        .await()
-                        .nodes
+                    val nodes =
+                        capabilityClient
+                            .getCapability(WearConstants.CAPABILITY_SCOREBOARD_APP, CapabilityClient.FILTER_REACHABLE)
+                            .await()
+                            .nodes
 
                     if (nodes.isNotEmpty()) {
                         _connectionState.value = ConnectionState.Connected(nodes.size)
@@ -64,7 +84,11 @@ class OptimizedWearDataSync(private val context: Context) {
         }
     }
 
-    suspend fun sendData(path: String, data: Map<String, Any>, urgent: Boolean = false) {
+    suspend fun sendData(
+        path: String,
+        data: Map<String, Any>,
+        urgent: Boolean = false,
+    ) {
         withContext(Dispatchers.IO) {
             try {
                 val dataMap = DataMap()
@@ -81,12 +105,13 @@ class OptimizedWearDataSync(private val context: Context) {
                 }
                 dataMap.putLong(WearConstants.KEY_TIMESTAMP, System.currentTimeMillis())
 
-                val putDataRequest = PutDataRequest.create(path).apply {
-                    setData(dataMap.toByteArray())
-                    if (urgent) {
-                        setUrgent()
+                val putDataRequest =
+                    PutDataRequest.create(path).apply {
+                        setData(dataMap.toByteArray())
+                        if (urgent) {
+                            setUrgent()
+                        }
                     }
-                }
 
                 dataClient.putDataItem(putDataRequest).await()
                 Log.d(TAG, "Data sent successfully to path: $path")
@@ -96,7 +121,10 @@ class OptimizedWearDataSync(private val context: Context) {
         }
     }
 
-    suspend fun sendMessage(path: String, data: ByteArray? = null) {
+    suspend fun sendMessage(
+        path: String,
+        data: ByteArray? = null,
+    ) {
         withContext(Dispatchers.IO) {
             try {
                 val nodes = nodeClient.connectedNodes.await()

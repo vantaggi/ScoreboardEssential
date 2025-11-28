@@ -28,24 +28,34 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun registerBroadcastReceiver() {
-        val receiver = object : android.content.BroadcastReceiver() {
-            override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
-                when (intent.action) {
-                    WearDataLayerService.ACTION_SCORE_UPDATE -> {
-                        val team1 = intent.getIntExtra(
-                            WearDataLayerService.EXTRA_TEAM1_SCORE, 0
-                        )
-                        val team2 = intent.getIntExtra(
-                            WearDataLayerService.EXTRA_TEAM2_SCORE, 0
-                        )
-                        viewModel.updateScoresFromMobile(team1, team2)
+        val receiver =
+            object : android.content.BroadcastReceiver() {
+                override fun onReceive(
+                    context: android.content.Context,
+                    intent: android.content.Intent,
+                ) {
+                    when (intent.action) {
+                        WearDataLayerService.ACTION_SCORE_UPDATE -> {
+                            val team1 =
+                                intent.getIntExtra(
+                                    WearDataLayerService.EXTRA_TEAM1_SCORE,
+                                    0,
+                                )
+                            val team2 =
+                                intent.getIntExtra(
+                                    WearDataLayerService.EXTRA_TEAM2_SCORE,
+                                    0,
+                                )
+                            viewModel.updateScoresFromMobile(team1, team2)
+                        }
                     }
                 }
             }
-        }
 
         val filter = android.content.IntentFilter(WearDataLayerService.ACTION_SCORE_UPDATE)
-        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this).registerReceiver(receiver, filter)
+        androidx.localbroadcastmanager.content.LocalBroadcastManager
+            .getInstance(this)
+            .registerReceiver(receiver, filter)
     }
 
     private fun setupClickListeners() {
