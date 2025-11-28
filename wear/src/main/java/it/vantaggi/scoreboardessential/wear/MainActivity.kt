@@ -123,18 +123,28 @@ class MainActivity : ComponentActivity() {
                         binding.keeperTimer.visibility = View.VISIBLE // SEMPRE VISIBILE
                         when (state) {
                             is KeeperTimerState.Hidden -> {
-                                binding.keeperTimer.text = "KEEPER"
+                                binding.keeperTimer.text = "K"
                                 binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.sidewalk_gray))
+                                binding.keeperProgressBar.visibility = View.INVISIBLE
                             }
                             is KeeperTimerState.Running -> {
-                                binding.keeperTimer.text = "K: ${state.secondsRemaining}"
-                                binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.team_spray_yellow))
+                                binding.keeperTimer.text = "K"
+                                binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.graffiti_pink))
+                                binding.keeperProgressBar.visibility = View.VISIBLE
                             }
                             is KeeperTimerState.Finished -> {
-                                binding.keeperTimer.text = "K: 00"
+                                binding.keeperTimer.text = "K"
                                 binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.error_red))
+                                binding.keeperProgressBar.visibility = View.VISIBLE
                             }
                         }
+                    }
+                }
+
+                // Observe Keeper Progress
+                launch {
+                    viewModel.keeperProgress.collect { progress ->
+                        binding.keeperProgressBar.progress = progress
                     }
                 }
 
