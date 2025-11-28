@@ -59,6 +59,10 @@ class WearViewModel(
     // Keeper Timer
     private val _keeperTimer = MutableStateFlow<KeeperTimerState>(KeeperTimerState.Hidden)
     val keeperTimer = _keeperTimer.asStateFlow()
+
+    private val _keeperProgress = MutableStateFlow(300)
+    val keeperProgress = _keeperProgress.asStateFlow()
+
     private var keeperCountDownTimer: CountDownTimer? = null
     private val keeperTimerDuration = 300000L // 5 minutes
 
@@ -170,14 +174,18 @@ class WearViewModel(
         // If the new state is Running, we need to start a countdown
         if (newState is KeeperTimerState.Running) {
             val duration = newState.secondsRemaining * 1000L
+            _keeperProgress.value = newState.secondsRemaining
             keeperCountDownTimer =
                 object : CountDownTimer(duration, 1000) {
                     override fun onTick(millisUntilFinished: Long) {
-                        _keeperTimer.value = KeeperTimerState.Running((millisUntilFinished / 1000).toInt())
+                        val seconds = (millisUntilFinished / 1000).toInt()
+                        _keeperTimer.value = KeeperTimerState.Running(seconds)
+                        _keeperProgress.value = seconds
                     }
 
                     override fun onFinish() {
                         _keeperTimer.value = KeeperTimerState.Finished
+                        _keeperProgress.value = 0
                         triggerStrongContinuousVibration()
                     }
                 }.start()
@@ -290,16 +298,21 @@ class WearViewModel(
 
     private fun startKeeperTimer() {
         keeperCountDownTimer?.cancel()
-        _keeperTimer.value = KeeperTimerState.Running((keeperTimerDuration / 1000).toInt())
+        val totalSeconds = (keeperTimerDuration / 1000).toInt()
+        _keeperTimer.value = KeeperTimerState.Running(totalSeconds)
+        _keeperProgress.value = totalSeconds
 
         keeperCountDownTimer =
             object : CountDownTimer(keeperTimerDuration, 1000) {
                 override fun onTick(millisUntilFinished: Long) {
-                    _keeperTimer.value = KeeperTimerState.Running((millisUntilFinished / 1000).toInt())
+                    val seconds = (millisUntilFinished / 1000).toInt()
+                    _keeperTimer.value = KeeperTimerState.Running(seconds)
+                    _keeperProgress.value = seconds
                 }
 
                 override fun onFinish() {
                     _keeperTimer.value = KeeperTimerState.Finished
+                    _keeperProgress.value = 0
                     triggerStrongContinuousVibration()
                 }
             }.start()
@@ -324,6 +337,7 @@ class WearViewModel(
         keeperCountDownTimer?.cancel()
         vibrator?.cancel()
         _keeperTimer.value = KeeperTimerState.Hidden
+        _keeperProgress.value = (keeperTimerDuration / 1000).toInt()
         triggerShortVibration()
 
         // Sync keeper timer reset

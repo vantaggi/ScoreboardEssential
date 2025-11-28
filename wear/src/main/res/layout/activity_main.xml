@@ -1,37 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.wear.widget.BoxInsetLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_asphalt_main"
-    android:padding="@dimen/box_inset_layout_padding"
+    android:background="@color/asphalt_dark"
     tools:context=".MainActivity"
     tools:deviceIds="wear">
 
+    <!-- Layer 1: Keeper Progress Ring (Bottom) -->
+    <ProgressBar
+        android:id="@+id/keeperProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:indeterminate="false"
+        android:max="300"
+        android:progress="300"
+        android:progressDrawable="@drawable/circular_progress_bar" />
+
+    <!-- Layer 2: UI Content (Top) -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="4dp"
-        app:layout_boxedEdges="all">
+        android:padding="4dp">
 
-        <!-- Horizontal Guidelines to define safe zones -->
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideline_top"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.15" />
+            app:layout_constraintGuide_percent="0.20" />
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideline_bottom"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.85" />
+            app:layout_constraintGuide_percent="0.80" />
 
-        <!-- Vertical Guideline to separate teams -->
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideline_center"
             android:layout_width="wrap_content"
@@ -52,9 +59,9 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="2dp"/>
+            android:layout_marginTop="16dp"/>
 
-        <!-- Team 1 Score - Left Side, Centered -->
+        <!-- Team 1 Score - Left Side -->
         <FrameLayout
             android:id="@+id/team1Container"
             android:layout_width="0dp"
@@ -71,11 +78,12 @@
                 android:layout_gravity="center"
                 android:text="0"
                 android:textSize="@dimen/wear_score_text_size"
-                android:fontFamily="sans-serif-black"
+                android:fontFamily="sans-serif-condensed"
+                android:textStyle="bold"
                 android:textColor="@color/team_spray_yellow"/>
         </FrameLayout>
 
-        <!-- Team 2 Score - Right Side, Centered -->
+        <!-- Team 2 Score - Right Side -->
         <FrameLayout
             android:id="@+id/team2Container"
             android:layout_width="0dp"
@@ -92,35 +100,26 @@
                 android:layout_gravity="center"
                 android:text="0"
                 android:textSize="@dimen/wear_score_text_size"
-                android:fontFamily="sans-serif-black"
+                android:fontFamily="sans-serif-condensed"
+                android:textStyle="bold"
                 android:textColor="@color/team_electric_green"/>
         </FrameLayout>
 
-        <!-- Vertical Separator between scores -->
-        <View
-            android:layout_width="2dp"
-            android:layout_height="0dp"
-            android:background="@color/sidewalk_gray"
-            app:layout_constraintTop_toBottomOf="@id/guideline_top"
-            app:layout_constraintBottom_toTopOf="@id/guideline_bottom"
-            app:layout_constraintStart_toStartOf="@id/guideline_center"
-            app:layout_constraintEnd_toEndOf="@id/guideline_center"/>
-
-        <!-- Keeper Timer - Above Reset Button -->
+        <!-- Keeper Timer Interaction Target - Center -->
         <TextView
             android:id="@+id/keeperTimer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="KEEPER"
-            android:textSize="@dimen/wear_keeper_timer_text_size"
+            android:text="K"
+            android:textSize="14sp"
             android:fontFamily="sans-serif-condensed"
+            android:textStyle="bold"
             android:textColor="@color/graffiti_pink"
-            android:visibility="visible"
-            android:paddingVertical="2dp"
-            android:paddingHorizontal="8dp"
+            android:padding="8dp"
+            app:layout_constraintTop_toBottomOf="@id/matchTimer"
             app:layout_constraintBottom_toTopOf="@id/btn_start_new_match"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <!-- Reset Button - Bottom Center -->
         <Button
@@ -135,12 +134,12 @@
             android:textSize="@dimen/wear_button_text_size"
             android:minWidth="0dp"
             android:minHeight="0dp"
-            android:paddingVertical="2dp"
-            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:paddingHorizontal="12dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginBottom="2dp"/>
+            android:layout_marginBottom="12dp"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-</androidx.wear.widget.BoxInsetLayout>
+</FrameLayout>
