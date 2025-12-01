@@ -40,6 +40,7 @@ class WearViewModel(
     val team2Name = _team2Name.asStateFlow()
 
     private val connectionManager = OptimizedWearDataSync(application)
+    val connectionState = connectionManager.connectionState
 
     // Team Scores
     private val _team1Score = MutableStateFlow(0)

@@ -4,32 +4,41 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-  <group android:scaleX="2.8"
-      android:scaleY="2.8"
-      android:translateX="22"
-      android:translateY="22">
+    
+    <!-- Background Circle/Glow -->
+    <path
+        android:fillColor="#33FFFFFF"
+        android:pathData="M54,54 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0" />
+
     <group
-        android:translateX="-12"
-        android:translateY="-12">
-        <!-- V Shape with street vibe style -->
+        android:scaleX="1.2"
+        android:scaleY="1.2"
+        android:translateX="-10.8"
+        android:translateY="-10.8">
+        
+        <!-- V Shape - Spray Yellow - Bottom Layer -->
         <path
             android:fillColor="@color/team_spray_yellow"
-            android:pathData="M3,3 L9,3 L12,10 L15,3 L21,3 L13,21 L11,21 L3,3 Z" />
+            android:pathData="M30,30 L45,30 L54,55 L63,30 L78,30 L54,80 Z"
+            android:strokeWidth="2"
+            android:strokeColor="#000000"
+            android:strokeAlpha="0.5"/>
 
-        <!-- S Shape with street vibe style -->
+        <!-- S Shape - Electric Green - Top Layer -->
         <path
             android:fillColor="@color/team_electric_green"
-            android:pathData="M16,5 C13,5 12,6.5 12,8.5 C12,10.5 13,11.5 16,11.5 L18,11.5 L18,13.5 C18,16 17,17 15,17 C13,17 11,16.5 11,14 L8,14 C8,18 11,20 15,20 C19,20 21,18 21,13.5 L21,11.5 L21,8.5 C21,6 19,5 16,5 Z M16,8 C17.5,8 18,8.5 18,9.5 L16,9.5 C14.5,9.5 14,9 14,8.5 C14,7.5 14.5,7 16,7 C17.5,7 18,7.5 18,8.5" />
-        
-        <!-- Spray paint effect dots -->
+            android:pathData="M75,35 L75,50 L55,50 L55,55 L75,55 L75,80 L45,80 L45,65 L65,65 L65,60 L45,60 L45,35 Z"
+            android:strokeWidth="2"
+            android:strokeColor="#000000"
+            android:strokeAlpha="0.5"/>
+            
+        <!-- Graffiti Accents -->
         <path
             android:fillColor="@color/graffiti_pink"
-            android:pathData="M5.2,18 a0.8,0.8 0 1,0 1.6,0 a0.8,0.8 0 1,0 -1.6,0"
-            android:alpha="0.6"/>
+            android:pathData="M80,25 l5,0 l-2,10 l-5,0 Z" />
         <path
             android:fillColor="@color/neon_cyan"
-            android:pathData="M17.4,19 a0.6,0.6 0 1,0 1.2,0 a0.6,0.6 0 1,0 -1.2,0"
-            android:alpha="0.5"/>
+            android:pathData="M25,75 l10,-5 l0,5 Z" />
+            
     </group>
-  </group>
 </vector>

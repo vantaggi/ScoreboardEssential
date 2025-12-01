@@ -58,15 +58,44 @@ class MainActivity : ComponentActivity() {
             .registerReceiver(receiver, filter)
     }
 
+    private var lastTouchY = 0f
+
     private fun setupClickListeners() {
-        // Long press per incrementare/decrementare
-        binding.team1Container.setOnLongClickListener {
+        val touchListener = View.OnTouchListener { _, event ->
+            if (event.action == android.view.MotionEvent.ACTION_DOWN) {
+                lastTouchY = event.y
+            }
+            false
+        }
+
+        binding.team1Container.setOnTouchListener(touchListener)
+        binding.team2Container.setOnTouchListener(touchListener)
+
+        // Click per incrementare (comportamento standard)
+        binding.team1Container.setOnClickListener {
             viewModel.incrementTeam1Score()
+        }
+
+        binding.team2Container.setOnClickListener {
+            viewModel.incrementTeam2Score()
+        }
+
+        // Long press spaziale: Alto -> Incrementa, Basso -> Decrementa
+        binding.team1Container.setOnLongClickListener { v ->
+            if (lastTouchY < v.height / 2) {
+                viewModel.incrementTeam1Score()
+            } else {
+                viewModel.decrementTeam1Score()
+            }
             true
         }
 
-        binding.team2Container.setOnLongClickListener {
-            viewModel.incrementTeam2Score()
+        binding.team2Container.setOnLongClickListener { v ->
+            if (lastTouchY < v.height / 2) {
+                viewModel.incrementTeam2Score()
+            } else {
+                viewModel.decrementTeam2Score()
+            }
             true
         }
 
@@ -156,6 +185,31 @@ class MainActivity : ComponentActivity() {
                             intent.putExtra("team_number", it)
                             startActivity(intent)
                             viewModel.clearPlayerSelectionEvent()
+                        }
+                    }
+                }
+                // Observe Connection State
+                launch {
+                    viewModel.connectionState.collect { state ->
+                        when (state) {
+                            is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Connected -> {
+                                binding.connectionStatusIndicator.backgroundTintList =
+                                    android.content.res.ColorStateList.valueOf(
+                                        ContextCompat.getColor(
+                                            this@MainActivity,
+                                            R.color.team_electric_green,
+                                        ),
+                                    )
+                            }
+                            else -> {
+                                binding.connectionStatusIndicator.backgroundTintList =
+                                    android.content.res.ColorStateList.valueOf(
+                                        ContextCompat.getColor(
+                                            this@MainActivity,
+                                            R.color.error_red,
+                                        ),
+                                    )
+                            }
                         }
                     }
                 }

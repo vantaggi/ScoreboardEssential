@@ -90,33 +90,40 @@ class OptimizedWearDataSync(
         urgent: Boolean = false,
     ) {
         withContext(Dispatchers.IO) {
-            try {
-                val dataMap = DataMap()
-                data.forEach { (key, value) ->
-                    when (value) {
-                        is Int -> dataMap.putInt(key, value)
-                        is String -> dataMap.putString(key, value)
-                        is Boolean -> dataMap.putBoolean(key, value)
-                        is Long -> dataMap.putLong(key, value)
-                        is Double -> dataMap.putDouble(key, value)
-                        is Float -> dataMap.putFloat(key, value)
-                        // Add other types as needed
-                    }
-                }
-                dataMap.putLong(WearConstants.KEY_TIMESTAMP, System.currentTimeMillis())
-
-                val putDataRequest =
-                    PutDataRequest.create(path).apply {
-                        setData(dataMap.toByteArray())
-                        if (urgent) {
-                            setUrgent()
+            var attempt = 0
+            var success = false
+            while (attempt < WearConstants.MAX_RETRY_ATTEMPTS && !success) {
+                try {
+                    val putDataMapRequest = com.google.android.gms.wearable.PutDataMapRequest.create(path)
+                    val dataMap = putDataMapRequest.dataMap
+                    
+                    data.forEach { (key, value) ->
+                        when (value) {
+                            is Int -> dataMap.putInt(key, value)
+                            is String -> dataMap.putString(key, value)
+                            is Boolean -> dataMap.putBoolean(key, value)
+                            is Long -> dataMap.putLong(key, value)
+                            is Double -> dataMap.putDouble(key, value)
+                            is Float -> dataMap.putFloat(key, value)
                         }
                     }
+                    dataMap.putLong(WearConstants.KEY_TIMESTAMP, System.currentTimeMillis())
 
-                dataClient.putDataItem(putDataRequest).await()
-                Log.d(TAG, "Data sent successfully to path: $path")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to send data to path: $path", e)
+                    val putDataRequest = putDataMapRequest.asPutDataRequest()
+                    if (urgent) {
+                        putDataRequest.setUrgent()
+                    }
+
+                    dataClient.putDataItem(putDataRequest).await()
+                    Log.d(TAG, "Data sent successfully to path: $path")
+                    success = true
+                } catch (e: Exception) {
+                    attempt++
+                    Log.e(TAG, "Failed to send data to path: $path (Attempt $attempt/${WearConstants.MAX_RETRY_ATTEMPTS})", e)
+                    if (attempt < WearConstants.MAX_RETRY_ATTEMPTS) {
+                        delay(WearConstants.RETRY_DELAY_MS)
+                    }
+                }
             }
         }
     }

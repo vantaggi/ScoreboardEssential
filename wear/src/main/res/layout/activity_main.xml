@@ -46,6 +46,18 @@
             android:orientation="vertical"
             app:layout_constraintGuide_percent="0.5" />
 
+        <!-- Connection Status Indicator -->
+        <View
+            android:id="@+id/connectionStatusIndicator"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:background="@drawable/shape_circle"
+            android:backgroundTint="@color/error_red"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="4dp" />
+
         <!-- Match Timer - Top Center -->
         <TextView
             android:id="@+id/matchTimer"
@@ -73,11 +85,16 @@
 
             <TextView
                 android:id="@+id/team1Score"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
                 android:text="0"
-                android:textSize="@dimen/wear_score_text_size"
+                android:maxLines="1"
+                android:includeFontPadding="false"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="12sp"
+                android:autoSizeMaxTextSize="100sp"
+                android:autoSizeStepGranularity="2sp"
                 android:fontFamily="sans-serif-condensed"
                 android:textStyle="bold"
                 android:textColor="@color/team_spray_yellow"/>
@@ -95,11 +112,16 @@
 
             <TextView
                 android:id="@+id/team2Score"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
                 android:text="0"
-                android:textSize="@dimen/wear_score_text_size"
+                android:maxLines="1"
+                android:includeFontPadding="false"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="12sp"
+                android:autoSizeMaxTextSize="100sp"
+                android:autoSizeStepGranularity="2sp"
                 android:fontFamily="sans-serif-condensed"
                 android:textStyle="bold"
                 android:textColor="@color/team_electric_green"/>
