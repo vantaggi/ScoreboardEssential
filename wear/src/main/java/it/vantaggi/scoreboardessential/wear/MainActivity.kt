@@ -48,11 +48,50 @@ class MainActivity : ComponentActivity() {
                                 )
                             viewModel.updateScoresFromMobile(team1, team2)
                         }
+                        WearDataLayerService.ACTION_TEAM_NAMES_UPDATE -> {
+                            val team1Name = intent.getStringExtra(WearDataLayerService.EXTRA_TEAM1_NAME) ?: "Team 1"
+                            val team2Name = intent.getStringExtra(WearDataLayerService.EXTRA_TEAM2_NAME) ?: "Team 2"
+                            viewModel.setTeamNames(team1Name, team2Name)
+                        }
+                        WearDataLayerService.ACTION_TEAM_COLOR_UPDATE -> {
+                            val teamId = intent.getIntExtra(WearDataLayerService.EXTRA_TEAM_ID, 0)
+                            val color = intent.getIntExtra(WearDataLayerService.EXTRA_COLOR, 0)
+                            if (teamId > 0) {
+                                viewModel.setTeamColor(teamId, color)
+                            }
+                        }
+                        WearDataLayerService.ACTION_TIMER_UPDATE -> {
+                            val millis = intent.getLongExtra(WearDataLayerService.EXTRA_TIMER_MILLIS, 0L)
+                            viewModel.setMatchTimerMillis(millis)
+                        }
+                        WearDataLayerService.ACTION_KEEPER_TIMER_UPDATE -> {
+                            val millis = intent.getLongExtra(WearDataLayerService.EXTRA_KEEPER_MILLIS, 0L)
+                            val isRunning = intent.getBooleanExtra(WearDataLayerService.EXTRA_KEEPER_RUNNING, false)
+                            if (isRunning) {
+                                viewModel.setKeeperTimerState(KeeperTimerState.Running((millis / 1000).toInt()))
+                            } else {
+                                viewModel.resetKeeperTimer()
+                            }
+                        }
+                        WearDataLayerService.ACTION_MATCH_STATE_UPDATE -> {
+                            val isActive = intent.getBooleanExtra(WearDataLayerService.EXTRA_MATCH_ACTIVE, true)
+                            if (!isActive) {
+                                viewModel.resetMatch()
+                            }
+                        }
                     }
                 }
             }
 
-        val filter = android.content.IntentFilter(WearDataLayerService.ACTION_SCORE_UPDATE)
+        val filter =
+            android.content.IntentFilter().apply {
+                addAction(WearDataLayerService.ACTION_SCORE_UPDATE)
+                addAction(WearDataLayerService.ACTION_TEAM_NAMES_UPDATE)
+                addAction(WearDataLayerService.ACTION_TEAM_COLOR_UPDATE)
+                addAction(WearDataLayerService.ACTION_TIMER_UPDATE)
+                addAction(WearDataLayerService.ACTION_KEEPER_TIMER_UPDATE)
+                addAction(WearDataLayerService.ACTION_MATCH_STATE_UPDATE)
+            }
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(this)
             .registerReceiver(receiver, filter)
@@ -136,6 +175,19 @@ class MainActivity : ComponentActivity() {
                 launch {
                     viewModel.team2Score.collect { score ->
                         binding.team2Score.text = score.toString()
+                    }
+                }
+
+                // Observe Team Colors
+                launch {
+                    viewModel.team1Color.collect { color ->
+                        color?.let { binding.team1Container.setBackgroundColor(it) }
+                    }
+                }
+
+                launch {
+                    viewModel.team2Color.collect { color ->
+                        color?.let { binding.team2Container.setBackgroundColor(it) }
                     }
                 }
 

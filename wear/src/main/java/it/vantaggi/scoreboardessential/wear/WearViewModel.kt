@@ -39,6 +39,12 @@ class WearViewModel(
     private val _team2Name = MutableStateFlow("TEAM 2")
     val team2Name = _team2Name.asStateFlow()
 
+    // Team Colors
+    private val _team1Color = MutableStateFlow<Int?>(null)
+    val team1Color = _team1Color.asStateFlow()
+    private val _team2Color = MutableStateFlow<Int?>(null)
+    val team2Color = _team2Color.asStateFlow()
+
     private val connectionManager = OptimizedWearDataSync(application)
     val connectionState = connectionManager.connectionState
 
@@ -105,6 +111,14 @@ class WearViewModel(
         _team2Name.value = team2Name
     }
 
+    fun setTeamColor(team: Int, color: Int) {
+        if (team == 1) {
+            _team1Color.value = color
+        } else {
+            _team2Color.value = color
+        }
+    }
+
     fun setScores(
         team1Score: Int,
         team2Score: Int,
@@ -165,6 +179,13 @@ class WearViewModel(
     fun setMatchTimer(time: String) {
         matchTimerJob?.cancel() // Stop the internal timer
         _matchTimer.value = time
+    }
+
+    fun setMatchTimerMillis(millis: Long) {
+        matchTimerJob?.cancel() // Stop internal timer if we get an update from mobile
+        val minutes = (millis / 1000) / 60
+        val seconds = (millis / 1000) % 60
+        _matchTimer.value = String.format("%02d:%02d", minutes, seconds)
     }
 
     // --- Keeper Timer Management ---

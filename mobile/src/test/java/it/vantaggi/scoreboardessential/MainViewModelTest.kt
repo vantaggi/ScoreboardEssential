@@ -1,17 +1,5 @@
 package it.vantaggi.scoreboardessential
 
-import org.junit.Ignore
-import org.junit.Test
-
-class MainViewModelTest {
-    @Test
-    @Ignore("Dependencies missing")
-    fun dummy() {
-    }
-}
-
-/*
-// TODO: Fix this test. The ScoreUpdateEventBus class is missing from the project.
 import android.app.Application
 import android.graphics.Color
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
@@ -22,8 +10,6 @@ import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
-import it.vantaggi.scoreboardessential.utils.ScoreUpdateEventBus
-import it.vantaggi.scoreboardessential.utils.TimerEvent
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -122,65 +108,6 @@ class MainViewModelTest {
         assertEquals(color, viewModel.team2Color.value)
         viewModel.team2Color.removeObserver(colorObserver)
     }
-
-    @Test
-    fun `timer event Start starts match timer`() =
-        runTest {
-            // Arrange
-            val timerObserver = Observer<Long> {}
-            viewModel.matchTimerValue.observeForever(timerObserver)
-
-            // Act
-            ScoreUpdateEventBus.postTimerEvent(TimerEvent.Start)
-            advanceTimeBy(1000) // Advance time to allow the timer to tick
-            advanceUntilIdle()
-
-            // Assert
-            assert(viewModel.matchTimerValue.value!! > 0)
-            viewModel.matchTimerValue.removeObserver(timerObserver)
-        }
-
-    @Test
-    fun `timer event Pause pauses match timer`() =
-        runTest {
-            // Arrange
-            val timerObserver = Observer<Long> {}
-            viewModel.matchTimerValue.observeForever(timerObserver)
-
-            viewModel.startStopMatchTimer() // Start it first
-            advanceTimeBy(1000)
-            advanceUntilIdle()
-            val timeWhenPaused = viewModel.matchTimerValue.value
-
-            // Act
-            ScoreUpdateEventBus.postTimerEvent(TimerEvent.Pause)
-            advanceTimeBy(1000)
-            advanceUntilIdle()
-
-            // Assert
-            assertEquals(timeWhenPaused, viewModel.matchTimerValue.value)
-            viewModel.matchTimerValue.removeObserver(timerObserver)
-        }
-
-    @Test
-    fun `timer event Reset resets match timer`() =
-        runTest {
-            // Arrange
-            val timerObserver = Observer<Long> {}
-            viewModel.matchTimerValue.observeForever(timerObserver)
-
-            viewModel.startStopMatchTimer() // Start it first
-            advanceTimeBy(1000)
-            advanceUntilIdle()
-
-            // Act
-            ScoreUpdateEventBus.postTimerEvent(TimerEvent.Reset)
-            advanceUntilIdle()
-
-            // Assert
-            assertEquals(0L, viewModel.matchTimerValue.value)
-            viewModel.matchTimerValue.removeObserver(timerObserver)
-        }
 
     @Test
     fun `service should unbind correctly on viewmodel clear`() {
@@ -379,7 +306,17 @@ class MainViewModelTest {
     @Test
     fun `startStopMatchTimer calls startTimer when timer is not running`() {
         // Arrange
-        `when`(viewModel.isMatchTimerRunning.value).thenReturn(false)
+        // Mock the internal live data or service behavior
+        val isRunningLiveData = androidx.lifecycle.MutableLiveData<Boolean>()
+        isRunningLiveData.value = false
+        `when`(mockMatchTimerService.isMatchTimerRunning).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(false))
+
+        // We also need to manipulate the ViewModel's internal LiveData which mirrors the service state
+        // Reflection to set _isMatchTimerRunning
+        val isMatchTimerRunningField = viewModel.javaClass.getDeclaredField("_isMatchTimerRunning")
+        isMatchTimerRunningField.isAccessible = true
+        val mutableLiveData = isMatchTimerRunningField.get(viewModel) as androidx.lifecycle.MutableLiveData<Boolean>
+        mutableLiveData.postValue(false)
 
         // Act
         viewModel.startStopMatchTimer()
@@ -396,6 +333,8 @@ class MainViewModelTest {
         val mutableLiveData = isMatchTimerRunningField.get(viewModel) as androidx.lifecycle.MutableLiveData<Boolean>
         mutableLiveData.postValue(true)
 
+        `when`(mockMatchTimerService.isMatchTimerRunning).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(true))
+
         // Act
         viewModel.startStopMatchTimer()
 
@@ -409,7 +348,7 @@ class MainViewModelTest {
         viewModel.resetMatchTimer()
 
         // Assert
-        verify(mockMatchTimerService).stopTimer()
+        verify(mockMatchTimerService).resetTimer()
     }
 
     @Test
@@ -468,4 +407,3 @@ class MainViewModelTest {
             viewModel.matchEvents.removeObserver(eventsObserver)
         }
 }
-*/

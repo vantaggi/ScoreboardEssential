@@ -149,7 +149,12 @@ class MainViewModel(
                         val millis = intent.getLongExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_MILLIS, 0L)
                         val running = intent.getBooleanExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_RUNNING, false)
                         Log.d("VM", "📥 Timer from Wear: $millis ms, running=$running")
-                        // Aggiorna timer
+                        // If we receive a timer update from wear, we might want to sync our service?
+                        // But usually Wear is a client. If Wear is controlling the timer (e.g. user taps on watch),
+                        // we should update our service state.
+                        if (running != (_isMatchTimerRunning.value ?: false)) {
+                            startStopMatchTimer()
+                        }
                     }
                 }
             }
