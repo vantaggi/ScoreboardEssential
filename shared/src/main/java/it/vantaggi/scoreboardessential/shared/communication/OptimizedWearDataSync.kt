@@ -5,10 +5,9 @@ import android.util.Log
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.NodeClient
-import com.google.android.gms.wearable.PutDataRequest
+import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -94,9 +93,9 @@ class OptimizedWearDataSync(
             var success = false
             while (attempt < WearConstants.MAX_RETRY_ATTEMPTS && !success) {
                 try {
-                    val putDataMapRequest = com.google.android.gms.wearable.PutDataMapRequest.create(path)
+                    val putDataMapRequest = PutDataMapRequest.create(path)
                     val dataMap = putDataMapRequest.dataMap
-                    
+
                     data.forEach { (key, value) ->
                         when (value) {
                             is Int -> dataMap.putInt(key, value)
