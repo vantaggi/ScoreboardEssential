@@ -190,6 +190,16 @@ class WearViewModel(
 
     // --- Keeper Timer Management ---
     fun setKeeperTimerState(newState: KeeperTimerState) {
+        // Prevent restarting the timer if the state is basically the same
+        val currentState = _keeperTimer.value
+        if (currentState is KeeperTimerState.Running && newState is KeeperTimerState.Running) {
+            val diff = kotlin.math.abs(currentState.secondsRemaining - newState.secondsRemaining)
+            if (diff < 2) {
+                // Ignore update if difference is less than 2 seconds to avoid jitter
+                return
+            }
+        }
+
         keeperCountDownTimer?.cancel()
         vibrator?.cancel()
         _keeperTimer.value = newState
