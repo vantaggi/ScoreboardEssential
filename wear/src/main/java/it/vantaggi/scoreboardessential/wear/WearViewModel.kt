@@ -111,7 +111,10 @@ class WearViewModel(
         _team2Name.value = team2Name
     }
 
-    fun setTeamColor(team: Int, color: Int) {
+    fun setTeamColor(
+        team: Int,
+        color: Int,
+    ) {
         if (team == 1) {
             _team1Color.value = color
         } else {
