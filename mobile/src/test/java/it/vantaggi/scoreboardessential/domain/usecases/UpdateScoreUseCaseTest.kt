@@ -1,18 +1,7 @@
 package it.vantaggi.scoreboardessential.domain.usecases
 
-import org.junit.Ignore
-import org.junit.Test
-
-class UpdateScoreUseCaseTest {
-    @Test
-    @Ignore("UseCase missing")
-    fun dummy() {
-    }
-}
-
-/*
-// TODO: Fix this test. The UpdateScoreUseCase class is missing from the project.
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -21,6 +10,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 
@@ -65,7 +55,16 @@ class UpdateScoreUseCaseTest {
             useCase.incrementScore(1)
 
 // Then
-            verify(wearDataSync).syncScores(1, 0, urgent = true)
+            val expectedData =
+                mapOf(
+                    WearConstants.KEY_TEAM1_SCORE to 1,
+                    WearConstants.KEY_TEAM2_SCORE to 0,
+                )
+            verify(wearDataSync).sendData(
+                eq(WearConstants.PATH_SCORE),
+                eq(expectedData),
+                eq(true),
+            )
         }
 
     @Test
@@ -83,4 +82,3 @@ class UpdateScoreUseCaseTest {
             assertEquals(0, useCase.scoreState.first().team2Score)
         }
 }
-*/
