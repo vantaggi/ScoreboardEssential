@@ -164,6 +164,18 @@ class OptimizedWearDataSync(
         }
     }
 
+    suspend fun syncTeamPlayers(
+        team1Players: String,
+        team2Players: String,
+    ) {
+        val data =
+            mapOf(
+                WearConstants.KEY_TEAM1_PLAYERS to team1Players,
+                WearConstants.KEY_TEAM2_PLAYERS to team2Players,
+            )
+        sendData(WearConstants.PATH_TEAM_PLAYERS, data)
+    }
+
     fun cleanup() {
         coroutineScope.cancel()
     }

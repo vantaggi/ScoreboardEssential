@@ -100,12 +100,13 @@ class MainActivity : ComponentActivity() {
     private var lastTouchY = 0f
 
     private fun setupClickListeners() {
-        val touchListener = View.OnTouchListener { _, event ->
-            if (event.action == android.view.MotionEvent.ACTION_DOWN) {
-                lastTouchY = event.y
+        val touchListener =
+            View.OnTouchListener { _, event ->
+                if (event.action == android.view.MotionEvent.ACTION_DOWN) {
+                    lastTouchY = event.y
+                }
+                false
             }
-            false
-        }
 
         binding.team1Container.setOnTouchListener(touchListener)
         binding.team2Container.setOnTouchListener(touchListener)
