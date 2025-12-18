@@ -26,4 +26,15 @@
     <!-- Onboarding Step 3: Wear OS Sync -->
     <string name="onboarding_wear_title">SYNC WITH WEAR OS</string>
     <string name="onboarding_wear_description">Stay connected. Your score and timers are always synced with your Wear OS smartwatch.</string>
+
+    <!-- Accessibility -->
+    <string name="cd_decrease_team_1">Decrease Team 1 score</string>
+    <string name="cd_increase_team_1">Increase Team 1 score</string>
+    <string name="cd_decrease_team_2">Decrease Team 2 score</string>
+    <string name="cd_increase_team_2">Increase Team 2 score</string>
+    <string name="cd_edit_team_1_name">Edit Team 1 name</string>
+    <string name="cd_edit_team_2_name">Edit Team 2 name</string>
+    <string name="cd_manage_players">Manage Players</string>
+    <string name="cd_settings">Settings</string>
+    <string name="cd_wear_status">Wear OS Connection Status</string>
 </resources>
