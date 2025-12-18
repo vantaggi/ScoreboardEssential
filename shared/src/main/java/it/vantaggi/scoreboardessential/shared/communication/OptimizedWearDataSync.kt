@@ -16,7 +16,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -46,6 +45,11 @@ class OptimizedWearDataSync(
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     val connectionState = _connectionState.asStateFlow()
 
+    private val capabilityListener =
+        CapabilityClient.OnCapabilityChangedListener {
+            updateConnectedNodes()
+        }
+
     companion object {
         private const val TAG = "OptimizedWearDataSync"
     }
@@ -55,30 +59,32 @@ class OptimizedWearDataSync(
     }
 
     private fun startMonitoring() {
-        coroutineScope.launch {
-            while (isActive) {
-                try {
-                    val nodes =
-                        capabilityClient
-                            .getCapability(WearConstants.CAPABILITY_SCOREBOARD_APP, CapabilityClient.FILTER_REACHABLE)
-                            .await()
-                            .nodes
+        capabilityClient.addListener(capabilityListener, WearConstants.CAPABILITY_SCOREBOARD_APP)
+        updateConnectedNodes()
+    }
 
-                    if (nodes.isNotEmpty()) {
-                        _connectionState.value = ConnectionState.Connected(nodes.size)
-                        Log.d(TAG, "Connected to ${nodes.size} nodes: ${nodes.joinToString { it.displayName }}")
-                    } else {
-                        _connectionState.value = ConnectionState.Disconnected
-                        Log.d(TAG, "No connected nodes found.")
-                    }
-                } catch (e: ApiException) {
-                    _connectionState.value = ConnectionState.Error("API Exception: ${e.message}")
-                    Log.e(TAG, "Error monitoring connection", e)
-                } catch (e: Exception) {
-                    _connectionState.value = ConnectionState.Error("Generic error: ${e.message}")
-                    Log.e(TAG, "An unexpected error occurred", e)
+    private fun updateConnectedNodes() {
+        coroutineScope.launch {
+            try {
+                val nodes =
+                    capabilityClient
+                        .getCapability(WearConstants.CAPABILITY_SCOREBOARD_APP, CapabilityClient.FILTER_REACHABLE)
+                        .await()
+                        .nodes
+
+                if (nodes.isNotEmpty()) {
+                    _connectionState.value = ConnectionState.Connected(nodes.size)
+                    Log.d(TAG, "Connected to ${nodes.size} nodes: ${nodes.joinToString { it.displayName }}")
+                } else {
+                    _connectionState.value = ConnectionState.Disconnected
+                    Log.d(TAG, "No connected nodes found.")
                 }
-                delay(5000) // Check every 5 seconds
+            } catch (e: ApiException) {
+                _connectionState.value = ConnectionState.Error("API Exception: ${e.message}")
+                Log.e(TAG, "Error monitoring connection", e)
+            } catch (e: Exception) {
+                _connectionState.value = ConnectionState.Error("Generic error: ${e.message}")
+                Log.e(TAG, "An unexpected error occurred", e)
             }
         }
     }
@@ -177,6 +183,7 @@ class OptimizedWearDataSync(
     }
 
     fun cleanup() {
+        capabilityClient.removeListener(capabilityListener)
         coroutineScope.cancel()
     }
 }
