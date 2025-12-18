@@ -16,7 +16,7 @@ import org.robolectric.annotation.Config
 import java.io.IOException
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.P])
+@Config(sdk = [34])
 class PlayerRepositoryTest {
     private lateinit var db: AppDatabase
     private lateinit var playerDao: PlayerDao

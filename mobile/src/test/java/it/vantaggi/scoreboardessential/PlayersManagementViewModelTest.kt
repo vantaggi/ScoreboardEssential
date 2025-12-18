@@ -17,6 +17,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
+import androidx.test.core.app.ApplicationProvider
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.ArgumentCaptor
@@ -170,17 +171,18 @@ class PlayersManagementViewModelTest {
             val roleIds = listOf(roleForward.roleId)
             viewModel.createPlayer(playerName, roleIds)
 
-            // We need to capture the arguments passed to the repository mock
-            val playerCaptor = ArgumentCaptor.forClass(Player::class.java)
-            val rolesCaptor = ArgumentCaptor.forClass(List::class.java) as ArgumentCaptor<List<Int>>
-
             // Advance the dispatcher to allow the coroutine in createPlayer to execute
             testDispatcher.scheduler.advanceUntilIdle()
 
-            verify(playerRepository).insertPlayerWithRoles(playerCaptor.capture(), rolesCaptor.capture())
-
-            assertEquals(playerName, playerCaptor.value.playerName)
-            assertEquals(roleIds, rolesCaptor.value)
+            // Use argument checking instead of capturing for nullable safety
+            verify(playerRepository).insertPlayerWithRoles(
+                org.mockito.kotlin.check {
+                    assertEquals(playerName, it.playerName)
+                },
+                org.mockito.kotlin.check {
+                    assertEquals(roleIds, it)
+                }
+            )
         }
 
     @Test
