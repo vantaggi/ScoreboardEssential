@@ -1,0 +1,201 @@
+> Task :mobile:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :mobile:preBuild UP-TO-DATE
+> Task :mobile:preDebugBuild UP-TO-DATE
+> Task :mobile:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :mobile:generateDebugResValues UP-TO-DATE
+> Task :mobile:generateDebugResources UP-TO-DATE
+> Task :shared:preBuild UP-TO-DATE
+> Task :shared:preDebugBuild UP-TO-DATE
+> Task :shared:generateDebugResValues UP-TO-DATE
+> Task :shared:generateDebugResources UP-TO-DATE
+> Task :shared:packageDebugResources UP-TO-DATE
+> Task :mobile:mergeDebugResources UP-TO-DATE
+> Task :mobile:packageDebugResources UP-TO-DATE
+> Task :mobile:parseDebugLocalResources UP-TO-DATE
+> Task :shared:parseDebugLocalResources UP-TO-DATE
+> Task :shared:generateDebugRFile UP-TO-DATE
+> Task :mobile:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :mobile:dataBindingTriggerDebug UP-TO-DATE
+> Task :shared:writeDebugAarMetadata UP-TO-DATE
+> Task :mobile:checkDebugAarMetadata UP-TO-DATE
+> Task :mobile:mapDebugSourceSetPaths UP-TO-DATE
+> Task :mobile:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :mobile:extractDeepLinksDebug UP-TO-DATE
+> Task :shared:extractDeepLinksDebug UP-TO-DATE
+> Task :shared:processDebugManifest UP-TO-DATE
+> Task :mobile:processDebugMainManifest UP-TO-DATE
+> Task :mobile:processDebugManifest UP-TO-DATE
+> Task :mobile:processDebugManifestForPackage UP-TO-DATE
+> Task :shared:compileDebugLibraryResources UP-TO-DATE
+> Task :mobile:processDebugResources UP-TO-DATE
+> Task :shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:compileDebugKotlin UP-TO-DATE
+> Task :shared:javaPreCompileDebug UP-TO-DATE
+> Task :shared:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :mobile:kspDebugKotlin UP-TO-DATE
+> Task :mobile:compileDebugKotlin UP-TO-DATE
+> Task :mobile:javaPreCompileDebug UP-TO-DATE
+> Task :mobile:compileDebugJavaWithJavac UP-TO-DATE
+> Task :mobile:bundleDebugClassesToRuntimeJar UP-TO-DATE
+> Task :mobile:bundleDebugClassesToCompileJar UP-TO-DATE
+> Task :mobile:preDebugUnitTestBuild UP-TO-DATE
+> Task :mobile:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :mobile:mergeDebugShaders UP-TO-DATE
+> Task :mobile:compileDebugShaders NO-SOURCE
+> Task :mobile:generateDebugAssets UP-TO-DATE
+> Task :shared:mergeDebugShaders UP-TO-DATE
+> Task :shared:compileDebugShaders NO-SOURCE
+> Task :shared:generateDebugAssets UP-TO-DATE
+> Task :shared:packageDebugAssets UP-TO-DATE
+> Task :mobile:mergeDebugAssets UP-TO-DATE
+> Task :mobile:packageDebugUnitTestForUnitTest UP-TO-DATE
+> Task :mobile:generateDebugUnitTestConfig UP-TO-DATE
+> Task :mobile:processDebugJavaRes UP-TO-DATE
+> Task :shared:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:processDebugJavaRes UP-TO-DATE
+> Task :mobile:kspDebugUnitTestKotlin
+> Task :mobile:compileDebugUnitTestKotlin
+> Task :mobile:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :mobile:processDebugUnitTestJavaRes UP-TO-DATE
+
+> Task :mobile:testDebugUnitTest
+
+it.vantaggi.scoreboardessential.MainActivityLayoutTest > clicking team name should show TeamNameDialogFragment FAILED
+    java.lang.NullPointerException at MainActivityLayoutTest.kt:62
+
+it.vantaggi.scoreboardessential.MainActivityLayoutTest > score section should adapt to different screen sizes FAILED
+    java.lang.RuntimeException at MainActivityLayoutTest.kt:37
+
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+
+> Task :mobile:testDebugUnitTest
+
+it.vantaggi.scoreboardessential.MainViewModelTest > setTeam1Name updates team1Name LiveData PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > service should unbind correctly on viewmodel clear PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > resetMatchTimer calls stopTimer PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > resetKeeperTimer calls resetKeeperTimer on service PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > subtractTeam2Score does not show scorer dialog PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > subtractTeam2Score decrements score when greater than zero PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > endMatch resets scores and stops timer FAILED
+    junit.framework.AssertionFailedError at MainViewModelTest.kt:395
+
+it.vantaggi.scoreboardessential.MainViewModelTest > subtractTeam2Score does not decrement score when zero PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > addTeam1Score increments score and shows scorer dialog PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > setTeam2Name updates team2Name LiveData PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > subtractTeam1Score decrements score when greater than zero PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > setTeam2Color updates team2Color LiveData PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > startStopMatchTimer calls pauseTimer when timer is running PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > startStopMatchTimer calls startTimer when timer is not running PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > subtractTeam1Score does not decrement score when zero PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > startKeeperTimer calls startKeeperTimer on service PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > addTeam2Score increments score and shows scorer dialog PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > setTeam1Color updates team1Color LiveData PASSED
+
+it.vantaggi.scoreboardessential.MainViewModelTest > subtractTeam1Score does not show scorer dialog PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.ManagePlayersUseCaseTest > removePlayerFromTeam removes player from team 1 PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.ManagePlayersUseCaseTest > removePlayerFromTeam removes player from team 2 PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.ManagePlayersUseCaseTest > addPlayerToTeam does not add duplicate player PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.ManagePlayersUseCaseTest > addPlayerToTeam adds player to team 1 PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.ManagePlayersUseCaseTest > addPlayerToTeam adds player to team 2 PASSED
+
+it.vantaggi.scoreboardessential.ExampleUnitTest > addition_isCorrect PASSED
+
+it.vantaggi.scoreboardessential.PlayersManagementViewModelTest > sortByAppearances sorts players by appearances descending PASSED
+
+it.vantaggi.scoreboardessential.PlayersManagementViewModelTest > createPlayer calls repository's insertPlayerWithRoles PASSED
+
+it.vantaggi.scoreboardessential.PlayersManagementViewModelTest > sortByName sorts players alphabetically PASSED
+
+it.vantaggi.scoreboardessential.PlayersManagementViewModelTest > setRoleFilter shows only players with the selected role PASSED
+
+it.vantaggi.scoreboardessential.PlayersManagementViewModelTest > setRoleFilter with non-matching role returns empty list PASSED
+
+it.vantaggi.scoreboardessential.PlayersManagementViewModelTest > sortByGoals sorts players by goals descending PASSED
+
+it.vantaggi.scoreboardessential.PlayersManagementViewModelTest > deletePlayer calls repository's deletePlayer PASSED
+
+it.vantaggi.scoreboardessential.PlayersManagementViewModelTest > setRoleFilter with null shows all players PASSED
+
+it.vantaggi.scoreboardessential.database.DatabaseMigrationTest > migrate8To9_containsCorrectIndices SKIPPED
+
+it.vantaggi.scoreboardessential.database.PlayerRepositoryTest > updatePlayerWithRoles_updatesNameAndChangesRoles PASSED
+
+it.vantaggi.scoreboardessential.database.PlayerRepositoryTest > deletePlayer_removesPlayerAndAssociations PASSED
+
+it.vantaggi.scoreboardessential.database.PlayerRepositoryTest > insertPlayerWithRoles_insertsPlayerAndRolesCorrectly PASSED
+
+it.vantaggi.scoreboardessential.domain.models.FormationTest > getFormationString returns correct format PASSED
+
+it.vantaggi.scoreboardessential.domain.models.FormationTest > isValid returns true when has goalkeeper PASSED
+
+it.vantaggi.scoreboardessential.domain.models.FormationTest > isValid returns false when no goalkeeper PASSED
+
+it.vantaggi.scoreboardessential.domain.models.FormationTest > fromPlayers groups players by role category correctly PASSED
+
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+
+> Task :mobile:testDebugUnitTest
+
+it.vantaggi.scoreboardessential.domain.usecases.ManageTimerUseCaseTest > startOrPauseTimer starts timer when not running PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.ManageTimerUseCaseTest > updateTimerValue updates timeMillis PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.ManageTimerUseCaseTest > resetTimer stops timer and resets state PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.ManageTimerUseCaseTest > setTimerRunning updates isRunning PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.ManageTimerUseCaseTest > startOrPauseTimer pauses timer when running PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.UpdateScoreUseCaseTest > incrementScore syncs with Wear PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.UpdateScoreUseCaseTest > incrementScore for team 1 increases score by 1 PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.UpdateScoreUseCaseTest > resetScores sets both scores to zero PASSED
+
+it.vantaggi.scoreboardessential.domain.usecases.UpdateScoreUseCaseTest > decrementScore does not go below zero PASSED
+
+it.vantaggi.scoreboardessential.repository.UserPreferencesRepositoryTest > hasSeenTutorial flow emits new value when preference changes PASSED
+
+it.vantaggi.scoreboardessential.repository.UserPreferencesRepositoryTest > hasSeenTutorial returns false by default PASSED
+
+it.vantaggi.scoreboardessential.repository.UserPreferencesRepositoryTest > setHasSeenTutorial updates the preference PASSED
+
+it.vantaggi.scoreboardessential.repository.UserPreferencesRepositoryTest > hasSeenTutorial returns true after being set PASSED
+
+56 tests completed, 3 failed, 1 skipped
+
+> Task :mobile:testDebugUnitTest FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':mobile:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///app/mobile/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 30s
+48 actionable tasks: 3 executed, 45 up-to-date

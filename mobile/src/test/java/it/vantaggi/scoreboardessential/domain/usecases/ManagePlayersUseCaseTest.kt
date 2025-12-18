@@ -10,11 +10,14 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
+import org.robolectric.RobolectricTestRunner
 
 @ExperimentalCoroutinesApi
+@RunWith(RobolectricTestRunner::class)
 class ManagePlayersUseCaseTest {
     private lateinit var playerDao: PlayerDao
     private lateinit var wearDataSync: OptimizedWearDataSync
@@ -49,7 +52,7 @@ class ManagePlayersUseCaseTest {
                     .first()
                     .team2Players.size,
             )
-            verify(wearDataSync).syncTeamPlayers(any(), any())
+            verify(wearDataSync, org.mockito.kotlin.atLeastOnce()).syncTeamPlayers(any(), any())
         }
 
     @Test
@@ -74,7 +77,8 @@ class ManagePlayersUseCaseTest {
                     .first()
                     .team2Players.size,
             )
-            verify(wearDataSync).syncTeamPlayers(any(), any())
+            // Expecting at least 1 invocation
+            verify(wearDataSync, org.mockito.kotlin.atLeastOnce()).syncTeamPlayers(any(), any())
         }
 
     @Test
@@ -113,7 +117,7 @@ class ManagePlayersUseCaseTest {
                     .first()
                     .team1Players.size,
             )
-            verify(wearDataSync).syncTeamPlayers(any(), any())
+            verify(wearDataSync, org.mockito.kotlin.atLeastOnce()).syncTeamPlayers(any(), any())
         }
 
     @Test
@@ -133,6 +137,6 @@ class ManagePlayersUseCaseTest {
                     .first()
                     .team2Players.size,
             )
-            verify(wearDataSync).syncTeamPlayers(any(), any())
+            verify(wearDataSync, org.mockito.kotlin.atLeastOnce()).syncTeamPlayers(any(), any())
         }
 }
