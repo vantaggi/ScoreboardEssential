@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card_player_stat"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardBackgroundColor="@color/graffiti_dark_gray"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:shapeAppearanceOverlay="@style/ShapeAppearance.App.StreetCard">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/text_rank"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:text="#1"
+            android:textColor="@color/graffiti_pink"
+            android:textSize="24sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/text_player_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-condensed-medium"
+            android:maxLines="1"
+            android:textAllCaps="true"
+            android:textColor="@color/stencil_white"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toStartOf="@+id/text_goals"
+            app:layout_constraintStart_toEndOf="@+id/text_rank"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="MARIO ROSSI" />
+
+        <TextView
+            android:id="@+id/text_appearances"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-condensed"
+            android:textColor="@color/sidewalk_gray"
+            android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="@+id/text_player_name"
+            app:layout_constraintTop_toBottomOf="@+id/text_player_name"
+            tools:text="15 Presenze" />
+
+        <TextView
+            android:id="@+id/text_goals"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:textColor="@color/team_electric_green"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="12 Gol" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

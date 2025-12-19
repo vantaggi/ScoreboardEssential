@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="asphalt_black">#000000</color>
     <color name="asphalt_dark">#121212</color>
     <color name="concrete_gray">#1E1E1E</color>
+    <color name="graffiti_dark_gray">#2C2C2C</color>
     <color name="stencil_white">#E0E0E0</color>
     <color name="sidewalk_gray">#9E9E9E</color>
     <color name="graffiti_pink">#F50057</color>

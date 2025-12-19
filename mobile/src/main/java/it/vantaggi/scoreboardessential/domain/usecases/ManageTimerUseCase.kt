@@ -9,12 +9,12 @@ import kotlinx.coroutines.flow.combine
 class ManageTimerUseCase(
     private val timerService: MatchTimerService,
     @Suppress("unused")
-    private val wearDataSync: OptimizedWearDataSync
+    private val wearDataSync: OptimizedWearDataSync,
 ) {
     val timerState: Flow<TimerState> =
         combine(
             timerService.isMatchTimerRunning,
-            timerService.matchTimerValue
+            timerService.matchTimerValue,
         ) { isRunning, timeMillis ->
             TimerState(isRunning, timeMillis)
         }

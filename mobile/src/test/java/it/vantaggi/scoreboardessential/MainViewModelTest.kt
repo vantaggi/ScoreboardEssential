@@ -4,6 +4,7 @@ import android.app.Application
 import android.graphics.Color
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
+import androidx.test.core.app.ApplicationProvider
 import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
@@ -12,6 +13,7 @@ import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
+import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,7 +26,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
-import androidx.test.core.app.ApplicationProvider
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.atLeastOnce
@@ -37,7 +38,6 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import java.lang.reflect.Field
-import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
@@ -82,10 +82,11 @@ class MainViewModelTest {
         // Inject mock PlayerDao and MatchDao
         val playerDaoField = MainViewModel::class.java.getDeclaredField("playerDao")
         playerDaoField.isAccessible = true
-        val mockPlayerDao = mock(PlayerDao::class.java).apply {
-            // Mock getAllPlayers to return empty flow to avoid NPEs if used
-            `when`(getAllPlayers()).thenReturn(kotlinx.coroutines.flow.flowOf(emptyList()))
-        }
+        val mockPlayerDao =
+            mock(PlayerDao::class.java).apply {
+                // Mock getAllPlayers to return empty flow to avoid NPEs if used
+                `when`(getAllPlayers()).thenReturn(kotlinx.coroutines.flow.flowOf(emptyList()))
+            }
         playerDaoField.set(viewModel, mockPlayerDao)
 
         val matchDaoField = MainViewModel::class.java.getDeclaredField("matchDao")
@@ -98,7 +99,11 @@ class MainViewModelTest {
         connectionManagerField.isAccessible = true
         val mockConnectionManager = mock(OptimizedWearDataSync::class.java)
         // Stub connectionState flow to return empty or mock state
-        whenever(mockConnectionManager.connectionState).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Disconnected))
+        whenever(
+            mockConnectionManager.connectionState,
+        ).thenReturn(
+            kotlinx.coroutines.flow.MutableStateFlow(it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Disconnected),
+        )
 
         connectionManagerField.set(viewModel, mockConnectionManager)
 
