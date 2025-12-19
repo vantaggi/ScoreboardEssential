@@ -149,11 +149,45 @@ class MainViewModel(
                         val millis = intent.getLongExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_MILLIS, 0L)
                         val running = intent.getBooleanExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_RUNNING, false)
                         Log.d("VM", "📥 Timer from Wear: $millis ms, running=$running")
-                        // If we receive a timer update from wear, we might want to sync our service?
-                        // But usually Wear is a client. If Wear is controlling the timer (e.g. user taps on watch),
-                        // we should update our service state.
-                        if (running != (_isMatchTimerRunning.value ?: false)) {
-                            startStopMatchTimer()
+                        
+                        if (millis == 0L && !running) {
+                            resetMatchTimer(fromRemote = true)
+                        } else {
+                             // For running updates, we can just update the service value directly without toggling if it matches
+                             if (isServiceBound) {
+                                matchTimerService?.updateMatchTimer(millis, fromRemote = true)
+                                // Only toggle if running state is different
+                                if (running != (_isMatchTimerRunning.value ?: false)) {
+                                     // We need a way to set state without sending back...
+                                     // Actually updateMatchTimer updates the value.
+                                     // We need to set running state too.
+                                     if (running) matchTimerService?.startTimer() else matchTimerService?.pauseTimer()
+                                }
+                             }
+                        }
+                    }
+                    SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE -> {
+                        val millis = intent.getLongExtra(SimplifiedDataLayerListenerService.EXTRA_KEEPER_MILLIS, 0L)
+                        val running = intent.getBooleanExtra(SimplifiedDataLayerListenerService.EXTRA_KEEPER_RUNNING, false)
+                        if (!running && millis == 0L) {
+                            resetKeeperTimer(fromRemote = true)
+                        } else if (running != (_isKeeperTimerRunning.value ?: false)) {
+                            // Sync running state if needed, usually just start/stop
+                            if (running) {
+                                if (millis > 0) {
+                                    keeperTimerDuration = millis
+                                    _keeperTimerValue.postValue(millis)
+                                }
+                                startKeeperTimer(fromRemote = true)
+                            } else {
+                                pauseKeeperTimer(fromRemote = true)
+                            }
+                        }
+                    }
+                    SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE -> {
+                        val isActive = intent.getBooleanExtra(SimplifiedDataLayerListenerService.EXTRA_MATCH_ACTIVE, true)
+                        if (!isActive) {
+                            endMatch()
                         }
                     }
                 }
@@ -166,6 +200,8 @@ class MainViewModel(
                 addAction(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_TEAM_NAMES_UPDATE)
+                addAction(SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE)
+                addAction(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
             }
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(context)
@@ -238,7 +274,20 @@ class MainViewModel(
     private var currentMatchId: Long? = null
 
     init {
-        loadMatchSettings()
+        viewModelScope.launch {
+            matchSettingsRepository.getSettingsFlow().collect { settings ->
+                if (_team1Name.value != settings.team1Name) setTeam1Name(settings.team1Name)
+                if (_team2Name.value != settings.team2Name) setTeam2Name(settings.team2Name)
+                if (_team1Color.value != settings.team1Color) setTeamColor(1, settings.team1Color)
+                if (_team2Color.value != settings.team2Color) setTeamColor(2, settings.team2Color)
+                
+                val currentDurationSeconds = keeperTimerDuration / 1000
+                if (currentDurationSeconds != settings.keeperTimerDuration) {
+                    setKeeperTimer(settings.keeperTimerDuration)
+                }
+            }
+        }
+    
         loadAllPlayers()
         startNewMatch()
         bindService()
@@ -261,16 +310,6 @@ class MainViewModel(
                     }
                 }
             }
-        }
-    }
-
-    private fun loadMatchSettings() {
-        viewModelScope.launch {
-            _team1Name.postValue(matchSettingsRepository.getTeam1Name())
-            _team2Name.postValue(matchSettingsRepository.getTeam2Name())
-            _team1Color.postValue(matchSettingsRepository.getTeam1Color())
-            _team2Color.postValue(matchSettingsRepository.getTeam2Color())
-            setKeeperTimer(matchSettingsRepository.getKeeperTimerDuration())
         }
     }
 
@@ -477,8 +516,20 @@ class MainViewModel(
         }
     }
 
-    fun resetMatchTimer() {
-        matchTimerService?.resetTimer()
+    fun resetMatchTimer(fromRemote: Boolean = false) {
+        if (fromRemote && isServiceBound) {
+             matchTimerService?.updateMatchTimer(0L, fromRemote = true)
+             matchTimerService?.stopTimer() // This usually sends update, we might need a silent stop?
+             // Actually stopTimer sends 0L, false. 
+             // If we call updateMatchTimer(0, true) then stopTimer(), stopTimer will send update.
+             // Let's add fromRemote to stopTimer in service too?
+             // For now, let's rely on updateMatchTimer(0, true) and manual state set if possible, or just accept that stopTimer sends one update 
+             // but if we are at 0 already it might be fine?
+             // Better: add fromRemote to resetTimer in Service.
+             matchTimerService?.resetTimer(fromRemote)
+        } else {
+            matchTimerService?.resetTimer()
+        }
     }
 
     // --- Keeper Timer Management ---
@@ -486,22 +537,24 @@ class MainViewModel(
         keeperTimerDuration = seconds * 1000
         _keeperTimerValue.value = keeperTimerDuration
         addMatchEvent("Keeper timer set to $seconds seconds")
+        // Sync default duration to Wear
+        sendKeeperTimerUpdate(false, keeperTimerDuration)
     }
 
-    fun startKeeperTimer() {
+    fun startKeeperTimer(fromRemote: Boolean = false) {
         if (!isServiceBound) return
-        matchTimerService?.startKeeperTimer(keeperTimerDuration)
+        matchTimerService?.startKeeperTimer(keeperTimerDuration, fromRemote)
         addMatchEvent("Keeper timer started (${keeperTimerDuration / 1000}s)")
     }
 
-    fun pauseKeeperTimer() {
+    fun pauseKeeperTimer(fromRemote: Boolean = false) {
         if (!isServiceBound) return
-        matchTimerService?.pauseKeeperTimer()
+        matchTimerService?.pauseKeeperTimer(fromRemote)
     }
 
-    fun resetKeeperTimer() {
+    fun resetKeeperTimer(fromRemote: Boolean = false) {
         if (!isServiceBound) return
-        matchTimerService?.resetKeeperTimer()
+        matchTimerService?.resetKeeperTimer(fromRemote)
         addMatchEvent("Keeper timer reset")
     }
 
@@ -580,11 +633,11 @@ class MainViewModel(
         }
     }
 
-    private fun sendKeeperTimerUpdate(isRunning: Boolean) {
+    private fun sendKeeperTimerUpdate(isRunning: Boolean, millis: Long? = null) {
         viewModelScope.launch {
             val data =
                 mapOf(
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to (_keeperTimerValue.value ?: 0L),
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to (millis ?: (_keeperTimerValue.value ?: 0L)),
                     it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to isRunning,
                 )
             connectionManager.sendData(

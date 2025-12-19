@@ -69,14 +69,21 @@ class MainActivity : ComponentActivity() {
                             val isRunning = intent.getBooleanExtra(WearDataLayerService.EXTRA_KEEPER_RUNNING, false)
                             if (isRunning) {
                                 viewModel.setKeeperTimerState(KeeperTimerState.Running((millis / 1000).toInt()))
+                                // Also update duration if it runs with specific duration? 
+                                // Yes, if we start remotely, we should respect that duration for next runs too.
+                                if (millis > 0) viewModel.updateKeeperTimerDuration(millis)
                             } else {
-                                viewModel.resetKeeperTimer()
+                                if (millis > 0) {
+                                     // This is a settings update (or pause?)
+                                     viewModel.updateKeeperTimerDuration(millis)
+                                }
+                                viewModel.resetKeeperTimer(fromRemote = true)
                             }
                         }
                         WearDataLayerService.ACTION_MATCH_STATE_UPDATE -> {
                             val isActive = intent.getBooleanExtra(WearDataLayerService.EXTRA_MATCH_ACTIVE, true)
                             if (!isActive) {
-                                viewModel.resetMatch()
+                                viewModel.resetMatch(fromRemote = true)
                             }
                         }
                     }
@@ -182,13 +189,13 @@ class MainActivity : ComponentActivity() {
                 // Observe Team Colors
                 launch {
                     viewModel.team1Color.collect { color ->
-                        color?.let { binding.team1Container.setBackgroundColor(it) }
+                        color?.let { binding.team1Score.setTextColor(it) }
                     }
                 }
 
                 launch {
                     viewModel.team2Color.collect { color ->
-                        color?.let { binding.team2Container.setBackgroundColor(it) }
+                        color?.let { binding.team2Score.setTextColor(it) }
                     }
                 }
 

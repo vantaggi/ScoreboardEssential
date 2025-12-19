@@ -151,55 +151,61 @@ class MatchTimerService : Service() {
         saveState()
     }
 
-    fun stopTimer() {
+    fun stopTimer(fromRemote: Boolean = false) {
         _isMatchTimerRunning.value = false
         matchTimerJob?.cancel()
         _matchTimerValue.value = 0L
         elapsedTimeOnPause = 0L
-        scope.launch {
-            val data =
-                mapOf(
-                    WearConstants.KEY_TIMER_MILLIS to 0L,
-                    WearConstants.KEY_TIMER_RUNNING to false,
+        
+        if (!fromRemote) {
+            scope.launch {
+                val data =
+                    mapOf(
+                        WearConstants.KEY_TIMER_MILLIS to 0L,
+                        WearConstants.KEY_TIMER_RUNNING to false,
+                    )
+                connectionManager.sendData(
+                    path = WearConstants.PATH_TIMER_STATE,
+                    data = data,
                 )
-            connectionManager.sendData(
-                path = WearConstants.PATH_TIMER_STATE,
-                data = data,
-            )
+            }
         }
         updateNotification(0)
         checkStopForeground()
         saveState()
     }
 
-    fun resetTimer() {
-        stopTimer()
+    fun resetTimer(fromRemote: Boolean = false) {
+        stopTimer(fromRemote)
     }
 
-    fun updateMatchTimer(timeMillis: Long) {
+    fun updateMatchTimer(timeMillis: Long, fromRemote: Boolean = false) {
         _matchTimerValue.value = timeMillis
         if (_isMatchTimerRunning.value) {
             matchStartTime = System.currentTimeMillis() - timeMillis
         } else {
             elapsedTimeOnPause = timeMillis
         }
-        scope.launch {
-            val data =
-                mapOf(
-                    WearConstants.KEY_TIMER_MILLIS to timeMillis,
-                    WearConstants.KEY_TIMER_RUNNING to _isMatchTimerRunning.value,
+
+        if (!fromRemote) {
+            scope.launch {
+                val data =
+                    mapOf(
+                        WearConstants.KEY_TIMER_MILLIS to timeMillis,
+                        WearConstants.KEY_TIMER_RUNNING to _isMatchTimerRunning.value,
+                    )
+                connectionManager.sendData(
+                    path = WearConstants.PATH_TIMER_STATE,
+                    data = data,
                 )
-            connectionManager.sendData(
-                path = WearConstants.PATH_TIMER_STATE,
-                data = data,
-            )
+            }
         }
         updateNotification(timeMillis)
         saveState()
     }
 
     // --- Keeper Timer Control ---
-    fun startKeeperTimer(durationMillis: Long) {
+    fun startKeeperTimer(durationMillis: Long, fromRemote: Boolean = false) {
         if (_isKeeperTimerRunning.value) return
         val duration = if (keeperRemainingOnPause > 0) keeperRemainingOnPause else durationMillis
         _isKeeperTimerRunning.value = true
@@ -232,57 +238,66 @@ class MatchTimerService : Service() {
                     delay(1000)
                 }
             }
-        scope.launch {
-            val data =
-                mapOf(
-                    WearConstants.KEY_KEEPER_MILLIS to duration,
-                    WearConstants.KEY_KEEPER_RUNNING to true,
+        
+        if (!fromRemote) {
+            scope.launch {
+                val data =
+                    mapOf(
+                        WearConstants.KEY_KEEPER_MILLIS to duration,
+                        WearConstants.KEY_KEEPER_RUNNING to true,
+                    )
+                connectionManager.sendData(
+                    path = WearConstants.PATH_KEEPER_TIMER,
+                    data = data,
                 )
-            connectionManager.sendData(
-                path = WearConstants.PATH_KEEPER_TIMER,
-                data = data,
-            )
+            }
         }
         startForegroundWithPermissionCheck()
         saveState()
     }
 
-    fun pauseKeeperTimer() {
+    fun pauseKeeperTimer(fromRemote: Boolean = false) {
         if (!_isKeeperTimerRunning.value) return
         _isKeeperTimerRunning.value = false
         keeperTimerJob?.cancel()
         keeperRemainingOnPause = _keeperTimerValue.value
-        scope.launch {
-            val data =
-                mapOf(
-                    WearConstants.KEY_KEEPER_MILLIS to _keeperTimerValue.value,
-                    WearConstants.KEY_KEEPER_RUNNING to false,
+        
+        if (!fromRemote) {
+            scope.launch {
+                val data =
+                    mapOf(
+                        WearConstants.KEY_KEEPER_MILLIS to _keeperTimerValue.value,
+                        WearConstants.KEY_KEEPER_RUNNING to false,
+                    )
+                connectionManager.sendData(
+                    path = WearConstants.PATH_KEEPER_TIMER,
+                    data = data,
                 )
-            connectionManager.sendData(
-                path = WearConstants.PATH_KEEPER_TIMER,
-                data = data,
-            )
+            }
         }
         checkStopForeground()
         saveState()
     }
 
-    fun resetKeeperTimer() {
+    fun resetKeeperTimer(fromRemote: Boolean = false) {
         _isKeeperTimerRunning.value = false
         keeperTimerJob?.cancel()
         _keeperTimerValue.value = 0L
         keeperTimerEndTime = 0L
         keeperRemainingOnPause = 0L
-        scope.launch {
-            val data =
-                mapOf(
-                    WearConstants.KEY_KEEPER_MILLIS to 0L,
-                    WearConstants.KEY_KEEPER_RUNNING to false,
+        
+        if (!fromRemote) {
+            scope.launch {
+                val data =
+                    mapOf(
+                        WearConstants.KEY_KEEPER_MILLIS to 0L,
+                        WearConstants.KEY_KEEPER_RUNNING to false,
+                    )
+                connectionManager.sendData(
+                    path = WearConstants.PATH_KEEPER_TIMER,
+                    data = data,
                 )
-            connectionManager.sendData(
-                path = WearConstants.PATH_KEEPER_TIMER,
-                data = data,
-            )
+            }
         }
         checkStopForeground()
         saveState()

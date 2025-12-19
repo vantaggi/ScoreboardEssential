@@ -21,6 +21,11 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         const val EXTRA_TEAM2_SCORE = "team2_score"
         const val EXTRA_TIMER_MILLIS = "timer_millis"
         const val EXTRA_TIMER_RUNNING = "timer_running"
+        const val ACTION_KEEPER_TIMER_UPDATE = "it.vantaggi.scoreboardessential.KEEPER_TIMER_UPDATE"
+        const val ACTION_MATCH_STATE_UPDATE = "it.vantaggi.scoreboardessential.MATCH_STATE_UPDATE"
+        const val EXTRA_KEEPER_MILLIS = "keeper_millis"
+        const val EXTRA_KEEPER_RUNNING = "keeper_running"
+        const val EXTRA_MATCH_ACTIVE = "match_active"
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -56,6 +61,24 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                     }
                     WearConstants.PATH_TEAM_NAMES -> {
                         val intent = Intent(ACTION_TEAM_NAMES_UPDATE)
+                        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+                    }
+                    WearConstants.PATH_KEEPER_TIMER -> {
+                        val millis = dataMap.getLong(WearConstants.KEY_KEEPER_MILLIS, 0L)
+                        val isRunning = dataMap.getBoolean(WearConstants.KEY_KEEPER_RUNNING, false)
+                        val intent =
+                            Intent(ACTION_KEEPER_TIMER_UPDATE).apply {
+                                putExtra(EXTRA_KEEPER_MILLIS, millis)
+                                putExtra(EXTRA_KEEPER_RUNNING, isRunning)
+                            }
+                        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+                    }
+                    WearConstants.PATH_MATCH_STATE -> {
+                        val isActive = dataMap.getBoolean(WearConstants.KEY_MATCH_ACTIVE, true)
+                        val intent =
+                            Intent(ACTION_MATCH_STATE_UPDATE).apply {
+                                putExtra(EXTRA_MATCH_ACTIVE, isActive)
+                            }
                         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
                     }
                 }

@@ -71,7 +71,15 @@ class WearViewModel(
     val keeperProgress = _keeperProgress.asStateFlow()
 
     private var keeperCountDownTimer: CountDownTimer? = null
-    private val keeperTimerDuration = 300000L // 5 minutes
+    private var keeperTimerDuration = 300000L // 5 minutes default
+
+    fun updateKeeperTimerDuration(millis: Long) {
+        keeperTimerDuration = millis
+        // Update progress if not running to reflect new duration immediately
+        if (_keeperTimer.value is KeeperTimerState.Hidden || _keeperTimer.value is KeeperTimerState.Finished) {
+            _keeperProgress.value = (millis / 1000).toInt()
+        }
+    }
 
     // Haptics
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
@@ -237,25 +245,42 @@ class WearViewModel(
 
     // --- Reset ---
 
-    fun resetMatch() {
-        updateScore(0, 0)
+    fun resetMatch(fromRemote: Boolean = false) {
+        // Update local state without sending data if fromRemote is true
+        if (fromRemote) {
+            _team1Score.value = 0
+            _team2Score.value = 0
+        } else {
+            updateScore(0, 0)
+        }
+        
         matchTimerJob?.cancel()
         matchTimeInSeconds = 0L
         _matchTimer.value = "00:00"
         isMatchTimerRunning = false
 
-        resetKeeperTimer()
+        resetKeeperTimer(fromRemote)
 
-        viewModelScope.launch {
-            val data =
-                mapOf(
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to 0L,
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to false,
+        if (!fromRemote) {
+            viewModelScope.launch {
+                val data =
+                    mapOf(
+                        it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to 0L,
+                        it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to false,
+                    )
+                connectionManager.sendData(
+                    path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
+                    data = data,
                 )
-            connectionManager.sendData(
-                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
-                data = data,
-            )
+            }
+            // Also signal match reset to mobile
+            viewModelScope.launch {
+                 val data = mapOf(it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_MATCH_ACTIVE to false)
+                 connectionManager.sendData(
+                     path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_MATCH_STATE,
+                     data = data
+                 )
+            }
         }
     }
 
@@ -368,24 +393,27 @@ class WearViewModel(
         }
     }
 
-    fun resetKeeperTimer() {
+    fun resetKeeperTimer(fromRemote: Boolean = false) {
         keeperCountDownTimer?.cancel()
         vibrator?.cancel()
         _keeperTimer.value = KeeperTimerState.Hidden
         _keeperProgress.value = (keeperTimerDuration / 1000).toInt()
-        triggerShortVibration()
+        
+        if (!fromRemote) {
+            triggerShortVibration()
 
-        // Sync keeper timer reset
-        viewModelScope.launch {
-            val data =
-                mapOf(
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to 0L,
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to false,
+            // Sync keeper timer reset
+            viewModelScope.launch {
+                val data =
+                    mapOf(
+                        it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to 0L,
+                        it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to false,
+                    )
+                connectionManager.sendData(
+                    path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
+                    data = data,
                 )
-            connectionManager.sendData(
-                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
-                data = data,
-            )
+            }
         }
     }
 }
