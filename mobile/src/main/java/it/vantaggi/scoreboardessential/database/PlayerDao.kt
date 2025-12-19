@@ -75,4 +75,13 @@ WHERE playerId = :playerId
 """,
     )
     suspend fun getRoleCountForPlayer(playerId: Int): Int
+
+    @Query(
+        """
+        SELECT * FROM players
+        ORDER BY goals DESC, appearances ASC
+        LIMIT :limit
+    """,
+    )
+    fun getTopScorers(limit: Int): Flow<List<Player>>
 }

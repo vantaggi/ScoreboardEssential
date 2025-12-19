@@ -37,6 +37,7 @@ import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
+import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
 import it.vantaggi.scoreboardessential.utils.playNativeGoalAnimation
 import it.vantaggi.scoreboardessential.views.FormationView
 import kotlinx.coroutines.delay
@@ -334,6 +335,10 @@ class MainActivity :
 
         findViewById<View>(R.id.settings_button).setOnClickListener {
             startActivity(Intent(this, MatchSettingsActivity::class.java))
+        }
+
+        findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.stats_fab).setOnClickListener {
+            startActivity(Intent(this, StatisticsActivity::class.java))
         }
     }
 

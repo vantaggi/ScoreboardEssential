@@ -29,4 +29,13 @@ interface MatchDao {
 
     @Query("SELECT * FROM matches WHERE isActive = 1 LIMIT 1")
     fun getActiveMatch(): Flow<Match?>
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM matches
+        INNER JOIN MatchPlayerCrossRef ON matches.matchId = MatchPlayerCrossRef.matchId
+        WHERE MatchPlayerCrossRef.playerId = :playerId AND matches.isActive = 0
+    """,
+    )
+    fun getFinishedMatchesCountForPlayer(playerId: Int): Flow<Int>
 }

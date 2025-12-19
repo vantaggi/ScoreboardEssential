@@ -690,4 +690,17 @@
         app:srcCompat="@drawable/ic_person_add"
         android:contentDescription="@string/cd_manage_players"/>
 
+    <!-- FAB for Statistics -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/stats_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="16dp"
+        app:backgroundTint="?attr/colorPrimary"
+        app:tint="?attr/colorOnPrimary"
+        app:shapeAppearance="@style/ShapeAppearance.App.StreetButton"
+        app:srcCompat="@drawable/ic_stats"
+        android:contentDescription="Statistics"/>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
