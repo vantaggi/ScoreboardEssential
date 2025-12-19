@@ -17,10 +17,8 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
-import androidx.test.core.app.ApplicationProvider
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.ArgumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -181,7 +179,7 @@ class PlayersManagementViewModelTest {
                 },
                 org.mockito.kotlin.check {
                     assertEquals(roleIds, it)
-                }
+                },
             )
         }
 

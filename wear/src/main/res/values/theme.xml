@@ -16,6 +16,7 @@
         <!-- Street Vibe Typeface References -->
         <item name="textAppearanceDisplayLarge">@style/TextAppearance.App.DisplayLarge.Street</item>
         <item name="textAppearanceHeadlineMedium">@style/TextAppearance.App.HeadlineMedium.Street</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.App.HeadlineSmall.Street</item>
         <item name="textAppearanceBodyLarge">@style/TextAppearance.App.BodyLarge.Street</item>
 
         <!-- Street Vibe Shape References for Wear OS -->
@@ -33,8 +34,17 @@
         <item name="android:textStyle">bold</item>
         <item name="android:textAllCaps">true</item>
     </style>
+    <style name="TextAppearance.App.HeadlineSmall.Street" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+    </style>
     <style name="TextAppearance.App.BodyLarge.Street" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:fontFamily">sans-serif-condensed</item>
+    </style>
+
+    <style name="ShapeAppearance.App.StreetCard" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">cut</item>
+        <item name="cornerSize">12dp</item>
     </style>
 
     <!-- Note: ShapeAppearance attributes like shapeAppearanceMediumComponent might not be respected
