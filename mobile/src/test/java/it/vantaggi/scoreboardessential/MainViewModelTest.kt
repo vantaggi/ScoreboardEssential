@@ -1,6 +1,7 @@
 package it.vantaggi.scoreboardessential
 
 import android.app.Application
+import android.content.ComponentName
 import android.graphics.Color
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
@@ -36,6 +37,8 @@ import org.mockito.Mockito.`when`
 import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
+import android.os.Looper
 import java.lang.reflect.Field
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 
@@ -56,8 +59,28 @@ class MainViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+
+        // Get the real application from Robolectric
+        val app = ApplicationProvider.getApplicationContext<Application>()
+
+        // Setup Binder for Service - MUST be done before ViewModel init because init calls bindService
+        val mockBinder = mock(MatchTimerService.MatchTimerBinder::class.java)
+        mockMatchTimerService = mock(MatchTimerService::class.java)
+        whenever(mockBinder.getService()).thenReturn(mockMatchTimerService)
+
+        // Mock StateFlows to avoid NPE in onServiceConnected
+        whenever(mockMatchTimerService.matchTimerValue).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(0L))
+        whenever(mockMatchTimerService.isMatchTimerRunning).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(false))
+        whenever(mockMatchTimerService.keeperTimerValue).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(0L))
+        whenever(mockMatchTimerService.isKeeperTimerRunning).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(false))
+
+        // Register the mock binder with Robolectric so bindService returns it
+        val componentName = ComponentName(app, MatchTimerService::class.java)
+        shadowOf(app).setComponentNameAndServiceForBindService(componentName, mockBinder)
+
         // Use a spy on the real application so we can verify interactions but also let AppDatabase work
-        mockApplication = spy(ApplicationProvider.getApplicationContext() as Application)
+        mockApplication = spy(app)
+
         mockRepository =
             mock(MatchRepository::class.java).apply {
                 `when`(allMatches).thenReturn(emptyFlow())
@@ -68,9 +91,9 @@ class MainViewModelTest {
             }
         mockMatchSettingsRepository = mock(MatchSettingsRepository::class.java)
         viewModel = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
-        mockMatchTimerService = mock(MatchTimerService::class.java)
 
         // Use reflection to inject the mock service and set isServiceBound to true
+        // Although bindService in init should now work, we ensure it's set for tests that rely on it immediately
         val serviceField: Field = MainViewModel::class.java.getDeclaredField("matchTimerService")
         serviceField.isAccessible = true
         serviceField.set(viewModel, mockMatchTimerService)
@@ -110,6 +133,13 @@ class MainViewModelTest {
             whenever(mockPlayerDao.update(any())).thenReturn(Unit)
             // Stub sendData
             whenever(mockConnectionManager.sendData(any(), any(), any())).thenReturn(Unit)
+
+            // Stub MatchSettingsRepository to avoid NPE in init
+            whenever(mockMatchSettingsRepository.getTeam1Name()).thenReturn("Team 1")
+            whenever(mockMatchSettingsRepository.getTeam2Name()).thenReturn("Team 2")
+            whenever(mockMatchSettingsRepository.getTeam1Color()).thenReturn(Color.RED)
+            whenever(mockMatchSettingsRepository.getTeam2Color()).thenReturn(Color.BLUE)
+            whenever(mockMatchSettingsRepository.getKeeperTimerDuration()).thenReturn(300L)
         }
     }
 
@@ -414,7 +444,6 @@ class MainViewModelTest {
     }
 
     @Test
-    @org.junit.Ignore("Mocking issues with OptimizedWearDataSync or DAO prevent startNewMatch execution in test env")
     fun `endMatch resets scores and stops timer`() =
         runTest {
             // Arrange
@@ -430,8 +459,25 @@ class MainViewModelTest {
             viewModel.addTeam2Score()
             advanceUntilIdle() // Allow suspend functions in addScore to complete
 
+            // Ensure timer service is set to running
+            val isMatchTimerRunningField = viewModel.javaClass.getDeclaredField("_isMatchTimerRunning")
+            isMatchTimerRunningField.isAccessible = true
+            val mutableLiveData = isMatchTimerRunningField.get(viewModel) as androidx.lifecycle.MutableLiveData<Boolean>
+            mutableLiveData.postValue(true)
+
+            // Set timer value to non-zero via reflection on LiveData
+            val matchTimerValueField = viewModel.javaClass.getDeclaredField("_matchTimerValue")
+            matchTimerValueField.isAccessible = true
+            val timerLiveData = matchTimerValueField.get(viewModel) as androidx.lifecycle.MutableLiveData<Long>
+            timerLiveData.postValue(1000L)
+            shadowOf(Looper.getMainLooper()).idle()
+
             // Act
-            viewModel.endMatch()
+            val result = viewModel.endMatch()
+
+            // If endMatch returned false, assert failure immediately with helpful message
+            assert(result) { "endMatch() returned false, probably because it thinks match hasn't started" }
+
             advanceUntilIdle() // Allow suspend functions in endMatch to complete
 
             // Assert
@@ -441,6 +487,9 @@ class MainViewModelTest {
             matchDaoField.isAccessible = true
             val injectedMatchDao = matchDaoField.get(viewModel) as MatchDao
             verify(injectedMatchDao).insert(any())
+
+            // Verify startNewMatch was called
+            verify(mockMatchTimerService).resetTimer()
 
             assertEquals(0, viewModel.team1Score.value)
             assertEquals(0, viewModel.team2Score.value)
