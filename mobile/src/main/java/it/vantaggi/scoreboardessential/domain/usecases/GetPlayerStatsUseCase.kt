@@ -13,8 +13,9 @@ class GetPlayerStatsUseCase(
     private val matchDao: MatchDao,
 ) {
     fun getTopScorers(limit: Int): Flow<List<PlayerStatsDTO>> =
-        playerDao.getTopScorers(limit).map { players ->
-            players.map { player ->
+        playerDao.getTopScorers(limit).map { playersWithRoles ->
+            playersWithRoles.map { playerWithRoles ->
+                val player = playerWithRoles.player
                 // Use appearances from Player entity which serves as a cache for finished matches.
                 // We could verify this with matchDao.getFinishedMatchesCountForPlayer(player.playerId)
                 // but to avoid N+1 query issue, we rely on the Player entity being kept in sync.
@@ -29,6 +30,7 @@ class GetPlayerStatsUseCase(
                     goals = player.goals,
                     appearances = player.appearances,
                     winRate = 0.0f,
+                    roles = playerWithRoles.roles
                 )
             }
         }

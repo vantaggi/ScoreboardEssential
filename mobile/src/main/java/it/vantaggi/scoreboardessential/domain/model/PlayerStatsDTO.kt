@@ -6,4 +6,5 @@ data class PlayerStatsDTO(
     val goals: Int,
     val appearances: Int,
     val winRate: Float,
+    val roles: List<it.vantaggi.scoreboardessential.database.Role> = emptyList(),
 )

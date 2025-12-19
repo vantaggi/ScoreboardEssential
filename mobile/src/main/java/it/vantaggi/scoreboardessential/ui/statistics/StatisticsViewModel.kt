@@ -8,7 +8,10 @@ import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.domain.model.PlayerStatsDTO
 import it.vantaggi.scoreboardessential.domain.usecases.GetPlayerStatsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class StatisticsViewModel(
@@ -18,17 +21,36 @@ class StatisticsViewModel(
     private val matchDao = AppDatabase.getDatabase(application).matchDao()
     private val getPlayerStatsUseCase = GetPlayerStatsUseCase(playerDao, matchDao)
 
-    private val _topScorers = MutableStateFlow<List<PlayerStatsDTO>>(emptyList())
-    val topScorers: StateFlow<List<PlayerStatsDTO>> = _topScorers
+    enum class FilterType {
+        ALL,
+        ATTACK,
+        DEFENSE,
+    }
+
+    private val _filter = MutableStateFlow(FilterType.ALL)
+    private val _allStats = MutableStateFlow<List<PlayerStatsDTO>>(emptyList())
+
+    val topScorers: StateFlow<List<PlayerStatsDTO>> =
+        combine(_allStats, _filter) { stats, filter ->
+            when (filter) {
+                FilterType.ALL -> stats
+                FilterType.ATTACK -> stats.filter { it.roles.any { role -> role.category == "ATTACCO" } }
+                FilterType.DEFENSE -> stats.filter { it.roles.any { role -> role.category == "DIFESA" || role.category == "PORTA" } }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
         loadTopScorers()
     }
 
+    fun setFilter(filter: FilterType) {
+        _filter.value = filter
+    }
+
     private fun loadTopScorers() {
         viewModelScope.launch {
             getPlayerStatsUseCase.getTopScorers(10).collect { stats ->
-                _topScorers.value = stats
+                _allStats.value = stats
             }
         }
     }

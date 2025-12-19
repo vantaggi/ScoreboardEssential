@@ -40,8 +40,11 @@ class StatisticsActivity : AppCompatActivity() {
         binding.tabLayout.addOnTabSelectedListener(
             object : TabLayout.OnTabSelectedListener {
                 override fun onTabSelected(tab: TabLayout.Tab?) {
-                    // Filter logic can be implemented here or in ViewModel
-                    // For now, we just show general stats
+                    when (tab?.position) {
+                        0 -> viewModel.setFilter(StatisticsViewModel.FilterType.ALL)
+                        1 -> viewModel.setFilter(StatisticsViewModel.FilterType.ATTACK)
+                        2 -> viewModel.setFilter(StatisticsViewModel.FilterType.DEFENSE)
+                    }
                 }
 
                 override fun onTabUnselected(tab: TabLayout.Tab?) {}

@@ -76,6 +76,7 @@ WHERE playerId = :playerId
     )
     suspend fun getRoleCountForPlayer(playerId: Int): Int
 
+    @Transaction
     @Query(
         """
         SELECT * FROM players
@@ -83,5 +84,5 @@ WHERE playerId = :playerId
         LIMIT :limit
     """,
     )
-    fun getTopScorers(limit: Int): Flow<List<Player>>
+    fun getTopScorers(limit: Int): Flow<List<PlayerWithRoles>>
 }
