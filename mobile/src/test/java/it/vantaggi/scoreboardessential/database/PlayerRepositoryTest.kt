@@ -1,6 +1,5 @@
 package it.vantaggi.scoreboardessential.database
 
-import android.os.Build
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat

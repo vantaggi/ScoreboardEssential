@@ -83,6 +83,6 @@
 
     <style name="ThemeOverlay.App.Dialog" parent="Theme.Material3.Dark.Dialog.Alert">
         <item name="android:windowBackground">@drawable/bg_concrete_card</item>
-        <item name="dialogCornerRadius">16dp</item>
+        <item name="dialogCornerRadius">12dp</item>
     </style>
 </resources>

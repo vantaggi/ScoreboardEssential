@@ -2,10 +2,8 @@ package it.vantaggi.scoreboardessential
 
 import android.content.Intent
 import android.content.res.Configuration
-import android.os.Build
 import android.view.View
 import androidx.test.core.app.ActivityScenario
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
