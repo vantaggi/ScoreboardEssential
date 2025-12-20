@@ -26,6 +26,9 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         const val EXTRA_KEEPER_MILLIS = "keeper_millis"
         const val EXTRA_KEEPER_RUNNING = "keeper_running"
         const val EXTRA_MATCH_ACTIVE = "match_active"
+        
+        const val ACTION_WEAR_COMMAND = "it.vantaggi.scoreboardessential.WEAR_COMMAND"
+        const val EXTRA_COMMAND = "wear_command"
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -38,8 +41,23 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                 val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
                 when (event.dataItem.uri.path) {
                     WearConstants.PATH_SCORE -> {
-                        val team1 = dataMap.getInt(WearConstants.KEY_TEAM1_SCORE, 0)
-                        val team2 = dataMap.getInt(WearConstants.KEY_TEAM2_SCORE, 0)
+                        // Use Bundle to avoid Type Mismatch warnings from DataMap when receiving different types (String/Int)
+                        val bundle = dataMap.toBundle()
+                        
+                        val team1Obj = bundle.get(WearConstants.KEY_TEAM1_SCORE)
+                        val team1 = when(team1Obj) {
+                            is Int -> team1Obj
+                            is String -> team1Obj.toIntOrNull() ?: 0
+                            else -> 0
+                        }
+
+                        val team2Obj = bundle.get(WearConstants.KEY_TEAM2_SCORE)
+                        val team2 = when(team2Obj) {
+                            is Int -> team2Obj
+                            is String -> team2Obj.toIntOrNull() ?: 0
+                            else -> 0
+                        }
+
                         val intent =
                             Intent(ACTION_SCORE_UPDATE).apply {
                                 putExtra(EXTRA_TEAM1_SCORE, team1)
@@ -89,5 +107,18 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
     override fun onMessageReceived(messageEvent: MessageEvent) {
         super.onMessageReceived(messageEvent)
         Log.d(TAG, "Message received: ${messageEvent.path}")
+        
+        when (messageEvent.path) {
+            WearConstants.PATH_CMD_ADD_T1,
+            WearConstants.PATH_CMD_ADD_T2,
+            WearConstants.PATH_CMD_SUB_T1,
+            WearConstants.PATH_CMD_SUB_T2,
+            WearConstants.PATH_CMD_UNDO -> {
+                 val intent = Intent(ACTION_WEAR_COMMAND).apply {
+                     putExtra(EXTRA_COMMAND, messageEvent.path)
+                 }
+                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+            }
+        }
     }
 }

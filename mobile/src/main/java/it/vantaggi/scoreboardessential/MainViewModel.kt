@@ -28,18 +28,25 @@ import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.domain.model.SportType
+import it.vantaggi.scoreboardessential.domain.scoring.ScoreBoardState
+import it.vantaggi.scoreboardessential.domain.scoring.ScoringStrategy
+import it.vantaggi.scoreboardessential.domain.scoring.SoccerScoringStrategy
+import it.vantaggi.scoreboardessential.domain.scoring.PadelScoringStrategy
+import it.vantaggi.scoreboardessential.shared.communication.WearConstants
+import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
-import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.Stack
 
 data class MatchEvent(
     val timestamp: String,
@@ -64,10 +71,11 @@ class MainViewModel(
 
     // Undo Stacks
     private data class GoalAction(
-        val teamId: Int,
-        val playerId: Int?,
-        val timestamp: Long
-    )
+    val teamId: Int,
+    val playerId: Int?,
+    val timestamp: Long,
+    val previousState: ScoreBoardState? = null
+)
     private val actionStack = java.util.Stack<GoalAction>()
     private val _canUndo = MutableLiveData(false)
     val canUndo: LiveData<Boolean> = _canUndo
@@ -76,11 +84,20 @@ class MainViewModel(
     private val _isWearConnected = MutableLiveData(false)
     val isWearConnected: LiveData<Boolean> = _isWearConnected
 
-    // LiveData for scores
-    private val _team1Score = MutableLiveData(0)
-    val team1Score: LiveData<Int> = _team1Score
-    private val _team2Score = MutableLiveData(0)
-    val team2Score: LiveData<Int> = _team2Score
+    // LiveData for scores (Changed to String for generic support)
+    private val _team1Score = MutableLiveData("0")
+    val team1Score: LiveData<String> = _team1Score
+    private val _team2Score = MutableLiveData("0")
+    val team2Score: LiveData<String> = _team2Score
+    
+    // Detailed Score Board State
+    private val _scoreBoardState = MutableLiveData<ScoreBoardState>()
+    val scoreBoardState: LiveData<ScoreBoardState> = _scoreBoardState
+
+    // Current Strategy
+    private var scoringStrategy: ScoringStrategy = SoccerScoringStrategy()
+    private val _currentSport = MutableLiveData(SportType.SOCCER)
+    val currentSport: LiveData<SportType> = _currentSport
 
     // LiveData for timer
     private val _matchTimerValue = MutableLiveData(0L)
@@ -156,8 +173,8 @@ class MainViewModel(
                         val team1 = intent.getIntExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM1_SCORE, 0)
                         val team2 = intent.getIntExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM2_SCORE, 0)
                         Log.d("VM", "📥 Score from Wear: T1=$team1, T2=$team2")
-                        _team1Score.value = team1
-                        _team2Score.value = team2
+                        _team1Score.value = team1.toString()
+                        _team2Score.value = team2.toString()
                     }
                     SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE -> {
                         val millis = intent.getLongExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_MILLIS, 0L)
@@ -204,6 +221,16 @@ class MainViewModel(
                             endMatch()
                         }
                     }
+                    SimplifiedDataLayerListenerService.ACTION_WEAR_COMMAND -> {
+                        val cmd = intent.getStringExtra(SimplifiedDataLayerListenerService.EXTRA_COMMAND)
+                        when (cmd) {
+                            WearConstants.PATH_CMD_ADD_T1 -> addTeam1Score()
+                            WearConstants.PATH_CMD_ADD_T2 -> addTeam2Score()
+                            WearConstants.PATH_CMD_SUB_T1 -> subtractTeam1Score()
+                            WearConstants.PATH_CMD_SUB_T2 -> subtractTeam2Score()
+                            WearConstants.PATH_CMD_UNDO -> undoLastGoal()
+                        }
+                    }
                 }
             }
         }
@@ -216,6 +243,7 @@ class MainViewModel(
                 addAction(SimplifiedDataLayerListenerService.ACTION_TEAM_NAMES_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
+                addAction(SimplifiedDataLayerListenerService.ACTION_WEAR_COMMAND)
             }
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(context)
@@ -303,7 +331,10 @@ class MainViewModel(
         }
     
         loadAllPlayers()
-        startNewMatch()
+        loadAllPlayers()
+        // Initialize default strategy
+        switchSport(SportType.SOCCER) 
+        
         bindService()
         checkIfOnboardingIsNeeded()
 
@@ -353,8 +384,19 @@ class MainViewModel(
         }
     }
 
+    fun switchSport(sportType: SportType) {
+        _currentSport.value = sportType
+        scoringStrategy = when (sportType) {
+            SportType.SOCCER -> SoccerScoringStrategy()
+            SportType.PADEL -> PadelScoringStrategy()
+        }
+        startNewMatch()
+    }
+
     private fun startNewMatch() {
-        updateScore(0, 0)
+        val initialState = scoringStrategy.getInitialState()
+        updateScoreState(initialState)
+        
         _matchEvents.value = emptyList()
         matchTimerService?.resetTimer()
         if (isServiceBound) {
@@ -364,8 +406,24 @@ class MainViewModel(
         actionStack.clear()
         _canUndo.postValue(false)
 
-        addMatchEvent("New match ready - press START to begin")
+        addMatchEvent("New match ready (${_currentSport.value}) - press START")
         sendMatchStateUpdate(true)
+    }
+    
+    private fun updateScoreState(state: ScoreBoardState) {
+        _scoreBoardState.value = state
+        
+        // Map main display score
+        _team1Score.value = state.team1Score
+        _team2Score.value = state.team2Score
+        
+        // Sync to wear (simplified for now, sends Strings converted to Int if possible or specific protocol)
+        // For Padel, we might need to send separate events or change the protocol.
+        // Attempt to parse or send generic
+       
+        // Temporary: If sport is Soccer, parse Int. If Padel, logic needed in Wear.
+        // We will send string data to wear in updated method
+        updateWearScore(state)
     }
 
     // --- Team Management ---
@@ -434,21 +492,30 @@ class MainViewModel(
     }
 
     // --- Score Management ---
-    fun updateScore(
-        team1: Int,
-        team2: Int,
-    ) {
-        _team1Score.value = team1
-        _team2Score.value = team2
-
-        viewModelScope.launch {
-            val data =
-                mapOf(
-                    "team1_score" to team1,
-                    "team2_score" to team2,
-                )
+    // Generic update score method replaced by Strategy usage
+    private fun updateWearScore(state: ScoreBoardState) {
+         viewModelScope.launch {
+            val data = mutableMapOf<String, Any>(
+                    WearConstants.KEY_TEAM1_SCORE to state.team1Score,
+                    WearConstants.KEY_TEAM2_SCORE to state.team2Score,
+                    WearConstants.KEY_SPORT_TYPE to state.sportType.name
+            )
+            
+            // Add Sets if Padel
+            if (state.sportType == SportType.PADEL) {
+                data[WearConstants.KEY_TEAM1_SETS] = state.team1Sets.toIntArray()
+                data[WearConstants.KEY_TEAM2_SETS] = state.team2Sets.toIntArray()
+                state.servingTeam?.let { data[WearConstants.KEY_SERVING_TEAM] = it }
+                state.servingSide?.let { data[WearConstants.KEY_SERVING_SIDE] = it }
+                data[WearConstants.KEY_IS_GOLDEN_POINT] = state.isGoldenPoint
+            }
+            
+            // Legacy Int support
+             data["team1_score_int"] = state.team1Score.toIntOrNull() ?: 0
+             data["team2_score_int"] = state.team2Score.toIntOrNull() ?: 0
+             
             connectionManager.sendData(
-                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_SCORE,
+                path = WearConstants.PATH_SCORE,
                 data = data,
                 urgent = true,
             )
@@ -456,45 +523,68 @@ class MainViewModel(
     }
 
     fun addTeam1Score() {
-        val newScore = (_team1Score.value ?: 0) + 1
-        updateScore(newScore, _team2Score.value ?: 0)
+        val currentState = _scoreBoardState.value ?: scoringStrategy.getInitialState()
+        val newState = scoringStrategy.addPoint(currentState, 1)
+        updateScoreState(newState)
+        
         triggerHapticFeedback()
-        val players = team1Players.value
-        if (!players.isNullOrEmpty()) {
-            showSelectScorerDialog.postValue(Pair(1, players))
+        
+        // Scorer dialog only for Soccer
+        if (scoringStrategy.getSportType() == SportType.SOCCER) {
+            val players = team1Players.value
+            if (!players.isNullOrEmpty()) {
+                showSelectScorerDialog.postValue(Pair(1, players))
+            } else {
+                addScorer(1, null) 
+            }
         } else {
-            addScorer(1, null) // No player to select, just log the goal
+            // Padel Point
+            addMatchEvent("Point for ${_team1Name.value}", team = 1)
+            // Undo Stack
+            actionStack.push(GoalAction(1, null, System.currentTimeMillis(), _scoreBoardState.value)) // Reusing GoalAction generic
+            _canUndo.postValue(true)
         }
     }
 
     fun subtractTeam1Score() {
-        val newScore = (_team1Score.value ?: 0) - 1
-        if (newScore >= 0) {
-            updateScore(newScore, _team2Score.value ?: 0)
-            triggerHapticFeedback()
-            addMatchEvent("Score correction for ${_team1Name.value}", team = 1)
-        }
+        // Undo logic is generally handled by 'undoLastGoal', but direct minus button?
+        // Logic depends on strategy.
+        val currentState = _scoreBoardState.value ?: return
+        val newState = scoringStrategy.removePoint(currentState, 1)
+        updateScoreState(newState)
+        
+        triggerHapticFeedback()
+        addMatchEvent("Score correction for ${_team1Name.value}", team = 1)
     }
 
     fun addTeam2Score() {
-        val newScore = (_team2Score.value ?: 0) + 1
-        updateScore(_team1Score.value ?: 0, newScore)
+        val currentState = _scoreBoardState.value ?: scoringStrategy.getInitialState()
+        val newState = scoringStrategy.addPoint(currentState, 2)
+        updateScoreState(newState)
+        
         triggerHapticFeedback()
-        val players = team2Players.value
-        if (!players.isNullOrEmpty()) {
-            showSelectScorerDialog.postValue(Pair(2, players))
+        
+        if (scoringStrategy.getSportType() == SportType.SOCCER) {
+             val players = team2Players.value
+            if (!players.isNullOrEmpty()) {
+                showSelectScorerDialog.postValue(Pair(2, players))
+            } else {
+                addScorer(2, null)
+            }
         } else {
-            addScorer(2, null) // No player to select, just log the goal
+            addMatchEvent("Point for ${_team2Name.value}", team = 2)
+            actionStack.push(GoalAction(2, null, System.currentTimeMillis(), _scoreBoardState.value))
+            _canUndo.postValue(true)
         }
     }
 
     fun subtractTeam2Score() {
-        val newScore = (_team2Score.value ?: 0) - 1
-        if (newScore >= 0) {
-            updateScore(_team1Score.value ?: 0, newScore)
-            triggerHapticFeedback()
-            addMatchEvent("Score correction for ${_team2Name.value}", team = 2)
-        }
+        val currentState = _scoreBoardState.value ?: return
+        val newState = scoringStrategy.removePoint(currentState, 2)
+        updateScoreState(newState)
+        
+        triggerHapticFeedback()
+        addMatchEvent("Score correction for ${_team2Name.value}", team = 2)
     }
 
     fun addScorer(
@@ -512,13 +602,13 @@ class MainViewModel(
                 addMatchEvent("Goal", team = team, player = playerWithRoles.player.playerName, playerRole = rolesString)
                 
                 // Track for Undo
-                actionStack.push(GoalAction(team, playerWithRoles.player.playerId, System.currentTimeMillis()))
+                actionStack.push(GoalAction(team, playerWithRoles.player.playerId, System.currentTimeMillis(), _scoreBoardState.value))
             } else {
                 // No specific player, just log a goal for the team
                 addMatchEvent("Goal", team = team, player = teamName)
                 
                 // Track for Undo (null playerId)
-                actionStack.push(GoalAction(team, null, System.currentTimeMillis()))
+                actionStack.push(GoalAction(team, null, System.currentTimeMillis(), _scoreBoardState.value))
             }
             _canUndo.postValue(true)
         }
@@ -531,23 +621,27 @@ class MainViewModel(
 
             viewModelScope.launch {
                 // 1. Revert Score
-                if (lastAction.teamId == 1) {
-                    val current = _team1Score.value ?: 0
-                    if (current > 0) updateScore(current - 1, _team2Score.value ?: 0)
-                } else {
-                    val current = _team2Score.value ?: 0
-                    if (current > 0) updateScore(_team1Score.value ?: 0, current - 1)
+                if (lastAction.previousState != null) {
+                    updateScoreState(lastAction.previousState)
+                } else if (scoringStrategy.getSportType() == SportType.SOCCER) {
+                     // Fallback for actions without state (should generally not happen with new logic)
+                     // Try to manually decrement info
+                     val current = _scoreBoardState.value
+                     if (current != null) {
+                         // Very basic fallback: just reload purely from current - 1 logic if possible?
+                         // But for Soccer we can just assume Int scores.
+                         if (lastAction.teamId == 1) {
+                             val newScore = (current.team1Score.toIntOrNull() ?: 1) - 1
+                             _team1Score.value = newScore.toString()
+                         } else {
+                             val newScore = (current.team2Score.toIntOrNull() ?: 1) - 1
+                             _team2Score.value = newScore.toString()
+                         }
+                     }
                 }
 
-                // 2. Revert Player Stats if needed
+                // 2. Revert Player Stats (Database)
                 lastAction.playerId?.let { playerId ->
-                    val playerFlow = playerDao.getPlayerWithRoles(playerId)
-                    // We need to collect once to get the player
-                    // Since we are in coroutine, we can't easily wait for Flow value without collection
-                    // Ideally DAO should have suspend fun getPlayer(id)
-                    // For now, we assume we might need to fetch from our local list if possible or just log it
-                    // Optimization: add suspend getPlayer to DAO for QoL
-                    
                      _allPlayers.value?.find { it.player.playerId == playerId }?.let { p ->
                          if (p.player.goals > 0) {
                              p.player.goals--
@@ -556,20 +650,19 @@ class MainViewModel(
                      }
                 }
 
-                // 3. Remove from Match Events
-                // We remove the first "Goal" event for this team/player
+                // 3. Revert Event Log
                 val currentEvents = _matchEvents.value?.toMutableList() ?: return@launch
                 val index = currentEvents.indexOfFirst { 
-                    it.event == "Goal" && 
-                    it.team == lastAction.teamId && 
-                    (lastAction.playerId == null || it.player != null) // Simplistic matching
+                    (it.event.contains("Goal") || it.event.contains("Point")) && 
+                    it.team == lastAction.teamId &&
+                    (lastAction.playerId == null || it.player != null)
                 }
                 if (index != -1) {
                     currentEvents.removeAt(index)
                     _matchEvents.postValue(currentEvents)
                 }
                 
-                addMatchEvent("Undo: Goal removed", team = lastAction.teamId)
+                addMatchEvent("Undo: Last action removed", team = lastAction.teamId)
             }
         }
     }
@@ -641,24 +734,69 @@ class MainViewModel(
     }
 
     // --- End Match ---
+    // --- End Match ---
     fun endMatch(): Boolean {
-        if (team1Score.value == 0 && team2Score.value == 0 && matchTimerValue.value == 0L) {
+        // Check if match started based on timer or score
+        // We use string comparison for scores "0"
+        if (team1Score.value == "0" && team2Score.value == "0" && matchTimerValue.value == 0L) {
             return false // Match not started, do not save
         }
+        
+        val currentState = _scoreBoardState.value
+        val sport = currentState?.sportType ?: SportType.SOCCER
 
         viewModelScope.launch {
             if (isServiceBound) {
                 matchTimerService?.stopTimer()
             }
+            
+            // Calculate Integer scores for compatibility
+            var s1 = 0
+            var s2 = 0
+            
+            if (sport == SportType.SOCCER) {
+                s1 = team1Score.value?.toIntOrNull() ?: 0
+                s2 = team2Score.value?.toIntOrNull() ?: 0
+            } else {
+                // For Padel, we count Sets won
+                // We'll trust the sets list or helper
+                // Simple logic: check finished sets
+                val t1Sets = currentState?.team1Sets ?: emptyList()
+                val t2Sets = currentState?.team2Sets ?: emptyList()
+                // ... logic to count sets ...
+                // Simplified: Just use scoreBoardState logic if available or recompute
+                // We know 2 sets won = match win.
+                // We can check if isMatchFinished and winnerTeamId
+                if (currentState?.isMatchFinished == true) {
+                    if (currentState.winnerTeamId == 1) { s1 = 2; s2 = countSetsWonSimple(t2Sets, t1Sets) } 
+                    else { s2 = 2; s1 = countSetsWonSimple(t1Sets, t2Sets) }
+                } else {
+                   // Match abandoned? Count sets won so far
+                   s1 = countSetsWonSimple(t1Sets, t2Sets)
+                   s2 = countSetsWonSimple(t2Sets, t1Sets)
+                }
+            }
+            
+            val detailsJson = try {
+                 org.json.JSONObject().apply {
+                    put("t1", currentState?.team1Score)
+                    put("t2", currentState?.team2Score)
+                    put("sets1", org.json.JSONArray(currentState?.team1Sets ?: emptyList<Int>()))
+                    put("sets2", org.json.JSONArray(currentState?.team2Sets ?: emptyList<Int>()))
+                    put("sport", currentState?.sportType?.name)
+                 }.toString()
+            } catch (e: Exception) { null }
 
             val matchId =
                 matchDao.insert(
                     Match(
                         team1Id = 1, // Default team 1 ID
                         team2Id = 2, // Default team 2 ID
-                        team1Score = team1Score.value ?: 0,
-                        team2Score = team2Score.value ?: 0,
+                        team1Score = s1,
+                        team2Score = s2,
                         timestamp = System.currentTimeMillis(),
+                        sport = sport.name,
+                        scoreDetails = detailsJson
                     ),
                 )
 
@@ -669,13 +807,24 @@ class MainViewModel(
                 matchDao.insertMatchPlayerCrossRef(MatchPlayerCrossRef(matchId.toInt(), playerWithRoles.player.playerId))
             }
 
-            addMatchEvent("Match ended - Final Score: ${team1Score.value} - ${team2Score.value}")
+            addMatchEvent("Match ended - Final: ${team1Score.value} - ${team2Score.value}")
 
             sendMatchStateUpdate(false)
             startNewMatch()
             sendResetUpdate()
         }
         return true
+    }
+    
+    private fun countSetsWonSimple(mySets: List<Int>, theirSets: List<Int>): Int {
+        var won = 0
+        for (i in mySets.indices) {
+            if (i >= theirSets.size) break
+            val my = mySets[i]
+            val their = theirSets[i]
+            if ((my == 6 && their <= 4) || (my == 7)) won++
+        }
+        return won
     }
 
     // --- Haptic Feedback ---
@@ -745,17 +894,26 @@ class MainViewModel(
     }
 
     private fun sendResetUpdate() {
-        updateScore(0, 0)
+        val initialState = scoringStrategy.getInitialState()
+        updateScoreState(initialState)
         sendTeamNamesUpdate()
+        
         viewModelScope.launch {
-            val data =
-                mapOf(
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to 0L,
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to false,
-                )
+            // Signal match reset to wear (active state = false)
+            val stateData = mapOf(WearConstants.KEY_MATCH_ACTIVE to true) // Keep it active but reset
             connectionManager.sendData(
-                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
-                data = data,
+                path = WearConstants.PATH_MATCH_STATE,
+                data = stateData,
+            )
+
+            // Reset timers on wear
+            val timerData = mapOf(
+                WearConstants.KEY_TIMER_MILLIS to 0L,
+                WearConstants.KEY_TIMER_RUNNING to false,
+            )
+            connectionManager.sendData(
+                path = WearConstants.PATH_TIMER_STATE,
+                data = timerData,
             )
         }
     }

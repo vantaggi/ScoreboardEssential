@@ -59,6 +59,38 @@ class WearViewModel(
     val matchTimer = _matchTimer.asStateFlow()
     private var matchTimerJob: Job? = null
     private var matchTimeInSeconds = 0L
+    
+    // Padel / MultiSport State
+    private val _sportType = MutableStateFlow("SOCCER")
+    val sportType = _sportType.asStateFlow()
+
+    private val _team1ScoreString = MutableStateFlow("0")
+    val team1ScoreString = _team1ScoreString.asStateFlow()
+
+    private val _team2ScoreString = MutableStateFlow("0")
+    val team2ScoreString = _team2ScoreString.asStateFlow()
+
+    private val _team1Sets = MutableStateFlow<IntArray?>(null)
+    val team1Sets = _team1Sets.asStateFlow()
+
+    private val _team2Sets = MutableStateFlow<IntArray?>(null)
+    val team2Sets = _team2Sets.asStateFlow()
+
+    private val _servingTeam = MutableStateFlow(0)
+    val servingTeam = _servingTeam.asStateFlow()
+
+    private val _servingSide = MutableStateFlow("R") // "R" (Right) or "L" (Left)
+    val servingSide = _servingSide.asStateFlow()
+
+    private val _isGoldenPoint = MutableStateFlow(false)
+    val isGoldenPoint = _isGoldenPoint.asStateFlow()
+    
+    // Commands helper
+    private fun sendCommand(path: String) {
+        viewModelScope.launch {
+            connectionManager.sendMessage(path)
+        }
+    }
 
     // Stato timer partita
     private var isMatchTimerRunning: Boolean = false
@@ -110,6 +142,30 @@ class WearViewModel(
         _team2Score.value = team2Score
     }
 
+    fun updateMatchState(
+        team1Score: Int,
+        team2Score: Int,
+        team1ScoreString: String?,
+        team2ScoreString: String?,
+        sportType: String,
+        team1Sets: IntArray?,
+        team2Sets: IntArray?,
+        servingTeam: Int,
+        servingSide: String?,
+        isGoldenPoint: Boolean
+    ) {
+         _team1Score.value = team1Score
+         _team2Score.value = team2Score
+         _team1ScoreString.value = team1ScoreString ?: team1Score.toString()
+         _team2ScoreString.value = team2ScoreString ?: team2Score.toString()
+         _sportType.value = sportType
+         _team1Sets.value = team1Sets
+         _team2Sets.value = team2Sets
+         _servingTeam.value = servingTeam
+         _servingSide.value = servingSide ?: "R"
+         _isGoldenPoint.value = isGoldenPoint
+    }
+
     // --- Score Management ---
     fun setTeamNames(
         team1Name: String,
@@ -144,11 +200,16 @@ class WearViewModel(
     ) {
         _team1Score.value = team1
         _team2Score.value = team2
+        // Update string values for UI immediately
+        _team1ScoreString.value = team1.toString()
+        _team2ScoreString.value = team2.toString()
         viewModelScope.launch {
             val data =
                 mapOf(
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM1_SCORE to team1,
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM2_SCORE to team2,
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM1_SCORE to team1.toString(),
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM2_SCORE to team2.toString(),
+                    "team1_score_int" to team1,
+                    "team2_score_int" to team2
                 )
             connectionManager.sendData(
                 path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_SCORE,
@@ -159,13 +220,19 @@ class WearViewModel(
     }
 
     fun incrementTeam1Score() {
-        val newScore = _team1Score.value + 1
-        updateScore(newScore, _team2Score.value)
-        triggerShortVibration()
+        if (_sportType.value == "PADEL") {
+             sendCommand(it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_CMD_ADD_T1)
+        } else {
+            val newScore = _team1Score.value + 1
+            updateScore(newScore, _team2Score.value)
+            triggerShortVibration()
+        }
     }
 
     fun decrementTeam1Score() {
-        if (_team1Score.value > 0) {
+        if (_sportType.value == "PADEL") {
+             sendCommand(it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_CMD_SUB_T1)
+        } else if (_team1Score.value > 0) {
             val newScore = _team1Score.value - 1
             updateScore(newScore, _team2Score.value)
             triggerShortVibration()
@@ -173,13 +240,19 @@ class WearViewModel(
     }
 
     fun incrementTeam2Score() {
-        val newScore = _team2Score.value + 1
-        updateScore(_team1Score.value, newScore)
-        triggerShortVibration()
+        if (_sportType.value == "PADEL") {
+             sendCommand(it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_CMD_ADD_T2)
+        } else {
+            val newScore = _team2Score.value + 1
+            updateScore(_team1Score.value, newScore)
+            triggerShortVibration()
+        }
     }
 
     fun decrementTeam2Score() {
-        if (_team2Score.value > 0) {
+        if (_sportType.value == "PADEL") {
+             sendCommand(it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_CMD_SUB_T2)
+        } else if (_team2Score.value > 0) {
             val newScore = _team2Score.value - 1
             updateScore(_team1Score.value, newScore)
             triggerShortVibration()
@@ -247,12 +320,15 @@ class WearViewModel(
 
     fun resetMatch(fromRemote: Boolean = false) {
         // Update local state without sending data if fromRemote is true
-        if (fromRemote) {
-            _team1Score.value = 0
-            _team2Score.value = 0
-        } else {
-            updateScore(0, 0)
-        }
+        _team1Score.value = 0
+        _team2Score.value = 0
+        _team1ScoreString.value = "0"
+        _team2ScoreString.value = "0"
+        _team1Sets.value = null
+        _team2Sets.value = null
+        _servingTeam.value = 1
+        _servingSide.value = "R"
+        _isGoldenPoint.value = false
         
         matchTimerJob?.cancel()
         matchTimeInSeconds = 0L

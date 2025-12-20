@@ -36,17 +36,27 @@ class MainActivity : ComponentActivity() {
                 ) {
                     when (intent.action) {
                         WearDataLayerService.ACTION_SCORE_UPDATE -> {
-                            val team1 =
-                                intent.getIntExtra(
-                                    WearDataLayerService.EXTRA_TEAM1_SCORE,
-                                    0,
-                                )
-                            val team2 =
-                                intent.getIntExtra(
-                                    WearDataLayerService.EXTRA_TEAM2_SCORE,
-                                    0,
-                                )
-                            viewModel.updateScoresFromMobile(team1, team2)
+                            val team1 = intent.getIntExtra(WearDataLayerService.EXTRA_TEAM1_SCORE, 0)
+                            val team2 = intent.getIntExtra(WearDataLayerService.EXTRA_TEAM2_SCORE, 0)
+                            
+                            val team1Str = intent.getStringExtra(WearDataLayerService.EXTRA_TEAM1_SCORE_STRING)
+                            val team2Str = intent.getStringExtra(WearDataLayerService.EXTRA_TEAM2_SCORE_STRING)
+                            val sportType = intent.getStringExtra(WearDataLayerService.EXTRA_SPORT_TYPE) ?: "SOCCER"
+                            val t1Sets = intent.getIntArrayExtra(WearDataLayerService.EXTRA_TEAM1_SETS)
+                            val t2Sets = intent.getIntArrayExtra(WearDataLayerService.EXTRA_TEAM2_SETS)
+                            val servingTeam = intent.getIntExtra(WearDataLayerService.EXTRA_SERVING_TEAM, 0)
+                            val servingSide = intent.getStringExtra(WearDataLayerService.EXTRA_SERVING_SIDE)
+                            val isGoldenPoint = intent.getBooleanExtra(WearDataLayerService.EXTRA_IS_GOLDEN_POINT, false)
+
+                            viewModel.updateMatchState(
+                                team1, team2, 
+                                team1Str, team2Str, 
+                                sportType, 
+                                t1Sets, t2Sets, 
+                                servingTeam,
+                                servingSide,
+                                isGoldenPoint
+                            )
                         }
                         WearDataLayerService.ACTION_TEAM_NAMES_UPDATE -> {
                             val team1Name = intent.getStringExtra(WearDataLayerService.EXTRA_TEAM1_NAME) ?: "Team 1"
@@ -174,28 +184,75 @@ class MainActivity : ComponentActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 // Observe Team 1 Score
                 launch {
-                    viewModel.team1Score.collect { score ->
-                        binding.team1Score.text = score.toString()
+                    viewModel.team1ScoreString.collect { score ->
+                        binding.team1Score.text = score
+                    }
+                }
+                
+                launch {
+                    viewModel.team2ScoreString.collect { score ->
+                        binding.team2Score.text = score
+                    }
+                }
+                
+                launch {
+                    viewModel.team1Sets.collect { sets ->
+                        if (sets != null && sets.isNotEmpty()) {
+                            binding.team1Sets.text = "Sets: " + sets.joinToString(" ")
+                            binding.team1Sets.visibility = View.VISIBLE
+                        } else {
+                            binding.team1Sets.visibility = View.GONE
+                        }
                     }
                 }
 
-                // Observe Team 2 Score
                 launch {
-                    viewModel.team2Score.collect { score ->
-                        binding.team2Score.text = score.toString()
+                    viewModel.team2Sets.collect { sets ->
+                        if (sets != null && sets.isNotEmpty()) {
+                            binding.team2Sets.text = "Sets: " + sets.joinToString(" ")
+                            binding.team2Sets.visibility = View.VISIBLE
+                        } else {
+                            binding.team2Sets.visibility = View.GONE
+                        }
+                    }
+                }
+                
+                launch {
+                    viewModel.servingTeam.collect { serving ->
+                        binding.team1Service.visibility = if (serving == 1) View.VISIBLE else View.GONE
+                        binding.team2Service.visibility = if (serving == 2) View.VISIBLE else View.GONE
+                    }
+                }
+
+                launch {
+                    viewModel.servingSide.collect { side ->
+                        binding.servingSideLabel.visibility = if (viewModel.sportType.value == "PADEL") View.VISIBLE else View.GONE
+                        binding.servingSideLabel.text = if (side == "R") "Destra" else "Sinistra"
+                    }
+                }
+
+                launch {
+                    viewModel.isGoldenPoint.collect { isGP ->
+                        binding.goldenPointIndicator.visibility = if (isGP) View.VISIBLE else View.GONE
                     }
                 }
 
                 // Observe Team Colors
                 launch {
                     viewModel.team1Color.collect { color ->
-                        color?.let { binding.team1Score.setTextColor(it) }
+                        color?.let { 
+                            binding.team1Score.setTextColor(it)
+                            binding.team1Service.backgroundTintList = android.content.res.ColorStateList.valueOf(it)
+                         }
                     }
                 }
 
                 launch {
                     viewModel.team2Color.collect { color ->
-                        color?.let { binding.team2Score.setTextColor(it) }
+                        color?.let { 
+                            binding.team2Score.setTextColor(it) 
+                            binding.team2Service.backgroundTintList = android.content.res.ColorStateList.valueOf(it)
+                        }
                     }
                 }
 

@@ -23,6 +23,13 @@ object WearConstants {
     const val MSG_SCORE_CHANGED = "/scoreboard/score_changed"
     const val MSG_TIMER_ACTION = "/scoreboard/timer_action"
     const val MSG_MATCH_ACTION = "/scoreboard/match_action"
+    
+    // Command Paths (Wear -> Mobile)
+    const val PATH_CMD_ADD_T1 = "/cmd/add_t1"
+    const val PATH_CMD_ADD_T2 = "/cmd/add_t2"
+    const val PATH_CMD_SUB_T1 = "/cmd/sub_t1"
+    const val PATH_CMD_SUB_T2 = "/cmd/sub_t2"
+    const val PATH_CMD_UNDO = "/cmd/undo"
 
     // Channel Paths
     const val CHANNEL_TIMER_STREAM = "/scoreboard/timer_stream"
@@ -47,6 +54,16 @@ object WearConstants {
     const val KEY_PLAYER_APPEARANCES = "player_appearances"
     const val KEY_MATCH_ACTIVE = "match_active"
     const val KEY_TEST_DATA = "test_data"
+    
+    // Padel Keys
+    const val KEY_SPORT_TYPE = "sport_type"
+    const val KEY_TEAM1_SETS = "team1_sets"
+    const val KEY_TEAM2_SETS = "team2_sets"
+    const val KEY_SERVING_TEAM = "serving_team"
+    const val KEY_TEAM1_SCORE_STRING = "team1_score_string"
+    const val KEY_TEAM2_SCORE_STRING = "team2_score_string"
+    const val KEY_SERVING_SIDE = "serving_side"
+    const val KEY_IS_GOLDEN_POINT = "is_golden_point"
 
     // Retry Logic
     const val MAX_RETRY_ATTEMPTS = 3

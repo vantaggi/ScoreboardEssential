@@ -43,6 +43,10 @@ import it.vantaggi.scoreboardessential.views.FormationView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
+import android.widget.ImageButton
+import it.vantaggi.scoreboardessential.domain.model.SportType
+import it.vantaggi.scoreboardessential.domain.scoring.ScoreBoardState
+import android.content.DialogInterface
 
 class MainActivity :
     AppCompatActivity(),
@@ -71,6 +75,15 @@ class MainActivity :
     private lateinit var team1NameTextView: TextView
     private lateinit var team2NameTextView: TextView
     private lateinit var vsIndicator: View
+    
+    // Padel Specific Views
+    private lateinit var team1SetsTextView: TextView
+    private lateinit var team2SetsTextView: TextView
+    private lateinit var team1ServiceIndicator: ImageView
+    private lateinit var team2ServiceIndicator: ImageView
+    private lateinit var servingSideLabel: TextView
+    private lateinit var goldenPointLabel: TextView
+    private lateinit var sportButton: ImageButton
 
     // Gesture detectors
     private lateinit var team1GestureDetector: GestureDetector
@@ -159,6 +172,14 @@ class MainActivity :
         team1NameTextView = findViewById(R.id.team1_name_textview)
         team2NameTextView = findViewById(R.id.team2_name_textview)
         vsIndicator = findViewById(R.id.vs_indicator)
+        
+        team1SetsTextView = findViewById(R.id.team1_sets_textview)
+        team2SetsTextView = findViewById(R.id.team2_sets_textview)
+        team1ServiceIndicator = findViewById(R.id.team1_service_indicator)
+        team2ServiceIndicator = findViewById(R.id.team2_service_indicator)
+        servingSideLabel = findViewById(R.id.serving_side_label)
+        goldenPointLabel = findViewById(R.id.golden_point_label)
+        sportButton = findViewById(R.id.sport_button)
 
         // Roster RecyclerViews
         team1RosterRecyclerView = findViewById(R.id.team1_roster_recyclerview)
@@ -248,6 +269,31 @@ class MainActivity :
             matchLogAdapter.submitList(events)
         }
 
+        viewModel.scoreBoardState.observe(this) { state ->
+            // Update Sets
+            if (state.sportType == SportType.PADEL) {
+                team1SetsTextView.text = "Sets: " + state.team1Sets.joinToString(" ")
+                team2SetsTextView.text = "Sets: " + state.team2Sets.joinToString(" ")
+                team1SetsTextView.visibility = View.VISIBLE
+                team2SetsTextView.visibility = View.VISIBLE
+                
+                team1ServiceIndicator.visibility = if (state.servingTeam == 1) View.VISIBLE else View.GONE
+                team2ServiceIndicator.visibility = if (state.servingTeam == 2) View.VISIBLE else View.GONE
+                
+                servingSideLabel.visibility = View.VISIBLE
+                servingSideLabel.text = if (state.servingSide == "R") "Destra" else "Sinistra"
+                
+                goldenPointLabel.visibility = if (state.isGoldenPoint) View.VISIBLE else View.GONE
+            } else {
+                team1SetsTextView.visibility = View.GONE
+                team2SetsTextView.visibility = View.GONE
+                team1ServiceIndicator.visibility = View.GONE
+                team2ServiceIndicator.visibility = View.GONE
+                servingSideLabel.visibility = View.GONE
+                goldenPointLabel.visibility = View.GONE
+            }
+        }
+
         viewModel.showSelectScorerDialog.observe(this) { (teamId, players) ->
             SelectScorerDialogFragment
                 .newInstance(players, teamId)
@@ -296,6 +342,57 @@ class MainActivity :
             resetButton?.isEnabled = isBound
             resetButton?.alpha = if (isBound) 1.0f else 0.5f
         }
+        
+        viewModel.currentSport.observe(this) { sport ->
+            updateSportUI(sport)
+        }
+        
+        viewModel.scoreBoardState.observe(this) { state ->
+            updatePadelUI(state)
+        }
+    }
+    
+    private fun updateSportUI(sport: SportType) {
+        val isPadel = sport == SportType.PADEL
+        val visibility = if (isPadel) View.VISIBLE else View.GONE
+        
+        team1SetsTextView.visibility = visibility
+        team2SetsTextView.visibility = visibility
+        // Service indicators visibility managed by state, but hide all if soccer
+        if (!isPadel) {
+            team1ServiceIndicator.visibility = View.GONE
+            team2ServiceIndicator.visibility = View.GONE
+        }
+        
+        sportButton.setImageResource(if (isPadel) R.drawable.ic_sport_switch else R.drawable.ic_sport_switch) // Can customize icon
+        // Maybe change title or styling
+    }
+
+    private fun updatePadelUI(state: ScoreBoardState) {
+        if (state.sportType != SportType.PADEL) return
+        
+        // Update Sets (e.g. "6-4, 2-1")
+        // We need to format the sets nicely. 
+        // currentState only has current sets logic or past sets?
+        // ScoreBoardState has team1Sets: List<Int>.
+        // This is Sets Won per Set played? Or Score within sets?
+        // Wait, PadelScoringStrategy implementation of team1Sets needs to be checked.
+        // Usually it stores games per set. e.g. [6, 2]
+        
+        fun formatSets(sets: List<Int>): String {
+             return if (sets.isEmpty()) "Sets: 0" else "Sets: " + sets.joinToString(" ")
+        }
+
+        team1SetsTextView.text = formatSets(state.team1Sets)
+        team2SetsTextView.text = formatSets(state.team2Sets)
+        
+        // Update Service
+        team1ServiceIndicator.visibility = if (state.servingTeam == 1) View.VISIBLE else View.GONE
+        team2ServiceIndicator.visibility = if (state.servingTeam == 2) View.VISIBLE else View.GONE
+        
+        // Also update main score TextViews if not handled by team1Score observer
+        // The team1Score observer gets String value from VM, which is "15", "30" etc.
+        // So that is handled.
     }
 
     private fun setupImprovedViews() {
@@ -350,6 +447,19 @@ class MainActivity :
 
         findViewById<View>(R.id.settings_button).setOnClickListener {
             startActivity(Intent(this, MatchSettingsActivity::class.java))
+        }
+
+        sportButton.setOnClickListener {
+            val sports = SportType.values()
+            val sportNames = sports.map { it.name }.toTypedArray()
+            
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Select Sport")
+                .setItems(sportNames) { _, which ->
+                    val selectedSport = sports[which]
+                    viewModel.switchSport(selectedSport)
+                }
+                .show()
         }
 
         findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.stats_fab).setOnClickListener {

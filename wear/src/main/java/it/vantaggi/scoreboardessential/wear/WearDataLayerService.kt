@@ -36,6 +36,16 @@ class WearDataLayerService : WearableListenerService() {
         const val EXTRA_KEEPER_MILLIS = "keeper_millis"
         const val EXTRA_KEEPER_RUNNING = "keeper_running"
         const val EXTRA_MATCH_ACTIVE = "match_active"
+        
+        // Padel Extras
+        const val EXTRA_SPORT_TYPE = "sport_type"
+        const val EXTRA_TEAM1_SETS = "team1_sets"
+        const val EXTRA_TEAM2_SETS = "team2_sets"
+        const val EXTRA_SERVING_TEAM = "serving_team"
+        const val EXTRA_TEAM1_SCORE_STRING = "team1_score_string"
+        const val EXTRA_TEAM2_SCORE_STRING = "team2_score_string"
+        const val EXTRA_SERVING_SIDE = "serving_side"
+        const val EXTRA_IS_GOLDEN_POINT = "is_golden_point"
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -59,15 +69,44 @@ class WearDataLayerService : WearableListenerService() {
 
         when (dataItem.uri.path) {
             WearConstants.PATH_SCORE -> {
-                val team1 = dataMap.getInt(WearConstants.KEY_TEAM1_SCORE, 0)
-                val team2 = dataMap.getInt(WearConstants.KEY_TEAM2_SCORE, 0)
+                // Try reading Int first (Legacy/Soccer)
+                // Use Bundle for safer type-agnostic retrieval to avoid Wearable DataMap warnings
+                val bundle = dataMap.toBundle()
+                
+                val team1Obj = bundle.get(WearConstants.KEY_TEAM1_SCORE)
+                val team1Str = team1Obj?.toString() ?: bundle.getInt("team1_score_int", 0).toString()
+                val team1 = team1Str.toIntOrNull() ?: 0
+
+                val team2Obj = bundle.get(WearConstants.KEY_TEAM2_SCORE)
+                val team2Str = team2Obj?.toString() ?: bundle.getInt("team2_score_int", 0).toString()
+                val team2 = team2Str.toIntOrNull() ?: 0
+                
+                val finalTeam1Str = team1Str
+                val finalTeam2Str = team2Str
+
+                val sportType = bundle.getString(WearConstants.KEY_SPORT_TYPE, "SOCCER")
+                val t1SetsArray = bundle.getIntArray(WearConstants.KEY_TEAM1_SETS)
+                val t2SetsArray = bundle.getIntArray(WearConstants.KEY_TEAM2_SETS)
+                
+                val servingTeam = bundle.getInt(WearConstants.KEY_SERVING_TEAM, 0)
+                val servingSide = bundle.getString(WearConstants.KEY_SERVING_SIDE, "R")
+                val isGoldenPoint = bundle.getBoolean(WearConstants.KEY_IS_GOLDEN_POINT, false)
+
                 val intent =
                     Intent(ACTION_SCORE_UPDATE).apply {
                         putExtra(EXTRA_TEAM1_SCORE, team1)
                         putExtra(EXTRA_TEAM2_SCORE, team2)
+                        putExtra(EXTRA_TEAM1_SCORE_STRING, finalTeam1Str)
+                        putExtra(EXTRA_TEAM2_SCORE_STRING, finalTeam2Str)
+                        putExtra(EXTRA_SPORT_TYPE, sportType)
+                        putExtra(EXTRA_TEAM1_SETS, t1SetsArray)
+                        putExtra(EXTRA_TEAM2_SETS, t2SetsArray)
+                        putExtra(EXTRA_SERVING_TEAM, servingTeam)
+                        putExtra(EXTRA_SERVING_SIDE, servingSide)
+                        putExtra(EXTRA_IS_GOLDEN_POINT, isGoldenPoint)
                     }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-                Log.d(TAG, "Broadcasted score update: T1=$team1, T2=$team2")
+                Log.d(TAG, "Broadcasted score update: $finalTeam1Str - $finalTeam2Str (Sport: $sportType)")
             }
             WearConstants.PATH_TEAM_NAMES -> {
                 val team1Name = dataMap.getString(WearConstants.KEY_TEAM1_NAME, "Team 1")

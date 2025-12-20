@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
         Match::class, Player::class, MatchPlayerCrossRef::class,
         Team::class, Role::class, PlayerRoleCrossRef::class,
     ],
-    version = 9, // ✅ Cambia da 8 a 9
+    version = 10,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -115,6 +115,14 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
 
+        private val MIGRATION_9_10 =
+            object : Migration(9, 10) {
+                override fun migrate(database: SupportSQLiteDatabase) {
+                    database.execSQL("ALTER TABLE matches ADD COLUMN sport TEXT NOT NULL DEFAULT 'SOCCER'")
+                    database.execSQL("ALTER TABLE matches ADD COLUMN scoreDetails TEXT DEFAULT NULL")
+                }
+            }
+
         fun getDatabase(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 val instance =
@@ -137,7 +145,7 @@ abstract class AppDatabase : RoomDatabase() {
                                     }
                                 }
                             },
-                        ).addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9) // ✅ Aggiungi MIGRATION_8_9
+                        ).addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10) // ✅ Aggiungi MIGRATION_9_10
                         .build()
                 this.instance = instance
                 instance

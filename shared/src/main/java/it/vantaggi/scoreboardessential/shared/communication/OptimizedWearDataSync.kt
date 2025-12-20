@@ -110,6 +110,14 @@ class OptimizedWearDataSync(
                             is Long -> dataMap.putLong(key, value)
                             is Double -> dataMap.putDouble(key, value)
                             is Float -> dataMap.putFloat(key, value)
+                            is IntArray -> dataMap.putIntegerArrayList(key, ArrayList(value.toList()))
+                            is ArrayList<*> -> {
+                                if (value.isNotEmpty() && value[0] is Int) {
+                                    dataMap.putIntegerArrayList(key, value as ArrayList<Int>)
+                                } else if (value.isNotEmpty() && value[0] is String) {
+                                    dataMap.putStringArrayList(key, value as ArrayList<String>)
+                                }
+                            }
                         }
                     }
                     dataMap.putLong(WearConstants.KEY_TIMESTAMP, System.currentTimeMillis())

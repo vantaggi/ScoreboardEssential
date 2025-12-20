@@ -13,4 +13,6 @@ data class Match(
     val team2Score: Int,
     val timestamp: Long,
     val isActive: Boolean = false,
+    val sport: String = "SOCCER", // Default compatibility
+    val scoreDetails: String? = null // JSON blob for Padel sets/games
 )
