@@ -321,14 +321,20 @@ class WearViewModel(
         matchTimerJob?.cancel()
         matchTimerJob =
             viewModelScope.launch {
+                val startTime = System.currentTimeMillis() - (matchTimeInSeconds * 1000)
                 while (isMatchTimerRunning) {
+                    val now = System.currentTimeMillis()
+                    val diff = now - startTime
+                    matchTimeInSeconds = diff / 1000
+                    
                     val minutes = matchTimeInSeconds / 60
                     val seconds = matchTimeInSeconds % 60
                     _matchTimer.value = String.format("%02d:%02d", minutes, seconds)
-                    delay(1000)
-                    if (isMatchTimerRunning) {
-                        matchTimeInSeconds++
-                    }
+                    
+                    // drift correction
+                    val nextSecond = (matchTimeInSeconds + 1) * 1000
+                    val delayMillis = nextSecond - diff
+                    delay(if (delayMillis > 0) delayMillis else 100L)
                 }
             }
     }

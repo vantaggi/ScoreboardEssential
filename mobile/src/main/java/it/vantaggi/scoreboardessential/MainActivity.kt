@@ -65,6 +65,7 @@ class MainActivity :
     private lateinit var team2Card: MaterialCardView
     private lateinit var keeperTimerTextView: TextView
     private lateinit var timerStartButton: Button
+    private lateinit var undoGoalButton: Button
 
     // New view references for refactored layout
     private lateinit var team1NameTextView: TextView
@@ -152,6 +153,7 @@ class MainActivity :
         team2Card = findViewById(R.id.team2_card)
         keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
         timerStartButton = findViewById(R.id.timer_start_button)
+        undoGoalButton = findViewById(R.id.undo_goal_button)
 
         // New Views
         team1NameTextView = findViewById(R.id.team1_name_textview)
@@ -281,6 +283,19 @@ class MainActivity :
             val intent = Intent(this, OnboardingActivity::class.java)
             startActivity(intent)
         }
+
+        viewModel.canUndo.observe(this) { canUndo ->
+            undoGoalButton.visibility = if (canUndo) View.VISIBLE else View.GONE
+        }
+        
+        viewModel.serviceBindingStatus.observe(this) { isBound ->
+            timerStartButton.isEnabled = isBound
+            timerStartButton.alpha = if (isBound) 1.0f else 0.5f
+            
+            val resetButton = findViewById<Button>(R.id.reset_timer_button)
+            resetButton?.isEnabled = isBound
+            resetButton?.alpha = if (isBound) 1.0f else 0.5f
+        }
     }
 
     private fun setupImprovedViews() {
@@ -339,6 +354,17 @@ class MainActivity :
 
         findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.stats_fab).setOnClickListener {
             startActivity(Intent(this, StatisticsActivity::class.java))
+        }
+
+        undoGoalButton.setOnClickListener {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Undo Last Goal?")
+                .setMessage("This will revert the score and remove the goal from the log.")
+                .setPositiveButton("Undo") { _, _ ->
+                    viewModel.undoLastGoal()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
     }
 

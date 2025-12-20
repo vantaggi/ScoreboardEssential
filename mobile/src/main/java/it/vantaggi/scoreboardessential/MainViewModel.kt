@@ -59,6 +59,18 @@ class MainViewModel(
     private val matchDao: MatchDao = AppDatabase.getDatabase(application).matchDao()
     private var matchTimerService: MatchTimerService? = null
     private var isServiceBound = false
+    private val _serviceBindingStatus = MutableLiveData(false)
+    val serviceBindingStatus: LiveData<Boolean> = _serviceBindingStatus
+
+    // Undo Stacks
+    private data class GoalAction(
+        val teamId: Int,
+        val playerId: Int?,
+        val timestamp: Long
+    )
+    private val actionStack = java.util.Stack<GoalAction>()
+    private val _canUndo = MutableLiveData(false)
+    val canUndo: LiveData<Boolean> = _canUndo
 
     val connectionManager = OptimizedWearDataSync(application)
     private val _isWearConnected = MutableLiveData(false)
@@ -92,6 +104,7 @@ class MainViewModel(
                 val binder = service as MatchTimerService.MatchTimerBinder
                 matchTimerService = binder.getService()
                 isServiceBound = true
+                _serviceBindingStatus.postValue(true)
 
                 viewModelScope.launch {
                     binder.getService().matchTimerValue.collect {
@@ -125,6 +138,7 @@ class MainViewModel(
                 android.util.Log.d("MainViewModel", "Service disconnected!")
                 matchTimerService = null
                 isServiceBound = false
+                _serviceBindingStatus.postValue(false)
             }
         }
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
@@ -347,6 +361,9 @@ class MainViewModel(
             matchTimerService?.resetKeeperTimer()
         }
 
+        actionStack.clear()
+        _canUndo.postValue(false)
+
         addMatchEvent("New match ready - press START to begin")
         sendMatchStateUpdate(true)
     }
@@ -493,9 +510,66 @@ class MainViewModel(
 
                 val rolesString = playerWithRoles.roles.joinToString(", ") { it.name }
                 addMatchEvent("Goal", team = team, player = playerWithRoles.player.playerName, playerRole = rolesString)
+                
+                // Track for Undo
+                actionStack.push(GoalAction(team, playerWithRoles.player.playerId, System.currentTimeMillis()))
             } else {
                 // No specific player, just log a goal for the team
                 addMatchEvent("Goal", team = team, player = teamName)
+                
+                // Track for Undo (null playerId)
+                actionStack.push(GoalAction(team, null, System.currentTimeMillis()))
+            }
+            _canUndo.postValue(true)
+        }
+    }
+
+    fun undoLastGoal() {
+        if (actionStack.isNotEmpty()) {
+            val lastAction = actionStack.pop()
+            _canUndo.postValue(actionStack.isNotEmpty())
+
+            viewModelScope.launch {
+                // 1. Revert Score
+                if (lastAction.teamId == 1) {
+                    val current = _team1Score.value ?: 0
+                    if (current > 0) updateScore(current - 1, _team2Score.value ?: 0)
+                } else {
+                    val current = _team2Score.value ?: 0
+                    if (current > 0) updateScore(_team1Score.value ?: 0, current - 1)
+                }
+
+                // 2. Revert Player Stats if needed
+                lastAction.playerId?.let { playerId ->
+                    val playerFlow = playerDao.getPlayerWithRoles(playerId)
+                    // We need to collect once to get the player
+                    // Since we are in coroutine, we can't easily wait for Flow value without collection
+                    // Ideally DAO should have suspend fun getPlayer(id)
+                    // For now, we assume we might need to fetch from our local list if possible or just log it
+                    // Optimization: add suspend getPlayer to DAO for QoL
+                    
+                     _allPlayers.value?.find { it.player.playerId == playerId }?.let { p ->
+                         if (p.player.goals > 0) {
+                             p.player.goals--
+                             playerDao.update(p.player)
+                         }
+                     }
+                }
+
+                // 3. Remove from Match Events
+                // We remove the first "Goal" event for this team/player
+                val currentEvents = _matchEvents.value?.toMutableList() ?: return@launch
+                val index = currentEvents.indexOfFirst { 
+                    it.event == "Goal" && 
+                    it.team == lastAction.teamId && 
+                    (lastAction.playerId == null || it.player != null) // Simplistic matching
+                }
+                if (index != -1) {
+                    currentEvents.removeAt(index)
+                    _matchEvents.postValue(currentEvents)
+                }
+                
+                addMatchEvent("Undo: Goal removed", team = lastAction.teamId)
             }
         }
     }
@@ -518,15 +592,7 @@ class MainViewModel(
 
     fun resetMatchTimer(fromRemote: Boolean = false) {
         if (fromRemote && isServiceBound) {
-             matchTimerService?.updateMatchTimer(0L, fromRemote = true)
-             matchTimerService?.stopTimer() // This usually sends update, we might need a silent stop?
-             // Actually stopTimer sends 0L, false. 
-             // If we call updateMatchTimer(0, true) then stopTimer(), stopTimer will send update.
-             // Let's add fromRemote to stopTimer in service too?
-             // For now, let's rely on updateMatchTimer(0, true) and manual state set if possible, or just accept that stopTimer sends one update 
-             // but if we are at 0 already it might be fine?
-             // Better: add fromRemote to resetTimer in Service.
-             matchTimerService?.resetTimer(fromRemote)
+             matchTimerService?.resetTimer(fromRemote = true)
         } else {
             matchTimerService?.resetTimer()
         }

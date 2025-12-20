@@ -24,22 +24,38 @@ class ScoreboardEssentialApplication : Application() {
         createNotificationChannel()
     }
 
+    companion object {
+        const val CHANNEL_ID = "scoreboard_channel"
+        const val CHANNEL_ID_ALARM = "scoreboard_alarm_channel"
+    }
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationManager: NotificationManager =
+                getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+            // Service Channel (Low Importance - Silent)
             val name = getString(R.string.channel_name)
             val descriptionText = getString(R.string.channel_description)
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val importance = NotificationManager.IMPORTANCE_LOW
             val channel =
                 NotificationChannel(CHANNEL_ID, name, importance).apply {
                     description = descriptionText
+                    setShowBadge(false)
                 }
-            val notificationManager: NotificationManager =
-                getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
-        }
-    }
 
-    companion object {
-        const val CHANNEL_ID = "scoreboard_channel"
+            // Alarm Channel (High Importance - Sound & Pop-up)
+            val alarmName = "Timer Alarms" // You might want to extract this to strings.xml later if strict localization is needed
+            val alarmDescription = "Notifications for expired timers"
+            val alarmImportance = NotificationManager.IMPORTANCE_HIGH
+            val alarmChannel =
+                NotificationChannel(CHANNEL_ID_ALARM, alarmName, alarmImportance).apply {
+                    description = alarmDescription
+                    enableVibration(true)
+                    enableLights(true)
+                }
+            notificationManager.createNotificationChannel(alarmChannel)
+        }
     }
 }

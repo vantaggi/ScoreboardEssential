@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.IBinder
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -62,6 +63,7 @@ class MatchTimerService : Service() {
         private const val KEEPER_TIMER_EXPIRED_NOTIFICATION_ID = 2
         const val ACTION_PAUSE = "it.vantaggi.scoreboardessential.service.PAUSE"
         const val ACTION_STOP = "it.vantaggi.scoreboardessential.service.STOP"
+        const val ACTION_DISMISS_ALARM = "it.vantaggi.scoreboardessential.service.DISMISS_ALARM"
 
         private const val PREFS_NAME = "MatchTimerPrefs"
         private const val KEY_MATCH_START_TIME = "match_start_time"
@@ -93,6 +95,10 @@ class MatchTimerService : Service() {
                 stopTimer()
                 resetKeeperTimer()
             }
+            ACTION_DISMISS_ALARM -> {
+                vibrator.cancel() // Stop vibration immediately
+                NotificationManagerCompat.from(this).cancel(KEEPER_TIMER_EXPIRED_NOTIFICATION_ID)
+            }
         }
         return START_STICKY
     }
@@ -111,7 +117,8 @@ class MatchTimerService : Service() {
         matchTimerJob =
             scope.launch {
                 while (isActive) {
-                    val elapsed = System.currentTimeMillis() - matchStartTime
+                    val now = System.currentTimeMillis()
+                    val elapsed = now - matchStartTime
                     _matchTimerValue.value = elapsed
                     updateNotification(elapsed)
                     val data =
@@ -123,7 +130,11 @@ class MatchTimerService : Service() {
                         path = WearConstants.PATH_TIMER_STATE,
                         data = data,
                     )
-                    delay(1000)
+                    
+                    // QoL: Calculate delay to land exactly on the next second boundary
+                    // This prevents drift and inconsistent UI updates
+                    val delayMillis = 1000L - (elapsed % 1000L)
+                    delay(if (delayMillis > 0) delayMillis else 1000L)
                 }
             }
         startForegroundWithPermissionCheck()
@@ -368,14 +379,20 @@ class MatchTimerService : Service() {
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
 
+        val dismissalIntent = Intent(this, MatchTimerService::class.java).apply { action = ACTION_DISMISS_ALARM }
+        val dismissalPendingIntent = PendingIntent.getService(this, 0, dismissalIntent, PendingIntent.FLAG_IMMUTABLE)
+
         val notification =
             NotificationCompat
-                .Builder(this, ScoreboardEssentialApplication.CHANNEL_ID)
+                .Builder(this, ScoreboardEssentialApplication.CHANNEL_ID_ALARM)
                 .setContentTitle(getString(R.string.keeper_timer_expired_title))
                 .setContentText(getString(R.string.keeper_timer_expired_text))
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
                 .setContentIntent(pendingIntent)
+                .setDeleteIntent(dismissalPendingIntent) // Stop vibration on swipe away
+                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissalPendingIntent) // Quick action
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setAutoCancel(true)
                 .build()
 
