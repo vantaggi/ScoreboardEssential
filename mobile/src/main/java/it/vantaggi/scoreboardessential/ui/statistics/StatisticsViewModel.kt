@@ -27,11 +27,11 @@ class StatisticsViewModel(
         DEFENSE,
     }
 
-    private val _filter = MutableStateFlow(FilterType.ALL)
-    private val _allStats = MutableStateFlow<List<PlayerStatsDTO>>(emptyList())
+    private val filter = MutableStateFlow(FilterType.ALL)
+    private val allStats = MutableStateFlow<List<PlayerStatsDTO>>(emptyList())
 
     val topScorers: StateFlow<List<PlayerStatsDTO>> =
-        combine(_allStats, _filter) { stats, filter ->
+        combine(allStats, filter) { stats, filter ->
             when (filter) {
                 FilterType.ALL -> stats
                 FilterType.ATTACK -> stats.filter { it.roles.any { role -> role.category == "ATTACCO" } }
@@ -43,14 +43,14 @@ class StatisticsViewModel(
         loadTopScorers()
     }
 
-    fun setFilter(filter: FilterType) {
-        _filter.value = filter
+    fun setFilter(newFilter: FilterType) {
+        filter.value = newFilter
     }
 
     private fun loadTopScorers() {
         viewModelScope.launch {
             getPlayerStatsUseCase.getTopScorers(10).collect { stats ->
-                _allStats.value = stats
+                allStats.value = stats
             }
         }
     }

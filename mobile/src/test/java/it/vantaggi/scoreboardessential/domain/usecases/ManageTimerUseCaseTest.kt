@@ -41,19 +41,33 @@ class ManageTimerUseCaseTest {
         timeMillisFlow.value = 0L
 
         // Setup mock behavior to update flows when methods are called
-        whenever(timerService.startTimer()).doAnswer {
+        // Note: startTimer, pauseTimer, and stopTimer in MatchTimerService return Unit (or void in Java),
+        // so we can't stub them with 'whenever(...).doAnswer' if they are final.
+        // However, MatchTimerService is likely open or we are using mockito-inline.
+        // The issue 'InvalidUseOfMatchersException' often comes from argument matchers used incorrectly or outside stubbing.
+        // Here we are using 'doAnswer' on void methods. The syntax `whenever(mock.voidMethod()).doAnswer` is incorrect for void methods.
+        // It should be `doAnswer { ... }.whenever(mock).voidMethod()`.
+
+        doAnswer {
             isRunningFlow.value = true
-        }
-        whenever(timerService.pauseTimer()).doAnswer {
+            null
+        }.whenever(timerService).startTimer()
+
+        doAnswer {
             isRunningFlow.value = false
-        }
-        whenever(timerService.stopTimer()).doAnswer {
+            null
+        }.whenever(timerService).pauseTimer()
+
+        doAnswer {
             isRunningFlow.value = false
             timeMillisFlow.value = 0L
-        }
-        whenever(timerService.updateMatchTimer(any())).doAnswer {
+            null
+        }.whenever(timerService).stopTimer()
+
+        doAnswer {
             timeMillisFlow.value = it.getArgument(0)
-        }
+            null
+        }.whenever(timerService).updateMatchTimer(any())
 
         useCase = ManageTimerUseCase(timerService, wearDataSync)
     }

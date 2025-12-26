@@ -5,10 +5,10 @@ import android.content.SharedPreferences
 import android.graphics.Color
 import androidx.core.content.edit
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.withContext
 
 class MatchSettingsRepository(
     context: Context,
@@ -76,33 +76,35 @@ class MatchSettingsRepository(
             sharedPreferences.getLong(KEY_KEEPER_TIMER_DURATION, 30L)
         }
 
-    fun getSettingsFlow(): Flow<MatchSettings> = callbackFlow {
-        val listener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
+    fun getSettingsFlow(): Flow<MatchSettings> =
+        callbackFlow {
+            val listener =
+                SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
+                    trySend(
+                        MatchSettings(
+                            prefs.getString(KEY_TEAM1_NAME, "Team 1") ?: "Team 1",
+                            prefs.getString(KEY_TEAM2_NAME, "Team 2") ?: "Team 2",
+                            prefs.getInt(KEY_TEAM1_COLOR, Color.parseColor("#FFD600")),
+                            prefs.getInt(KEY_TEAM2_COLOR, Color.parseColor("#76FF03")),
+                            prefs.getLong(KEY_KEEPER_TIMER_DURATION, 30L),
+                        ),
+                    )
+                }
+
+            // Emit initial value
             trySend(
                 MatchSettings(
-                    prefs.getString(KEY_TEAM1_NAME, "Team 1") ?: "Team 1",
-                    prefs.getString(KEY_TEAM2_NAME, "Team 2") ?: "Team 2",
-                    prefs.getInt(KEY_TEAM1_COLOR, Color.parseColor("#FFD600")),
-                    prefs.getInt(KEY_TEAM2_COLOR, Color.parseColor("#76FF03")),
-                    prefs.getLong(KEY_KEEPER_TIMER_DURATION, 30L)
-                )
+                    sharedPreferences.getString(KEY_TEAM1_NAME, "Team 1") ?: "Team 1",
+                    sharedPreferences.getString(KEY_TEAM2_NAME, "Team 2") ?: "Team 2",
+                    sharedPreferences.getInt(KEY_TEAM1_COLOR, Color.parseColor("#FFD600")),
+                    sharedPreferences.getInt(KEY_TEAM2_COLOR, Color.parseColor("#76FF03")),
+                    sharedPreferences.getLong(KEY_KEEPER_TIMER_DURATION, 30L),
+                ),
             )
+
+            sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
+            awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
         }
-
-        // Emit initial value
-        trySend(
-            MatchSettings(
-                sharedPreferences.getString(KEY_TEAM1_NAME, "Team 1") ?: "Team 1",
-                sharedPreferences.getString(KEY_TEAM2_NAME, "Team 2") ?: "Team 2",
-                sharedPreferences.getInt(KEY_TEAM1_COLOR, Color.parseColor("#FFD600")),
-                sharedPreferences.getInt(KEY_TEAM2_COLOR, Color.parseColor("#76FF03")),
-                sharedPreferences.getLong(KEY_KEEPER_TIMER_DURATION, 30L)
-            )
-        )
-
-        sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
-        awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
-    }
 
     companion object {
         private const val KEY_TEAM1_NAME = "team1_name"
@@ -118,5 +120,5 @@ data class MatchSettings(
     val team2Name: String,
     val team1Color: Int,
     val team2Color: Int,
-    val keeperTimerDuration: Long
+    val keeperTimerDuration: Long,
 )

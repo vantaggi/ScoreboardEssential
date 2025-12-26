@@ -139,21 +139,22 @@ class PlayersManagementActivity : AppCompatActivity() {
     private fun setupRoleFilterChips(roles: List<it.vantaggi.scoreboardessential.database.Role>) {
         rolesFilterChipGroup.removeAllViews()
 
+        val inflater = android.view.LayoutInflater.from(this)
+
         // Add "All" chip
         val allChip =
-            Chip(this).apply {
+            (inflater.inflate(R.layout.item_chip_filter, rolesFilterChipGroup, false) as Chip).apply {
                 text = "All"
                 id = View.generateViewId()
                 isCheckable = true
                 isChecked = true
-                // The style is inherited from the theme, or can be set in the XML via `chipStyle`
             }
         rolesFilterChipGroup.addView(allChip)
 
         // Add role chips
         roles.forEach { role ->
             val chip =
-                Chip(this).apply {
+                (inflater.inflate(R.layout.item_chip_filter, rolesFilterChipGroup, false) as Chip).apply {
                     text = role.name
                     id = View.generateViewId()
                     tag = role.roleId

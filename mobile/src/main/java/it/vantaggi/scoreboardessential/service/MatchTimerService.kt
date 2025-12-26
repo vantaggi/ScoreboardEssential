@@ -12,7 +12,6 @@ import android.os.Build
 import android.os.IBinder
 import android.os.VibrationEffect
 import android.os.Vibrator
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -110,7 +109,7 @@ class MatchTimerService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     // --- Match Timer Control ---
-    fun startTimer() {
+    fun startTimer(fromRemote: Boolean = false) {
         if (_isMatchTimerRunning.value) return
         _isMatchTimerRunning.value = true
         matchStartTime = System.currentTimeMillis() - elapsedTimeOnPause
@@ -121,16 +120,19 @@ class MatchTimerService : Service() {
                     val elapsed = now - matchStartTime
                     _matchTimerValue.value = elapsed
                     updateNotification(elapsed)
-                    val data =
-                        mapOf(
-                            WearConstants.KEY_TIMER_MILLIS to elapsed,
-                            WearConstants.KEY_TIMER_RUNNING to true,
+
+                    if (!fromRemote) {
+                        val data =
+                            mapOf(
+                                WearConstants.KEY_TIMER_MILLIS to elapsed,
+                                WearConstants.KEY_TIMER_RUNNING to true,
+                            )
+                        connectionManager.sendData(
+                            path = WearConstants.PATH_TIMER_STATE,
+                            data = data,
                         )
-                    connectionManager.sendData(
-                        path = WearConstants.PATH_TIMER_STATE,
-                        data = data,
-                    )
-                    
+                    }
+
                     // QoL: Calculate delay to land exactly on the next second boundary
                     // This prevents drift and inconsistent UI updates
                     val delayMillis = 1000L - (elapsed % 1000L)
@@ -141,21 +143,24 @@ class MatchTimerService : Service() {
         saveState()
     }
 
-    fun pauseTimer() {
+    fun pauseTimer(fromRemote: Boolean = false) {
         if (!_isMatchTimerRunning.value) return
         _isMatchTimerRunning.value = false
         matchTimerJob?.cancel()
         elapsedTimeOnPause = _matchTimerValue.value
-        scope.launch {
-            val data =
-                mapOf(
-                    WearConstants.KEY_TIMER_MILLIS to _matchTimerValue.value,
-                    WearConstants.KEY_TIMER_RUNNING to false,
+
+        if (!fromRemote) {
+            scope.launch {
+                val data =
+                    mapOf(
+                        WearConstants.KEY_TIMER_MILLIS to _matchTimerValue.value,
+                        WearConstants.KEY_TIMER_RUNNING to false,
+                    )
+                connectionManager.sendData(
+                    path = WearConstants.PATH_TIMER_STATE,
+                    data = data,
                 )
-            connectionManager.sendData(
-                path = WearConstants.PATH_TIMER_STATE,
-                data = data,
-            )
+            }
         }
         updateNotification(_matchTimerValue.value)
         checkStopForeground()
@@ -167,7 +172,7 @@ class MatchTimerService : Service() {
         matchTimerJob?.cancel()
         _matchTimerValue.value = 0L
         elapsedTimeOnPause = 0L
-        
+
         if (!fromRemote) {
             scope.launch {
                 val data =
@@ -190,7 +195,10 @@ class MatchTimerService : Service() {
         stopTimer(fromRemote)
     }
 
-    fun updateMatchTimer(timeMillis: Long, fromRemote: Boolean = false) {
+    fun updateMatchTimer(
+        timeMillis: Long,
+        fromRemote: Boolean = false,
+    ) {
         _matchTimerValue.value = timeMillis
         if (_isMatchTimerRunning.value) {
             matchStartTime = System.currentTimeMillis() - timeMillis
@@ -216,7 +224,10 @@ class MatchTimerService : Service() {
     }
 
     // --- Keeper Timer Control ---
-    fun startKeeperTimer(durationMillis: Long, fromRemote: Boolean = false) {
+    fun startKeeperTimer(
+        durationMillis: Long,
+        fromRemote: Boolean = false,
+    ) {
         if (_isKeeperTimerRunning.value) return
         val duration = if (keeperRemainingOnPause > 0) keeperRemainingOnPause else durationMillis
         _isKeeperTimerRunning.value = true
@@ -249,7 +260,7 @@ class MatchTimerService : Service() {
                     delay(1000)
                 }
             }
-        
+
         if (!fromRemote) {
             scope.launch {
                 val data =
@@ -272,7 +283,7 @@ class MatchTimerService : Service() {
         _isKeeperTimerRunning.value = false
         keeperTimerJob?.cancel()
         keeperRemainingOnPause = _keeperTimerValue.value
-        
+
         if (!fromRemote) {
             scope.launch {
                 val data =
@@ -296,7 +307,7 @@ class MatchTimerService : Service() {
         _keeperTimerValue.value = 0L
         keeperTimerEndTime = 0L
         keeperRemainingOnPause = 0L
-        
+
         if (!fromRemote) {
             scope.launch {
                 val data =

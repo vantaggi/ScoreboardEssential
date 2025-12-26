@@ -33,8 +33,9 @@ class GetPlayerStatsUseCaseTest {
             val player1 = Player(1, "Player 1", 10, 5)
             val player2 = Player(2, "Player 2", 8, 3)
             val players = listOf(player1, player2)
+            val playersWithRoles = players.map { PlayerWithRoles(it, emptyList()) }
 
-            `when`(playerDao.getTopScorers(10)).thenReturn(flowOf(players))
+            `when`(playerDao.getTopScorers(10)).thenReturn(flowOf(playersWithRoles))
 
             // When
             val result = getPlayerStatsUseCase.getTopScorers(10).first()

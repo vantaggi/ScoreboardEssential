@@ -3,6 +3,7 @@ package it.vantaggi.scoreboardessential
 import android.app.Application
 import android.content.ComponentName
 import android.graphics.Color
+import android.os.Looper
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import androidx.test.core.app.ApplicationProvider
@@ -39,7 +40,6 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
-import android.os.Looper
 import java.lang.reflect.Field
 
 @ExperimentalCoroutinesApi

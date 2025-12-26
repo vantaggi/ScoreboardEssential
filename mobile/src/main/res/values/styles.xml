@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Widget.App.Chip.Street" parent="Widget.Material3.Chip.Filter">
+        <item name="shapeAppearance">@style/ShapeAppearance.App.StreetBadge</item>
+        <item name="android:textAppearance">@style/TextAppearance.App.Button</item>
+        <item name="chipBackgroundColor">@color/concrete_gray</item>
+        <item name="chipStrokeColor">@color/graffiti_pink</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="android:textColor">@color/stencil_white</item>
+    </style>
+</resources>
