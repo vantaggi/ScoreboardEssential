@@ -51,7 +51,7 @@ class ManageTimerUseCaseTest {
             isRunningFlow.value = false
             timeMillisFlow.value = 0L
         }
-        whenever(timerService.updateMatchTimer(any())).doAnswer {
+        whenever(timerService.updateMatchTimer(any(), any())).doAnswer {
             timeMillisFlow.value = it.getArgument(0)
         }
 

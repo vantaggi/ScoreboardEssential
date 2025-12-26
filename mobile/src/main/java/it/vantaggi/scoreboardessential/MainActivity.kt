@@ -287,11 +287,11 @@ class MainActivity :
         viewModel.canUndo.observe(this) { canUndo ->
             undoGoalButton.visibility = if (canUndo) View.VISIBLE else View.GONE
         }
-        
+
         viewModel.serviceBindingStatus.observe(this) { isBound ->
             timerStartButton.isEnabled = isBound
             timerStartButton.alpha = if (isBound) 1.0f else 0.5f
-            
+
             val resetButton = findViewById<Button>(R.id.reset_timer_button)
             resetButton?.isEnabled = isBound
             resetButton?.alpha = if (isBound) 1.0f else 0.5f
@@ -362,8 +362,7 @@ class MainActivity :
                 .setMessage("This will revert the score and remove the goal from the log.")
                 .setPositiveButton("Undo") { _, _ ->
                     viewModel.undoLastGoal()
-                }
-                .setNegativeButton("Cancel", null)
+                }.setNegativeButton("Cancel", null)
                 .show()
         }
     }

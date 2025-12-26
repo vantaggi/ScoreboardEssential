@@ -66,8 +66,9 @@ class MainViewModel(
     private data class GoalAction(
         val teamId: Int,
         val playerId: Int?,
-        val timestamp: Long
+        val timestamp: Long,
     )
+
     private val actionStack = java.util.Stack<GoalAction>()
     private val _canUndo = MutableLiveData(false)
     val canUndo: LiveData<Boolean> = _canUndo
@@ -163,21 +164,21 @@ class MainViewModel(
                         val millis = intent.getLongExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_MILLIS, 0L)
                         val running = intent.getBooleanExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_RUNNING, false)
                         Log.d("VM", "📥 Timer from Wear: $millis ms, running=$running")
-                        
+
                         if (millis == 0L && !running) {
                             resetMatchTimer(fromRemote = true)
                         } else {
-                             // For running updates, we can just update the service value directly without toggling if it matches
-                             if (isServiceBound) {
+                            // For running updates, we can just update the service value directly without toggling if it matches
+                            if (isServiceBound) {
                                 matchTimerService?.updateMatchTimer(millis, fromRemote = true)
                                 // Only toggle if running state is different
                                 if (running != (_isMatchTimerRunning.value ?: false)) {
-                                     // We need a way to set state without sending back...
-                                     // Actually updateMatchTimer updates the value.
-                                     // We need to set running state too.
-                                     if (running) matchTimerService?.startTimer() else matchTimerService?.pauseTimer()
+                                    // We need a way to set state without sending back...
+                                    // Actually updateMatchTimer updates the value.
+                                    // We need to set running state too.
+                                    if (running) matchTimerService?.startTimer() else matchTimerService?.pauseTimer()
                                 }
-                             }
+                            }
                         }
                     }
                     SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE -> {
@@ -294,14 +295,14 @@ class MainViewModel(
                 if (_team2Name.value != settings.team2Name) setTeam2Name(settings.team2Name)
                 if (_team1Color.value != settings.team1Color) setTeamColor(1, settings.team1Color)
                 if (_team2Color.value != settings.team2Color) setTeamColor(2, settings.team2Color)
-                
+
                 val currentDurationSeconds = keeperTimerDuration / 1000
                 if (currentDurationSeconds != settings.keeperTimerDuration) {
                     setKeeperTimer(settings.keeperTimerDuration)
                 }
             }
         }
-    
+
         loadAllPlayers()
         startNewMatch()
         bindService()
@@ -510,13 +511,13 @@ class MainViewModel(
 
                 val rolesString = playerWithRoles.roles.joinToString(", ") { it.name }
                 addMatchEvent("Goal", team = team, player = playerWithRoles.player.playerName, playerRole = rolesString)
-                
+
                 // Track for Undo
                 actionStack.push(GoalAction(team, playerWithRoles.player.playerId, System.currentTimeMillis()))
             } else {
                 // No specific player, just log a goal for the team
                 addMatchEvent("Goal", team = team, player = teamName)
-                
+
                 // Track for Undo (null playerId)
                 actionStack.push(GoalAction(team, null, System.currentTimeMillis()))
             }
@@ -547,28 +548,29 @@ class MainViewModel(
                     // Ideally DAO should have suspend fun getPlayer(id)
                     // For now, we assume we might need to fetch from our local list if possible or just log it
                     // Optimization: add suspend getPlayer to DAO for QoL
-                    
-                     _allPlayers.value?.find { it.player.playerId == playerId }?.let { p ->
-                         if (p.player.goals > 0) {
-                             p.player.goals--
-                             playerDao.update(p.player)
-                         }
-                     }
+
+                    _allPlayers.value?.find { it.player.playerId == playerId }?.let { p ->
+                        if (p.player.goals > 0) {
+                            p.player.goals--
+                            playerDao.update(p.player)
+                        }
+                    }
                 }
 
                 // 3. Remove from Match Events
                 // We remove the first "Goal" event for this team/player
                 val currentEvents = _matchEvents.value?.toMutableList() ?: return@launch
-                val index = currentEvents.indexOfFirst { 
-                    it.event == "Goal" && 
-                    it.team == lastAction.teamId && 
-                    (lastAction.playerId == null || it.player != null) // Simplistic matching
-                }
+                val index =
+                    currentEvents.indexOfFirst {
+                        it.event == "Goal" &&
+                            it.team == lastAction.teamId &&
+                            (lastAction.playerId == null || it.player != null) // Simplistic matching
+                    }
                 if (index != -1) {
                     currentEvents.removeAt(index)
                     _matchEvents.postValue(currentEvents)
                 }
-                
+
                 addMatchEvent("Undo: Goal removed", team = lastAction.teamId)
             }
         }
@@ -592,7 +594,7 @@ class MainViewModel(
 
     fun resetMatchTimer(fromRemote: Boolean = false) {
         if (fromRemote && isServiceBound) {
-             matchTimerService?.resetTimer(fromRemote = true)
+            matchTimerService?.resetTimer(fromRemote = true)
         } else {
             matchTimerService?.resetTimer()
         }
@@ -699,11 +701,15 @@ class MainViewModel(
         }
     }
 
-    private fun sendKeeperTimerUpdate(isRunning: Boolean, millis: Long? = null) {
+    private fun sendKeeperTimerUpdate(
+        isRunning: Boolean,
+        millis: Long? = null,
+    ) {
         viewModelScope.launch {
             val data =
                 mapOf(
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to (millis ?: (_keeperTimerValue.value ?: 0L)),
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to
+                        (millis ?: (_keeperTimerValue.value ?: 0L)),
                     it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to isRunning,
                 )
             connectionManager.sendData(

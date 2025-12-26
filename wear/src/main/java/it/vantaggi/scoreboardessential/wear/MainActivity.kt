@@ -69,13 +69,13 @@ class MainActivity : ComponentActivity() {
                             val isRunning = intent.getBooleanExtra(WearDataLayerService.EXTRA_KEEPER_RUNNING, false)
                             if (isRunning) {
                                 viewModel.setKeeperTimerState(KeeperTimerState.Running((millis / 1000).toInt()))
-                                // Also update duration if it runs with specific duration? 
+                                // Also update duration if it runs with specific duration?
                                 // Yes, if we start remotely, we should respect that duration for next runs too.
                                 if (millis > 0) viewModel.updateKeeperTimerDuration(millis)
                             } else {
                                 if (millis > 0) {
-                                     // This is a settings update (or pause?)
-                                     viewModel.updateKeeperTimerDuration(millis)
+                                    // This is a settings update (or pause?)
+                                    viewModel.updateKeeperTimerDuration(millis)
                                 }
                                 viewModel.resetKeeperTimer(fromRemote = true)
                             }
