@@ -1,0 +1,87 @@
+<resources>
+    <string name="app_name">Scoreboard Essential</string>
+    <string name="channel_name">Scoreboard Channel</string>
+    <string name="channel_description">Notifiche da Scoreboard Essential</string>
+    <string name="appbar_scrolling_view_behavior" translatable="false">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
+    <string name="delete_match">Elimina Partita</string>
+    <string name="match_timer">Timer Partita</string>
+    <string name="pause">Pausa</string>
+    <string name="stop">Stop</string>
+    <string name="keeper_timer_expired_title">Timer Portiere Scaduto</string>
+    <string name="keeper_timer_expired_text">Il timer del portiere è scaduto.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Salta</string>
+    <string name="onboarding_next">Avanti</string>
+    <string name="onboarding_finish">Fines</string>
+
+    <!-- Onboarding Step 1: Score Management -->
+    <string name="onboarding_score_title">GESTIONE PUNTEGGIO FACILE</string>
+    <string name="onboarding_score_description">Tocca per aggiungere punti. Scorri per rimuovere. Tieni premuto per cambiare i colori della squadra e mostrare il tuo stile.</string>
+
+    <!-- Onboarding Step 2: Timers and Players -->
+    <string name="onboarding_timers_title">TIMER PARTITA E PORTIERE</string>
+    <string name="onboarding_timers_description">Controlla il gioco con il timer principale. Usa il timer dedicato al portiere. Aggiungi giocatori per costruire le tue squadre.</string>
+
+    <!-- Onboarding Step 3: Wear OS Sync -->
+    <string name="onboarding_wear_title">SINCRONIZZAZIONE WEAR OS</string>
+    <string name="onboarding_wear_description">Resta connesso. Il punteggio e i timer sono sempre sincronizzati con il tuo smartwatch Wear OS.</string>
+
+    <!-- Accessibility -->
+    <string name="cd_decrease_team_1">Diminuisci punteggio Squadra 1</string>
+    <string name="cd_increase_team_1">Aumenta punteggio Squadra 1</string>
+    <string name="cd_decrease_team_2">Diminuisci punteggio Squadra 2</string>
+    <string name="cd_increase_team_2">Aumenta punteggio Squadra 2</string>
+    <string name="cd_edit_team_1_name">Modifica nome Squadra 1</string>
+    <string name="cd_edit_team_2_name">Modifica nome Squadra 2</string>
+    <string name="cd_manage_players">Gestisci Giocatori</string>
+    <string name="cd_settings">Impostazioni</string>
+    <string name="cd_wear_status">Stato Connessione Wear OS</string>
+
+    <!-- Settings -->
+    <string name="settings_saved">Impostazioni salvate con successo!</string>
+    <string name="choose_team_color">Scegli Colore Squadra %d</string>
+    <string name="select">Seleziona</string>
+    <string name="cancel">Annulla</string>
+    <string name="language">Lingua</string>
+    <string name="team_1_name">Nome Squadra 1</string>
+    <string name="team_2_name">Nome Squadra 2</string>
+    <string name="keeper_timer_seconds">Timer Portiere (secondi)</string>
+    <string name="save_settings">Salva Impostazioni</string>
+    <string name="btn_team_1_color">Colore Squadra 1</string>
+    <string name="btn_team_2_color">Colore Squadra 2</string>
+
+    <!-- MainActivity Strings -->
+    <string name="notification_permission_required">È necessaria l\'autorizzazione per le notifiche del timer</string>
+    <string name="wear_connected">✓ Wear OS Connesso</string>
+    <string name="wear_not_connected">✗ Wear OS Non Connesso</string>
+    <string name="start">AVVIA</string>
+    <string name="pause_caps">PAUSA</string>
+    <string name="wear_connected_tooltip">Wear OS Connesso</string>
+    <string name="wear_disconnected_tooltip">Wear OS Disconnesso</string>
+    <string name="share_match_results">Condividi Risultati Partita</string>
+    <string name="undo_goal_title">Annulla Ultimo Gol?</string>
+    <string name="undo_goal_message">Questo annullerà il punteggio e rimuoverà il gol dal registro.</string>
+    <string name="undo">Annulla</string>
+    <string name="no_available_players">Nessun giocatore disponibile. Crea nuovi giocatori in Gestione Giocatori.</string>
+    <string name="manage">GESTISCI</string>
+    <string name="add_player_title">Aggiungi Giocatore a Squadra %d</string>
+    <string name="player_added_message">%1$s aggiunto a %2$s</string>
+    <string name="remove_player_title">Rimuovi Giocatore?</string>
+    <string name="remove_player_message">Rimuovere %1$s da %2$s?</string>
+    <string name="remove">Rimuovi</string>
+    <string name="player_removed_message">%1$s rimosso da %2$s</string>
+    <string name="goal_by_message">⚽ Gol di %s!</string>
+    <string name="end_match_title">Termina Partita?</string>
+    <string name="end_match_message">%1$s: %2$d\n%3$s: %4$d\n\nSalvare questa partita e iniziarne una nuova?</string>
+    <string name="btn_end_match">Termina Partita</string>
+    <string name="continue_action">Continua</string>
+    <string name="match_saved">Partita salvata!</string>
+    <string name="match_not_started_error">Avvia la partita o segna un gol prima di terminarla.</string>
+    <string name="keeper_change_title">⏰ CAMBIO PORTIERE!</string>
+    <string name="keeper_change_message">È ora di cambiare il portiere!</string>
+    <string name="reset_timer_title">Resetta Timer?</string>
+    <string name="reset_timer_message">Questo resetterà il timer della partita a 00:00</string>
+    <string name="reset">Resetta</string>
+    <string name="ok">OK</string>
+</resources>

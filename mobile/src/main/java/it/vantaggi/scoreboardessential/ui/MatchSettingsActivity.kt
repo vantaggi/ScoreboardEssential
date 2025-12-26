@@ -17,13 +17,37 @@ class MatchSettingsActivity : AppCompatActivity() {
         )
     }
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(it.vantaggi.scoreboardessential.utils.LocaleHelper.onAttach(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMatchSettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setupLanguageDropdown() // setup before observing
         observeViewModel()
         setupListeners()
+    }
+
+    private fun setupLanguageDropdown() {
+        val languages = listOf("English", "Italiano")
+        val adapter = android.widget.ArrayAdapter(
+            this,
+            android.R.layout.simple_dropdown_item_1line,
+            languages
+        )
+        (binding.languageAutoComplete as? android.widget.AutoCompleteTextView)?.setAdapter(adapter)
+        
+        binding.languageAutoComplete.setOnItemClickListener { _, _, position, _ ->
+            val selectedLang = if (position == 0) "en" else "it"
+            if (viewModel.appLanguage.value != selectedLang) {
+                viewModel.saveAppLanguage(selectedLang)
+                it.vantaggi.scoreboardessential.utils.LocaleHelper.setLocale(this, selectedLang)
+                recreate()
+            }
+        }
     }
 
     private fun observeViewModel() {
@@ -50,6 +74,13 @@ class MatchSettingsActivity : AppCompatActivity() {
         viewModel.keeperTimerDuration.observe(this) { duration ->
             if (binding.keeperTimerEdittext.text.toString() != duration.toString()) {
                 binding.keeperTimerEdittext.setText(duration.toString())
+            }
+        }
+
+        viewModel.appLanguage.observe(this) { lang ->
+            val text = if (lang == "it") "Italiano" else "English"
+             if (binding.languageAutoComplete.text.toString() != text) {
+                binding.languageAutoComplete.setText(text, false)
             }
         }
     }
@@ -98,7 +129,7 @@ class MatchSettingsActivity : AppCompatActivity() {
             com.google.android.material.snackbar.Snackbar
                 .make(
                     binding.root,
-                    "Settings saved successfully!",
+                    getString(R.string.settings_saved),
                     com.google.android.material.snackbar.Snackbar.LENGTH_SHORT,
                 ).show()
         }
@@ -112,15 +143,15 @@ class MatchSettingsActivity : AppCompatActivity() {
         colorPickerView.attachBrightnessSlider(brightnessSlideBar)
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("Choose Team $team Color")
+            .setTitle(getString(R.string.choose_team_color, team)) // Format string
             .setView(dialogView)
-            .setPositiveButton("Select") { _, _ ->
+            .setPositiveButton(getString(R.string.select)) { _, _ ->
                 if (team == 1) {
                     viewModel.saveTeam1Color(colorPickerView.color)
                 } else {
                     viewModel.saveTeam2Color(colorPickerView.color)
                 }
-            }.setNegativeButton("Cancel", null)
+            }.setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
 }

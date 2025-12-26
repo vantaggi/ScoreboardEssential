@@ -1,138 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/bg_asphalt_main"
-    android:fitsSystemWindows="true"
-    tools:context=".ui.MatchSettingsActivity">
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_asphalt_main" android:fitsSystemWindows="true" tools:context=".ui.MatchSettingsActivity">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
 
         <!-- Team 1 Settings -->
-        <com.google.android.material.card.MaterialCardView
-            style="?attr/materialCardViewFilledStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/concrete_gray"
-            app:shapeAppearance="@style/ShapeAppearance.App.StreetCard">
+        <com.google.android.material.card.MaterialCardView style="?attr/materialCardViewFilledStyle" android:layout_width="match_parent" android:layout_height="wrap_content" app:cardBackgroundColor="@color/concrete_gray" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Team 1 Name">
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/team_1_name">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/team1NameEdittext"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/team1NameEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/team1ColorButton"
-                    style="@style/Widget.App.Button.Street"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Team 1 Color"
-                    app:icon="@drawable/ic_color_picker"
-                    app:iconGravity="textStart" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/team1ColorButton" style="@style/Widget.App.Button.Street" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/btn_team_1_color" app:icon="@drawable/ic_color_picker" app:iconGravity="textStart" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Team 2 Settings -->
-        <com.google.android.material.card.MaterialCardView
-            style="?attr/materialCardViewFilledStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="@color/concrete_gray"
-            app:shapeAppearance="@style/ShapeAppearance.App.StreetCard">
+        <com.google.android.material.card.MaterialCardView style="?attr/materialCardViewFilledStyle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:cardBackgroundColor="@color/concrete_gray" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Team 2 Name">
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/team_2_name">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/team2NameEdittext"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/team2NameEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/team2ColorButton"
-                    style="@style/Widget.App.Button.Street"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Team 2 Color"
-                    app:icon="@drawable/ic_color_picker"
-                    app:iconGravity="textStart" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/team2ColorButton" style="@style/Widget.App.Button.Street" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/btn_team_2_color" app:icon="@drawable/ic_color_picker" app:iconGravity="textStart" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Timer Settings -->
-        <com.google.android.material.card.MaterialCardView
-            style="?attr/materialCardViewFilledStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="@color/concrete_gray"
-            app:shapeAppearance="@style/ShapeAppearance.App.StreetCard">
+        <com.google.android.material.card.MaterialCardView style="?attr/materialCardViewFilledStyle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:cardBackgroundColor="@color/concrete_gray" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Keeper Timer (seconds)">
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/keeper_timer_seconds">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/keeperTimerEdittext"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="number" />
+                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/keeperTimerEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" />
                 </com.google.android.material.textfield.TextInputLayout>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <Button
-            android:id="@+id/saveSettingsButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:text="SAVE SETTINGS"
-            style="@style/Widget.App.Button.Street" />
+        <!-- Language Settings -->
+        <com.google.android.material.card.MaterialCardView style="?attr/materialCardViewFilledStyle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:cardBackgroundColor="@color/concrete_gray" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard">
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/language">
+
+                    <AutoCompleteTextView android:id="@+id/languageAutoComplete" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="none" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <Button android:id="@+id/saveSettingsButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:text="@string/save_settings" style="@style/Widget.App.Button.Street" />
 
     </LinearLayout>
 </ScrollView>

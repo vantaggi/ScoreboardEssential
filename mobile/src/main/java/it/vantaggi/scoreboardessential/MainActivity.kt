@@ -101,11 +101,15 @@ class MainActivity :
                 Snackbar
                     .make(
                         findViewById(android.R.id.content),
-                        "Notifications permission is required for timer alerts",
+                        getString(R.string.notification_permission_required),
                         Snackbar.LENGTH_LONG,
                     ).show()
             }
         }
+
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(it.vantaggi.scoreboardessential.utils.LocaleHelper.onAttach(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -136,10 +140,10 @@ class MainActivity :
             val testResult = viewModel.connectionManager.testConnection()
             if (testResult) {
                 Log.d("ConnectionTest", "✅ CONNECTION TEST PASSED")
-                Toast.makeText(this@MainActivity, "✓ Wear OS Connected", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, getString(R.string.wear_connected), Toast.LENGTH_SHORT).show()
             } else {
                 Log.e("ConnectionTest", "❌ CONNECTION TEST FAILED")
-                Toast.makeText(this@MainActivity, "✗ Wear OS Not Connected", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MainActivity, getString(R.string.wear_not_connected), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -255,7 +259,7 @@ class MainActivity :
         }
 
         viewModel.isMatchTimerRunning.observe(this) { isRunning ->
-            timerStartButton.text = if (isRunning) "PAUSE" else "START"
+            timerStartButton.text = if (isRunning) getString(R.string.pause_caps) else getString(R.string.start)
         }
 
         viewModel.isWearConnected.observe(this) { isConnected ->
@@ -264,19 +268,19 @@ class MainActivity :
                 statusIcon.setImageResource(R.drawable.ic_watch_connected)
                 statusIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.team_electric_green))
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    statusIcon.tooltipText = "Wear OS Connected"
+                    statusIcon.tooltipText = getString(R.string.wear_connected_tooltip)
                 }
             } else {
                 statusIcon.setImageResource(R.drawable.ic_watch_disconnected)
                 statusIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.sidewalk_gray))
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    statusIcon.tooltipText = "Wear OS Disconnected"
+                    statusIcon.tooltipText = getString(R.string.wear_disconnected_tooltip)
                 }
             }
         }
 
         viewModel.shareMatchEvent.observe(this) { intent ->
-            startActivity(Intent.createChooser(intent, "Share Match Results"))
+            startActivity(Intent.createChooser(intent, getString(R.string.share_match_results)))
         }
 
         viewModel.showOnboarding.observe(this) {
@@ -358,11 +362,11 @@ class MainActivity :
 
         undoGoalButton.setOnClickListener {
             MaterialAlertDialogBuilder(this)
-                .setTitle("Undo Last Goal?")
-                .setMessage("This will revert the score and remove the goal from the log.")
-                .setPositiveButton("Undo") { _, _ ->
+                .setTitle(getString(R.string.undo_goal_title))
+                .setMessage(getString(R.string.undo_goal_message))
+                .setPositiveButton(getString(R.string.undo)) { _, _ ->
                     viewModel.undoLastGoal()
-                }.setNegativeButton("Cancel", null)
+                }.setNegativeButton(getString(R.string.cancel), null)
                 .show()
         }
     }
@@ -561,9 +565,9 @@ class MainActivity :
             Snackbar
                 .make(
                     findViewById(android.R.id.content),
-                    "No available players. Create new players in Player Management.",
+                    getString(R.string.no_available_players),
                     Snackbar.LENGTH_LONG,
-                ).setAction("MANAGE") {
+                ).setAction(getString(R.string.manage)) {
                     startActivity(Intent(this, PlayersManagementActivity::class.java))
                 }.show()
             return
@@ -571,7 +575,7 @@ class MainActivity :
 
         val playerNames = availablePlayers.map { it.player.playerName }.toTypedArray()
         MaterialAlertDialogBuilder(this)
-            .setTitle("Add Player to Team $team")
+            .setTitle(getString(R.string.add_player_title, team))
             .setItems(playerNames) { _, which ->
                 val selectedPlayer = availablePlayers[which]
                 viewModel.addPlayerToTeam(selectedPlayer, team)
@@ -579,10 +583,10 @@ class MainActivity :
                 Snackbar
                     .make(
                         findViewById(android.R.id.content),
-                        "${selectedPlayer.player.playerName} added to $teamName",
+                        getString(R.string.player_added_message, selectedPlayer.player.playerName, teamName),
                         Snackbar.LENGTH_SHORT,
                     ).show()
-            }.setNegativeButton("Cancel", null)
+            }.setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
 
@@ -592,17 +596,17 @@ class MainActivity :
     ) {
         val teamName = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
         MaterialAlertDialogBuilder(this)
-            .setTitle("Remove Player?")
-            .setMessage("Remove ${playerWithRoles.player.playerName} from $teamName?")
-            .setPositiveButton("Remove") { _, _ ->
+            .setTitle(getString(R.string.remove_player_title))
+            .setMessage(getString(R.string.remove_player_message, playerWithRoles.player.playerName, teamName))
+            .setPositiveButton(getString(R.string.remove)) { _, _ ->
                 viewModel.removePlayerFromTeam(playerWithRoles, team)
                 Snackbar
                     .make(
                         findViewById(android.R.id.content),
-                        "${playerWithRoles.player.playerName} removed from $teamName",
+                        getString(R.string.player_removed_message, playerWithRoles.player.playerName, teamName),
                         Snackbar.LENGTH_SHORT,
                     ).show()
-            }.setNegativeButton("Cancel", null)
+            }.setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
 
@@ -614,7 +618,7 @@ class MainActivity :
         Snackbar
             .make(
                 findViewById(android.R.id.content),
-                "⚽ Goal by ${playerWithRoles.player.playerName}!",
+                getString(R.string.goal_by_message, playerWithRoles.player.playerName),
                 Snackbar.LENGTH_SHORT,
             ).show()
     }
@@ -626,34 +630,34 @@ class MainActivity :
         val team2Name = viewModel.team2Name.value ?: "Team 2"
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("End Match?")
-            .setMessage("$team1Name: $team1Score\n$team2Name: $team2Score\n\nSave this match and start a new one?")
-            .setPositiveButton("End Match") { _, _ ->
+            .setTitle(getString(R.string.end_match_title))
+            .setMessage(getString(R.string.end_match_message, team1Name, team1Score, team2Name, team2Score))
+            .setPositiveButton(getString(R.string.btn_end_match)) { _, _ ->
                 if (viewModel.endMatch()) {
                     Snackbar
                         .make(
                             findViewById(android.R.id.content),
-                            "Match saved!",
+                            getString(R.string.match_saved),
                             Snackbar.LENGTH_LONG,
                         ).show()
                 } else {
                     Snackbar
                         .make(
                             findViewById(android.R.id.content),
-                            "Start the match or score a goal before ending it.",
+                            getString(R.string.match_not_started_error),
                             Snackbar.LENGTH_LONG,
                         ).show()
                 }
-            }.setNegativeButton("Continue", null)
+            }.setNegativeButton(getString(R.string.continue_action), null)
             .show()
     }
 
     private fun showKeeperTimerExpiredAlert() {
         triggerStrongVibration()
         MaterialAlertDialogBuilder(this)
-            .setTitle("⏰ KEEPER CHANGE!")
-            .setMessage("Time to change the goalkeeper!")
-            .setPositiveButton("OK") { _, _ ->
+            .setTitle(getString(R.string.keeper_change_title))
+            .setMessage(getString(R.string.keeper_change_message))
+            .setPositiveButton(getString(R.string.ok)) { _, _ ->
                 viewModel.resetKeeperTimer()
             }.setCancelable(false)
             .show()
@@ -707,11 +711,11 @@ class MainActivity :
     @Suppress("UNUSED_PARAMETER")
     fun resetTimer(view: View) {
         MaterialAlertDialogBuilder(this)
-            .setTitle("Reset Timer?")
-            .setMessage("This will reset the match timer to 00:00")
-            .setPositiveButton("Reset") { _, _ ->
+            .setTitle(getString(R.string.reset_timer_title))
+            .setMessage(getString(R.string.reset_timer_message))
+            .setPositiveButton(getString(R.string.reset)) { _, _ ->
                 viewModel.resetMatchTimer()
-            }.setNegativeButton("Cancel", null)
+            }.setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
 

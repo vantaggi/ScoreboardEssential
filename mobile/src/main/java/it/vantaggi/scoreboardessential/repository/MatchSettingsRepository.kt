@@ -112,7 +112,20 @@ class MatchSettingsRepository(
         private const val KEY_TEAM1_COLOR = "team1_color"
         private const val KEY_TEAM2_COLOR = "team2_color"
         private const val KEY_KEEPER_TIMER_DURATION = "keeper_timer_duration"
+        private const val KEY_APP_LANGUAGE = "app_language"
     }
+
+    suspend fun setAppLanguage(languageCode: String) =
+        withContext(Dispatchers.IO) {
+            sharedPreferences.edit {
+                putString(KEY_APP_LANGUAGE, languageCode)
+            }
+        }
+
+    suspend fun getAppLanguage(): String =
+        withContext(Dispatchers.IO) {
+            sharedPreferences.getString(KEY_APP_LANGUAGE, "en") ?: "en"
+        }
 }
 
 data class MatchSettings(

@@ -26,6 +26,9 @@ class MatchSettingsViewModel(
     private val _keeperTimerDuration = MutableLiveData<Long>()
     val keeperTimerDuration: LiveData<Long> = _keeperTimerDuration
 
+    private val _appLanguage = MutableLiveData<String>()
+    val appLanguage: LiveData<String> = _appLanguage
+
     init {
         loadSettings()
     }
@@ -37,6 +40,7 @@ class MatchSettingsViewModel(
             _team1Color.value = repository.getTeam1Color()
             _team2Color.value = repository.getTeam2Color()
             _keeperTimerDuration.value = repository.getKeeperTimerDuration()
+            _appLanguage.value = repository.getAppLanguage()
         }
     }
 
@@ -72,6 +76,13 @@ class MatchSettingsViewModel(
         viewModelScope.launch {
             repository.setKeeperTimerDuration(duration)
             _keeperTimerDuration.value = duration
+        }
+    }
+
+    fun saveAppLanguage(language: String) {
+        viewModelScope.launch {
+            repository.setAppLanguage(language)
+            _appLanguage.value = language
         }
     }
 }

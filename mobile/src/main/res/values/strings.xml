@@ -37,4 +37,51 @@
     <string name="cd_manage_players">Manage Players</string>
     <string name="cd_settings">Settings</string>
     <string name="cd_wear_status">Wear OS Connection Status</string>
+
+    <!-- Settings -->
+    <string name="settings_saved">Settings saved successfully!</string>
+    <string name="choose_team_color">Choose Team %d Color</string>
+    <string name="select">Select</string>
+    <string name="cancel">Cancel</string>
+    <string name="language">Language</string>
+    <string name="team_1_name">Team 1 Name</string>
+    <string name="team_2_name">Team 2 Name</string>
+    <string name="keeper_timer_seconds">Keeper Timer (seconds)</string>
+    <string name="save_settings">Save Settings</string>
+    <string name="btn_team_1_color">Team 1 Color</string>
+    <string name="btn_team_2_color">Team 2 Color</string>
+
+    <!-- MainActivity Strings -->
+    <string name="notification_permission_required">Notifications permission is required for timer alerts</string>
+    <string name="wear_connected">✓ Wear OS Connected</string>
+    <string name="wear_not_connected">✗ Wear OS Not Connected</string>
+    <string name="start">START</string>
+    <string name="pause_caps">PAUSE</string>
+    <string name="wear_connected_tooltip">Wear OS Connected</string>
+    <string name="wear_disconnected_tooltip">Wear OS Disconnected</string>
+    <string name="share_match_results">Share Match Results</string>
+    <string name="undo_goal_title">Undo Last Goal?</string>
+    <string name="undo_goal_message">This will revert the score and remove the goal from the log.</string>
+    <string name="undo">Undo</string>
+    <string name="no_available_players">No available players. Create new players in Player Management.</string>
+    <string name="manage">MANAGE</string>
+    <string name="add_player_title">Add Player to Team %d</string>
+    <string name="player_added_message">%1$s added to %2$s</string>
+    <string name="remove_player_title">Remove Player?</string>
+    <string name="remove_player_message">Remove %1$s from %2$s?</string>
+    <string name="remove">Remove</string>
+    <string name="player_removed_message">%1$s removed from %2$s</string>
+    <string name="goal_by_message">⚽ Goal by %s!</string>
+    <string name="end_match_title">End Match?</string>
+    <string name="end_match_message">%1$s: %2$d\n%3$s: %4$d\n\nSave this match and start a new one?</string>
+    <string name="btn_end_match">End Match</string>
+    <string name="continue_action">Continue</string>
+    <string name="match_saved">Match saved!</string>
+    <string name="match_not_started_error">Start the match or score a goal before ending it.</string>
+    <string name="keeper_change_title">⏰ KEEPER CHANGE!</string>
+    <string name="keeper_change_message">Time to change the goalkeeper!</string>
+    <string name="reset_timer_title">Reset Timer?</string>
+    <string name="reset_timer_message">This will reset the match timer to 00:00</string>
+    <string name="reset">Reset</string>
+    <string name="ok">OK</string>
 </resources>
