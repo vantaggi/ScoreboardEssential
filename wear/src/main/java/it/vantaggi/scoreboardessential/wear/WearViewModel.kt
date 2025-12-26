@@ -253,7 +253,7 @@ class WearViewModel(
         } else {
             updateScore(0, 0)
         }
-        
+
         matchTimerJob?.cancel()
         matchTimeInSeconds = 0L
         _matchTimer.value = "00:00"
@@ -275,11 +275,11 @@ class WearViewModel(
             }
             // Also signal match reset to mobile
             viewModelScope.launch {
-                 val data = mapOf(it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_MATCH_ACTIVE to false)
-                 connectionManager.sendData(
-                     path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_MATCH_STATE,
-                     data = data
-                 )
+                val data = mapOf(it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_MATCH_ACTIVE to false)
+                connectionManager.sendData(
+                    path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_MATCH_STATE,
+                    data = data,
+                )
             }
         }
     }
@@ -326,11 +326,11 @@ class WearViewModel(
                     val now = System.currentTimeMillis()
                     val diff = now - startTime
                     matchTimeInSeconds = diff / 1000
-                    
+
                     val minutes = matchTimeInSeconds / 60
                     val seconds = matchTimeInSeconds % 60
                     _matchTimer.value = String.format("%02d:%02d", minutes, seconds)
-                    
+
                     // drift correction
                     val nextSecond = (matchTimeInSeconds + 1) * 1000
                     val delayMillis = nextSecond - diff
@@ -404,7 +404,7 @@ class WearViewModel(
         vibrator?.cancel()
         _keeperTimer.value = KeeperTimerState.Hidden
         _keeperProgress.value = (keeperTimerDuration / 1000).toInt()
-        
+
         if (!fromRemote) {
             triggerShortVibration()
 

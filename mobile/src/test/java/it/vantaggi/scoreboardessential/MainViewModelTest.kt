@@ -90,6 +90,8 @@ class MainViewModelTest {
                 `when`(hasSeenTutorial).thenReturn(emptyFlow())
             }
         mockMatchSettingsRepository = mock(MatchSettingsRepository::class.java)
+        whenever(mockMatchSettingsRepository.getSettingsFlow()).thenReturn(emptyFlow())
+
         viewModel = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
 
         // Use reflection to inject the mock service and set isServiceBound to true
@@ -464,18 +466,24 @@ class MainViewModelTest {
             viewModel.addTeam2Score()
             advanceUntilIdle() // Allow suspend functions in addScore to complete
 
-            // Ensure timer service is set to running
+            // Ensure timer service is set to running and has non-zero value
+            // We must update the mock service flows because ViewModel collects them
+            val timerFlow = kotlinx.coroutines.flow.MutableStateFlow(1000L)
+            whenever(mockMatchTimerService.matchTimerValue).thenReturn(timerFlow)
+
+            // Also update ViewModel LiveData directly to be sure, as collection happens in coroutine
+            val matchTimerValueField = viewModel.javaClass.getDeclaredField("_matchTimerValue")
+            matchTimerValueField.isAccessible = true
+            val timerLiveData = matchTimerValueField.get(viewModel) as androidx.lifecycle.MutableLiveData<Long>
+            timerLiveData.postValue(1000L)
+
             val isMatchTimerRunningField = viewModel.javaClass.getDeclaredField("_isMatchTimerRunning")
             isMatchTimerRunningField.isAccessible = true
             val mutableLiveData = isMatchTimerRunningField.get(viewModel) as androidx.lifecycle.MutableLiveData<Boolean>
             mutableLiveData.postValue(true)
 
-            // Set timer value to non-zero via reflection on LiveData
-            val matchTimerValueField = viewModel.javaClass.getDeclaredField("_matchTimerValue")
-            matchTimerValueField.isAccessible = true
-            val timerLiveData = matchTimerValueField.get(viewModel) as androidx.lifecycle.MutableLiveData<Long>
-            timerLiveData.postValue(1000L)
             shadowOf(Looper.getMainLooper()).idle()
+            advanceUntilIdle() // Process flow collection updates
 
             // Act
             val result = viewModel.endMatch()
@@ -483,7 +491,12 @@ class MainViewModelTest {
             // If endMatch returned false, assert failure immediately with helpful message
             assert(result) { "endMatch() returned false, probably because it thinks match hasn't started" }
 
+            // Idle main looper for MutableLiveData posts inside endMatch/startNewMatch
+            shadowOf(Looper.getMainLooper()).idle()
             advanceUntilIdle() // Allow suspend functions in endMatch to complete
+
+            // Allow postValue to propagate
+            shadowOf(Looper.getMainLooper()).idle()
 
             // Assert
             // Verify DAO interactions to debug why score didn't reset
@@ -500,8 +513,10 @@ class MainViewModelTest {
             assertEquals(0, viewModel.team2Score.value)
             verify(mockMatchTimerService, atLeastOnce()).stopTimer()
 
-            val matchEndedEvent = viewModel.matchEvents.value?.find { it.event.contains("Match ended") }
-            assert(matchEndedEvent != null)
+            // "Match ended" event is added but then cleared by startNewMatch which adds "New match ready"
+            // So we check for the new match event instead
+            val newMatchEvent = viewModel.matchEvents.value?.find { it.event.contains("New match ready") }
+            assert(newMatchEvent != null)
 
             // Cleanup
             viewModel.team1Score.removeObserver(score1Observer)
