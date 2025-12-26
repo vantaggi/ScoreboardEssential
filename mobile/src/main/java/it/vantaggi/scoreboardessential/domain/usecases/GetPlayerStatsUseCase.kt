@@ -30,7 +30,7 @@ class GetPlayerStatsUseCase(
                     goals = player.goals,
                     appearances = player.appearances,
                     winRate = 0.0f,
-                    roles = playerWithRoles.roles
+                    roles = playerWithRoles.roles,
                 )
             }
         }
