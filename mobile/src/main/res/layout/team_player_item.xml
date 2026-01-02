@@ -6,38 +6,45 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
-    android:paddingVertical="8dp"
-    android:paddingHorizontal="12dp">
+    android:paddingVertical="@dimen/padding_small"
+    android:paddingHorizontal="@dimen/padding_medium">
 
     <!-- Player Avatar -->
-    <TextView
-        android:id="@+id/player_avatar"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:background="@drawable/circle_background"
-        android:gravity="center"
-        android:textAppearance="?attr/textAppearanceBodyLarge"
-        android:textColor="@color/stencil_white"
-        android:fontFamily="sans-serif-condensed"
-        android:textStyle="bold"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/player_avatar_card"
+        android:layout_width="@dimen/avatar_size_small"
+        android:layout_height="@dimen/avatar_size_small"
+        app:cardBackgroundColor="?attr/colorSecondary"
+        app:shapeAppearance="@style/ShapeAppearance.App.StreetBadge"
+        app:cardElevation="@dimen/card_elevation_none"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        tools:text="J"
-        tools:backgroundTint="?attr/colorPrimary"/>
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <TextView
+            android:id="@+id/player_avatar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="@color/stencil_white"
+            android:fontFamily="sans-serif-condensed"
+            android:textStyle="bold"
+            tools:text="J" />
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- Player Info -->
     <TextView
         android:id="@+id/player_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="@dimen/margin_medium"
         android:textAppearance="?attr/textAppearanceBodyLarge"
         android:textColor="@color/stencil_white"
         android:fontFamily="sans-serif-condensed"
         android:maxLines="1"
         android:ellipsize="end"
-        app:layout_constraintStart_toEndOf="@id/player_avatar"
+        app:layout_constraintStart_toEndOf="@id/player_avatar_card"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/player_roles"
@@ -49,7 +56,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        app:chipSpacing="2dp"
+        app:chipSpacing="@dimen/chip_spacing_small"
         app:layout_constraintStart_toStartOf="@id/player_name"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/player_name"

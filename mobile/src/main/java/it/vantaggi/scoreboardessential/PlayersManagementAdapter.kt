@@ -46,6 +46,7 @@ class PlayersManagementAdapter(
         private val appearancesTextView: TextView = itemView.findViewById(R.id.player_appearances)
         private val statsButton: ImageButton = itemView.findViewById(R.id.stats_button)
         private val avatarTextView: TextView = itemView.findViewById(R.id.player_avatar)
+        private val avatarCardView: MaterialCardView = itemView.findViewById(R.id.player_avatar_card)
 
         fun bind(playerWithRoles: PlayerWithRoles) {
             val player = playerWithRoles.player
@@ -60,7 +61,7 @@ class PlayersManagementAdapter(
 
             val colors = itemView.context.resources.getIntArray(R.array.avatar_colors)
             val colorIndex = Math.abs(player.playerName.hashCode()) % colors.size
-            avatarTextView.setBackgroundColor(colors[colorIndex])
+            avatarCardView.setCardBackgroundColor(colors[colorIndex])
 
             cardView.setOnClickListener {
                 onPlayerClick(playerWithRoles)
