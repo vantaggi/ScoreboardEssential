@@ -108,7 +108,10 @@ class MainActivity :
         }
 
     override fun attachBaseContext(newBase: android.content.Context) {
-        super.attachBaseContext(it.vantaggi.scoreboardessential.utils.LocaleHelper.onAttach(newBase))
+        super.attachBaseContext(
+            it.vantaggi.scoreboardessential.utils.LocaleHelper
+                .onAttach(newBase),
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

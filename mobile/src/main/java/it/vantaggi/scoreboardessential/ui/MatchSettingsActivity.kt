@@ -18,7 +18,10 @@ class MatchSettingsActivity : AppCompatActivity() {
     }
 
     override fun attachBaseContext(newBase: android.content.Context) {
-        super.attachBaseContext(it.vantaggi.scoreboardessential.utils.LocaleHelper.onAttach(newBase))
+        super.attachBaseContext(
+            it.vantaggi.scoreboardessential.utils.LocaleHelper
+                .onAttach(newBase),
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,18 +36,20 @@ class MatchSettingsActivity : AppCompatActivity() {
 
     private fun setupLanguageDropdown() {
         val languages = listOf("English", "Italiano")
-        val adapter = android.widget.ArrayAdapter(
-            this,
-            android.R.layout.simple_dropdown_item_1line,
-            languages
-        )
+        val adapter =
+            android.widget.ArrayAdapter(
+                this,
+                android.R.layout.simple_dropdown_item_1line,
+                languages,
+            )
         (binding.languageAutoComplete as? android.widget.AutoCompleteTextView)?.setAdapter(adapter)
-        
+
         binding.languageAutoComplete.setOnItemClickListener { _, _, position, _ ->
             val selectedLang = if (position == 0) "en" else "it"
             if (viewModel.appLanguage.value != selectedLang) {
                 viewModel.saveAppLanguage(selectedLang)
-                it.vantaggi.scoreboardessential.utils.LocaleHelper.setLocale(this, selectedLang)
+                it.vantaggi.scoreboardessential.utils.LocaleHelper
+                    .setLocale(this, selectedLang)
                 recreate()
             }
         }
@@ -79,7 +84,7 @@ class MatchSettingsActivity : AppCompatActivity() {
 
         viewModel.appLanguage.observe(this) { lang ->
             val text = if (lang == "it") "Italiano" else "English"
-             if (binding.languageAutoComplete.text.toString() != text) {
+            if (binding.languageAutoComplete.text.toString() != text) {
                 binding.languageAutoComplete.setText(text, false)
             }
         }

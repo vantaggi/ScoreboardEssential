@@ -20,7 +20,10 @@ class ScoreboardEssentialApplication : Application() {
     val matchSettingsRepository by lazy { MatchSettingsRepository(this) }
 
     override fun attachBaseContext(base: android.content.Context) {
-        super.attachBaseContext(it.vantaggi.scoreboardessential.utils.LocaleHelper.onAttach(base))
+        super.attachBaseContext(
+            it.vantaggi.scoreboardessential.utils.LocaleHelper
+                .onAttach(base),
+        )
     }
 
     override fun onCreate() {
