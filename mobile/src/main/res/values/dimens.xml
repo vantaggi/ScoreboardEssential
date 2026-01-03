@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Avatar Sizes -->
+    <dimen name="avatar_size_large">48dp</dimen>
+    <dimen name="avatar_size_small">32dp</dimen>
+
+    <!-- Margins and Padding -->
+    <dimen name="margin_small">8dp</dimen>
+    <dimen name="margin_medium">12dp</dimen>
+    <dimen name="margin_large">16dp</dimen>
+    <dimen name="padding_small">8dp</dimen>
+    <dimen name="padding_medium">12dp</dimen>
+    <dimen name="padding_large">16dp</dimen>
+
+    <!-- Chip Spacing -->
+    <dimen name="chip_spacing_small">2dp</dimen>
+    <dimen name="chip_spacing_medium">4dp</dimen>
+
+    <!-- Card Elevation -->
+    <dimen name="card_elevation_default">4dp</dimen>
+    <dimen name="card_elevation_none">0dp</dimen>
+</resources>
