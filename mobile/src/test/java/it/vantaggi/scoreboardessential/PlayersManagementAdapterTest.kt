@@ -1,16 +1,14 @@
 package it.vantaggi.scoreboardessential
 
 import android.content.Context
-import android.graphics.drawable.ColorDrawable
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.android.material.card.MaterialCardView
 import it.vantaggi.scoreboardessential.database.Player
-import it.vantaggi.scoreboardessential.database.Role
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.database.Role
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,7 +17,6 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [34])
 class PlayersManagementAdapterTest {
-
     private lateinit var adapter: PlayersManagementAdapter
     private lateinit var context: Context
 
