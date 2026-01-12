@@ -25,7 +25,6 @@ import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 class MatchRepositoryTest {
-
     private lateinit var matchRepository: MatchRepository
     private lateinit var matchDao: MatchDao
     private lateinit var context: Context
@@ -60,81 +59,90 @@ class MatchRepositoryTest {
     }
 
     @Test
-    fun `team1Color initialization defaults`() = runTest {
-        // Assert initial value matches default from ColorRepository
-        assertEquals(100, matchRepository.team1Color.first())
-    }
-
-    @Test
-    fun `team2Color initialization defaults`() = runTest {
-        // Assert initial value matches default from ColorRepository
-        assertEquals(200, matchRepository.team2Color.first())
-    }
-
-    @Test
-    fun `team1Color initialization from prefs`() = runTest {
-        // Setup prefs to return a different color
-        `when`(sharedPreferences.getInt("team1_color", 100)).thenReturn(101)
-
-        // Re-initialize repository to pick up new prefs
-        matchRepository = MatchRepository(matchDao, context, colorRepository)
-
-        assertEquals(101, matchRepository.team1Color.first())
-    }
-
-    @Test
-    fun `team2Color initialization from prefs`() = runTest {
-        // Setup prefs to return a different color
-        `when`(sharedPreferences.getInt("team2_color", 200)).thenReturn(201)
-
-        // Re-initialize repository to pick up new prefs
-        matchRepository = MatchRepository(matchDao, context, colorRepository)
-
-        assertEquals(201, matchRepository.team2Color.first())
-    }
-
-    @Test
-    fun `team1Color updates on pref change`() = runTest {
-        val listenerCaptor = ArgumentCaptor.forClass(SharedPreferences.OnSharedPreferenceChangeListener::class.java)
-        verify(sharedPreferences).registerOnSharedPreferenceChangeListener(listenerCaptor.capture())
-
-        val results = mutableListOf<Int>()
-        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
-            matchRepository.team1Color.collect { results.add(it) }
+    fun `team1Color initialization defaults`() =
+        runTest {
+            // Assert initial value matches default from ColorRepository
+            assertEquals(100, matchRepository.team1Color.first())
         }
 
-        // Trigger change
-        `when`(sharedPreferences.getInt("team1_color", 100)).thenReturn(102)
-        listenerCaptor.value.onSharedPreferenceChanged(sharedPreferences, "team1_color")
-
-        assertEquals(listOf(100, 102), results)
-        job.cancel()
-    }
-
     @Test
-    fun `team2Color updates on pref change`() = runTest {
-        val listenerCaptor = ArgumentCaptor.forClass(SharedPreferences.OnSharedPreferenceChangeListener::class.java)
-        verify(sharedPreferences).registerOnSharedPreferenceChangeListener(listenerCaptor.capture())
-
-        val results = mutableListOf<Int>()
-        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
-            matchRepository.team2Color.collect { results.add(it) }
+    fun `team2Color initialization defaults`() =
+        runTest {
+            // Assert initial value matches default from ColorRepository
+            assertEquals(200, matchRepository.team2Color.first())
         }
 
-        // Trigger change
-        `when`(sharedPreferences.getInt("team2_color", 200)).thenReturn(202)
-        listenerCaptor.value.onSharedPreferenceChanged(sharedPreferences, "team2_color")
+    @Test
+    fun `team1Color initialization from prefs`() =
+        runTest {
+            // Setup prefs to return a different color
+            `when`(sharedPreferences.getInt("team1_color", 100)).thenReturn(101)
 
-        assertEquals(listOf(200, 202), results)
-        job.cancel()
-    }
+            // Re-initialize repository to pick up new prefs
+            matchRepository = MatchRepository(matchDao, context, colorRepository)
+
+            assertEquals(101, matchRepository.team1Color.first())
+        }
 
     @Test
-    fun `deleteMatch calls dao`() = runTest {
-        val match = mock(Match::class.java)
-        matchRepository.deleteMatch(match)
-        verify(matchDao).delete(match)
-    }
+    fun `team2Color initialization from prefs`() =
+        runTest {
+            // Setup prefs to return a different color
+            `when`(sharedPreferences.getInt("team2_color", 200)).thenReturn(201)
+
+            // Re-initialize repository to pick up new prefs
+            matchRepository = MatchRepository(matchDao, context, colorRepository)
+
+            assertEquals(201, matchRepository.team2Color.first())
+        }
+
+    @Test
+    fun `team1Color updates on pref change`() =
+        runTest {
+            val listenerCaptor = ArgumentCaptor.forClass(SharedPreferences.OnSharedPreferenceChangeListener::class.java)
+            verify(sharedPreferences).registerOnSharedPreferenceChangeListener(listenerCaptor.capture())
+
+            val results = mutableListOf<Int>()
+            val job =
+                launch(UnconfinedTestDispatcher(testScheduler)) {
+                    matchRepository.team1Color.collect { results.add(it) }
+                }
+
+            // Trigger change
+            `when`(sharedPreferences.getInt("team1_color", 100)).thenReturn(102)
+            listenerCaptor.value.onSharedPreferenceChanged(sharedPreferences, "team1_color")
+
+            assertEquals(listOf(100, 102), results)
+            job.cancel()
+        }
+
+    @Test
+    fun `team2Color updates on pref change`() =
+        runTest {
+            val listenerCaptor = ArgumentCaptor.forClass(SharedPreferences.OnSharedPreferenceChangeListener::class.java)
+            verify(sharedPreferences).registerOnSharedPreferenceChangeListener(listenerCaptor.capture())
+
+            val results = mutableListOf<Int>()
+            val job =
+                launch(UnconfinedTestDispatcher(testScheduler)) {
+                    matchRepository.team2Color.collect { results.add(it) }
+                }
+
+            // Trigger change
+            `when`(sharedPreferences.getInt("team2_color", 200)).thenReturn(202)
+            listenerCaptor.value.onSharedPreferenceChanged(sharedPreferences, "team2_color")
+
+            assertEquals(listOf(200, 202), results)
+            job.cancel()
+        }
+
+    @Test
+    fun `deleteMatch calls dao`() =
+        runTest {
+            val match = mock(Match::class.java)
+            matchRepository.deleteMatch(match)
+            verify(matchDao).delete(match)
+        }
 
     @Test
     fun `close unregisters listener`() {
