@@ -46,7 +46,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                                 putExtra(EXTRA_TEAM2_SCORE, team2)
                             }
                         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-                        Log.d(TAG, "Broadcasted score update: T1=$team1, T2=$team2")
+                        Log.d(TAG, "Broadcasted score update")
                     }
                     WearConstants.PATH_TIMER_STATE -> {
                         val millis = dataMap.getLong(WearConstants.KEY_TIMER_MILLIS, 0L)
@@ -57,7 +57,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                                 putExtra(EXTRA_TIMER_RUNNING, isRunning)
                             }
                         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-                        Log.d(TAG, "Broadcasted timer update: $millis ms, running=$isRunning")
+                        Log.d(TAG, "Broadcasted timer update")
                     }
                     WearConstants.PATH_TEAM_NAMES -> {
                         val intent = Intent(ACTION_TEAM_NAMES_UPDATE)
