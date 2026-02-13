@@ -127,10 +127,12 @@ class MatchTimerService : Service() {
                                 WearConstants.KEY_TIMER_MILLIS to elapsed,
                                 WearConstants.KEY_TIMER_RUNNING to true,
                             )
-                        connectionManager.sendData(
-                            path = WearConstants.PATH_TIMER_STATE,
-                            data = data,
-                        )
+                        scope.launch {
+                            connectionManager.sendData(
+                                path = WearConstants.PATH_TIMER_STATE,
+                                data = data,
+                            )
+                        }
                     }
 
                     // QoL: Calculate delay to land exactly on the next second boundary
