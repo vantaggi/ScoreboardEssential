@@ -81,4 +81,28 @@ class UpdateScoreUseCaseTest {
             assertEquals(0, useCase.scoreState.first().team1Score)
             assertEquals(0, useCase.scoreState.first().team2Score)
         }
+
+    @Test
+    fun `incrementScore with invalid teamId returns false`() =
+        runTest {
+// When
+            val result = useCase.incrementScore(3)
+
+// Then
+            assertFalse(result)
+            assertEquals(0, useCase.scoreState.first().team1Score)
+            assertEquals(0, useCase.scoreState.first().team2Score)
+        }
+
+    @Test
+    fun `decrementScore with invalid teamId returns false`() =
+        runTest {
+// When
+            val result = useCase.decrementScore(3)
+
+// Then
+            assertFalse(result)
+            assertEquals(0, useCase.scoreState.first().team1Score)
+            assertEquals(0, useCase.scoreState.first().team2Score)
+        }
 }
