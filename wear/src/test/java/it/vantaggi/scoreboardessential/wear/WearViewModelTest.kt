@@ -104,4 +104,37 @@ class WearViewModelTest {
             // Assert: Timer should be a NEW instance
             assertTrue("Timer SHOULD be recreated on large update", timer1 !== timer2)
         }
+
+    @Test
+    fun `incrementScore increases team score`() =
+        runTest {
+            // Arrange
+            viewModel.updateScoresFromMobile(0, 0)
+
+            // Act
+            viewModel.incrementScore(1)
+            viewModel.incrementScore(2)
+            viewModel.incrementScore(2)
+
+            // Assert
+            assertTrue("Team 1 score should be 1", viewModel.team1Score.value == 1)
+            assertTrue("Team 2 score should be 2", viewModel.team2Score.value == 2)
+        }
+
+    @Test
+    fun `decrementScore decreases team score but not below zero`() =
+        runTest {
+            // Arrange
+            viewModel.updateScoresFromMobile(2, 1)
+
+            // Act
+            viewModel.decrementScore(1)
+            viewModel.decrementScore(2)
+            viewModel.decrementScore(2)
+            viewModel.decrementScore(2) // Should stay at 0
+
+            // Assert
+            assertTrue("Team 1 score should be 1", viewModel.team1Score.value == 1)
+            assertTrue("Team 2 score should be 0", viewModel.team2Score.value == 0)
+        }
 }
