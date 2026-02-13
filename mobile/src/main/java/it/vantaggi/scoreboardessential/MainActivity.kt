@@ -311,24 +311,24 @@ class MainActivity :
         // New buttons with improved feedback
         findViewById<View>(R.id.team1_add_button_card).setOnClickListener {
             animateScoreButton(it)
-            viewModel.addTeam1Score()
+            viewModel.addScore(1)
             playGoalAnimation(1)
         }
 
         findViewById<View>(R.id.team1_subtract_button_card).setOnClickListener {
             animateScoreButton(it, isSubtract = true)
-            viewModel.subtractTeam1Score()
+            viewModel.subtractScore(1)
         }
 
         findViewById<View>(R.id.team2_add_button_card).setOnClickListener {
             animateScoreButton(it)
-            viewModel.addTeam2Score()
+            viewModel.addScore(2)
             playGoalAnimation(2)
         }
 
         findViewById<View>(R.id.team2_subtract_button_card).setOnClickListener {
             animateScoreButton(it, isSubtract = true)
-            viewModel.subtractTeam2Score()
+            viewModel.subtractScore(2)
         }
 
         findViewById<Button>(R.id.reset_scores_button).setOnClickListener {
@@ -390,10 +390,10 @@ class MainActivity :
                             val diffY = e2.y - it.y
                             if (Math.abs(diffY) > 100) {
                                 if (diffY < 0) {
-                                    viewModel.addTeam1Score()
+                                    viewModel.addScore(1)
                                     playGoalAnimation(1)
                                 } else {
-                                    viewModel.subtractTeam1Score()
+                                    viewModel.subtractScore(1)
                                 }
                                 return true
                             }
@@ -402,7 +402,7 @@ class MainActivity :
                     }
 
                     override fun onDoubleTap(e: MotionEvent): Boolean {
-                        viewModel.addTeam1Score()
+                        viewModel.addScore(1)
                         playGoalAnimation(1)
                         return true
                     }
@@ -428,10 +428,10 @@ class MainActivity :
                             val diffY = e2.y - it.y
                             if (Math.abs(diffY) > 100) {
                                 if (diffY < 0) {
-                                    viewModel.addTeam2Score()
+                                    viewModel.addScore(2)
                                     playGoalAnimation(2)
                                 } else {
-                                    viewModel.subtractTeam2Score()
+                                    viewModel.subtractScore(2)
                                 }
                                 return true
                             }
@@ -440,7 +440,7 @@ class MainActivity :
                     }
 
                     override fun onDoubleTap(e: MotionEvent): Boolean {
-                        viewModel.addTeam2Score()
+                        viewModel.addScore(2)
                         playGoalAnimation(2)
                         return true
                     }

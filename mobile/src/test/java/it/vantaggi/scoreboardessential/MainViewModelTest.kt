@@ -205,7 +205,7 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `addTeam1Score increments score and shows scorer dialog`() {
+    fun `addScore(1) increments score and shows scorer dialog`() {
         // Arrange
         val scoreObserver = Observer<Int> {}
         val dialogObserver = Observer<Pair<Int, List<PlayerWithRoles>>> {}
@@ -214,7 +214,7 @@ class MainViewModelTest {
         viewModel.addPlayerToTeam(PlayerWithRoles(Player(1, "Player 1", 0, 0), emptyList()), 1)
 
         // Act
-        viewModel.addTeam1Score()
+        viewModel.addScore(1)
 
         // Assert
         assertEquals(1, viewModel.team1Score.value)
@@ -226,7 +226,7 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `addTeam2Score increments score and shows scorer dialog`() {
+    fun `addScore(2) increments score and shows scorer dialog`() {
         // Arrange
         val scoreObserver = Observer<Int> {}
         val dialogObserver = Observer<Pair<Int, List<PlayerWithRoles>>> {}
@@ -235,7 +235,7 @@ class MainViewModelTest {
         viewModel.addPlayerToTeam(PlayerWithRoles(Player(2, "Player 2", 0, 0), emptyList()), 2)
 
         // Act
-        viewModel.addTeam2Score()
+        viewModel.addScore(2)
 
         // Assert
         assertEquals(1, viewModel.team2Score.value)
@@ -247,14 +247,14 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `subtractTeam1Score decrements score when greater than zero`() {
+    fun `subtractScore(1) decrements score when greater than zero`() {
         // Arrange
         val scoreObserver = Observer<Int> {}
         viewModel.team1Score.observeForever(scoreObserver)
-        viewModel.addTeam1Score() // Score is now 1
+        viewModel.addScore(1) // Score is now 1
 
         // Act
-        viewModel.subtractTeam1Score()
+        viewModel.subtractScore(1)
 
         // Assert
         assertEquals(0, viewModel.team1Score.value)
@@ -264,14 +264,14 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `subtractTeam2Score decrements score when greater than zero`() {
+    fun `subtractScore(2) decrements score when greater than zero`() {
         // Arrange
         val scoreObserver = Observer<Int> {}
         viewModel.team2Score.observeForever(scoreObserver)
-        viewModel.addTeam2Score() // Score is now 1
+        viewModel.addScore(2) // Score is now 1
 
         // Act
-        viewModel.subtractTeam2Score()
+        viewModel.subtractScore(2)
 
         // Assert
         assertEquals(0, viewModel.team2Score.value)
@@ -281,13 +281,13 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `subtractTeam1Score does not decrement score when zero`() {
+    fun `subtractScore(1) does not decrement score when zero`() {
         // Arrange
         val scoreObserver = Observer<Int> {}
         viewModel.team1Score.observeForever(scoreObserver)
 
         // Act
-        viewModel.subtractTeam1Score()
+        viewModel.subtractScore(1)
 
         // Assert
         assertEquals(0, viewModel.team1Score.value)
@@ -297,13 +297,13 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `subtractTeam2Score does not decrement score when zero`() {
+    fun `subtractScore(2) does not decrement score when zero`() {
         // Arrange
         val scoreObserver = Observer<Int> {}
         viewModel.team2Score.observeForever(scoreObserver)
 
         // Act
-        viewModel.subtractTeam2Score()
+        viewModel.subtractScore(2)
 
         // Assert
         assertEquals(0, viewModel.team2Score.value)
@@ -313,14 +313,14 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `subtractTeam1Score does not show scorer dialog`() {
+    fun `subtractScore(1) does not show scorer dialog`() {
         // Arrange
         val dialogObserver = Observer<Pair<Int, List<PlayerWithRoles>>> {}
         viewModel.showSelectScorerDialog.observeForever(dialogObserver)
-        viewModel.addTeam1Score() // Score is now 1
+        viewModel.addScore(1) // Score is now 1
 
         // Act
-        viewModel.subtractTeam1Score()
+        viewModel.subtractScore(1)
 
         // Assert
         assert(viewModel.showSelectScorerDialog.value == null)
@@ -330,14 +330,14 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `subtractTeam2Score does not show scorer dialog`() {
+    fun `subtractScore(2) does not show scorer dialog`() {
         // Arrange
         val dialogObserver = Observer<Pair<Int, List<PlayerWithRoles>>> {}
         viewModel.showSelectScorerDialog.observeForever(dialogObserver)
-        viewModel.addTeam2Score() // Score is now 1
+        viewModel.addScore(2) // Score is now 1
 
         // Act
-        viewModel.subtractTeam2Score()
+        viewModel.subtractScore(2)
 
         // Assert
         assert(viewModel.showSelectScorerDialog.value == null)
@@ -462,8 +462,8 @@ class MainViewModelTest {
             viewModel.matchEvents.observeForever(eventsObserver)
 
             // Set initial scores by calling add score methods
-            viewModel.addTeam1Score()
-            viewModel.addTeam2Score()
+            viewModel.addScore(1)
+            viewModel.addScore(2)
             advanceUntilIdle() // Allow suspend functions in addScore to complete
 
             // Ensure timer service is set to running and has non-zero value
