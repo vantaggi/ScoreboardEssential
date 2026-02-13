@@ -18,9 +18,10 @@ class PlayerRepository(
         roleIds: List<Int>,
     ) {
         val playerId = playerDao.insert(player)
-        roleIds.forEach { roleId ->
-            playerDao.addRoleToPlayer(PlayerRoleCrossRef(playerId.toInt(), roleId))
+        val crossRefs = roleIds.map { roleId ->
+            PlayerRoleCrossRef(playerId.toInt(), roleId)
         }
+        playerDao.addRolesToPlayer(crossRefs)
     }
 
     suspend fun updatePlayerWithRoles(
