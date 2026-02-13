@@ -1,0 +1,1 @@
+BENCHMARK_RESULT: Time taken to insert 100 players with 20 roles each: 337ms
