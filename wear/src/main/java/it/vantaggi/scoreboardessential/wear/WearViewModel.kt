@@ -174,11 +174,9 @@ class WearViewModel(
         val newScore = (currentScore + delta).coerceAtLeast(0)
 
         if (newScore != currentScore) {
-            if (team == 1) {
-                updateScore(newScore, _team2Score.value)
-            } else {
-                updateScore(_team1Score.value, newScore)
-            }
+            val s1 = if (team == 1) newScore else _team1Score.value
+            val s2 = if (team == 1) _team2Score.value else newScore
+            updateScore(s1, s2)
             triggerShortVibration()
         }
     }
