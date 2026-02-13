@@ -158,33 +158,31 @@ class WearViewModel(
         }
     }
 
-    fun incrementTeam1Score() {
-        val newScore = _team1Score.value + 1
-        updateScore(newScore, _team2Score.value)
-        triggerShortVibration()
+    fun incrementScore(team: Int) {
+        modifyScore(team, 1)
     }
 
-    fun decrementTeam1Score() {
-        if (_team1Score.value > 0) {
-            val newScore = _team1Score.value - 1
-            updateScore(newScore, _team2Score.value)
+    fun decrementScore(team: Int) {
+        modifyScore(team, -1)
+    }
+
+    private fun modifyScore(
+        team: Int,
+        delta: Int,
+    ) {
+        val currentScore = if (team == 1) _team1Score.value else _team2Score.value
+        val newScore = (currentScore + delta).coerceAtLeast(0)
+
+        if (newScore != currentScore) {
+            if (team == 1) {
+                updateScore(newScore, _team2Score.value)
+            } else {
+                updateScore(_team1Score.value, newScore)
+            }
             triggerShortVibration()
         }
     }
 
-    fun incrementTeam2Score() {
-        val newScore = _team2Score.value + 1
-        updateScore(_team1Score.value, newScore)
-        triggerShortVibration()
-    }
-
-    fun decrementTeam2Score() {
-        if (_team2Score.value > 0) {
-            val newScore = _team2Score.value - 1
-            updateScore(_team1Score.value, newScore)
-            triggerShortVibration()
-        }
-    }
 
     // --- Match Timer Management ---
     fun setMatchTimer(time: String) {

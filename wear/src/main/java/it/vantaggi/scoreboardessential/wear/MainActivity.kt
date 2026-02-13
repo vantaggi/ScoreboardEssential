@@ -120,28 +120,28 @@ class MainActivity : ComponentActivity() {
 
         // Click per incrementare (comportamento standard)
         binding.team1Container.setOnClickListener {
-            viewModel.incrementTeam1Score()
+            viewModel.incrementScore(1)
         }
 
         binding.team2Container.setOnClickListener {
-            viewModel.incrementTeam2Score()
+            viewModel.incrementScore(2)
         }
 
         // Long press spaziale: Alto -> Incrementa, Basso -> Decrementa
         binding.team1Container.setOnLongClickListener { v ->
             if (lastTouchY < v.height / 2) {
-                viewModel.incrementTeam1Score()
+                viewModel.incrementScore(1)
             } else {
-                viewModel.decrementTeam1Score()
+                viewModel.decrementScore(1)
             }
             true
         }
 
         binding.team2Container.setOnLongClickListener { v ->
             if (lastTouchY < v.height / 2) {
-                viewModel.incrementTeam2Score()
+                viewModel.incrementScore(2)
             } else {
-                viewModel.decrementTeam2Score()
+                viewModel.decrementScore(2)
             }
             true
         }
