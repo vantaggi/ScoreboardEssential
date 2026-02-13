@@ -1,9 +1,14 @@
 package it.vantaggi.scoreboardessential.utils
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.animation.ValueAnimator
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.BounceInterpolator
 import android.view.animation.OvershootInterpolator
@@ -114,4 +119,44 @@ fun MaterialCardView.pulseAnimation() {
     animator.interpolator = AccelerateDecelerateInterpolator()
     animator.repeatCount = ValueAnimator.INFINITE
     animator.start()
+}
+
+fun View.animateScoreButton(
+    isSubtract: Boolean = false,
+) {
+    val scaleX = ObjectAnimator.ofFloat(this, "scaleX", 1f, 0.9f, 1.1f, 1f)
+    val scaleY = ObjectAnimator.ofFloat(this, "scaleY", 1f, 0.9f, 1.1f, 1f)
+
+    AnimatorSet().apply {
+        playTogether(scaleX, scaleY)
+        duration = 200
+        interpolator = OvershootInterpolator()
+        start()
+    }
+
+    if (this is MaterialCardView) {
+        val card = this
+        val originalColor = card.cardBackgroundColor
+        val targetColor =
+            if (isSubtract) {
+                ColorStateList.valueOf(Color.parseColor("#FF1744"))
+            } else {
+                ColorStateList.valueOf(Color.parseColor("#76FF03"))
+            }
+
+        ValueAnimator.ofArgb(originalColor.defaultColor, targetColor.defaultColor).apply {
+            duration = 300
+            addUpdateListener { animator ->
+                card.setCardBackgroundColor(animator.animatedValue as Int)
+            }
+            addListener(
+                object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        card.setCardBackgroundColor(originalColor)
+                    }
+                },
+            )
+            start()
+        }
+    }
 }

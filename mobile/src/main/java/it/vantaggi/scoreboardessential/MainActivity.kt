@@ -38,6 +38,7 @@ import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
+import it.vantaggi.scoreboardessential.utils.animateScoreButton
 import it.vantaggi.scoreboardessential.utils.playNativeGoalAnimation
 import it.vantaggi.scoreboardessential.views.FormationView
 import kotlinx.coroutines.delay
@@ -310,24 +311,24 @@ class MainActivity :
 
         // New buttons with improved feedback
         findViewById<View>(R.id.team1_add_button_card).setOnClickListener {
-            animateScoreButton(it)
+            it.animateScoreButton()
             viewModel.addTeam1Score()
             playGoalAnimation(1)
         }
 
         findViewById<View>(R.id.team1_subtract_button_card).setOnClickListener {
-            animateScoreButton(it, isSubtract = true)
+            it.animateScoreButton(isSubtract = true)
             viewModel.subtractTeam1Score()
         }
 
         findViewById<View>(R.id.team2_add_button_card).setOnClickListener {
-            animateScoreButton(it)
+            it.animateScoreButton()
             viewModel.addTeam2Score()
             playGoalAnimation(2)
         }
 
         findViewById<View>(R.id.team2_subtract_button_card).setOnClickListener {
-            animateScoreButton(it, isSubtract = true)
+            it.animateScoreButton(isSubtract = true)
             viewModel.subtractTeam2Score()
         }
 
@@ -452,51 +453,6 @@ class MainActivity :
         }
     }
 
-    private fun animateScoreButton(
-        view: View,
-        isSubtract: Boolean = false,
-    ) {
-        val scaleX = ObjectAnimator.ofFloat(view, "scaleX", 1f, 0.9f, 1.1f, 1f)
-        val scaleY = ObjectAnimator.ofFloat(view, "scaleY", 1f, 0.9f, 1.1f, 1f)
-
-        AnimatorSet().apply {
-            playTogether(scaleX, scaleY)
-            duration = 200
-            interpolator = OvershootInterpolator()
-            start()
-        }
-
-        if (view is MaterialCardView) {
-            val originalColor = view.cardBackgroundColor
-            val targetColor =
-                if (isSubtract) {
-                    ColorStateList.valueOf(Color.parseColor("#FF1744"))
-                } else {
-                    ColorStateList.valueOf(Color.parseColor("#76FF03"))
-                }
-
-            ValueAnimator.ofArgb(originalColor.defaultColor, targetColor.defaultColor).apply {
-                duration = 300
-                addUpdateListener { animator ->
-                    view.setCardBackgroundColor(animator.animatedValue as Int)
-                }
-                addListener(
-                    object : android.animation.Animator.AnimatorListener {
-                        override fun onAnimationStart(animation: android.animation.Animator) {}
-
-                        override fun onAnimationEnd(animation: android.animation.Animator) {
-                            view.setCardBackgroundColor(originalColor)
-                        }
-
-                        override fun onAnimationCancel(animation: android.animation.Animator) {}
-
-                        override fun onAnimationRepeat(animation: android.animation.Animator) {}
-                    },
-                )
-                start()
-            }
-        }
-    }
 
     private fun animateTextChange(
         textView: TextView,
