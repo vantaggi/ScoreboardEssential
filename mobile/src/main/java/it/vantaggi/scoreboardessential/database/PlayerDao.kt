@@ -30,6 +30,9 @@ interface PlayerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addRoleToPlayer(crossRef: PlayerRoleCrossRef)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun addRolesToPlayer(crossRefs: List<PlayerRoleCrossRef>)
+
     @Delete
     suspend fun removeRoleFromPlayer(crossRef: PlayerRoleCrossRef)
 
