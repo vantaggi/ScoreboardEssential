@@ -137,7 +137,9 @@ class MainViewModelTest {
             whenever(mockMatchDao.insert(any())).thenReturn(1L)
             // Stub other suspend functions just in case
             whenever(mockMatchDao.insertMatchPlayerCrossRef(any())).thenReturn(Unit)
+            whenever(mockMatchDao.insertMatchPlayerCrossRefs(any())).thenReturn(Unit)
             whenever(mockPlayerDao.update(any())).thenReturn(Unit)
+            whenever(mockPlayerDao.updatePlayers(any())).thenReturn(Unit)
             // Stub sendData
             whenever(mockConnectionManager.sendData(any(), any(), any())).thenReturn(Unit)
 

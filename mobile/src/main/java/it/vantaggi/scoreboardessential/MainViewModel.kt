@@ -663,11 +663,18 @@ class MainViewModel(
                 )
 
             val allMatchPlayers = (team1Players.value ?: emptyList()) + (team2Players.value ?: emptyList())
-            for (playerWithRoles in allMatchPlayers) {
-                playerWithRoles.player.appearances++
-                playerDao.update(playerWithRoles.player)
-                matchDao.insertMatchPlayerCrossRef(MatchPlayerCrossRef(matchId.toInt(), playerWithRoles.player.playerId))
-            }
+
+            val playersToUpdate =
+                allMatchPlayers.map {
+                    it.player.apply { appearances++ }
+                }
+            playerDao.updatePlayers(playersToUpdate)
+
+            val matchPlayerCrossRefs =
+                allMatchPlayers.map {
+                    MatchPlayerCrossRef(matchId.toInt(), it.player.playerId)
+                }
+            matchDao.insertMatchPlayerCrossRefs(matchPlayerCrossRefs)
 
             addMatchEvent("Match ended - Final Score: ${team1Score.value} - ${team2Score.value}")
 
