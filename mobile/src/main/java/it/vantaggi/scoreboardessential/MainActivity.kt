@@ -307,8 +307,14 @@ class MainActivity :
     }
 
     private fun setupImprovedViews() {
-        // Team name containers are no longer clickable
+        setupScoreButtons()
+        setupMatchActions()
+        setupPlayerManagementButtons()
+        setupNavigationButtons()
+    }
 
+    private fun setupScoreButtons() {
+        // Team name containers are no longer clickable
         // New buttons with improved feedback
         findViewById<View>(R.id.team1_add_button_card).setOnClickListener {
             it.animateScoreButton()
@@ -331,15 +337,29 @@ class MainActivity :
             it.animateScoreButton(isSubtract = true)
             viewModel.subtractTeam2Score()
         }
+    }
 
+    private fun setupMatchActions() {
         findViewById<Button>(R.id.reset_scores_button).setOnClickListener {
             showEndMatchConfirmation()
         }
 
-        findViewById<Button>(R.id.match_history_button).setOnClickListener {
-            startActivity(Intent(this, MatchHistoryActivity::class.java))
+        findViewById<Button>(R.id.share_match_button).setOnClickListener {
+            viewModel.shareMatchResults()
         }
 
+        undoGoalButton.setOnClickListener {
+            MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.undo_goal_title))
+                .setMessage(getString(R.string.undo_goal_message))
+                .setPositiveButton(getString(R.string.undo)) { _, _ ->
+                    viewModel.undoLastGoal()
+                }.setNegativeButton(getString(R.string.cancel), null)
+                .show()
+        }
+    }
+
+    private fun setupPlayerManagementButtons() {
         findViewById<Button>(R.id.add_team1_player_button).setOnClickListener {
             showAddPlayerToTeamDialog(1)
         }
@@ -351,9 +371,11 @@ class MainActivity :
         findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.players_fab).setOnClickListener {
             startActivity(Intent(this, PlayersManagementActivity::class.java))
         }
+    }
 
-        findViewById<Button>(R.id.share_match_button).setOnClickListener {
-            viewModel.shareMatchResults()
+    private fun setupNavigationButtons() {
+        findViewById<Button>(R.id.match_history_button).setOnClickListener {
+            startActivity(Intent(this, MatchHistoryActivity::class.java))
         }
 
         findViewById<View>(R.id.settings_button).setOnClickListener {
@@ -362,16 +384,6 @@ class MainActivity :
 
         findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.stats_fab).setOnClickListener {
             startActivity(Intent(this, StatisticsActivity::class.java))
-        }
-
-        undoGoalButton.setOnClickListener {
-            MaterialAlertDialogBuilder(this)
-                .setTitle(getString(R.string.undo_goal_title))
-                .setMessage(getString(R.string.undo_goal_message))
-                .setPositiveButton(getString(R.string.undo)) { _, _ ->
-                    viewModel.undoLastGoal()
-                }.setNegativeButton(getString(R.string.cancel), null)
-                .show()
         }
     }
 
