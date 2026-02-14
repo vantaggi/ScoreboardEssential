@@ -456,45 +456,43 @@ class MainViewModel(
         }
     }
 
-    fun addTeam1Score() {
-        val newScore = (_team1Score.value ?: 0) + 1
-        updateScore(newScore, _team2Score.value ?: 0)
-        triggerHapticFeedback()
-        val players = team1Players.value
-        if (!players.isNullOrEmpty()) {
-            showSelectScorerDialog.postValue(Pair(1, players))
+    fun addScore(teamId: Int) {
+        val currentTeam1Score = _team1Score.value ?: 0
+        val currentTeam2Score = _team2Score.value ?: 0
+
+        if (teamId == 1) {
+            updateScore(currentTeam1Score + 1, currentTeam2Score)
         } else {
-            addScorer(1, null) // No player to select, just log the goal
+            updateScore(currentTeam1Score, currentTeam2Score + 1)
         }
-    }
 
-    fun subtractTeam1Score() {
-        val newScore = (_team1Score.value ?: 0) - 1
-        if (newScore >= 0) {
-            updateScore(newScore, _team2Score.value ?: 0)
-            triggerHapticFeedback()
-            addMatchEvent("Score correction for ${_team1Name.value}", team = 1)
-        }
-    }
-
-    fun addTeam2Score() {
-        val newScore = (_team2Score.value ?: 0) + 1
-        updateScore(_team1Score.value ?: 0, newScore)
         triggerHapticFeedback()
-        val players = team2Players.value
+
+        val players = if (teamId == 1) team1Players.value else team2Players.value
         if (!players.isNullOrEmpty()) {
-            showSelectScorerDialog.postValue(Pair(2, players))
+            showSelectScorerDialog.postValue(Pair(teamId, players))
         } else {
-            addScorer(2, null) // No player to select, just log the goal
+            addScorer(teamId, null) // No player to select, just log the goal
         }
     }
 
-    fun subtractTeam2Score() {
-        val newScore = (_team2Score.value ?: 0) - 1
-        if (newScore >= 0) {
-            updateScore(_team1Score.value ?: 0, newScore)
+    fun subtractScore(teamId: Int) {
+        val currentTeam1Score = _team1Score.value ?: 0
+        val currentTeam2Score = _team2Score.value ?: 0
+        var newTeam1Score = currentTeam1Score
+        var newTeam2Score = currentTeam2Score
+
+        if (teamId == 1) {
+            newTeam1Score = (currentTeam1Score - 1).coerceAtLeast(0)
+        } else {
+            newTeam2Score = (currentTeam2Score - 1).coerceAtLeast(0)
+        }
+
+        if (newTeam1Score != currentTeam1Score || newTeam2Score != currentTeam2Score) {
+            updateScore(newTeam1Score, newTeam2Score)
             triggerHapticFeedback()
-            addMatchEvent("Score correction for ${_team2Name.value}", team = 2)
+            val teamName = if (teamId == 1) _team1Name.value else _team2Name.value
+            addMatchEvent("Score correction for $teamName", team = teamId)
         }
     }
 
