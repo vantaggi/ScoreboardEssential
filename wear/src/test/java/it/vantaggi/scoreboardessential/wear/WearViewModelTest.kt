@@ -24,7 +24,7 @@ import org.robolectric.annotation.Config
 
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33], manifest = Config.NONE)
+@Config(sdk = [34])
 class WearViewModelTest {
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
@@ -37,6 +37,9 @@ class WearViewModelTest {
     @Mock
     private lateinit var vibrator: Vibrator
 
+    @Mock
+    private lateinit var packageManager: android.content.pm.PackageManager
+
     private lateinit var viewModel: WearViewModel
 
     @Before
@@ -45,11 +48,14 @@ class WearViewModelTest {
         MockitoAnnotations.openMocks(this)
 
         Mockito.`when`(application.getSystemService(Context.VIBRATOR_SERVICE)).thenReturn(vibrator)
+        Mockito.`when`(application.packageManager).thenReturn(packageManager)
+        Mockito.`when`(packageManager.hasSystemFeature(Mockito.anyString())).thenReturn(false)
         Mockito.`when`(application.applicationContext).thenReturn(application)
 
         try {
             viewModel = WearViewModel(application)
         } catch (e: Exception) {
+            e.printStackTrace()
             // Ignore initialization errors for DataClient if possible
         }
     }
@@ -136,5 +142,19 @@ class WearViewModelTest {
             // Assert
             assertTrue("Team 1 score should be 1", viewModel.team1Score.value == 1)
             assertTrue("Team 2 score should be 0", viewModel.team2Score.value == 0)
+        }
+
+    @Test
+    fun `incrementScore with invalid team ID does not change scores`() =
+        runTest {
+            // Arrange
+            viewModel.updateScoresFromMobile(0, 0)
+
+            // Act
+            viewModel.incrementScore(3) // Invalid team ID
+
+            // Assert
+            assertTrue("Team 1 score should remain 0", viewModel.team1Score.value == 0)
+            assertTrue("Team 2 score should remain 0", viewModel.team2Score.value == 0)
         }
 }

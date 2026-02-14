@@ -9,6 +9,7 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
+import it.vantaggi.scoreboardessential.utils.WearDataValidator
 
 class SimplifiedDataLayerListenerService : WearableListenerService() {
     companion object {
@@ -40,24 +41,36 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                     WearConstants.PATH_SCORE -> {
                         val team1 = dataMap.getInt(WearConstants.KEY_TEAM1_SCORE, 0)
                         val team2 = dataMap.getInt(WearConstants.KEY_TEAM2_SCORE, 0)
+
+                        if (!WearDataValidator.isValidScore(team1) || !WearDataValidator.isValidScore(team2)) {
+                            Log.w(TAG, "Invalid score received: T1=$team1, T2=$team2. Ignoring.")
+                            return@forEachIndexed
+                        }
+
                         val intent =
                             Intent(ACTION_SCORE_UPDATE).apply {
                                 putExtra(EXTRA_TEAM1_SCORE, team1)
                                 putExtra(EXTRA_TEAM2_SCORE, team2)
                             }
                         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-                        Log.d(TAG, "Broadcasted score update: T1=$team1, T2=$team2")
+                        Log.d(TAG, "Broadcasted score update")
                     }
                     WearConstants.PATH_TIMER_STATE -> {
                         val millis = dataMap.getLong(WearConstants.KEY_TIMER_MILLIS, 0L)
                         val isRunning = dataMap.getBoolean(WearConstants.KEY_TIMER_RUNNING, false)
+
+                        if (!WearDataValidator.isValidTimer(millis)) {
+                            Log.w(TAG, "Invalid timer value received: $millis. Ignoring.")
+                            return@forEachIndexed
+                        }
+
                         val intent =
                             Intent(ACTION_TIMER_UPDATE).apply {
                                 putExtra(EXTRA_TIMER_MILLIS, millis)
                                 putExtra(EXTRA_TIMER_RUNNING, isRunning)
                             }
                         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-                        Log.d(TAG, "Broadcasted timer update: $millis ms, running=$isRunning")
+                        Log.d(TAG, "Broadcasted timer update")
                     }
                     WearConstants.PATH_TEAM_NAMES -> {
                         val intent = Intent(ACTION_TEAM_NAMES_UPDATE)
@@ -66,6 +79,12 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                     WearConstants.PATH_KEEPER_TIMER -> {
                         val millis = dataMap.getLong(WearConstants.KEY_KEEPER_MILLIS, 0L)
                         val isRunning = dataMap.getBoolean(WearConstants.KEY_KEEPER_RUNNING, false)
+
+                        if (!WearDataValidator.isValidTimer(millis)) {
+                            Log.w(TAG, "Invalid keeper timer value received: $millis. Ignoring.")
+                            return@forEachIndexed
+                        }
+
                         val intent =
                             Intent(ACTION_KEEPER_TIMER_UPDATE).apply {
                                 putExtra(EXTRA_KEEPER_MILLIS, millis)

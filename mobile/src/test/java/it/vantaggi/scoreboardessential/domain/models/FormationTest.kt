@@ -59,6 +59,29 @@ class FormationTest {
     }
 
     @Test
+    fun `fromPlayers assigns player with no role to midfielders`() {
+        // Given
+        val playerWithNoRole = mockPlayerWithRoles()
+        val players = listOf(playerWithNoRole)
+
+        // When
+        val formation = Formation.fromPlayers(players)
+
+        // Then
+        assertEquals(0, formation.goalkeeper.size)
+        assertEquals(0, formation.defenders.size)
+        assertEquals(1, formation.midfielders.size)
+        assertEquals(0, formation.forwards.size)
+
+        assertEquals(
+            "Mock",
+            formation.midfielders
+                .first()
+                .player.playerName,
+        )
+    }
+
+    @Test
     fun `getFormationString returns correct format`() {
         // Given
         val formation =
