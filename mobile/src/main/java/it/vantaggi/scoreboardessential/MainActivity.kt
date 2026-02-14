@@ -318,24 +318,24 @@ class MainActivity :
         // New buttons with improved feedback
         findViewById<View>(R.id.team1_add_button_card).setOnClickListener {
             it.animateScoreButton()
-            viewModel.addTeam1Score()
+            viewModel.addScore(1)
             playGoalAnimation(1)
         }
 
         findViewById<View>(R.id.team1_subtract_button_card).setOnClickListener {
             it.animateScoreButton(isSubtract = true)
-            viewModel.subtractTeam1Score()
+            viewModel.subtractScore(1)
         }
 
         findViewById<View>(R.id.team2_add_button_card).setOnClickListener {
             it.animateScoreButton()
-            viewModel.addTeam2Score()
+            viewModel.addScore(2)
             playGoalAnimation(2)
         }
 
         findViewById<View>(R.id.team2_subtract_button_card).setOnClickListener {
             it.animateScoreButton(isSubtract = true)
-            viewModel.subtractTeam2Score()
+            viewModel.subtractScore(2)
         }
     }
 

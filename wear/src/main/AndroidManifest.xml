@@ -6,29 +6,14 @@
 
     <uses-feature android:name="android.hardware.type.watch" />
 
-    <application
-        android:allowBackup="false"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.ScoreboardEssential">
-        <uses-library
-            android:name="com.google.android.wearable"
-            android:required="true" />
+    <application android:allowBackup="false" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:label="@string/app_name" android:supportsRtl="true" android:theme="@style/Theme.ScoreboardEssential">
+        <uses-library android:name="com.google.android.wearable" android:required="true" />
 
-        <meta-data
-            android:name="com.google.android.wearable.standalone"
-            android:value="false" />
+        <meta-data android:name="com.google.android.wearable.standalone" android:value="false" />
 
-        <meta-data
-            android:name="com.google.android.wearable.capabilities"
-            android:resource="@xml/wear" />
+        <!-- Wear capabilities defined in res/values/wear.xml -->
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:label="@string/app_name">
+        <activity android:name=".MainActivity" android:exported="true" android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -36,21 +21,16 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".PlayerSelectionActivity"
-            android:exported="false"
-            android:label="Select Scorer" />
+        <activity android:name=".PlayerSelectionActivity" android:exported="false" android:label="Select Scorer" />
 
-        <service
-            android:name=".WearDataLayerService"
-            android:exported="true">
+        <service android:name=".WearDataLayerService" android:exported="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/scoreboard" />
             </intent-filter>
         </service>
-        
+
     </application>
 
 </manifest>
