@@ -17,6 +17,9 @@ interface PlayerDao {
     @Update
     suspend fun update(player: Player)
 
+    @Update
+    suspend fun updatePlayers(players: List<Player>)
+
     @Delete
     suspend fun delete(player: Player)
 
