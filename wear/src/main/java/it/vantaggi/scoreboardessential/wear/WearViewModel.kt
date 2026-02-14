@@ -170,6 +170,7 @@ class WearViewModel(
         team: Int,
         delta: Int,
     ) {
+        if (team != 1 && team != 2) return
         val currentScore = if (team == 1) _team1Score.value else _team2Score.value
         val newScore = (currentScore + delta).coerceAtLeast(0)
 

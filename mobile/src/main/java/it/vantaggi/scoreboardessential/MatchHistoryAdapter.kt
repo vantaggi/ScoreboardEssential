@@ -46,13 +46,14 @@ class MatchHistoryAdapter(
         private val playersTextView: TextView = itemView.findViewById(R.id.players_textview)
         private val deleteButton: View = itemView.findViewById(R.id.delete_match_button)
 
+        private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+
         fun bind(matchWithTeams: MatchWithTeams) {
             team1NameTextView.text = matchWithTeams.team1?.name ?: "Team 1"
             team2NameTextView.text = matchWithTeams.team2?.name ?: "Team 2"
             team1ScoreTextView.text = matchWithTeams.match.team1Score.toString()
             team2ScoreTextView.text = matchWithTeams.match.team2Score.toString()
 
-            val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
             timestampTextView.text = dateFormat.format(Date(matchWithTeams.match.timestamp))
 
             if (matchWithTeams.players.isNotEmpty()) {

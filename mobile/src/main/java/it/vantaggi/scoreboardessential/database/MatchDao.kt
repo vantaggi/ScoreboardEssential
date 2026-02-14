@@ -16,6 +16,9 @@ interface MatchDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertMatchPlayerCrossRef(crossRef: MatchPlayerCrossRef)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertMatchPlayerCrossRefs(crossRefs: List<MatchPlayerCrossRef>)
+
     @Transaction
     @Query("SELECT * FROM matches ORDER BY timestamp DESC")
     fun getAllMatchesWithPlayers(): Flow<List<MatchWithPlayers>>
