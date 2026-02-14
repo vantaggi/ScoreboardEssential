@@ -39,6 +39,9 @@ interface PlayerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRole(role: Role)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPlayerRoles(crossRefs: List<PlayerRoleCrossRef>)
+
     @Transaction
     suspend fun updatePlayerWithRoles(
         player: Player,
@@ -46,9 +49,8 @@ interface PlayerDao {
     ) {
         update(player)
         deleteAllRolesForPlayer(player.playerId)
-        roleIds.forEach { roleId ->
-            addRoleToPlayer(PlayerRoleCrossRef(player.playerId, roleId))
-        }
+        val crossRefs = roleIds.map { roleId -> PlayerRoleCrossRef(player.playerId, roleId) }
+        insertPlayerRoles(crossRefs)
     }
 
     @Query("DELETE FROM player_role_cross_ref WHERE playerId = :playerId")
