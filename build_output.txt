@@ -1,0 +1,84 @@
+> Task :mobile:preBuild UP-TO-DATE
+> Task :mobile:preDebugBuild UP-TO-DATE
+> Task :mobile:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :mobile:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :mobile:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :mobile:generateDebugResValues UP-TO-DATE
+> Task :mobile:generateDebugResources
+> Task :shared:preBuild UP-TO-DATE
+> Task :shared:preDebugBuild UP-TO-DATE
+> Task :shared:generateDebugResValues UP-TO-DATE
+> Task :shared:generateDebugResources UP-TO-DATE
+> Task :shared:packageDebugResources UP-TO-DATE
+> Task :mobile:mergeDebugResources
+> Task :mobile:packageDebugResources
+> Task :shared:parseDebugLocalResources UP-TO-DATE
+> Task :shared:generateDebugRFile UP-TO-DATE
+> Task :mobile:dataBindingTriggerDebug UP-TO-DATE
+> Task :shared:writeDebugAarMetadata UP-TO-DATE
+> Task :mobile:checkDebugAarMetadata UP-TO-DATE
+> Task :mobile:mapDebugSourceSetPaths
+> Task :mobile:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :mobile:extractDeepLinksDebug UP-TO-DATE
+> Task :shared:extractDeepLinksDebug UP-TO-DATE
+> Task :shared:processDebugManifest UP-TO-DATE
+> Task :mobile:processDebugMainManifest UP-TO-DATE
+> Task :mobile:processDebugManifest UP-TO-DATE
+> Task :mobile:processDebugManifestForPackage UP-TO-DATE
+> Task :shared:compileDebugLibraryResources UP-TO-DATE
+> Task :shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :mobile:parseDebugLocalResources
+> Task :shared:compileDebugKotlin UP-TO-DATE
+> Task :mobile:dataBindingGenBaseClassesDebug
+> Task :shared:javaPreCompileDebug UP-TO-DATE
+> Task :shared:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :mobile:javaPreCompileDebug UP-TO-DATE
+> Task :mobile:mergeDebugShaders UP-TO-DATE
+> Task :mobile:compileDebugShaders NO-SOURCE
+> Task :mobile:generateDebugAssets UP-TO-DATE
+> Task :shared:mergeDebugShaders UP-TO-DATE
+> Task :shared:compileDebugShaders NO-SOURCE
+> Task :shared:generateDebugAssets UP-TO-DATE
+> Task :shared:packageDebugAssets UP-TO-DATE
+> Task :mobile:mergeDebugAssets UP-TO-DATE
+> Task :mobile:compressDebugAssets UP-TO-DATE
+> Task :shared:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :mobile:desugarDebugFileDependencies UP-TO-DATE
+> Task :shared:processDebugJavaRes UP-TO-DATE
+> Task :mobile:checkDebugDuplicateClasses UP-TO-DATE
+> Task :mobile:mergeDebugStartupProfile UP-TO-DATE
+> Task :mobile:mergeExtDexDebug UP-TO-DATE
+> Task :shared:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :mobile:mergeDebugJniLibFolders UP-TO-DATE
+> Task :shared:mergeDebugJniLibFolders UP-TO-DATE
+> Task :shared:mergeDebugNativeLibs NO-SOURCE
+> Task :shared:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :mobile:mergeLibDexDebug
+> Task :mobile:mergeDebugNativeLibs NO-SOURCE
+> Task :mobile:stripDebugDebugSymbols NO-SOURCE
+> Task :mobile:validateSigningDebug UP-TO-DATE
+> Task :mobile:writeDebugAppMetadata
+> Task :mobile:writeDebugSigningConfigVersions
+note: generating mipmap/ic_launcher_round with config "anydpi-v33" for round icon compatibility.
+
+> Task :mobile:processDebugResources
+> Task :mobile:kspDebugKotlin
+
+> Task :mobile:compileDebugKotlin
+w: file:///app/mobile/src/main/java/it/vantaggi/scoreboardessential/AddEditPlayerActivity.kt:39:31 'fun <T : Parcelable!> getParcelableExtra(p0: String!): T?' is deprecated. Deprecated in Java.
+w: file:///app/mobile/src/main/java/it/vantaggi/scoreboardessential/SelectScorerDialogFragment.kt:46:34 Unchecked cast of 'java.io.Serializable?' to 'kotlin.collections.List<it.vantaggi.scoreboardessential.database.PlayerWithRoles>'.
+w: file:///app/mobile/src/main/java/it/vantaggi/scoreboardessential/service/MatchTimerService.kt:82:45 'static field VIBRATOR_SERVICE: String' is deprecated. Deprecated in Java.
+
+> Task :mobile:compileDebugJavaWithJavac
+> Task :mobile:dexBuilderDebug
+> Task :mobile:mergeDebugGlobalSynthetics
+> Task :mobile:processDebugJavaRes
+> Task :mobile:mergeProjectDexDebug
+> Task :mobile:mergeDebugJavaResource
+> Task :mobile:packageDebug
+> Task :mobile:createDebugApkListingFileRedirect
+> Task :mobile:assembleDebug
+
+BUILD SUCCESSFUL in 1m 6s
+58 actionable tasks: 20 executed, 38 up-to-date
