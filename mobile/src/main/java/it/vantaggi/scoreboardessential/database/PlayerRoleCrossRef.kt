@@ -23,9 +23,8 @@ import androidx.room.Index
         ),
     ],
     indices = [
-        Index(value = ["playerId"]), // ✅ Nuovo: ottimizza query per player
-        Index(value = ["roleId"]), // ✅ Già presente
-        Index(value = ["playerId", "roleId"]), // ✅ Nuovo: ottimizza join
+        Index(value = ["playerId"]),
+        Index(value = ["roleId"]),
     ],
 )
 data class PlayerRoleCrossRef(

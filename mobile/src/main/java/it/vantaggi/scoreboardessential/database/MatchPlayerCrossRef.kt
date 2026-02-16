@@ -5,7 +5,7 @@ import androidx.room.Index
 
 @Entity(
     primaryKeys = ["matchId", "playerId"],
-    indices = [Index(value = ["playerId"])],
+    indices = [Index(value = ["playerId"]), Index(value = ["matchId"])],
 )
 data class MatchPlayerCrossRef(
     val matchId: Int,
