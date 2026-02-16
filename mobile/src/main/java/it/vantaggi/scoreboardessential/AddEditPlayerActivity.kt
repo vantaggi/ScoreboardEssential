@@ -13,11 +13,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
+import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.Player
+import it.vantaggi.scoreboardessential.repository.PlayerRepository
+import it.vantaggi.scoreboardessential.views.PlayersManagementViewModelFactory
 import kotlinx.coroutines.launch
+import androidx.lifecycle.ViewModelProvider
 
 class AddEditPlayerActivity : AppCompatActivity() {
-    private val viewModel: PlayersManagementViewModel by viewModels()
+    private lateinit var viewModel: PlayersManagementViewModel
     private lateinit var roleAdapter: RoleSelectionAdapter
     private lateinit var playerNameInput: TextInputEditText
     private lateinit var rolesRecyclerView: RecyclerView
@@ -28,6 +32,11 @@ class AddEditPlayerActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_edit_player)
+
+        val playerDao = AppDatabase.getDatabase(application).playerDao()
+        val playerRepository = PlayerRepository(playerDao)
+        val factory = PlayersManagementViewModelFactory(application, playerRepository)
+        viewModel = ViewModelProvider(this, factory).get(PlayersManagementViewModel::class.java)
 
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)

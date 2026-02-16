@@ -38,15 +38,25 @@ class TeamRosterAdapter(
     ) : RecyclerView.ViewHolder(itemView) {
         private val playerNameTextView: TextView = itemView.findViewById(R.id.player_name)
         private val playerRolesGroup: ChipGroup = itemView.findViewById(R.id.player_roles)
+        private val playerInitialsTextView: TextView = itemView.findViewById(R.id.player_initials)
 
         fun bind(playerWithRoles: PlayerWithRoles) {
             val player = playerWithRoles.player
             playerNameTextView.text = player.playerName
+            
+            // Bind Initials
+            val initials = player.playerName
+                .split(" ")
+                .mapNotNull { it.firstOrNull()?.toString() }
+                .take(2)
+                .joinToString("")
+                .uppercase()
+            playerInitialsTextView.text = if (initials.isNotEmpty()) initials else "?"
+
             playerRolesGroup.setRoles(playerWithRoles.roles)
 
-            itemView.setOnLongClickListener {
+            itemView.setOnClickListener {
                 onPlayerClick(playerWithRoles)
-                true
             }
         }
     }

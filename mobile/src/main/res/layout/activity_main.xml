@@ -137,7 +137,7 @@
 
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Team 1" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="?attr/colorPrimary" android:layout_marginBottom="8dp"/>
 
-                            <androidx.recyclerview.widget.RecyclerView android:id="@+id/team1_roster_recyclerview" android:layout_width="match_parent" android:layout_height="150dp" android:nestedScrollingEnabled="false"/>
+                            <androidx.recyclerview.widget.RecyclerView android:id="@+id/team1_roster_recyclerview" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
 
                             <com.google.android.material.button.MaterialButton android:id="@+id/add_team1_player_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Add Player" android:layout_marginTop="8dp"/>
                         </LinearLayout>
@@ -147,7 +147,7 @@
 
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Team 2" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="?attr/colorSecondary" android:layout_marginBottom="8dp"/>
 
-                            <androidx.recyclerview.widget.RecyclerView android:id="@+id/team2_roster_recyclerview" android:layout_width="match_parent" android:layout_height="150dp" android:nestedScrollingEnabled="false"/>
+                            <androidx.recyclerview.widget.RecyclerView android:id="@+id/team2_roster_recyclerview" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
 
                             <com.google.android.material.button.MaterialButton android:id="@+id/add_team2_player_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Add Player" android:layout_marginTop="8dp"/>
                         </LinearLayout>
@@ -162,7 +162,7 @@
 
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MATCH LOG" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:layout_marginBottom="12dp"/>
 
-                    <androidx.recyclerview.widget.RecyclerView android:id="@+id/match_log_recyclerview" android:layout_width="match_parent" android:layout_height="200dp" android:nestedScrollingEnabled="false"/>
+                    <androidx.recyclerview.widget.RecyclerView android:id="@+id/match_log_recyclerview" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

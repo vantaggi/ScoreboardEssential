@@ -1,67 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:paddingVertical="@dimen/padding_small"
-    android:paddingHorizontal="@dimen/padding_medium">
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="16dp" android:layout_marginVertical="4dp" android:minHeight="48dp" app:cardElevation="0dp" app:strokeWidth="1dp" app:strokeColor="?attr/colorOutlineVariant" app:cardBackgroundColor="?attr/colorSurface" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackground">
 
-    <!-- Player Avatar -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/player_avatar_card"
-        android:layout_width="@dimen/avatar_size_small"
-        android:layout_height="@dimen/avatar_size_small"
-        app:cardBackgroundColor="?attr/colorSecondary"
-        app:shapeAppearance="@style/ShapeAppearance.App.StreetBadge"
-        app:cardElevation="@dimen/card_elevation_none"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
+    <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="12dp">
 
-        <TextView
-            android:id="@+id/player_avatar"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
-            android:textColor="@color/stencil_white"
-            android:fontFamily="sans-serif-condensed"
-            android:textStyle="bold"
-            tools:text="J" />
-    </com.google.android.material.card.MaterialCardView>
+        <!-- Avatar (Initials) -->
+        <com.google.android.material.card.MaterialCardView android:id="@+id/player_avatar_container" android:layout_width="40dp" android:layout_height="40dp" app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" app:cardBackgroundColor="?attr/colorPrimaryContainer" app:strokeWidth="0dp" app:cardElevation="0dp" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent">
 
-    <!-- Player Info -->
-    <TextView
-        android:id="@+id/player_name"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/margin_medium"
-        android:textAppearance="?attr/textAppearanceBodyLarge"
-        android:textColor="@color/stencil_white"
-        android:fontFamily="sans-serif-condensed"
-        android:maxLines="1"
-        android:ellipsize="end"
-        app:layout_constraintStart_toEndOf="@id/player_avatar_card"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/player_roles"
-        app:layout_constraintVertical_chainStyle="packed"
-        tools:text="Johnathan Doe" />
+            <TextView android:id="@+id/player_initials" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="?attr/colorOnPrimaryContainer" tools:text="JD"/>
+        </com.google.android.material.card.MaterialCardView>
 
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/player_roles"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        app:chipSpacing="@dimen/chip_spacing_small"
-        app:singleLine="false"
-        app:selectionRequired="false"
-        app:layout_constraintStart_toStartOf="@id/player_name"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/player_name"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        <!-- Player Name -->
+        <TextView android:id="@+id/player_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_marginEnd="8dp" android:textAppearance="?attr/textAppearanceBodyLarge" android:textColor="?attr/colorOnSurface" android:maxLines="1" android:ellipsize="end" app:layout_constraintStart_toEndOf="@id/player_avatar_container" app:layout_constraintTop_toTopOf="@id/player_avatar_container" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toTopOf="@id/player_roles" app:layout_constraintVertical_chainStyle="packed" tools:text="Johnathan Doe"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Roles -->
+        <com.google.android.material.chip.ChipGroup android:id="@+id/player_roles" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="4dp" app:singleLine="true" app:chipSpacingHorizontal="4dp" app:chipSpacingVertical="0dp" app:layout_constraintStart_toStartOf="@id/player_name" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toBottomOf="@id/player_name" app:layout_constraintBottom_toBottomOf="@id/player_avatar_container" tools:visibility="visible">
+            <!-- Chips are added dynamically -->
+        </com.google.android.material.chip.ChipGroup>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

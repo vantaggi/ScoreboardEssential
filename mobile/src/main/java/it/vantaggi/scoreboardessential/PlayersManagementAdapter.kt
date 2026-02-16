@@ -46,6 +46,7 @@ class PlayersManagementAdapter(
         private val goalsTextView: TextView = itemView.findViewById(R.id.player_goals)
         private val appearancesTextView: TextView = itemView.findViewById(R.id.player_appearances)
         private val statsButton: ImageButton = itemView.findViewById(R.id.stats_button)
+        private val editButton: ImageButton = itemView.findViewById(R.id.edit_button)
         private val avatarTextView: TextView = itemView.findViewById(R.id.player_avatar)
         private val avatarCardView: MaterialCardView = itemView.findViewById(R.id.player_avatar_card)
 
@@ -58,13 +59,28 @@ class PlayersManagementAdapter(
             goalsTextView.text = "⚽ ${player.goals}"
             appearancesTextView.text = "🎮 ${player.appearances}"
 
-            avatarTextView.text = player.playerName.firstOrNull()?.uppercase() ?: "?"
+            // Initials for Avatar
+            val initials = player.playerName
+                .split(" ")
+                .mapNotNull { it.firstOrNull()?.toString() }
+                .take(2)
+                .joinToString("")
+                .uppercase()
+            avatarTextView.text = if (initials.isNotEmpty()) initials else "?"
 
+            // Colorful Avatar Background
             val colors = itemView.context.resources.getIntArray(R.array.avatar_colors)
-            val colorIndex = Math.abs(player.playerName.hashCode()) % colors.size
-            avatarCardView.setCardBackgroundColor(colors[colorIndex])
+            if (colors.isNotEmpty()) {
+                val colorIndex = Math.abs(player.playerName.hashCode()) % colors.size
+                avatarCardView.setCardBackgroundColor(colors[colorIndex])
+            }
 
+            // Click Listeners
             cardView.setOnClickListener {
+                onPlayerClick(playerWithRoles)
+            }
+            
+            editButton.setOnClickListener {
                 onPlayerClick(playerWithRoles)
             }
 

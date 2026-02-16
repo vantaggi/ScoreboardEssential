@@ -1,120 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/player_card"
-    style="?attr/materialCardViewElevatedStyle"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_margin="@dimen/margin_small"
-    app:cardBackgroundColor="@color/concrete_gray"
-    app:shapeAppearance="@style/ShapeAppearance.App.StreetCard"
-    app:cardElevation="@dimen/card_elevation_default">
+    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/player_card" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="16dp" android:layout_marginVertical="8dp" app:cardBackgroundColor="@color/concrete_gray" app:cardElevation="4dp" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackground">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="@dimen/padding_large">
+    <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp">
 
-        <!-- Player Avatar -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/player_avatar_card"
-            android:layout_width="@dimen/avatar_size_large"
-            android:layout_height="@dimen/avatar_size_large"
-            app:cardBackgroundColor="?attr/colorSecondary"
-            app:shapeAppearance="@style/ShapeAppearance.App.StreetBadge"
-            app:cardElevation="@dimen/card_elevation_none"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+        <!-- Avatar -->
+        <com.google.android.material.card.MaterialCardView android:id="@+id/player_avatar_card" android:layout_width="48dp" android:layout_height="48dp" app:shapeAppearance="@style/ShapeAppearance.App.StreetBadge" app:cardBackgroundColor="@color/graffiti_dark_gray" app:cardElevation="0dp" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
-                android:id="@+id/player_avatar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="A"
-                android:textAppearance="?attr/textAppearanceHeadlineSmall"
-                android:textColor="@color/stencil_white"
-                android:fontFamily="sans-serif-condensed"
-                android:textStyle="bold"
-                tools:text="J" />
+            <TextView android:id="@+id/player_avatar" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="@color/stencil_white" android:textStyle="bold" tools:text="JD"/>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Player Info -->
-        <TextView
-            android:id="@+id/player_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/margin_large"
-            android:layout_marginEnd="@dimen/margin_small"
-            android:text="Player Name"
-            android:textAppearance="?attr/textAppearanceHeadlineSmall"
-            android:textColor="@color/stencil_white"
-            android:fontFamily="sans-serif-condensed"
-            android:maxLines="1"
-            android:ellipsize="end"
-            app:layout_constraintStart_toEndOf="@id/player_avatar_card"
-            app:layout_constraintEnd_toStartOf="@id/stats_button"
-            app:layout_constraintTop_toTopOf="@id/player_avatar_card"
-            tools:text="John Doe" />
+        <!-- Name and Roles Container -->
+        <LinearLayout android:id="@+id/info_container" android:layout_width="0dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginStart="16dp" android:layout_marginEnd="8dp" app:layout_constraintStart_toEndOf="@id/player_avatar_card" app:layout_constraintEnd_toStartOf="@id/action_container" app:layout_constraintTop_toTopOf="@id/player_avatar_card" app:layout_constraintBottom_toBottomOf="@id/player_avatar_card">
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/player_roles_group"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            app:chipSpacing="@dimen/chip_spacing_medium"
-            app:singleLine="false"
-            app:selectionRequired="false"
-            app:layout_constraintStart_toStartOf="@id/player_name"
-            app:layout_constraintEnd_toStartOf="@id/stats_button"
-            app:layout_constraintTop_toBottomOf="@id/player_name" />
+            <TextView android:id="@+id/player_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/stencil_white" android:maxLines="1" android:ellipsize="end" tools:text="Johnathan Doe"/>
 
-        <!-- Stats -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="4dp"
-            app:layout_constraintStart_toStartOf="@id/player_name"
-            app:layout_constraintTop_toBottomOf="@id/player_roles_group">
-
-            <TextView
-                android:id="@+id/player_goals"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="⚽ 0"
-                android:textAppearance="?attr/textAppearanceLabelMedium"
-                android:textColor="@color/team_spray_yellow"
-                android:fontFamily="sans-serif-condensed"
-                tools:text="⚽ 15" />
-
-            <TextView
-                android:id="@+id/player_appearances"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/margin_large"
-                android:text="🎮 0"
-                android:textAppearance="?attr/textAppearanceLabelMedium"
-                android:textColor="@color/team_electric_green"
-                android:fontFamily="sans-serif-condensed"
-                tools:text="🎮 10" />
+            <com.google.android.material.chip.ChipGroup android:id="@+id/player_roles_group" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" app:singleLine="true" app:chipSpacingHorizontal="4dp" app:chipSpacingVertical="0dp" app:selectionRequired="false">
+                <!-- Chips added dynamically -->
+            </com.google.android.material.chip.ChipGroup>
 
         </LinearLayout>
 
-        <!-- Stats Button -->
-        <ImageButton
-            android:id="@+id/stats_button"
-            android:layout_width="@dimen/avatar_size_large"
-            android:layout_height="@dimen/avatar_size_large"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_stats"
-            app:tint="@color/neon_cyan"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+        <!-- Stats Row -->
+        <LinearLayout android:id="@+id/stats_row" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal" app:layout_constraintTop_toBottomOf="@id/info_container" app:layout_constraintStart_toStartOf="@id/info_container" app:layout_constraintEnd_toEndOf="@id/info_container">
+
+            <TextView android:id="@+id/player_goals" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="16dp" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/team_spray_yellow" tools:text="⚽ 12"/>
+
+            <TextView android:id="@+id/player_appearances" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/team_electric_green" tools:text="🎮 24"/>
+        </LinearLayout>
+
+        <!-- Actions -->
+        <LinearLayout android:id="@+id/action_container" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="vertical" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageButton android:id="@+id/stats_button" android:layout_width="40dp" android:layout_height="40dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_stats" android:contentDescription="View Stats" app:tint="@color/neon_cyan"/>
+
+            <ImageButton android:id="@+id/edit_button" android:layout_width="40dp" android:layout_height="40dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_edit" android:contentDescription="Edit Player" app:tint="@color/sidewalk_gray"/>
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
