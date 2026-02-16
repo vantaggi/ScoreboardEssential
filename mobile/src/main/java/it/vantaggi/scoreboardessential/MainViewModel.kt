@@ -294,6 +294,7 @@ class MainViewModel(
                     is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Connected -> {
                         Log.d("App", "✓ Connected to ${state.nodeCount} device(s)")
                         _isWearConnected.value = true
+                        syncAllDataToWear()
                     }
                     is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Disconnected -> {
                         Log.d("App", "✗ Not connected")
@@ -314,6 +315,7 @@ class MainViewModel(
                 addAction(SimplifiedDataLayerListenerService.ACTION_TEAM_NAMES_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
+                addAction(SimplifiedDataLayerListenerService.ACTION_REQUEST_SYNC)
             }
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(application)
@@ -760,6 +762,38 @@ class MainViewModel(
                 path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
                 data = data,
             )
+        }
+    }
+
+    private fun syncAllDataToWear() {
+        viewModelScope.launch {
+            Log.d("MainViewModel", "Syncing all data to Wear OS")
+            // 1. Scores
+            updateScore(_team1Score.value ?: 0, _team2Score.value ?: 0)
+
+            // 2. Names
+            sendTeamNamesUpdate()
+
+            // 3. Colors
+            _team1Color.value?.let { sendTeamColorUpdate(1, it) }
+            _team2Color.value?.let { sendTeamColorUpdate(2, it) }
+
+            // 4. Match State
+            sendMatchStateUpdate(true)
+
+            // 5. Timer State (Manual construction to ensure current VM state is sent)
+            val timerData =
+                mapOf(
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to (_matchTimerValue.value ?: 0L),
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to (_isMatchTimerRunning.value ?: false),
+                )
+            connectionManager.sendData(
+                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
+                data = timerData,
+            )
+
+            // 6. Keeper Timer State
+            sendKeeperTimerUpdate(_isKeeperTimerRunning.value ?: false, _keeperTimerValue.value)
         }
     }
 

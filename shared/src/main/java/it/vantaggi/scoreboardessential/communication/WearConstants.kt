@@ -23,6 +23,7 @@ object WearConstants {
     const val MSG_SCORE_CHANGED = "/scoreboard/score_changed"
     const val MSG_TIMER_ACTION = "/scoreboard/timer_action"
     const val MSG_MATCH_ACTION = "/scoreboard/match_action"
+    const val MSG_REQUEST_SYNC = "/scoreboard/request_sync"
 
     // Channel Paths
     const val CHANNEL_TIMER_STREAM = "/scoreboard/timer_stream"
