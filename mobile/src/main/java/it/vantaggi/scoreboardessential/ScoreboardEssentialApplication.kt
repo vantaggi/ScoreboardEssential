@@ -34,6 +34,7 @@ class ScoreboardEssentialApplication : Application() {
     companion object {
         const val CHANNEL_ID = "scoreboard_channel"
         const val CHANNEL_ID_ALARM = "scoreboard_alarm_channel"
+        const val CHANNEL_ID_TIMER = "scoreboard_timer_channel"
     }
 
     private fun createNotificationChannel() {
@@ -51,6 +52,16 @@ class ScoreboardEssentialApplication : Application() {
                     setShowBadge(false)
                 }
             notificationManager.createNotificationChannel(channel)
+
+            // Timer Channel (Low Importance - Silent for updates)
+            val timerName = getString(R.string.match_timer)
+            val timerDescription = "Active match timer updates"
+            val timerChannel =
+                NotificationChannel(CHANNEL_ID_TIMER, timerName, NotificationManager.IMPORTANCE_LOW).apply {
+                    description = timerDescription
+                    setShowBadge(false)
+                }
+            notificationManager.createNotificationChannel(timerChannel)
 
             // Alarm Channel (High Importance - Sound & Pop-up)
             val alarmName = "Timer Alarms" // You might want to extract this to strings.xml later if strict localization is needed

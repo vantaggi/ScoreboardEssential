@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.core.app.NotificationCompat
@@ -39,6 +40,7 @@ class MatchTimerService : Service() {
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private lateinit var connectionManager: OptimizedWearDataSync
     private lateinit var vibrator: Vibrator
+    private var wakeLock: PowerManager.WakeLock? = null
 
     // Match Timer
     private var matchTimerJob: Job? = null
@@ -78,6 +80,8 @@ class MatchTimerService : Service() {
         super.onCreate()
         connectionManager = OptimizedWearDataSync(applicationContext)
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ScoreboardEssential:MatchTimerLock")
         restoreState()
     }
 
@@ -113,6 +117,9 @@ class MatchTimerService : Service() {
     fun startTimer(fromRemote: Boolean = false) {
         if (_isMatchTimerRunning.value) return
         _isMatchTimerRunning.value = true
+        if (wakeLock?.isHeld == false) {
+            wakeLock?.acquire()
+        }
         matchStartTime = System.currentTimeMillis() - elapsedTimeOnPause
         matchTimerJob =
             scope.launch {
@@ -166,7 +173,7 @@ class MatchTimerService : Service() {
             }
         }
         updateNotification(_matchTimerValue.value)
-        checkStopForeground()
+        checkStopForegroundAndWakeLock()
         saveState()
     }
 
@@ -190,7 +197,7 @@ class MatchTimerService : Service() {
             }
         }
         updateNotification(0)
-        checkStopForeground()
+        checkStopForegroundAndWakeLock()
         saveState()
     }
 
@@ -232,6 +239,9 @@ class MatchTimerService : Service() {
         fromRemote: Boolean = false,
     ) {
         if (_isKeeperTimerRunning.value) return
+        if (wakeLock?.isHeld == false) {
+            wakeLock?.acquire()
+        }
         val duration = if (keeperRemainingOnPause > 0) keeperRemainingOnPause else durationMillis
         _isKeeperTimerRunning.value = true
         keeperTimerEndTime = System.currentTimeMillis() + duration
@@ -300,7 +310,7 @@ class MatchTimerService : Service() {
                 )
             }
         }
-        checkStopForeground()
+        checkStopForegroundAndWakeLock()
         saveState()
     }
 
@@ -324,7 +334,7 @@ class MatchTimerService : Service() {
                 )
             }
         }
-        checkStopForeground()
+        checkStopForegroundAndWakeLock()
         saveState()
     }
 
@@ -333,18 +343,18 @@ class MatchTimerService : Service() {
         vibrator.vibrate(effect)
     }
 
-    private fun checkStopForeground() {
+    private fun checkStopForegroundAndWakeLock() {
         if (!_isMatchTimerRunning.value && !_isKeeperTimerRunning.value) {
-            stopForeground(true)
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            if (wakeLock?.isHeld == true) {
+                wakeLock?.release()
+            }
         }
     }
 
     private fun startForegroundWithPermissionCheck() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
+        // On Android 13+, even if POST_NOTIFICATIONS is denied, we MUST call startForeground
+        // to comply with Foreground Service requirements. The notification will be suppressed by the system.
         startForeground(NOTIFICATION_ID, createNotification(_matchTimerValue.value))
     }
 
@@ -361,7 +371,7 @@ class MatchTimerService : Service() {
         val stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE)
 
         return NotificationCompat
-            .Builder(this, ScoreboardEssentialApplication.CHANNEL_ID)
+            .Builder(this, ScoreboardEssentialApplication.CHANNEL_ID_TIMER)
             .setContentTitle(getString(R.string.match_timer))
             .setContentText(formattedTime)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
@@ -465,6 +475,9 @@ class MatchTimerService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (wakeLock?.isHeld == true) {
+            wakeLock?.release()
+        }
         saveState()
         matchTimerJob?.cancel()
         keeperTimerJob?.cancel()
