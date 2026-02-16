@@ -40,6 +40,7 @@ import it.vantaggi.scoreboardessential.domain.models.MatchReportData
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
+import it.vantaggi.scoreboardessential.utils.TimeUtils
 import it.vantaggi.scoreboardessential.utils.MatchReportUtils
 import it.vantaggi.scoreboardessential.utils.animateScoreButton
 import it.vantaggi.scoreboardessential.utils.playNativeGoalAnimation
@@ -645,16 +646,12 @@ class MainActivity :
     }
 
     private fun updateTimerTextView(timeInMillis: Long) {
-        val minutes = (timeInMillis / 1000) / 60
-        val seconds = (timeInMillis / 1000) % 60
-        timerTextView.text = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
+        timerTextView.text = TimeUtils.formatTime(timeInMillis)
     }
 
     private fun updateKeeperTimerTextView(timeInMillis: Long) {
         if (timeInMillis > 0) {
-            val minutes = (timeInMillis / 1000) / 60
-            val seconds = (timeInMillis / 1000) % 60
-            keeperTimerTextView.text = String.format(Locale.getDefault(), "⏰ %02d:%02d", minutes, seconds)
+            keeperTimerTextView.text = "⏰ ${TimeUtils.formatTime(timeInMillis)}"
             keeperTimerTextView.visibility = View.VISIBLE
         } else {
             keeperTimerTextView.visibility = View.GONE

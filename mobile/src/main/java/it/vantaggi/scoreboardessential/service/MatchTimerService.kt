@@ -21,6 +21,7 @@ import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
+import it.vantaggi.scoreboardessential.utils.TimeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -349,7 +350,7 @@ class MatchTimerService : Service() {
 
     // --- Foreground Service & Notifications ---
     private fun createNotification(timeInMillis: Long): Notification {
-        val formattedTime = formatTime(timeInMillis)
+        val formattedTime = TimeUtils.formatTime(timeInMillis)
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
 
@@ -460,12 +461,6 @@ class MatchTimerService : Service() {
             keeperRemainingOnPause = prefs.getLong(KEY_KEEPER_REMAINING_PAUSE, 0L)
             _keeperTimerValue.value = keeperRemainingOnPause
         }
-    }
-
-    private fun formatTime(millis: Long): String {
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(millis)
-        val seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % 60
-        return String.format("%02d:%02d", minutes, seconds)
     }
 
     override fun onDestroy() {
