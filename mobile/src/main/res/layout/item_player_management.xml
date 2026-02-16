@@ -60,12 +60,14 @@
             app:layout_constraintTop_toTopOf="@id/player_avatar_card"
             tools:text="John Doe" />
 
-        <it.vantaggi.scoreboardessential.views.RoleBadgeGroup
+        <com.google.android.material.chip.ChipGroup
             android:id="@+id/player_roles_group"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             app:chipSpacing="@dimen/chip_spacing_medium"
+            app:singleLine="false"
+            app:selectionRequired="false"
             app:layout_constraintStart_toStartOf="@id/player_name"
             app:layout_constraintEnd_toStartOf="@id/stats_button"
             app:layout_constraintTop_toBottomOf="@id/player_name" />

@@ -7,8 +7,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.chip.ChipGroup
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
-import it.vantaggi.scoreboardessential.views.RoleBadgeGroup
+import it.vantaggi.scoreboardessential.utils.setRoles
 
 class SelectScorerAdapter(
     private val onScorerClicked: (PlayerWithRoles) -> Unit,
@@ -39,7 +40,7 @@ class SelectScorerAdapter(
         itemView: View,
     ) : RecyclerView.ViewHolder(itemView) {
         private val nameTextView: TextView = itemView.findViewById(R.id.player_name_textview)
-        private val roleBadgeGroup: RoleBadgeGroup = itemView.findViewById(R.id.role_badge_group)
+        private val roleBadgeGroup: ChipGroup = itemView.findViewById(R.id.role_badge_group)
 
         fun bind(playerWithRoles: PlayerWithRoles) {
             nameTextView.text = playerWithRoles.player.playerName

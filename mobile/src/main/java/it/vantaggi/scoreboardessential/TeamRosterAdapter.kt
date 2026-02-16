@@ -7,8 +7,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.chip.ChipGroup
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
-import it.vantaggi.scoreboardessential.views.RoleBadgeGroup
+import it.vantaggi.scoreboardessential.utils.setRoles
 
 class TeamRosterAdapter(
     private val onPlayerClick: (PlayerWithRoles) -> Unit,
@@ -36,7 +37,7 @@ class TeamRosterAdapter(
         private val onPlayerClick: (PlayerWithRoles) -> Unit,
     ) : RecyclerView.ViewHolder(itemView) {
         private val playerNameTextView: TextView = itemView.findViewById(R.id.player_name)
-        private val playerRolesGroup: RoleBadgeGroup = itemView.findViewById(R.id.player_roles)
+        private val playerRolesGroup: ChipGroup = itemView.findViewById(R.id.player_roles)
 
         fun bind(playerWithRoles: PlayerWithRoles) {
             val player = playerWithRoles.player
