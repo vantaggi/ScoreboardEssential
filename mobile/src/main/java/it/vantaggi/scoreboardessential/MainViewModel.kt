@@ -34,20 +34,14 @@ import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
+import it.vantaggi.scoreboardessential.domain.models.MatchEvent
+import it.vantaggi.scoreboardessential.domain.models.MatchReportData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-data class MatchEvent(
-    val timestamp: String,
-    val event: String,
-    val team: Int? = null,
-    val player: String? = null,
-    val playerRole: String? = null,
-)
 
 class MainViewModel(
     private val repository: MatchRepository,
@@ -277,7 +271,7 @@ class MainViewModel(
     val showSelectScorerDialog = SingleLiveEvent<Pair<Int, List<PlayerWithRoles>>>()
     val showPlayerSelectionDialog = SingleLiveEvent<Int>()
     val showKeeperTimerExpired = SingleLiveEvent<Unit>()
-    val shareMatchEvent = SingleLiveEvent<Intent>()
+    val shareMatchReportData = SingleLiveEvent<MatchReportData>()
     val showOnboardingTutorial = SingleLiveEvent<Unit>()
 
     // Data Client for Wear OS sync
@@ -772,135 +766,18 @@ class MainViewModel(
     }
 
     fun shareMatchResults() {
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            val context = getApplication<Application>().applicationContext
-            val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as android.view.LayoutInflater
-            val view = inflater.inflate(R.layout.pdf_match_report, null)
-
-            // Get Views
-            val team1NameTextView = view.findViewById<android.widget.TextView>(R.id.pdf_team1_name)
-            val team1ScoreTextView = view.findViewById<android.widget.TextView>(R.id.pdf_team1_score)
-            val team2NameTextView = view.findViewById<android.widget.TextView>(R.id.pdf_team2_name)
-            val team2ScoreTextView = view.findViewById<android.widget.TextView>(R.id.pdf_team2_score)
-            val team1PlayersList = view.findViewById<android.widget.LinearLayout>(R.id.pdf_team1_players_list)
-            val team2PlayersList = view.findViewById<android.widget.LinearLayout>(R.id.pdf_team2_players_list)
-            val scorersList = view.findViewById<android.widget.LinearLayout>(R.id.pdf_scorers_list)
-
-            // Set Header Info
-            team1NameTextView.text = team1Name.value
-            team1ScoreTextView.text = team1Score.value?.toString() ?: "0"
-            team2NameTextView.text = team2Name.value
-            team2ScoreTextView.text = team2Score.value?.toString() ?: "0"
-
-            // Apply Dynamic Colors
-            _team1Color.value?.let {
-                team1NameTextView.setTextColor(it)
-                team1ScoreTextView.setTextColor(it)
-            }
-            _team2Color.value?.let {
-                team2NameTextView.setTextColor(it)
-                team2ScoreTextView.setTextColor(it)
-            }
-
-            // Populate Formations
-            team1Players.value?.forEach { player ->
-                val playerTextView =
-                    android.widget.TextView(context).apply {
-                        text = player.player.playerName
-                        setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                        setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
-                        setPadding(0, 4, 0, 4)
-                    }
-                team1PlayersList.addView(playerTextView)
-            }
-
-            team2Players.value?.forEach { player ->
-                val playerTextView =
-                    android.widget.TextView(context).apply {
-                        text = player.player.playerName
-                        setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                        setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
-                        setPadding(0, 4, 0, 4)
-                    }
-                team2PlayersList.addView(playerTextView)
-            }
-
-            // Populate Scorers
-            val scorers =
-                _matchEvents.value
-                    ?.filter { it.event == "Goal" && it.player != null }
-                    ?.map { it.player!! }
-                    ?.groupingBy { it }
-                    ?.eachCount()
-            if (scorers != null && scorers.isNotEmpty()) {
-                scorers.forEach { (playerName, goalCount) ->
-                    val scorerTextView =
-                        android.widget.TextView(context).apply {
-                            text = "$playerName ($goalCount)"
-                            setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                            setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
-                            setPadding(0, 4, 0, 4)
-                        }
-                    scorersList.addView(scorerTextView)
-                }
-            } else {
-                val noScorersTextView =
-                    android.widget.TextView(context).apply {
-                        text = "Nessun marcatore"
-                        setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                        setTextColor(ContextCompat.getColor(context, R.color.sidewalk_gray))
-                        setPadding(0, 4, 0, 4)
-                    }
-                scorersList.addView(noScorersTextView)
-            }
-
-            // PDF Generation
-            val pdfDocument = android.graphics.pdf.PdfDocument()
-            val pageInfo =
-                android.graphics.pdf.PdfDocument.PageInfo
-                    .Builder(595, 842, 1)
-                    .create() // A4 size
-            val page = pdfDocument.startPage(pageInfo)
-            val canvas = page.canvas
-
-            val measureWidth =
-                android.view.View.MeasureSpec
-                    .makeMeasureSpec(pageInfo.pageWidth, android.view.View.MeasureSpec.EXACTLY)
-            val measureHeight =
-                android.view.View.MeasureSpec.makeMeasureSpec(
-                    pageInfo.pageHeight,
-                    android.view.View.MeasureSpec.UNSPECIFIED,
-                )
-            view.measure(measureWidth, measureHeight)
-            view.layout(0, 0, pageInfo.pageWidth, view.measuredHeight)
-
-            view.draw(canvas)
-            pdfDocument.finishPage(page)
-
-            val pdfFile = java.io.File(context.cacheDir, "match_report.pdf")
-            try {
-                pdfDocument.writeTo(java.io.FileOutputStream(pdfFile))
-            } catch (e: java.io.IOException) {
-                e.printStackTrace()
-            }
-            pdfDocument.close()
-
-            val pdfUri =
-                androidx.core.content.FileProvider
-                    .getUriForFile(context, "${context.packageName}.provider", pdfFile)
-
-            val shareIntent =
-                Intent(Intent.ACTION_SEND).apply {
-                    type = "application/pdf"
-                    putExtra(Intent.EXTRA_STREAM, pdfUri)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    putExtra(Intent.EXTRA_SUBJECT, "Match Report: ${team1Name.value} vs ${team2Name.value}")
-                    val text = "Ecco il report del match tra ${team1Name.value} e ${team2Name.value}."
-                    putExtra(Intent.EXTRA_TEXT, text)
-                }
-
-            shareMatchEvent.postValue(shareIntent)
-        }
+        val data = MatchReportData(
+            team1Name = _team1Name.value ?: "TEAM 1",
+            team1Score = _team1Score.value ?: 0,
+            team1Color = _team1Color.value,
+            team1Players = _team1Players.value ?: emptyList(),
+            team2Name = _team2Name.value ?: "TEAM 2",
+            team2Score = _team2Score.value ?: 0,
+            team2Color = _team2Color.value,
+            team2Players = _team2Players.value ?: emptyList(),
+            matchEvents = _matchEvents.value ?: emptyList()
+        )
+        shareMatchReportData.postValue(data)
     }
 
     override fun onCleared() {

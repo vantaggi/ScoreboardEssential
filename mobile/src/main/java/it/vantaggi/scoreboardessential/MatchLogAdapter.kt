@@ -1,5 +1,6 @@
 package it.vantaggi.scoreboardessential
 
+import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
