@@ -168,7 +168,10 @@ abstract class AppDatabase : RoomDatabase() {
                 )
 
             roles.forEach { (name, category) ->
-                database.execSQL("INSERT INTO `roles` (name, category) VALUES ('$name', '$category')")
+                database.execSQL(
+                    "INSERT INTO `roles` (name, category) VALUES (?, ?)",
+                    arrayOf(name, category),
+                )
             }
         }
     }
