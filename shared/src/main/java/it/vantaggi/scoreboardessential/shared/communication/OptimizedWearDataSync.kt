@@ -35,11 +35,11 @@ sealed class ConnectionState {
 
 class OptimizedWearDataSync(
     private val context: Context,
+    private val dataClient: DataClient = Wearable.getDataClient(context),
+    private val messageClient: MessageClient = Wearable.getMessageClient(context),
+    private val capabilityClient: CapabilityClient = Wearable.getCapabilityClient(context),
+    private val nodeClient: NodeClient = Wearable.getNodeClient(context),
 ) {
-    private val dataClient: DataClient = Wearable.getDataClient(context)
-    private val messageClient: MessageClient = Wearable.getMessageClient(context)
-    private val capabilityClient: CapabilityClient = Wearable.getCapabilityClient(context)
-    private val nodeClient: NodeClient = Wearable.getNodeClient(context)
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 

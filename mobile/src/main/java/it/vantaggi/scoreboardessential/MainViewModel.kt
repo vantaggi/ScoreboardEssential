@@ -43,6 +43,17 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * The primary ViewModel for the application's main scoring screen.
+ * It manages the state of the match, including scores, timer, team names/colors, players, and match events.
+ * It also handles the connection to the Wear OS device and the synchronization of data.
+ *
+ * This ViewModel acts as the central coordinator for:
+ * - Match state management (Score, Timer, Teams)
+ * - Wear OS communication (Sending/Receiving updates)
+ * - Persistence (Saving match history, Settings)
+ * - Service binding (MatchTimerService)
+ */
 class MainViewModel(
     private val repository: MatchRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
@@ -53,10 +64,20 @@ class MainViewModel(
     private val matchDao: MatchDao = AppDatabase.getDatabase(application).matchDao()
     private var matchTimerService: MatchTimerService? = null
     private var isServiceBound = false
+
+    /**
+     * LiveData indicating if the [MatchTimerService] is currently bound and accessible.
+     */
     private val _serviceBindingStatus = MutableLiveData(false)
     val serviceBindingStatus: LiveData<Boolean> = _serviceBindingStatus
 
     // Undo Stacks
+    /**
+     * Represents a single goal action that can be undone.
+     * @property teamId The ID of the team that scored.
+     * @property playerId The optional ID of the player who scored.
+     * @property timestamp When the goal occurred.
+     */
     private data class GoalAction(
         val teamId: Int,
         val playerId: Int?,
@@ -65,28 +86,42 @@ class MainViewModel(
 
     private val actionStack = java.util.Stack<GoalAction>()
     private val _canUndo = MutableLiveData(false)
+
+    /** LiveData indicating if there are actions available to undo. */
     val canUndo: LiveData<Boolean> = _canUndo
 
+    /** Component handling efficient data synchronization with Wear OS nodes. */
     val connectionManager = OptimizedWearDataSync(application)
     private val _isWearConnected = MutableLiveData(false)
+
+    /** LiveData indicating if a Wear OS device is currently connected. */
     val isWearConnected: LiveData<Boolean> = _isWearConnected
 
     // LiveData for scores
     private val _team1Score = MutableLiveData(0)
+    /** Current score for Team 1. */
     val team1Score: LiveData<Int> = _team1Score
+
     private val _team2Score = MutableLiveData(0)
+    /** Current score for Team 2. */
     val team2Score: LiveData<Int> = _team2Score
 
     // LiveData for timer
     private val _matchTimerValue = MutableLiveData(0L)
+    /** Current elapsed time of the match in milliseconds. */
     val matchTimerValue: LiveData<Long> = _matchTimerValue
+
     private val _isMatchTimerRunning = MutableLiveData(false)
+    /** Status of the match timer (running or paused). */
     val isMatchTimerRunning: LiveData<Boolean> = _isMatchTimerRunning
 
     // LiveData for players
     private val _team1Players = MutableLiveData<List<PlayerWithRoles>>(emptyList())
+    /** List of players currently assigned to Team 1 roster. */
     val team1Players: LiveData<List<PlayerWithRoles>> = _team1Players
+
     private val _team2Players = MutableLiveData<List<PlayerWithRoles>>(emptyList())
+    /** List of players currently assigned to Team 2 roster. */
     val team2Players: LiveData<List<PlayerWithRoles>> = _team2Players
 
     private val serviceConnection =
@@ -101,6 +136,7 @@ class MainViewModel(
                 isServiceBound = true
                 _serviceBindingStatus.postValue(true)
 
+                // Collect flows from service to update UI
                 viewModelScope.launch {
                     binder.getService().matchTimerValue.collect {
                         _matchTimerValue.postValue(it)
@@ -138,8 +174,13 @@ class MainViewModel(
         }
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
 
+    /** LiveData of all saved matches from history. */
     val allMatches: LiveData<List<MatchWithTeams>> = repository.allMatches.asLiveData()
 
+    /*
+     * Receives local broadcasts from the Wear OS listener service.
+     * This handles updates coming from the watch when the app is in the background or foreground.
+     */
     private val broadcastReceiver =
         object : android.content.BroadcastReceiver() {
             override fun onReceive(
@@ -162,14 +203,9 @@ class MainViewModel(
                         if (millis == 0L && !running) {
                             resetMatchTimer(fromRemote = true)
                         } else {
-                            // For running updates, we can just update the service value directly without toggling if it matches
                             if (isServiceBound) {
                                 matchTimerService?.updateMatchTimer(millis, fromRemote = true)
-                                // Only toggle if running state is different
                                 if (running != (_isMatchTimerRunning.value ?: false)) {
-                                    // We need a way to set state without sending back...
-                                    // Actually updateMatchTimer updates the value.
-                                    // We need to set running state too.
                                     if (running) matchTimerService?.startTimer() else matchTimerService?.pauseTimer()
                                 }
                             }
@@ -181,7 +217,6 @@ class MainViewModel(
                         if (!running && millis == 0L) {
                             resetKeeperTimer(fromRemote = true)
                         } else if (running != (_isKeeperTimerRunning.value ?: false)) {
-                            // Sync running state if needed, usually just start/stop
                             if (running) {
                                 if (millis > 0) {
                                     keeperTimerDuration = millis
@@ -203,6 +238,9 @@ class MainViewModel(
             }
         }
 
+    /**
+     * Deletes a match from the history permanently.
+     */
     fun deleteMatch(match: Match) =
         viewModelScope.launch {
             repository.deleteMatch(match)

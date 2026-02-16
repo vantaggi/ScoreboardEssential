@@ -51,23 +51,23 @@ class ManageTimerUseCaseTest {
         doAnswer {
             isRunningFlow.value = true
             null
-        }.whenever(timerService).startTimer()
+        }.`when`(timerService).startTimer(any())
 
         doAnswer {
             isRunningFlow.value = false
             null
-        }.whenever(timerService).pauseTimer()
+        }.`when`(timerService).pauseTimer(any())
 
         doAnswer {
             isRunningFlow.value = false
             timeMillisFlow.value = 0L
             null
-        }.whenever(timerService).stopTimer()
+        }.`when`(timerService).stopTimer(any())
 
         doAnswer {
             timeMillisFlow.value = it.getArgument(0)
             null
-        }.whenever(timerService).updateMatchTimer(any())
+        }.`when`(timerService).updateMatchTimer(any(), any())
 
         useCase = ManageTimerUseCase(timerService, wearDataSync)
     }
