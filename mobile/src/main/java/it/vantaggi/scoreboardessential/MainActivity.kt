@@ -35,15 +35,20 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.Formation
+import it.vantaggi.scoreboardessential.domain.models.MatchEvent
+import it.vantaggi.scoreboardessential.domain.models.MatchReportData
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
 import it.vantaggi.scoreboardessential.utils.TimeUtils
+import it.vantaggi.scoreboardessential.utils.MatchReportUtils
 import it.vantaggi.scoreboardessential.utils.animateScoreButton
 import it.vantaggi.scoreboardessential.utils.playNativeGoalAnimation
 import it.vantaggi.scoreboardessential.views.FormationView
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class MainActivity :
@@ -284,8 +289,13 @@ class MainActivity :
             }
         }
 
-        viewModel.shareMatchEvent.observe(this) { intent ->
-            startActivity(Intent.createChooser(intent, getString(R.string.share_match_results)))
+        viewModel.shareMatchReportData.observe(this) { data ->
+            lifecycleScope.launch(Dispatchers.IO) {
+                val shareIntent = MatchReportUtils.generateAndGetShareIntent(this@MainActivity, data)
+                withContext(Dispatchers.Main) {
+                    startActivity(Intent.createChooser(shareIntent, getString(R.string.share_match_results)))
+                }
+            }
         }
 
         viewModel.showOnboarding.observe(this) {
