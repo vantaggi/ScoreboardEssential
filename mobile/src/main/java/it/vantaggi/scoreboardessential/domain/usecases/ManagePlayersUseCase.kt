@@ -10,6 +10,13 @@ import kotlinx.coroutines.flow.update
 import org.json.JSONArray
 import org.json.JSONObject
 
+/**
+ * Use case responsible for managing the roster of players for the current match.
+ * It handles adding/removing players from teams and synchronizing this state with the Wear OS device.
+ *
+ * @property playerDao Data Access Object for player operations (currently unused but reserved for future persistence).
+ * @property wearDataSync Component for synchronizing data with Wear OS.
+ */
 class ManagePlayersUseCase(
     @Suppress("UNUSED_PARAMETER") private val playerDao: PlayerDao,
     private val wearDataSync: OptimizedWearDataSync,
@@ -17,6 +24,14 @@ class ManagePlayersUseCase(
     private val _teamRoster = MutableStateFlow(TeamRoster())
     val teamRoster: StateFlow<TeamRoster> = _teamRoster.asStateFlow()
 
+    /**
+     * Adds a player to the specified team.
+     * Checks if the player is already in the team to avoid duplicates.
+     * Triggers a sync with Wear OS upon successful addition.
+     *
+     * @param player The player (with roles) to add.
+     * @param teamId The ID of the team (1 or 2).
+     */
     suspend fun addPlayerToTeam(
         player: PlayerWithRoles,
         teamId: Int,
@@ -39,6 +54,13 @@ class ManagePlayersUseCase(
         syncTeamPlayers()
     }
 
+    /**
+     * Removes a player from the specified team.
+     * Triggers a sync with Wear OS upon successful removal.
+     *
+     * @param player The player to remove.
+     * @param teamId The ID of the team (1 or 2).
+     */
     suspend fun removePlayerFromTeam(
         player: PlayerWithRoles,
         teamId: Int,

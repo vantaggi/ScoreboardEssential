@@ -203,20 +203,6 @@ class MainViewModel(
             }
         }
 
-    fun registerBroadcasts(context: Context) {
-        val filter =
-            android.content.IntentFilter().apply {
-                addAction(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE)
-                addAction(SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE)
-                addAction(SimplifiedDataLayerListenerService.ACTION_TEAM_NAMES_UPDATE)
-                addAction(SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE)
-                addAction(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
-            }
-        androidx.localbroadcastmanager.content.LocalBroadcastManager
-            .getInstance(context)
-            .registerReceiver(broadcastReceiver, filter)
-    }
-
     fun deleteMatch(match: Match) =
         viewModelScope.launch {
             repository.deleteMatch(match)
@@ -320,6 +306,18 @@ class MainViewModel(
                 }
             }
         }
+
+        val filter =
+            android.content.IntentFilter().apply {
+                addAction(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE)
+                addAction(SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE)
+                addAction(SimplifiedDataLayerListenerService.ACTION_TEAM_NAMES_UPDATE)
+                addAction(SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE)
+                addAction(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
+            }
+        androidx.localbroadcastmanager.content.LocalBroadcastManager
+            .getInstance(application)
+            .registerReceiver(broadcastReceiver, filter)
     }
 
     private fun checkIfOnboardingIsNeeded() {
@@ -787,6 +785,9 @@ class MainViewModel(
                 getApplication<Application>().unbindService(serviceConnection)
                 isServiceBound = false
             }
+            androidx.localbroadcastmanager.content.LocalBroadcastManager
+                .getInstance(getApplication())
+                .unregisterReceiver(broadcastReceiver)
         } catch (e: Exception) {
             Log.e("MainViewModel", "Error unbinding service", e)
         }

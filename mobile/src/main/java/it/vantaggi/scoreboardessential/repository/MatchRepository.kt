@@ -14,8 +14,14 @@ class MatchRepository(
     private val context: Context,
     private val colorRepository: ColorRepository,
 ) {
+    companion object {
+        private const val PREFS_NAME = "it.vantaggi.scoreboardessential.PREFERENCES"
+        private const val KEY_TEAM1_COLOR = "team1_color"
+        private const val KEY_TEAM2_COLOR = "team2_color"
+    }
+
     private val sharedPreferences: SharedPreferences =
-        context.getSharedPreferences("it.vantaggi.scoreboardessential.PREFERENCES", Context.MODE_PRIVATE)
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     private val _team1Color =
         MutableStateFlow(colorRepository.getTeam1DefaultColor())
@@ -28,13 +34,13 @@ class MatchRepository(
     private val preferenceChangeListener =
         SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
             when (key) {
-                "team1_color" ->
+                KEY_TEAM1_COLOR ->
                     _team1Color.value =
                         prefs.getInt(
                             key,
                             colorRepository.getTeam1DefaultColor(),
                         )
-                "team2_color" ->
+                KEY_TEAM2_COLOR ->
                     _team2Color.value =
                         prefs.getInt(
                             key,
@@ -46,12 +52,12 @@ class MatchRepository(
     init {
         _team1Color.value =
             sharedPreferences.getInt(
-                "team1_color",
+                KEY_TEAM1_COLOR,
                 colorRepository.getTeam1DefaultColor(),
             )
         _team2Color.value =
             sharedPreferences.getInt(
-                "team2_color",
+                KEY_TEAM2_COLOR,
                 colorRepository.getTeam2DefaultColor(),
             )
         sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceChangeListener)
