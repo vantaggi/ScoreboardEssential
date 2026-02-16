@@ -15,6 +15,7 @@ import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
+import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
