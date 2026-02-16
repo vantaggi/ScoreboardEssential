@@ -25,6 +25,7 @@ import androidx.room.Index
     indices = [
         Index(value = ["playerId"]),
         Index(value = ["roleId"]),
+        Index(value = ["playerId", "roleId"]),
     ],
 )
 data class PlayerRoleCrossRef(

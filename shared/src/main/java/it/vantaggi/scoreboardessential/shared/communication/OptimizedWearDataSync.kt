@@ -147,13 +147,28 @@ class OptimizedWearDataSync(
     ) {
         withContext(Dispatchers.IO) {
             try {
-                val nodes = nodeClient.connectedNodes.await()
-                nodes.forEach { node ->
-                    messageClient.sendMessage(node.id, path, data).await()
+                // Use capabilityClient to find nodes that actually have the app and are reachable
+                val nodes =
+                    capabilityClient
+                        .getCapability(WearConstants.CAPABILITY_SCOREBOARD_APP, CapabilityClient.FILTER_REACHABLE)
+                        .await()
+                        .nodes
+
+                if (nodes.isEmpty()) {
+                    Log.w(TAG, "sendMessage: No capable nodes found for path: $path")
+                    return@withContext
                 }
-                Log.d(TAG, "Message sent to ${nodes.size} nodes: $path")
+
+                nodes.forEach { node ->
+                    try {
+                        messageClient.sendMessage(node.id, path, data).await()
+                        Log.d(TAG, "Message sent to node ${node.displayName} (${node.id}): $path")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to send message to node ${node.displayName} (${node.id}): $path", e)
+                    }
+                }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to send message: $path", e)
+                Log.e(TAG, "Failed to resolve nodes for message: $path", e)
             }
         }
     }
@@ -161,15 +176,22 @@ class OptimizedWearDataSync(
     suspend fun testConnection(): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                val nodes = nodeClient.connectedNodes.await()
+                // Use capabilityClient for consistent testing with sendMessage
+                val nodes =
+                    capabilityClient
+                        .getCapability(WearConstants.CAPABILITY_SCOREBOARD_APP, CapabilityClient.FILTER_REACHABLE)
+                        .await()
+                        .nodes
+
                 if (nodes.isEmpty()) {
-                    Log.w(TAG, "Test Connection: No nodes found.")
+                    Log.w(TAG, "Test Connection: No capable nodes found.")
                     return@withContext false
                 }
-                // Send a test message to the first available node
+                // Send a test message to the first available node (which is presumably the most relevant one)
+                val node = nodes.first()
                 val testMessage = "ping".toByteArray()
-                messageClient.sendMessage(nodes.first().id, WearConstants.PATH_TEST_PING, testMessage).await()
-                Log.d(TAG, "Test Connection: Ping sent successfully.")
+                messageClient.sendMessage(node.id, WearConstants.PATH_TEST_PING, testMessage).await()
+                Log.d(TAG, "Test Connection: Ping sent successfully to node ${node.displayName} (${node.id}).")
                 true
             } catch (e: Exception) {
                 Log.e(TAG, "Test Connection: Failed.", e)
