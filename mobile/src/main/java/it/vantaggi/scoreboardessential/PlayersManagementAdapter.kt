@@ -9,8 +9,9 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.chip.ChipGroup
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
-import it.vantaggi.scoreboardessential.views.RoleBadgeGroup
+import it.vantaggi.scoreboardessential.utils.setRoles
 
 class PlayersManagementAdapter(
     private val onPlayerClick: (PlayerWithRoles) -> Unit,
@@ -41,7 +42,7 @@ class PlayersManagementAdapter(
     ) : RecyclerView.ViewHolder(itemView) {
         private val cardView: MaterialCardView = itemView.findViewById(R.id.player_card)
         private val nameTextView: TextView = itemView.findViewById(R.id.player_name)
-        private val rolesGroup: RoleBadgeGroup = itemView.findViewById(R.id.player_roles_group)
+        private val rolesGroup: ChipGroup = itemView.findViewById(R.id.player_roles_group)
         private val goalsTextView: TextView = itemView.findViewById(R.id.player_goals)
         private val appearancesTextView: TextView = itemView.findViewById(R.id.player_appearances)
         private val statsButton: ImageButton = itemView.findViewById(R.id.stats_button)
