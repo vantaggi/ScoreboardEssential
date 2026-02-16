@@ -142,7 +142,6 @@ class MainActivity :
         setupImprovedViews() // Call new setup method
         setupGestureControls() // Call gesture setup
         requestNotificationPermission()
-        viewModel.registerBroadcasts(this)
 
         lifecycleScope.launch {
             delay(2000) // Aspetta che il servizio si registri

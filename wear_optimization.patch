@@ -1,0 +1,97 @@
+Subject: [PROPOSAL] Optimization: Move Wear Data Sync to Foreground
+
+Reason:
+Currently, `WearDataLayerService` runs as a background service triggered by `com.google.android.gms.wearable.DATA_CHANGED`.
+It parses data and broadcasts it locally via `LocalBroadcastManager`.
+This occurs even if the Wear app is in the background or closed, consuming battery unnecessarily (unless Complications are used, which appear to be absent).
+
+Proposal:
+Move the data listening logic directly to `MainActivity` (or a lifecycle-aware component bound to UI).
+Use `Wearable.getDataClient(context).addListener(listener)` in `onResume()` and `removeListener(listener)` in `onPause()`.
+This ensures data is processed only when the user is looking at the app.
+
+--- a/wear/src/main/AndroidManifest.xml
++++ b/wear/src/main/AndroidManifest.xml
+@@ -application
+     ...
+-    <service
+-        android:name=".WearDataLayerService"
+-        android:exported="true">
+-        <intent-filter>
+-            <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+-            <data android:scheme="wear" android:host="*" android:pathPrefix="/score" />
+-            <!-- Add other paths -->
+-        </intent-filter>
+-    </service>
+     ...
+
+--- a/wear/src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt
++++ b/wear/src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt
+@@ -10,6 +10,11 @@
+ import androidx.wear.remote.interactions.RemoteActivityHelper
+ import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
+ import kotlinx.coroutines.launch
++import com.google.android.gms.wearable.DataClient
++import com.google.android.gms.wearable.DataEvent
++import com.google.android.gms.wearable.DataEventBuffer
++import com.google.android.gms.wearable.DataMapItem
++import com.google.android.gms.wearable.Wearable
++import it.vantaggi.scoreboardessential.shared.communication.WearConstants
+
+-class MainActivity : ComponentActivity() {
++class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
+     private lateinit var binding: ActivityMainBinding
+     private val viewModel: WearViewModel by viewModels()
+
+-    private val broadcastReceiver = object : android.content.BroadcastReceiver() { ... }
++    // BroadcastReceiver removed in favor of direct DataClient usage
+
+     override fun onCreate(savedInstanceState: Bundle?) {
+         super.onCreate(savedInstanceState)
+         binding = ActivityMainBinding.inflate(layoutInflater)
+         setContentView(binding.root)
+
+         setupClickListeners()
+         observeViewModel()
+-        // LocalBroadcastManager registration removed
+     }
+
+-    override fun onDestroy() {
+-        super.onDestroy()
+-        // LocalBroadcastManager unregistration removed
+-    }
++    override fun onResume() {
++        super.onResume()
++        Wearable.getDataClient(this).addListener(this)
++    }
++
++    override fun onPause() {
++        super.onPause()
++        Wearable.getDataClient(this).removeListener(this)
++    }
++
++    override fun onDataChanged(dataEvents: DataEventBuffer) {
++        dataEvents.forEach { event ->
++            if (event.type == DataEvent.TYPE_CHANGED) {
++                val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
++                when (event.dataItem.uri.path) {
++                    WearConstants.PATH_SCORE -> {
++                        val team1 = dataMap.getInt(WearConstants.KEY_TEAM1_SCORE, 0)
++                        val team2 = dataMap.getInt(WearConstants.KEY_TEAM2_SCORE, 0)
++                        viewModel.updateScoresFromMobile(team1, team2)
++                    }
++                    WearConstants.PATH_TEAM_NAMES -> {
++                        val team1Name = dataMap.getString(WearConstants.KEY_TEAM1_NAME, "Team 1")
++                        val team2Name = dataMap.getString(WearConstants.KEY_TEAM2_NAME, "Team 2")
++                        viewModel.setTeamNames(team1Name, team2Name)
++                    }
++                    WearConstants.PATH_TIMER_STATE -> {
++                         val millis = dataMap.getLong(WearConstants.KEY_TIMER_MILLIS, 0L)
++                         viewModel.setMatchTimerMillis(millis)
++                    }
++                    // Implement other cases (Color, Keeper, Match State) similarly
++                }
++            }
++        }
++    }
+...
