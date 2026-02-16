@@ -3,6 +3,7 @@ package it.vantaggi.scoreboardessential.shared.communication
 import android.content.Context
 import android.util.Log
 import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.wearable.Asset
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.MessageClient
@@ -110,6 +111,7 @@ class OptimizedWearDataSync(
                             is Long -> dataMap.putLong(key, value)
                             is Double -> dataMap.putDouble(key, value)
                             is Float -> dataMap.putFloat(key, value)
+                            is Asset -> dataMap.putAsset(key, value)
                         }
                     }
                     dataMap.putLong(WearConstants.KEY_TIMESTAMP, System.currentTimeMillis())
@@ -117,6 +119,12 @@ class OptimizedWearDataSync(
                     val putDataRequest = putDataMapRequest.asPutDataRequest()
                     if (urgent) {
                         putDataRequest.setUrgent()
+                    }
+
+                    val payloadSize = putDataRequest.data?.size ?: 0
+                    if (payloadSize > 90 * 1024) { // 90KB safety limit
+                        Log.e(TAG, "Payload too large: $payloadSize bytes. Max 90KB allowed. Skipping send to avoid crash.")
+                        return@withContext
                     }
 
                     dataClient.putDataItem(putDataRequest).await()
