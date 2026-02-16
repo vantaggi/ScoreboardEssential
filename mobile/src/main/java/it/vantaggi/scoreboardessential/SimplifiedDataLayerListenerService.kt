@@ -27,6 +27,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         const val EXTRA_KEEPER_MILLIS = "keeper_millis"
         const val EXTRA_KEEPER_RUNNING = "keeper_running"
         const val EXTRA_MATCH_ACTIVE = "match_active"
+        const val ACTION_REQUEST_SYNC = "it.vantaggi.scoreboardessential.REQUEST_SYNC"
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -108,5 +109,10 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
     override fun onMessageReceived(messageEvent: MessageEvent) {
         super.onMessageReceived(messageEvent)
         Log.d(TAG, "Message received: ${messageEvent.path}")
+        if (messageEvent.path == WearConstants.MSG_REQUEST_SYNC) {
+            val intent = Intent(ACTION_REQUEST_SYNC)
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+            Log.d(TAG, "Broadcasted sync request")
+        }
     }
 }

@@ -98,6 +98,12 @@ class WearViewModel(
     private val _team2Players = MutableStateFlow<List<PlayerData>>(emptyList())
     val team2Players = _team2Players.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            connectionManager.sendMessage(it.vantaggi.scoreboardessential.shared.communication.WearConstants.MSG_REQUEST_SYNC)
+        }
+    }
+
     fun clearPlayerSelectionEvent() {
         _showPlayerSelection.value = null
     }
