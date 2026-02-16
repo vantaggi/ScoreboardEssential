@@ -49,23 +49,24 @@ class OptimizedWearDataSyncTest {
     private lateinit var mockNode: Node
 
     private lateinit var optimizedWearDataSync: OptimizedWearDataSync
+    private lateinit var mockLog: org.mockito.MockedStatic<android.util.Log>
 
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
+        
+        // Mock static Log class
+        mockLog = Mockito.mockStatic(android.util.Log::class.java)
+        mockLog.`when`<Int> { android.util.Log.d(any(), any()) }.thenReturn(0)
+        mockLog.`when`<Int> { android.util.Log.e(any(), any()) }.thenReturn(0)
+        mockLog.`when`<Int> { android.util.Log.w(any(), any<String>()) }.thenReturn(0)
+        mockLog.`when`<Int> { android.util.Log.i(any(), any()) }.thenReturn(0)
+        mockLog.`when`<Int> { android.util.Log.v(any(), any()) }.thenReturn(0)
 
         // Basic setup for capability check
         whenever(mockCapabilityInfo.nodes).thenReturn(setOf(mockNode))
         whenever(mockNode.id).thenReturn("node1")
         whenever(mockNode.displayName).thenReturn("Test Node")
-        
-        // Mock the Tasks.await calls by returning completed tasks or mocking suspend funs if using play-services-coroutines
-        // Actually, OptimizedWearDataSync uses `await()`, which is an extension function on Task.
-        // Mocking Task API is hard. 
-        // Ideally we should use a wrapper for Task execution or just accept that we can't easily unit test the GMS Task part without PowerMock.
-        // However, we can use `Tasks.forResult` if we can control the return value of client methods.
-        
-        // Since OptimizedWearDataSync calls `capabilityClient.getCapability(...)`, strictly speaking we'd need to mock it returning a Task.
         
         val task = Tasks.forResult(mockCapabilityInfo)
         whenever(mockCapabilityClient.getCapability(any(), any())).thenReturn(task)
@@ -78,6 +79,11 @@ class OptimizedWearDataSyncTest {
             mockCapabilityClient,
             mockNodeClient
         )
+    }
+
+    @org.junit.After
+    fun tearDown() {
+        mockLog.close()
     }
 
     @Test
