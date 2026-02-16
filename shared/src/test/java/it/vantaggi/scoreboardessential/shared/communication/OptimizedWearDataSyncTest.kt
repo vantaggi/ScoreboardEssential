@@ -49,19 +49,9 @@ class OptimizedWearDataSyncTest {
     private lateinit var mockNode: Node
 
     private lateinit var optimizedWearDataSync: OptimizedWearDataSync
-    private lateinit var mockLog: org.mockito.MockedStatic<android.util.Log>
-
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
-        
-        // Mock static Log class
-        mockLog = Mockito.mockStatic(android.util.Log::class.java)
-        mockLog.`when`<Int> { android.util.Log.d(any(), any()) }.thenReturn(0)
-        mockLog.`when`<Int> { android.util.Log.e(any(), any()) }.thenReturn(0)
-        mockLog.`when`<Int> { android.util.Log.w(any(), any<String>()) }.thenReturn(0)
-        mockLog.`when`<Int> { android.util.Log.i(any(), any()) }.thenReturn(0)
-        mockLog.`when`<Int> { android.util.Log.v(any(), any()) }.thenReturn(0)
 
         // Basic setup for capability check
         whenever(mockCapabilityInfo.nodes).thenReturn(setOf(mockNode))
@@ -79,11 +69,6 @@ class OptimizedWearDataSyncTest {
             mockCapabilityClient,
             mockNodeClient
         )
-    }
-
-    @org.junit.After
-    fun tearDown() {
-        mockLog.close()
     }
 
     @Test
