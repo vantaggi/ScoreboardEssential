@@ -1,4 +1,4 @@
-package it.vantaggi.scoreboardessential.utils
+package it.vantaggi.scoreboardessential.shared.utils
 
 /**
  * Utility class for validating data received from Wear OS devices.
