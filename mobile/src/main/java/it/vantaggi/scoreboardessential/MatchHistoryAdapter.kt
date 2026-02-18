@@ -8,13 +8,14 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
+import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class MatchHistoryAdapter(
     private val onDeleteClicked: (MatchWithTeams) -> Unit,
-) : ListAdapter<MatchWithTeams, MatchHistoryAdapter.MatchViewHolder>(MatchDiffCallback()) {
+) : ListAdapter<MatchHistoryUiState, MatchHistoryAdapter.MatchViewHolder>(MatchDiffCallback()) {
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int,
@@ -30,8 +31,8 @@ class MatchHistoryAdapter(
         holder: MatchViewHolder,
         position: Int,
     ) {
-        val match = getItem(position)
-        holder.bind(match)
+        val item = getItem(position)
+        holder.bind(item)
     }
 
     class MatchViewHolder(
@@ -48,7 +49,9 @@ class MatchHistoryAdapter(
 
         private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
-        fun bind(matchWithTeams: MatchWithTeams) {
+        fun bind(item: MatchHistoryUiState) {
+            val matchWithTeams = item.matchWithTeams
+
             team1NameTextView.text = matchWithTeams.team1?.name ?: "Team 1"
             team2NameTextView.text = matchWithTeams.team2?.name ?: "Team 2"
             team1ScoreTextView.text = matchWithTeams.match.team1Score.toString()
@@ -56,9 +59,9 @@ class MatchHistoryAdapter(
 
             timestampTextView.text = dateFormat.format(Date(matchWithTeams.match.timestamp))
 
-            if (matchWithTeams.players.isNotEmpty()) {
+            if (item.formattedPlayers.isNotEmpty()) {
                 playersTextView.visibility = View.VISIBLE
-                playersTextView.text = "Players: ${matchWithTeams.players.joinToString(", ") { it.playerName }}"
+                playersTextView.text = item.formattedPlayers
             } else {
                 playersTextView.visibility = View.GONE
             }
@@ -70,14 +73,14 @@ class MatchHistoryAdapter(
     }
 }
 
-class MatchDiffCallback : DiffUtil.ItemCallback<MatchWithTeams>() {
+class MatchDiffCallback : DiffUtil.ItemCallback<MatchHistoryUiState>() {
     override fun areItemsTheSame(
-        oldItem: MatchWithTeams,
-        newItem: MatchWithTeams,
-    ): Boolean = oldItem.match.matchId == newItem.match.matchId
+        oldItem: MatchHistoryUiState,
+        newItem: MatchHistoryUiState,
+    ): Boolean = oldItem.matchWithTeams.match.matchId == newItem.matchWithTeams.match.matchId
 
     override fun areContentsTheSame(
-        oldItem: MatchWithTeams,
-        newItem: MatchWithTeams,
+        oldItem: MatchHistoryUiState,
+        newItem: MatchHistoryUiState,
     ): Boolean = oldItem == newItem
 }
