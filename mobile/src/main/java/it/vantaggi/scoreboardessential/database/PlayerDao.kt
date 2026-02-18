@@ -93,4 +93,17 @@ WHERE playerId = :playerId
     """,
     )
     fun getTopScorers(limit: Int): Flow<List<PlayerWithRoles>>
+
+    @Transaction
+    @Query(
+        """
+        SELECT DISTINCT players.* FROM players
+        INNER JOIN player_role_cross_ref ON players.playerId = player_role_cross_ref.playerId
+        INNER JOIN roles ON player_role_cross_ref.roleId = roles.roleId
+        WHERE roles.category IN (:categories)
+        ORDER BY players.goals DESC, players.appearances ASC
+        LIMIT :limit
+    """,
+    )
+    fun getTopScorersByRoleCategories(limit: Int, categories: List<String>): Flow<List<PlayerWithRoles>>
 }
