@@ -39,7 +39,8 @@ class MainActivity : ComponentActivity() {
                 }
                 WearDataLayerService.ACTION_TIMER_UPDATE -> {
                     val millis = intent.getLongExtra(WearDataLayerService.EXTRA_TIMER_MILLIS, 0L)
-                    viewModel.setMatchTimerMillis(millis)
+                    val isRunning = intent.getBooleanExtra(WearDataLayerService.EXTRA_TIMER_RUNNING, false)
+                    viewModel.syncMatchTimer(millis, isRunning)
                 }
                 WearDataLayerService.ACTION_KEEPER_TIMER_UPDATE -> {
                     val millis = intent.getLongExtra(WearDataLayerService.EXTRA_KEEPER_MILLIS, 0L)
