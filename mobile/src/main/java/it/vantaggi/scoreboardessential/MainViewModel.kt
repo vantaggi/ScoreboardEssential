@@ -191,14 +191,14 @@ class MainViewModel(
                     SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE -> {
                         val team1 = intent.getIntExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM1_SCORE, 0)
                         val team2 = intent.getIntExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM2_SCORE, 0)
-                        Log.d("VM", "📥 Score from Wear: T1=$team1, T2=$team2")
+                        Log.d("VM", "📥 Score update received from Wear")
                         _team1Score.value = team1
                         _team2Score.value = team2
                     }
                     SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE -> {
                         val millis = intent.getLongExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_MILLIS, 0L)
                         val running = intent.getBooleanExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_RUNNING, false)
-                        Log.d("VM", "📥 Timer from Wear: $millis ms, running=$running")
+                        Log.d("VM", "📥 Timer update received from Wear")
 
                         if (millis == 0L && !running) {
                             resetMatchTimer(fromRemote = true)
