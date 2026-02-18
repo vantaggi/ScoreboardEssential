@@ -40,8 +40,8 @@ data class Formation(
                     "CENTROCAMPO" -> midfielders.add(player)
                     "ATTACCO" -> forwards.add(player)
                     else -> {
-// Fallback: se non ha ruolo, metti a centrocampo
-                        if (player.roles.isEmpty()) midfielders.add(player)
+// Fallback: se non ha ruolo o ruolo sconosciuto, metti a centrocampo
+                        midfielders.add(player)
                     }
                 }
             }
