@@ -13,6 +13,7 @@ import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -102,8 +103,8 @@ class MainViewModelEdgeCasesTest {
     fun `receive score from Wear should update LiveData`() {
         // Arrange
         val intent = Intent(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE).apply {
-            putExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM1_SCORE, 10)
-            putExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM2_SCORE, 5)
+            putExtra(WearConstants.KEY_TEAM1_SCORE, 10)
+            putExtra(WearConstants.KEY_TEAM2_SCORE, 5)
         }
 
         val observer = Observer<Int> {}

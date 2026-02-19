@@ -17,16 +17,8 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         const val ACTION_SCORE_UPDATE = "it.vantaggi.scoreboardessential.SCORE_UPDATE"
         const val ACTION_TIMER_UPDATE = "it.vantaggi.scoreboardessential.TIMER_UPDATE"
         const val ACTION_TEAM_NAMES_UPDATE = "it.vantaggi.scoreboardessential.TEAM_NAMES_UPDATE"
-
-        const val EXTRA_TEAM1_SCORE = "team1_score"
-        const val EXTRA_TEAM2_SCORE = "team2_score"
-        const val EXTRA_TIMER_MILLIS = "timer_millis"
-        const val EXTRA_TIMER_RUNNING = "timer_running"
         const val ACTION_KEEPER_TIMER_UPDATE = "it.vantaggi.scoreboardessential.KEEPER_TIMER_UPDATE"
         const val ACTION_MATCH_STATE_UPDATE = "it.vantaggi.scoreboardessential.MATCH_STATE_UPDATE"
-        const val EXTRA_KEEPER_MILLIS = "keeper_millis"
-        const val EXTRA_KEEPER_RUNNING = "keeper_running"
-        const val EXTRA_MATCH_ACTIVE = "match_active"
         const val ACTION_REQUEST_SYNC = "it.vantaggi.scoreboardessential.REQUEST_SYNC"
     }
 
@@ -54,8 +46,8 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
 
                         val intent =
                             Intent(ACTION_SCORE_UPDATE).apply {
-                                putExtra(EXTRA_TEAM1_SCORE, team1)
-                                putExtra(EXTRA_TEAM2_SCORE, team2)
+                                putExtra(WearConstants.KEY_TEAM1_SCORE, team1)
+                                putExtra(WearConstants.KEY_TEAM2_SCORE, team2)
                             }
                         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
                         if (BuildConfig.DEBUG) {
@@ -73,8 +65,8 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
 
                         val intent =
                             Intent(ACTION_TIMER_UPDATE).apply {
-                                putExtra(EXTRA_TIMER_MILLIS, millis)
-                                putExtra(EXTRA_TIMER_RUNNING, isRunning)
+                                putExtra(WearConstants.KEY_TIMER_MILLIS, millis)
+                                putExtra(WearConstants.KEY_TIMER_RUNNING, isRunning)
                             }
                         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
                         if (BuildConfig.DEBUG) {
@@ -96,8 +88,8 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
 
                         val intent =
                             Intent(ACTION_KEEPER_TIMER_UPDATE).apply {
-                                putExtra(EXTRA_KEEPER_MILLIS, millis)
-                                putExtra(EXTRA_KEEPER_RUNNING, isRunning)
+                                putExtra(WearConstants.KEY_KEEPER_MILLIS, millis)
+                                putExtra(WearConstants.KEY_KEEPER_RUNNING, isRunning)
                             }
                         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
                     }
@@ -105,7 +97,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                         val isActive = dataMap.getBoolean(WearConstants.KEY_MATCH_ACTIVE, true)
                         val intent =
                             Intent(ACTION_MATCH_STATE_UPDATE).apply {
-                                putExtra(EXTRA_MATCH_ACTIVE, isActive)
+                                putExtra(WearConstants.KEY_MATCH_ACTIVE, isActive)
                             }
                         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
                     }
