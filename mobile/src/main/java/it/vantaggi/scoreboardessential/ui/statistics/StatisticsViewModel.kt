@@ -7,12 +7,12 @@ import androidx.lifecycle.viewModelScope
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.domain.model.PlayerStatsDTO
 import it.vantaggi.scoreboardessential.domain.usecases.GetPlayerStatsUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 class StatisticsViewModel(
     application: Application,
@@ -28,31 +28,20 @@ class StatisticsViewModel(
     }
 
     private val filter = MutableStateFlow(FilterType.ALL)
-    private val allStats = MutableStateFlow<List<PlayerStatsDTO>>(emptyList())
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val topScorers: StateFlow<List<PlayerStatsDTO>> =
-        combine(allStats, filter) { stats, filter ->
-            when (filter) {
-                FilterType.ALL -> stats
-                FilterType.ATTACK -> stats.filter { it.roles.any { role -> role.category == "ATTACCO" } }
-                FilterType.DEFENSE -> stats.filter { it.roles.any { role -> role.category == "DIFESA" || role.category == "PORTA" } }
+        filter.flatMapLatest { filterType ->
+            val categories = when (filterType) {
+                FilterType.ALL -> null
+                FilterType.ATTACK -> listOf("ATTACCO")
+                FilterType.DEFENSE -> listOf("DIFESA", "PORTA")
             }
+            getPlayerStatsUseCase.getTopScorers(10, categories)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    init {
-        loadTopScorers()
-    }
 
     fun setFilter(newFilter: FilterType) {
         filter.value = newFilter
-    }
-
-    private fun loadTopScorers() {
-        viewModelScope.launch {
-            getPlayerStatsUseCase.getTopScorers(10).collect { stats ->
-                allStats.value = stats
-            }
-        }
     }
 
     class Factory(
