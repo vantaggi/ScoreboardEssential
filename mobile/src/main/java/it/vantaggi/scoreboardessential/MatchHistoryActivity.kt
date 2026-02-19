@@ -31,7 +31,7 @@ class MatchHistoryActivity : AppCompatActivity() {
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        viewModel.allMatches.observe(this) { matches ->
+        viewModel.matchHistory.observe(this) { matches ->
             matches?.let {
                 adapter.submitList(it)
                 summaryTextView.text = "TOTAL MATCHES: ${it.size}"

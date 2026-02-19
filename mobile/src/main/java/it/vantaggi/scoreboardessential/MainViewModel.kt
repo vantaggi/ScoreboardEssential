@@ -39,6 +39,10 @@ import it.vantaggi.scoreboardessential.domain.models.MatchReportData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
+import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -177,6 +181,19 @@ class MainViewModel(
 
     /** LiveData of all saved matches from history. */
     val allMatches: LiveData<List<MatchWithTeams>> = repository.allMatches.asLiveData()
+
+    /** LiveData of all saved matches formatted for UI. */
+    val matchHistory: LiveData<List<MatchHistoryUiState>> = repository.allMatches
+        .map { matches ->
+            matches.map { match ->
+                val formatted = if (match.players.isNotEmpty()) {
+                    "Players: ${match.players.joinToString(", ") { it.playerName }}"
+                } else ""
+                MatchHistoryUiState(match, formatted)
+            }
+        }
+        .flowOn(Dispatchers.Default)
+        .asLiveData()
 
     /*
      * Receives local broadcasts from the Wear OS listener service.
