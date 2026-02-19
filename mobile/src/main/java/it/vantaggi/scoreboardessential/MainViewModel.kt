@@ -37,6 +37,7 @@ import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchReportData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
 import kotlinx.coroutines.Dispatchers
@@ -208,14 +209,14 @@ class MainViewModel(
                     SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE -> {
                         val team1 = intent.getIntExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM1_SCORE, 0)
                         val team2 = intent.getIntExtra(SimplifiedDataLayerListenerService.EXTRA_TEAM2_SCORE, 0)
-                        Log.d("VM", "📥 Score from Wear: T1=$team1, T2=$team2")
+                        Log.d("VM", "📥 Score update received from Wear")
                         _team1Score.value = team1
                         _team2Score.value = team2
                     }
                     SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE -> {
                         val millis = intent.getLongExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_MILLIS, 0L)
                         val running = intent.getBooleanExtra(SimplifiedDataLayerListenerService.EXTRA_TIMER_RUNNING, false)
-                        Log.d("VM", "📥 Timer from Wear: $millis ms, running=$running")
+                        Log.d("VM", "📥 Timer update received from Wear")
 
                         if (millis == 0L && !running) {
                             resetMatchTimer(fromRemote = true)
@@ -229,8 +230,8 @@ class MainViewModel(
                         }
                     }
                     SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE -> {
-                        val millis = intent.getLongExtra(SimplifiedDataLayerListenerService.EXTRA_KEEPER_MILLIS, 0L)
-                        val running = intent.getBooleanExtra(SimplifiedDataLayerListenerService.EXTRA_KEEPER_RUNNING, false)
+                        val millis = intent.getLongExtra(WearConstants.KEY_KEEPER_MILLIS, 0L)
+                        val running = intent.getBooleanExtra(WearConstants.KEY_KEEPER_RUNNING, false)
                         if (!running && millis == 0L) {
                             resetKeeperTimer(fromRemote = true)
                         } else if (running != (_isKeeperTimerRunning.value ?: false)) {
@@ -246,7 +247,7 @@ class MainViewModel(
                         }
                     }
                     SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE -> {
-                        val isActive = intent.getBooleanExtra(SimplifiedDataLayerListenerService.EXTRA_MATCH_ACTIVE, true)
+                        val isActive = intent.getBooleanExtra(WearConstants.KEY_MATCH_ACTIVE, true)
                         if (!isActive) {
                             endMatch()
                         }
@@ -494,11 +495,11 @@ class MainViewModel(
         viewModelScope.launch {
             val data =
                 mapOf(
-                    "team1_score" to team1,
-                    "team2_score" to team2,
+                    WearConstants.KEY_TEAM1_SCORE to team1,
+                    WearConstants.KEY_TEAM2_SCORE to team2,
                 )
             connectionManager.sendData(
-                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_SCORE,
+                path = WearConstants.PATH_SCORE,
                 data = data,
                 urgent = true,
             )
@@ -745,11 +746,11 @@ class MainViewModel(
         viewModelScope.launch {
             val data =
                 mapOf(
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM1_NAME to (_team1Name.value ?: "TEAM 1"),
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TEAM2_NAME to (_team2Name.value ?: "TEAM 2"),
+                    WearConstants.KEY_TEAM1_NAME to (_team1Name.value ?: "TEAM 1"),
+                    WearConstants.KEY_TEAM2_NAME to (_team2Name.value ?: "TEAM 2"),
                 )
             connectionManager.sendData(
-                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TEAM_NAMES,
+                path = WearConstants.PATH_TEAM_NAMES,
                 data = data,
             )
         }
@@ -762,12 +763,12 @@ class MainViewModel(
         viewModelScope.launch {
             val data =
                 mapOf(
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to
+                    WearConstants.KEY_KEEPER_MILLIS to
                         (millis ?: (_keeperTimerValue.value ?: 0L)),
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to isRunning,
+                    WearConstants.KEY_KEEPER_RUNNING to isRunning,
                 )
             connectionManager.sendData(
-                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
+                path = WearConstants.PATH_KEEPER_TIMER,
                 data = data,
             )
         }
@@ -777,10 +778,10 @@ class MainViewModel(
         viewModelScope.launch {
             val data =
                 mapOf(
-                    "match_active" to isActive,
+                    WearConstants.KEY_MATCH_ACTIVE to isActive,
                 )
             connectionManager.sendData(
-                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_MATCH_STATE,
+                path = WearConstants.PATH_MATCH_STATE,
                 data = data,
             )
         }
@@ -795,9 +796,9 @@ class MainViewModel(
                 if (team ==
                     1
                 ) {
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TEAM1_COLOR
+                    WearConstants.PATH_TEAM1_COLOR
                 } else {
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TEAM2_COLOR
+                    WearConstants.PATH_TEAM2_COLOR
                 }
             val data = mapOf("color" to color)
             connectionManager.sendData(path = path, data = data)
@@ -810,11 +811,11 @@ class MainViewModel(
         viewModelScope.launch {
             val data =
                 mapOf(
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to 0L,
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to false,
+                    WearConstants.KEY_TIMER_MILLIS to 0L,
+                    WearConstants.KEY_TIMER_RUNNING to false,
                 )
             connectionManager.sendData(
-                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
+                path = WearConstants.PATH_TIMER_STATE,
                 data = data,
             )
         }
@@ -839,11 +840,11 @@ class MainViewModel(
             // 5. Timer State (Manual construction to ensure current VM state is sent)
             val timerData =
                 mapOf(
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_MILLIS to (_matchTimerValue.value ?: 0L),
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_TIMER_RUNNING to (_isMatchTimerRunning.value ?: false),
+                    WearConstants.KEY_TIMER_MILLIS to (_matchTimerValue.value ?: 0L),
+                    WearConstants.KEY_TIMER_RUNNING to (_isMatchTimerRunning.value ?: false),
                 )
             connectionManager.sendData(
-                path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
+                path = WearConstants.PATH_TIMER_STATE,
                 data = timerData,
             )
 

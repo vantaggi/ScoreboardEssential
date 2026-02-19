@@ -359,16 +359,23 @@ class MatchTimerService : Service() {
     }
 
     // --- Foreground Service & Notifications ---
+    private val pendingIntent by lazy {
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+    }
+
+    private val pausePendingIntent by lazy {
+        val pauseIntent = Intent(this, MatchTimerService::class.java).apply { action = ACTION_PAUSE }
+        PendingIntent.getService(this, 0, pauseIntent, PendingIntent.FLAG_IMMUTABLE)
+    }
+
+    private val stopPendingIntent by lazy {
+        val stopIntent = Intent(this, MatchTimerService::class.java).apply { action = ACTION_STOP }
+        PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE)
+    }
+
     private fun createNotification(timeInMillis: Long): Notification {
         val formattedTime = TimeUtils.formatTime(timeInMillis)
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
-
-        val pauseIntent = Intent(this, MatchTimerService::class.java).apply { action = ACTION_PAUSE }
-        val pausePendingIntent = PendingIntent.getService(this, 0, pauseIntent, PendingIntent.FLAG_IMMUTABLE)
-
-        val stopIntent = Intent(this, MatchTimerService::class.java).apply { action = ACTION_STOP }
-        val stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE)
 
         return NotificationCompat
             .Builder(this, ScoreboardEssentialApplication.CHANNEL_ID_TIMER)

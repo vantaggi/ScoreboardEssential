@@ -4,8 +4,6 @@ import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.domain.model.PlayerStatsDTO
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
 /**
@@ -24,10 +22,17 @@ class GetPlayerStatsUseCase(
      * Note: Win rate is currently returned as 0.0f due to database schema limitations (MatchPlayerCrossRef lacks team affiliation).
      *
      * @param limit The maximum number of players to return.
+     * @param roleCategories Optional list of role categories to filter by.
      * @return A Flow emitting a list of [PlayerStatsDTO].
      */
-    fun getTopScorers(limit: Int): Flow<List<PlayerStatsDTO>> =
-        playerDao.getTopScorers(limit).map { playersWithRoles ->
+    fun getTopScorers(limit: Int, roleCategories: List<String>? = null): Flow<List<PlayerStatsDTO>> {
+        val sourceFlow = if (roleCategories.isNullOrEmpty()) {
+            playerDao.getTopScorers(limit)
+        } else {
+            playerDao.getTopScorersByRoleCategories(limit, roleCategories)
+        }
+
+        return sourceFlow.map { playersWithRoles ->
             playersWithRoles.map { playerWithRoles ->
                 val player = playerWithRoles.player
                 // Use appearances from Player entity which serves as a cache for finished matches.
@@ -48,6 +53,7 @@ class GetPlayerStatsUseCase(
                 )
             }
         }
+    }
 
     /**
      * Calculates stats for a specific player.
@@ -57,23 +63,20 @@ class GetPlayerStatsUseCase(
      * @return A Flow emitting [PlayerStatsDTO] if found, or null if not found.
      */
     fun getPlayerStats(playerId: Int): Flow<PlayerStatsDTO?> =
-        flow {
-            val playerWithRoles = playerDao.getPlayerWithRoles(playerId).first()
+        playerDao.getPlayerWithRoles(playerId).map { playerWithRoles ->
             if (playerWithRoles != null) {
                 val player = playerWithRoles.player
                 // Here we would ideally calculate wins.
                 // For now, we return what we have.
-                emit(
-                    PlayerStatsDTO(
-                        playerId = player.playerId,
-                        playerName = player.playerName,
-                        goals = player.goals,
-                        appearances = player.appearances,
-                        winRate = 0.0f,
-                    ),
+                PlayerStatsDTO(
+                    playerId = player.playerId,
+                    playerName = player.playerName,
+                    goals = player.goals,
+                    appearances = player.appearances,
+                    winRate = 0.0f,
                 )
             } else {
-                emit(null)
+                null
             }
         }
 }
