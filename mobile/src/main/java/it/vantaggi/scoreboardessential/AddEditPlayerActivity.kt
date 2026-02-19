@@ -92,9 +92,18 @@ class AddEditPlayerActivity : AppCompatActivity() {
         }
 
     private fun savePlayer() {
-        val playerName = playerNameInput.text.toString().trim()
+        val playerName = playerNameInput.text.toString().trim().replace("\\s+".toRegex(), " ")
         if (playerName.isEmpty()) {
             Toast.makeText(this, "Player name cannot be empty", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (playerName.length > MAX_PLAYER_NAME_LENGTH) {
+            Toast.makeText(
+                this,
+                "Player name is too long (max $MAX_PLAYER_NAME_LENGTH chars)",
+                Toast.LENGTH_SHORT,
+            ).show()
             return
         }
 
@@ -118,5 +127,6 @@ class AddEditPlayerActivity : AppCompatActivity() {
         const val EXTRA_PLAYER_ID = "extra_player_id"
         const val EXTRA_PLAYER_NAME = "extra_player_name"
         const val EXTRA_SELECTED_ROLES = "extra_selected_roles"
+        private const val MAX_PLAYER_NAME_LENGTH = 30
     }
 }
