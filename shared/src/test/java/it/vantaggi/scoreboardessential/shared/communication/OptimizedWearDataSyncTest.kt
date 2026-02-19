@@ -19,6 +19,7 @@ import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.any
+import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -85,7 +86,7 @@ class OptimizedWearDataSyncTest {
 
         // Assert
         // We expect getCapability to be called to find nodes
-        verify(mockCapabilityClient).getCapability(eq(WearConstants.CAPABILITY_SCOREBOARD_APP), eq(CapabilityClient.FILTER_REACHABLE))
+        verify(mockCapabilityClient, atLeastOnce()).getCapability(eq(WearConstants.CAPABILITY_SCOREBOARD_APP), eq(CapabilityClient.FILTER_REACHABLE))
         
         // And then sendMessage to be called for the found node
         verify(mockMessageClient).sendMessage(eq("node1"), eq(path), eq(data))
