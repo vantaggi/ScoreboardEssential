@@ -9,7 +9,7 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
-import it.vantaggi.scoreboardessential.utils.WearDataValidator
+import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 
 class SimplifiedDataLayerListenerService : WearableListenerService() {
     companion object {

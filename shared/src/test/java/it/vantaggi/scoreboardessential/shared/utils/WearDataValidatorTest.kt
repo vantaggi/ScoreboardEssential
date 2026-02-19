@@ -1,4 +1,4 @@
-package it.vantaggi.scoreboardessential.utils
+package it.vantaggi.scoreboardessential.shared.utils
 
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
