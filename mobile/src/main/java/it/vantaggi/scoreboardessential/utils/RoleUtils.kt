@@ -43,11 +43,11 @@ object RoleUtils {
 
             else -> {
                 // Fallback: prendi le prime 2-3 lettere maiuscole
-                val words = roleName.split(" ")
+                val words = roleName.split(" ").filter { it.isNotEmpty() }
                 if (words.size > 1) {
                     words.map { it.first().uppercase() }.take(3).joinToString("")
                 } else {
-                    roleName.take(3).uppercase()
+                    roleName.trim().take(3).uppercase()
                 }
             }
         }
