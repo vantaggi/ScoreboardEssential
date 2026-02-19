@@ -4,7 +4,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class TimeUtilsTest {
-
     @Test
     fun testFormatTime() {
         assertEquals("00:00", TimeUtils.formatTime(0))

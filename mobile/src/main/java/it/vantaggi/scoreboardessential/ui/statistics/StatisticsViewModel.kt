@@ -31,14 +31,16 @@ class StatisticsViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val topScorers: StateFlow<List<PlayerStatsDTO>> =
-        filter.flatMapLatest { filterType ->
-            val categories = when (filterType) {
-                FilterType.ALL -> null
-                FilterType.ATTACK -> listOf("ATTACCO")
-                FilterType.DEFENSE -> listOf("DIFESA", "PORTA")
-            }
-            getPlayerStatsUseCase.getTopScorers(10, categories)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        filter
+            .flatMapLatest { filterType ->
+                val categories =
+                    when (filterType) {
+                        FilterType.ALL -> null
+                        FilterType.ATTACK -> listOf("ATTACCO")
+                        FilterType.DEFENSE -> listOf("DIFESA", "PORTA")
+                    }
+                getPlayerStatsUseCase.getTopScorers(10, categories)
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun setFilter(newFilter: FilterType) {
         filter.value = newFilter

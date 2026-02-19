@@ -1,6 +1,5 @@
 package it.vantaggi.scoreboardessential
 
-import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +8,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.color.MaterialColors
+import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 
 class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHolder>(MatchEventDiffCallback()) {
     var team1Color: Int = 0

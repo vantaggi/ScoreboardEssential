@@ -40,7 +40,6 @@ class OptimizedWearDataSync(
     private val capabilityClient: CapabilityClient = Wearable.getCapabilityClient(context),
     private val nodeClient: NodeClient = Wearable.getNodeClient(context),
 ) {
-
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)

@@ -10,7 +10,6 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class ScoreGestureListenerTest {
-
     private val onIncreaseScore: () -> Unit = mock()
     private val onDecreaseScore: () -> Unit = mock()
     private val listener = ScoreGestureListener(onIncreaseScore, onDecreaseScore)

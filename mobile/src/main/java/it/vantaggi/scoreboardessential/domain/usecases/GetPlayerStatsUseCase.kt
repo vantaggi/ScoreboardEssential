@@ -25,12 +25,16 @@ class GetPlayerStatsUseCase(
      * @param roleCategories Optional list of role categories to filter by.
      * @return A Flow emitting a list of [PlayerStatsDTO].
      */
-    fun getTopScorers(limit: Int, roleCategories: List<String>? = null): Flow<List<PlayerStatsDTO>> {
-        val sourceFlow = if (roleCategories.isNullOrEmpty()) {
-            playerDao.getTopScorers(limit)
-        } else {
-            playerDao.getTopScorersByRoleCategories(limit, roleCategories)
-        }
+    fun getTopScorers(
+        limit: Int,
+        roleCategories: List<String>? = null,
+    ): Flow<List<PlayerStatsDTO>> {
+        val sourceFlow =
+            if (roleCategories.isNullOrEmpty()) {
+                playerDao.getTopScorers(limit)
+            } else {
+                playerDao.getTopScorersByRoleCategories(limit, roleCategories)
+            }
 
         return sourceFlow.map { playersWithRoles ->
             playersWithRoles.map { playerWithRoles ->

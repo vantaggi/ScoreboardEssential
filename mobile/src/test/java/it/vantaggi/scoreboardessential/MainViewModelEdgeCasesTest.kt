@@ -1,7 +1,6 @@
 package it.vantaggi.scoreboardessential
 
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
@@ -49,24 +48,30 @@ class MainViewModelEdgeCasesTest {
         Dispatchers.setMain(testDispatcher)
         application = ApplicationProvider.getApplicationContext()
 
-        mockRepository = mock(MatchRepository::class.java).apply {
-            whenever(allMatches).thenReturn(emptyFlow())
-        }
-        mockUserPreferencesRepository = mock(UserPreferencesRepository::class.java).apply {
-            whenever(hasSeenTutorial).thenReturn(emptyFlow())
-        }
-        mockMatchSettingsRepository = mock(MatchSettingsRepository::class.java).apply {
-            whenever(getSettingsFlow()).thenReturn(emptyFlow())
-        }
+        mockRepository =
+            mock(MatchRepository::class.java).apply {
+                whenever(allMatches).thenReturn(emptyFlow())
+            }
+        mockUserPreferencesRepository =
+            mock(UserPreferencesRepository::class.java).apply {
+                whenever(hasSeenTutorial).thenReturn(emptyFlow())
+            }
+        mockMatchSettingsRepository =
+            mock(MatchSettingsRepository::class.java).apply {
+                whenever(getSettingsFlow()).thenReturn(emptyFlow())
+            }
 
         viewModel = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, application)
 
         // Inject mock DAOs and ConnectionManager to avoid NPEs
         val playerDaoField = MainViewModel::class.java.getDeclaredField("playerDao")
         playerDaoField.isAccessible = true
-        playerDaoField.set(viewModel, mock(PlayerDao::class.java).apply {
-            whenever(getAllPlayers()).thenReturn(emptyFlow())
-        })
+        playerDaoField.set(
+            viewModel,
+            mock(PlayerDao::class.java).apply {
+                whenever(getAllPlayers()).thenReturn(emptyFlow())
+            },
+        )
 
         val matchDaoField = MainViewModel::class.java.getDeclaredField("matchDao")
         matchDaoField.isAccessible = true
@@ -75,7 +80,9 @@ class MainViewModelEdgeCasesTest {
         val connectionManagerField = MainViewModel::class.java.getDeclaredField("connectionManager")
         connectionManagerField.isAccessible = true
         val mockConnectionManager = mock(OptimizedWearDataSync::class.java)
-        whenever(mockConnectionManager.connectionState).thenReturn(MutableStateFlow(it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Disconnected))
+        whenever(
+            mockConnectionManager.connectionState,
+        ).thenReturn(MutableStateFlow(it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Disconnected))
         connectionManagerField.set(viewModel, mockConnectionManager)
     }
 
@@ -102,10 +109,11 @@ class MainViewModelEdgeCasesTest {
     @Test
     fun `receive score from Wear should update LiveData`() {
         // Arrange
-        val intent = Intent(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE).apply {
-            putExtra(WearConstants.KEY_TEAM1_SCORE, 10)
-            putExtra(WearConstants.KEY_TEAM2_SCORE, 5)
-        }
+        val intent =
+            Intent(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE).apply {
+                putExtra(WearConstants.KEY_TEAM1_SCORE, 10)
+                putExtra(WearConstants.KEY_TEAM2_SCORE, 5)
+            }
 
         val observer = Observer<Int> {}
         viewModel.team1Score.observeForever(observer)

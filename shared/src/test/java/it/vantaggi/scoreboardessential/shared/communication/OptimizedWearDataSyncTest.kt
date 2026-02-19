@@ -8,14 +8,12 @@ import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
-import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
-import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.any
@@ -27,7 +25,6 @@ import org.mockito.kotlin.whenever
 @ExperimentalCoroutinesApi
 @RunWith(MockitoJUnitRunner::class)
 class OptimizedWearDataSyncTest {
-
     @Mock
     private lateinit var mockContext: Context
 
@@ -50,6 +47,7 @@ class OptimizedWearDataSyncTest {
     private lateinit var mockNode: Node
 
     private lateinit var optimizedWearDataSync: OptimizedWearDataSync
+
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
@@ -58,51 +56,60 @@ class OptimizedWearDataSyncTest {
         whenever(mockCapabilityInfo.nodes).thenReturn(setOf(mockNode))
         whenever(mockNode.id).thenReturn("node1")
         whenever(mockNode.displayName).thenReturn("Test Node")
-        
+
         val task = Tasks.forResult(mockCapabilityInfo)
         whenever(mockCapabilityClient.getCapability(any(), any())).thenReturn(task)
 
         // Initialize with mocks - this bypasses the Wearable.getDataClient static calls
-        optimizedWearDataSync = OptimizedWearDataSync(
-            mockContext,
-            mockDataClient,
-            mockMessageClient,
-            mockCapabilityClient,
-            mockNodeClient
-        )
+        optimizedWearDataSync =
+            OptimizedWearDataSync(
+                mockContext,
+                mockDataClient,
+                mockMessageClient,
+                mockCapabilityClient,
+                mockNodeClient,
+            )
     }
 
     @Test
-    fun `sendMessage sends to capable nodes`() = runTest {
-        // Arrange
-        val path = "/test/path"
-        val data = "test data".toByteArray()
-        
-        val voidTask = Tasks.forResult<Int>(1) // sendMessage returns Task<Integer>
-        whenever(mockMessageClient.sendMessage(any(), any(), any())).thenReturn(voidTask)
+    fun `sendMessage sends to capable nodes`() =
+        runTest {
+            // Arrange
+            val path = "/test/path"
+            val data = "test data".toByteArray()
 
-        // Act
-        optimizedWearDataSync.sendMessage(path, data)
+            val voidTask = Tasks.forResult<Int>(1) // sendMessage returns Task<Integer>
+            whenever(mockMessageClient.sendMessage(any(), any(), any())).thenReturn(voidTask)
 
-        // Assert
-        // We expect getCapability to be called to find nodes
-        verify(mockCapabilityClient, atLeastOnce()).getCapability(eq(WearConstants.CAPABILITY_SCOREBOARD_APP), eq(CapabilityClient.FILTER_REACHABLE))
-        
-        // And then sendMessage to be called for the found node
-        verify(mockMessageClient).sendMessage(eq("node1"), eq(path), eq(data))
-    }
-    
+            // Act
+            optimizedWearDataSync.sendMessage(path, data)
+
+            // Assert
+            // We expect getCapability to be called to find nodes
+            verify(
+                mockCapabilityClient,
+                atLeastOnce(),
+            ).getCapability(
+                eq(WearConstants.CAPABILITY_SCOREBOARD_APP),
+                eq(CapabilityClient.FILTER_REACHABLE),
+            )
+
+            // And then sendMessage to be called for the found node
+            verify(mockMessageClient).sendMessage(eq("node1"), eq(path), eq(data))
+        }
+
     @Test
-    fun `testConnection returns true when nodes are available`() = runTest {
-        // Arrange
-        val voidTask = Tasks.forResult<Int>(1)
-        whenever(mockMessageClient.sendMessage(any(), any(), any())).thenReturn(voidTask)
+    fun `testConnection returns true when nodes are available`() =
+        runTest {
+            // Arrange
+            val voidTask = Tasks.forResult<Int>(1)
+            whenever(mockMessageClient.sendMessage(any(), any(), any())).thenReturn(voidTask)
 
-        // Act
-        val result = optimizedWearDataSync.testConnection()
+            // Act
+            val result = optimizedWearDataSync.testConnection()
 
-        // Assert
-        assert(result)
-        verify(mockMessageClient).sendMessage(eq("node1"), eq(WearConstants.PATH_TEST_PING), any())
-    }
+            // Assert
+            assert(result)
+            verify(mockMessageClient).sendMessage(eq("node1"), eq(WearConstants.PATH_TEST_PING), any())
+        }
 }

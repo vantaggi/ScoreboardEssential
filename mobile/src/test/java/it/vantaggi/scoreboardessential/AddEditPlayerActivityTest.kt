@@ -11,24 +11,24 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowToast
-import java.lang.reflect.Field
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class AddEditPlayerActivityTest {
-
     private lateinit var database: AppDatabase
 
     @Before
     fun setUp() {
         // Create in-memory database
-        database = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(),
-            AppDatabase::class.java
-        ).allowMainThreadQueries().build()
+        database =
+            Room
+                .inMemoryDatabaseBuilder(
+                    ApplicationProvider.getApplicationContext(),
+                    AppDatabase::class.java,
+                ).allowMainThreadQueries()
+                .build()
 
         // Inject database into singleton using reflection
         setDatabaseInstance(database)
@@ -65,7 +65,13 @@ class AddEditPlayerActivityTest {
     @Test
     fun savePlayer_withTooLongName_showsErrorAndDoesNotFinish() {
         val controller = Robolectric.buildActivity(AddEditPlayerActivity::class.java)
-        val activity = controller.create().start().resume().visible().get()
+        val activity =
+            controller
+                .create()
+                .start()
+                .resume()
+                .visible()
+                .get()
 
         val nameInput = activity.findViewById<EditText>(R.id.player_name_input)
 

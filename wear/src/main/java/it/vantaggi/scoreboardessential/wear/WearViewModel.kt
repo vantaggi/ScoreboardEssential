@@ -188,7 +188,6 @@ class WearViewModel(
         }
     }
 
-
     // --- Match Timer Management ---
     fun setMatchTimer(time: String) {
         matchTimerJob?.cancel() // Stop the internal timer

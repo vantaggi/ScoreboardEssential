@@ -1,13 +1,9 @@
 package it.vantaggi.scoreboardessential
 
 import android.Manifest
-import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -15,7 +11,6 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
 import android.view.GestureDetector
-import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
@@ -35,14 +30,12 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.Formation
-import it.vantaggi.scoreboardessential.domain.models.MatchEvent
-import it.vantaggi.scoreboardessential.domain.models.MatchReportData
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.ScoreGestureListener
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
-import it.vantaggi.scoreboardessential.utils.TimeUtils
 import it.vantaggi.scoreboardessential.utils.MatchReportUtils
+import it.vantaggi.scoreboardessential.utils.TimeUtils
 import it.vantaggi.scoreboardessential.utils.animateScoreButton
 import it.vantaggi.scoreboardessential.utils.playNativeGoalAnimation
 import it.vantaggi.scoreboardessential.views.FormationView
@@ -437,7 +430,6 @@ class MainActivity :
             team2GestureDetector.onTouchEvent(event)
         }
     }
-
 
     private fun animateTextChange(
         textView: TextView,

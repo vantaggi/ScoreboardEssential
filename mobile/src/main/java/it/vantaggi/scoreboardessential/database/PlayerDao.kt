@@ -105,5 +105,8 @@ WHERE playerId = :playerId
         LIMIT :limit
     """,
     )
-    fun getTopScorersByRoleCategories(limit: Int, categories: List<String>): Flow<List<PlayerWithRoles>>
+    fun getTopScorersByRoleCategories(
+        limit: Int,
+        categories: List<String>,
+    ): Flow<List<PlayerWithRoles>>
 }

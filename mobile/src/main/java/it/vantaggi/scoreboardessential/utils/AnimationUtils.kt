@@ -121,9 +121,7 @@ fun MaterialCardView.pulseAnimation() {
     animator.start()
 }
 
-fun View.animateScoreButton(
-    isSubtract: Boolean = false,
-) {
+fun View.animateScoreButton(isSubtract: Boolean = false) {
     val scaleX = ObjectAnimator.ofFloat(this, "scaleX", 1f, 0.9f, 1.1f, 1f)
     val scaleY = ObjectAnimator.ofFloat(this, "scaleY", 1f, 0.9f, 1.1f, 1f)
 

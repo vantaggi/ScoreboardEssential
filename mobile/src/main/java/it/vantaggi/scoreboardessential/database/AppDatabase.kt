@@ -121,7 +121,7 @@ abstract class AppDatabase : RoomDatabase() {
                     // Crea indice esplicito per matchId in MatchPlayerCrossRef
                     database.execSQL(
                         "CREATE INDEX IF NOT EXISTS `index_MatchPlayerCrossRef_matchId` " +
-                            "ON `MatchPlayerCrossRef` (`matchId`)"
+                            "ON `MatchPlayerCrossRef` (`matchId`)",
                     )
                 }
             }

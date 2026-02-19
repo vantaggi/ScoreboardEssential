@@ -28,18 +28,18 @@ import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.domain.models.MatchEvent
+import it.vantaggi.scoreboardessential.domain.models.MatchReportData
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
-import it.vantaggi.scoreboardessential.domain.models.MatchEvent
-import it.vantaggi.scoreboardessential.domain.models.MatchReportData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
-import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
+import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -77,6 +77,7 @@ class MainViewModel(
     val serviceBindingStatus: LiveData<Boolean> = _serviceBindingStatus
 
     // Undo Stacks
+
     /**
      * Represents a single goal action that can be undone.
      * @property teamId The ID of the team that scored.
@@ -104,28 +105,34 @@ class MainViewModel(
 
     // LiveData for scores
     private val _team1Score = MutableLiveData(0)
+
     /** Current score for Team 1. */
     val team1Score: LiveData<Int> = _team1Score
 
     private val _team2Score = MutableLiveData(0)
+
     /** Current score for Team 2. */
     val team2Score: LiveData<Int> = _team2Score
 
     // LiveData for timer
     private val _matchTimerValue = MutableLiveData(0L)
+
     /** Current elapsed time of the match in milliseconds. */
     val matchTimerValue: LiveData<Long> = _matchTimerValue
 
     private val _isMatchTimerRunning = MutableLiveData(false)
+
     /** Status of the match timer (running or paused). */
     val isMatchTimerRunning: LiveData<Boolean> = _isMatchTimerRunning
 
     // LiveData for players
     private val _team1Players = MutableLiveData<List<PlayerWithRoles>>(emptyList())
+
     /** List of players currently assigned to Team 1 roster. */
     val team1Players: LiveData<List<PlayerWithRoles>> = _team1Players
 
     private val _team2Players = MutableLiveData<List<PlayerWithRoles>>(emptyList())
+
     /** List of players currently assigned to Team 2 roster. */
     val team2Players: LiveData<List<PlayerWithRoles>> = _team2Players
 
@@ -183,17 +190,20 @@ class MainViewModel(
     val allMatches: LiveData<List<MatchWithTeams>> = repository.allMatches.asLiveData()
 
     /** LiveData of all saved matches formatted for UI. */
-    val matchHistory: LiveData<List<MatchHistoryUiState>> = repository.allMatches
-        .map { matches ->
-            matches.map { match ->
-                val formatted = if (match.players.isNotEmpty()) {
-                    "Players: ${match.players.joinToString(", ") { it.playerName }}"
-                } else ""
-                MatchHistoryUiState(match, formatted)
-            }
-        }
-        .flowOn(Dispatchers.Default)
-        .asLiveData()
+    val matchHistory: LiveData<List<MatchHistoryUiState>> =
+        repository.allMatches
+            .map { matches ->
+                matches.map { match ->
+                    val formatted =
+                        if (match.players.isNotEmpty()) {
+                            "Players: ${match.players.joinToString(", ") { it.playerName }}"
+                        } else {
+                            ""
+                        }
+                    MatchHistoryUiState(match, formatted)
+                }
+            }.flowOn(Dispatchers.Default)
+            .asLiveData()
 
     /*
      * Receives local broadcasts from the Wear OS listener service.
@@ -854,17 +864,18 @@ class MainViewModel(
     }
 
     fun shareMatchResults() {
-        val data = MatchReportData(
-            team1Name = _team1Name.value ?: "TEAM 1",
-            team1Score = _team1Score.value ?: 0,
-            team1Color = _team1Color.value,
-            team1Players = _team1Players.value ?: emptyList(),
-            team2Name = _team2Name.value ?: "TEAM 2",
-            team2Score = _team2Score.value ?: 0,
-            team2Color = _team2Color.value,
-            team2Players = _team2Players.value ?: emptyList(),
-            matchEvents = _matchEvents.value ?: emptyList()
-        )
+        val data =
+            MatchReportData(
+                team1Name = _team1Name.value ?: "TEAM 1",
+                team1Score = _team1Score.value ?: 0,
+                team1Color = _team1Color.value,
+                team1Players = _team1Players.value ?: emptyList(),
+                team2Name = _team2Name.value ?: "TEAM 2",
+                team2Score = _team2Score.value ?: 0,
+                team2Color = _team2Color.value,
+                team2Players = _team2Players.value ?: emptyList(),
+                matchEvents = _matchEvents.value ?: emptyList(),
+            )
         shareMatchReportData.postValue(data)
     }
 

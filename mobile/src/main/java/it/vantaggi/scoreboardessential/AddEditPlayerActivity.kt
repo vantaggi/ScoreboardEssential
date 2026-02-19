@@ -6,9 +6,9 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -18,7 +18,6 @@ import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.views.PlayersManagementViewModelFactory
 import kotlinx.coroutines.launch
-import androidx.lifecycle.ViewModelProvider
 
 class AddEditPlayerActivity : AppCompatActivity() {
     private lateinit var viewModel: PlayersManagementViewModel
@@ -92,18 +91,23 @@ class AddEditPlayerActivity : AppCompatActivity() {
         }
 
     private fun savePlayer() {
-        val playerName = playerNameInput.text.toString().trim().replace("\\s+".toRegex(), " ")
+        val playerName =
+            playerNameInput.text
+                .toString()
+                .trim()
+                .replace("\\s+".toRegex(), " ")
         if (playerName.isEmpty()) {
             Toast.makeText(this, "Player name cannot be empty", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (playerName.length > MAX_PLAYER_NAME_LENGTH) {
-            Toast.makeText(
-                this,
-                "Player name is too long (max $MAX_PLAYER_NAME_LENGTH chars)",
-                Toast.LENGTH_SHORT,
-            ).show()
+            Toast
+                .makeText(
+                    this,
+                    "Player name is too long (max $MAX_PLAYER_NAME_LENGTH chars)",
+                    Toast.LENGTH_SHORT,
+                ).show()
             return
         }
 

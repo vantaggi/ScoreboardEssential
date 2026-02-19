@@ -17,7 +17,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class FormationViewTest {
-
     @Test
     fun setFormation_addsCorrectNumberOfChildViews() {
         // Use a themed context so Material components work
@@ -29,19 +28,20 @@ class FormationViewTest {
         // Set size so updateViews doesn't return early
         view.measure(
             View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(1500, View.MeasureSpec.EXACTLY)
+            View.MeasureSpec.makeMeasureSpec(1500, View.MeasureSpec.EXACTLY),
         )
         view.layout(0, 0, 1000, 1500)
 
         val p1 = PlayerWithRoles(Player(1, "GK", 0, 0), emptyList())
         val p2 = PlayerWithRoles(Player(2, "DEF", 0, 0), emptyList())
 
-        val formation = Formation(
-            goalkeeper = listOf(p1),
-            defenders = listOf(p2),
-            midfielders = emptyList(),
-            forwards = emptyList()
-        )
+        val formation =
+            Formation(
+                goalkeeper = listOf(p1),
+                defenders = listOf(p2),
+                midfielders = emptyList(),
+                forwards = emptyList(),
+            )
 
         view.setFormation(formation)
 

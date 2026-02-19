@@ -11,5 +11,5 @@ data class MatchReportData(
     val team2Score: Int,
     val team2Color: Int?,
     val team2Players: List<PlayerWithRoles>,
-    val matchEvents: List<MatchEvent>
+    val matchEvents: List<MatchEvent>,
 )

@@ -4,5 +4,5 @@ import it.vantaggi.scoreboardessential.database.MatchWithTeams
 
 data class MatchHistoryUiState(
     val matchWithTeams: MatchWithTeams,
-    val formattedPlayers: String
+    val formattedPlayers: String,
 )

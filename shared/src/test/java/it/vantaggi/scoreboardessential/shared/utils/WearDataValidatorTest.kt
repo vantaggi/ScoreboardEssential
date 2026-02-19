@@ -5,7 +5,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WearDataValidatorTest {
-
     @Test
     fun `isValidScore returns true for positive score`() {
         assertTrue(WearDataValidator.isValidScore(1))

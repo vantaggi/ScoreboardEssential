@@ -43,14 +43,15 @@ class TeamRosterAdapter(
         fun bind(playerWithRoles: PlayerWithRoles) {
             val player = playerWithRoles.player
             playerNameTextView.text = player.playerName
-            
+
             // Bind Initials
-            val initials = player.playerName
-                .split(" ")
-                .mapNotNull { it.firstOrNull()?.toString() }
-                .take(2)
-                .joinToString("")
-                .uppercase()
+            val initials =
+                player.playerName
+                    .split(" ")
+                    .mapNotNull { it.firstOrNull()?.toString() }
+                    .take(2)
+                    .joinToString("")
+                    .uppercase()
             playerInitialsTextView.text = if (initials.isNotEmpty()) initials else "?"
 
             playerRolesGroup.setRoles(playerWithRoles.roles)

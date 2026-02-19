@@ -34,9 +34,10 @@ class PlayerRepository(
         roleIds: List<Int>,
     ) {
         val playerId = playerDao.insert(player)
-        val crossRefs = roleIds.map { roleId ->
-            PlayerRoleCrossRef(playerId.toInt(), roleId)
-        }
+        val crossRefs =
+            roleIds.map { roleId ->
+                PlayerRoleCrossRef(playerId.toInt(), roleId)
+            }
         playerDao.addRolesToPlayer(crossRefs)
     }
 

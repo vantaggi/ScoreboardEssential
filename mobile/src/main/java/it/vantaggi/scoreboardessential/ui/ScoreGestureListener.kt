@@ -8,7 +8,6 @@ class ScoreGestureListener(
     private val onIncreaseScore: () -> Unit,
     private val onDecreaseScore: () -> Unit,
 ) : GestureDetector.SimpleOnGestureListener() {
-
     override fun onFling(
         e1: MotionEvent?,
         e2: MotionEvent,

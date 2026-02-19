@@ -16,8 +16,10 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 object MatchReportUtils {
-
-    fun generateAndGetShareIntent(context: Context, data: MatchReportData): Intent {
+    fun generateAndGetShareIntent(
+        context: Context,
+        data: MatchReportData,
+    ): Intent {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val view = inflater.inflate(R.layout.pdf_match_report, null)
 
@@ -48,49 +50,54 @@ object MatchReportUtils {
 
         // Populate Formations
         data.team1Players.forEach { player ->
-            val playerTextView = TextView(context).apply {
-                text = player.player.playerName
-                setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
-                setPadding(0, 4, 0, 4)
-            }
-            team1PlayersList.addView(playerTextView)
-        }
-
-        data.team2Players.forEach { player ->
-            val playerTextView = TextView(context).apply {
-                text = player.player.playerName
-                setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
-                setPadding(0, 4, 0, 4)
-            }
-            team2PlayersList.addView(playerTextView)
-        }
-
-        // Populate Scorers
-        val scorers = data.matchEvents
-            .filter { it.event == "Goal" && it.player != null }
-            .map { it.player!! }
-            .groupingBy { it }
-            .eachCount()
-
-        if (scorers.isNotEmpty()) {
-            scorers.forEach { (playerName, goalCount) ->
-                val scorerTextView = TextView(context).apply {
-                    text = "$playerName ($goalCount)"
+            val playerTextView =
+                TextView(context).apply {
+                    text = player.player.playerName
                     setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
                     setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
                     setPadding(0, 4, 0, 4)
                 }
+            team1PlayersList.addView(playerTextView)
+        }
+
+        data.team2Players.forEach { player ->
+            val playerTextView =
+                TextView(context).apply {
+                    text = player.player.playerName
+                    setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
+                    setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
+                    setPadding(0, 4, 0, 4)
+                }
+            team2PlayersList.addView(playerTextView)
+        }
+
+        // Populate Scorers
+        val scorers =
+            data.matchEvents
+                .filter { it.event == "Goal" && it.player != null }
+                .map { it.player!! }
+                .groupingBy { it }
+                .eachCount()
+
+        if (scorers.isNotEmpty()) {
+            scorers.forEach { (playerName, goalCount) ->
+                val scorerTextView =
+                    TextView(context).apply {
+                        text = "$playerName ($goalCount)"
+                        setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
+                        setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
+                        setPadding(0, 4, 0, 4)
+                    }
                 scorersList.addView(scorerTextView)
             }
         } else {
-            val noScorersTextView = TextView(context).apply {
-                text = "Nessun marcatore"
-                setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                setTextColor(ContextCompat.getColor(context, R.color.sidewalk_gray))
-                setPadding(0, 4, 0, 4)
-            }
+            val noScorersTextView =
+                TextView(context).apply {
+                    text = "Nessun marcatore"
+                    setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
+                    setTextColor(ContextCompat.getColor(context, R.color.sidewalk_gray))
+                    setPadding(0, 4, 0, 4)
+                }
             scorersList.addView(noScorersTextView)
         }
 

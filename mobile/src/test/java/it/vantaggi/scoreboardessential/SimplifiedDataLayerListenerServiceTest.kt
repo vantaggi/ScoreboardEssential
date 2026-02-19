@@ -1,9 +1,6 @@
 package it.vantaggi.scoreboardessential
 
-import android.content.Intent
-import android.util.Log
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.test.core.app.ApplicationProvider
+import android.net.Uri
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataItem
@@ -11,13 +8,10 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import org.junit.After
-import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.ArgumentMatchers.anyInt
-import org.mockito.Mock
 import org.mockito.MockedStatic
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.mockStatic
@@ -25,11 +19,9 @@ import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.shadows.ShadowLog
-import android.net.Uri
 
 @RunWith(RobolectricTestRunner::class)
 class SimplifiedDataLayerListenerServiceTest {
-
     private lateinit var service: SimplifiedDataLayerListenerService
     private lateinit var mockDataEventBuffer: DataEventBuffer
     private lateinit var mockDataEvent: DataEvent
@@ -105,11 +97,11 @@ class SimplifiedDataLayerListenerServiceTest {
         val sensitiveLog = logs.find { it.msg.contains("Broadcasted score update: T1=10, T2=5") }
 
         if (sensitiveLog != null) {
-             // This confirms the vulnerability exists (for reproduction)
-             // or fails if we fixed it.
-             // Since I want to verify the fix later, I should assert that it DOES NOT contain this.
-             // But for reproduction, I want to show it exists.
-             // I'll leave a comment.
+            // This confirms the vulnerability exists (for reproduction)
+            // or fails if we fixed it.
+            // Since I want to verify the fix later, I should assert that it DOES NOT contain this.
+            // But for reproduction, I want to show it exists.
+            // I'll leave a comment.
         }
 
         // To verify the fix, we assert that no log contains the sensitive values

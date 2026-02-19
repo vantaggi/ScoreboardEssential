@@ -60,12 +60,13 @@ class PlayersManagementAdapter(
             appearancesTextView.text = "🎮 ${player.appearances}"
 
             // Initials for Avatar
-            val initials = player.playerName
-                .split(" ")
-                .mapNotNull { it.firstOrNull()?.toString() }
-                .take(2)
-                .joinToString("")
-                .uppercase()
+            val initials =
+                player.playerName
+                    .split(" ")
+                    .mapNotNull { it.firstOrNull()?.toString() }
+                    .take(2)
+                    .joinToString("")
+                    .uppercase()
             avatarTextView.text = if (initials.isNotEmpty()) initials else "?"
 
             // Colorful Avatar Background
@@ -79,7 +80,7 @@ class PlayersManagementAdapter(
             cardView.setOnClickListener {
                 onPlayerClick(playerWithRoles)
             }
-            
+
             editButton.setOnClickListener {
                 onPlayerClick(playerWithRoles)
             }
