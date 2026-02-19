@@ -202,6 +202,25 @@ class WearViewModel(
         _matchTimer.value = String.format("%02d:%02d", minutes, seconds)
     }
 
+    fun syncMatchTimer(
+        millis: Long,
+        isRunning: Boolean,
+    ) {
+        matchTimeInSeconds = millis / 1000
+        isMatchTimerRunning = isRunning
+
+        // Update display immediately
+        val minutes = matchTimeInSeconds / 60
+        val seconds = matchTimeInSeconds % 60
+        _matchTimer.value = String.format("%02d:%02d", minutes, seconds)
+
+        if (isRunning) {
+            startMatchTimerInternal()
+        } else {
+            matchTimerJob?.cancel()
+        }
+    }
+
     // --- Keeper Timer Management ---
     fun setKeeperTimerState(newState: KeeperTimerState) {
         // Prevent restarting the timer if the state is basically the same

@@ -50,6 +50,7 @@ class MatchTimerService : Service() {
     val isMatchTimerRunning = _isMatchTimerRunning.asStateFlow()
     private var matchStartTime = 0L
     private var elapsedTimeOnPause = 0L
+    private var lastSyncElapsedTime = 0L
 
     // Keeper Timer
     private var keeperTimerJob: Job? = null
@@ -74,6 +75,8 @@ class MatchTimerService : Service() {
         private const val KEY_KEEPER_END_TIME = "keeper_end_time"
         private const val KEY_KEEPER_REMAINING_PAUSE = "keeper_remaining_pause"
         private const val KEY_KEEPER_RUNNING = "keeper_running"
+
+        var SYNC_INTERVAL = 60000L
     }
 
     override fun onCreate() {
@@ -121,15 +124,31 @@ class MatchTimerService : Service() {
             wakeLock?.acquire()
         }
         matchStartTime = System.currentTimeMillis() - elapsedTimeOnPause
+        lastSyncElapsedTime = elapsedTimeOnPause
         matchTimerJob =
             scope.launch {
+                if (!fromRemote) {
+                    val data =
+                        mapOf(
+                            WearConstants.KEY_TIMER_MILLIS to elapsedTimeOnPause,
+                            WearConstants.KEY_TIMER_RUNNING to true,
+                        )
+                    scope.launch {
+                        connectionManager.sendData(
+                            path = WearConstants.PATH_TIMER_STATE,
+                            data = data,
+                        )
+                    }
+                }
+
                 while (isActive) {
                     val now = System.currentTimeMillis()
                     val elapsed = now - matchStartTime
                     _matchTimerValue.value = elapsed
                     updateNotification(elapsed)
 
-                    if (!fromRemote) {
+                    if (!fromRemote && elapsed - lastSyncElapsedTime >= SYNC_INTERVAL) {
+                        lastSyncElapsedTime = elapsed
                         val data =
                             mapOf(
                                 WearConstants.KEY_TIMER_MILLIS to elapsed,

@@ -157,4 +157,31 @@ class WearViewModelTest {
             assertTrue("Team 1 score should remain 0", viewModel.team1Score.value == 0)
             assertTrue("Team 2 score should remain 0", viewModel.team2Score.value == 0)
         }
+
+    @Test
+    fun `syncMatchTimer updates state and controls internal timer`() =
+        runTest {
+            // Arrange
+            val timeMillis = 60000L // 1 minute
+            val expectedTime = "01:00"
+
+            // Act: Start Timer
+            viewModel.syncMatchTimer(timeMillis, true)
+
+            // Assert
+            assertTrue("Timer value should be updated", viewModel.matchTimer.value == expectedTime)
+
+            // Access private field to check if job is active
+            val timerJobField = WearViewModel::class.java.getDeclaredField("matchTimerJob")
+            timerJobField.isAccessible = true
+            val job = timerJobField.get(viewModel) as? kotlinx.coroutines.Job
+            assertTrue("Timer job should be active", job?.isActive == true)
+
+            // Act: Stop Timer
+            viewModel.syncMatchTimer(timeMillis, false)
+
+            // Assert
+            val jobStopped = timerJobField.get(viewModel) as? kotlinx.coroutines.Job
+            assertTrue("Timer job should be cancelled", jobStopped?.isActive == false || jobStopped?.isCancelled == true)
+        }
 }
