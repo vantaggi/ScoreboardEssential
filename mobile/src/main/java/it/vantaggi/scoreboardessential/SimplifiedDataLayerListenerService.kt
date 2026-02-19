@@ -24,10 +24,14 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         super.onDataChanged(dataEvents)
-        Log.d(TAG, "📥 [${System.currentTimeMillis()}] Data received, count: ${dataEvents.count}")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "📥 [${System.currentTimeMillis()}] Data received, count: ${dataEvents.count}")
+        }
 
         dataEvents.forEachIndexed { index, event ->
-            Log.d(TAG, "  Event $index: type=${event.type}, path=${event.dataItem.uri.path}")
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "  Event $index: type=${event.type}, path=${event.dataItem.uri.path}")
+            }
             if (event.type == DataEvent.TYPE_CHANGED) {
                 val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
                 when (event.dataItem.uri.path) {
@@ -36,7 +40,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                         val team2 = dataMap.getInt(WearConstants.KEY_TEAM2_SCORE, 0)
 
                         if (!WearDataValidator.isValidScore(team1) || !WearDataValidator.isValidScore(team2)) {
-                            Log.w(TAG, "Invalid score received: T1=$team1, T2=$team2. Ignoring.")
+                            Log.w(TAG, "Invalid score received. Ignoring.")
                             return@forEachIndexed
                         }
 
@@ -46,14 +50,16 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                                 putExtra(WearConstants.KEY_TEAM2_SCORE, team2)
                             }
                         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-                        Log.d(TAG, "Broadcasted score update")
+                        if (BuildConfig.DEBUG) {
+                            Log.d(TAG, "Broadcasted score update")
+                        }
                     }
                     WearConstants.PATH_TIMER_STATE -> {
                         val millis = dataMap.getLong(WearConstants.KEY_TIMER_MILLIS, 0L)
                         val isRunning = dataMap.getBoolean(WearConstants.KEY_TIMER_RUNNING, false)
 
                         if (!WearDataValidator.isValidTimer(millis)) {
-                            Log.w(TAG, "Invalid timer value received: $millis. Ignoring.")
+                            Log.w(TAG, "Invalid timer value received. Ignoring.")
                             return@forEachIndexed
                         }
 
@@ -63,7 +69,9 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                                 putExtra(WearConstants.KEY_TIMER_RUNNING, isRunning)
                             }
                         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-                        Log.d(TAG, "Broadcasted timer update")
+                        if (BuildConfig.DEBUG) {
+                            Log.d(TAG, "Broadcasted timer update")
+                        }
                     }
                     WearConstants.PATH_TEAM_NAMES -> {
                         val intent = Intent(ACTION_TEAM_NAMES_UPDATE)
@@ -74,7 +82,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                         val isRunning = dataMap.getBoolean(WearConstants.KEY_KEEPER_RUNNING, false)
 
                         if (!WearDataValidator.isValidTimer(millis)) {
-                            Log.w(TAG, "Invalid keeper timer value received: $millis. Ignoring.")
+                            Log.w(TAG, "Invalid keeper timer value received. Ignoring.")
                             return@forEachIndexed
                         }
 
@@ -100,11 +108,15 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
         super.onMessageReceived(messageEvent)
-        Log.d(TAG, "Message received: ${messageEvent.path}")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Message received: ${messageEvent.path}")
+        }
         if (messageEvent.path == WearConstants.MSG_REQUEST_SYNC) {
             val intent = Intent(ACTION_REQUEST_SYNC)
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-            Log.d(TAG, "Broadcasted sync request")
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Broadcasted sync request")
+            }
         }
     }
 }

@@ -82,6 +82,33 @@ class FormationTest {
     }
 
     @Test
+    fun `fromPlayers assigns player with unknown role category to midfielders`() {
+        // Given
+        val playerWithUnknownRole =
+            PlayerWithRoles(
+                Player(5, "Unknown", 0, 0),
+                listOf(Role(5, "Unknown Role", "UNKNOWN")),
+            )
+        val players = listOf(playerWithUnknownRole)
+
+        // When
+        val formation = Formation.fromPlayers(players)
+
+        // Then
+        assertEquals(0, formation.goalkeeper.size)
+        assertEquals(0, formation.defenders.size)
+        assertEquals(1, formation.midfielders.size)
+        assertEquals(0, formation.forwards.size)
+
+        assertEquals(
+            "Unknown",
+            formation.midfielders
+                .first()
+                .player.playerName,
+        )
+    }
+
+    @Test
     fun `getFormationString returns correct format`() {
         // Given
         val formation =
