@@ -38,6 +38,7 @@ import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchReportData
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
+import it.vantaggi.scoreboardessential.ui.ScoreGestureListener
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
 import it.vantaggi.scoreboardessential.utils.TimeUtils
@@ -402,34 +403,15 @@ class MainActivity :
         team1GestureDetector =
             GestureDetector(
                 this,
-                object : GestureDetector.SimpleOnGestureListener() {
-                    override fun onFling(
-                        e1: MotionEvent?,
-                        e2: MotionEvent,
-                        velocityX: Float,
-                        velocityY: Float,
-                    ): Boolean {
-                        e1?.let {
-                            val diffY = e2.y - it.y
-                            if (Math.abs(diffY) > 100) {
-                                if (diffY < 0) {
-                                    viewModel.addScore(1)
-                                    playGoalAnimation(1)
-                                } else {
-                                    viewModel.subtractScore(1)
-                                }
-                                return true
-                            }
-                        }
-                        return false
-                    }
-
-                    override fun onDoubleTap(e: MotionEvent): Boolean {
+                ScoreGestureListener(
+                    onIncreaseScore = {
                         viewModel.addScore(1)
                         playGoalAnimation(1)
-                        return true
-                    }
-                },
+                    },
+                    onDecreaseScore = {
+                        viewModel.subtractScore(1)
+                    },
+                ),
             )
 
         findViewById<View>(R.id.team1_card).setOnTouchListener { _, event ->
@@ -440,34 +422,15 @@ class MainActivity :
         team2GestureDetector =
             GestureDetector(
                 this,
-                object : GestureDetector.SimpleOnGestureListener() {
-                    override fun onFling(
-                        e1: MotionEvent?,
-                        e2: MotionEvent,
-                        velocityX: Float,
-                        velocityY: Float,
-                    ): Boolean {
-                        e1?.let {
-                            val diffY = e2.y - it.y
-                            if (Math.abs(diffY) > 100) {
-                                if (diffY < 0) {
-                                    viewModel.addScore(2)
-                                    playGoalAnimation(2)
-                                } else {
-                                    viewModel.subtractScore(2)
-                                }
-                                return true
-                            }
-                        }
-                        return false
-                    }
-
-                    override fun onDoubleTap(e: MotionEvent): Boolean {
+                ScoreGestureListener(
+                    onIncreaseScore = {
                         viewModel.addScore(2)
                         playGoalAnimation(2)
-                        return true
-                    }
-                },
+                    },
+                    onDecreaseScore = {
+                        viewModel.subtractScore(2)
+                    },
+                ),
             )
 
         findViewById<View>(R.id.team2_card).setOnTouchListener { _, event ->
