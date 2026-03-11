@@ -22,7 +22,14 @@ class SelectScorerAdapter(
             LayoutInflater
                 .from(parent.context)
                 .inflate(R.layout.scorer_item, parent, false)
-        return ScorerViewHolder(view)
+        val holder = ScorerViewHolder(view)
+        view.setOnClickListener {
+            val position = holder.bindingAdapterPosition
+            if (position != RecyclerView.NO_POSITION) {
+                onScorerClicked(getItem(position))
+            }
+        }
+        return holder
     }
 
     override fun onBindViewHolder(
@@ -31,9 +38,6 @@ class SelectScorerAdapter(
     ) {
         val player = getItem(position)
         holder.bind(player)
-        holder.itemView.setOnClickListener {
-            onScorerClicked(player)
-        }
     }
 
     class ScorerViewHolder(
