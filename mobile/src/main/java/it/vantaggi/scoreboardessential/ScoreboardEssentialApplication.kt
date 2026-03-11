@@ -17,7 +17,7 @@ class ScoreboardEssentialApplication : Application() {
     val playerRepository by lazy { PlayerRepository(database.playerDao()) }
     val matchRepository by lazy { MatchRepository(database.matchDao(), this, colorRepository) }
     val userPreferencesRepository by lazy { UserPreferencesRepository(this) }
-    val matchSettingsRepository by lazy { MatchSettingsRepository(this) }
+    val matchSettingsRepository by lazy { MatchSettingsRepository(this, colorRepository) }
 
     override fun attachBaseContext(base: android.content.Context) {
         super.attachBaseContext(
