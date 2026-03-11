@@ -40,9 +40,13 @@ class WearDataLayerService : WearableListenerService() {
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
-        Log.d(TAG, "📥 [${System.currentTimeMillis()}] Data received, count: ${dataEvents.count}")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "📥 [${System.currentTimeMillis()}] Data received, count: ${dataEvents.count}")
+        }
         dataEvents.forEach { event ->
-            Log.d(TAG, "  Event: type=${event.type}, path=${event.dataItem.uri.path}")
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "  Event: type=${event.type}, path=${event.dataItem.uri.path}")
+            }
             if (event.type == DataEvent.TYPE_CHANGED) {
                 handleData(event.dataItem)
             }
@@ -51,7 +55,9 @@ class WearDataLayerService : WearableListenerService() {
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
         super.onMessageReceived(messageEvent)
-        Log.d(TAG, "Message received: ${messageEvent.path}")
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Message received: ${messageEvent.path}")
+        }
         // Handle specific messages if needed, e.g., triggers not carrying data
     }
 
@@ -64,7 +70,9 @@ class WearDataLayerService : WearableListenerService() {
                 val team2 = dataMap.getInt(WearConstants.KEY_TEAM2_SCORE, 0)
 
                 if (!WearDataValidator.isValidScore(team1) || !WearDataValidator.isValidScore(team2)) {
-                    Log.w(TAG, "Invalid score received: T1=$team1, T2=$team2. Ignoring.")
+                    if (BuildConfig.DEBUG) {
+                        Log.w(TAG, "Invalid score received. Ignoring.")
+                    }
                     return
                 }
 
@@ -74,7 +82,9 @@ class WearDataLayerService : WearableListenerService() {
                         putExtra(EXTRA_TEAM2_SCORE, team2)
                     }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-                Log.d(TAG, "Broadcasted score update: T1=$team1, T2=$team2")
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "Broadcasted score update")
+                }
             }
             WearConstants.PATH_TEAM_NAMES -> {
                 val team1Name = dataMap.getString(WearConstants.KEY_TEAM1_NAME, "Team 1")
@@ -85,7 +95,9 @@ class WearDataLayerService : WearableListenerService() {
                         putExtra(EXTRA_TEAM2_NAME, team2Name)
                     }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
-                Log.d(TAG, "Broadcasted team names: $team1Name vs $team2Name")
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "Broadcasted team names update")
+                }
             }
             WearConstants.PATH_TEAM1_COLOR -> {
                 val color = dataMap.getInt("color", 0)
@@ -110,7 +122,9 @@ class WearDataLayerService : WearableListenerService() {
                 val running = dataMap.getBoolean(WearConstants.KEY_TIMER_RUNNING, false)
 
                 if (!WearDataValidator.isValidTimer(millis)) {
-                    Log.w(TAG, "Invalid timer value received: $millis. Ignoring.")
+                    if (BuildConfig.DEBUG) {
+                        Log.w(TAG, "Invalid timer value received. Ignoring.")
+                    }
                     return
                 }
 
@@ -126,7 +140,9 @@ class WearDataLayerService : WearableListenerService() {
                 val running = dataMap.getBoolean(WearConstants.KEY_KEEPER_RUNNING, false)
 
                 if (!WearDataValidator.isValidTimer(millis)) {
-                    Log.w(TAG, "Invalid keeper timer value received: $millis. Ignoring.")
+                    if (BuildConfig.DEBUG) {
+                        Log.w(TAG, "Invalid keeper timer value received. Ignoring.")
+                    }
                     return
                 }
 

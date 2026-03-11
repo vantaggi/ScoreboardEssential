@@ -63,7 +63,9 @@ class PlayerSelectionActivity : ComponentActivity() {
                             WearPlayer(player.name, player.roles)
                         }
                     adapter.submitList(wearPlayers)
-                    Log.d("PlayerSelection", "Loaded ${wearPlayers.size} players from mobile app")
+                    if (BuildConfig.DEBUG) {
+                        Log.d("PlayerSelection", "Loaded ${wearPlayers.size} players")
+                    }
                 }
             }
         }
@@ -132,7 +134,9 @@ class PlayerAdapter(
             playerName.text = player.name
 
             val rolesText = player.roles.joinToString(", ")
-            Log.d("PlayerAdapter", "Binding player ${player.name} with roles: $rolesText")
+            if (BuildConfig.DEBUG) {
+                Log.d("PlayerAdapter", "Binding player")
+            }
 
             if (rolesText.isEmpty()) {
                 playerRole.text = "No role"
