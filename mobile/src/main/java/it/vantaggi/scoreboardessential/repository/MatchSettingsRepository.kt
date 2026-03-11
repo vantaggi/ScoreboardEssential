@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 
 class MatchSettingsRepository(
     context: Context,
+    private val colorRepository: ColorRepository,
 ) {
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences("match_settings_prefs", Context.MODE_PRIVATE)
@@ -49,7 +50,7 @@ class MatchSettingsRepository(
 
     suspend fun getTeam1Color(): Int =
         withContext(Dispatchers.IO) {
-            sharedPreferences.getInt(KEY_TEAM1_COLOR, Color.parseColor("#FFD600"))
+            sharedPreferences.getInt(KEY_TEAM1_COLOR, colorRepository.getTeam1DefaultColor())
         }
 
     suspend fun setTeam2Color(color: Int) =
@@ -61,7 +62,7 @@ class MatchSettingsRepository(
 
     suspend fun getTeam2Color(): Int =
         withContext(Dispatchers.IO) {
-            sharedPreferences.getInt(KEY_TEAM2_COLOR, Color.parseColor("#76FF03"))
+            sharedPreferences.getInt(KEY_TEAM2_COLOR, colorRepository.getTeam2DefaultColor())
         }
 
     suspend fun setKeeperTimerDuration(duration: Long) =
@@ -84,8 +85,8 @@ class MatchSettingsRepository(
                         MatchSettings(
                             prefs.getString(KEY_TEAM1_NAME, "Team 1") ?: "Team 1",
                             prefs.getString(KEY_TEAM2_NAME, "Team 2") ?: "Team 2",
-                            prefs.getInt(KEY_TEAM1_COLOR, Color.parseColor("#FFD600")),
-                            prefs.getInt(KEY_TEAM2_COLOR, Color.parseColor("#76FF03")),
+                            prefs.getInt(KEY_TEAM1_COLOR, colorRepository.getTeam1DefaultColor()),
+                            prefs.getInt(KEY_TEAM2_COLOR, colorRepository.getTeam2DefaultColor()),
                             prefs.getLong(KEY_KEEPER_TIMER_DURATION, 30L),
                         ),
                     )
@@ -96,8 +97,8 @@ class MatchSettingsRepository(
                 MatchSettings(
                     sharedPreferences.getString(KEY_TEAM1_NAME, "Team 1") ?: "Team 1",
                     sharedPreferences.getString(KEY_TEAM2_NAME, "Team 2") ?: "Team 2",
-                    sharedPreferences.getInt(KEY_TEAM1_COLOR, Color.parseColor("#FFD600")),
-                    sharedPreferences.getInt(KEY_TEAM2_COLOR, Color.parseColor("#76FF03")),
+                    sharedPreferences.getInt(KEY_TEAM1_COLOR, colorRepository.getTeam1DefaultColor()),
+                    sharedPreferences.getInt(KEY_TEAM2_COLOR, colorRepository.getTeam2DefaultColor()),
                     sharedPreferences.getLong(KEY_KEEPER_TIMER_DURATION, 30L),
                 ),
             )
