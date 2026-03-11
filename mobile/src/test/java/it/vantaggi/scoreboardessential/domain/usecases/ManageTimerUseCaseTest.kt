@@ -1,7 +1,6 @@
 package it.vantaggi.scoreboardessential.domain.usecases
 
 import it.vantaggi.scoreboardessential.service.MatchTimerService
-import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -20,7 +19,6 @@ import org.mockito.kotlin.whenever
 @ExperimentalCoroutinesApi
 class ManageTimerUseCaseTest {
     private lateinit var timerService: MatchTimerService
-    private lateinit var wearDataSync: OptimizedWearDataSync
     private lateinit var useCase: ManageTimerUseCase
 
     // Flows to mock service behavior
@@ -30,7 +28,6 @@ class ManageTimerUseCaseTest {
     @Before
     fun setup() {
         timerService = mock()
-        wearDataSync = mock()
 
         // Stub flows
         whenever(timerService.isMatchTimerRunning).thenReturn(isRunningFlow)
@@ -69,7 +66,7 @@ class ManageTimerUseCaseTest {
             null
         }.`when`(timerService).updateMatchTimer(any(), any())
 
-        useCase = ManageTimerUseCase(timerService, wearDataSync)
+        useCase = ManageTimerUseCase(timerService)
     }
 
     @Test
