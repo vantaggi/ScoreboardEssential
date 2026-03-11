@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -183,5 +184,55 @@ class WearViewModelTest {
             // Assert
             val jobStopped = timerJobField.get(viewModel) as? kotlinx.coroutines.Job
             assertTrue("Timer job should be cancelled", jobStopped?.isActive == false || jobStopped?.isCancelled == true)
+        }
+
+    @Test
+    fun `resetMatchTimer resets timer state`() =
+        runTest {
+            // Arrange
+            viewModel.syncMatchTimer(60000L, true) // 01:00, running
+
+            // Act
+            viewModel.resetMatchTimer()
+
+            // Assert
+            assertEquals("00:00", viewModel.matchTimer.value)
+
+            val matchTimeField = WearViewModel::class.java.getDeclaredField("matchTimeInSeconds")
+            matchTimeField.isAccessible = true
+            assertEquals(0L, matchTimeField.get(viewModel))
+
+            val isRunningField = WearViewModel::class.java.getDeclaredField("isMatchTimerRunning")
+            isRunningField.isAccessible = true
+            assertEquals(false, isRunningField.get(viewModel))
+
+            val timerJobField = WearViewModel::class.java.getDeclaredField("matchTimerJob")
+            timerJobField.isAccessible = true
+            val job = timerJobField.get(viewModel) as? kotlinx.coroutines.Job
+            assertTrue("Timer job should be cancelled", job?.isActive != true)
+        }
+
+    @Test
+    fun `resetMatch resets scores and timers`() =
+        runTest {
+            // Arrange
+            viewModel.updateScoresFromMobile(2, 3)
+            viewModel.syncMatchTimer(60000L, true)
+
+            // Act
+            viewModel.resetMatch(fromRemote = true)
+
+            // Assert
+            assertEquals(0, viewModel.team1Score.value)
+            assertEquals(0, viewModel.team2Score.value)
+            assertEquals("00:00", viewModel.matchTimer.value)
+
+            val matchTimeField = WearViewModel::class.java.getDeclaredField("matchTimeInSeconds")
+            matchTimeField.isAccessible = true
+            assertEquals(0L, matchTimeField.get(viewModel))
+
+            val isRunningField = WearViewModel::class.java.getDeclaredField("isMatchTimerRunning")
+            isRunningField.isAccessible = true
+            assertEquals(false, isRunningField.get(viewModel))
         }
 }
