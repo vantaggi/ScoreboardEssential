@@ -492,9 +492,10 @@ class MainActivity :
     private fun showAddPlayerToTeamDialog(team: Int) {
         val allPlayers = viewModel.allPlayers.value ?: emptyList()
         val teamPlayers = if (team == 1) viewModel.team1Players.value else viewModel.team2Players.value
+        val teamPlayerIds = teamPlayers?.map { it.player.playerId }?.toSet() ?: emptySet()
         val availablePlayers =
             allPlayers.filter { playerWithRoles ->
-                teamPlayers?.none { it.player.playerId == playerWithRoles.player.playerId } ?: true
+                !teamPlayerIds.contains(playerWithRoles.player.playerId)
             }
 
         if (availablePlayers.isEmpty()) {
