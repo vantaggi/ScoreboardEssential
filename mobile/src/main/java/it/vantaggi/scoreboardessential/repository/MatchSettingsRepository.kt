@@ -2,7 +2,6 @@ package it.vantaggi.scoreboardessential.repository
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.graphics.Color
 import androidx.core.content.edit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
