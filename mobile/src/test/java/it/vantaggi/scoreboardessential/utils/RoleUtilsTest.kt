@@ -33,6 +33,10 @@ class RoleUtilsTest {
         "Attacking Midfielder, AM",
         "Very Long Role Name, VLR",
         "A B, AB",
+        "Coach, COA",
+        "Technical Director, TD",
+        "Unknown Role Name, URN",
+        "lowercase role, LR",
         // Edge Cases
         "'', ''", // Empty string
         "'   ', ''", // Spaces only
