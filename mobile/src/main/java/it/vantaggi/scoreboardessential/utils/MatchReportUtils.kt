@@ -72,18 +72,21 @@ object MatchReportUtils {
         }
 
         // Populate Scorers
-        val scorers =
-            data.matchEvents
-                .filter { it.event == "Goal" && it.player != null }
-                .map { it.player!! }
-                .groupingBy { it }
-                .eachCount()
+        val scorers = mutableMapOf<String, Int>()
+        data.matchEvents.forEach { event ->
+            if (event.event == "Goal" && event.player != null) {
+                scorers[event.player] = (scorers[event.player] ?: 0) + 1
+            }
+        }
 
         if (scorers.isNotEmpty()) {
+            val sb = StringBuilder()
             scorers.forEach { (playerName, goalCount) ->
+                sb.setLength(0)
+                sb.append(playerName).append(" (").append(goalCount).append(")")
                 val scorerTextView =
                     TextView(context).apply {
-                        text = "$playerName ($goalCount)"
+                        text = sb.toString()
                         setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
                         setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
                         setPadding(0, 4, 0, 4)
