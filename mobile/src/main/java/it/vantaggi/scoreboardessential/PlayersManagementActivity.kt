@@ -139,7 +139,7 @@ class PlayersManagementActivity : AppCompatActivity() {
     private fun setupRoleFilterChips(roles: List<it.vantaggi.scoreboardessential.database.Role>) {
         rolesFilterChipGroup.removeAllViews()
 
-        val inflater = android.view.LayoutInflater.from(this)
+        val inflater = layoutInflater
 
         // Add "All" chip
         val allChip =

@@ -69,15 +69,18 @@ class FormationView
             val midY = 0.50f
             val fwdY = 0.25f
 
-            addPlayersRow(currentFormation.goalkeeper, gkY)
-            addPlayersRow(currentFormation.defenders, defY)
-            addPlayersRow(currentFormation.midfielders, midY)
-            addPlayersRow(currentFormation.forwards, fwdY)
+            val inflater = LayoutInflater.from(context)
+
+            addPlayersRow(currentFormation.goalkeeper, gkY, inflater)
+            addPlayersRow(currentFormation.defenders, defY, inflater)
+            addPlayersRow(currentFormation.midfielders, midY, inflater)
+            addPlayersRow(currentFormation.forwards, fwdY, inflater)
         }
 
         private fun addPlayersRow(
             players: List<PlayerWithRoles>,
             yPercent: Float,
+            inflater: LayoutInflater,
         ) {
             if (players.isEmpty()) return
 
@@ -86,7 +89,7 @@ class FormationView
             val spacing = width.toFloat() / (count + 1)
 
             players.forEachIndexed { index, player ->
-                val playerView = LayoutInflater.from(context).inflate(R.layout.view_formation_player_marker, this, false)
+                val playerView = inflater.inflate(R.layout.view_formation_player_marker, this, false)
 
                 // Setup dati giocatore
                 val cardView = playerView.findViewById<MaterialCardView>(R.id.card_avatar)
