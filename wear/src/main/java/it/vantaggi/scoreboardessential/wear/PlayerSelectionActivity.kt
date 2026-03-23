@@ -16,6 +16,8 @@ import androidx.wear.widget.WearableLinearLayoutManager
 import androidx.wear.widget.WearableRecyclerView
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
+import it.vantaggi.scoreboardessential.shared.communication.WearConstants
+import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 import kotlinx.coroutines.launch
 
 data class WearPlayer(
@@ -35,7 +37,16 @@ class PlayerSelectionActivity : ComponentActivity() {
         setContentView(R.layout.activity_player_selection)
 
         messageClient = Wearable.getMessageClient(this)
-        teamNumber = intent.getIntExtra("team_number", 1)
+        val rawTeamNumber = intent.getIntExtra(WearConstants.EXTRA_TEAM_NUMBER, 1)
+
+        if (WearDataValidator.isValidTeamNumber(rawTeamNumber)) {
+            teamNumber = rawTeamNumber
+        } else {
+            teamNumber = 1
+            if (BuildConfig.DEBUG) {
+                Log.w("PlayerSelection", "Invalid team number received. Defaulting to 1.")
+            }
+        }
 
         setupRecyclerView()
         observeViewModel()

@@ -34,4 +34,29 @@ class WearDataValidatorTest {
     fun `isValidTimer returns false for negative timer`() {
         assertFalse(WearDataValidator.isValidTimer(-1000L))
     }
+
+    @Test
+    fun `isValidTeamNumber returns true for team 1`() {
+        assertTrue(WearDataValidator.isValidTeamNumber(1))
+    }
+
+    @Test
+    fun `isValidTeamNumber returns true for team 2`() {
+        assertTrue(WearDataValidator.isValidTeamNumber(2))
+    }
+
+    @Test
+    fun `isValidTeamNumber returns false for invalid team 0`() {
+        assertFalse(WearDataValidator.isValidTeamNumber(0))
+    }
+
+    @Test
+    fun `isValidTeamNumber returns false for invalid team 3`() {
+        assertFalse(WearDataValidator.isValidTeamNumber(3))
+    }
+
+    @Test
+    fun `isValidTeamNumber returns false for negative team number`() {
+        assertFalse(WearDataValidator.isValidTeamNumber(-1))
+    }
 }
