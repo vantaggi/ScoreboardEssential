@@ -19,4 +19,12 @@ object WearDataValidator {
      * @return True if the timer value is valid (>= 0), false otherwise.
      */
     fun isValidTimer(millis: Long): Boolean = millis >= 0
+
+    /**
+     * Validates that the team number is valid (1 or 2).
+     *
+     * @param team Number of the team to validate.
+     * @return True if the team number is valid (1 or 2), false otherwise.
+     */
+    fun isValidTeamNumber(team: Int): Boolean = team in 1..2
 }

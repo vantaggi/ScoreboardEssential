@@ -49,6 +49,8 @@ object WearConstants {
     const val KEY_MATCH_ACTIVE = "match_active"
     const val KEY_TEST_DATA = "test_data"
 
+    const val EXTRA_TEAM_NUMBER = "team_number"
+
     // Retry Logic
     const val MAX_RETRY_ATTEMPTS = 3
     const val RETRY_DELAY_MS = 200L

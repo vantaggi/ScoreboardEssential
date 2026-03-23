@@ -10,6 +10,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.wear.remote.interactions.RemoteActivityHelper
+import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 
@@ -236,7 +237,7 @@ class MainActivity : ComponentActivity() {
                     viewModel.showPlayerSelection.collect { teamNumber ->
                         teamNumber?.let {
                             val intent = Intent(this@MainActivity, PlayerSelectionActivity::class.java)
-                            intent.putExtra("team_number", it)
+                            intent.putExtra(WearConstants.EXTRA_TEAM_NUMBER, it)
                             startActivity(intent)
                             viewModel.clearPlayerSelectionEvent()
                         }
