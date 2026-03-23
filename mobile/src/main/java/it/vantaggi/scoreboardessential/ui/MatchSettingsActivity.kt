@@ -8,6 +8,9 @@ import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.databinding.ActivityMatchSettingsBinding
+import android.os.Vibrator
+import android.os.VibrationEffect
+import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 
 class MatchSettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMatchSettingsBinding
@@ -122,6 +125,8 @@ class MatchSettingsActivity : AppCompatActivity() {
         }
 
         binding.saveSettingsButton.setOnClickListener {
+            val vibrator = getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
+            vibrator?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_CONFIRM, -1))
             viewModel.saveTeam1Name(binding.team1NameEdittext.text.toString())
             viewModel.saveTeam2Name(binding.team2NameEdittext.text.toString())
 

@@ -20,10 +20,15 @@
         android:progressDrawable="@drawable/circular_progress_bar" />
 
     <!-- Layer 2: UI Content (Top) -->
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.wear.widget.BoxInsetLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="4dp">
+        android:layout_height="match_parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="4dp"
+            app:layout_boxedEdges="all">
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideline_top"
@@ -163,5 +168,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginBottom="12dp"/>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.wear.widget.BoxInsetLayout>
 </FrameLayout>

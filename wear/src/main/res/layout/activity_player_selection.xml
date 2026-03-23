@@ -18,12 +18,21 @@
             android:text="WHO SCORED?"
             android:textAppearance="?attr/textAppearanceHeadlineMedium"
             android:gravity="center"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="8dp" />
 
         <androidx.wear.widget.WearableRecyclerView
             android:id="@+id/player_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+
+        <TextView
+            android:id="@+id/empty_state_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="No players found."
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:gravity="center"
+            android:visibility="gone" />
 
     </LinearLayout>
 

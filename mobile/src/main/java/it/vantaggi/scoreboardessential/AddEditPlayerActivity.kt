@@ -18,6 +18,9 @@ import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.views.PlayersManagementViewModelFactory
 import kotlinx.coroutines.launch
+import android.os.Vibrator
+import android.os.VibrationEffect
+import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 
 class AddEditPlayerActivity : AppCompatActivity() {
     private lateinit var viewModel: PlayersManagementViewModel
@@ -84,6 +87,8 @@ class AddEditPlayerActivity : AppCompatActivity() {
                 true
             }
             R.id.action_save -> {
+                val vibrator = getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
+                vibrator?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_CONFIRM, -1))
                 savePlayer()
                 true
             }

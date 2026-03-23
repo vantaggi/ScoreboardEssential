@@ -74,6 +74,16 @@ class PlayerSelectionActivity : ComponentActivity() {
                             WearPlayer(player.name, player.roles)
                         }
                     adapter.submitList(wearPlayers)
+
+                    val emptyStateText = findViewById<TextView>(R.id.empty_state_text)
+                    if (wearPlayers.isEmpty()) {
+                        playerList.visibility = View.GONE
+                        emptyStateText.visibility = View.VISIBLE
+                    } else {
+                        playerList.visibility = View.VISIBLE
+                        emptyStateText.visibility = View.GONE
+                    }
+
                     if (BuildConfig.DEBUG) {
                         Log.d("PlayerSelection", "Loaded ${wearPlayers.size} players")
                     }
@@ -158,7 +168,10 @@ class PlayerAdapter(
             }
 
             itemView.setOnClickListener {
-                onPlayerClick(player)
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onPlayerClick(player)
+                }
             }
         }
     }

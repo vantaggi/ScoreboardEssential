@@ -151,7 +151,14 @@ class MainActivity : ComponentActivity() {
         }
 
         binding.btnStartNewMatch.setOnClickListener {
-            viewModel.resetMatch()
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Reset Match")
+                .setMessage("Are you sure you want to end this match? This will reset all scores and timers.")
+                .setPositiveButton("Reset") { _, _ ->
+                    viewModel.resetMatch()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
     }
 
