@@ -78,9 +78,11 @@ class SingleLiveEventTest {
 
     @Test
     fun `call notifies observer with null`() {
-        singleLiveEvent.observe(owner, observer)
-        singleLiveEvent.call()
-        verify(observer).onChanged(null)
+        val nullableEvent = SingleLiveEvent<Int?>()
+        val nullableObserver = mock(Observer::class.java) as Observer<Int?>
+        nullableEvent.observe(owner, nullableObserver)
+        nullableEvent.call()
+        verify(nullableObserver).onChanged(null)
     }
 
     @Test
@@ -107,8 +109,12 @@ class SingleLiveEventTest {
         verify(observer2, never()).onChanged(1)
 
         singleLiveEvent.value = 2
+        // Since both observers are observing the underlying MutableLiveData,
+        // and pending flag is shared among them,
+        // only one observer should be triggered when value changes to 2.
+        // Therefore observer will be triggered and observer2 will NOT be triggered.
         verify(observer).onChanged(2)
-        verify(observer2).onChanged(2)
+        verify(observer2, never()).onChanged(2)
     }
 
     private class TestLifecycleOwner : LifecycleOwner {

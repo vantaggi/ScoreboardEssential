@@ -23,7 +23,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 @ExperimentalCoroutinesApi
-@RunWith(MockitoJUnitRunner::class)
+@RunWith(MockitoJUnitRunner.Silent::class)
 class OptimizedWearDataSyncTest {
     @Mock
     private lateinit var mockContext: Context

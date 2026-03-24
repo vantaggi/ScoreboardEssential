@@ -24,9 +24,17 @@ class MatchHistoryActivity : AppCompatActivity() {
 
         val summaryTextView = findViewById<TextView>(R.id.summary_textview)
         val recyclerView = findViewById<RecyclerView>(R.id.match_history_recyclerview)
+        val emptyStateTextView = findViewById<TextView>(R.id.empty_state_textview)
         val adapter =
             MatchHistoryAdapter { matchWithTeams ->
-                viewModel.deleteMatch(matchWithTeams.match)
+                androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Delete Match")
+                    .setMessage("Are you sure you want to delete this match log?")
+                    .setPositiveButton("Delete") { _, _ ->
+                        viewModel.deleteMatch(matchWithTeams.match)
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
             }
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -35,6 +43,13 @@ class MatchHistoryActivity : AppCompatActivity() {
             matches?.let {
                 adapter.submitList(it)
                 summaryTextView.text = "TOTAL MATCHES: ${it.size}"
+                if (it.isEmpty()) {
+                    recyclerView.visibility = android.view.View.GONE
+                    emptyStateTextView.visibility = android.view.View.VISIBLE
+                } else {
+                    recyclerView.visibility = android.view.View.VISIBLE
+                    emptyStateTextView.visibility = android.view.View.GONE
+                }
             }
         }
     }

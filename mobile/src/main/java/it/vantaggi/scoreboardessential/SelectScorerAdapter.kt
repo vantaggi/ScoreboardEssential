@@ -24,7 +24,7 @@ class SelectScorerAdapter(
                 .inflate(R.layout.scorer_item, parent, false)
         val holder = ScorerViewHolder(view)
         view.setOnClickListener {
-            val position = holder.bindingAdapterPosition
+            val position = holder.adapterPosition
             if (position != RecyclerView.NO_POSITION) {
                 onScorerClicked(getItem(position))
             }
