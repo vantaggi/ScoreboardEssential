@@ -225,17 +225,6 @@ class PlayersManagementActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showDeleteConfirmation(playerWithRoles: PlayerWithRoles) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Delete Player?")
-            .setMessage("Are you sure you want to delete ${playerWithRoles.player.playerName}? This action cannot be undone.")
-            .setPositiveButton("Delete") { _, _ ->
-                viewModel.deletePlayer(playerWithRoles)
-                Snackbar.make(fab, "Player deleted", Snackbar.LENGTH_SHORT).show()
-            }.setNegativeButton("Cancel", null)
-            .show()
-    }
-
     private fun showResetStatsConfirmation(playerWithRoles: PlayerWithRoles) {
         MaterialAlertDialogBuilder(this)
             .setTitle("Reset Statistics?")
@@ -246,16 +235,6 @@ class PlayersManagementActivity : AppCompatActivity() {
                 Snackbar.make(fab, "Stats reset", Snackbar.LENGTH_SHORT).show()
             }.setNegativeButton("Cancel", null)
             .show()
-    }
-
-    private fun showEmptyState() {
-        findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.empty_state)
-            ?.visibility = android.view.View.VISIBLE
-    }
-
-    private fun hideEmptyState() {
-        findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.empty_state)
-            ?.visibility = android.view.View.GONE
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
