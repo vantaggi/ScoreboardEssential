@@ -378,18 +378,31 @@ class MatchTimerService : Service() {
 
     // --- Foreground Service & Notifications ---
     private val pendingIntent by lazy {
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+        val notificationIntent = Intent(this, MainActivity::class.java).apply { setPackage(packageName) }
+        PendingIntent.getActivity(
+            this,
+            0,
+            notificationIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
     }
 
     private val pausePendingIntent by lazy {
-        val pauseIntent = Intent(this, MatchTimerService::class.java).apply { action = ACTION_PAUSE }
-        PendingIntent.getService(this, 0, pauseIntent, PendingIntent.FLAG_IMMUTABLE)
+        val pauseIntent =
+            Intent(this, MatchTimerService::class.java).apply {
+                action = ACTION_PAUSE
+                setPackage(packageName)
+            }
+        PendingIntent.getService(this, 0, pauseIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
     private val stopPendingIntent by lazy {
-        val stopIntent = Intent(this, MatchTimerService::class.java).apply { action = ACTION_STOP }
-        PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE)
+        val stopIntent =
+            Intent(this, MatchTimerService::class.java).apply {
+                action = ACTION_STOP
+                setPackage(packageName)
+            }
+        PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
     private fun createNotification(timeInMillis: Long): Notification {
@@ -425,11 +438,27 @@ class MatchTimerService : Service() {
         ) {
             return
         }
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+        val notificationIntent = Intent(this, MainActivity::class.java).apply { setPackage(packageName) }
+        val pendingIntent =
+            PendingIntent.getActivity(
+                this,
+                0,
+                notificationIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
 
-        val dismissalIntent = Intent(this, MatchTimerService::class.java).apply { action = ACTION_DISMISS_ALARM }
-        val dismissalPendingIntent = PendingIntent.getService(this, 0, dismissalIntent, PendingIntent.FLAG_IMMUTABLE)
+        val dismissalIntent =
+            Intent(this, MatchTimerService::class.java).apply {
+                action = ACTION_DISMISS_ALARM
+                setPackage(packageName)
+            }
+        val dismissalPendingIntent =
+            PendingIntent.getService(
+                this,
+                0,
+                dismissalIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
 
         val notification =
             NotificationCompat
