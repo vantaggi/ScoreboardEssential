@@ -83,7 +83,11 @@ object MatchReportUtils {
             val sb = StringBuilder()
             scorers.forEach { (playerName, goalCount) ->
                 sb.setLength(0)
-                sb.append(playerName).append(" (").append(goalCount).append(")")
+                sb
+                    .append(playerName)
+                    .append(" (")
+                    .append(goalCount)
+                    .append(")")
                 val scorerTextView =
                     TextView(context).apply {
                         text = sb.toString()

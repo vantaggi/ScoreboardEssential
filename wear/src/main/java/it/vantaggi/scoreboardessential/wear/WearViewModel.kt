@@ -28,8 +28,6 @@ sealed class KeeperTimerState {
 
 class WearViewModel(
     application: Application,
-    // Injectable for testing; defaults to the real Wearable Data Layer sync engine.
-    private val connectionManager: OptimizedWearDataSync = OptimizedWearDataSync(application),
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "WearViewModel"
@@ -47,6 +45,7 @@ class WearViewModel(
     private val _team2Color = MutableStateFlow<Int?>(null)
     val team2Color = _team2Color.asStateFlow()
 
+    private val connectionManager = OptimizedWearDataSync(application)
     val connectionState = connectionManager.connectionState
 
     // Team Scores

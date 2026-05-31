@@ -69,7 +69,8 @@ class MainActivity : ComponentActivity() {
                     WearDataLayerService.ACTION_PLAYERS_UPDATE -> {
                         val raw = intent.getStringExtra(WearDataLayerService.EXTRA_PLAYERS)
                         viewModel.setAllPlayers(
-                            it.vantaggi.scoreboardessential.shared.PlayerData.decodeList(raw),
+                            it.vantaggi.scoreboardessential.shared.PlayerData
+                                .decodeList(raw),
                         )
                     }
                 }
@@ -158,13 +159,13 @@ class MainActivity : ComponentActivity() {
         }
 
         binding.btnStartNewMatch.setOnClickListener {
-            android.app.AlertDialog.Builder(this)
+            android.app.AlertDialog
+                .Builder(this)
                 .setTitle("Reset Match")
                 .setMessage("Are you sure you want to end this match? This will reset all scores and timers.")
                 .setPositiveButton("Reset") { _, _ ->
                     viewModel.resetMatch()
-                }
-                .setNegativeButton("Cancel", null)
+                }.setNegativeButton("Cancel", null)
                 .show()
         }
     }

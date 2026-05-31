@@ -3,6 +3,8 @@ package it.vantaggi.scoreboardessential
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -16,11 +18,9 @@ import com.google.android.material.textfield.TextInputEditText
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
+import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.views.PlayersManagementViewModelFactory
 import kotlinx.coroutines.launch
-import android.os.Vibrator
-import android.os.VibrationEffect
-import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 
 class AddEditPlayerActivity : AppCompatActivity() {
     private lateinit var viewModel: PlayersManagementViewModel

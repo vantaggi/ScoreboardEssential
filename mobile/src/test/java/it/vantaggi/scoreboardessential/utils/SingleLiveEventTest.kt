@@ -5,7 +5,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.Observer
-import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -18,7 +17,6 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class SingleLiveEventTest {
-
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
@@ -120,6 +118,7 @@ class SingleLiveEventTest {
     private class TestLifecycleOwner : LifecycleOwner {
         private val registry = LifecycleRegistry(this)
         override val lifecycle: Lifecycle get() = registry
+
         fun handleLifecycleEvent(event: Lifecycle.Event) = registry.handleLifecycleEvent(event)
     }
 }

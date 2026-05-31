@@ -1,6 +1,8 @@
 package it.vantaggi.scoreboardessential.ui
 
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -8,8 +10,6 @@ import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.databinding.ActivityMatchSettingsBinding
-import android.os.Vibrator
-import android.os.VibrationEffect
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 
 class MatchSettingsActivity : AppCompatActivity() {

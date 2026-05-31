@@ -78,7 +78,9 @@ class PlayerSelectionActivity : ComponentActivity() {
         message: String,
     ) {
         val data = message.toByteArray()
-        Wearable.getNodeClient(this).connectedNodes
+        Wearable
+            .getNodeClient(this)
+            .connectedNodes
             .addOnSuccessListener { nodes ->
                 nodes.forEach { node ->
                     messageClient.sendMessage(node.id, path, data)

@@ -75,6 +75,8 @@ class MatchTimerService : Service() {
         private const val KEY_KEEPER_REMAINING_PAUSE = "keeper_remaining_pause"
         private const val KEY_KEEPER_RUNNING = "keeper_running"
 
+        // Mutable test seam: overridden in MatchTimerServiceTest to shorten the sync interval.
+        @Suppress("ktlint:standard:property-naming")
         var SYNC_INTERVAL = 60000L
     }
 
