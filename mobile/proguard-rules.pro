@@ -5,17 +5,41 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Preserve line numbers for readable crash stack traces.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ---------------------------------------------------------------------------
+# ScoreboardEssential keep rules
+# ---------------------------------------------------------------------------
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep Room entities, DAOs and relation/projection classes (accessed reflectively)
+-keep class it.vantaggi.scoreboardessential.database.** { *; }
+-keep interface it.vantaggi.scoreboardessential.database.** { *; }
+
+# Keep data classes used for Wear communication and domain models
+-keep class it.vantaggi.scoreboardessential.shared.** { *; }
+-keep class it.vantaggi.scoreboardessential.domain.models.** { *; }
+-keep class it.vantaggi.scoreboardessential.domain.model.** { *; }
+
+# Keep Parcelable CREATOR fields
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final ** CREATOR;
+}
+
+# Google Play Services Wearable
+-keep class com.google.android.gms.wearable.** { *; }
+-dontwarn com.google.android.gms.**
+
+# Kotlin Coroutines
+-keepclassmembers class kotlinx.coroutines.** { *; }
+-dontwarn kotlinx.coroutines.**
+
+# Keep ViewModels
+-keep class * extends androidx.lifecycle.ViewModel { *; }
+
+# Keep View/Data Binding generated classes
+-keep class it.vantaggi.scoreboardessential.databinding.** { *; }
+
+# WearableListenerService subclasses are instantiated by the framework
+-keep class * extends com.google.android.gms.wearable.WearableListenerService { *; }

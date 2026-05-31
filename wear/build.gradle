@@ -7,19 +7,41 @@ android {
     namespace 'it.vantaggi.scoreboardessential.wear'
     compileSdk 34
 
+    // Optional release signing, mirroring the mobile module.
+    def keystorePropertiesFile = rootProject.file("keystore.properties")
+    def keystoreProperties = new Properties()
+    def hasKeystore = keystorePropertiesFile.exists()
+    if (hasKeystore) {
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    }
+
     defaultConfig {
         applicationId "it.vantaggi.scoreboardessential"
         minSdk 30
         targetSdk 34
-        versionCode 1
+        // Wear version codes use a 2000+ offset so they never collide with the phone APK.
+        versionCode 2001
         versionName "1.0"
+    }
 
+    signingConfigs {
+        if (hasKeystore) {
+            release {
+                storeFile rootProject.file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (hasKeystore) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     buildFeatures {

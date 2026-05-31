@@ -1,42 +1,82 @@
 # ScoreboardEssential
 
-ScoreboardEssential is a simple and intuitive application for Android and Wear OS designed to keep track of scores in a soccer match. The app allows you to easily increase and decrease the scores for two teams and features a synchronized timer across both mobile and smartwatch devices. This project aims to "Professionalize the Passion" by providing a robust tool for amateur sports.
+ScoreboardEssential is a simple, intuitive scoreboard for amateur soccer matches, available for
+Android phones and Wear OS watches. Track scores for two teams, run match and goalkeeper-rotation
+timers, manage players and rosters, and keep everything synchronized between phone and watch in
+real time. The project's goal is to "Professionalize the Passion" by giving amateur sports a
+robust, dependable tool.
 
 ## Project Architecture
 
-The project is built with a multi-module architecture, ensuring a clean separation of concerns and promoting code reusability.
+A multi-module Android project with a clean separation of concerns:
 
-*   `mobile`: The main Android application for handheld devices.
-*   `wear`: The Wear OS application for wearable devices.
-*   `shared`: A common library module containing the data synchronization logic used by both the `mobile` and `wear` modules, leveraging the Google Play Services Wearable Data Layer API.
+* **`mobile`** — the phone application (Android Views + View/Data Binding, `ViewModel` +
+  `LiveData`, Room, a foreground `MatchTimerService`).
+* **`wear`** — the Wear OS companion (Views + ViewBinding, `ViewModel` + `StateFlow`).
+* **`shared`** — common code used by both apps: the Wearable Data Layer sync engine
+  (`OptimizedWearDataSync`), the wire-protocol constants (`WearConstants`), the transport model
+  (`PlayerData`), validation (`WearDataValidator`) and haptics (`HapticFeedbackManager`).
 
 ## Tech Stack
 
-*   **UI**: Android Views with Data Binding
-*   **Lifecycle**: `ViewModel` and `LiveData`
-*   **Database**: Room
-*   **Communication**: Google Play Services for Wearables
+* **UI:** Android Views with View/Data Binding
+* **State:** `ViewModel`, `LiveData` (mobile) and `StateFlow` (wear)
+* **Database:** Room
+* **Phone ↔ Watch:** Google Play Services Wearable Data Layer (DataItems + Messages)
+* **Architecture:** lean MVVM (ViewModel → Repository → DAO)
 
-## Implemented Features
+## Features
 
-The following features have been implemented and are fully functional:
+* **Score management** — increase/decrease each team's score, with a one-tap **undo** for the
+  last goal.
+* **Custom team names and colors** — long-press a team card to pick its color.
+* **Match timer** — start, pause and reset; runs in a foreground service so it survives
+  backgrounding.
+* **Goalkeeper timer** — a secondary countdown (e.g. for goalkeeper rotation) that alerts when it
+  expires.
+* **Player & roster management** — create players, assign roles, and build each team's roster.
+* **Player roles** — roles are shown in the roster and the goal-scorer picker, and feed the
+  formation view.
+* **Match history & statistics** — finished matches are saved; a statistics screen shows top
+  scorers, appearances and **win rate** (derived from each player's team affiliation per match).
+* **Match report sharing** — export a match report (including a PDF) to share results.
+* **Onboarding** — a first-run tutorial, shown once.
+* **Two-way phone ↔ watch sync** — scores, team names, colors, both timers and match state stay in
+  sync in both directions. Scoring on the watch prompts a **scorer selection** that is sent back to
+  the phone and attributed to the player; the full roster is synced to the watch so the picker is
+  populated.
+* **Offline-first** — everything works without an internet connection; no data leaves the device.
+* **Localization** — English (default) and Italian.
 
-*   **Score Management:** Add or subtract points for each team.
-*   **Custom Team Names:** Users can set custom names for the two teams.
-*   **Match Timer:** A main timer for the match that can be started, stopped, and reset.
-*   **Goalkeeper Timer:** A secondary timer, useful for goalkeeper rotation, which shows an alert when the time expires.
-*   **Player Management:**
-    *   Create new players with a name and role.
-    *   Assign players to teams.
-    *   Remove players from teams.
-*   **Match History:** Match results are saved and can be viewed on a dedicated screen.
-*   **Mobile -> Wear Sync:** Changes made on the mobile device (scores, names, timers) are reflected on the smartwatch.
-*   **Basic Wear OS Controls:** The smartwatch app allows for score modifications and interaction with the goalkeeper timer.
-*   **Wear -> Mobile Sync:** Full two-way synchronization is enabled. Changes made on the wearable, such as score updates or timer interactions, are now reflected on the mobile app.
-*   **Team Color Selection:** Customize the color for each team. Long-press on a team's card to open the color picker and choose a new color.
+## Building
 
-## Work in Progress / Missing Features
+```bash
+# Debug builds
+./gradlew :mobile:assembleDebug :wear:assembleDebug
 
-*   **Player Roles:** It is possible to assign "roles" to players, but this information is not currently used or displayed anywhere in the application.
-*   **Backup Configuration:** The rules for automatic data backup on Android have not yet been defined.
-*   **Package Name:** The application's package name (`it.vantaggi.scoreboardessential`) is the default and should be changed for a production release.
+# Tests and lint
+./gradlew test lint
+
+# Release bundles (see Release signing below)
+./gradlew :mobile:bundleRelease :wear:bundleRelease
+```
+
+### Release signing
+
+Release builds are signed only if a git-ignored `keystore.properties` exists at the repo root:
+
+```properties
+storeFile=path/to/release.jks
+storePassword=********
+keyAlias=********
+keyPassword=********
+```
+
+Without it, debug builds work normally and release builds are produced unsigned. The phone and
+watch share an `applicationId` (`it.vantaggi.scoreboardessential`); the watch uses a `2000+`
+`versionCode` offset so its bundle never collides with the phone's.
+
+## Data & Privacy
+
+All data is stored locally in a Room database; nothing is uploaded. Android auto-backup is
+disabled (`allowBackup="false"`). See [PRIVACY_POLICY.md](PRIVACY_POLICY.md).

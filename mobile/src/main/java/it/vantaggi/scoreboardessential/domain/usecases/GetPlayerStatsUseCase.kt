@@ -4,6 +4,7 @@ import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.domain.model.PlayerStatsDTO
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 /**
@@ -36,23 +37,19 @@ class GetPlayerStatsUseCase(
                 playerDao.getTopScorersByRoleCategories(limit, roleCategories)
             }
 
-        return sourceFlow.map { playersWithRoles ->
+        // Combine the roster flow with per-player win counts so the win rate stays reactive
+        // and is computed with a single grouped query (no N+1).
+        return combine(sourceFlow, matchDao.getPlayerWinCounts()) { playersWithRoles, winCounts ->
+            val winsByPlayer = winCounts.associate { it.playerId to it.wins }
             playersWithRoles.map { playerWithRoles ->
                 val player = playerWithRoles.player
-                // Use appearances from Player entity which serves as a cache for finished matches.
-                // We could verify this with matchDao.getFinishedMatchesCountForPlayer(player.playerId)
-                // but to avoid N+1 query issue, we rely on the Player entity being kept in sync.
-                //
-                // Note regarding Win Rate:
-                // The current database schema (MatchPlayerCrossRef) does not store which team a player was on.
-                // Therefore, it is impossible to calculate an accurate Win Rate from history.
-                // We return 0.0f until the schema is updated to link players to specific teams in a match.
+                val wins = winsByPlayer[player.playerId] ?: 0
                 PlayerStatsDTO(
                     playerId = player.playerId,
                     playerName = player.playerName,
                     goals = player.goals,
                     appearances = player.appearances,
-                    winRate = 0.0f,
+                    winRate = if (player.appearances > 0) wins.toFloat() / player.appearances else 0.0f,
                     roles = playerWithRoles.roles,
                 )
             }
@@ -67,17 +64,20 @@ class GetPlayerStatsUseCase(
      * @return A Flow emitting [PlayerStatsDTO] if found, or null if not found.
      */
     fun getPlayerStats(playerId: Int): Flow<PlayerStatsDTO?> =
-        playerDao.getPlayerWithRoles(playerId).map { playerWithRoles ->
+        combine(
+            playerDao.getPlayerWithRoles(playerId),
+            matchDao.getPlayerWinCounts(),
+        ) { playerWithRoles, winCounts ->
             if (playerWithRoles != null) {
                 val player = playerWithRoles.player
-                // Here we would ideally calculate wins.
-                // For now, we return what we have.
+                val wins = winCounts.firstOrNull { it.playerId == player.playerId }?.wins ?: 0
                 PlayerStatsDTO(
                     playerId = player.playerId,
                     playerName = player.playerName,
                     goals = player.goals,
                     appearances = player.appearances,
-                    winRate = 0.0f,
+                    winRate = if (player.appearances > 0) wins.toFloat() / player.appearances else 0.0f,
+                    roles = playerWithRoles.roles,
                 )
             } else {
                 null

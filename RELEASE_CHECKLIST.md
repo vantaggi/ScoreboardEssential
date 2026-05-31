@@ -3,50 +3,52 @@
 Use this checklist before every release to ensure quality and compliance.
 
 ## 1. Versioning
-- [ ] **Mobile Module**: Open `mobile/build.gradle`.
-  - [ ] Increment `versionCode` (e.g., 1 -> 2).
-  - [ ] Update `versionName` (e.g., "1.0" -> "1.1").
-- [ ] **Wear Module**: Open `wear/build.gradle`.
-  - [ ] Increment `versionCode` (must be unique, consider using a scheme like 2000+versionCode to avoid conflicts with mobile).
-  - [ ] Update `versionName` to match mobile.
-- [ ] **Sync Gradle**: Ensure project syncs successfully.
+- [ ] **Mobile Module** (`mobile/build.gradle`): increment `versionCode`; update `versionName`.
+- [ ] **Wear Module** (`wear/build.gradle`): increment `versionCode` keeping the `2000+` offset
+      (e.g. mobile `2` → wear `2002`) so the two bundles never collide; set `versionName` to match
+      mobile.
+- [ ] **Database**: if the Room schema changed, bump the version in `AppDatabase`, add a
+      `Migration`, and add a migration test.
+- [ ] **Gradle sync** succeeds.
 
 ## 2. Code & Security
-- [ ] **ProGuard Rules**: Verify `proguard-rules.pro` includes rules from `proguard-rules-recommendation.pro`.
-- [ ] **Lint Check**: Run `./gradlew lint` to catch potential issues.
-- [ ] **Unit Tests**: Run `./gradlew test` to ensure no regressions.
-- [ ] **Sensitive Data**: Verify no API keys or secrets are hardcoded in the codebase.
+- [ ] **ProGuard**: confirm `mobile/proguard-rules.pro` still keeps Room entities, `shared.**`,
+      domain models, Parcelable CREATORs, ViewModels, binding classes and
+      `WearableListenerService` subclasses. (Reference: `proguard-rules-recommendation.pro`.)
+- [ ] **Lint**: `./gradlew lint` — review and address warnings.
+- [ ] **Unit tests**: `./gradlew test` — all green.
+- [ ] **Sensitive data**: no API keys/secrets hardcoded; `keystore.properties` is git-ignored and
+      not committed; release logging does not leak game/user data.
 
 ## 3. Build & Signing
-- [ ] **Keystore**: Ensure you have the release Keystore file (`*.jks` or `*.keystore`) and passwords.
-- [ ] **Build Bundle**:
-  - Run `./gradlew :mobile:bundleRelease` (generates `.aab` for phone).
-  - Run `./gradlew :wear:bundleRelease` (generates `.aab` for watch).
-  - *Note: If distributing as a multi-APK or single bundle, ensure the configuration matches Play Store requirements.*
+- [ ] **Keystore**: create a git-ignored `keystore.properties` at the repo root with
+      `storeFile`, `storePassword`, `keyAlias`, `keyPassword` (signing activates automatically).
+- [ ] **Build bundles**:
+  - `./gradlew :mobile:bundleRelease` → `mobile/build/outputs/bundle/release/mobile-release.aab`
+  - `./gradlew :wear:bundleRelease` → `wear/build/outputs/bundle/release/wear-release.aab`
+- [ ] **Verify R8**: `./gradlew :mobile:assembleRelease` (minify on) completes without
+      missing-class or keep-rule errors.
 
 ## 4. Manual Verification (Release Build)
-- [ ] **Install Release Build**: Install the release APK/Bundle on a physical phone and watch.
-  - `adb install -r mobile/release/app-release.apk`
-- [ ] **Permissions**:
-  - [ ] Verify `POST_NOTIFICATIONS` prompt appears and works.
-  - [ ] Verify `WRITE_EXTERNAL_STORAGE` works for exports (if applicable).
-- [ ] **Wear Sync**:
-  - [ ] Start a match on Mobile.
-  - [ ] Verify Watch automatically opens/updates.
-  - [ ] Verify Score updates reflect on both devices instantly.
-  - [ ] Verify Timer syncs correctly.
-  - [ ] Verify Player names sync.
-- [ ] **Offline Mode**: Test app functionality without internet (should work 100%).
+- [ ] **Install** the release build on a physical phone and watch.
+- [ ] **Permissions**: `POST_NOTIFICATIONS` prompt appears and works; sharing/export works.
+- [ ] **Wear sync** (both directions):
+  - [ ] Start a match on the phone; the watch reflects it.
+  - [ ] Score updates reflect on both devices instantly.
+  - [ ] Match timer and goalkeeper timer stay in sync.
+  - [ ] Team names **and colors** sync.
+  - [ ] Scoring on the watch prompts scorer selection and the goal is attributed on the phone.
+- [ ] **Offline mode**: full functionality with no network.
 
 ## 5. Play Store Assets & Listing
-- [ ] **Privacy Policy**: Update the hosted Privacy Policy URL if `PRIVACY_POLICY.md` has changed.
-- [ ] **Screenshots**:
-  - [ ] Mobile: Phone screenshots (16:9 or similar).
-  - [ ] Wear OS: Circular screenshots (required for Wear OS distribution).
-- [ ] **Feature Graphic**: 1024x500 promo image.
-- [ ] **Description**: Update "What's New" text.
+- [ ] **Privacy Policy**: host `PRIVACY_POLICY.md` at a public URL and keep it current in the
+      Play Console.
+- [ ] **Screenshots**: phone screenshots; circular Wear OS screenshots (required for Wear
+      distribution).
+- [ ] **Feature graphic**: 1024×500.
+- [ ] **What's New**: update from `CHANGELOG.md`.
 
 ## 6. Upload
-- [ ] Upload Mobile App Bundle to Production/Beta track.
-- [ ] Upload Wear App Bundle to Production/Beta track (using the correct form factor settings in Play Console).
-- [ ] Submit for Review.
+- [ ] Upload the mobile App Bundle to the Production/Beta track.
+- [ ] Upload the wear App Bundle to the Production/Beta track (correct form-factor settings).
+- [ ] Submit for review.

@@ -15,3 +15,14 @@ captures/
 
 # Local properties
 local.properties
+
+# Benchmark artifacts
+mobile/benchmark_results.txt
+
+# Internal development notes
+.Jules/
+
+# Release signing — never commit secrets
+keystore.properties
+*.jks
+*.keystore

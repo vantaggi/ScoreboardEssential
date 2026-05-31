@@ -9,6 +9,16 @@ android {
     namespace 'it.vantaggi.scoreboardessential'
     compileSdk 34
 
+    // Optional release signing. Create a git-ignored keystore.properties at the repo root with
+    // storeFile/storePassword/keyAlias/keyPassword to sign release builds; otherwise release
+    // builds are produced unsigned and debug builds are unaffected.
+    def keystorePropertiesFile = rootProject.file("keystore.properties")
+    def keystoreProperties = new Properties()
+    def hasKeystore = keystorePropertiesFile.exists()
+    if (hasKeystore) {
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    }
+
     defaultConfig {
         applicationId "it.vantaggi.scoreboardessential"
         minSdk 30
@@ -17,15 +27,29 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        
+
         // Force enable multidex
         multiDexEnabled true
+    }
+
+    signingConfigs {
+        if (hasKeystore) {
+            release {
+                storeFile rootProject.file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (hasKeystore) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     compileOptions {

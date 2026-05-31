@@ -7,6 +7,7 @@ import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.model.PlayerStatsDTO
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -26,6 +27,7 @@ class GetPlayerStatsUseCaseReactiveTest {
     fun setup() {
         playerDao = mock()
         matchDao = mock()
+        whenever(matchDao.getPlayerWinCounts()).thenReturn(flowOf(emptyList()))
         getPlayerStatsUseCase = GetPlayerStatsUseCase(playerDao, matchDao)
     }
 

@@ -24,6 +24,7 @@ class WearDataLayerService : WearableListenerService() {
         const val ACTION_KEEPER_TIMER_UPDATE = "it.vantaggi.scoreboardessential.wear.KEEPER_TIMER_UPDATE"
         const val ACTION_MATCH_STATE_UPDATE = "it.vantaggi.scoreboardessential.wear.MATCH_STATE_UPDATE"
         const val ACTION_RESET_MATCH = "it.vantaggi.scoreboardessential.wear.RESET_MATCH"
+        const val ACTION_PLAYERS_UPDATE = "it.vantaggi.scoreboardessential.wear.PLAYERS_UPDATE"
 
         // Extras
         const val EXTRA_TEAM1_SCORE = "team1_score"
@@ -37,18 +38,20 @@ class WearDataLayerService : WearableListenerService() {
         const val EXTRA_KEEPER_MILLIS = "keeper_millis"
         const val EXTRA_KEEPER_RUNNING = "keeper_running"
         const val EXTRA_MATCH_ACTIVE = "match_active"
+        const val EXTRA_PLAYERS = "players"
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "📥 [${System.currentTimeMillis()}] Data received, count: ${dataEvents.count}")
+            Log.d(TAG, "Data received, count: ${dataEvents.count}")
         }
         dataEvents.forEach { event ->
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "  Event: type=${event.type}, path=${event.dataItem.uri.path}")
-            }
             if (event.type == DataEvent.TYPE_CHANGED) {
-                handleData(event.dataItem)
+                try {
+                    handleData(event.dataItem)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error handling data event", e)
+                }
             }
         }
     }
@@ -58,7 +61,7 @@ class WearDataLayerService : WearableListenerService() {
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Message received: ${messageEvent.path}")
         }
-        // Handle specific messages if needed, e.g., triggers not carrying data
+        // Wear currently only consumes data items; reserved for future message handling.
     }
 
     private fun handleData(dataItem: DataItem) {
@@ -70,9 +73,7 @@ class WearDataLayerService : WearableListenerService() {
                 val team2 = dataMap.getInt(WearConstants.KEY_TEAM2_SCORE, 0)
 
                 if (!WearDataValidator.isValidScore(team1) || !WearDataValidator.isValidScore(team2)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.w(TAG, "Invalid score received. Ignoring.")
-                    }
+                    Log.w(TAG, "Invalid score received. Ignoring.")
                     return
                 }
 
@@ -100,7 +101,7 @@ class WearDataLayerService : WearableListenerService() {
                 }
             }
             WearConstants.PATH_TEAM1_COLOR -> {
-                val color = dataMap.getInt("color", 0)
+                val color = dataMap.getInt(WearConstants.KEY_TEAM_COLOR, 0)
                 val intent =
                     Intent(ACTION_TEAM_COLOR_UPDATE).apply {
                         putExtra(EXTRA_TEAM_ID, 1)
@@ -109,7 +110,7 @@ class WearDataLayerService : WearableListenerService() {
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
             WearConstants.PATH_TEAM2_COLOR -> {
-                val color = dataMap.getInt("color", 0)
+                val color = dataMap.getInt(WearConstants.KEY_TEAM_COLOR, 0)
                 val intent =
                     Intent(ACTION_TEAM_COLOR_UPDATE).apply {
                         putExtra(EXTRA_TEAM_ID, 2)
@@ -122,9 +123,7 @@ class WearDataLayerService : WearableListenerService() {
                 val running = dataMap.getBoolean(WearConstants.KEY_TIMER_RUNNING, false)
 
                 if (!WearDataValidator.isValidTimer(millis)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.w(TAG, "Invalid timer value received. Ignoring.")
-                    }
+                    Log.w(TAG, "Invalid timer value received. Ignoring.")
                     return
                 }
 
@@ -140,9 +139,7 @@ class WearDataLayerService : WearableListenerService() {
                 val running = dataMap.getBoolean(WearConstants.KEY_KEEPER_RUNNING, false)
 
                 if (!WearDataValidator.isValidTimer(millis)) {
-                    if (BuildConfig.DEBUG) {
-                        Log.w(TAG, "Invalid keeper timer value received. Ignoring.")
-                    }
+                    Log.w(TAG, "Invalid keeper timer value received. Ignoring.")
                     return
                 }
 
@@ -158,6 +155,14 @@ class WearDataLayerService : WearableListenerService() {
                 val intent =
                     Intent(ACTION_MATCH_STATE_UPDATE).apply {
                         putExtra(EXTRA_MATCH_ACTIVE, active)
+                    }
+                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+            }
+            WearConstants.PATH_PLAYERS -> {
+                val raw = dataMap.getString(WearConstants.KEY_PLAYERS, "")
+                val intent =
+                    Intent(ACTION_PLAYERS_UPDATE).apply {
+                        putExtra(EXTRA_PLAYERS, raw)
                     }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }

@@ -36,8 +36,10 @@ import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
+import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
+import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import kotlinx.coroutines.Dispatchers
@@ -262,6 +264,11 @@ class MainViewModel(
                             endMatch()
                         }
                     }
+                    SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED -> {
+                        val playerName = intent.getStringExtra(WearConstants.KEY_PLAYER_NAME) ?: return
+                        val team = intent.getIntExtra(WearConstants.EXTRA_TEAM_NUMBER, 1)
+                        attributeRemoteScorer(team, playerName)
+                    }
                 }
             }
         }
@@ -382,6 +389,7 @@ class MainViewModel(
                 addAction(SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_REQUEST_SYNC)
+                addAction(SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED)
             }
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(application)
@@ -410,7 +418,33 @@ class MainViewModel(
         viewModelScope.launch {
             playerDao.getAllPlayers().collect { players ->
                 _allPlayers.postValue(players)
+                sendPlayersUpdate(players)
             }
+        }
+    }
+
+    /**
+     * Pushes the full player roster to the Wear device so the watch can attribute
+     * goals to a scorer. Serialized via [PlayerData.encodeList].
+     */
+    private fun sendPlayersUpdate(players: List<PlayerWithRoles>) {
+        viewModelScope.launch {
+            val encoded =
+                PlayerData.encodeList(
+                    players.map { pwr ->
+                        PlayerData(
+                            id = pwr.player.playerId,
+                            name = pwr.player.playerName,
+                            roles = pwr.roles.map { it.name },
+                            goals = pwr.player.goals,
+                            appearances = pwr.player.appearances,
+                        )
+                    },
+                )
+            connectionManager.sendData(
+                path = WearConstants.PATH_PLAYERS,
+                data = mapOf(WearConstants.KEY_PLAYERS to encoded),
+            )
         }
     }
 
@@ -499,6 +533,10 @@ class MainViewModel(
         team1: Int,
         team2: Int,
     ) {
+        if (!WearDataValidator.isValidScore(team1) || !WearDataValidator.isValidScore(team2)) {
+            Log.w("MainViewModel", "Refusing to set out-of-range score: $team1-$team2")
+            return
+        }
         _team1Score.value = team1
         _team2Score.value = team2
 
@@ -579,6 +617,26 @@ class MainViewModel(
                 // Track for Undo (null playerId)
                 actionStack.push(GoalAction(team, null, System.currentTimeMillis()))
             }
+            _canUndo.postValue(true)
+        }
+    }
+
+    /**
+     * Attributes a goal to a player chosen on the Wear device.
+     * The score itself is synchronized separately via [ACTION_SCORE_UPDATE]; this only
+     * records the scorer (player goal count + match event). Matches the player by name
+     * against the known roster; falls back to a name-only event if not found.
+     */
+    fun attributeRemoteScorer(
+        team: Int,
+        playerName: String,
+    ) {
+        val match = _allPlayers.value?.find { it.player.playerName == playerName }
+        if (match != null) {
+            addScorer(team, match)
+        } else {
+            addMatchEvent("Goal", team = team, player = playerName)
+            actionStack.push(GoalAction(team, null, System.currentTimeMillis()))
             _canUndo.postValue(true)
         }
     }
@@ -722,7 +780,9 @@ class MainViewModel(
                     ),
                 )
 
-            val allMatchPlayers = (team1Players.value ?: emptyList()) + (team2Players.value ?: emptyList())
+            val team1Roster = team1Players.value ?: emptyList()
+            val team2Roster = team2Players.value ?: emptyList()
+            val allMatchPlayers = team1Roster + team2Roster
 
             val playersToUpdate =
                 allMatchPlayers.map {
@@ -731,9 +791,8 @@ class MainViewModel(
             playerDao.updatePlayers(playersToUpdate)
 
             val matchPlayerCrossRefs =
-                allMatchPlayers.map {
-                    MatchPlayerCrossRef(matchId.toInt(), it.player.playerId)
-                }
+                team1Roster.map { MatchPlayerCrossRef(matchId.toInt(), it.player.playerId, teamNumber = 1) } +
+                    team2Roster.map { MatchPlayerCrossRef(matchId.toInt(), it.player.playerId, teamNumber = 2) }
             matchDao.insertMatchPlayerCrossRefs(matchPlayerCrossRefs)
 
             addMatchEvent("Match ended - Final Score: ${team1Score.value} - ${team2Score.value}")
@@ -810,7 +869,7 @@ class MainViewModel(
                 } else {
                     WearConstants.PATH_TEAM2_COLOR
                 }
-            val data = mapOf("color" to color)
+            val data = mapOf(WearConstants.KEY_TEAM_COLOR to color)
             connectionManager.sendData(path = path, data = data)
         }
     }
@@ -860,6 +919,9 @@ class MainViewModel(
 
             // 6. Keeper Timer State
             sendKeeperTimerUpdate(_isKeeperTimerRunning.value ?: false, _keeperTimerValue.value)
+
+            // 7. Player roster (so the watch can attribute scorers)
+            _allPlayers.value?.let { sendPlayersUpdate(it) }
         }
     }
 
@@ -889,8 +951,9 @@ class MainViewModel(
             androidx.localbroadcastmanager.content.LocalBroadcastManager
                 .getInstance(getApplication())
                 .unregisterReceiver(broadcastReceiver)
+            connectionManager.cleanup()
         } catch (e: Exception) {
-            Log.e("MainViewModel", "Error unbinding service", e)
+            Log.e("MainViewModel", "Error during ViewModel cleanup", e)
         }
         super.onCleared()
     }
