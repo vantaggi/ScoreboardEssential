@@ -28,6 +28,8 @@ sealed class KeeperTimerState {
 
 class WearViewModel(
     application: Application,
+    // Injectable for testing; defaults to the real Wearable Data Layer sync engine.
+    private val connectionManager: OptimizedWearDataSync = OptimizedWearDataSync(application),
 ) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "WearViewModel"
@@ -45,7 +47,6 @@ class WearViewModel(
     private val _team2Color = MutableStateFlow<Int?>(null)
     val team2Color = _team2Color.asStateFlow()
 
-    private val connectionManager = OptimizedWearDataSync(application)
     val connectionState = connectionManager.connectionState
 
     // Team Scores
@@ -106,6 +107,11 @@ class WearViewModel(
 
     fun clearPlayerSelectionEvent() {
         _showPlayerSelection.value = null
+    }
+
+    /** Replaces the cached roster pushed from the phone. */
+    fun setAllPlayers(players: List<PlayerData>) {
+        _allPlayers.value = players
     }
 
     fun updateScoresFromMobile(
@@ -185,6 +191,11 @@ class WearViewModel(
             val s2 = if (team == 1) _team2Score.value else newScore
             updateScore(s1, s2)
             triggerShortVibration()
+
+            // On a goal (increment), prompt to attribute a scorer if a roster is available.
+            if (delta > 0 && _allPlayers.value.isNotEmpty()) {
+                _showPlayerSelection.value = team
+            }
         }
     }
 
@@ -429,5 +440,13 @@ class WearViewModel(
                 )
             }
         }
+    }
+
+    override fun onCleared() {
+        matchTimerJob?.cancel()
+        keeperCountDownTimer?.cancel()
+        vibrator?.cancel()
+        connectionManager.cleanup()
+        super.onCleared()
     }
 }

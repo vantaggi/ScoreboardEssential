@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
         Match::class, Player::class, MatchPlayerCrossRef::class,
         Team::class, Role::class, PlayerRoleCrossRef::class,
     ],
-    version = 10, // ✅ Cambia da 9 a 10
+    version = 11,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -126,6 +126,16 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
 
+        internal val MIGRATION_10_11 =
+            object : Migration(10, 11) {
+                override fun migrate(database: SupportSQLiteDatabase) {
+                    // Track which team a player was on in a match, enabling win-rate stats.
+                    database.execSQL(
+                        "ALTER TABLE `MatchPlayerCrossRef` ADD COLUMN `teamNumber` INTEGER NOT NULL DEFAULT 0",
+                    )
+                }
+            }
+
         fun getDatabase(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 val instance =
@@ -148,7 +158,7 @@ abstract class AppDatabase : RoomDatabase() {
                                     }
                                 }
                             },
-                        ).addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10) // ✅ Aggiungi MIGRATION_9_10
+                        ).addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
                         .fallbackToDestructiveMigrationOnDowngrade()
                         .build()
                 this.instance = instance

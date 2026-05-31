@@ -5,6 +5,7 @@
     <string name="appbar_scrolling_view_behavior" translatable="false">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
     <string name="delete_match">Delete Match</string>
     <string name="match_timer">Match Timer</string>
+    <string name="fgs_special_use_description" translatable="false">Keeps the match and goalkeeper timers running while the app is in the background.</string>
     <string name="pause">Pause</string>
     <string name="stop">Stop</string>
     <string name="keeper_timer_expired_title">Keeper Timer Expired</string>

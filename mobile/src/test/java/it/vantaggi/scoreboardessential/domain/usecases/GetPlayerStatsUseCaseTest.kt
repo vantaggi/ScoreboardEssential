@@ -3,6 +3,7 @@ package it.vantaggi.scoreboardessential.domain.usecases
 import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
+import it.vantaggi.scoreboardessential.database.PlayerWinCount
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -23,8 +24,23 @@ class GetPlayerStatsUseCaseTest {
     fun setup() {
         playerDao = mock()
         matchDao = mock()
+        whenever(matchDao.getPlayerWinCounts()).thenReturn(flowOf(emptyList()))
         getPlayerStatsUseCase = GetPlayerStatsUseCase(playerDao, matchDao)
     }
+
+    @Test
+    fun getTopScorers_computesWinRateFromWinCounts() =
+        runTest {
+            val player = Player(playerId = 1, playerName = "Player 1", appearances = 10, goals = 5)
+            whenever(playerDao.getTopScorers(10))
+                .thenReturn(flowOf(listOf(PlayerWithRoles(player, emptyList()))))
+            whenever(matchDao.getPlayerWinCounts())
+                .thenReturn(flowOf(listOf(PlayerWinCount(1, 4))))
+
+            val result = getPlayerStatsUseCase.getTopScorers(10).first()
+
+            assertEquals(0.4f, result[0].winRate, 0.0001f)
+        }
 
     @Test
     fun getTopScorers_returnsMappedPlayerStats() =

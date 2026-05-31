@@ -7,28 +7,28 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.activity.viewModels
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
 import androidx.wear.widget.WearableLinearLayoutManager
 import androidx.wear.widget.WearableRecyclerView
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
+import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
-import kotlinx.coroutines.launch
 
 data class WearPlayer(
     val name: String,
     val roles: List<String>,
 )
 
+/**
+ * Lets the watch user pick which player scored. The roster is passed in via the launching
+ * Intent ([WearDataLayerService.EXTRA_PLAYERS]); the selection is sent back to the phone as a
+ * [WearConstants.MSG_SCORER_SELECTED] message, which the phone attributes to the goal.
+ */
 class PlayerSelectionActivity : ComponentActivity() {
     private lateinit var playerList: WearableRecyclerView
     private lateinit var adapter: PlayerAdapter
-    private val viewModel: WearViewModel by viewModels()
     private var teamNumber: Int = 1
     private lateinit var messageClient: MessageClient
 
@@ -38,64 +38,38 @@ class PlayerSelectionActivity : ComponentActivity() {
 
         messageClient = Wearable.getMessageClient(this)
         val rawTeamNumber = intent.getIntExtra(WearConstants.EXTRA_TEAM_NUMBER, 1)
-
-        if (WearDataValidator.isValidTeamNumber(rawTeamNumber)) {
-            teamNumber = rawTeamNumber
-        } else {
-            teamNumber = 1
-            if (BuildConfig.DEBUG) {
-                Log.w("PlayerSelection", "Invalid team number received. Defaulting to 1.")
-            }
-        }
+        teamNumber = if (WearDataValidator.isValidTeamNumber(rawTeamNumber)) rawTeamNumber else 1
 
         setupRecyclerView()
-        observeViewModel()
+        showPlayers(PlayerData.decodeList(intent.getStringExtra(WearDataLayerService.EXTRA_PLAYERS)))
     }
 
     private fun setupRecyclerView() {
         playerList = findViewById(R.id.player_list)
-        adapter =
-            PlayerAdapter { player ->
-                selectPlayer(player)
-            }
-
+        adapter = PlayerAdapter { player -> selectPlayer(player) }
         playerList.layoutManager = WearableLinearLayoutManager(this)
         playerList.adapter = adapter
-
         playerList.isEdgeItemsCenteringEnabled = true
     }
 
-    private fun observeViewModel() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.allPlayers.collect { playerData ->
-                    val wearPlayers =
-                        playerData.map { player ->
-                            WearPlayer(player.name, player.roles)
-                        }
-                    adapter.submitList(wearPlayers)
+    private fun showPlayers(players: List<PlayerData>) {
+        val wearPlayers = players.map { WearPlayer(it.name, it.roles) }
+        adapter.submitList(wearPlayers)
 
-                    val emptyStateText = findViewById<TextView>(R.id.empty_state_text)
-                    if (wearPlayers.isEmpty()) {
-                        playerList.visibility = View.GONE
-                        emptyStateText.visibility = View.VISIBLE
-                    } else {
-                        playerList.visibility = View.VISIBLE
-                        emptyStateText.visibility = View.GONE
-                    }
-
-                    if (BuildConfig.DEBUG) {
-                        Log.d("PlayerSelection", "Loaded ${wearPlayers.size} players")
-                    }
-                }
-            }
+        val emptyStateText = findViewById<TextView>(R.id.empty_state_text)
+        if (wearPlayers.isEmpty()) {
+            playerList.visibility = View.GONE
+            emptyStateText.visibility = View.VISIBLE
+        } else {
+            playerList.visibility = View.VISIBLE
+            emptyStateText.visibility = View.GONE
         }
     }
 
     private fun selectPlayer(player: WearPlayer) {
         val rolesString = player.roles.joinToString(",")
         val message = "${player.name}|$rolesString|$teamNumber"
-        sendMessageToMobile("/scorer_selected", message)
+        sendMessageToMobile(WearConstants.MSG_SCORER_SELECTED, message)
         finish()
     }
 
@@ -104,11 +78,14 @@ class PlayerSelectionActivity : ComponentActivity() {
         message: String,
     ) {
         val data = message.toByteArray()
-        Wearable.getNodeClient(this).connectedNodes.addOnSuccessListener { nodes ->
-            nodes.forEach { node ->
-                messageClient.sendMessage(node.id, path, data)
+        Wearable.getNodeClient(this).connectedNodes
+            .addOnSuccessListener { nodes ->
+                nodes.forEach { node ->
+                    messageClient.sendMessage(node.id, path, data)
+                }
+            }.addOnFailureListener { e ->
+                Log.e("PlayerSelection", "Failed to resolve nodes for scorer selection", e)
             }
-        }
     }
 }
 

@@ -41,4 +41,21 @@ interface MatchDao {
     """,
     )
     fun getFinishedMatchesCountForPlayer(playerId: Int): Flow<Int>
+
+    /**
+     * Number of matches each player won, derived from their team affiliation
+     * ([MatchPlayerCrossRef.teamNumber]) and the final match score. Players on the
+     * winning side of a finished match are counted once per match.
+     */
+    @Query(
+        """
+        SELECT cr.playerId AS playerId, COUNT(*) AS wins
+        FROM MatchPlayerCrossRef cr
+        INNER JOIN matches m ON cr.matchId = m.matchId
+        WHERE (cr.teamNumber = 1 AND m.team1Score > m.team2Score)
+           OR (cr.teamNumber = 2 AND m.team2Score > m.team1Score)
+        GROUP BY cr.playerId
+    """,
+    )
+    fun getPlayerWinCounts(): Flow<List<PlayerWinCount>>
 }

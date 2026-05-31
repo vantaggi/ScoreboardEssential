@@ -55,7 +55,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.property.FOREGROUND_SERVICE_TYPE_SPECIAL_USE_DESCRIPTION"
-                android:resource="@string/match_timer" />
+                android:resource="@string/fgs_special_use_description" />
         </service>
 
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.provider" android:exported="false" android:grantUriPermissions="true">

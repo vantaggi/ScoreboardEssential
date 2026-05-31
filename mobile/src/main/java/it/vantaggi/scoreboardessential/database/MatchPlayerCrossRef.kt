@@ -10,4 +10,6 @@ import androidx.room.Index
 data class MatchPlayerCrossRef(
     val matchId: Int,
     val playerId: Int,
+    /** Which team the player was on in this match (1 or 2). 0 = unknown (legacy rows). */
+    val teamNumber: Int = 0,
 )

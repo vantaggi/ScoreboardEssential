@@ -66,6 +66,12 @@ class MainActivity : ComponentActivity() {
                             viewModel.resetMatch(fromRemote = true)
                         }
                     }
+                    WearDataLayerService.ACTION_PLAYERS_UPDATE -> {
+                        val raw = intent.getStringExtra(WearDataLayerService.EXTRA_PLAYERS)
+                        viewModel.setAllPlayers(
+                            it.vantaggi.scoreboardessential.shared.PlayerData.decodeList(raw),
+                        )
+                    }
                 }
             }
         }
@@ -86,6 +92,7 @@ class MainActivity : ComponentActivity() {
                 addAction(WearDataLayerService.ACTION_TIMER_UPDATE)
                 addAction(WearDataLayerService.ACTION_KEEPER_TIMER_UPDATE)
                 addAction(WearDataLayerService.ACTION_MATCH_STATE_UPDATE)
+                addAction(WearDataLayerService.ACTION_PLAYERS_UPDATE)
             }
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(this)
@@ -242,9 +249,14 @@ class MainActivity : ComponentActivity() {
                 // Observe Player Selection Events
                 launch {
                     viewModel.showPlayerSelection.collect { teamNumber ->
-                        teamNumber?.let {
+                        teamNumber?.let { team ->
                             val intent = Intent(this@MainActivity, PlayerSelectionActivity::class.java)
-                            intent.putExtra(WearConstants.EXTRA_TEAM_NUMBER, it)
+                            intent.putExtra(WearConstants.EXTRA_TEAM_NUMBER, team)
+                            intent.putExtra(
+                                WearDataLayerService.EXTRA_PLAYERS,
+                                it.vantaggi.scoreboardessential.shared.PlayerData
+                                    .encodeList(viewModel.allPlayers.value),
+                            )
                             startActivity(intent)
                             viewModel.clearPlayerSelectionEvent()
                         }

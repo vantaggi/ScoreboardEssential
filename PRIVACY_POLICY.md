@@ -32,4 +32,8 @@ We may update our Privacy Policy from time to time. Thus, you are advised to rev
 
 ## 5. Contact Us
 
-If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us.
+If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us at
+**mattiavantaggi@gmail.com**.
+
+> **Note for publishing:** Google Play requires the privacy policy to be reachable at a public URL.
+> Host this document (e.g. via GitHub Pages) and enter that URL in the Play Console listing.
