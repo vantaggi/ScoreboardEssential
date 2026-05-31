@@ -27,13 +27,13 @@ class MatchHistoryActivity : AppCompatActivity() {
         val emptyStateTextView = findViewById<TextView>(R.id.empty_state_textview)
         val adapter =
             MatchHistoryAdapter { matchWithTeams ->
-                androidx.appcompat.app.AlertDialog.Builder(this)
+                androidx.appcompat.app.AlertDialog
+                    .Builder(this)
                     .setTitle("Delete Match")
                     .setMessage("Are you sure you want to delete this match log?")
                     .setPositiveButton("Delete") { _, _ ->
                         viewModel.deleteMatch(matchWithTeams.match)
-                    }
-                    .setNegativeButton("Cancel", null)
+                    }.setNegativeButton("Cancel", null)
                     .show()
             }
         recyclerView.adapter = adapter

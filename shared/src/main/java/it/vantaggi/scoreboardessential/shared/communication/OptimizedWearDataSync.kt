@@ -3,7 +3,6 @@ package it.vantaggi.scoreboardessential.shared.communication
 import android.content.Context
 import android.util.Log
 import com.google.android.gms.common.api.ApiException
-import it.vantaggi.scoreboardessential.shared.BuildConfig
 import com.google.android.gms.wearable.Asset
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.DataClient
@@ -11,6 +10,7 @@ import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.NodeClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import it.vantaggi.scoreboardessential.shared.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
