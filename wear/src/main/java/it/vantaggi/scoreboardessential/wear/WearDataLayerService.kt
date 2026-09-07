@@ -87,6 +87,7 @@ class WearDataLayerService : WearableListenerService() {
                     Log.d(TAG, "Broadcasted score update")
                 }
             }
+
             WearConstants.PATH_TEAM_NAMES -> {
                 val team1Name = dataMap.getString(WearConstants.KEY_TEAM1_NAME, "Team 1")
                 val team2Name = dataMap.getString(WearConstants.KEY_TEAM2_NAME, "Team 2")
@@ -100,6 +101,7 @@ class WearDataLayerService : WearableListenerService() {
                     Log.d(TAG, "Broadcasted team names update")
                 }
             }
+
             WearConstants.PATH_TEAM1_COLOR -> {
                 val color = dataMap.getInt(WearConstants.KEY_TEAM_COLOR, 0)
                 val intent =
@@ -109,6 +111,7 @@ class WearDataLayerService : WearableListenerService() {
                     }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
+
             WearConstants.PATH_TEAM2_COLOR -> {
                 val color = dataMap.getInt(WearConstants.KEY_TEAM_COLOR, 0)
                 val intent =
@@ -118,6 +121,7 @@ class WearDataLayerService : WearableListenerService() {
                     }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
+
             WearConstants.PATH_TIMER_STATE -> {
                 val millis = dataMap.getLong(WearConstants.KEY_TIMER_MILLIS, 0L)
                 val running = dataMap.getBoolean(WearConstants.KEY_TIMER_RUNNING, false)
@@ -134,6 +138,7 @@ class WearDataLayerService : WearableListenerService() {
                     }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
+
             WearConstants.PATH_KEEPER_TIMER -> {
                 val millis = dataMap.getLong(WearConstants.KEY_KEEPER_MILLIS, 0L)
                 val running = dataMap.getBoolean(WearConstants.KEY_KEEPER_RUNNING, false)
@@ -150,6 +155,7 @@ class WearDataLayerService : WearableListenerService() {
                     }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
+
             WearConstants.PATH_MATCH_STATE -> {
                 val active = dataMap.getBoolean(WearConstants.KEY_MATCH_ACTIVE, true)
                 val intent =
@@ -158,6 +164,7 @@ class WearDataLayerService : WearableListenerService() {
                     }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }
+
             WearConstants.PATH_PLAYERS -> {
                 val raw = dataMap.getString(WearConstants.KEY_PLAYERS, "")
                 val intent =

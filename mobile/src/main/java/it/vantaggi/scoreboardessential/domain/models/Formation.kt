@@ -35,10 +35,22 @@ data class Formation(
 // Prendi il primo ruolo come principale
                 val primaryRole = player.roles.firstOrNull()
                 when (primaryRole?.category) {
-                    "PORTA" -> goalkeeper.add(player)
-                    "DIFESA" -> defenders.add(player)
-                    "CENTROCAMPO" -> midfielders.add(player)
-                    "ATTACCO" -> forwards.add(player)
+                    "PORTA" -> {
+                        goalkeeper.add(player)
+                    }
+
+                    "DIFESA" -> {
+                        defenders.add(player)
+                    }
+
+                    "CENTROCAMPO" -> {
+                        midfielders.add(player)
+                    }
+
+                    "ATTACCO" -> {
+                        forwards.add(player)
+                    }
+
                     else -> {
 // Fallback: se non ha ruolo o ruolo sconosciuto, metti a centrocampo
                         midfielders.add(player)

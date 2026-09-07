@@ -20,26 +20,64 @@ object RoleUtils {
     fun getRoleAbbreviation(roleName: String): String =
         when (roleName) {
             // PORTA
-            "Portiere" -> "POR"
+            "Portiere" -> {
+                "POR"
+            }
 
             // DIFESA
-            "Difensore Centrale" -> "DC"
-            "Terzino Sinistro" -> "TS"
-            "Terzino Destro" -> "TD"
-            "Libero" -> "LIB"
+            "Difensore Centrale" -> {
+                "DC"
+            }
+
+            "Terzino Sinistro" -> {
+                "TS"
+            }
+
+            "Terzino Destro" -> {
+                "TD"
+            }
+
+            "Libero" -> {
+                "LIB"
+            }
 
             // CENTROCAMPO
-            "Mediano" -> "MED"
-            "Centrocampista Centrale" -> "CC"
-            "Trequartista" -> "TRQ"
-            "Esterno Sinistro" -> "ES"
-            "Esterno Destro" -> "ED"
+            "Mediano" -> {
+                "MED"
+            }
+
+            "Centrocampista Centrale" -> {
+                "CC"
+            }
+
+            "Trequartista" -> {
+                "TRQ"
+            }
+
+            "Esterno Sinistro" -> {
+                "ES"
+            }
+
+            "Esterno Destro" -> {
+                "ED"
+            }
 
             // ATTACCO
-            "Ala Sinistra" -> "AS"
-            "Ala Destra" -> "AD"
-            "Seconda Punta" -> "SP"
-            "Centravanti" -> "ATT"
+            "Ala Sinistra" -> {
+                "AS"
+            }
+
+            "Ala Destra" -> {
+                "AD"
+            }
+
+            "Seconda Punta" -> {
+                "SP"
+            }
+
+            "Centravanti" -> {
+                "ATT"
+            }
 
             else -> {
                 // Fallback: prendi le prime 2-3 lettere maiuscole

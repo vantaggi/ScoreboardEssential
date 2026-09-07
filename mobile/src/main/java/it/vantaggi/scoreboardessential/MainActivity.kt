@@ -680,6 +680,7 @@ class MainActivity :
                     team1FormationLabel.text = "$teamName (No formation)"
                 }
             }
+
             2 -> {
                 team2FormationView.setFormation(formation)
                 val teamName = viewModel.team2Name.value ?: "Team 2"

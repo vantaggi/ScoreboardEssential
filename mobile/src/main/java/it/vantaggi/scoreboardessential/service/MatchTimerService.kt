@@ -101,10 +101,12 @@ class MatchTimerService : Service() {
                 pauseTimer()
                 pauseKeeperTimer()
             }
+
             ACTION_STOP -> {
                 stopTimer()
                 resetKeeperTimer()
             }
+
             ACTION_DISMISS_ALARM -> {
                 vibrator.cancel() // Stop vibration immediately
                 NotificationManagerCompat.from(this).cancel(KEEPER_TIMER_EXPIRED_NOTIFICATION_ID)

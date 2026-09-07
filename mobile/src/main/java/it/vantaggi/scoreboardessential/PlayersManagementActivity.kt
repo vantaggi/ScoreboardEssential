@@ -288,18 +288,24 @@ class PlayersManagementActivity : AppCompatActivity() {
                 finish()
                 true
             }
+
             R.id.action_sort_name -> {
                 viewModel.sortByName()
                 true
             }
+
             R.id.action_sort_goals -> {
                 viewModel.sortByGoals()
                 true
             }
+
             R.id.action_sort_appearances -> {
                 viewModel.sortByAppearances()
                 true
             }
-            else -> super.onOptionsItemSelected(item)
+
+            else -> {
+                super.onOptionsItemSelected(item)
+            }
         }
 }

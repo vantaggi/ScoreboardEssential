@@ -61,10 +61,12 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
                     teamIndicator.visibility = View.VISIBLE
                     teamIndicator.setBackgroundColor(team1Color)
                 }
+
                 2 -> {
                     teamIndicator.visibility = View.VISIBLE
                     teamIndicator.setBackgroundColor(team2Color)
                 }
+
                 else -> {
                     teamIndicator.visibility = View.GONE
                 }

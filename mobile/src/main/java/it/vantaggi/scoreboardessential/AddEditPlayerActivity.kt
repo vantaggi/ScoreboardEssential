@@ -96,13 +96,17 @@ class AddEditPlayerActivity : AppCompatActivity() {
                 finish()
                 true
             }
+
             R.id.action_save -> {
                 val vibrator = getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
                 vibrator?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_CONFIRM, -1))
                 savePlayer()
                 true
             }
-            else -> super.onOptionsItemSelected(item)
+
+            else -> {
+                super.onOptionsItemSelected(item)
+            }
         }
 
     private fun savePlayer() {

@@ -34,18 +34,21 @@ class MatchRepository(
     private val preferenceChangeListener =
         SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
             when (key) {
-                KEY_TEAM1_COLOR ->
+                KEY_TEAM1_COLOR -> {
                     _team1Color.value =
                         prefs.getInt(
                             key,
                             colorRepository.getTeam1DefaultColor(),
                         )
-                KEY_TEAM2_COLOR ->
+                }
+
+                KEY_TEAM2_COLOR -> {
                     _team2Color.value =
                         prefs.getInt(
                             key,
                             colorRepository.getTeam2DefaultColor(),
                         )
+                }
             }
         }
 

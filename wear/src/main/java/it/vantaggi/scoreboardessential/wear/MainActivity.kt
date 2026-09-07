@@ -30,11 +30,13 @@ class MainActivity : ComponentActivity() {
                         val team2 = intent.getIntExtra(WearDataLayerService.EXTRA_TEAM2_SCORE, 0)
                         viewModel.updateScoresFromMobile(team1, team2)
                     }
+
                     WearDataLayerService.ACTION_TEAM_NAMES_UPDATE -> {
                         val team1Name = intent.getStringExtra(WearDataLayerService.EXTRA_TEAM1_NAME) ?: "Team 1"
                         val team2Name = intent.getStringExtra(WearDataLayerService.EXTRA_TEAM2_NAME) ?: "Team 2"
                         viewModel.setTeamNames(team1Name, team2Name)
                     }
+
                     WearDataLayerService.ACTION_TEAM_COLOR_UPDATE -> {
                         val teamId = intent.getIntExtra(WearDataLayerService.EXTRA_TEAM_ID, 0)
                         val color = intent.getIntExtra(WearDataLayerService.EXTRA_COLOR, 0)
@@ -42,11 +44,13 @@ class MainActivity : ComponentActivity() {
                             viewModel.setTeamColor(teamId, color)
                         }
                     }
+
                     WearDataLayerService.ACTION_TIMER_UPDATE -> {
                         val millis = intent.getLongExtra(WearDataLayerService.EXTRA_TIMER_MILLIS, 0L)
                         val isRunning = intent.getBooleanExtra(WearDataLayerService.EXTRA_TIMER_RUNNING, false)
                         viewModel.syncMatchTimer(millis, isRunning)
                     }
+
                     WearDataLayerService.ACTION_KEEPER_TIMER_UPDATE -> {
                         val millis = intent.getLongExtra(WearDataLayerService.EXTRA_KEEPER_MILLIS, 0L)
                         val isRunning = intent.getBooleanExtra(WearDataLayerService.EXTRA_KEEPER_RUNNING, false)
@@ -60,12 +64,14 @@ class MainActivity : ComponentActivity() {
                             viewModel.resetKeeperTimer(fromRemote = true)
                         }
                     }
+
                     WearDataLayerService.ACTION_MATCH_STATE_UPDATE -> {
                         val isActive = intent.getBooleanExtra(WearDataLayerService.EXTRA_MATCH_ACTIVE, true)
                         if (!isActive) {
                             viewModel.resetMatch(fromRemote = true)
                         }
                     }
+
                     WearDataLayerService.ACTION_PLAYERS_UPDATE -> {
                         val raw = intent.getStringExtra(WearDataLayerService.EXTRA_PLAYERS)
                         viewModel.setAllPlayers(
@@ -226,11 +232,13 @@ class MainActivity : ComponentActivity() {
                                 binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.sidewalk_gray))
                                 binding.keeperProgressBar.visibility = View.INVISIBLE
                             }
+
                             is KeeperTimerState.Running -> {
                                 binding.keeperTimer.text = "K"
                                 binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.graffiti_pink))
                                 binding.keeperProgressBar.visibility = View.VISIBLE
                             }
+
                             is KeeperTimerState.Finished -> {
                                 binding.keeperTimer.text = "K"
                                 binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.error_red))
@@ -276,6 +284,7 @@ class MainActivity : ComponentActivity() {
                                         ),
                                     )
                             }
+
                             else -> {
                                 binding.connectionStatusIndicator.backgroundTintList =
                                     android.content.res.ColorStateList.valueOf(

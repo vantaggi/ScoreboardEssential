@@ -56,7 +56,10 @@ class RoleSelectionAdapter(
         position: Int,
     ) {
         when (holder) {
-            is HeaderViewHolder -> holder.bind(items[position] as String)
+            is HeaderViewHolder -> {
+                holder.bind(items[position] as String)
+            }
+
             is RoleViewHolder -> {
                 val role = items[position] as Role
                 holder.bind(role, selectedRoleIds.contains(role.roleId)) { roleId, isChecked ->

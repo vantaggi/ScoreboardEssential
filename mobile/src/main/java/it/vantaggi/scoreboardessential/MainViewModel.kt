@@ -225,6 +225,7 @@ class MainViewModel(
                         _team1Score.value = team1
                         _team2Score.value = team2
                     }
+
                     SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE -> {
                         val millis = intent.getLongExtra(WearConstants.KEY_TIMER_MILLIS, 0L)
                         val running = intent.getBooleanExtra(WearConstants.KEY_TIMER_RUNNING, false)
@@ -241,6 +242,7 @@ class MainViewModel(
                             }
                         }
                     }
+
                     SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE -> {
                         val millis = intent.getLongExtra(WearConstants.KEY_KEEPER_MILLIS, 0L)
                         val running = intent.getBooleanExtra(WearConstants.KEY_KEEPER_RUNNING, false)
@@ -258,12 +260,14 @@ class MainViewModel(
                             }
                         }
                     }
+
                     SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE -> {
                         val isActive = intent.getBooleanExtra(WearConstants.KEY_MATCH_ACTIVE, true)
                         if (!isActive) {
                             endMatch()
                         }
                     }
+
                     SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED -> {
                         val playerName = intent.getStringExtra(WearConstants.KEY_PLAYER_NAME) ?: return
                         val team = intent.getIntExtra(WearConstants.EXTRA_TEAM_NUMBER, 1)
@@ -369,10 +373,12 @@ class MainViewModel(
                         _isWearConnected.value = true
                         syncAllDataToWear()
                     }
+
                     is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Disconnected -> {
                         Log.d("App", "✗ Not connected")
                         _isWearConnected.value = false
                     }
+
                     is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Error -> {
                         Log.e("App", "✗ Error: ${state.message}")
                         _isWearConnected.value = false
