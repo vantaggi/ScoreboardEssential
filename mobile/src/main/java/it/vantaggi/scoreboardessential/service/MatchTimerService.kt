@@ -13,6 +13,7 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -61,6 +62,7 @@ class MatchTimerService : Service() {
     private var keeperRemainingOnPause = 0L
 
     companion object {
+        private const val TAG = "MatchTimerService"
         private const val NOTIFICATION_ID = 1
         private const val KEEPER_TIMER_EXPIRED_NOTIFICATION_ID = 2
         const val ACTION_PAUSE = "it.vantaggi.scoreboardessential.service.PAUSE"
@@ -375,7 +377,20 @@ class MatchTimerService : Service() {
     private fun startForegroundWithPermissionCheck() {
         // On Android 13+, even if POST_NOTIFICATIONS is denied, we MUST call startForeground
         // to comply with Foreground Service requirements. The notification will be suppressed by the system.
-        startForeground(NOTIFICATION_ID, createNotification(_matchTimerValue.value))
+        try {
+            startForeground(NOTIFICATION_ID, createNotification(_matchTimerValue.value))
+        } catch (e: IllegalStateException) {
+            // Il catch esiste perche' startTimer()/startKeeperTimer() possono essere innescati dall'orologio
+            // (SimplifiedDataLayerListenerService -> LocalBroadcastManager -> MainViewModel -> service) oppure da
+            // restoreState() in onCreate(). La consegna a un WearableListenerService non concede l'esenzione
+            // all'avvio in background di un foreground service, e questo service e' solo bound: non essendoci
+            // startForegroundService() non c'e' nemmeno la finestra di grazia. Con l'app in background
+            // startForeground lancia ForegroundServiceStartNotAllowedException (sottoclasse di
+            // IllegalStateException, catturata cosi' perche' la classe non esiste sotto API 31) e il processo
+            // morirebbe. Degradiamo con grazia: i job del timer e il wakeLock restano attivi, si perde solo la
+            // notifica persistente.
+            Log.w(TAG, "startForeground negato: il timer prosegue senza notifica persistente", e)
+        }
     }
 
     // --- Foreground Service & Notifications ---
