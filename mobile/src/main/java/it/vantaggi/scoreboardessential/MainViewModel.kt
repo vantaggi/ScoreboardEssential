@@ -237,7 +237,14 @@ class MainViewModel(
                             if (isServiceBound) {
                                 matchTimerService?.updateMatchTimer(millis, fromRemote = true)
                                 if (running != (_isMatchTimerRunning.value ?: false)) {
-                                    if (running) matchTimerService?.startTimer() else matchTimerService?.pauseTimer()
+                                    // fromRemote = true come per updateMatchTimer appena sopra:
+                                    // senza, il telefono ri-pubblica all'orologio lo stato che
+                                    // l'orologio gli ha appena mandato.
+                                    if (running) {
+                                        matchTimerService?.startTimer(fromRemote = true)
+                                    } else {
+                                        matchTimerService?.pauseTimer(fromRemote = true)
+                                    }
                                 }
                             }
                         }
@@ -266,6 +273,15 @@ class MainViewModel(
                         if (!isActive) {
                             endMatch()
                         }
+                    }
+
+                    SimplifiedDataLayerListenerService.ACTION_REQUEST_SYNC -> {
+                        // L'orologio la manda a ogni avvio a freddo. Finora l'azione era
+                        // registrata nell'IntentFilter ma non aveva alcun ramo qui, quindi
+                        // veniva scartata in silenzio: l'orologio restava a 0-0 finche' il
+                        // collector di ConnectionState non scattava per conto suo.
+                        Log.d("VM", "Richiesta di risincronizzazione ricevuta dall'orologio")
+                        syncAllDataToWear()
                     }
 
                     SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED -> {
@@ -391,7 +407,6 @@ class MainViewModel(
             android.content.IntentFilter().apply {
                 addAction(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_TIMER_UPDATE)
-                addAction(SimplifiedDataLayerListenerService.ACTION_TEAM_NAMES_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_REQUEST_SYNC)
