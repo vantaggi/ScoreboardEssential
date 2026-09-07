@@ -94,14 +94,22 @@ quelli che diventano irreparabili se il codice nuovo ci si costruisce sopra.
 
 | # | Bug | File | Stato |
 |---|---|---|---|
-| B1 | `ACTION_REQUEST_SYNC` registrato nel filtro, nessun ramo nel `when` | `MainViewModel.kt:391` | ⬜ |
+| B1 | `ACTION_REQUEST_SYNC` registrato nel filtro, nessun ramo nel `when` | `MainViewModel.kt` | ✅ fatto |
 | B2 | Lista eventi read-modify-`postValue`, si sovrascrive | `MainViewModel.kt:687,758` | ⬜ |
 | B3 | `startNewMatch()` gira prima di `bindService()` e pubblica 0-0 | `MainViewModel.kt:360` | ⬜ |
-| B4 | Eco del cronometro: `startTimer()`/`pauseTimer()` senza `fromRemote` | `MainViewModel.kt:239` | ⬜ |
+| B4 | Eco del cronometro: `startTimer()`/`pauseTimer()` senza `fromRemote` | `MainViewModel.kt` | ✅ fatto |
 | B5 | Gol come `@Update` di riga intera su istanza stantia → serve `UPDATE ... goals = goals + 1` | `MainViewModel.kt:605` | ⬜ |
-| B6 | Telefono e orologio dichiarano la stessa capability `scoreboard_app` | `*/res/values/wear.xml` | ⬜ |
+| B6 | Telefono e orologio dichiarano la stessa capability `scoreboard_app` | `*/res/values/wear.xml` | ⬜ **spostato a S3** — vedi nota |
 | B7 | Marcatore attribuito per **nome**, l'id viene scartato | `PlayerSelectionActivity.kt:71` | ⬜ |
 | B8 | `"Goal"` è insieme testo mostrato e chiave semantica | `MainViewModel.kt:609` | ⬜ |
+
+**B6 è stato spostato dentro S3, deliberatamente.** Separare le capability è un
+cambiamento del contratto fra due binari versionati in modo indipendente: se il
+telefono smette di cercare `scoreboard_app` mentre un orologio non aggiornato
+dichiara solo quello, la coppia smette di vedersi. Va fatto in modo additivo e
+insieme al lato che interroga, cioè con il protocollo v2 — non a metà adesso.
+Nota anche che `FILTER_REACHABLE` esclude il nodo stesso, quindi il difetto oggi
+è di ambiguità potenziale, non un guasto osservabile.
 
 Ortogonali, **non** prerequisiti: `teams` mai scritta, FK mancanti su
 `MatchPlayerCrossRef`, wake lock non rilasciato, stringhe hardcoded nei layout.
