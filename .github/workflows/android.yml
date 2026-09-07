@@ -6,55 +6,102 @@ on:
   pull_request:
     branches: ["main"]
 
+# Una PR riceve tipicamente piu' push ravvicinati: senza questo blocco ogni push
+# accodava un run da mezz'ora e nessuno cancellava i precedenti.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
 
-    timeout-minutes: 30
+    # Alzato da 30: lint e le due build release sono passi nuovi e non gratuiti.
+    timeout-minutes: 45
 
     steps:
       - name: 1. Check out repository
         uses: actions/checkout@v4
 
+      # Il 17 qui deve restare allineato a gradle/gradle-daemon-jvm.properties
+      # (toolchainVersion=17) e a jvmToolchain(17) nei tre moduli. Se una delle
+      # tre dichiarazioni cambia senza le altre, la CI compila con una JVM
+      # diversa da quella degli sviluppatori e la divergenza non fa rumore.
       - name: 2. Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: "17"
           distribution: "temurin"
-          cache: gradle
 
-      - name: 3. Grant execute permission for gradlew
+      # Sostituisce "cache: gradle" di setup-java: gestisce la cache di build in
+      # modo piu' accurato e valida il checksum del wrapper.
+      - name: 3. Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: 4. Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: 4. Run tests for all modules
+      - name: 5. Run tests for all modules
         run: ./gradlew test
 
-      - name: 5. Run Ktlint Check
+      - name: 6. Run Ktlint Check
         run: ./gradlew ktlintCheck
 
-      - name: 6. Build debug APKs for all modules
+      # Nessuno step eseguiva lint: l'artefatto "lint-reports" in coda al
+      # workflow e' stato vuoto a ogni run da quando esiste.
+      - name: 7. Run Android Lint
+        run: ./gradlew lint
+
+      - name: 8. Build debug APKs for all modules
         run: ./gradlew assembleDebug
 
-      - name: 7. Upload Mobile App APK
+      # La build release e' l'unico percorso che esercita R8 e
+      # mobile/proguard-rules.pro (:mobile ha minifyEnabled true). Senza
+      # keystore.properties gli APK escono non firmati, ma la minificazione gira
+      # lo stesso: e' li' che si vedono le keep rule sbagliate o mancanti,
+      # invece che come crash in un bundle gia' firmato.
+      - name: 9. Build release APKs for all modules
+        run: ./gradlew :mobile:assembleRelease :wear:assembleRelease
+
+      # KSP riscrive mobile/schemas a ogni compilazione (room.schemaLocation).
+      # Se una @Entity cambia senza rigenerare e committare lo schema, la
+      # differenza compare qui invece che a runtime su un device.
+      - name: 10. Verify Room schemas are committed
+        run: |
+          git diff --exit-code -- mobile/schemas
+          # git diff non vede i file nuovi: un bump di @Database(version = ...)
+          # produce un N.json non tracciato, che sfuggirebbe al controllo sopra.
+          untracked="$(git ls-files --others --exclude-standard -- mobile/schemas)"
+          if [ -n "$untracked" ]; then
+            echo "Schemi Room generati ma non committati:"
+            echo "$untracked"
+            exit 1
+          fi
+
+      # Volutamente NON c'e' uno step connectedAndroidTest: il source set
+      # androidTest di :mobile oggi non compila (simboli inesistenti in
+      # WearCommunicationTest.kt). Va sistemato prima, non aggiunto qui.
+
+      - name: 11. Upload Mobile App APK
         uses: actions/upload-artifact@v4
         with:
           name: mobile-app-debug
           path: mobile/build/outputs/apk/debug/mobile-debug.apk
 
-      - name: 8. Upload Wear OS App APK
+      - name: 12. Upload Wear OS App APK
         uses: actions/upload-artifact@v4
         with:
           name: wear-app-debug
           path: wear/build/outputs/apk/debug/wear-debug.apk
 
-      - name: 9. Upload Test Reports
+      - name: 13. Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
           path: "**/build/reports/tests/**"
 
-      - name: 10. Upload Lint Reports
+      - name: 14. Upload Lint Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
