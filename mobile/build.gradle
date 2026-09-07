@@ -1,8 +1,8 @@
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     id 'kotlin-parcelize'
-    id 'com.google.devtools.ksp'
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -80,53 +80,49 @@ android {
 }
 
 dependencies {
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.0.21"))
-    implementation 'androidx.core:core-ktx:1.13.1'
-    implementation "androidx.fragment:fragment-ktx:1.8.1"
-    implementation "androidx.activity:activity-ktx:1.9.0"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.2"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.8.2"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.2"
+    implementation(platform(libs.kotlin.bom))
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.fragment.ktx
+    implementation libs.androidx.activity.ktx.mobile
+    implementation libs.androidx.lifecycle.viewmodel.ktx.mobile
+    implementation libs.androidx.lifecycle.livedata.ktx.mobile
+    implementation libs.androidx.lifecycle.runtime.ktx.mobile
     implementation project(':shared')
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'com.google.android.material:material:1.12.0'
-    implementation 'com.google.android.gms:play-services-wearable:19.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation libs.androidx.appcompat.mobile
+    implementation libs.android.material.mobile
+    implementation libs.play.services.wearable
+    implementation libs.androidx.constraintlayout.mobile
 
-    
     // MultiDex support
-    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation libs.androidx.multidex
 
-    testImplementation 'org.robolectric:robolectric:4.12.2'
-    testImplementation 'org.mockito:mockito-core:5.12.0'
-    testImplementation 'org.mockito:mockito-inline:5.2.0'
-    testImplementation 'org.mockito:mockito-android:5.12.0'
-    testImplementation 'org.mockito.kotlin:mockito-kotlin:5.3.1'
-    testImplementation 'androidx.test:rules:1.6.0'
-    testImplementation 'androidx.test.ext:junit-ktx:1.2.1'
+    testImplementation libs.robolectric.mobile
+    testImplementation libs.mockito.core.mobile
+    testImplementation libs.mockito.inline.mobile
+    testImplementation libs.mockito.android
+    testImplementation libs.mockito.kotlin.mobile
+    testImplementation libs.androidx.test.rules
+    testImplementation libs.androidx.test.ext.junit.ktx
     // Dependencies for coroutines testing and LiveData
-    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1"
-    testImplementation "androidx.arch.core:core-testing:2.2.0"
-    testImplementation 'com.google.truth:truth:1.4.2'
+    testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.androidx.arch.core.testing
+    testImplementation libs.truth
 
     // JUnit 5 for useJUnitPlatform()
-    def junit_version = "5.10.2"
-    testImplementation platform("org.junit:junit-bom:$junit_version")
-    testImplementation "org.junit.jupiter:junit-jupiter-api"
-    testImplementation "org.junit.jupiter:junit-jupiter-engine"
-    testImplementation "org.junit.jupiter:junit-jupiter-params"
-    testImplementation "org.junit.vintage:junit-vintage-engine:5.10.2"
-    testImplementation "org.junit.platform:junit-platform-launcher"
-    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
-    androidTestImplementation 'org.mockito:mockito-android:5.12.0'
-    androidTestImplementation 'androidx.test:rules:1.6.0'
+    testImplementation platform(libs.junit.bom)
+    testImplementation libs.junit.jupiter.api
+    testImplementation libs.junit.jupiter.engine
+    testImplementation libs.junit.jupiter.params
+    testImplementation libs.junit.vintage.engine
+    testImplementation libs.junit.platform.launcher
+    androidTestImplementation libs.androidx.test.ext.junit
+    androidTestImplementation libs.androidx.test.espresso.core
+    androidTestImplementation libs.mockito.android
+    androidTestImplementation libs.androidx.test.rules
 
-    def room_version = "2.6.1"
-
-    implementation "androidx.room:room-runtime:$room_version"
-    implementation "androidx.room:room-ktx:$room_version"
-    ksp "androidx.room:room-compiler:$room_version"
-    testImplementation "androidx.room:room-testing:$room_version"
-    implementation "com.github.skydoves:colorpickerview:2.3.0"
+    implementation libs.androidx.room.runtime
+    implementation libs.androidx.room.ktx
+    ksp libs.androidx.room.compiler
+    testImplementation libs.androidx.room.testing
+    implementation libs.colorpickerview
 }
