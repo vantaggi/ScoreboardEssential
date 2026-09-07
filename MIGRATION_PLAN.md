@@ -25,11 +25,13 @@ scarica.
 
 ---
 
-## Fase T — toolchain
+## Fase T — toolchain ✅ COMPLETATA
 
 Requisito Play: dal 31 agosto 2026 gli aggiornamenti richiedono `targetSdk 36`.
-Il progetto è a 34, quindi **oggi non è pubblicabile**. Proroga richiedibile al
-1 novembre 2026. Le app Wear OS sono esentate: `:wear` resta a `targetSdk 34`.
+**Risolto**: `:mobile` è a 36, il bundle release si costruisce. Le app Wear OS
+sono esentate, `:wear` resta a `targetSdk 34`.
+
+Restano due verifiche che richiedono un dispositivo, elencate in fondo.
 
 | # | Passo | Stato |
 |---|---|---|
@@ -39,16 +41,16 @@ Il progetto è a 34, quindi **oggi non è pubblicabile**. Proroga richiedibile a
 | T4 | Una coordinata una versione + igiene dipendenze | ✅ fatto |
 | T5 | Wrapper Gradle 8.9 → 8.13 | ✅ fatto |
 | T6+T7 | AGP 8.13.0 + Kotlin 2.2.21 + KSP 2.2.21-2.0.5 + Room 2.8.4 — **inseparabili**, vedi sotto | ✅ fatto |
-| T8 | ktlint 12.1.1 → 13.x (+ `ktlintFormat` in un secondo commit) | ⬜ **prossimo** |
+| T8 | ktlint 13.1.0 + engine 1.8.0, format in commit separato | ✅ fatto |
 | T9 | compileSdk 34 → 36 su tutti e tre i moduli | ✅ fatto |
 | T10 | Robolectric 4.16.1, `robolectric.properties`, Mockito 5, **`includeAndroidResources` in `wear/build.gradle`** | ✅ fatto |
 | T11 | `exportSchema = true`, `11.json` committato, `fallbackToDestructiveMigrationFrom(1..5)` | ✅ fatto (con due limiti, sotto) |
-| T12 | Edge-to-edge reale (`enableEdgeToEdge` + insets) | ⬜ ▲ richiede verifica manuale |
-| T13 | Igiene manifest (FGS, predictive back, `ForegroundServiceStartNotAllowedException`) | ⬜ |
-| T14 | **`targetSdk 34 → 36` su `:mobile`** — una riga, sblocca Play | ⬜ ▲ richiede pass manuale su device |
-| T15 | Sweep deprecati (`Stack`→`ArrayDeque`, bundle Parcelable, guardie SDK morte) | ⬜ |
-| T16 | Togliere `@Parcelize` da `Player`/`Role` (3 call site) → sblocca AGP 9 | ⬜ |
-| T17 | CI: `lint`, `assembleRelease`, gate schemi, golden test del protocollo | ⬜ |
+| T12 | Edge-to-edge reale (`enableEdgeToEdge` + insets) | ✅ codice fatto · ▲ **verifica manuale ancora da fare** |
+| T13 | Igiene manifest (FGS, predictive back, `ForegroundServiceStartNotAllowedException`) | ✅ fatto |
+| T14 | **`targetSdk 34 → 36` su `:mobile`** — Play sbloccato | ✅ fatto · ▲ **pass manuale su device ancora da fare** |
+| T15 | Sweep deprecati (`Stack`→`ArrayDeque`, guardie SDK morte) | ✅ fatto |
+| T16 | `@Parcelize` fuori dalle entità Room → **AGP 9 sbloccato** | ✅ fatto |
+| T17 | CI: `lint` + baseline, `assembleRelease`, gate schemi, concurrency | ✅ fatto · golden test protocollo → resta a S3 |
 
 **Vincoli d'ordine (violarli produce fallimenti che sembrano casuali):**
 T5→T6 · T6→T9 · T7→T11 · **T10→T14** · T12,T13→T14
