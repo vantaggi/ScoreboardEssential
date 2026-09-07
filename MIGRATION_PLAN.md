@@ -85,6 +85,30 @@ T5→T6 · T6→T9 · T7→T11 · **T10→T14** · T12,T13→T14
 - **Esiste solo `11.json`**: l'export è stato acceso a schema già alla v11, le
   migrazioni storiche non sono validabili a posteriori. Da v12 in poi sì.
 
+### AGP 9 — decisione presa: rimandato, non bloccato
+
+Android Studio segnala periodicamente che AGP 8.13 ha un aggiornamento. **Non
+accettarlo, e non usare l'Upgrade Assistant**: riscrive i file di build senza
+sapere del version catalog né di `gradle-daemon-jvm.properties`, e trascina anche
+Gradle a 9.x.
+
+Cosa è cambiato: i due blocchi più duri **sono caduti**. Non esiste più alcun
+`@Parcelize` nel repo (rimosso in T16, quindi niente trigger per google/ksp#3053)
+e kapt non è mai stato usato. AGP 9 è ora una **scelta**, non un impedimento.
+
+Cosa costerebbe, se si decidesse di farlo: è una catena, non un bump. Gradle 9.x
++ Kotlin 2.3.x + KSP 2.3.x, e la rimozione del Kotlin Gradle Plugin da tutti e
+tre i moduli in favore del built-in Kotlin. Stessa forma di vincoli incrociati
+che ha reso T6 e T7 inseparabili.
+
+Le due incognite da verificare prima di impegnarsi:
+1. il plugin **ktlint 13.x** sotto built-in Kotlin;
+2. **DataBinding**, che `:mobile` usa pesantemente — è già il punto che ha fatto
+   esplodere il passaggio ad AGP 8.13 (`databinding-ktx` compilato con Kotlin 2.2).
+
+Nessun requisito di Play tocca AGP, e Studio supporta le versioni degli ultimi
+3 anni: 8.13 non ha scadenze. Riaprire la questione dopo la Fase S.
+
 ---
 
 ## Fase B — bug che il refactor cementerebbe
