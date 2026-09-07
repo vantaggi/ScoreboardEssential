@@ -3,7 +3,6 @@ package it.vantaggi.scoreboardessential
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.os.Build
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.repository.ColorRepository
 import it.vantaggi.scoreboardessential.repository.MatchRepository
@@ -38,42 +37,40 @@ class ScoreboardEssentialApplication : Application() {
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager: NotificationManager =
-                getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager: NotificationManager =
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-            // Service Channel (Low Importance - Silent)
-            val name = getString(R.string.channel_name)
-            val descriptionText = getString(R.string.channel_description)
-            val importance = NotificationManager.IMPORTANCE_LOW
-            val channel =
-                NotificationChannel(CHANNEL_ID, name, importance).apply {
-                    description = descriptionText
-                    setShowBadge(false)
-                }
-            notificationManager.createNotificationChannel(channel)
+        // Service Channel (Low Importance - Silent)
+        val name = getString(R.string.channel_name)
+        val descriptionText = getString(R.string.channel_description)
+        val importance = NotificationManager.IMPORTANCE_LOW
+        val channel =
+            NotificationChannel(CHANNEL_ID, name, importance).apply {
+                description = descriptionText
+                setShowBadge(false)
+            }
+        notificationManager.createNotificationChannel(channel)
 
-            // Timer Channel (Low Importance - Silent for updates)
-            val timerName = getString(R.string.match_timer)
-            val timerDescription = "Active match timer updates"
-            val timerChannel =
-                NotificationChannel(CHANNEL_ID_TIMER, timerName, NotificationManager.IMPORTANCE_LOW).apply {
-                    description = timerDescription
-                    setShowBadge(false)
-                }
-            notificationManager.createNotificationChannel(timerChannel)
+        // Timer Channel (Low Importance - Silent for updates)
+        val timerName = getString(R.string.match_timer)
+        val timerDescription = "Active match timer updates"
+        val timerChannel =
+            NotificationChannel(CHANNEL_ID_TIMER, timerName, NotificationManager.IMPORTANCE_LOW).apply {
+                description = timerDescription
+                setShowBadge(false)
+            }
+        notificationManager.createNotificationChannel(timerChannel)
 
-            // Alarm Channel (High Importance - Sound & Pop-up)
-            val alarmName = "Timer Alarms" // You might want to extract this to strings.xml later if strict localization is needed
-            val alarmDescription = "Notifications for expired timers"
-            val alarmImportance = NotificationManager.IMPORTANCE_HIGH
-            val alarmChannel =
-                NotificationChannel(CHANNEL_ID_ALARM, alarmName, alarmImportance).apply {
-                    description = alarmDescription
-                    enableVibration(true)
-                    enableLights(true)
-                }
-            notificationManager.createNotificationChannel(alarmChannel)
-        }
+        // Alarm Channel (High Importance - Sound & Pop-up)
+        val alarmName = "Timer Alarms" // You might want to extract this to strings.xml later if strict localization is needed
+        val alarmDescription = "Notifications for expired timers"
+        val alarmImportance = NotificationManager.IMPORTANCE_HIGH
+        val alarmChannel =
+            NotificationChannel(CHANNEL_ID_ALARM, alarmName, alarmImportance).apply {
+                description = alarmDescription
+                enableVibration(true)
+                enableLights(true)
+            }
+        notificationManager.createNotificationChannel(alarmChannel)
     }
 }

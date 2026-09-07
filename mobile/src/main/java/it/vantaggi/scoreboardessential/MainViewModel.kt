@@ -92,7 +92,7 @@ class MainViewModel(
         val timestamp: Long,
     )
 
-    private val actionStack = java.util.Stack<GoalAction>()
+    private val actionStack = ArrayDeque<GoalAction>()
     private val _canUndo = MutableLiveData(false)
 
     /** LiveData indicating if there are actions available to undo. */
@@ -609,13 +609,13 @@ class MainViewModel(
                 addMatchEvent("Goal", team = team, player = playerWithRoles.player.playerName, playerRole = rolesString)
 
                 // Track for Undo
-                actionStack.push(GoalAction(team, playerWithRoles.player.playerId, System.currentTimeMillis()))
+                actionStack.addLast(GoalAction(team, playerWithRoles.player.playerId, System.currentTimeMillis()))
             } else {
                 // No specific player, just log a goal for the team
                 addMatchEvent("Goal", team = team, player = teamName)
 
                 // Track for Undo (null playerId)
-                actionStack.push(GoalAction(team, null, System.currentTimeMillis()))
+                actionStack.addLast(GoalAction(team, null, System.currentTimeMillis()))
             }
             _canUndo.postValue(true)
         }
@@ -636,14 +636,14 @@ class MainViewModel(
             addScorer(team, match)
         } else {
             addMatchEvent("Goal", team = team, player = playerName)
-            actionStack.push(GoalAction(team, null, System.currentTimeMillis()))
+            actionStack.addLast(GoalAction(team, null, System.currentTimeMillis()))
             _canUndo.postValue(true)
         }
     }
 
     fun undoLastGoal() {
-        if (actionStack.isNotEmpty()) {
-            val lastAction = actionStack.pop()
+        val lastAction = actionStack.removeLastOrNull()
+        if (lastAction != null) {
             _canUndo.postValue(actionStack.isNotEmpty())
 
             viewModelScope.launch {
