@@ -33,6 +33,17 @@ class WearViewModel(
     // muore sul looper di Robolectric.
     private val connectionManager: OptimizedWearDataSync = OptimizedWearDataSync(application),
 ) : AndroidViewModel(application) {
+    /**
+     * Costruttore richiesto da [androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory],
+     * che lo cerca PER RIFLESSIONE con esattamente la firma (Application).
+     *
+     * Non basta il valore di default sul parametro secondario: i default di Kotlin non
+     * generano un costruttore separato, quindi la factory non lo troverebbe e MainActivity
+     * crasherebbe all'avvio con NoSuchMethodException. E' un contratto invisibile nel
+     * codice sorgente, per questo e' esplicito qui e coperto da WearViewModelConstructorTest.
+     */
+    constructor(application: Application) : this(application, OptimizedWearDataSync(application))
+
     companion object {
         private const val TAG = "WearViewModel"
     }
