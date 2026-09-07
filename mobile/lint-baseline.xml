@@ -1,0 +1,2004 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.13.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.0)" variant="all" version="8.13.0">
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="            Goals per Match: ${if (player.appearances > 0) String.format(&quot;%.2f&quot;, player.goals.toFloat() / player.appearances) else &quot;0.00&quot;}"
+        errorLine2="                                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/PlayersManagementActivity.kt"
+            line="215"
+            column="60"/>
+    </issue>
+
+    <issue
+        id="OldTargetApi"
+        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
+        errorLine1="        targetSdk 34"
+        errorLine2="        ~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="29"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="AppBundleLocaleChanges"
+        message="Found dynamic locale changes, but did not find corresponding Play Core library calls for downloading languages and splitting by language is not disabled in the `bundle` configuration"
+        errorLine1="        configuration.setLocale(locale)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/utils/LocaleHelper.kt"
+            line="53"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="        val view = inflater.inflate(R.layout.pdf_match_report, null)"
+        errorLine2="                                                               ~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/utils/MatchReportUtils.kt"
+            line="24"
+            column="64"/>
+    </issue>
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of Gradle than 8.13 is available: 8.14.5"
+        errorLine1="distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/wrapper/gradle-wrapper.properties"
+            line="3"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of com.android.application than 8.13.0 is available: 9.4.0. (There is also a newer version of 8.13.𝑥 available, if upgrading to 9.4.0 is difficult: 8.13.2)"
+        errorLine1="agp = &quot;8.13.0&quot;"
+        errorLine2="      ~~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="9"
+            column="7"/>
+    </issue>
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of com.android.library than 8.13.0 is available: 9.4.0. (There is also a newer version of 8.13.𝑥 available, if upgrading to 9.4.0 is difficult: 8.13.2)"
+        errorLine1="agp = &quot;8.13.0&quot;"
+        errorLine2="      ~~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="9"
+            column="7"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.activity:activity-ktx than 1.9.3 is available: 1.13.0"
+        errorLine1="activity = &quot;1.9.3&quot;"
+        errorLine2="           ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="15"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.appcompat:appcompat than 1.7.1 is available: 1.8.0"
+        errorLine1="appcompat = &quot;1.7.1&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="16"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.constraintlayout:constraintlayout than 2.2.1 is available: 2.2.2"
+        errorLine1="constraintlayout = &quot;2.2.1&quot;"
+        errorLine2="                   ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="17"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.core:core-ktx than 1.13.1 is available: 1.19.0"
+        errorLine1="coreKtx = &quot;1.13.1&quot;"
+        errorLine2="          ~~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="18"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.fragment:fragment-ktx than 1.8.1 is available: 1.9.0"
+        errorLine1="fragmentKtx = &quot;1.8.1&quot;"
+        errorLine2="              ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="20"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-livedata-ktx than 2.8.7 is available: 2.11.0"
+        errorLine1="lifecycle = &quot;2.8.7&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="21"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-runtime-ktx than 2.8.7 is available: 2.11.0"
+        errorLine1="lifecycle = &quot;2.8.7&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="21"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-viewmodel-ktx than 2.8.7 is available: 2.11.0"
+        errorLine1="lifecycle = &quot;2.8.7&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="21"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of com.google.android.material:material than 1.13.0 is available: 1.14.0"
+        errorLine1="material = &quot;1.13.0&quot;"
+        errorLine2="           ~~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="23"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of com.google.android.gms:play-services-wearable than 19.0.0 is available: 20.0.1"
+        errorLine1="playServicesWearable = &quot;19.0.0&quot;"
+        errorLine2="                       ~~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="24"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.recyclerview:recyclerview than 1.3.2 is available: 1.4.0"
+        errorLine1="recyclerview = &quot;1.3.2&quot;"
+        errorLine2="               ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="25"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.wear:wear than 1.3.0 is available: 1.4.0"
+        errorLine1="wear = &quot;1.3.0&quot;"
+        errorLine2="       ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="27"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.wear:wear-remote-interactions than 1.1.0 is available: 1.2.0"
+        errorLine1="wearRemoteInteractions = &quot;1.1.0&quot;"
+        errorLine2="                         ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="28"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.test.espresso:espresso-core than 3.6.1 is available: 3.7.0"
+        errorLine1="espresso = &quot;3.6.1&quot;"
+        errorLine2="           ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="33"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.test:rules than 1.6.0 is available: 1.7.0"
+        errorLine1="testRules = &quot;1.6.0&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="34"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.test.ext:junit than 1.2.1 is available: 1.3.0"
+        errorLine1="testJunitExt = &quot;1.2.1&quot;"
+        errorLine2="               ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="35"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.test.ext:junit-ktx than 1.2.1 is available: 1.3.0"
+        errorLine1="testJunitExt = &quot;1.2.1&quot;"
+        errorLine2="               ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="35"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.android than 2.2.21 is available: 2.4.20"
+        errorLine1="kotlin = &quot;2.2.21&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="10"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jlleitschuh.gradle.ktlint than 12.1.1 is available: 14.2.0"
+        errorLine1="ktlintPlugin = &quot;12.1.1&quot;"
+        errorLine2="               ~~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="12"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-android than 1.8.1 is available: 1.11.0"
+        errorLine1="coroutines = &quot;1.8.1&quot;"
+        errorLine2="             ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="19"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-play-services than 1.8.1 is available: 1.11.0"
+        errorLine1="coroutines = &quot;1.8.1&quot;"
+        errorLine2="             ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="19"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.github.skydoves:colorpickerview than 2.3.0 is available: 2.4.0"
+        errorLine1="colorpicker = &quot;2.3.0&quot;"
+        errorLine2="              ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="29"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.truth:truth than 1.4.2 is available: 1.4.5"
+        errorLine1="truth = &quot;1.4.2&quot;"
+        errorLine2="        ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="36"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.junit.vintage:junit-vintage-engine than 5.10.2 is available: 6.1.3"
+        errorLine1="junit5 = &quot;5.10.2&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="38"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.junit:junit-bom than 5.10.2 is available: 6.1.3"
+        errorLine1="junit5 = &quot;5.10.2&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="38"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.mockito:mockito-android than 5.12.0 is available: 5.23.0"
+        errorLine1="mockito = &quot;5.12.0&quot;"
+        errorLine2="          ~~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="40"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.mockito:mockito-core than 5.12.0 is available: 5.23.0"
+        errorLine1="mockito = &quot;5.12.0&quot;"
+        errorLine2="          ~~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="40"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.mockito.kotlin:mockito-kotlin than 5.3.1 is available: 6.3.0"
+        errorLine1="mockitoKotlin = &quot;5.3.1&quot;"
+        errorLine2="                ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="41"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-test than 1.8.1 is available: 1.11.0"
+        errorLine1="coroutinesTest = &quot;1.8.1&quot;"
+        errorLine2="                 ~~~~~~~">
+        <location
+            file="$HOME/Desktop/PROGETTI/ScoreboardEssential/.claude/worktrees/project-review-multi-sport-6e998b/gradle/libs.versions.toml"
+            line="42"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="DataBindingWithoutKapt"
+        message="If you plan to use data binding in a Kotlin project, you should apply the kotlin-kapt plugin."
+        errorLine1="        dataBinding true"
+        errorLine2="        ~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="71"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="Untranslatable"
+        message="The resource string &quot;appbar_scrolling_view_behavior&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;it&quot; (Italian) here"
+        errorLine1="    &lt;string name=&quot;appbar_scrolling_view_behavior&quot; translatable=&quot;false&quot;>com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior&lt;/string>"
+        errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-it/strings.xml"
+            line="5"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;Color&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;choose_team_color&quot;>Choose Team %d Color&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="44"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="WakelockTimeout"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery."
+        errorLine1="            wakeLock?.acquire()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/service/MatchTimerService.kt"
+            line="125"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="WakelockTimeout"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery."
+        errorLine1="            wakeLock?.acquire()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/service/MatchTimerService.kt"
+            line="263"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="            matchLogAdapter.notifyDataSetChanged()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="227"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="            matchLogAdapter.notifyDataSetChanged()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="233"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="        notifyDataSetChanged()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/RoleSelectionAdapter.kt"
+            line="33"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 30"
+        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/utils/LocaleHelper.kt"
+            line="23"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 30"
+        errorLine1="                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="273"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 30"
+        errorLine1="                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="279"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 30"
+        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="485"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 30"
+        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/ScoreboardEssentialApplication.kt"
+            line="41"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v26`) is unnecessary; `minSdkVersion` is 30. Merge all the resources in this folder into `mipmap-anydpi`.">
+        <location
+            file="src/main/res/mipmap-anydpi-v26"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="This field leaks a context object"
+        errorLine1="    private var matchTimerService: MatchTimerService? = null"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt"
+            line="72"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="DisableBaselineAlignment"
+        message="Set `android:baselineAligned=&quot;false&quot;` on this element for better performance"
+        errorLine1="                    &lt;LinearLayout android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;wrap_content&quot; android:orientation=&quot;horizontal&quot;>"
+        errorLine2="                     ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="133"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="DisableBaselineAlignment"
+        message="Set `android:baselineAligned=&quot;false&quot;` on this element for better performance"
+        errorLine1="                    &lt;LinearLayout android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;wrap_content&quot; android:orientation=&quot;horizontal&quot;>"
+        errorLine2="                     ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="175"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `@color/asphalt_dark` with a theme that also paints a background (inferred theme is `@style/Theme.ScoreboardEssential`)"
+        errorLine1="    android:background=&quot;@color/asphalt_dark&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_statistics.xml"
+            line="7"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.avatar_size_large` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;avatar_size_large&quot;>48dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="4"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.avatar_size_small` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;avatar_size_small&quot;>32dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="5"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.margin_small` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;margin_small&quot;>8dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="8"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.margin_medium` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;margin_medium&quot;>12dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="9"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.margin_large` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;margin_large&quot;>16dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="10"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.padding_small` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;padding_small&quot;>8dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="11"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.padding_medium` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;padding_medium&quot;>12dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="12"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.padding_large` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;padding_large&quot;>16dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="13"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.chip_spacing_small` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;chip_spacing_small&quot;>2dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="16"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.chip_spacing_medium` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;chip_spacing_medium&quot;>4dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="17"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.card_elevation_default` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;card_elevation_default&quot;>4dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="20"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.card_elevation_none` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;card_elevation_none&quot;>0dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="21"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.array.android_wear_capabilities` appears to be unused"
+        errorLine1="    &lt;string-array name=&quot;android_wear_capabilities&quot;>"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/wear.xml"
+            line="3"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icon used as round icon did not have a circular shape">
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icon used as round icon did not have a circular shape">
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icon used as round icon did not have a circular shape">
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher_round.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icon used as round icon did not have a circular shape">
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icon used as round icon did not have a circular shape">
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
+    </issue>
+
+    <issue
+        id="MonochromeLauncherIcon"
+        message="The application adaptive icon is missing a monochrome tag"
+        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/main/res/mipmap-anydpi-v26/ic_launcher.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="MonochromeLauncherIcon"
+        message="The application adaptive roundIcon is missing a monochrome tag"
+        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `ic_launcher.png` varies significantly in its density-independent (dip) size across the various density versions: mipmap-hdpi/ic_launcher.png: 683x683 dp (1024x1024 px), mipmap-mdpi/ic_launcher.png: 1024x1024 dp (1024x1024 px), mipmap-xhdpi/ic_launcher.png: 512x512 dp (1024x1024 px), mipmap-xxhdpi/ic_launcher.png: 341x341 dp (1024x1024 px), mipmap-xxxhdpi/ic_launcher.png: 256x256 dp (1024x1024 px)">
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher.png"/>
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher.png"/>
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher.png"/>
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `ic_launcher_round.png` varies significantly in its density-independent (dip) size across the various density versions: mipmap-hdpi/ic_launcher_round.png: 683x683 dp (1024x1024 px), mipmap-mdpi/ic_launcher_round.png: 1024x1024 dp (1024x1024 px), mipmap-xhdpi/ic_launcher_round.png: 512x512 dp (1024x1024 px), mipmap-xxhdpi/ic_launcher_round.png: 341x341 dp (1024x1024 px), mipmap-xxxhdpi/ic_launcher_round.png: 256x256 dp (1024x1024 px)">
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `10sp`"
+        errorLine1="        android:textSize=&quot;10sp&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_team_name.xml"
+            line="66"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toColorInt` instead?"
+        errorLine1="                ColorStateList.valueOf(Color.parseColor(&quot;#FF1744&quot;))"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/utils/AnimationUtils.kt"
+            line="140"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toColorInt` instead?"
+        errorLine1="                ColorStateList.valueOf(Color.parseColor(&quot;#76FF03&quot;))"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/utils/AnimationUtils.kt"
+            line="142"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        preferences.edit().putString(KEY_APP_LANGUAGE, language).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/utils/LocaleHelper.kt"
+            line="42"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        sharedPreferences.edit().putBoolean(&quot;onboarding_completed&quot;, true).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt"
+            line="407"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ClickableViewAccessibility"
+        message="`onTouch` lambda should call `View#performClick` when a click is detected"
+        errorLine1="        findViewById&lt;View>(R.id.team1_card).setOnTouchListener { _, event ->"
+        errorLine2="                                                               ^">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="410"
+            column="64"/>
+    </issue>
+
+    <issue
+        id="ClickableViewAccessibility"
+        message="`onTouch` lambda should call `View#performClick` when a click is detected"
+        errorLine1="        findViewById&lt;View>(R.id.team2_card).setOnTouchListener { _, event ->"
+        errorLine2="                                                               ^">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="429"
+            column="64"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="                                &lt;ImageView android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:padding=&quot;16dp&quot; android:src=&quot;@drawable/ic_minus&quot; app:tint=&quot;@color/stencil_white&quot; />"
+        errorLine2="                                 ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="67"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="                                &lt;ImageView android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:padding=&quot;18dp&quot; android:src=&quot;@drawable/ic_plus&quot; app:tint=&quot;@color/stencil_white&quot; />"
+        errorLine2="                                 ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="73"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="                                &lt;ImageView android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:padding=&quot;16dp&quot; android:src=&quot;@drawable/ic_minus&quot; app:tint=&quot;@color/stencil_white&quot; />"
+        errorLine2="                                 ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="104"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="                                &lt;ImageView android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:padding=&quot;18dp&quot; android:src=&quot;@drawable/ic_plus&quot; app:tint=&quot;@color/stencil_white&quot; />"
+        errorLine2="                                 ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="110"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="            &lt;ImageView"
+        errorLine2="             ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_players_management.xml"
+            line="74"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="    &lt;com.google.android.material.floatingactionbutton.FloatingActionButton"
+        errorLine2="     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_players_management.xml"
+            line="114"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_statistics.xml"
+            line="49"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="src/main/res/layout/fragment_onboarding_step.xml"
+            line="10"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="LabelFor"
+        message="Missing accessibility label: provide either a view with an `android:labelFor` that references this view or provide an `android:hint`"
+        errorLine1="                    &lt;AutoCompleteTextView android:id=&quot;@+id/languageAutoComplete&quot; android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;wrap_content&quot; android:inputType=&quot;none&quot; />"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_match_settings.xml"
+            line="58"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="            selectedRolesTextView.text = &quot;No roles selected&quot;"
+        errorLine2="                                          ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/CreatePlayerDialogFragment.kt"
+            line="56"
+            column="43"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
+        errorLine1="            team1ScoreTextView.text = score.toString()"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="209"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
+        errorLine1="            team2ScoreTextView.text = score.toString()"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="213"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="            keeperTimerTextView.text = &quot;⏰ ${TimeUtils.formatTime(timeInMillis)}&quot;"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="609"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="                    team1FormationLabel.text = &quot;$teamName (${formation.getFormationString()})&quot;"
+        errorLine2="                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="666"
+            column="48"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="                    team1FormationLabel.text = &quot;$teamName (No formation)&quot;"
+        errorLine2="                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="668"
+            column="48"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="                    team1FormationLabel.text = &quot;$teamName (No formation)&quot;"
+        errorLine2="                                                         ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="668"
+            column="58"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="                    team2FormationLabel.text = &quot;$teamName (${formation.getFormationString()})&quot;"
+        errorLine2="                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="675"
+            column="48"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="                    team2FormationLabel.text = &quot;$teamName (No formation)&quot;"
+        errorLine2="                                               ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="677"
+            column="48"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="                    team2FormationLabel.text = &quot;$teamName (No formation)&quot;"
+        errorLine2="                                                         ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt"
+            line="677"
+            column="58"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="                summaryTextView.text = &quot;TOTAL MATCHES: ${it.size}&quot;"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MatchHistoryActivity.kt"
+            line="45"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="                summaryTextView.text = &quot;TOTAL MATCHES: ${it.size}&quot;"
+        errorLine2="                                        ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MatchHistoryActivity.kt"
+            line="45"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
+        errorLine1="            team1ScoreTextView.text = matchWithTeams.match.team1Score.toString()"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MatchHistoryAdapter.kt"
+            line="57"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
+        errorLine1="            team2ScoreTextView.text = matchWithTeams.match.team2Score.toString()"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/MatchHistoryAdapter.kt"
+            line="58"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
+        errorLine1="        team1ScoreTextView.text = data.team1Score.toString()"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/utils/MatchReportUtils.kt"
+            line="37"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
+        errorLine1="        team2ScoreTextView.text = data.team2Score.toString()"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/utils/MatchReportUtils.kt"
+            line="39"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="                    text = &quot;Nessun marcatore&quot;"
+        errorLine2="                            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/utils/MatchReportUtils.kt"
+            line="103"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
+        errorLine1="                binding.keeperTimerEdittext.setText(duration.toString())"
+        errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/ui/MatchSettingsActivity.kt"
+            line="84"
+            column="53"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="                text = &quot;All&quot;"
+        errorLine2="                        ~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/PlayersManagementActivity.kt"
+            line="147"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="            goalsTextView.text = &quot;⚽ ${player.goals}&quot;"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/PlayersManagementAdapter.kt"
+            line="59"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="            appearancesTextView.text = &quot;🎮 ${player.appearances}&quot;"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/PlayersManagementAdapter.kt"
+            line="60"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="            rankTextView.text = &quot;#$rank&quot;"
+        errorLine2="                                ~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/ui/statistics/StatisticsAdapter.kt"
+            line="48"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="            goalsTextView.text = &quot;${item.goals} Gol&quot;"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/ui/statistics/StatisticsAdapter.kt"
+            line="50"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="            goalsTextView.text = &quot;${item.goals} Gol&quot;"
+        errorLine2="                                               ~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/ui/statistics/StatisticsAdapter.kt"
+            line="50"
+            column="48"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="            appearancesTextView.text = &quot;${item.appearances} Presenze&quot;"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/ui/statistics/StatisticsAdapter.kt"
+            line="51"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="            appearancesTextView.text = &quot;${item.appearances} Presenze&quot;"
+        errorLine2="                                                           ~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/ui/statistics/StatisticsAdapter.kt"
+            line="51"
+            column="60"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Player Name&quot;, should use `@string` resource"
+        errorLine1="                android:hint=&quot;Player Name&quot;>"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_add_edit_player.xml"
+            line="41"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Roles&quot;, should use `@string` resource"
+        errorLine1="                android:text=&quot;Roles&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_add_edit_player.xml"
+            line="55"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;MATCH TIME&quot;, should use `@string` resource"
+        errorLine1="                    &lt;TextView android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;MATCH TIME&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textColor=&quot;@color/sidewalk_gray&quot; android:textSize=&quot;14sp&quot;/>"
+        errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="22"
+            column="104"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;00:00&quot;, should use `@string` resource"
+        errorLine1="                    &lt;TextView android:id=&quot;@+id/timer_textview&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;00:00&quot; android:textAppearance=&quot;?attr/textAppearanceDisplayLarge&quot; android:layout_marginTop=&quot;4dp&quot;/>"
+        errorLine2="                                                                                                                                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="24"
+            column="137"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;05:00&quot;, should use `@string` resource"
+        errorLine1="                    &lt;TextView android:id=&quot;@+id/keeper_timer_textview&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;05:00&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textColor=&quot;?attr/colorPrimary&quot; android:layout_marginTop=&quot;8dp&quot; android:visibility=&quot;visible&quot;/>"
+        errorLine2="                                                                                                                                               ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="26"
+            column="144"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;START&quot;, should use `@string` resource"
+        errorLine1="                        &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/timer_start_button&quot; style=&quot;@style/Widget.App.Button.Street&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;START&quot; android:onClick=&quot;startStopTimer&quot; android:layout_marginEnd=&quot;8dp&quot;/>"
+        errorLine2="                                                                                                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="30"
+            column="226"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;RESET&quot;, should use `@string` resource"
+        errorLine1="                        &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/reset_timer_button&quot; style=&quot;@style/Widget.App.Button.TextButton.Street&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;RESET&quot; android:onClick=&quot;resetTimer&quot;/>"
+        errorLine2="                                                                                                                                                                                                                                            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="32"
+            column="237"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;UNDO LAST GOAL&quot;, should use `@string` resource"
+        errorLine1="                    &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/undo_goal_button&quot; style=&quot;@style/Widget.App.Button.TextButton.Street&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:layout_marginTop=&quot;8dp&quot; android:text=&quot;UNDO LAST GOAL&quot; android:textColor=&quot;@color/error_red&quot; app:icon=&quot;@drawable/ic_undo&quot; app:iconTint=&quot;@color/error_red&quot; android:visibility=&quot;gone&quot; tools:visibility=&quot;visible&quot;/>"
+        errorLine2="                                                                                                                                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="35"
+            column="262"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;TEAM 1&quot;, should use `@string` resource"
+        errorLine1="                            &lt;TextView android:id=&quot;@+id/team1_name_textview&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;TEAM 1&quot; android:textAlignment=&quot;center&quot; android:textColor=&quot;@color/concrete_gray&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textSize=&quot;20sp&quot;/>"
+        errorLine2="                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="50"
+            column="150"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;0&quot;, should use `@string` resource"
+        errorLine1="                            &lt;TextView android:id=&quot;@+id/team1_score_textview&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:layout_gravity=&quot;center&quot; android:text=&quot;0&quot; android:textColor=&quot;@color/concrete_gray&quot; android:textSize=&quot;86sp&quot; android:fontFamily=&quot;sans-serif-condensed&quot; android:textStyle=&quot;bold&quot; android:includeFontPadding=&quot;false&quot; android:shadowColor=&quot;@color/asphalt_dark&quot; android:shadowDx=&quot;3&quot; android:shadowDy=&quot;3&quot; android:shadowRadius=&quot;6&quot; />"
+        errorLine2="                                                                                                                                                                                      ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="57"
+            column="183"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;TEAM 2&quot;, should use `@string` resource"
+        errorLine1="                            &lt;TextView android:id=&quot;@+id/team2_name_textview&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;TEAM 2&quot; android:textAlignment=&quot;center&quot; android:textColor=&quot;@color/concrete_gray&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textSize=&quot;20sp&quot;/>"
+        errorLine2="                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="87"
+            column="150"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;0&quot;, should use `@string` resource"
+        errorLine1="                            &lt;TextView android:id=&quot;@+id/team2_score_textview&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:layout_gravity=&quot;center&quot; android:text=&quot;0&quot; android:textColor=&quot;@color/concrete_gray&quot; android:textSize=&quot;86sp&quot; android:fontFamily=&quot;sans-serif-condensed&quot; android:textStyle=&quot;bold&quot; android:includeFontPadding=&quot;false&quot; android:shadowColor=&quot;@color/asphalt_dark&quot; android:shadowDx=&quot;3&quot; android:shadowDy=&quot;3&quot; android:shadowRadius=&quot;6&quot; />"
+        errorLine2="                                                                                                                                                                                      ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="94"
+            column="183"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;VS&quot;, should use `@string` resource"
+        errorLine1="                    &lt;TextView android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:text=&quot;VS&quot; android:gravity=&quot;center&quot; android:textColor=&quot;@color/neon_cyan&quot; android:textSize=&quot;18sp&quot; android:fontFamily=&quot;sans-serif-black&quot; />"
+        errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="119"
+            column="104"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;TEAM ROSTERS&quot;, should use `@string` resource"
+        errorLine1="                    &lt;TextView android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;TEAM ROSTERS&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textColor=&quot;@color/sidewalk_gray&quot; android:textSize=&quot;14sp&quot; android:layout_marginBottom=&quot;12dp&quot;/>"
+        errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="131"
+            column="104"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Team 1&quot;, should use `@string` resource"
+        errorLine1="                            &lt;TextView android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Team 1&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineSmall&quot; android:textColor=&quot;?attr/colorPrimary&quot; android:layout_marginBottom=&quot;8dp&quot;/>"
+        errorLine2="                                                                                                               ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="138"
+            column="112"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Add Player&quot;, should use `@string` resource"
+        errorLine1="                            &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/add_team1_player_button&quot; style=&quot;@style/Widget.App.Button.TextButton.Street&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Add Player&quot; android:layout_marginTop=&quot;8dp&quot;/>"
+        errorLine2="                                                                                                                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="142"
+            column="246"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Team 2&quot;, should use `@string` resource"
+        errorLine1="                            &lt;TextView android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Team 2&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineSmall&quot; android:textColor=&quot;?attr/colorSecondary&quot; android:layout_marginBottom=&quot;8dp&quot;/>"
+        errorLine2="                                                                                                               ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="148"
+            column="112"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Add Player&quot;, should use `@string` resource"
+        errorLine1="                            &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/add_team2_player_button&quot; style=&quot;@style/Widget.App.Button.TextButton.Street&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Add Player&quot; android:layout_marginTop=&quot;8dp&quot;/>"
+        errorLine2="                                                                                                                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="152"
+            column="246"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;MATCH LOG&quot;, should use `@string` resource"
+        errorLine1="                    &lt;TextView android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;MATCH LOG&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textColor=&quot;@color/sidewalk_gray&quot; android:textSize=&quot;14sp&quot; android:layout_marginBottom=&quot;12dp&quot;/>"
+        errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="163"
+            column="104"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;FORMATIONS&quot;, should use `@string` resource"
+        errorLine1="                    &lt;TextView android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;FORMATIONS&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textColor=&quot;@color/sidewalk_gray&quot; android:textSize=&quot;14sp&quot; android:layout_marginBottom=&quot;12dp&quot;/>"
+        errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="173"
+            column="104"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Team 1 (4-4-2)&quot;, should use `@string` resource"
+        errorLine1="                            &lt;TextView android:id=&quot;@+id/team1_formation_label&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Team 1 (4-4-2)&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineSmall&quot; android:textColor=&quot;?attr/colorPrimary&quot; android:layout_marginBottom=&quot;8dp&quot;/>"
+        errorLine2="                                                                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="179"
+            column="152"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Team 2 (4-3-3)&quot;, should use `@string` resource"
+        errorLine1="                            &lt;TextView android:id=&quot;@+id/team2_formation_label&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Team 2 (4-3-3)&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineSmall&quot; android:textColor=&quot;?attr/colorSecondary&quot; android:layout_marginBottom=&quot;8dp&quot;/>"
+        errorLine2="                                                                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="186"
+            column="152"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;HISTORY&quot;, should use `@string` resource"
+        errorLine1="                &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/match_history_button&quot; style=&quot;@style/Widget.App.Button.Street&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;wrap_content&quot; android:layout_weight=&quot;1&quot; android:text=&quot;HISTORY&quot; android:layout_marginEnd=&quot;8dp&quot;/>"
+        errorLine2="                                                                                                                                                                                                                                            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="197"
+            column="237"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;END MATCH&quot;, should use `@string` resource"
+        errorLine1="                &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/reset_scores_button&quot; style=&quot;@style/Widget.App.Button.Street&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;wrap_content&quot; android:layout_weight=&quot;1&quot; android:text=&quot;END MATCH&quot;/>"
+        errorLine2="                                                                                                                                                                                                                                           ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="199"
+            column="236"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Share&quot;, should use `@string` resource"
+        errorLine1="                &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/share_match_button&quot; style=&quot;@style/Widget.App.Button.TextButton.Street&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:layout_marginStart=&quot;8dp&quot; android:text=&quot;Share&quot; app:icon=&quot;@drawable/ic_share&quot; />"
+        errorLine2="                                                                                                                                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="201"
+            column="262"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Statistics&quot;, should use `@string` resource"
+        errorLine1="    &lt;com.google.android.material.floatingactionbutton.FloatingActionButton android:id=&quot;@+id/stats_fab&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:layout_gravity=&quot;bottom|start&quot; android:layout_margin=&quot;16dp&quot; app:backgroundTint=&quot;?attr/colorPrimary&quot; app:tint=&quot;?attr/colorOnPrimary&quot; app:shapeAppearance=&quot;@style/ShapeAppearance.App.StreetButton&quot; app:srcCompat=&quot;@drawable/ic_stats&quot; android:contentDescription=&quot;Statistics&quot;/>"
+        errorLine2="                                                                                                                                                                                                                                                                                                                                                                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="210"
+            column="413"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;No matches found&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;No matches found&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_match_history.xml"
+            line="54"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;No Players Yet&quot;, should use `@string` resource"
+        errorLine1="                android:text=&quot;No Players Yet&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_players_management.xml"
+            line="89"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Tap the + button to add your first player&quot;, should use `@string` resource"
+        errorLine1="                android:text=&quot;Tap the + button to add your first player&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_players_management.xml"
+            line="101"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Nessuna partita giocata&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Nessuna partita giocata&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_statistics.xml"
+            line="60"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Gioca un match per vedere chi è il King!&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Gioca un match per vedere chi è il King!&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_statistics.xml"
+            line="69"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Player Name&quot;, should use `@string` resource"
+        errorLine1="        android:hint=&quot;Player Name&quot;>"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_create_player.xml"
+            line="12"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;CHOOSE ROLES&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;CHOOSE ROLES&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_create_player.xml"
+            line="28"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;No roles selected&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;No roles selected&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_create_player.xml"
+            line="36"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Chi ha segnato?&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;Chi ha segnato?&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_select_scorer.xml"
+            line="10"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;TEAM NAME&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;TEAM NAME&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_team_name.xml"
+            line="12"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;PREVIEW&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;PREVIEW&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_team_name.xml"
+            line="53"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;QUICK PICKS&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;QUICK PICKS&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_team_name.xml"
+            line="64"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;LIONS&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;LIONS&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_team_name.xml"
+            line="78"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;EAGLES&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;EAGLES&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_team_name.xml"
+            line="82"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;WARRIORS&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;WARRIORS&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_team_name.xml"
+            line="86"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;THUNDER&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;THUNDER&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_team_name.xml"
+            line="90"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;View Stats&quot;, should use `@string` resource"
+        errorLine1="            &lt;ImageButton android:id=&quot;@+id/stats_button&quot; android:layout_width=&quot;40dp&quot; android:layout_height=&quot;40dp&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; android:src=&quot;@drawable/ic_stats&quot; android:contentDescription=&quot;View Stats&quot; app:tint=&quot;@color/neon_cyan&quot;/>"
+        errorLine2="                                                                                                                                                                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_player_management.xml"
+            line="36"
+            column="209"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Edit Player&quot;, should use `@string` resource"
+        errorLine1="            &lt;ImageButton android:id=&quot;@+id/edit_button&quot; android:layout_width=&quot;40dp&quot; android:layout_height=&quot;40dp&quot; android:background=&quot;?attr/selectableItemBackgroundBorderless&quot; android:src=&quot;@drawable/ic_edit&quot; android:contentDescription=&quot;Edit Player&quot; app:tint=&quot;@color/sidewalk_gray&quot;/>"
+        errorLine2="                                                                                                                                                                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_player_management.xml"
+            line="38"
+            column="207"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;#1&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;#1&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_player_stat.xml"
+            line="25"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;00:00&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;00:00&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/match_event_item.xml"
+            line="27"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Event description&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;Event description&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/match_event_item.xml"
+            line="41"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Save&quot;, should use `@string` resource"
+        errorLine1="        android:title=&quot;Save&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/menu/menu_add_edit_player.xml"
+            line="6"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Search&quot;, should use `@string` resource"
+        errorLine1="        android:title=&quot;Search&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/menu/menu_players_management.xml"
+            line="8"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Sort&quot;, should use `@string` resource"
+        errorLine1="        android:title=&quot;Sort&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/menu/menu_players_management.xml"
+            line="14"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Sort by Name&quot;, should use `@string` resource"
+        errorLine1="                android:title=&quot;Sort by Name&quot; />"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/menu/menu_players_management.xml"
+            line="19"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Sort by Goals&quot;, should use `@string` resource"
+        errorLine1="                android:title=&quot;Sort by Goals&quot; />"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/menu/menu_players_management.xml"
+            line="22"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Sort by Appearances&quot;, should use `@string` resource"
+        errorLine1="                android:title=&quot;Sort by Appearances&quot; />"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/menu/menu_players_management.xml"
+            line="25"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;MATCH REPORT&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;MATCH REPORT&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/pdf_match_report.xml"
+            line="16"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;VS&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;VS&quot;/>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/pdf_match_report.xml"
+            line="54"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;FORMAZIONI&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;FORMAZIONI&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/pdf_match_report.xml"
+            line="81"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;TABELLINO MARCATORI&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;TABELLINO MARCATORI&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/pdf_match_report.xml"
+            line="115"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Player Name&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;Player Name&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/scorer_item.xml"
+            line="17"
+            column="9"/>
+    </issue>
+
+</issues>

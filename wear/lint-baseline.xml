@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.13.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.0)" variant="all" version="8.13.0">
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="        _matchTimer.value = String.format(&quot;%02d:%02d&quot;, minutes, seconds)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/wear/WearViewModel.kt"
+            line="214"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="        _matchTimer.value = String.format(&quot;%02d:%02d&quot;, minutes, seconds)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/wear/WearViewModel.kt"
+            line="227"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="                    _matchTimer.value = String.format(&quot;%02d:%02d&quot;, minutes, seconds)"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/wear/WearViewModel.kt"
+            line="351"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="RedundantLabel"
+        message="Redundant label can be removed"
+        errorLine1="        &lt;activity android:name=&quot;.MainActivity&quot; android:exported=&quot;true&quot; android:label=&quot;@string/app_name&quot;>"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="16"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="DataExtractionRules"
+        message="The attribute `android:allowBackup` is deprecated from Android 12 and higher and may be removed in future versions. Consider adding the attribute `android:dataExtractionRules` specifying an `@xml` resource which configures cloud backups and device transfers on Android 12 and higher."
+        errorLine1="    &lt;application android:allowBackup=&quot;false&quot; android:icon=&quot;@mipmap/ic_launcher&quot; android:roundIcon=&quot;@mipmap/ic_launcher_round&quot; android:label=&quot;@string/app_name&quot; android:supportsRtl=&quot;true&quot; android:theme=&quot;@style/Theme.ScoreboardEssential&quot;>"
+        errorLine2="                                      ~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="9"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="        notifyDataSetChanged()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/wear/PlayerSelectionActivity.kt"
+            line="101"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v26`) is unnecessary; `minSdkVersion` is 30. Merge all the resources in this folder into `mipmap-anydpi`.">
+        <location
+            file="src/main/res/mipmap-anydpi-v26"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `@color/asphalt_dark` with a theme that also paints a background (inferred theme is `@style/Theme.ScoreboardEssential`)"
+        errorLine1="    android:background=&quot;@color/asphalt_dark&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="7"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `@color/asphalt_dark` with a theme that also paints a background (inferred theme is `@style/Theme.ScoreboardEssential`)"
+        errorLine1="    android:background=&quot;@color/asphalt_dark&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_player_selection.xml"
+            line="6"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.background` appears to be unused"
+        errorLine1="    &lt;color name=&quot;background&quot;>@color/asphalt_dark&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="14"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.surface` appears to be unused"
+        errorLine1="    &lt;color name=&quot;surface&quot;>@color/concrete_gray&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="15"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.box_inset_layout_padding` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;box_inset_layout_padding&quot;>0dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="7"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.wear_score_text_size` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;wear_score_text_size&quot;>52sp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="16"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.wear_keeper_timer_text_size` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;wear_keeper_timer_text_size&quot;>11sp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="18"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.array.android_wear_capabilities` appears to be unused"
+        errorLine1="    &lt;string-array name=&quot;android_wear_capabilities&quot;>"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/wear.xml"
+            line="3"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icon used as round icon did not have a circular shape">
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icon used as round icon did not have a circular shape">
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icon used as round icon did not have a circular shape">
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher_round.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icon used as round icon did not have a circular shape">
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.png"/>
+    </issue>
+
+    <issue
+        id="IconLauncherShape"
+        message="Launcher icon used as round icon did not have a circular shape">
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
+    </issue>
+
+    <issue
+        id="MonochromeLauncherIcon"
+        message="The application adaptive icon is missing a monochrome tag"
+        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/main/res/mipmap-anydpi-v26/ic_launcher.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="MonochromeLauncherIcon"
+        message="The application adaptive roundIcon is missing a monochrome tag"
+        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `ic_launcher.png` varies significantly in its density-independent (dip) size across the various density versions: mipmap-hdpi/ic_launcher.png: 683x683 dp (1024x1024 px), mipmap-mdpi/ic_launcher.png: 1024x1024 dp (1024x1024 px), mipmap-xhdpi/ic_launcher.png: 512x512 dp (1024x1024 px), mipmap-xxhdpi/ic_launcher.png: 341x341 dp (1024x1024 px), mipmap-xxxhdpi/ic_launcher.png: 256x256 dp (1024x1024 px)">
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher.png"/>
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher.png"/>
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher.png"/>
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `ic_launcher_round.png` varies significantly in its density-independent (dip) size across the various density versions: mipmap-hdpi/ic_launcher_round.png: 683x683 dp (1024x1024 px), mipmap-mdpi/ic_launcher_round.png: 1024x1024 dp (1024x1024 px), mipmap-xhdpi/ic_launcher_round.png: 512x512 dp (1024x1024 px), mipmap-xxhdpi/ic_launcher_round.png: 341x341 dp (1024x1024 px), mipmap-xxxhdpi/ic_launcher_round.png: 256x256 dp (1024x1024 px)">
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher.png"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
+        errorLine1="        &lt;activity android:name=&quot;.MainActivity&quot; android:exported=&quot;true&quot; android:label=&quot;@string/app_name&quot;>"
+        errorLine2="        ^">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="16"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="WearRecents"
+        message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
+        errorLine1="        &lt;activity android:name=&quot;.PlayerSelectionActivity&quot; android:exported=&quot;false&quot; android:label=&quot;Select Scorer&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="24"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ClickableViewAccessibility"
+        message="`onTouch` lambda should call `View#performClick` when a click is detected"
+        errorLine1="            View.OnTouchListener { _, event ->"
+        errorLine2="                                 ^">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt"
+            line="114"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="ClickableViewAccessibility"
+        message="Custom view ``FrameLayout`` has `setOnTouchListener` called on it but does not override `performClick`"
+        errorLine1="        binding.team1Container.setOnTouchListener(touchListener)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt"
+            line="121"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ClickableViewAccessibility"
+        message="Custom view ``FrameLayout`` has `setOnTouchListener` called on it but does not override `performClick`"
+        errorLine1="        binding.team2Container.setOnTouchListener(touchListener)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt"
+            line="122"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
+        errorLine1="                        binding.team1Score.text = score.toString()"
+        errorLine2="                                                  ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt"
+            line="188"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
+        errorLine1="                        binding.team2Score.text = score.toString()"
+        errorLine2="                                                  ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt"
+            line="195"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="                playerRole.text = &quot;No role&quot;"
+        errorLine2="                                   ~~~~~~~">
+        <location
+            file="src/main/java/it/vantaggi/scoreboardessential/wear/PlayerSelectionActivity.kt"
+            line="142"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;00:00&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;00:00&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="71"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;0&quot;, should use `@string` resource"
+        errorLine1="                android:text=&quot;0&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="96"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;0&quot;, should use `@string` resource"
+        errorLine1="                android:text=&quot;0&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="123"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;K&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;K&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="140"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;RESET&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;RESET&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="156"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;WHO SCORED?&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;WHO SCORED?&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_player_selection.xml"
+            line="18"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;No players found.&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;No players found.&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_player_selection.xml"
+            line="32"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Player Name&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Player Name&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_player_wear.xml"
+            line="24"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Position&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Position&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/item_player_wear.xml"
+            line="33"
+            column="13"/>
+    </issue>
+
+</issues>
