@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
         Team::class, Role::class, PlayerRoleCrossRef::class,
     ],
     version = 11,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun matchDao(): MatchDao
@@ -26,6 +26,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun teamDao(): TeamDao
 
     companion object {
+        /** Versione dello schema. Tenuta qui cosi' che i test non la ripetano a mano. */
+        const val SCHEMA_VERSION = 11
+
         @Volatile
         private var instance: AppDatabase? = null
 
@@ -159,6 +162,13 @@ abstract class AppDatabase : RoomDatabase() {
                                 }
                             },
                         ).addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                        // Non esiste alcun percorso di migrazione dalle versioni 1-5: un
+                        // dispositivo fermo li' crasherebbe a ogni avvio, per sempre. La
+                        // ricostruzione e' limitata a QUELLE versioni e non generalizzata:
+                        // un fallbackToDestructiveMigration() globale trasformerebbe
+                        // "migrazione sbagliata = crash rumoroso in test" in "migrazione
+                        // sbagliata = cronologia utente cancellata in silenzio".
+                        .fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5)
                         .fallbackToDestructiveMigrationOnDowngrade()
                         .build()
                 this.instance = instance

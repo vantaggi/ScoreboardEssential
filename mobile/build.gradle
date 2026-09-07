@@ -64,6 +64,14 @@ android {
     }
 
 
+    sourceSets {
+        // MigrationTestHelper cerca gli schemi fra gli ASSET. Sotto Robolectric gli
+        // asset visibili sono quelli dell'app, non quelli del source set di test:
+        // vanno quindi agganciati alla variante debug (pochi KB, mai in release).
+        debug.assets.srcDirs += files("$projectDir/schemas")
+        androidTest.assets.srcDirs += files("$projectDir/schemas")
+    }
+
     testOptions {
         unitTests {
             includeAndroidResources = true
@@ -75,6 +83,13 @@ android {
             }
         }
     }
+}
+
+// Schemi Room esportati e versionati: senza di questi MigrationTestHelper non puo'
+// validare che una migrazione produca lo schema che Room si aspetta -- le
+// migrazioni verrebbero verificate contro se stesse, non contro una verita'.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
