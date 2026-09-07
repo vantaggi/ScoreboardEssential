@@ -26,3 +26,6 @@ mobile/benchmark_results.txt
 keystore.properties
 *.jks
 *.keystore
+
+# Log del daemon Kotlin, rigenerati a ogni build
+.kotlin/

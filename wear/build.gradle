@@ -59,20 +59,18 @@ android {
 
 dependencies {
     implementation libs.androidx.core.ktx
-    implementation libs.androidx.activity.ktx.wear
-    implementation libs.androidx.lifecycle.viewmodel.ktx.wear
-    implementation libs.androidx.lifecycle.runtime.ktx.wear
-    implementation libs.androidx.lifecycle.livedata.ktx.wear
+    implementation libs.androidx.activity.ktx
+    implementation libs.androidx.lifecycle.viewmodel.ktx
+    implementation libs.androidx.lifecycle.runtime.ktx
+    implementation libs.androidx.lifecycle.livedata.ktx
     implementation project(':shared')
     implementation libs.play.services.wearable
-    implementation libs.androidx.percentlayout
-    implementation libs.androidx.legacy.support.v4
     implementation libs.androidx.recyclerview
     implementation libs.androidx.wear
     implementation libs.androidx.wear.remote.interactions
-    implementation libs.androidx.appcompat.wear
-    implementation libs.android.material.wear
-    implementation libs.androidx.constraintlayout.wear
+    implementation libs.androidx.appcompat
+    implementation libs.android.material
+    implementation libs.androidx.constraintlayout
     implementation libs.androidx.localbroadcastmanager
 
     testImplementation libs.junit4

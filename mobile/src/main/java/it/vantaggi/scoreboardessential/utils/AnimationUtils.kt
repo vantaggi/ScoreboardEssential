@@ -33,7 +33,7 @@ fun TextView.playEnhancedScoreAnimation() {
     val colors =
         intArrayOf(
             originalColor,
-            MaterialColors.getColor(context, com.google.android.material.R.attr.colorPrimary, "Error"),
+            MaterialColors.getColor(context, androidx.appcompat.R.attr.colorPrimary, "Error"),
             MaterialColors.getColor(context, com.google.android.material.R.attr.colorSecondary, "Error"),
             originalColor,
         )
@@ -79,7 +79,7 @@ fun TextView.playNativeGoalAnimation() {
 
     // 2. Animazione "Flash" del colore - più vivace
     val originalColor = this.currentTextColor
-    val primaryColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorPrimary)
+    val primaryColor = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary)
     val secondaryColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSecondary)
 
     val colorAnimator =

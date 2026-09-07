@@ -1,10 +1,9 @@
 # Unica fonte di verita' per versioni di plugin e dipendenze.
 #
-# Questo file nasce come trascrizione VERBATIM delle versioni che erano sparse
-# nei tre build.gradle: nessun aggiornamento, nessun allineamento. Le divergenze
-# fra i moduli sono quindi ancora presenti e volutamente visibili qui sotto
-# (vedi i blocchi marcati SKEW), cosi' che il commit che le risolve sia un diff
-# leggibile e separato da quello che introduce il catalogo.
+# Regola: una coordinata, una versione. Le dipendenze di produzione sono
+# allineate; restano volutamente divergenti solo quelle di test, che vengono
+# unificate insieme all'aggiornamento dell'infrastruttura di test (Robolectric,
+# Mockito) in un commit dedicato.
 
 [versions]
 agp = "8.5.0"
@@ -13,17 +12,25 @@ ksp = "2.0.21-1.0.28"
 ktlintPlugin = "12.1.1"
 ktlintEngine = "1.3.1"
 
+activity = "1.9.3"
+appcompat = "1.7.1"
+constraintlayout = "2.2.1"
 coreKtx = "1.13.1"
+coroutines = "1.8.1"
 fragmentKtx = "1.8.1"
-room = "2.6.1"
-colorpicker = "2.3.0"
-multidex = "2.0.1"
-recyclerview = "1.3.2"
-percentlayout = "1.0.0"
-legacySupport = "1.0.0"
+lifecycle = "2.8.7"
 localbroadcast = "1.1.0"
+material = "1.13.0"
+playServicesWearable = "19.0.0"
+recyclerview = "1.3.2"
+room = "2.6.1"
 wear = "1.3.0"
 wearRemoteInteractions = "1.1.0"
+colorpicker = "2.3.0"
+
+# --- test ---------------------------------------------------------------------
+# Ancora divergenti fra i moduli: si allineano con l'aggiornamento di Robolectric,
+# che e' un passo a se' perche' e' un prerequisito duro per targetSdk 36.
 archCoreTesting = "2.2.0"
 espresso = "3.6.1"
 testRules = "1.6.0"
@@ -31,24 +38,6 @@ testJunitExt = "1.2.1"
 truth = "1.4.2"
 junit4 = "4.13.2"
 junit5 = "5.10.2"
-
-# --- SKEW: versioni che oggi differiscono fra i moduli -----------------------
-# Ogni coppia qui sotto e' un disallineamento reale del progetto, trascritto
-# com'e'. Il commit successivo ne tiene una sola per coordinata.
-activityMobile = "1.9.0"
-activityWear = "1.9.3"
-appcompatMobile = "1.7.0"
-appcompatWear = "1.7.1"
-materialMobile = "1.12.0"
-materialWear = "1.13.0"
-constraintlayoutMobile = "2.1.4"
-constraintlayoutWear = "2.2.1"
-lifecycleMobile = "2.8.2"
-lifecycleWear = "2.8.7"
-# ...e dentro :wear convivono due versioni di lifecycle nello stesso modulo:
-lifecycleWearLivedata = "2.10.0"
-playServicesWearable = "19.0.0"
-playServicesWearableShared = "18.2.0"
 robolectricMobile = "4.12.2"
 robolectricWear = "4.10.3"
 mockitoMobile = "5.12.0"
@@ -59,39 +48,29 @@ mockitoKotlinMobile = "5.3.1"
 mockitoKotlinShared = "5.2.1"
 coroutinesTest = "1.8.1"
 coroutinesTestWear = "1.7.1"
-coroutinesPlayServices = "1.8.1"
 
 [libraries]
 kotlin-bom = { group = "org.jetbrains.kotlin", name = "kotlin-bom", version.ref = "kotlin" }
 
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activity" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragmentKtx" }
-androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
-androidx-percentlayout = { group = "androidx.percentlayout", name = "percentlayout", version.ref = "percentlayout" }
-androidx-legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacySupport" }
 androidx-localbroadcastmanager = { group = "androidx.localbroadcastmanager", name = "localbroadcastmanager", version.ref = "localbroadcast" }
-androidx-multidex = { group = "androidx.multidex", name = "multidex", version.ref = "multidex" }
+androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 androidx-wear = { group = "androidx.wear", name = "wear", version.ref = "wear" }
 androidx-wear-remote-interactions = { group = "androidx.wear", name = "wear-remote-interactions", version.ref = "wearRemoteInteractions" }
+android-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
-androidx-activity-ktx-mobile = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityMobile" }
-androidx-activity-ktx-wear = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityWear" }
-androidx-appcompat-mobile = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompatMobile" }
-androidx-appcompat-wear = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompatWear" }
-android-material-mobile = { group = "com.google.android.material", name = "material", version.ref = "materialMobile" }
-android-material-wear = { group = "com.google.android.material", name = "material", version.ref = "materialWear" }
-androidx-constraintlayout-mobile = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayoutMobile" }
-androidx-constraintlayout-wear = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayoutWear" }
-
-androidx-lifecycle-viewmodel-ktx-mobile = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleMobile" }
-androidx-lifecycle-livedata-ktx-mobile = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycleMobile" }
-androidx-lifecycle-runtime-ktx-mobile = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleMobile" }
-androidx-lifecycle-viewmodel-ktx-wear = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleWear" }
-androidx-lifecycle-runtime-ktx-wear = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleWear" }
-androidx-lifecycle-livedata-ktx-wear = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycleWearLivedata" }
+androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
-play-services-wearable-shared = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearableShared" }
+
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
 
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
@@ -100,10 +79,8 @@ androidx-room-testing = { group = "androidx.room", name = "room-testing", versio
 
 colorpickerview = { group = "com.github.skydoves", name = "colorpickerview", version.ref = "colorpicker" }
 
-kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutinesPlayServices" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 kotlinx-coroutines-test-wear = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTestWear" }
-
 junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit5" }
 junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api" }
@@ -111,7 +88,6 @@ junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engi
 junit-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params" }
 junit-vintage-engine = { group = "org.junit.vintage", name = "junit-vintage-engine", version.ref = "junit5" }
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
-
 robolectric-mobile = { group = "org.robolectric", name = "robolectric", version.ref = "robolectricMobile" }
 robolectric-wear = { group = "org.robolectric", name = "robolectric", version.ref = "robolectricWear" }
 mockito-core-mobile = { group = "org.mockito", name = "mockito-core", version.ref = "mockitoMobile" }
@@ -121,7 +97,6 @@ mockito-inline-mobile = { group = "org.mockito", name = "mockito-inline", versio
 mockito-inline-wear = { group = "org.mockito", name = "mockito-inline", version.ref = "mockitoInlineWear" }
 mockito-kotlin-mobile = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlinMobile" }
 mockito-kotlin-shared = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlinShared" }
-
 androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "archCoreTesting" }
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "testRules" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "testJunitExt" }

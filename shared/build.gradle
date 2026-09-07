@@ -33,7 +33,10 @@ android {
 
 dependencies {
     implementation libs.androidx.core.ktx
-    implementation libs.play.services.wearable.shared
+    // api, non implementation: OptimizedWearDataSync espone DataClient,
+    // MessageClient, CapabilityClient e NodeClient nel proprio costruttore
+    // pubblico, quindi il tipo fa parte della superficie del modulo.
+    api libs.play.services.wearable
     implementation libs.kotlinx.coroutines.play.services
 
     testImplementation libs.junit4

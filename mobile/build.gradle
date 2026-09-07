@@ -27,9 +27,6 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
-        // Force enable multidex
-        multiDexEnabled true
     }
 
     signingConfigs {
@@ -83,18 +80,21 @@ dependencies {
     implementation(platform(libs.kotlin.bom))
     implementation libs.androidx.core.ktx
     implementation libs.androidx.fragment.ktx
-    implementation libs.androidx.activity.ktx.mobile
-    implementation libs.androidx.lifecycle.viewmodel.ktx.mobile
-    implementation libs.androidx.lifecycle.livedata.ktx.mobile
-    implementation libs.androidx.lifecycle.runtime.ktx.mobile
+    implementation libs.androidx.activity.ktx
+    implementation libs.androidx.lifecycle.viewmodel.ktx
+    implementation libs.androidx.lifecycle.livedata.ktx
+    implementation libs.androidx.lifecycle.runtime.ktx
     implementation project(':shared')
-    implementation libs.androidx.appcompat.mobile
-    implementation libs.android.material.mobile
+    implementation libs.androidx.appcompat
+    implementation libs.android.material
     implementation libs.play.services.wearable
-    implementation libs.androidx.constraintlayout.mobile
+    implementation libs.androidx.constraintlayout
 
-    // MultiDex support
-    implementation libs.androidx.multidex
+    // Usate direttamente dal codice ma finora ereditate per via transitiva:
+    // localbroadcastmanager arrivava a 1.0.0 quattro livelli sotto material,
+    // coroutines-android sotto lifecycle-viewmodel-ktx.
+    implementation libs.androidx.localbroadcastmanager
+    implementation libs.kotlinx.coroutines.android
 
     testImplementation libs.robolectric.mobile
     testImplementation libs.mockito.core.mobile
