@@ -9,7 +9,7 @@ kotlin {
 
 android {
     namespace 'it.vantaggi.scoreboardessential.shared'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         minSdk 30

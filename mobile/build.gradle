@@ -11,7 +11,7 @@ kotlin {
 
 android {
     namespace 'it.vantaggi.scoreboardessential'
-    compileSdk 34
+    compileSdk 36
 
     // Optional release signing. Create a git-ignored keystore.properties at the repo root with
     // storeFile/storePassword/keyAlias/keyPassword to sign release builds; otherwise release

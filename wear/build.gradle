@@ -9,7 +9,7 @@ kotlin {
 
 android {
     namespace 'it.vantaggi.scoreboardessential.wear'
-    compileSdk 34
+    compileSdk 36
 
     // Optional release signing, mirroring the mobile module.
     def keystorePropertiesFile = rootProject.file("keystore.properties")
