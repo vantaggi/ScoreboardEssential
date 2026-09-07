@@ -41,7 +41,6 @@ dependencies {
     implementation libs.kotlinx.coroutines.play.services
 
     testImplementation libs.junit4
-    testImplementation libs.mockito.kotlin.shared
-    testImplementation libs.mockito.inline.mobile
+    testImplementation libs.mockito.kotlin
     testImplementation libs.kotlinx.coroutines.test
 }

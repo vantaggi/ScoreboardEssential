@@ -29,8 +29,6 @@ wearRemoteInteractions = "1.1.0"
 colorpicker = "2.3.0"
 
 # --- test ---------------------------------------------------------------------
-# Ancora divergenti fra i moduli: si allineano con l'aggiornamento di Robolectric,
-# che e' un passo a se' perche' e' un prerequisito duro per targetSdk 36.
 archCoreTesting = "2.2.0"
 espresso = "3.6.1"
 testRules = "1.6.0"
@@ -38,16 +36,10 @@ testJunitExt = "1.2.1"
 truth = "1.4.2"
 junit4 = "4.13.2"
 junit5 = "5.10.2"
-robolectricMobile = "4.12.2"
-robolectricWear = "4.10.3"
-mockitoMobile = "5.12.0"
-mockitoWear = "4.8.0"
-mockitoInlineMobile = "5.2.0"
-mockitoInlineWear = "4.8.0"
-mockitoKotlinMobile = "5.3.1"
-mockitoKotlinShared = "5.2.1"
+robolectric = "4.16.1"
+mockito = "5.12.0"
+mockitoKotlin = "5.3.1"
 coroutinesTest = "1.8.1"
-coroutinesTestWear = "1.7.1"
 
 [libraries]
 kotlin-bom = { group = "org.jetbrains.kotlin", name = "kotlin-bom", version.ref = "kotlin" }
@@ -80,7 +72,6 @@ androidx-room-testing = { group = "androidx.room", name = "room-testing", versio
 colorpickerview = { group = "com.github.skydoves", name = "colorpickerview", version.ref = "colorpicker" }
 
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
-kotlinx-coroutines-test-wear = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTestWear" }
 junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit5" }
 junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api" }
@@ -88,15 +79,10 @@ junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engi
 junit-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params" }
 junit-vintage-engine = { group = "org.junit.vintage", name = "junit-vintage-engine", version.ref = "junit5" }
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
-robolectric-mobile = { group = "org.robolectric", name = "robolectric", version.ref = "robolectricMobile" }
-robolectric-wear = { group = "org.robolectric", name = "robolectric", version.ref = "robolectricWear" }
-mockito-core-mobile = { group = "org.mockito", name = "mockito-core", version.ref = "mockitoMobile" }
-mockito-core-wear = { group = "org.mockito", name = "mockito-core", version.ref = "mockitoWear" }
-mockito-android = { group = "org.mockito", name = "mockito-android", version.ref = "mockitoMobile" }
-mockito-inline-mobile = { group = "org.mockito", name = "mockito-inline", version.ref = "mockitoInlineMobile" }
-mockito-inline-wear = { group = "org.mockito", name = "mockito-inline", version.ref = "mockitoInlineWear" }
-mockito-kotlin-mobile = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlinMobile" }
-mockito-kotlin-shared = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlinShared" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
+mockito-android = { group = "org.mockito", name = "mockito-android", version.ref = "mockito" }
+mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
 androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "archCoreTesting" }
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "testRules" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "testJunitExt" }

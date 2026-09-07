@@ -48,6 +48,14 @@ android {
             }
         }
     }
+    testOptions {
+        unitTests {
+            // Senza questa riga Robolectric ripiega sulla legacy resources mode e
+            // salta in silenzio ogni test su SDK > 28: la suite risultava verde
+            // con 8 test su 8 "skipped".
+            includeAndroidResources = true
+        }
+    }
     buildFeatures {
         buildConfig true
         viewBinding true
@@ -75,9 +83,8 @@ dependencies {
     implementation libs.androidx.localbroadcastmanager
 
     testImplementation libs.junit4
-    testImplementation libs.mockito.core.wear
-    testImplementation libs.robolectric.wear
+    testImplementation libs.mockito.core
+    testImplementation libs.robolectric
     testImplementation libs.androidx.arch.core.testing
-    testImplementation libs.kotlinx.coroutines.test.wear
-    testImplementation libs.mockito.inline.wear
+    testImplementation libs.kotlinx.coroutines.test
 }

@@ -12,10 +12,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [34])
 class PlayersManagementAdapterTest {
     private lateinit var adapter: PlayersManagementAdapter
     private lateinit var context: Context

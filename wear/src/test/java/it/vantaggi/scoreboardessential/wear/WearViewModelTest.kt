@@ -4,6 +4,11 @@ import android.app.Application
 import android.content.Context
 import android.os.Vibrator
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.google.android.gms.wearable.CapabilityClient
+import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.NodeClient
+import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -21,11 +26,9 @@ import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
 class WearViewModelTest {
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
@@ -53,12 +56,20 @@ class WearViewModelTest {
         Mockito.`when`(packageManager.hasSystemFeature(Mockito.anyString())).thenReturn(false)
         Mockito.`when`(application.applicationContext).thenReturn(application)
 
-        try {
-            viewModel = WearViewModel(application)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            // Ignore initialization errors for DataClient if possible
-        }
+        // I client GMS sono mockati: il costruttore reale li istanzia davvero e il
+        // loro GoogleApiHandler muore sul looper di Robolectric, facendo fallire il
+        // primo test che tocca il ViewModel.
+        viewModel =
+            WearViewModel(
+                application,
+                OptimizedWearDataSync(
+                    application,
+                    Mockito.mock(DataClient::class.java),
+                    Mockito.mock(MessageClient::class.java),
+                    Mockito.mock(CapabilityClient::class.java),
+                    Mockito.mock(NodeClient::class.java),
+                ),
+            )
     }
 
     @After

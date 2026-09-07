@@ -97,11 +97,9 @@ dependencies {
     implementation libs.androidx.localbroadcastmanager
     implementation libs.kotlinx.coroutines.android
 
-    testImplementation libs.robolectric.mobile
-    testImplementation libs.mockito.core.mobile
-    testImplementation libs.mockito.inline.mobile
-    testImplementation libs.mockito.android
-    testImplementation libs.mockito.kotlin.mobile
+    testImplementation libs.robolectric
+    testImplementation libs.mockito.core
+    testImplementation libs.mockito.kotlin
     testImplementation libs.androidx.test.rules
     testImplementation libs.androidx.test.ext.junit.ktx
     // Dependencies for coroutines testing and LiveData

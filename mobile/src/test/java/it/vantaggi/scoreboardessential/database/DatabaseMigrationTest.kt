@@ -7,11 +7,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 import java.io.IOException
 
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [34])
 @org.junit.Ignore("Schema files are missing, skipping migration tests")
 class DatabaseMigrationTest {
     @get:Rule
