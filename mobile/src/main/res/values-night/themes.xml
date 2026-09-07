@@ -13,9 +13,6 @@
         <item name="colorOnSurface">@color/stencil_white</item>
         <item name="colorOnSurfaceVariant">@color/sidewalk_gray</item>
 
-        <!-- Status bar color -->
-        <item name="android:statusBarColor">@color/asphalt_dark</item>
-
         <!-- Street Vibe Typeface References -->
         <item name="textAppearanceDisplayLarge">@style/TextAppearance.App.DisplayLarge.Street</item>
         <item name="textAppearanceHeadlineMedium">@style/TextAppearance.App.HeadlineMedium.Street</item>

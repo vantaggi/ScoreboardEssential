@@ -1,8 +1,12 @@
 package it.vantaggi.scoreboardessential
 
 import android.os.Bundle
+import android.view.View
 import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -10,7 +14,15 @@ import androidx.recyclerview.widget.RecyclerView
 class MatchHistoryActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_match_history)
+
+        // Edge-to-edge: gli insets di sistema diventano padding del contenitore radice.
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(R.id.match_history_root)) { view, windowInsets ->
+            val bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            windowInsets
+        }
 
         val application = application as ScoreboardEssentialApplication
         val viewModelFactory =

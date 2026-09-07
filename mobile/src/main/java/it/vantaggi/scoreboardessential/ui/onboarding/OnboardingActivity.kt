@@ -2,8 +2,11 @@ package it.vantaggi.scoreboardessential.ui.onboarding
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.viewpager2.widget.ViewPager2
 import it.vantaggi.scoreboardessential.MainViewModel
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
@@ -23,8 +26,17 @@ class OnboardingActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         binding = ActivityOnboardingBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Edge-to-edge: gli insets di sistema diventano padding del contenitore radice,
+        // cosi' i bottoni ancorati in basso restano sopra la barra di navigazione.
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, windowInsets ->
+            val bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            windowInsets
+        }
 
         pagerAdapter = OnboardingPagerAdapter(this)
         binding.viewPager.adapter = pagerAdapter

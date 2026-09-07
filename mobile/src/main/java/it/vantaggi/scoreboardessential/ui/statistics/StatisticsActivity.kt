@@ -2,8 +2,11 @@ package it.vantaggi.scoreboardessential.ui.statistics
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.tabs.TabLayout
@@ -19,8 +22,17 @@ class StatisticsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         binding = ActivityStatisticsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Edge-to-edge: gli insets di sistema diventano padding del contenitore radice,
+        // cosi' la toolbar scende sotto la status bar e la lista si ferma sopra la barra di navigazione.
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, windowInsets ->
+            val bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            windowInsets
+        }
 
         setupUI()
         observeViewModel()
