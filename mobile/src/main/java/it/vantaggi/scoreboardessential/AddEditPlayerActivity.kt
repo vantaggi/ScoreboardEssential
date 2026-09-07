@@ -16,10 +16,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
 import it.vantaggi.scoreboardessential.database.AppDatabase
-import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.views.PlayersManagementViewModelFactory
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class AddEditPlayerActivity : AppCompatActivity() {
@@ -29,7 +29,8 @@ class AddEditPlayerActivity : AppCompatActivity() {
     private lateinit var rolesRecyclerView: RecyclerView
     private lateinit var toolbar: Toolbar
 
-    private var playerToEdit: Player? = null
+    // L'Intent trasporta solo l'id: le entita' Room non sono piu' oggetti di trasporto per la UI
+    private var editingPlayerId: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,16 +48,25 @@ class AddEditPlayerActivity : AppCompatActivity() {
         playerNameInput = findViewById(R.id.player_name_input)
         rolesRecyclerView = findViewById(R.id.roles_recycler_view)
 
-        playerToEdit = intent.getParcelableExtra(EXTRA_PLAYER)
+        editingPlayerId = intent.getIntExtra(EXTRA_PLAYER_ID, -1)
 
         setupRecyclerView()
         observeRoles()
 
-        if (playerToEdit != null) {
+        if (editingPlayerId != -1) {
             supportActionBar?.title = "Edit Player"
-            playerNameInput.setText(playerToEdit?.playerName)
+            loadPlayerName(editingPlayerId)
         } else {
             supportActionBar?.title = "Add Player"
+        }
+    }
+
+    // Ricarica il nome dal DAO invece di riceverlo dentro l'Intent
+    private fun loadPlayerName(playerId: Int) {
+        lifecycleScope.launch {
+            viewModel.getPlayer(playerId.toLong()).first()?.let {
+                playerNameInput.setText(it.player.playerName)
+            }
         }
     }
 
@@ -122,8 +132,8 @@ class AddEditPlayerActivity : AppCompatActivity() {
             Intent().apply {
                 putExtra(EXTRA_PLAYER_NAME, playerName)
                 putIntegerArrayListExtra(EXTRA_SELECTED_ROLES, ArrayList(selectedRoleIds))
-                playerToEdit?.let {
-                    putExtra(EXTRA_PLAYER_ID, it.playerId)
+                if (editingPlayerId != -1) {
+                    putExtra(EXTRA_PLAYER_ID, editingPlayerId)
                 }
             }
 
@@ -132,7 +142,6 @@ class AddEditPlayerActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val EXTRA_PLAYER = "extra_player"
         const val EXTRA_PLAYER_ID = "extra_player_id"
         const val EXTRA_PLAYER_NAME = "extra_player_name"
         const val EXTRA_SELECTED_ROLES = "extra_selected_roles"

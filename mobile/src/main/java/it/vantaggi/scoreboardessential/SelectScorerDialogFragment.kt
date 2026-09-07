@@ -2,13 +2,16 @@ package it.vantaggi.scoreboardessential
 
 import android.app.Dialog
 import android.content.Context
-import android.os.Build
 import android.os.Bundle
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class SelectScorerDialogFragment : DialogFragment() {
     interface ScorerDialogListener {
@@ -19,7 +22,8 @@ class SelectScorerDialogFragment : DialogFragment() {
     }
 
     private var listener: ScorerDialogListener? = null
-    private lateinit var players: List<PlayerWithRoles>
+    private var adapter: SelectScorerAdapter? = null
+    private var playerIds: IntArray = IntArray(0)
     private var teamId: Int = 0
 
     override fun onAttach(context: Context) {
@@ -36,15 +40,8 @@ class SelectScorerDialogFragment : DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            val rawPlayers =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    it.getSerializable("players", ArrayList::class.java)
-                } else {
-                    @Suppress("DEPRECATION")
-                    it.getSerializable("players")
-                }
-            players = rawPlayers as? List<PlayerWithRoles> ?: emptyList()
-            teamId = it.getInt("teamId")
+            playerIds = it.getIntArray(ARG_PLAYER_IDS) ?: IntArray(0)
+            teamId = it.getInt(ARG_TEAM_ID)
         }
     }
 
@@ -53,23 +50,36 @@ class SelectScorerDialogFragment : DialogFragment() {
         val view = inflater.inflate(R.layout.dialog_select_scorer, null)
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.scorers_recyclerview)
-        val adapter =
+        val scorerAdapter =
             SelectScorerAdapter { player ->
                 listener?.onScorerSelected(player, teamId)
                 dismiss()
             }
+        adapter = scorerAdapter
 
-        recyclerView.adapter = adapter
+        recyclerView.adapter = scorerAdapter
         recyclerView.layoutManager = LinearLayoutManager(context)
-        adapter.submitList(players)
+        loadPlayers()
 
         return MaterialAlertDialogBuilder(requireContext())
             .setView(view)
             .create()
     }
 
+    // Gli argomenti trasportano solo gli id: i giocatori si ricaricano dal DAO
+    private fun loadPlayers() {
+        val playerDao = AppDatabase.getDatabase(requireContext().applicationContext).playerDao()
+        lifecycleScope.launch {
+            val playersById = playerDao.getAllPlayers().first().associateBy { it.player.playerId }
+            adapter?.submitList(playerIds.asList().mapNotNull { playersById[it] })
+        }
+    }
+
     companion object {
         const val TAG = "SelectScorerDialog"
+
+        private const val ARG_PLAYER_IDS = "player_ids"
+        private const val ARG_TEAM_ID = "team_id"
 
         fun newInstance(
             players: List<PlayerWithRoles>,
@@ -77,9 +87,8 @@ class SelectScorerDialogFragment : DialogFragment() {
         ): SelectScorerDialogFragment {
             val args =
                 Bundle().apply {
-                    // ArrayList is serializable, List is not
-                    putSerializable("players", ArrayList(players))
-                    putInt("teamId", teamId)
+                    putIntArray(ARG_PLAYER_IDS, players.map { it.player.playerId }.toIntArray())
+                    putInt(ARG_TEAM_ID, teamId)
                 }
             return SelectScorerDialogFragment().apply {
                 arguments = args

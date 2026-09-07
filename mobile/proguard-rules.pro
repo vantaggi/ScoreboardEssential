@@ -22,11 +22,6 @@
 -keep class it.vantaggi.scoreboardessential.domain.models.** { *; }
 -keep class it.vantaggi.scoreboardessential.domain.model.** { *; }
 
-# Keep Parcelable CREATOR fields
--keepclassmembers class * implements android.os.Parcelable {
-    public static final ** CREATOR;
-}
-
 # Google Play Services Wearable
 -keep class com.google.android.gms.wearable.** { *; }
 -dontwarn com.google.android.gms.**

@@ -98,7 +98,7 @@ class PlayersManagementActivity : AppCompatActivity() {
                 onPlayerClick = { playerWithRoles ->
                     val intent =
                         Intent(this, AddEditPlayerActivity::class.java).apply {
-                            putExtra(AddEditPlayerActivity.EXTRA_PLAYER, playerWithRoles.player)
+                            putExtra(AddEditPlayerActivity.EXTRA_PLAYER_ID, playerWithRoles.player.playerId)
                             putIntegerArrayListExtra(
                                 AddEditPlayerActivity.EXTRA_SELECTED_ROLES,
                                 ArrayList(playerWithRoles.roles.map { it.roleId }),
