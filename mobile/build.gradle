@@ -107,6 +107,7 @@ dependencies {
     implementation libs.androidx.lifecycle.viewmodel.ktx
     implementation libs.androidx.lifecycle.livedata.ktx
     implementation libs.androidx.lifecycle.runtime.ktx
+    implementation project(':core')
     implementation project(':shared')
     implementation libs.androidx.appcompat
     implementation libs.android.material

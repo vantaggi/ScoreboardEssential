@@ -20,6 +20,10 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.Wearable
+import it.vantaggi.scoreboardessential.core.MatchEngine
+import it.vantaggi.scoreboardessential.core.ScoringEvent
+import it.vantaggi.scoreboardessential.core.SportRegistry
+import it.vantaggi.scoreboardessential.core.SportRules
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchDao
@@ -223,6 +227,11 @@ class MainViewModel(
                         val team1 = intent.getIntExtra(WearConstants.KEY_TEAM1_SCORE, 0)
                         val team2 = intent.getIntExtra(WearConstants.KEY_TEAM2_SCORE, 0)
                         Log.d("VM", "📥 Score update received from Wear")
+                        // Anche il motore va riallineato, non solo le LiveData: altrimenti il
+                        // primo tocco locale ripartirebbe dal punteggio che il motore aveva
+                        // prima dell'aggiornamento remoto, facendo saltare il tabellone
+                        // all'indietro.
+                        seedEngineFromAbsolute(team1, team2)
                         _team1Score.value = team1
                         _team2Score.value = team2
                     }
@@ -344,6 +353,22 @@ class MainViewModel(
     val allPlayers: LiveData<List<PlayerWithRoles>> = _allPlayers
 
     // Match Events Log
+
+    /**
+     * Le regole in vigore. Oggi sempre il calcio: il selettore dello sport arriva dopo, e
+     * introdurlo qui senza un'interfaccia che lo mostri sarebbe codice senza consumatori.
+     */
+    private val sportRules: SportRules = SportRegistry.byId(SportRegistry.FOOTBALL)
+
+    /**
+     * Sorgente di verita' del punteggio.
+     *
+     * [_team1Score] e [_team2Score] restano `LiveData<Int>` con la stessa identica superficie
+     * pubblica di prima -- l'interfaccia, i binding e i test esistenti non si accorgono di nulla
+     * -- ma ora sono una PROIEZIONE di `engine.state.headline()` invece di essere loro stessi lo
+     * stato. E' l'unico cambiamento di questo passo: nessuna rinomina, nessuna firma toccata.
+     */
+    private val engine = MatchEngine(sportRules)
 
     /**
      * Sorgente di verita' del registro eventi.
@@ -488,6 +513,7 @@ class MainViewModel(
     }
 
     private fun startNewMatch() {
+        engine.reset()
         updateScore(0, 0)
         synchronized(matchEventLog) {
             matchEventLog.clear()
@@ -596,15 +622,33 @@ class MainViewModel(
         }
     }
 
-    fun addScore(teamId: Int) {
-        val currentTeam1Score = _team1Score.value ?: 0
-        val currentTeam2Score = _team2Score.value ?: 0
+    /** Proietta lo stato del motore sulle LiveData e lo propaga all'orologio. */
+    private fun publishEngineState() {
+        val (uno, due) = engine.state.headline()
+        updateScore(uno, due)
+    }
 
-        if (teamId == 1) {
-            updateScore(currentTeam1Score + 1, currentTeam2Score)
-        } else {
-            updateScore(currentTeam1Score, currentTeam2Score + 1)
-        }
+    /**
+     * Riallinea il motore a un punteggio ASSOLUTO arrivato dall'orologio.
+     *
+     * Finche' il protocollo non e' versionato, l'orologio manda la coppia di interi e non gli
+     * eventi che l'hanno prodotta. Per uno sport a contatore semplice la ricostruzione e' esatta:
+     * un punteggio N-M *e'* N punti a un lato e M all'altro. Senza questo, motore e schermo
+     * divergerebbero e il primo tocco locale farebbe saltare il punteggio all'indietro.
+     */
+    private fun seedEngineFromAbsolute(
+        team1: Int,
+        team2: Int,
+    ) {
+        val eventi =
+            List(team1.coerceAtLeast(0)) { ScoringEvent.Point(side = 1) } +
+                List(team2.coerceAtLeast(0)) { ScoringEvent.Point(side = 2) }
+        engine.restore(eventi)
+    }
+
+    fun addScore(teamId: Int) {
+        engine.apply(ScoringEvent.Point(side = teamId))
+        publishEngineState()
 
         triggerHapticFeedback()
 
@@ -617,19 +661,14 @@ class MainViewModel(
     }
 
     fun subtractScore(teamId: Int) {
-        val currentTeam1Score = _team1Score.value ?: 0
-        val currentTeam2Score = _team2Score.value ?: 0
-        var newTeam1Score = currentTeam1Score
-        var newTeam2Score = currentTeam2Score
+        val prima = engine.state.headline()
+        engine.apply(ScoringEvent.Correction(side = teamId))
+        val dopo = engine.state.headline()
 
-        if (teamId == 1) {
-            newTeam1Score = (currentTeam1Score - 1).coerceAtLeast(0)
-        } else {
-            newTeam2Score = (currentTeam2Score - 1).coerceAtLeast(0)
-        }
-
-        if (newTeam1Score != currentTeam1Score || newTeam2Score != currentTeam2Score) {
-            updateScore(newTeam1Score, newTeam2Score)
+        // Come prima: gli effetti collaterali scattano solo se il punteggio e' davvero cambiato.
+        // A zero la correzione e' un'operazione nulla, e resta tale.
+        if (dopo != prima) {
+            publishEngineState()
             triggerHapticFeedback()
             val teamName = if (teamId == 1) _team1Name.value else _team2Name.value
             addMatchEvent("Score correction for $teamName", team = teamId)
@@ -704,13 +743,12 @@ class MainViewModel(
             _canUndo.postValue(actionStack.isNotEmpty())
 
             viewModelScope.launch {
-                // 1. Revert Score
-                if (lastAction.teamId == 1) {
-                    val current = _team1Score.value ?: 0
-                    if (current > 0) updateScore(current - 1, _team2Score.value ?: 0)
-                } else {
-                    val current = _team2Score.value ?: 0
-                    if (current > 0) updateScore(_team1Score.value ?: 0, current - 1)
+                // 1. Revert Score -- rifacendo il fold, non sottraendo a mano. Per il calcio
+                // il risultato e' identico; per uno sport a set sara' l'unico modo corretto di
+                // riattraversare all'indietro un confine di game.
+                if (engine.canUndo()) {
+                    engine.undo()
+                    publishEngineState()
                 }
 
                 // 2. Revert Player Stats if needed
