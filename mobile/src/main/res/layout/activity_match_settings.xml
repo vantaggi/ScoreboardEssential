@@ -61,6 +61,23 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Sport Settings -->
+        <com.google.android.material.card.MaterialCardView style="?attr/materialCardViewFilledStyle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:cardBackgroundColor="@color/concrete_gray" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard">
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/settings_sport_title" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/stencil_white" />
+
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/settings_sport_hint" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/sidewalk_gray" />
+
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
+
+                    <AutoCompleteTextView android:id="@+id/sportAutoComplete" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="none" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <Button android:id="@+id/saveSettingsButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:text="@string/save_settings" style="@style/Widget.App.Button.Street" />
 
     </LinearLayout>

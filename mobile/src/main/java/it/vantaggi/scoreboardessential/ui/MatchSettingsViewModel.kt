@@ -29,6 +29,11 @@ class MatchSettingsViewModel(
     private val _appLanguage = MutableLiveData<String>()
     val appLanguage: LiveData<String> = _appLanguage
 
+    private val _activeSport = MutableLiveData<String>()
+
+    /** Lo sport scelto. E' la sola sorgente della voce mostrata nel selettore. */
+    val activeSport: LiveData<String> = _activeSport
+
     init {
         loadSettings()
     }
@@ -41,6 +46,7 @@ class MatchSettingsViewModel(
             _team2Color.value = repository.getTeam2Color()
             _keeperTimerDuration.value = repository.getKeeperTimerDuration()
             _appLanguage.value = repository.getAppLanguage()
+            _activeSport.value = repository.getActiveSport()
         }
     }
 
@@ -76,6 +82,21 @@ class MatchSettingsViewModel(
         viewModelScope.launch {
             repository.setKeeperTimerDuration(duration)
             _keeperTimerDuration.value = duration
+        }
+    }
+
+    /**
+     * Scrive soltanto la preferenza.
+     *
+     * La guardia "non si cambia sport a partita in corso" vive nel ViewModel della schermata
+     * principale, che e' l'unico a sapere se il punteggio e' gia' stato toccato: duplicarla qui
+     * significherebbe avere due verita' che possono divergere. Qui la scelta si registra e basta;
+     * di la' viene applicata appena la partita e' ferma.
+     */
+    fun saveActiveSport(sportId: String) {
+        viewModelScope.launch {
+            repository.setActiveSport(sportId)
+            _activeSport.value = sportId
         }
     }
 

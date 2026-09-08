@@ -9,6 +9,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
 import it.vantaggi.scoreboardessential.R
+import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.databinding.ActivityMatchSettingsBinding
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 
@@ -33,6 +34,7 @@ class MatchSettingsActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupLanguageDropdown() // setup before observing
+        setupSportDropdown()
         observeViewModel()
         setupListeners()
     }
@@ -58,6 +60,38 @@ class MatchSettingsActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupSportDropdown() {
+        val sportIds = SportRegistry.selectable().map { it.id }
+        val adapter =
+            android.widget.ArrayAdapter(
+                this,
+                android.R.layout.simple_dropdown_item_1line,
+                sportIds.map(::sportLabel),
+            )
+        binding.sportAutoComplete.setAdapter(adapter)
+
+        binding.sportAutoComplete.setOnItemClickListener { _, _, position, _ ->
+            val selectedSport = sportIds[position]
+            if (viewModel.activeSport.value != selectedSport) {
+                viewModel.saveActiveSport(selectedSport)
+            }
+        }
+    }
+
+    /**
+     * Uno sport senza etichetta ripiega sul proprio id.
+     *
+     * Il registro delle regole vive in :core e puo' guadagnare uno sport prima che ne arrivi la
+     * traduzione: in quel caso il selettore mostra "volley" invece di far crashare le impostazioni.
+     */
+    private fun sportLabel(sportId: String): String =
+        when (sportId) {
+            SportRegistry.FOOTBALL -> getString(R.string.sport_football)
+            SportRegistry.PADEL -> getString(R.string.sport_padel)
+            SportRegistry.TENNIS -> getString(R.string.sport_tennis)
+            else -> sportId
+        }
+
     private fun observeViewModel() {
         viewModel.team1Name.observe(this) { name ->
             if (binding.team1NameEdittext.text.toString() != name) {
@@ -82,6 +116,15 @@ class MatchSettingsActivity : AppCompatActivity() {
         viewModel.keeperTimerDuration.observe(this) { duration ->
             if (binding.keeperTimerEdittext.text.toString() != duration.toString()) {
                 binding.keeperTimerEdittext.setText(duration.toString())
+            }
+        }
+
+        // La voce mostrata segue sempre il ViewModel: se una scrittura non passasse, il selettore
+        // tornerebbe da solo sulla scelta precedente invece di mentire.
+        viewModel.activeSport.observe(this) { sportId ->
+            val label = sportLabel(sportId)
+            if (binding.sportAutoComplete.text.toString() != label) {
+                binding.sportAutoComplete.setText(label, false)
             }
         }
 

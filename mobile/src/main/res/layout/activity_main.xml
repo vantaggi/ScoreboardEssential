@@ -19,13 +19,13 @@
                         <ImageView android:id="@+id/wear_status_icon" android:layout_width="32dp" android:layout_height="32dp" android:src="@drawable/ic_watch_disconnected" android:contentDescription="@string/cd_wear_status" tools:src="@drawable/ic_watch_connected"/>
                     </LinearLayout>
 
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MATCH TIME" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp"/>
+                    <TextView android:id="@+id/match_time_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MATCH TIME" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp"/>
 
                     <TextView android:id="@+id/timer_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="00:00" android:textAppearance="?attr/textAppearanceDisplayLarge" android:layout_marginTop="4dp"/>
 
                     <TextView android:id="@+id/keeper_timer_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="05:00" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="?attr/colorPrimary" android:layout_marginTop="8dp" android:visibility="visible"/>
 
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="12dp">
+                    <LinearLayout android:id="@+id/timer_controls_row" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="12dp">
 
                         <com.google.android.material.button.MaterialButton android:id="@+id/timer_start_button" style="@style/Widget.App.Button.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="START" android:onClick="startStopTimer" android:layout_marginEnd="8dp"/>
 
@@ -54,7 +54,14 @@
                         <!-- Score con animazione -->
                         <FrameLayout android:layout_width="match_parent" android:layout_height="wrap_content" app:layout_constraintTop_toBottomOf="@id/team1_name_container" app:layout_constraintBottom_toTopOf="@id/team1_controls_container" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
 
-                            <TextView android:id="@+id/team1_score_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="0" android:textColor="@color/concrete_gray" android:textSize="86sp" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:includeFontPadding="false" android:shadowColor="@color/asphalt_dark" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="6" />
+                            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="center" android:orientation="vertical" android:gravity="center_horizontal">
+
+                                <TextView android:id="@+id/team1_score_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="0" android:textColor="@color/concrete_gray" android:textSize="86sp" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:includeFontPadding="false" android:shadowColor="@color/asphalt_dark" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="6" />
+
+                                <!-- Set chiusi e game correnti. Vuoto e invisibile finche' uno sport non lo popola. -->
+                                <TextView android:id="@+id/team1_score_detail_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/concrete_gray" android:includeFontPadding="false" android:visibility="gone" tools:text="6-4 · 3-2" tools:visibility="visible" />
+
+                            </LinearLayout>
 
                         </FrameLayout>
 
@@ -91,7 +98,14 @@
                         <!-- Score con animazione -->
                         <FrameLayout android:layout_width="match_parent" android:layout_height="wrap_content" app:layout_constraintTop_toBottomOf="@id/team2_name_container" app:layout_constraintBottom_toTopOf="@id/team2_controls_container" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
 
-                            <TextView android:id="@+id/team2_score_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="0" android:textColor="@color/concrete_gray" android:textSize="86sp" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:includeFontPadding="false" android:shadowColor="@color/asphalt_dark" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="6" />
+                            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="center" android:orientation="vertical" android:gravity="center_horizontal">
+
+                                <TextView android:id="@+id/team2_score_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="0" android:textColor="@color/concrete_gray" android:textSize="86sp" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:includeFontPadding="false" android:shadowColor="@color/asphalt_dark" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="6" />
+
+                                <!-- Set chiusi e game correnti. Vuoto e invisibile finche' uno sport non lo popola. -->
+                                <TextView android:id="@+id/team2_score_detail_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/concrete_gray" android:includeFontPadding="false" android:visibility="gone" tools:text="6-4 · 3-2" tools:visibility="visible" />
+
+                            </LinearLayout>
 
                         </FrameLayout>
 

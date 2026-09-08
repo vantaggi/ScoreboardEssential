@@ -31,6 +31,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import it.vantaggi.scoreboardessential.core.ClockMode
+import it.vantaggi.scoreboardessential.core.SportCapabilities
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
@@ -70,6 +72,14 @@ class MainActivity :
     private lateinit var keeperTimerTextView: TextView
     private lateinit var timerStartButton: Button
     private lateinit var undoGoalButton: Button
+
+    // Sezioni che compaiono o spariscono a seconda dello sport
+    private lateinit var rostersCard: View
+    private lateinit var formationsCard: View
+
+    // L'ultima configurazione osservata. Il countdown del portiere e l'annulla hanno un LiveData
+    // proprio che potrebbe riaccenderli dopo il gating, quindi devono poterla riconsultare.
+    private var capabilities: SportCapabilities? = null
 
     // New view references for refactored layout
     private lateinit var team1NameTextView: TextView
@@ -173,6 +183,8 @@ class MainActivity :
         keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
         timerStartButton = findViewById(R.id.timer_start_button)
         undoGoalButton = findViewById(R.id.undo_goal_button)
+        rostersCard = findViewById(R.id.rosters_card)
+        formationsCard = findViewById(R.id.formations_card)
 
         // New Views
         team1NameTextView = findViewById(R.id.team1_name_textview)
@@ -308,8 +320,12 @@ class MainActivity :
             startActivity(intent)
         }
 
-        viewModel.canUndo.observe(this) { canUndo ->
-            undoGoalButton.visibility = if (canUndo) View.VISIBLE else View.GONE
+        viewModel.canUndo.observe(this) {
+            refreshUndoButtonVisibility()
+        }
+
+        viewModel.sportCapabilities.observe(this) { sportCapabilities ->
+            applyCapabilities(sportCapabilities)
         }
 
         viewModel.serviceBindingStatus.observe(this) { isBound ->
@@ -320,6 +336,32 @@ class MainActivity :
             resetButton?.isEnabled = isBound
             resetButton?.alpha = if (isBound) 1.0f else 0.5f
         }
+    }
+
+    /**
+     * Accende e spegne le sezioni in base a cosa lo sport prevede. Nessun `when` sullo sport:
+     * l'unica cosa che questa schermata sa e' quali capacita' le servono.
+     */
+    private fun applyCapabilities(sportCapabilities: SportCapabilities) {
+        capabilities = sportCapabilities
+        // Il cronometro si spegne, la CARD no. settings_button e wear_status_icon vivono dentro
+        // timer_card: nasconderla intera toglierebbe all'utente l'ingranaggio delle impostazioni,
+        // cioe' l'unico modo per tornare a cambiare sport. Si spegne il blocco cronometro, non il
+        // contenitore che ospita anche la barra di intestazione.
+        val orologioVisibile = sportCapabilities.clock != ClockMode.NONE
+        findViewById<View>(R.id.match_time_label).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.timer_textview).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.timer_controls_row).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
+        rostersCard.visibility = if (sportCapabilities.hasRoles) View.VISIBLE else View.GONE
+        formationsCard.visibility = if (sportCapabilities.hasRoles) View.VISIBLE else View.GONE
+        refreshUndoButtonVisibility()
+        updateKeeperTimerTextView(viewModel.keeperTimerValue.value ?: 0L)
+    }
+
+    private fun refreshUndoButtonVisibility() {
+        // Finche' le capacita' non sono arrivate vale il comportamento storico (il calcio).
+        val allowed = capabilities?.attributesScorer != false
+        undoGoalButton.visibility = if (allowed && viewModel.canUndo.value == true) View.VISIBLE else View.GONE
     }
 
     private fun setupImprovedViews() {
@@ -340,7 +382,7 @@ class MainActivity :
 
         findViewById<View>(R.id.team1_subtract_button_card).setOnClickListener {
             it.animateScoreButton(isSubtract = true)
-            viewModel.subtractScore(1)
+            decrementScore(1)
         }
 
         findViewById<View>(R.id.team2_add_button_card).setOnClickListener {
@@ -351,7 +393,20 @@ class MainActivity :
 
         findViewById<View>(R.id.team2_subtract_button_card).setOnClickListener {
             it.animateScoreButton(isSubtract = true)
-            viewModel.subtractScore(2)
+            decrementScore(2)
+        }
+    }
+
+    /**
+     * Il "-" e' una correzione oppure un annullamento, a seconda dello sport: dove il punteggio
+     * non e' un contatore (game, set) sottrarre un punto non e' un'operazione definita, quindi si
+     * disfa l'ultima azione invece di inventarne l'inversa.
+     */
+    private fun decrementScore(team: Int) {
+        if (capabilities?.decrementIsUndo == true) {
+            viewModel.undoLastGoal()
+        } else {
+            viewModel.subtractScore(team)
         }
     }
 
@@ -414,7 +469,7 @@ class MainActivity :
                         playGoalAnimation(1)
                     },
                     onDecreaseScore = {
-                        viewModel.subtractScore(1)
+                        decrementScore(1)
                     },
                 ),
             )
@@ -433,7 +488,7 @@ class MainActivity :
                         playGoalAnimation(2)
                     },
                     onDecreaseScore = {
-                        viewModel.subtractScore(2)
+                        decrementScore(2)
                     },
                 ),
             )
@@ -617,7 +672,8 @@ class MainActivity :
     }
 
     private fun updateKeeperTimerTextView(timeInMillis: Long) {
-        if (timeInMillis > 0) {
+        // Finche' le capacita' non sono arrivate vale il comportamento storico (il calcio).
+        if (timeInMillis > 0 && capabilities?.hasAuxCountdown != false) {
             keeperTimerTextView.text = "⏰ ${TimeUtils.formatTime(timeInMillis)}"
             keeperTimerTextView.visibility = View.VISIBLE
         } else {
