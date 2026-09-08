@@ -151,11 +151,11 @@ quindi non allarga il blocco AGP 9.
 | # | Passo | Stato |
 |---|---|---|
 | S1 | `:core` + contratti + FootballRules + RacketRules + MatchEngine + codec + registro, e il punteggio delegato al motore | ✅ **fatto, zero test esistenti toccati** |
-| S2 | `MIGRATION_11_12` fatta ✅ · partita viva ripristinabile ⬜ | ⬜ **in corso** ▲ rollback = perdita dati |
-| S3 | Protocollo Wear v2 (path nuovo, mai uno cambiato) | ⬜ ▲ matrice manuale 2×2 |
-| S4 | Selettore sport + gating capability, solo calcio nel registro | ⬜ |
-| S5 | **Padel punto a punto** | ⬜ |
-| S6 | **Tennis** — una riga di config | ⬜ |
+| S2 | `MIGRATION_11_12` + partita viva ripristinabile | ✅ fatto ▲ rollback = perdita dati |
+| S3 | Protocollo Wear v2 (path nuovo, mai uno cambiato) + B6 | ⬜ **prossimo** ▲ matrice manuale 2×2 |
+| S4 | Selettore sport + gating capability | ✅ fatto ▲ verifica visiva da fare |
+| S5 | **Padel punto a punto** — punteggio impaginato dalle regole | ✅ fatto ▲ verifica visiva da fare |
+| S6 | **Tennis** — una riga di config | ✅ fatto (nel registro, con test) |
 | S7 | Pallavolo / basket, solo su richiesta | ⬜ |
 
 **Segnale d'allarme su S1:** è costruito per non rinominare nulla. Se costringe a
