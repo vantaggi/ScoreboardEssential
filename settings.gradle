@@ -19,6 +19,7 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Scoreboard Essential"
+include ':core'
 include ':mobile'
 include ':wear'
 include ':shared'
