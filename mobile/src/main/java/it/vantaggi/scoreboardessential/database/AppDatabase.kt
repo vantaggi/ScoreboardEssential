@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
         Match::class, Player::class, MatchPlayerCrossRef::class,
         Team::class, Role::class, PlayerRoleCrossRef::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -27,7 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         /** Versione dello schema. Tenuta qui cosi' che i test non la ripetano a mano. */
-        const val SCHEMA_VERSION = 11
+        const val SCHEMA_VERSION = 12
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -139,6 +139,35 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
 
+        internal val MIGRATION_11_12 =
+            object : Migration(11, 12) {
+                override fun migrate(database: SupportSQLiteDatabase) {
+                    // Puramente ADDITIVA: due ALTER TABLE e un indice. Nessuna riga riscritta,
+                    // nessuna tabella ricostruita, nessuna UPDATE -- quindi nemmeno il rischio che
+                    // PRAGMA foreign_key_check faccia abortire la migrazione a meta'.
+                    //
+                    // Il backfill E' la clausola DEFAULT: ogni partita gia' salvata diventa
+                    // 'football' con cronologia vuota, che significa "solo punteggio finale".
+                    // E' l'opposto esatto di MIGRATION_6_7, che creava players_new, copiava
+                    // quattro colonne e poi faceva DROP TABLE players perdendo per strada le
+                    // assegnazioni di ruolo precedenti alla v7.
+                    database.execSQL(
+                        "ALTER TABLE `matches` ADD COLUMN `sportId` TEXT NOT NULL DEFAULT 'football'",
+                    )
+                    database.execSQL(
+                        "ALTER TABLE `matches` ADD COLUMN `eventLog` TEXT NOT NULL DEFAULT ''",
+                    )
+                    // Il nome deve combaciare CARATTERE PER CARATTERE con quello che Room genera
+                    // da @Index(value = ["sportId", "timestamp"]) su `matches`, altrimenti la
+                    // validazione fallisce all'avvio con "Migration didn't properly handle" -- a
+                    // ogni avvio, per sempre, senza fix remoto possibile.
+                    database.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_matches_sportId_timestamp` " +
+                            "ON `matches` (`sportId`, `timestamp`)",
+                    )
+                }
+            }
+
         fun getDatabase(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 val instance =
@@ -161,7 +190,7 @@ abstract class AppDatabase : RoomDatabase() {
                                     }
                                 }
                             },
-                        ).addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                        ).addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                         // Non esiste alcun percorso di migrazione dalle versioni 1-5: un
                         // dispositivo fermo li' crasherebbe a ogni avvio, per sempre. La
                         // ricostruzione e' limitata a QUELLE versioni e non generalizzata:
