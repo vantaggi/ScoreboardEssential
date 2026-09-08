@@ -33,6 +33,46 @@ interface MatchDao {
     @Query("SELECT * FROM matches WHERE isActive = 1 LIMIT 1")
     fun getActiveMatch(): Flow<Match?>
 
+    /**
+     * La partita in corso, letta una volta sola.
+     *
+     * `isActive` esisteva gia' ma non veniva MAI messa a 1: nessuna riga la valorizzava, quindi
+     * [getActiveMatch] poteva soltanto emettere null e non aveva chiamanti. Da qui diventa il
+     * meccanismo che ripristina una partita dopo la morte del processo.
+     */
+    @Query("SELECT * FROM matches WHERE isActive = 1 ORDER BY timestamp DESC LIMIT 1")
+    suspend fun getActiveMatchOnce(): Match?
+
+    /** Aggiorna la riga viva: una scrittura per punto, mirata alle sole colonne che cambiano. */
+    @Query(
+        """
+        UPDATE matches SET team1Score = :team1, team2Score = :team2, eventLog = :eventLog
+        WHERE matchId = :matchId
+    """,
+    )
+    suspend fun updateLiveMatch(
+        matchId: Int,
+        team1: Int,
+        team2: Int,
+        eventLog: String,
+    )
+
+    /** Chiude la partita viva: smette di essere attiva e fissa il risultato finale. */
+    @Query(
+        """
+        UPDATE matches SET isActive = 0, team1Score = :team1, team2Score = :team2,
+            eventLog = :eventLog, timestamp = :timestamp
+        WHERE matchId = :matchId
+    """,
+    )
+    suspend fun finalizeMatch(
+        matchId: Int,
+        team1: Int,
+        team2: Int,
+        eventLog: String,
+        timestamp: Long,
+    )
+
     @Query(
         """
         SELECT COUNT(*) FROM matches

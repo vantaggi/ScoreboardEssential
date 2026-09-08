@@ -18,11 +18,22 @@ package it.vantaggi.scoreboardessential.core
 class MatchEngine(
     val rules: SportRules,
 ) {
-    private val mutableEvents = mutableListOf<ScoringEvent>()
+    private val mutableLog = mutableListOf<LoggedEvent>()
+
+    /**
+     * La storia completa, timestamp compresi.
+     *
+     * Il motore tiene [LoggedEvent] e non il solo [ScoringEvent] perche' il QUANDO e' meta' del
+     * valore della cronologia: senza, dall'export verso Padel Elite si ricava l'ordine dei punti
+     * ma non l'andamento, i recuperi, la durata dei set. E' anche la forma che la colonna
+     * `eventLog` persiste, quindi salvare e ripristinare non richiedono conversioni.
+     */
+    val log: List<LoggedEvent>
+        get() = mutableLog.toList()
 
     /** Copia difensiva: chi la riceve non deve poter far divergere la storia dallo stato. */
     val events: List<ScoringEvent>
-        get() = mutableEvents.toList()
+        get() = mutableLog.map { it.event }
 
     /**
      * Stato memorizzato, non ricalcolato a ogni accesso.
@@ -43,24 +54,27 @@ class MatchEngine(
      * prima". Se lo si scartasse, l'annullamento subito dopo un evento innocuo mangerebbe invece
      * l'ultimo punto valido.
      */
-    fun apply(event: ScoringEvent): ScoreState {
-        mutableEvents.add(event)
+    fun apply(
+        event: ScoringEvent,
+        atMillis: Long? = null,
+    ): ScoreState {
+        mutableLog.add(LoggedEvent(event, atMillis))
         state = rules.apply(state, event)
         return state
     }
 
-    fun canUndo(): Boolean = mutableEvents.isNotEmpty()
+    fun canUndo(): Boolean = mutableLog.isNotEmpty()
 
     /** Su motore vuoto non lancia e non cambia nulla: [apply] e' totale, e anche questo lo e'. */
     fun undo(): ScoreState {
-        if (mutableEvents.isEmpty()) return state
-        mutableEvents.removeAt(mutableEvents.lastIndex)
-        state = derive(mutableEvents)
+        if (mutableLog.isEmpty()) return state
+        mutableLog.removeAt(mutableLog.lastIndex)
+        state = derive(mutableLog)
         return state
     }
 
     fun reset(): ScoreState {
-        mutableEvents.clear()
+        mutableLog.clear()
         state = rules.initial()
         return state
     }
@@ -72,12 +86,15 @@ class MatchEngine(
      * niente, perche' il ripristino deve dare lo stesso motore che era stato salvato, annullamenti
      * disponibili compresi.
      */
-    fun restore(events: List<ScoringEvent>): ScoreState {
-        mutableEvents.clear()
-        mutableEvents.addAll(events)
-        state = derive(mutableEvents)
+    fun restore(events: List<ScoringEvent>): ScoreState = restoreLog(events.map { LoggedEvent(it) })
+
+    /** Come [restore], ma conservando i tempi: e' la forma che arriva dalla persistenza. */
+    fun restoreLog(entries: List<LoggedEvent>): ScoreState {
+        mutableLog.clear()
+        mutableLog.addAll(entries)
+        state = derive(mutableLog)
         return state
     }
 
-    private fun derive(source: List<ScoringEvent>): ScoreState = source.fold(rules.initial()) { acc, event -> rules.apply(acc, event) }
+    private fun derive(source: List<LoggedEvent>): ScoreState = source.fold(rules.initial()) { acc, entry -> rules.apply(acc, entry.event) }
 }

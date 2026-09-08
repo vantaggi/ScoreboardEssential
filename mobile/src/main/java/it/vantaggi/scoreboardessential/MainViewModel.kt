@@ -21,6 +21,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.MatchEngine
+import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.core.SportRules
@@ -422,6 +423,7 @@ class MainViewModel(
         // tornava a 0-0 mentre il cronometro, che il service persiste per conto suo, proseguiva.
         bindService()
         startNewMatch()
+        restoreActiveMatchIfAny()
         checkIfOnboardingIsNeeded()
 
         viewModelScope.launch {
@@ -514,6 +516,7 @@ class MainViewModel(
 
     private fun startNewMatch() {
         engine.reset()
+        currentMatchId = null
         updateScore(0, 0)
         synchronized(matchEventLog) {
             matchEventLog.clear()
@@ -626,6 +629,73 @@ class MainViewModel(
     private fun publishEngineState() {
         val (uno, due) = engine.state.headline()
         updateScore(uno, due)
+        persistLiveMatch()
+    }
+
+    /**
+     * Scrive la partita in corso, creando la riga alla prima azione utile.
+     *
+     * La riga NON nasce alla costruzione del ViewModel: altrimenti ogni apertura dell'app
+     * lascerebbe in cronologia una partita vuota mai giocata. Nasce al primo punto, che e' il
+     * momento in cui esiste davvero qualcosa da non perdere.
+     *
+     * Una scrittura per punto su Dispatchers.IO. E' il prezzo per cui, oggi, il cronometro
+     * sopravvive alla morte del processo (il service lo persiste per conto suo) mentre punteggio
+     * e registro no: si torna con il cronometro a 12:34 e il tabellone a 0-0.
+     */
+    private fun persistLiveMatch() {
+        val (uno, due) = engine.state.headline()
+        val log = MatchLogCodec.encode(engine.log)
+        viewModelScope.launch {
+            val id = currentMatchId
+            if (id == null) {
+                if (uno == 0 && due == 0 && engine.log.isEmpty()) return@launch
+                currentMatchId =
+                    matchDao.insert(
+                        Match(
+                            team1Id = 1,
+                            team2Id = 2,
+                            team1Score = uno,
+                            team2Score = due,
+                            timestamp = System.currentTimeMillis(),
+                            isActive = true,
+                            sportId = sportRules.id,
+                            eventLog = log,
+                        ),
+                    )
+            } else {
+                matchDao.updateLiveMatch(id.toInt(), uno, due, log)
+            }
+        }
+    }
+
+    /**
+     * Ripristina una partita rimasta aperta.
+     *
+     * Volutamente ASINCRONO e successivo a [startNewMatch]: la costruzione del ViewModel continua
+     * a lasciare il tabellone a 0-0 esattamente come prima, e il ripristino arriva dopo, se c'e'
+     * qualcosa da ripristinare. Cosi' il comportamento predefinito non cambia e nessun test
+     * esistente cambia di significato.
+     */
+    private fun restoreActiveMatchIfAny() {
+        viewModelScope.launch {
+            val attiva = matchDao.getActiveMatchOnce() ?: return@launch
+            currentMatchId = attiva.matchId.toLong()
+            val eventi = MatchLogCodec.decode(attiva.eventLog)
+            if (eventi != null) {
+                engine.restoreLog(eventi)
+                val (uno, due) = engine.state.headline()
+                updateScore(uno, due)
+            } else {
+                // Cronologia illeggibile (formato piu' recente, riga corrotta): si recupera
+                // comunque il punteggio di testata invece di perdere la partita. Degradare una
+                // riga di cronologia e' accettabile; perdere il punteggio no.
+                Log.w("MainViewModel", "eventLog illeggibile per la partita ${attiva.matchId}: recupero il solo punteggio")
+                seedEngineFromAbsolute(attiva.team1Score, attiva.team2Score)
+                updateScore(attiva.team1Score, attiva.team2Score)
+            }
+            addMatchEvent("Partita ripresa")
+        }
     }
 
     /**
@@ -854,16 +924,31 @@ class MainViewModel(
                 matchTimerService?.stopTimer()
             }
 
+            val uno = team1Score.value ?: 0
+            val due = team2Score.value ?: 0
+            val log = MatchLogCodec.encode(engine.log)
+            val adesso = System.currentTimeMillis()
+
+            // Se una riga viva esiste gia' la si CHIUDE, invece di inserirne una seconda: la
+            // partita e' la stessa, e duplicarla falserebbe presenze e statistiche.
+            val vivaId = currentMatchId
             val matchId =
-                matchDao.insert(
-                    Match(
-                        team1Id = 1, // Default team 1 ID
-                        team2Id = 2, // Default team 2 ID
-                        team1Score = team1Score.value ?: 0,
-                        team2Score = team2Score.value ?: 0,
-                        timestamp = System.currentTimeMillis(),
-                    ),
-                )
+                if (vivaId != null) {
+                    matchDao.finalizeMatch(vivaId.toInt(), uno, due, log, adesso)
+                    vivaId
+                } else {
+                    matchDao.insert(
+                        Match(
+                            team1Id = 1, // Default team 1 ID
+                            team2Id = 2, // Default team 2 ID
+                            team1Score = uno,
+                            team2Score = due,
+                            timestamp = adesso,
+                            sportId = sportRules.id,
+                            eventLog = log,
+                        ),
+                    )
+                }
 
             val team1Roster = team1Players.value ?: emptyList()
             val team2Roster = team2Players.value ?: emptyList()
