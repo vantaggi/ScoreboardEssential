@@ -23,6 +23,19 @@ interface PlayerDao {
     @Delete
     suspend fun delete(player: Player)
 
+    /**
+     * Incremento atomico lato database. Un @Update di riga intera partendo da un'istanza in
+     * memoria riscrive TUTTE le colonne con i valori che quella copia aveva al momento della
+     * lettura: con due grafi di oggetti distinti per lo stesso giocatore (la lista globale e il
+     * roster della squadra) l'ultimo che scrive cancella il lavoro dell'altro.
+     */
+    @Query("UPDATE players SET goals = goals + 1 WHERE playerId = :playerId")
+    suspend fun incrementGoals(playerId: Int)
+
+    /** Simmetrica di [incrementGoals]. Il guard su goals > 0 evita conteggi negativi. */
+    @Query("UPDATE players SET goals = goals - 1 WHERE playerId = :playerId AND goals > 0")
+    suspend fun decrementGoals(playerId: Int)
+
     @Transaction
     @Query("SELECT * FROM players ORDER BY playerName ASC")
     fun getAllPlayers(): Flow<List<PlayerWithRoles>>

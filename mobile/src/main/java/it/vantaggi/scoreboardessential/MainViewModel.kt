@@ -29,6 +29,7 @@ import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
+import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.domain.models.MatchReportData
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
@@ -287,7 +288,8 @@ class MainViewModel(
                     SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED -> {
                         val playerName = intent.getStringExtra(WearConstants.KEY_PLAYER_NAME) ?: return
                         val team = intent.getIntExtra(WearConstants.EXTRA_TEAM_NUMBER, 1)
-                        attributeRemoteScorer(team, playerName)
+                        val playerId = intent.getIntExtra(WearConstants.KEY_PLAYER_ID, -1).takeIf { it >= 0 }
+                        attributeRemoteScorer(team, playerName, playerId)
                     }
                 }
             }
@@ -342,6 +344,18 @@ class MainViewModel(
     val allPlayers: LiveData<List<PlayerWithRoles>> = _allPlayers
 
     // Match Events Log
+
+    /**
+     * Sorgente di verita' del registro eventi.
+     *
+     * Prima ogni scrittura faceva leggi-modifica-postValue su [_matchEvents]. postValue e'
+     * asincrono, quindi due eventi ravvicinati leggevano lo stesso valore e il secondo
+     * sovrascriveva il primo. L'annullamento era il caso peggiore: rimuoveva il gol dalla lista
+     * e subito dopo registrava "Undo", che ripubblicava la lista PRIMA della rimozione -- quindi
+     * il gol restava. La lista vive qui, a LiveData va sempre una copia.
+     */
+    private val matchEventLog = mutableListOf<MatchEvent>()
+
     private val _matchEvents = MutableLiveData<List<MatchEvent>>(emptyList())
     val matchEvents: LiveData<List<MatchEvent>> = _matchEvents
 
@@ -377,8 +391,12 @@ class MainViewModel(
         }
 
         loadAllPlayers()
-        startNewMatch()
+        // bindService PRIMA di startNewMatch: startNewMatch azzera i timer attraverso il service,
+        // e con l'ordine invertito quelle chiamate cadevano nel vuoto perche' matchTimerService
+        // era ancora null. Effetto osservabile: alla ricostruzione del ViewModel il punteggio
+        // tornava a 0-0 mentre il cronometro, che il service persiste per conto suo, proseguiva.
         bindService()
+        startNewMatch()
         checkIfOnboardingIsNeeded()
 
         viewModelScope.launch {
@@ -471,7 +489,10 @@ class MainViewModel(
 
     private fun startNewMatch() {
         updateScore(0, 0)
-        _matchEvents.value = emptyList()
+        synchronized(matchEventLog) {
+            matchEventLog.clear()
+            _matchEvents.postValue(emptyList())
+        }
         matchTimerService?.resetTimer()
         if (isServiceBound) {
             matchTimerService?.resetKeeperTimer()
@@ -622,18 +643,26 @@ class MainViewModel(
         viewModelScope.launch {
             val teamName = if (team == 1) _team1Name.value else _team2Name.value
             if (playerWithRoles != null) {
-                // A specific player scored
-                playerWithRoles.player.goals++
-                playerDao.update(playerWithRoles.player)
+                // Incremento atomico lato database invece di mutare l'istanza in memoria e
+                // riscrivere l'intera riga: _allPlayers e i roster tengono grafi di oggetti
+                // DIVERSI per lo stesso giocatore, quindi un @Update di riga intera partendo da
+                // una copia stantia riportava indietro i gol segnati nel frattempo.
+                playerDao.incrementGoals(playerWithRoles.player.playerId)
 
                 val rolesString = playerWithRoles.roles.joinToString(", ") { it.name }
-                addMatchEvent("Goal", team = team, player = playerWithRoles.player.playerName, playerRole = rolesString)
+                addMatchEvent(
+                    "Goal",
+                    team = team,
+                    player = playerWithRoles.player.playerName,
+                    playerRole = rolesString,
+                    type = MatchEventType.SCORE,
+                )
 
                 // Track for Undo
                 actionStack.addLast(GoalAction(team, playerWithRoles.player.playerId, System.currentTimeMillis()))
             } else {
                 // No specific player, just log a goal for the team
-                addMatchEvent("Goal", team = team, player = teamName)
+                addMatchEvent("Goal", team = team, player = teamName, type = MatchEventType.SCORE)
 
                 // Track for Undo (null playerId)
                 actionStack.addLast(GoalAction(team, null, System.currentTimeMillis()))
@@ -651,12 +680,19 @@ class MainViewModel(
     fun attributeRemoteScorer(
         team: Int,
         playerName: String,
+        playerId: Int? = null,
     ) {
-        val match = _allPlayers.value?.find { it.player.playerName == playerName }
+        val roster = _allPlayers.value
+        // L'id vince sul nome: due omonimi erano indistinguibili e il nome e' modificabile.
+        // La ricerca per nome resta come ripiego, perche' un orologio non aggiornato manda
+        // ancora soltanto quello.
+        val match =
+            playerId?.let { id -> roster?.find { it.player.playerId == id } }
+                ?: roster?.find { it.player.playerName == playerName }
         if (match != null) {
             addScorer(team, match)
         } else {
-            addMatchEvent("Goal", team = team, player = playerName)
+            addMatchEvent("Goal", team = team, player = playerName, type = MatchEventType.SCORE)
             actionStack.addLast(GoalAction(team, null, System.currentTimeMillis()))
             _canUndo.postValue(true)
         }
@@ -678,34 +714,21 @@ class MainViewModel(
                 }
 
                 // 2. Revert Player Stats if needed
-                lastAction.playerId?.let { playerId ->
-                    val playerFlow = playerDao.getPlayerWithRoles(playerId)
-                    // We need to collect once to get the player
-                    // Since we are in coroutine, we can't easily wait for Flow value without collection
-                    // Ideally DAO should have suspend fun getPlayer(id)
-                    // For now, we assume we might need to fetch from our local list if possible or just log it
-                    // Optimization: add suspend getPlayer to DAO for QoL
-
-                    _allPlayers.value?.find { it.player.playerId == playerId }?.let { p ->
-                        if (p.player.goals > 0) {
-                            p.player.goals--
-                            playerDao.update(p.player)
-                        }
-                    }
-                }
+                // Decremento atomico: non dipende piu' dal fatto che _allPlayers contenga gia' il
+                // giocatore ne' che la sua copia sia aggiornata. Prima, annullare subito dopo aver
+                // segnato saltava il decremento perche' il Flow non aveva ancora riemesso.
+                lastAction.playerId?.let { playerId -> playerDao.decrementGoals(playerId) }
 
                 // 3. Remove from Match Events
-                // We remove the first "Goal" event for this team/player
-                val currentEvents = _matchEvents.value?.toMutableList() ?: return@launch
-                val index =
-                    currentEvents.indexOfFirst {
-                        it.event == "Goal" &&
-                            it.team == lastAction.teamId &&
-                            (lastAction.playerId == null || it.player != null) // Simplistic matching
+                synchronized(matchEventLog) {
+                    val index =
+                        matchEventLog.indexOfFirst {
+                            it.type == MatchEventType.SCORE && it.team == lastAction.teamId
+                        }
+                    if (index != -1) {
+                        matchEventLog.removeAt(index)
+                        _matchEvents.postValue(matchEventLog.toList())
                     }
-                if (index != -1) {
-                    currentEvents.removeAt(index)
-                    _matchEvents.postValue(currentEvents)
                 }
 
                 addMatchEvent("Undo: Goal removed", team = lastAction.teamId)
@@ -764,19 +787,22 @@ class MainViewModel(
     }
 
     // --- Match Events ---
+
     private fun addMatchEvent(
         event: String,
         team: Int? = null,
         player: String? = null,
         playerRole: String? = null,
+        type: MatchEventType = MatchEventType.INFO,
     ) {
         val timeFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
         val timestamp = timeFormat.format(Date(matchTimerValue.value ?: 0L))
 
-        val matchEvent = MatchEvent(timestamp, event, team, player, playerRole)
-        val currentEvents = _matchEvents.value?.toMutableList() ?: mutableListOf()
-        currentEvents.add(0, matchEvent) // Add to beginning for reverse chronological order
-        _matchEvents.postValue(currentEvents)
+        synchronized(matchEventLog) {
+            // in testa: ordine cronologico inverso
+            matchEventLog.add(0, MatchEvent(timestamp, event, team, player, playerRole, type))
+            _matchEvents.postValue(matchEventLog.toList())
+        }
     }
 
     // --- End Match ---

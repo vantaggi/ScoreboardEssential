@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import it.vantaggi.scoreboardessential.R
+import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.domain.models.MatchReportData
 import java.io.File
 import java.io.FileOutputStream
@@ -74,7 +75,7 @@ object MatchReportUtils {
         // Populate Scorers
         val scorers = mutableMapOf<String, Int>()
         data.matchEvents.forEach { event ->
-            if (event.event == "Goal" && event.player != null) {
+            if (event.type == MatchEventType.SCORE && event.player != null) {
                 scorers[event.player] = (scorers[event.player] ?: 0) + 1
             }
         }

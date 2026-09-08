@@ -166,11 +166,14 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
             Log.w(TAG, "Invalid scorer-selection fields. Ignoring.")
             return
         }
+        // Quarto campo opzionale: presente solo dagli orologi aggiornati.
+        val playerId = parts.getOrNull(3)?.toIntOrNull()
         val intent =
             Intent(ACTION_SCORER_SELECTED).apply {
                 putExtra(WearConstants.KEY_PLAYER_NAME, playerName)
                 putExtra(WearConstants.KEY_PLAYER_ROLES, roles)
                 putExtra(WearConstants.EXTRA_TEAM_NUMBER, teamNumber)
+                if (playerId != null) putExtra(WearConstants.KEY_PLAYER_ID, playerId)
             }
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
         if (BuildConfig.DEBUG) {

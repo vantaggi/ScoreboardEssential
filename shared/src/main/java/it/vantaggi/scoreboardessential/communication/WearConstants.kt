@@ -41,6 +41,7 @@ object WearConstants {
     const val KEY_TEAM1_PLAYERS = "team1_players"
     const val KEY_TEAM2_PLAYERS = "team2_players"
     const val KEY_PLAYER_NAME = "player_name"
+    const val KEY_PLAYER_ID = "player_id"
     const val KEY_PLAYER_ROLES = "player_roles"
     const val KEY_TEAM_COLOR = "team_color"
     const val KEY_MATCH_ACTIVE = "match_active"

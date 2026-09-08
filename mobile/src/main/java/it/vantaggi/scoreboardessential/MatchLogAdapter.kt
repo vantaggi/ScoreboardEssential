@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.color.MaterialColors
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
+import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 
 class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHolder>(MatchEventDiffCallback()) {
     var team1Color: Int = 0
@@ -47,7 +48,7 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
             timestampTextView.text = event.timestamp
 
             val description =
-                if (event.event == "Goal" && event.player != null) {
+                if (event.type == MatchEventType.SCORE && event.player != null) {
                     val roleInfo = if (event.playerRole?.isNotEmpty() == true) " (${event.playerRole})" else ""
                     "GOAL! ${event.player}$roleInfo"
                 } else {

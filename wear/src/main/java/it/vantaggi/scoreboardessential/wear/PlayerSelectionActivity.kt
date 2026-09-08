@@ -17,6 +17,7 @@ import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 
 data class WearPlayer(
+    val id: Int,
     val name: String,
     val roles: List<String>,
 )
@@ -53,7 +54,7 @@ class PlayerSelectionActivity : ComponentActivity() {
     }
 
     private fun showPlayers(players: List<PlayerData>) {
-        val wearPlayers = players.map { WearPlayer(it.name, it.roles) }
+        val wearPlayers = players.map { WearPlayer(it.id, it.name, it.roles) }
         adapter.submitList(wearPlayers)
 
         val emptyStateText = findViewById<TextView>(R.id.empty_state_text)
@@ -68,7 +69,10 @@ class PlayerSelectionActivity : ComponentActivity() {
 
     private fun selectPlayer(player: WearPlayer) {
         val rolesString = player.roles.joinToString(",")
-        val message = "${player.name}|$rolesString|$teamNumber"
+        // L'id e' un QUARTO campo aggiunto in coda, non una sostituzione del nome: un
+        // telefono non aggiornato legge i primi tre e ignora il resto, quindi la coppia
+        // mista continua a funzionare in entrambe le direzioni.
+        val message = "${player.name}|$rolesString|$teamNumber|${player.id}"
         sendMessageToMobile(WearConstants.MSG_SCORER_SELECTED, message)
         finish()
     }
