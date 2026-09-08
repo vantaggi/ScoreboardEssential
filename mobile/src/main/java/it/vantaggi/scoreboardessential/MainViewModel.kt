@@ -22,6 +22,7 @@ import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
+import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportCapabilities
 import it.vantaggi.scoreboardessential.core.SportRegistry
@@ -410,6 +411,7 @@ class MainViewModel(
         currentMatchId = null
         _team1Score.value = 0
         _team2Score.value = 0
+        _scoreDisplay.value = sportRules.display(engine.state)
     }
 
     /**
@@ -672,9 +674,22 @@ class MainViewModel(
         }
     }
 
+    private val _scoreDisplay = MutableLiveData(sportRules.display(sportRules.initial()))
+
+    /**
+     * Il punteggio gia' impaginato dalle regole dello sport.
+     *
+     * L'interfaccia mostra STRINGHE, non interi. Per il calcio `side1Primary` e' "3" e il
+     * dettaglio e' null, quindi il risultato a schermo e' identico a prima; per il padel il
+     * primario e' "40" o "AV" e il dettaglio "6-4 - 3-2". Cosi' la schermata non deve sapere che
+     * sport si sta giocando, ed e' anche la stessa forma che l'orologio ricevera' gia' pronta.
+     */
+    val scoreDisplay: LiveData<ScoreDisplay> = _scoreDisplay
+
     /** Proietta lo stato del motore sulle LiveData e lo propaga all'orologio. */
     private fun publishEngineState() {
         val (uno, due) = engine.state.headline()
+        _scoreDisplay.value = sportRules.display(engine.state)
         updateScore(uno, due)
         persistLiveMatch()
     }
@@ -732,6 +747,7 @@ class MainViewModel(
             if (eventi != null) {
                 engine.restoreLog(eventi)
                 val (uno, due) = engine.state.headline()
+                _scoreDisplay.postValue(sportRules.display(engine.state))
                 updateScore(uno, due)
             } else {
                 // Cronologia illeggibile (formato piu' recente, riga corrotta): si recupera
@@ -761,6 +777,7 @@ class MainViewModel(
             List(team1.coerceAtLeast(0)) { ScoringEvent.Point(side = 1) } +
                 List(team2.coerceAtLeast(0)) { ScoringEvent.Point(side = 2) }
         engine.restore(eventi)
+        _scoreDisplay.postValue(sportRules.display(engine.state))
     }
 
     fun addScore(teamId: Int) {

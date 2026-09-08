@@ -65,6 +65,8 @@ class MainActivity :
 
     // Core view references
     private lateinit var team1ScoreTextView: TextView
+    private lateinit var team1ScoreDetailTextView: TextView
+    private lateinit var team2ScoreDetailTextView: TextView
     private lateinit var team2ScoreTextView: TextView
     private lateinit var timerTextView: TextView
     private lateinit var team1Card: MaterialCardView
@@ -176,6 +178,8 @@ class MainActivity :
     private fun initializeViews() {
         // Core views
         team1ScoreTextView = findViewById(R.id.team1_score_textview)
+        team1ScoreDetailTextView = findViewById(R.id.team1_score_detail_textview)
+        team2ScoreDetailTextView = findViewById(R.id.team2_score_detail_textview)
         team2ScoreTextView = findViewById(R.id.team2_score_textview)
         timerTextView = findViewById(R.id.timer_textview)
         team1Card = findViewById(R.id.team1_card)
@@ -229,12 +233,14 @@ class MainActivity :
     }
 
     private fun observeViewModel() {
-        viewModel.team1Score.observe(this) { score ->
-            team1ScoreTextView.text = score.toString()
-        }
-
-        viewModel.team2Score.observe(this) { score ->
-            team2ScoreTextView.text = score.toString()
+        // Il punteggio a schermo viene dalle regole dello sport, non dagli interi: per il calcio
+        // e' la stessa cifra di prima, per gli sport a set e' "40"/"AV" con il dettaglio dei set
+        // sotto. La schermata non sa che sport si sta giocando.
+        viewModel.scoreDisplay.observe(this) { display ->
+            team1ScoreTextView.text = display.side1Primary
+            team2ScoreTextView.text = display.side2Primary
+            bindScoreDetail(team1ScoreDetailTextView, display.side1Secondary)
+            bindScoreDetail(team2ScoreDetailTextView, display.side2Secondary)
         }
 
         viewModel.team1Name.observe(this) { name ->
@@ -517,6 +523,14 @@ class MainActivity :
                     .setInterpolator(OvershootInterpolator())
                     .start()
             }.start()
+    }
+
+    private fun bindScoreDetail(
+        view: TextView,
+        text: String?,
+    ) {
+        view.text = text.orEmpty()
+        view.visibility = if (text.isNullOrEmpty()) View.GONE else View.VISIBLE
     }
 
     private fun playGoalAnimation(team: Int) {
