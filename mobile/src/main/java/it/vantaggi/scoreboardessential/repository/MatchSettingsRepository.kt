@@ -76,6 +76,24 @@ class MatchSettingsRepository(
             sharedPreferences.getLong(KEY_KEEPER_TIMER_DURATION, 30L)
         }
 
+    /**
+     * Lo sport selezionato.
+     *
+     * Il default e' il calcio, quindi ogni installazione esistente non vede nulla di nuovo. La
+     * stringa non e' interpretata qui: la verita' sulle regole vive nel registro in :core.
+     */
+    suspend fun setActiveSport(sportId: String) =
+        withContext(Dispatchers.IO) {
+            sharedPreferences.edit {
+                putString(KEY_ACTIVE_SPORT, sportId)
+            }
+        }
+
+    suspend fun getActiveSport(): String =
+        withContext(Dispatchers.IO) {
+            sharedPreferences.getString(KEY_ACTIVE_SPORT, DEFAULT_SPORT) ?: DEFAULT_SPORT
+        }
+
     fun getSettingsFlow(): Flow<MatchSettings> =
         callbackFlow {
             val listener =
@@ -87,6 +105,7 @@ class MatchSettingsRepository(
                             prefs.getInt(KEY_TEAM1_COLOR, colorRepository.getTeam1DefaultColor()),
                             prefs.getInt(KEY_TEAM2_COLOR, colorRepository.getTeam2DefaultColor()),
                             prefs.getLong(KEY_KEEPER_TIMER_DURATION, 30L),
+                            prefs.getString(KEY_ACTIVE_SPORT, DEFAULT_SPORT) ?: DEFAULT_SPORT,
                         ),
                     )
                 }
@@ -99,6 +118,7 @@ class MatchSettingsRepository(
                     sharedPreferences.getInt(KEY_TEAM1_COLOR, colorRepository.getTeam1DefaultColor()),
                     sharedPreferences.getInt(KEY_TEAM2_COLOR, colorRepository.getTeam2DefaultColor()),
                     sharedPreferences.getLong(KEY_KEEPER_TIMER_DURATION, 30L),
+                    sharedPreferences.getString(KEY_ACTIVE_SPORT, DEFAULT_SPORT) ?: DEFAULT_SPORT,
                 ),
             )
 
@@ -113,6 +133,8 @@ class MatchSettingsRepository(
         private const val KEY_TEAM2_COLOR = "team2_color"
         private const val KEY_KEEPER_TIMER_DURATION = "keeper_timer_duration"
         private const val KEY_APP_LANGUAGE = "app_language"
+        private const val KEY_ACTIVE_SPORT = "active_sport"
+        private const val DEFAULT_SPORT = "football"
     }
 
     suspend fun setAppLanguage(languageCode: String) =
@@ -134,4 +156,5 @@ data class MatchSettings(
     val team1Color: Int,
     val team2Color: Int,
     val keeperTimerDuration: Long,
+    val activeSport: String = "football",
 )

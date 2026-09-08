@@ -23,6 +23,7 @@ import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.core.ScoringEvent
+import it.vantaggi.scoreboardessential.core.SportCapabilities
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.core.SportRules
 import it.vantaggi.scoreboardessential.database.AppDatabase
@@ -359,7 +360,7 @@ class MainViewModel(
      * Le regole in vigore. Oggi sempre il calcio: il selettore dello sport arriva dopo, e
      * introdurlo qui senza un'interfaccia che lo mostri sarebbe codice senza consumatori.
      */
-    private val sportRules: SportRules = SportRegistry.byId(SportRegistry.FOOTBALL)
+    private var sportRules: SportRules = SportRegistry.byId(SportRegistry.FOOTBALL)
 
     /**
      * Sorgente di verita' del punteggio.
@@ -369,7 +370,47 @@ class MainViewModel(
      * -- ma ora sono una PROIEZIONE di `engine.state.headline()` invece di essere loro stessi lo
      * stato. E' l'unico cambiamento di questo passo: nessuna rinomina, nessuna firma toccata.
      */
-    private val engine = MatchEngine(sportRules)
+    private var engine = MatchEngine(sportRules)
+
+    private val _activeSport = MutableLiveData(SportRegistry.FOOTBALL)
+
+    /** Identificativo dello sport in corso. L'interfaccia lo usa solo per la selezione. */
+    val activeSport: LiveData<String> = _activeSport
+
+    private val _sportCapabilities = MutableLiveData(sportRules.capabilities)
+
+    /**
+     * Cosa lo sport corrente prevede.
+     *
+     * E' l'unica cosa che l'interfaccia deve sapere: non c'e' alcun `when (sport)` nei layout ne'
+     * nelle Activity. Accendere uno sport nuovo non tocca una riga di codice di presentazione.
+     */
+    val sportCapabilities: LiveData<SportCapabilities> = _sportCapabilities
+
+    /**
+     * Cambia sport, se e' lecito farlo.
+     *
+     * Ritorna false quando una partita e' gia' in corso: convertire un punteggio vivo fra due
+     * regolamenti diversi non ha una risposta giusta (quanti game vale un 3-1 di calcio?), quindi
+     * la si evita invece di inventarne una. Una guardia al posto di un problema.
+     */
+    fun selectSport(sportId: String): Boolean {
+        if (engine.log.isNotEmpty()) return false
+        if (sportId == _activeSport.value) return true
+        applySport(sportId)
+        viewModelScope.launch { matchSettingsRepository.setActiveSport(sportId) }
+        return true
+    }
+
+    private fun applySport(sportId: String) {
+        sportRules = SportRegistry.byId(sportId)
+        engine = MatchEngine(sportRules)
+        _activeSport.value = sportRules.id
+        _sportCapabilities.value = sportRules.capabilities
+        currentMatchId = null
+        _team1Score.value = 0
+        _team2Score.value = 0
+    }
 
     /**
      * Sorgente di verita' del registro eventi.
@@ -412,6 +453,12 @@ class MainViewModel(
                 val currentDurationSeconds = keeperTimerDuration / 1000
                 if (currentDurationSeconds != settings.keeperTimerDuration) {
                     setKeeperTimer(settings.keeperTimerDuration)
+                }
+
+                // Lo sport si applica solo a partita ferma: un cambio arrivato dalle impostazioni
+                // mentre si sta giocando verrebbe ignorato qui e ripreso alla partita successiva.
+                if (settings.activeSport != _activeSport.value && engine.log.isEmpty()) {
+                    applySport(settings.activeSport)
                 }
             }
         }

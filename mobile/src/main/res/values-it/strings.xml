@@ -84,4 +84,13 @@
     <string name="reset_timer_message">Questo resetterà il timer della partita a 00:00</string>
     <string name="reset">Resetta</string>
     <string name="ok">OK</string>
+
+    <!-- Multi-sport -->
+    <string name="settings_sport_title">Sport</string>
+    <string name="settings_sport_hint">Si cambia solo a partita ferma</string>
+    <string name="sport_football">Calcio</string>
+    <string name="sport_padel">Padel</string>
+    <string name="sport_tennis">Tennis</string>
+    <string name="sport_change_blocked">Termina la partita in corso per cambiare sport</string>
+    <string name="match_resumed">Partita ripresa</string>
 </resources>
