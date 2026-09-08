@@ -351,3 +351,71 @@ E' l'ultimo pezzo della Fase S e assorbe anche **B6**. Scopo preciso:
 Ordine consigliato: prima il golden test, poi le aggiunte. E la matrice manuale
 2x2 {orologio vecchio, nuovo} x {telefono vecchio, nuovo} con la condizione
 **"orologio vecchio + telefono nuovo + calcio = identico a oggi"**.
+
+---
+
+## Fase D — direzione di interfaccia
+
+**Decisione presa (8 settembre 2026): la via di mezzo.**
+
+L'identità attuale è deliberatamente espressiva — `asphalt_black`, `graffiti_pink`,
+`neon_cyan`, texture di asfalto e cemento, forme `StreetCard` — mentre la filosofia
+di Jony Ive è riduttiva: l'interfaccia si toglie di mezzo perché conta il contenuto.
+Non sono conciliabili al 100%, e non si prova.
+
+Quindi:
+
+- **Si tiene l'identità street** nelle superfici di contorno: icona, onboarding,
+  cronologia, statistiche, report.
+- **Si applica la riduzione di Ive alla sola schermata in uso durante la partita**,
+  dove l'unica cosa che conta è il numero.
+
+Non si ridipinge l'app di bianco e grigio per «sembrare Apple»: sarebbe cargo cult,
+si perderebbe un'identità scelta senza guadagnare nessuno dei principi.
+
+### I rilievi che motivano la decisione
+
+Misurati sul layout, non a impressione.
+
+1. **Troppe scelte simultanee.** 47 elementi con id, 15 controlli, 7 regioni che
+   scorrono. L'atto primario — segnare un punto, in piedi a bordo campo, con una mano
+   — è una delle sette, **e scorre**.
+2. **Due orologi, uno senza nome.** `timer_textview` (`00:00`) e
+   `keeper_timer_textview` (`05:00`) hanno lo **stesso** `textAppearance`, ma solo il
+   primo ha un'etichetta. L'esistenza del tutorial di primo avvio è il sintomo:
+   l'oggetto non si spiega da solo.
+3. **Affordance duplicate che divergono.** Pulsante e gesto fanno la stessa cosa —
+   ed **erano già divergenti** (il gesto chiamava `subtractScore` mentre il pulsante
+   era passato a `decrementScore`); corretto l'8 settembre. La duplicazione non è
+   gratis: deriva.
+4. **Un controllo che mente.** Il `−` in padel diventa *annulla* con lo stesso glifo.
+   Se cambia il significato deve cambiare il segno.
+
+Nota tipografica: la scala è `86 → 20 → 18 → 14`, cioè un salto di 4× e poi tre
+valori quasi indistinguibili, col 14sp che porta quattro ruoli. La gerarchia è
+affermata dalla sola dimensione, senza gradini intermedi.
+
+### Azioni, in ordine
+
+| # | Azione | Costo | Stato |
+|---|---|---|---|
+| D1 | Etichettare il secondo cronometro | una stringa | ⬜ |
+| D2 | Scegliere UNA strada per segnare: gesto **o** pulsante | piccolo | ⬜ |
+| D3 | Far cambiare segno al `−` quando diventa annulla (le `SportCapabilities` lo sanno già) | piccolo | ⬜ |
+| D4 | Portare l'atto primario fuori dallo scorrimento: punteggio e comandi sempre visibili | medio | ⬜ |
+| D5 | Valutare la texture dietro i numeri — **solo dopo** i primi quattro | da guardare a occhio | ⬜ |
+
+**I primi tre cambiano l'esperienza più del quarto**, e D1 da solo toglie la ragione
+principale per cui esiste il tutorial.
+
+Punti di attrito nel flusso, non solo nella grafica:
+- il dialogo del marcatore interrompe nel momento di massima attenzione (hai appena
+  visto il gol e stai guardando il campo): attribuire dopo, o dal log, rispetterebbe
+  l'attenzione;
+- `reset_scores_button` confonde «azzera» e «termina»: un pulsante, due modelli mentali;
+- il cambio sport si applica in silenzio alla partita successiva — è il debito già
+  registrato sopra, ed è anche una violazione del principio per cui il sistema non
+  deve mai fare qualcosa di diverso da ciò che è sembrato fare.
+
+*Questa analisi è stata fatta su layout, tema e flussi nel codice: l'app non è mai
+stata osservata in funzione. D4 e D5 richiedono l'occhio.*
