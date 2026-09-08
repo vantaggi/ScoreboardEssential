@@ -111,7 +111,7 @@ Nessun requisito di Play tocca AGP, e Studio supporta le versioni degli ultimi
 
 ---
 
-## Fase B — bug che il refactor cementerebbe
+## Fase B — bug che il refactor cementerebbe ✅ COMPLETATA (B6 → S3)
 
 Da fare **prima** del dominio multi-sport. Non sono i più gravi in assoluto: sono
 quelli che diventano irreparabili se il codice nuovo ci si costruisce sopra.
@@ -119,13 +119,13 @@ quelli che diventano irreparabili se il codice nuovo ci si costruisce sopra.
 | # | Bug | File | Stato |
 |---|---|---|---|
 | B1 | `ACTION_REQUEST_SYNC` registrato nel filtro, nessun ramo nel `when` | `MainViewModel.kt` | ✅ fatto |
-| B2 | Lista eventi read-modify-`postValue`, si sovrascrive | `MainViewModel.kt:687,758` | ⬜ |
-| B3 | `startNewMatch()` gira prima di `bindService()` e pubblica 0-0 | `MainViewModel.kt:360` | ⬜ |
+| B2 | Lista eventi read-modify-`postValue`, si sovrascrive | `MainViewModel.kt` | ✅ fatto |
+| B3 | `startNewMatch()` gira prima di `bindService()` | `MainViewModel.kt` | ✅ fatto |
 | B4 | Eco del cronometro: `startTimer()`/`pauseTimer()` senza `fromRemote` | `MainViewModel.kt` | ✅ fatto |
-| B5 | Gol come `@Update` di riga intera su istanza stantia → serve `UPDATE ... goals = goals + 1` | `MainViewModel.kt:605` | ⬜ |
+| B5 | Gol come `@Update` di riga intera → ora `UPDATE ... goals = goals + 1` | `PlayerDao.kt` | ✅ fatto |
 | B6 | Telefono e orologio dichiarano la stessa capability `scoreboard_app` | `*/res/values/wear.xml` | ⬜ **spostato a S3** — vedi nota |
-| B7 | Marcatore attribuito per **nome**, l'id viene scartato | `PlayerSelectionActivity.kt:71` | ⬜ |
-| B8 | `"Goal"` è insieme testo mostrato e chiave semantica | `MainViewModel.kt:609` | ⬜ |
+| B7 | Marcatore per **nome** → id come quarto campo additivo | `PlayerSelectionActivity.kt` | ✅ fatto |
+| B8 | `"Goal"` testo + chiave → `MatchEventType` tipizzato | `MatchEvent.kt` | ✅ fatto |
 
 **B6 è stato spostato dentro S3, deliberatamente.** Separare le capability è un
 cambiamento del contratto fra due binari versionati in modo indipendente: se il
@@ -150,8 +150,8 @@ quindi non allarga il blocco AGP 9.
 
 | # | Passo | Stato |
 |---|---|---|
-| S1 | `:core` + `ScoreState`/`ScoringEvent`/`SportRules` + `FootballRules` + `MatchEngine`. Zero cambi di comportamento | ⬜ |
-| S2 | `MIGRATION_11_12` + partita viva ripristinabile | ⬜ ▲ rollback = perdita dati |
+| S1 | `:core` + contratti + FootballRules + RacketRules + MatchEngine + codec + registro, e il punteggio delegato al motore | ✅ **fatto, zero test esistenti toccati** |
+| S2 | `MIGRATION_11_12` fatta ✅ · partita viva ripristinabile ⬜ | ⬜ **in corso** ▲ rollback = perdita dati |
 | S3 | Protocollo Wear v2 (path nuovo, mai uno cambiato) | ⬜ ▲ matrice manuale 2×2 |
 | S4 | Selettore sport + gating capability, solo calcio nel registro | ⬜ |
 | S5 | **Padel punto a punto** | ⬜ |
@@ -161,6 +161,21 @@ quindi non allarga il blocco AGP 9.
 **Segnale d'allarme su S1:** è costruito per non rinominare nulla. Se costringe a
 riscrivere anche un solo test, l'ordine è sbagliato — fermarsi e iniettare i DAO
 attraverso la factory prima.
+
+### Verifica differenziale contro Padel Elite
+
+`RacketRules` è un **port** di `js/livematch.js`, non un progetto nuovo. Per
+provare che sia fedele e non solo coerente con sé stesso, la sezione pura di
+`window.LiveScoring` viene eseguita sotto Node su 145 sequenze deterministiche e
+il suo stato finale è congelato in `core/src/test/resources/livescoring-reference.txt`.
+`RacketRulesDifferentialTest` replica le stesse sequenze e confronta nove campi,
+servizio compreso.
+
+Rigenerare il fixture: `node scratchpad/genfixture.js <percorso>` (lo script sta
+nello scratchpad di sessione; se serve stabilmente, va spostato nel repo).
+
+Le 5 sequenze che toccano il 6-6 sono escluse alla generazione: è l'unico punto
+in cui il port diverge apposta, perché il web non modella il tie-break.
 
 ### Il modello di dominio, in breve
 
