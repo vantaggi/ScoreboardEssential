@@ -294,3 +294,60 @@ Stato attuale: **294 test, 288 eseguiti, 0 falliti.**
 Inoltre il source set `androidTest` di `:mobile` **non compila**: quattro simboli
 inesistenti in `WearCommunicationTest.kt` (`syncScores`, `sendMessageWithRetry`,
 `MSG_TIMER_ACTION`, `PATH_TEST_PONG`). La CI non lo compila mai.
+
+---
+
+## Stato al 8 settembre 2026
+
+Fasi **T**, **B** e quasi tutta **S** completate. `main` allineato al branch.
+**347 test, 341 eseguiti, 0 falliti.** Il padel e il tennis sono giocabili sul
+telefono; l'orologio e' ancora solo calcio.
+
+In tutta la Fase S **nessun file sotto `src/test` e' stato toccato**: la promessa
+"il calcio non cambia" e' verificata meccanicamente con `git status`, non a parole.
+
+### Debiti dichiarati, da chiudere
+
+- **`@string/sport_change_blocked` e' inutilizzata.** La schermata impostazioni non
+  puo' sapere se una partita e' in corso senza duplicare la guardia che vive in
+  `MainViewModel.selectSport()`. Oggi il cambio a partita viva viene scritto nelle
+  preferenze e applicato alla partita **successiva**, in silenzio. Il sottotitolo
+  del selettore lo dichiara, ma un avviso esplicito sarebbe meglio.
+- **`MatchEngine` registra anche gli eventi senza effetto** (un tocco a partita
+  finita). Serve a mantenere vera la proprieta' "applica poi annulla = stato di
+  prima", ma significa che dopo un tocco inerte servono **due** annullamenti per
+  togliere il punto precedente. Scelta consapevole, da ridiscutere se da' fastidio.
+- **`MatchLogCodec` non scrive `sportId`**: lo sport e' gia' una colonna della stessa
+  riga. Deviazione voluta rispetto alla proposta originale.
+
+### Verifiche manuali accumulate (nessuna eseguibile senza dispositivo)
+
+1. **Edge-to-edge** su emulatore API 36 con navigazione a gesti (T12).
+2. **Pass completo** su telefono API 36 con orologio accoppiato (T14).
+3. **Avvio dell'app sull'orologio** — e' il punto in cui si e' manifestato il crash
+   del costruttore riflessivo, e nessun build verde lo intercetta.
+4. **Padel a schermo**: che l'ingranaggio impostazioni sia raggiungibile con lo
+   sport senza cronometro, e che il collasso dei vincoli fra `score_section`,
+   `match_log_card` e le card nascoste non lasci spazi vuoti (S4/S5).
+5. **Dichiarazione Play Console** per il foreground service `specialUse` (T13).
+
+### Prossimo passo: S3 — protocollo Wear v2
+
+E' l'ultimo pezzo della Fase S e assorbe anche **B6**. Scopo preciso:
+
+- si **aggiunge** un path (`/scoreboard/v2/state`), non se ne cambia mai uno. La
+  leva di compatibilita' e' verificata: ne' `SimplifiedDataLayerListenerService` ne'
+  `WearDataLayerService` hanno un ramo `else` nel loro `when` sul path, quindi un
+  path sconosciuto e' un no-op silenzioso su un orologio non aggiornato;
+- il telefono diventa **autoritativo** e manda `ScoreDisplay` gia' impaginato --
+  esiste gia', lo espone `MainViewModel.scoreDisplay`. Cosi' il padel non richiede
+  una riga di regole sull'orologio;
+- i tocchi dell'orologio diventano **intenzioni** con numero di sequenza su
+  `MessageClient` (non coalescente), e il telefono ignora cio' che ha gia' visto;
+- capability separate `scoreboard_phone` / `scoreboard_watch`, **additive**,
+  mantenendo `scoreboard_app` per una release (questo e' B6);
+- golden test in `:shared` che asserisce il valore letterale di ogni path e chiave.
+
+Ordine consigliato: prima il golden test, poi le aggiunte. E la matrice manuale
+2x2 {orologio vecchio, nuovo} x {telefono vecchio, nuovo} con la condizione
+**"orologio vecchio + telefono nuovo + calcio = identico a oggi"**.
