@@ -91,6 +91,14 @@
     <string name="cd_subtract_point">Togli un punto</string>
     <string name="cd_undo_point">Annulla ultimo punto</string>
 
+    <string name="padel_link_title">Collegamento a Padel Elite</string>
+    <string name="padel_link_hint">Id del giocatore nel tuo gruppo Padel Elite. Vuoto se non collegato.</string>
+    <string name="export_match">Esporta partita</string>
+    <string name="export_ready">Partita esportata</string>
+    <string name="export_needs_four">Servono esattamente 4 giocatori distinti per esportare</string>
+    <string name="export_needs_link">Collega prima ogni giocatore a Padel Elite: %1$s</string>
+    <string name="export_needs_match">Niente da esportare, per ora</string>
+
     <!-- Multi-sport -->
     <string name="settings_sport_title">Sport</string>
     <string name="settings_sport_hint">Si cambia solo a partita ferma</string>

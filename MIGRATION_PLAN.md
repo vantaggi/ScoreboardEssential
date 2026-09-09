@@ -82,6 +82,10 @@ T5→T6 · T6→T9 · T7→T11 · **T10→T14** · T12,T13→T14
   percorso assoluto, driver configurato col nome nudo). È per test strumentati.
   Lo schema *è* esportato e presente in `mergeDebugAssets`: manca il runner, non
   il dato. Il test resta `@Ignore` con la ragione vera scritta dentro.
+- **Gli apostrofi nelle stringhe Android vanno sfuggiti**, e le sequenze di escape
+  unicode non bastano: aapt rifiuta la risorsa con «Can not extract resource», un
+  errore che non nomina ne' il file ne' la riga. La via piu' economica e' **riformulare
+  senza apostrofo**. Ci sono inciampato due volte.
 - **Esiste solo `11.json`**: l'export è stato acceso a schema già alla v11, le
   migrazioni storiche non sono validabili a posteriori. Da v12 in poi sì.
 

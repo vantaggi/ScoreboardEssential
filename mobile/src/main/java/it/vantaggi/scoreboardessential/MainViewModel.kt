@@ -423,6 +423,35 @@ class MainViewModel(
         return true
     }
 
+    /**
+     * L'ordine di servizio si DERIVA dai roster invece di chiederlo.
+     *
+     * Nel padel la rotazione e' A1, B1, A2, B2: alternando i due roster si ottiene esattamente
+     * quella, quindi l'unica cosa che l'utente deve davvero decidere -- chi serve per primo --
+     * coincide con chi mette per primo nel roster. Una schermata in meno da compilare a bordo
+     * campo, che e' il posto peggiore per compilare schermate.
+     *
+     * Si applica solo a partita ferma: cambiare la rotazione a meta' partita falserebbe
+     * l'attribuzione dei punti gia' giocati.
+     */
+    private fun refreshServeOrder() {
+        if (engine.log.isNotEmpty()) return
+        val uno = _team1Players.value.orEmpty()
+        val due = _team2Players.value.orEmpty()
+        if (uno.size < 2 || due.size < 2) return
+        val ordine =
+            listOf(
+                uno[0].player.playerId,
+                due[0].player.playerId,
+                uno[1].player.playerId,
+                due[1].player.playerId,
+            )
+        if (ordine == sportRules.config.serveOrder) return
+        sportRules = SportRegistry.forMatch(sportRules.id, ordine)
+        engine = MatchEngine(sportRules)
+        _scoreDisplay.value = sportRules.display(engine.state)
+    }
+
     private fun applySport(sportId: String) {
         sportRules = SportRegistry.byId(sportId)
         engine = MatchEngine(sportRules)
@@ -643,6 +672,7 @@ class MainViewModel(
         }
         val teamName = if (teamId == 1) _team1Name.value else _team2Name.value
         addMatchEvent("${playerWithRoles.player.playerName} added to $teamName", team = teamId)
+        refreshServeOrder()
     }
 
     fun removePlayerFromTeam(
@@ -654,6 +684,7 @@ class MainViewModel(
         } else {
             _team2Players.value = _team2Players.value?.minus(playerWithRoles)
         }
+        refreshServeOrder()
     }
 
     fun createNewPlayer(

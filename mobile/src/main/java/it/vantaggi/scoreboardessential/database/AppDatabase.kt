@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
         Match::class, Player::class, MatchPlayerCrossRef::class,
         Team::class, Role::class, PlayerRoleCrossRef::class,
     ],
-    version = 12,
+    version = 13,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -27,7 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         /** Versione dello schema. Tenuta qui cosi' che i test non la ripetano a mano. */
-        const val SCHEMA_VERSION = 12
+        const val SCHEMA_VERSION = 13
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -168,6 +168,16 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
 
+        internal val MIGRATION_12_13 =
+            object : Migration(12, 13) {
+                override fun migrate(database: SupportSQLiteDatabase) {
+                    // Additiva e nullable: nessun default, quindi lo schema atteso da Room
+                    // combacia senza @ColumnInfo. Null significa "non ancora collegato", che e'
+                    // lo stato giusto per ogni giocatore esistente.
+                    database.execSQL("ALTER TABLE `players` ADD COLUMN `padelPlayerId` INTEGER")
+                }
+            }
+
         fun getDatabase(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 val instance =
@@ -190,7 +200,15 @@ abstract class AppDatabase : RoomDatabase() {
                                     }
                                 }
                             },
-                        ).addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
+                        ).addMigrations(
+                            MIGRATION_6_7,
+                            MIGRATION_7_8,
+                            MIGRATION_8_9,
+                            MIGRATION_9_10,
+                            MIGRATION_10_11,
+                            MIGRATION_11_12,
+                            MIGRATION_12_13,
+                        )
                         // Non esiste alcun percorso di migrazione dalle versioni 1-5: un
                         // dispositivo fermo li' crasherebbe a ogni avvio, per sempre. La
                         // ricostruzione e' limitata a QUELLE versioni e non generalizzata:

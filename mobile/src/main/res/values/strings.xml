@@ -92,6 +92,14 @@
     <string name="cd_subtract_point">Subtract a point</string>
     <string name="cd_undo_point">Undo last point</string>
 
+    <string name="padel_link_title">Padel Elite link</string>
+    <string name="padel_link_hint">Player id in your Padel Elite group. Leave empty if not linked.</string>
+    <string name="export_match">Export match</string>
+    <string name="export_ready">Match exported</string>
+    <string name="export_needs_four">Padel export needs exactly 4 distinct players</string>
+    <string name="export_needs_link">Link every player to Padel Elite first: %1$s</string>
+    <string name="export_needs_match">Nothing to export yet</string>
+
     <!-- Multi-sport -->
     <string name="settings_sport_title">Sport</string>
     <string name="settings_sport_hint">Can only be changed between matches</string>
