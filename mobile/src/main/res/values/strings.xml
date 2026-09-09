@@ -89,6 +89,9 @@
     <string name="label_match_time">MATCH TIME</string>
     <string name="label_keeper_timer">GOALKEEPER</string>
 
+    <string name="cd_subtract_point">Subtract a point</string>
+    <string name="cd_undo_point">Undo last point</string>
+
     <!-- Multi-sport -->
     <string name="settings_sport_title">Sport</string>
     <string name="settings_sport_hint">Can only be changed between matches</string>

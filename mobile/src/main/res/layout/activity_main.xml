@@ -72,7 +72,7 @@
                             <!-- Pulsante Meno più grande e accessibile -->
                             <com.google.android.material.card.MaterialCardView android:id="@+id/team1_subtract_button_card" android:layout_width="60dp" android:layout_height="60dp" android:layout_marginEnd="20dp" app:cardBackgroundColor="@color/concrete_gray" app:shapeAppearance="@style/ShapeAppearance.App.StreetButton" app:cardElevation="4dp" app:rippleColor="@color/error_red" android:contentDescription="@string/cd_decrease_team_1">
 
-                                <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="16dp" android:src="@drawable/ic_minus" app:tint="@color/stencil_white" />
+                                <ImageView android:id="@+id/team1_subtract_icon" android:layout_width="match_parent" android:layout_height="match_parent" android:padding="16dp" android:src="@drawable/ic_minus" app:tint="@color/stencil_white" />
                             </com.google.android.material.card.MaterialCardView>
 
                             <!-- Pulsante Più prominente -->
@@ -116,7 +116,7 @@
                             <!-- Pulsante Meno più grande e accessibile -->
                             <com.google.android.material.card.MaterialCardView android:id="@+id/team2_subtract_button_card" android:layout_width="60dp" android:layout_height="60dp" android:layout_marginEnd="20dp" app:cardBackgroundColor="@color/concrete_gray" app:shapeAppearance="@style/ShapeAppearance.App.StreetButton" app:cardElevation="4dp" app:rippleColor="@color/error_red" android:contentDescription="@string/cd_decrease_team_2">
 
-                                <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:padding="16dp" android:src="@drawable/ic_minus" app:tint="@color/stencil_white" />
+                                <ImageView android:id="@+id/team2_subtract_icon" android:layout_width="match_parent" android:layout_height="match_parent" android:padding="16dp" android:src="@drawable/ic_minus" app:tint="@color/stencil_white" />
                             </com.google.android.material.card.MaterialCardView>
 
                             <!-- Pulsante Più prominente -->

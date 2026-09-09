@@ -2,6 +2,10 @@ package it.vantaggi.scoreboardessential.wear
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.RelativeSizeSpan
+import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
@@ -10,13 +14,21 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.wear.remote.interactions.RemoteActivityHelper
+import com.google.android.gms.wearable.DataMap
+import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        private const val TAG = "MainActivity"
+    }
+
     private lateinit var binding: ActivityMainBinding
     private val viewModel: WearViewModel by viewModels()
+
+    private var stateRestored = false
 
     private val broadcastReceiver =
         object : android.content.BroadcastReceiver() {
@@ -25,6 +37,11 @@ class MainActivity : ComponentActivity() {
                 intent: android.content.Intent,
             ) {
                 when (intent.action) {
+                    WearDataLayerService.ACTION_STATE_V2_UPDATE -> {
+                        val payload = intent.getByteArrayExtra(WearDataLayerService.EXTRA_V2_PAYLOAD) ?: return
+                        viewModel.applyStateV2(WearScoreState.fromDataMap(DataMap.fromByteArray(payload)))
+                    }
+
                     WearDataLayerService.ACTION_SCORE_UPDATE -> {
                         val team1 = intent.getIntExtra(WearDataLayerService.EXTRA_TEAM1_SCORE, 0)
                         val team2 = intent.getIntExtra(WearDataLayerService.EXTRA_TEAM2_SCORE, 0)
@@ -93,6 +110,7 @@ class MainActivity : ComponentActivity() {
 
         val filter =
             android.content.IntentFilter().apply {
+                addAction(WearDataLayerService.ACTION_STATE_V2_UPDATE)
                 addAction(WearDataLayerService.ACTION_SCORE_UPDATE)
                 addAction(WearDataLayerService.ACTION_TEAM_NAMES_UPDATE)
                 addAction(WearDataLayerService.ACTION_TEAM_COLOR_UPDATE)
@@ -104,6 +122,48 @@ class MainActivity : ComponentActivity() {
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(this)
             .registerReceiver(broadcastReceiver, filter)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        restoreStateFromDataItems()
+    }
+
+    /**
+     * Il Data Layer consegna un DataItem solo quando CAMBIA: tutto cio' che e' arrivato mentre
+     * questa schermata non esisteva e' stato trasmesso a nessuno, perche' il service lo ha
+     * ritrasmesso in broadcast senza che ci fosse un ricevitore. E' il difetto per cui aprendo
+     * l'orologio a meta' partita si vedeva 0-0.
+     *
+     * Sta qui e non nel ViewModel perche' e' un fatto del ciclo di vita della schermata: il
+     * ViewModel sopravvive e non viene ricreato al risveglio, quindi un blocco init non basterebbe.
+     *
+     * Una volta sola per istanza: da quel momento il service consegna gli aggiornamenti vivi, e
+     * rigiocare un DataItem vecchio riporterebbe il cronometro indietro all'ultimo valore scritto
+     * dal telefono invece di lasciarlo correre.
+     */
+    private fun restoreStateFromDataItems() {
+        if (stateRestored) return
+        stateRestored = true
+        Wearable
+            .getDataClient(this)
+            .dataItems
+            .addOnSuccessListener { buffer ->
+                try {
+                    buffer
+                        // Prima il v2: da li' in poi il ViewModel scarta da solo il punteggio v1.
+                        .sortedBy { if (it.uri.path == WearConstants.PATH_STATE_V2) 0 else 1 }
+                        // Il countdown del portiere non porta con se' l'istante di partenza:
+                        // rigiocarlo farebbe ripartire da capo un conto alla rovescia gia' finito,
+                        // vibrazione compresa.
+                        .filter { it.uri.path != WearConstants.PATH_KEEPER_TIMER }
+                        .forEach { WearDataLayerService.dispatchDataItem(this, it) }
+                } finally {
+                    buffer.release()
+                }
+            }.addOnFailureListener { e ->
+                Log.w(TAG, "Rilettura dei DataItem al risveglio fallita", e)
+            }
     }
 
     override fun onDestroy() {
@@ -157,7 +217,10 @@ class MainActivity : ComponentActivity() {
 
         // Timer controls
         binding.matchTimer.setOnClickListener {
-            viewModel.toggleTimer()
+            // Senza cronometro quella riga mostra il periodo ("Set 2"): non e' piu' un comando.
+            if (viewModel.scoreState.value?.hasClock != false) {
+                viewModel.toggleTimer()
+            }
         }
 
         binding.keeperTimer.setOnClickListener {
@@ -185,9 +248,48 @@ class MainActivity : ComponentActivity() {
         RemoteActivityHelper(this).startRemoteActivity(intent)
     }
 
+    /**
+     * L'orologio non calcola: mette a schermo le stringhe che il telefono ha gia' impaginato, e
+     * toglie i comandi che questo sport non ha. Con le capacita' del calcio non cambia nulla.
+     */
+    private fun renderScoreState(state: WearScoreState) {
+        binding.team1Score.maxLines = if (state.side1Secondary.isEmpty()) 1 else 2
+        binding.team1Score.text = sideText(state.side1Primary, state.side1Secondary)
+        binding.team2Score.maxLines = if (state.side2Secondary.isEmpty()) 1 else 2
+        binding.team2Score.text = sideText(state.side2Primary, state.side2Secondary)
+
+        // Senza cronometro quel posto in alto e' libero: il periodo non avrebbe dove stare.
+        if (!state.hasClock) {
+            binding.matchTimer.text = state.periodLabel
+        }
+
+        if (!state.hasAuxTimer) {
+            binding.keeperTimer.visibility = View.GONE
+            binding.keeperProgressBar.visibility = View.INVISIBLE
+        }
+    }
+
+    /** Il secondario sta sotto al primario e piu' piccolo: e' l'unico spazio disponibile. */
+    private fun sideText(
+        primary: String,
+        secondary: String,
+    ): CharSequence {
+        if (secondary.isEmpty()) return primary
+        val text = SpannableString("$primary\n$secondary")
+        text.setSpan(RelativeSizeSpan(0.4f), primary.length + 1, text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        return text
+    }
+
     private fun observeViewModel() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observe the pre-formatted v2 state (null until the phone speaks v2)
+                launch {
+                    viewModel.scoreState.collect { state ->
+                        state?.let { renderScoreState(it) }
+                    }
+                }
+
                 // Observe Team 1 Score
                 launch {
                     viewModel.team1Score.collect { score ->
@@ -225,7 +327,9 @@ class MainActivity : ComponentActivity() {
                 // Observe Keeper Timer
                 launch {
                     viewModel.keeperTimer.collect { state ->
-                        binding.keeperTimer.visibility = View.VISIBLE // SEMPRE VISIBILE
+                        // SEMPRE VISIBILE, finche' lo sport ha davvero un timer ausiliario.
+                        val auxAvailable = viewModel.scoreState.value?.hasAuxTimer != false
+                        binding.keeperTimer.visibility = if (auxAvailable) View.VISIBLE else View.GONE
                         when (state) {
                             is KeeperTimerState.Hidden -> {
                                 binding.keeperTimer.text = "K"

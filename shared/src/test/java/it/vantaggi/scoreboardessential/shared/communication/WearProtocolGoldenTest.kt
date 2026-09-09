@@ -91,6 +91,10 @@ class WearProtocolGoldenTest {
         assertEquals("cap_decrement_is_undo", WearConstants.KEY_CAP_DECREMENT_IS_UNDO)
         assertEquals("seq", WearConstants.KEY_SEQ)
         assertEquals("side", WearConstants.KEY_SIDE)
+        assertEquals("intent_kind", WearConstants.KEY_INTENT_KIND)
+        assertEquals("point", WearConstants.INTENT_POINT)
+        assertEquals("correction", WearConstants.INTENT_CORRECTION)
+        assertEquals("undo", WearConstants.INTENT_UNDO)
     }
 
     /**

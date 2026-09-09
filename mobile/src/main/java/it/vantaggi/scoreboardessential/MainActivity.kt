@@ -354,6 +354,18 @@ class MainActivity :
         // timer_card: nasconderla intera toglierebbe all'utente l'ingranaggio delle impostazioni,
         // cioe' l'unico modo per tornare a cambiare sport. Si spegne il blocco cronometro, non il
         // contenitore che ospita anche la barra di intestazione.
+        // Il "-" cambia SEGNO quando cambia significato. Negli sport a set sottrarre un punto non
+        // e' un'operazione definita, quindi il comando annulla l'ultima azione: lasciargli il
+        // glifo del meno sarebbe un controllo che dice una cosa e ne fa un'altra.
+        val icona = if (sportCapabilities.decrementIsUndo) R.drawable.ic_undo else R.drawable.ic_minus
+        val descrizione = if (sportCapabilities.decrementIsUndo) R.string.cd_undo_point else R.string.cd_subtract_point
+        listOf(R.id.team1_subtract_icon, R.id.team2_subtract_icon).forEach { id ->
+            findViewById<ImageView>(id).apply {
+                setImageResource(icona)
+                contentDescription = getString(descrizione)
+            }
+        }
+
         val orologioVisibile = sportCapabilities.clock != ClockMode.NONE
         findViewById<View>(R.id.match_time_label).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
         findViewById<View>(R.id.timer_textview).visibility = if (orologioVisibile) View.VISIBLE else View.GONE

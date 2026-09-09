@@ -20,6 +20,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.Wearable
+import it.vantaggi.scoreboardessential.core.ClockMode
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
@@ -227,6 +228,13 @@ class MainViewModel(
             ) {
                 when (intent.action) {
                     SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE -> {
+                        // Il v1 spedisce due interi ASSOLUTI: sono un punteggio solo per il
+                        // calcio. Un orologio non aggiornato che li mandasse durante una partita
+                        // di padel sovrascriverebbe uno stato strutturato (game, set, servizio)
+                        // con la sua idea piatta di esso. Qui si degrada -- l'aggiornamento non
+                        // arriva -- invece di corrompere.
+                        if (sportRules.id != SportRegistry.FOOTBALL) return
+
                         val team1 = intent.getIntExtra(WearConstants.KEY_TEAM1_SCORE, 0)
                         val team2 = intent.getIntExtra(WearConstants.KEY_TEAM2_SCORE, 0)
                         Log.d("VM", "📥 Score update received from Wear")
@@ -295,6 +303,18 @@ class MainViewModel(
                         // collector di ConnectionState non scattava per conto suo.
                         Log.d("VM", "Richiesta di risincronizzazione ricevuta dall'orologio")
                         syncAllDataToWear()
+                    }
+
+                    SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT -> {
+                        val side = intent.getIntExtra(WearConstants.KEY_SIDE, 0)
+                        if (side != 1 && side != 2) return
+                        // Il lato dice DOVE, il tipo dice COSA. Tenerli separati e' cio' che evita
+                        // di caricare un campo di piu' significati.
+                        when (intent.getStringExtra(WearConstants.KEY_INTENT_KIND)) {
+                            WearConstants.INTENT_UNDO -> undoLastGoal()
+                            WearConstants.INTENT_CORRECTION -> subtractScore(side)
+                            else -> addRemotePoint(side)
+                        }
                     }
 
                     SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED -> {
@@ -412,6 +432,10 @@ class MainViewModel(
         _team1Score.value = 0
         _team2Score.value = 0
         _scoreDisplay.value = sportRules.display(engine.state)
+        // Il cambio di sport non passa da updateScore (che qui non va chiamata: spedirebbe un
+        // azzeramento v1 che oggi non parte), ma cambia le CAPACITA'. Senza questo invio
+        // l'orologio continuerebbe a mostrare i comandi del calcio fino al primo punto.
+        sendStateV2()
     }
 
     /**
@@ -504,6 +528,7 @@ class MainViewModel(
                 addAction(SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_REQUEST_SYNC)
+                addAction(SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT)
                 addAction(SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED)
             }
         androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -672,6 +697,55 @@ class MainViewModel(
                 urgent = true,
             )
         }
+
+        // Il v2 esce dallo stesso imbuto del v1, cosi' i due non possono mai divergere: ogni
+        // chiamante che aggiorna il punteggio (publishEngineState, syncAllDataToWear,
+        // startNewMatch, restoreActiveMatchIfAny, sendResetUpdate) passa di qui.
+        sendStateV2()
+    }
+
+    /**
+     * Il punteggio GIA' IMPAGINATO sul path v2. Il telefono e' autoritativo: l'orologio rende
+     * stringhe e non esegue mai regole.
+     *
+     * **Convenzione delle stringhe assenti** (da leggere insieme al lato orologio): le chiavi ci
+     * sono SEMPRE, e il valore VUOTO significa "niente da mostrare". Cosi' chi legge ha una regola
+     * sola -- `getString(chiave, "")` e poi `isEmpty()` -- invece di dover distinguere una chiave
+     * mancante da una chiave vuota. Per la stessa ragione [WearConstants.KEY_SERVING_SIDE] vale 0
+     * quando nessuno e' al servizio: i lati sono 1 e 2, quindi 0 non e' ambiguo.
+     *
+     * `KEY_TIMESTAMP` lo aggiunge gia' `sendData` a ogni invio, ed e' portante: senza, il Data
+     * Layer non riconsegna un DataItem identico al precedente e un punteggio che torna al valore
+     * di prima non arriverebbe.
+     */
+    private fun sendStateV2() {
+        // Impaginato al momento dallo stato del motore invece che da _scoreDisplay: quella
+        // LiveData viene scritta anche con postValue, quindi il suo `value` puo' essere indietro
+        // di un giro rispetto al motore.
+        val display = sportRules.display(engine.state)
+        val capacita = sportRules.capabilities
+        viewModelScope.launch {
+            val data =
+                mapOf(
+                    WearConstants.KEY_PROTO_VERSION to WearConstants.PROTO_VERSION,
+                    WearConstants.KEY_SPORT_ID to sportRules.id,
+                    WearConstants.KEY_SIDE1_PRIMARY to display.side1Primary,
+                    WearConstants.KEY_SIDE1_SECONDARY to (display.side1Secondary ?: ""),
+                    WearConstants.KEY_SIDE2_PRIMARY to display.side2Primary,
+                    WearConstants.KEY_SIDE2_SECONDARY to (display.side2Secondary ?: ""),
+                    WearConstants.KEY_PERIOD_LABEL to (display.periodLabel ?: ""),
+                    WearConstants.KEY_SERVING_SIDE to (display.servingSide ?: 0),
+                    WearConstants.KEY_CAP_HAS_CLOCK to (capacita.clock != ClockMode.NONE),
+                    WearConstants.KEY_CAP_HAS_AUX_TIMER to capacita.hasAuxCountdown,
+                    WearConstants.KEY_CAP_ATTRIBUTES_SCORER to capacita.attributesScorer,
+                    WearConstants.KEY_CAP_DECREMENT_IS_UNDO to capacita.decrementIsUndo,
+                )
+            connectionManager.sendData(
+                path = WearConstants.PATH_STATE_V2,
+                data = data,
+                urgent = true,
+            )
+        }
     }
 
     private val _scoreDisplay = MutableLiveData(sportRules.display(sportRules.initial()))
@@ -791,6 +865,36 @@ class MainViewModel(
             showSelectScorerDialog.postValue(Pair(teamId, players))
         } else {
             addScorer(teamId, null) // No player to select, just log the goal
+        }
+    }
+
+    /**
+     * Applica un punto arrivato come INTENZIONE dall'orologio.
+     *
+     * Non riusa [addScore] di proposito. [addScore] apre il dialogo del marcatore, che e' una
+     * domanda rivolta a chi ha il TELEFONO in mano; l'intenzione invece la genera chi guarda
+     * l'orologio, spesso con il telefono in tasca o su una panchina. Quel dialogo resterebbe
+     * aperto a bloccare la schermata e finirebbe per attribuire il punto a una scelta fatta minuti
+     * dopo, o alla persona sbagliata. Il punto viene quindi registrato senza marcatore, come fa
+     * gia' [addScore] quando la rosa e' vuota: l'attribuzione ha il suo canale, MSG_SCORER_SELECTED,
+     * che l'orologio manda quando l'utente sceglie li'.
+     *
+     * Nemmeno la vibrazione viene riprodotta: e' la conferma tattile di un tocco locale, e chi ha
+     * toccato sta guardando l'orologio.
+     */
+    private fun addRemotePoint(side: Int) {
+        engine.apply(ScoringEvent.Point(side = side))
+        publishEngineState()
+
+        // L'orologio manda l'intenzione E POI, se lo sport attribuisce il marcatore e c'e' un
+        // roster, la scelta del giocatore. Registrare il gol qui e di nuovo all'arrivo
+        // dell'attribuzione produrrebbe DUE voci nel registro e DUE annullamenti in coda per un
+        // solo punto. Lo si registra qui solo quando l'attribuzione non arrivera' mai -- che e' la
+        // stessa condizione del percorso locale in addScore.
+        val roster = if (side == 1) team1Players.value else team2Players.value
+        val attribuiraDopo = sportRules.capabilities.attributesScorer && !roster.isNullOrEmpty()
+        if (!attribuiraDopo) {
+            addScorer(side, null)
         }
     }
 
@@ -1127,7 +1231,8 @@ class MainViewModel(
     private fun syncAllDataToWear() {
         viewModelScope.launch {
             Log.d("MainViewModel", "Syncing all data to Wear OS")
-            // 1. Scores
+            // 1. Scores -- updateScore spedisce sia il v1 sia il v2: non aggiungere un secondo
+            // invio qui, sarebbe un duplicato.
             updateScore(_team1Score.value ?: 0, _team2Score.value ?: 0)
 
             // 2. Names

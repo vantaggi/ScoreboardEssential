@@ -4,17 +4,68 @@ import android.app.Application
 import android.os.CountDownTimer
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.wearable.DataMap
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+/**
+ * Il punteggio gia' impaginato dal telefono, piu' le capacita' dello sport.
+ *
+ * L'orologio non esegue mai regole: rende stringhe. Per questo qui non c'e' nessun numero da
+ * sommare, e aggiungere uno sport non richiede una riga di codice su questo lato.
+ */
+data class WearScoreState(
+    val side1Primary: String,
+    val side1Secondary: String,
+    val side2Primary: String,
+    val side2Secondary: String,
+    val periodLabel: String,
+    val hasClock: Boolean,
+    val hasAuxTimer: Boolean,
+    val attributesScorer: Boolean,
+    val decrementIsUndo: Boolean,
+) {
+    companion object {
+        private const val TAG = "WearScoreState"
+
+        /**
+         * Nessuna versione viene mai rifiutata: un telefono piu' recente puo' aggiungere chiavi, e
+         * ogni lettura ha un valore di default, quindi non lancia. Un orologio vecchio deve
+         * mostrare cio' che capisce, non morire.
+         *
+         * I default delle capacita' sono quelli del calcio: se il telefono le omettesse, la
+         * schermata resterebbe quella di oggi invece di perdere comandi.
+         */
+        fun fromDataMap(dataMap: DataMap): WearScoreState {
+            val version = dataMap.getInt(WearConstants.KEY_PROTO_VERSION, WearConstants.PROTO_VERSION)
+            if (version > WearConstants.PROTO_VERSION) {
+                Log.i(TAG, "Protocollo v$version piu' recente di v${WearConstants.PROTO_VERSION}: leggo cio' che conosco")
+            }
+            return WearScoreState(
+                side1Primary = dataMap.getString(WearConstants.KEY_SIDE1_PRIMARY, ""),
+                side1Secondary = dataMap.getString(WearConstants.KEY_SIDE1_SECONDARY, ""),
+                side2Primary = dataMap.getString(WearConstants.KEY_SIDE2_PRIMARY, ""),
+                side2Secondary = dataMap.getString(WearConstants.KEY_SIDE2_SECONDARY, ""),
+                periodLabel = dataMap.getString(WearConstants.KEY_PERIOD_LABEL, ""),
+                hasClock = dataMap.getBoolean(WearConstants.KEY_CAP_HAS_CLOCK, true),
+                hasAuxTimer = dataMap.getBoolean(WearConstants.KEY_CAP_HAS_AUX_TIMER, true),
+                attributesScorer = dataMap.getBoolean(WearConstants.KEY_CAP_ATTRIBUTES_SCORER, true),
+                decrementIsUndo = dataMap.getBoolean(WearConstants.KEY_CAP_DECREMENT_IS_UNDO, false),
+            )
+        }
+    }
+}
 
 sealed class KeeperTimerState {
     object Hidden : KeeperTimerState()
@@ -47,6 +98,26 @@ class WearViewModel(
     companion object {
         private const val TAG = "WearViewModel"
     }
+
+    // Stato v2: il telefono e' autoritativo, qui c'e' solo il testo da mettere a schermo.
+    private val _scoreState = MutableStateFlow<WearScoreState?>(null)
+    val scoreState = _scoreState.asStateFlow()
+
+    /**
+     * Visto un v2, non si torna indietro: lo stesso telefono continua a scrivere anche il v1 per
+     * gli orologi non aggiornati, e i due formati si sovrascriverebbero a vicenda.
+     */
+    private var protocolV2Seen = false
+
+    /**
+     * Seminato con l'orologio di sistema, non da zero.
+     *
+     * Il telefono ricorda l'ultima sequenza vista per nodo e scarta cio' che non la supera.
+     * Ripartendo da 1 dopo un riavvio dell'app, i primi tocchi verrebbero scartati come "gia'
+     * visti", tanti quanti se ne erano fatti prima. Dal tempo corrente la monotonia attraversa i
+     * riavvii.
+     */
+    private var intentSequence = System.currentTimeMillis()
 
     // Team Names
     private val _team1Name = MutableStateFlow("TEAM 1")
@@ -131,8 +202,15 @@ class WearViewModel(
         team1Score: Int,
         team2Score: Int,
     ) {
+        if (protocolV2Seen) return
         _team1Score.value = team1Score
         _team2Score.value = team2Score
+    }
+
+    /** Il punteggio arriva gia' impaginato: da qui in poi il v1 sullo stesso telefono e' rumore. */
+    fun applyStateV2(state: WearScoreState) {
+        protocolV2Seen = true
+        _scoreState.value = state
     }
 
     // --- Score Management ---
@@ -184,11 +262,59 @@ class WearViewModel(
     }
 
     fun incrementScore(team: Int) {
+        if (team != 1 && team != 2) return
+        sendScoreIntent(team, WearConstants.INTENT_POINT)
+        if (protocolV2Seen) {
+            // Il punteggio lo decide il telefono: qui resta solo la risposta al tocco.
+            triggerShortVibration()
+            if (_scoreState.value?.attributesScorer == true && _allPlayers.value.isNotEmpty()) {
+                _showPlayerSelection.value = team
+            }
+            return
+        }
         modifyScore(team, 1)
     }
 
     fun decrementScore(team: Int) {
+        if (team != 1 && team != 2) return
+        if (protocolV2Seen) {
+            val tipo =
+                if (_scoreState.value?.decrementIsUndo == true) {
+                    WearConstants.INTENT_UNDO
+                } else {
+                    WearConstants.INTENT_CORRECTION
+                }
+            sendScoreIntent(team, tipo)
+            triggerShortVibration()
+            return
+        }
         modifyScore(team, -1)
+    }
+
+    /**
+     * Il tocco e' un'INTENZIONE, non uno stato. Va su MessageClient, che non coalesce: due punti a
+     * un secondo di distanza restano due messaggi, mentre sullo stesso path DataClient il secondo
+     * put sostituiva il primo e un punto spariva.
+     *
+     * Il lato resta SEMPRE 1 o 2; il significato del gesto viaggia in un campo suo. La prima
+     * stesura caricava il lato di tre semantiche (negativi per la correzione, zero per
+     * l'annullamento) e il telefono li scartava con la validazione del numero di squadra: sul
+     * calcio, con entrambi i lati aggiornati, il tocco di sottrazione sarebbe diventato inerte.
+     */
+    private fun sendScoreIntent(
+        side: Int,
+        kind: String,
+    ) {
+        val seq = ++intentSequence
+        viewModelScope.launch {
+            val payload =
+                DataMap().apply {
+                    putInt(WearConstants.KEY_SIDE, side)
+                    putString(WearConstants.KEY_INTENT_KIND, kind)
+                    putLong(WearConstants.KEY_SEQ, seq)
+                }
+            connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
+        }
     }
 
     private fun modifyScore(

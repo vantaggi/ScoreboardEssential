@@ -66,7 +66,23 @@ object WearConstants {
 
     /** Numero di sequenza monotono per nodo: il telefono ignora cio' che ha gia' visto. */
     const val KEY_SEQ = "seq"
+
+    /** Il lato a cui l'intenzione si riferisce: sempre 1 o 2, mai altro. */
     const val KEY_SIDE = "side"
+
+    /**
+     * Che cosa vuole fare il tocco.
+     *
+     * Campo a se' invece di caricare [KEY_SIDE] di tre significati (1/2 punto, -1/-2 correzione,
+     * 0 annullamento). Un campo con piu' semantiche e' un difetto che aspetta: la prima stesura
+     * lo aveva, e il telefono scartava i valori negativi con la validazione del numero di squadra
+     * -- sul calcio, con entrambi i lati aggiornati, il tocco di sottrazione sarebbe diventato
+     * inerte. Il tipo esplicito rende quel guasto impossibile invece di allargare una guardia.
+     */
+    const val KEY_INTENT_KIND = "intent_kind"
+    const val INTENT_POINT = "point"
+    const val INTENT_CORRECTION = "correction"
+    const val INTENT_UNDO = "undo"
 
     // Message Paths (MessageClient, fire-and-forget triggers)
     const val MSG_SCORER_SELECTED = "/scoreboard/scorer_selected"
