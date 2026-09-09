@@ -21,8 +21,11 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.ClockMode
+import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchEngine
+import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
+import it.vantaggi.scoreboardessential.core.MatchPlayer
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportCapabilities
@@ -1293,6 +1296,30 @@ class MainViewModel(
             // 7. Player roster (so the watch can attribute scorers)
             _allPlayers.value?.let { sendPlayersUpdate(it) }
         }
+    }
+
+    /**
+     * Prepara l'export della partita corrente verso Padel Elite.
+     *
+     * La validazione la fa :core e ritorna un risultato TIPIZZATO invece di lanciare: cosi'
+     * l'interfaccia puo' dire all'utente che cosa manca -- quali giocatori non sono collegati,
+     * per nome -- invece di limitarsi a rifiutare.
+     */
+    fun buildExport(): ExportResult {
+        val uno = _team1Players.value.orEmpty()
+        val due = _team2Players.value.orEmpty()
+        val roster =
+            uno.map { MatchPlayer(it.player.playerId, it.player.playerName, 1) } +
+                due.map { MatchPlayer(it.player.playerId, it.player.playerName, 2) }
+        val padelIds =
+            (uno + due).mapNotNull { p -> p.player.padelPlayerId?.let { p.player.playerId to it } }.toMap()
+        return MatchExporter.build(engine, roster, padelIds)
+    }
+
+    /** Etichetta della partita per il nome del file. Il timestamp lo aggiunge chi scrive. */
+    fun exportFileLabel(): String {
+        val squadre = "${_team1Name.value.orEmpty()}-vs-${_team2Name.value.orEmpty()}"
+        return "${sportRules.id}-$squadre"
     }
 
     fun shareMatchResults() {

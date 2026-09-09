@@ -41,6 +41,14 @@ class PlayersManagementActivity : AppCompatActivity() {
                 val playerName = data?.getStringExtra(AddEditPlayerActivity.EXTRA_PLAYER_NAME)
                 val selectedRoleIds = data?.getIntegerArrayListExtra(AddEditPlayerActivity.EXTRA_SELECTED_ROLES)
                 val playerId = data?.getIntExtra(AddEditPlayerActivity.EXTRA_PLAYER_ID, -1)
+                // Un extra Int non trasporta null, quindi il sentinella va tradotto qui e non piu'
+                // in giro: da questo punto in poi "non collegato" e' null e basta.
+                val padelPlayerId =
+                    data
+                        ?.getIntExtra(
+                            AddEditPlayerActivity.EXTRA_PADEL_PLAYER_ID,
+                            AddEditPlayerActivity.PADEL_PLAYER_ID_NONE,
+                        )?.takeIf { it != AddEditPlayerActivity.PADEL_PLAYER_ID_NONE }
 
                 if (playerName != null && selectedRoleIds != null) {
                     if (playerId != null && playerId != -1) {
@@ -48,13 +56,14 @@ class PlayersManagementActivity : AppCompatActivity() {
                         lifecycleScope.launch {
                             val playerToUpdate = viewModel.getPlayer(playerId.toLong()).first()
                             playerToUpdate?.let {
-                                val updatedPlayer = it.player.copy(playerName = playerName)
+                                val updatedPlayer =
+                                    it.player.copy(playerName = playerName, padelPlayerId = padelPlayerId)
                                 viewModel.updatePlayer(updatedPlayer, selectedRoleIds)
                             }
                         }
                     } else {
                         // Adding new player
-                        viewModel.createPlayer(playerName, selectedRoleIds)
+                        viewModel.createPlayer(playerName, selectedRoleIds, padelPlayerId)
                     }
                 }
             }

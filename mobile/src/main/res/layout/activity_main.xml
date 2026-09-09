@@ -213,7 +213,8 @@
 
                 <com.google.android.material.button.MaterialButton android:id="@+id/reset_scores_button" style="@style/Widget.App.Button.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="END MATCH"/>
 
-                <com.google.android.material.button.MaterialButton android:id="@+id/share_match_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="Share" app:icon="@drawable/ic_share" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/share_match_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="@string/share_match_report" app:icon="@drawable/ic_share" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/export_match_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="@string/export_match" app:icon="@drawable/ic_share"  android:visibility="gone"/>
             </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>

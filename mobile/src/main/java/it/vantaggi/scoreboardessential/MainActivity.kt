@@ -32,13 +32,19 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import it.vantaggi.scoreboardessential.core.ClockMode
+import it.vantaggi.scoreboardessential.core.ExportProblem
+import it.vantaggi.scoreboardessential.core.ExportResult
+import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.SportCapabilities
+import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.ScoreGestureListener
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
+import it.vantaggi.scoreboardessential.utils.ExportBlocked
+import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import it.vantaggi.scoreboardessential.utils.MatchReportUtils
 import it.vantaggi.scoreboardessential.utils.TimeUtils
 import it.vantaggi.scoreboardessential.utils.animateScoreButton
@@ -366,6 +372,11 @@ class MainActivity :
             }
         }
 
+        // L'export verso Padel Elite compare SOLO nello sport che lo prevede: la schermata del
+        // calcio non guadagna un controllo in piu' per una funzione che li' non esiste.
+        findViewById<View>(R.id.export_match_button).visibility =
+            if (viewModel.activeSport.value == SportRegistry.PADEL) View.VISIBLE else View.GONE
+
         val orologioVisibile = sportCapabilities.clock != ClockMode.NONE
         findViewById<View>(R.id.match_time_label).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
         findViewById<View>(R.id.timer_textview).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
@@ -435,6 +446,44 @@ class MainActivity :
 
         findViewById<Button>(R.id.share_match_button).setOnClickListener {
             viewModel.shareMatchResults()
+        }
+
+        findViewById<Button>(R.id.export_match_button).setOnClickListener {
+            when (val esito = viewModel.buildExport()) {
+                is ExportResult.Ready -> {
+                    MatchExportUtils.shareMatchJson(
+                        this,
+                        MatchExporter.toJson(esito.export),
+                        viewModel.exportFileLabel(),
+                    )
+                }
+
+                is ExportResult.Incomplete -> {
+                    // Il primo problema in ordine e' quello da risolvere per primo: dirne uno solo
+                    // e' piu' utile che elencarli tutti a chi e' in piedi a bordo campo.
+                    val nonCollegati =
+                        esito.problems
+                            .filterIsInstance<ExportProblem.UnlinkedPlayers>()
+                            .flatMap { it.names }
+                    when {
+                        esito.problems.any { it is ExportProblem.NoPoints } -> {
+                            MatchExportUtils.showBlocked(this, ExportBlocked.NO_MATCH)
+                        }
+
+                        nonCollegati.isNotEmpty() -> {
+                            MatchExportUtils.showBlocked(
+                                this,
+                                ExportBlocked.NEEDS_LINK,
+                                nonCollegati.joinToString(", "),
+                            )
+                        }
+
+                        else -> {
+                            MatchExportUtils.showBlocked(this, ExportBlocked.NEEDS_FOUR)
+                        }
+                    }
+                }
+            }
         }
 
         undoGoalButton.setOnClickListener {
