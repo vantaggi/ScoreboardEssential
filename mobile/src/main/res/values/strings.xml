@@ -86,6 +86,9 @@
     <string name="reset">Reset</string>
     <string name="ok">OK</string>
 
+    <string name="label_match_time">MATCH TIME</string>
+    <string name="label_keeper_timer">GOALKEEPER</string>
+
     <!-- Multi-sport -->
     <string name="settings_sport_title">Sport</string>
     <string name="settings_sport_hint">Can only be changed between matches</string>

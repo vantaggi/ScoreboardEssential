@@ -85,6 +85,9 @@
     <string name="reset">Resetta</string>
     <string name="ok">OK</string>
 
+    <string name="label_match_time">TEMPO PARTITA</string>
+    <string name="label_keeper_timer">PORTIERE</string>
+
     <!-- Multi-sport -->
     <string name="settings_sport_title">Sport</string>
     <string name="settings_sport_hint">Si cambia solo a partita ferma</string>

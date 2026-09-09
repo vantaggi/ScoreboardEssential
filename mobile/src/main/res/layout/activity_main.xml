@@ -19,10 +19,11 @@
                         <ImageView android:id="@+id/wear_status_icon" android:layout_width="32dp" android:layout_height="32dp" android:src="@drawable/ic_watch_disconnected" android:contentDescription="@string/cd_wear_status" tools:src="@drawable/ic_watch_connected"/>
                     </LinearLayout>
 
-                    <TextView android:id="@+id/match_time_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MATCH TIME" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp"/>
+                    <TextView android:id="@+id/match_time_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_match_time" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp"/>
 
                     <TextView android:id="@+id/timer_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="00:00" android:textAppearance="?attr/textAppearanceDisplayLarge" android:layout_marginTop="4dp"/>
 
+                    <TextView android:id="@+id/keeper_timer_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_keeper_timer" android:textAppearance="?attr/textAppearanceLabelMedium" android:textColor="@color/sidewalk_gray" android:letterSpacing="0.08" android:layout_marginTop="8dp"/>
                     <TextView android:id="@+id/keeper_timer_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="05:00" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="?attr/colorPrimary" android:layout_marginTop="8dp" android:visibility="visible"/>
 
                     <LinearLayout android:id="@+id/timer_controls_row" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="12dp">

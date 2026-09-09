@@ -687,12 +687,13 @@ class MainActivity :
 
     private fun updateKeeperTimerTextView(timeInMillis: Long) {
         // Finche' le capacita' non sono arrivate vale il comportamento storico (il calcio).
-        if (timeInMillis > 0 && capabilities?.hasAuxCountdown != false) {
-            keeperTimerTextView.text = "⏰ ${TimeUtils.formatTime(timeInMillis)}"
-            keeperTimerTextView.visibility = View.VISIBLE
-        } else {
-            keeperTimerTextView.visibility = View.GONE
+        val visibile = timeInMillis > 0 && capabilities?.hasAuxCountdown != false
+        if (visibile) {
+            keeperTimerTextView.text = TimeUtils.formatTime(timeInMillis)
         }
+        keeperTimerTextView.visibility = if (visibile) View.VISIBLE else View.GONE
+        // L'etichetta segue il suo cronometro: da sola non significherebbe niente.
+        findViewById<View>(R.id.keeper_timer_label).visibility = if (visibile) View.VISIBLE else View.GONE
     }
 
     private fun triggerStrongVibration() {
