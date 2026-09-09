@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="android_wear_capabilities">
+        <!-- scoreboard_app resta dichiarata: toglierla mentre un dispositivo non
+             aggiornato cerca solo quella significherebbe che la coppia smette di
+             vedersi. Additiva per almeno una release. -->
         <item>scoreboard_app</item>
+        <item>scoreboard_phone</item>
     </string-array>
 </resources>
