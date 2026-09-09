@@ -198,7 +198,7 @@ l'unico undo corretto attraverso un confine di game o di set.
 
 ---
 
-## Fase I — integrazione con Padel Elite
+## Fase I — integrazione con Padel Elite (I1–I3 ✅)
 
 Progetto: `C:/Users/cioti/Desktop/PROGETTI/padel` (Vite + Tailwind + Supabase +
 Capacitor, `it.padelite.dashboard`). **In uso reale ogni settimana: nessuna
@@ -252,11 +252,11 @@ valere per entrambi i lati.
 
 | # | Passo | Stato |
 |---|---|---|
-| I1 | Mappatura `Player.playerId` ↔ `v2_players.id` (chiude anche B7) | ⬜ |
-| I2 | Selezione dell'ordine di servizio a inizio partita | ⬜ |
-| I3 | Export su file, zero rete, con validazione a monte (4 giocatori distinti e mappati) | ⬜ |
-| I4 | Import nella dashboard + destinazione per la timeline | ⬜ ▲ tocca il progetto padel |
-| I5 | Upload diretto via `create_match()` | ⬜ ▲ tocca Supabase di produzione |
+| I1 | Mappatura `Player.playerId` ↔ `v2_players.id` | ✅ fatto (schema v13) |
+| I2 | Ordine di servizio — **derivato dai roster**, non chiesto | ✅ fatto |
+| I3 | Export su file, zero rete, con validazione tipizzata | ✅ fatto |
+| I4 | Import nella dashboard + destinazione per la timeline | ⬜ ▲ **richiede autorizzazione**: tocca il progetto padel |
+| I5 | Upload diretto via `create_match()` | ⬜ ▲ **richiede autorizzazione**: Supabase di produzione |
 
 Per estendere `create_match()`: parametro nuovo **in coda** con `DEFAULT NULL` e
 `DROP FUNCTION` della firma esatta precedente — `CREATE OR REPLACE` non può
