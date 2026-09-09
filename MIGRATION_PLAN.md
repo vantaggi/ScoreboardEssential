@@ -123,7 +123,7 @@ quelli che diventano irreparabili se il codice nuovo ci si costruisce sopra.
 | B3 | `startNewMatch()` gira prima di `bindService()` | `MainViewModel.kt` | ✅ fatto |
 | B4 | Eco del cronometro: `startTimer()`/`pauseTimer()` senza `fromRemote` | `MainViewModel.kt` | ✅ fatto |
 | B5 | Gol come `@Update` di riga intera → ora `UPDATE ... goals = goals + 1` | `PlayerDao.kt` | ✅ fatto |
-| B6 | Telefono e orologio dichiarano la stessa capability `scoreboard_app` | `*/res/values/wear.xml` | ⬜ **spostato a S3** — vedi nota |
+| B6 | Telefono e orologio dichiarano la stessa capability `scoreboard_app` | `*/res/values/wear.xml` | ✅ fatto in S3, additivo |
 | B7 | Marcatore per **nome** → id come quarto campo additivo | `PlayerSelectionActivity.kt` | ✅ fatto |
 | B8 | `"Goal"` testo + chiave → `MatchEventType` tipizzato | `MatchEvent.kt` | ✅ fatto |
 
@@ -142,7 +142,7 @@ Obbligatorio **prima del basket** (non del padel): `MatchTimerService` è solo
 
 ---
 
-## Fase S — multi-sport
+## Fase S — multi-sport ✅ COMPLETATA
 
 Modulo `:core`, `java-library` Kotlin puro, zero Android: è l'unico posto del repo
 dove un test è garantito che venga eseguito, e non contiene `@Entity`/`@Parcelize`
@@ -152,7 +152,7 @@ quindi non allarga il blocco AGP 9.
 |---|---|---|
 | S1 | `:core` + contratti + FootballRules + RacketRules + MatchEngine + codec + registro, e il punteggio delegato al motore | ✅ **fatto, zero test esistenti toccati** |
 | S2 | `MIGRATION_11_12` + partita viva ripristinabile | ✅ fatto ▲ rollback = perdita dati |
-| S3 | Protocollo Wear v2 (path nuovo, mai uno cambiato) + B6 | ⬜ **prossimo** ▲ matrice manuale 2×2 |
+| S3 | Protocollo Wear v2 + B6 | ✅ fatto ▲ **matrice manuale 2×2 da fare** |
 | S4 | Selettore sport + gating capability | ✅ fatto ▲ verifica visiva da fare |
 | S5 | **Padel punto a punto** — punteggio impaginato dalle regole | ✅ fatto ▲ verifica visiva da fare |
 | S6 | **Tennis** — una riga di config | ✅ fatto (nel registro, con test) |
@@ -331,7 +331,24 @@ In tutta la Fase S **nessun file sotto `src/test` e' stato toccato**: la promess
    `match_log_card` e le card nascoste non lasci spazi vuoti (S4/S5).
 5. **Dichiarazione Play Console** per il foreground service `specialUse` (T13).
 
-### Prossimo passo: S3 — protocollo Wear v2
+### S3 — fatto. Cosa è emerso in integrazione
+
+Tre difetti trovati mettendo insieme i due lati, **nessuno colto dai build verdi**:
+
+1. Il campo `side` portava tre significati (1/2 punto, −1/−2 correzione, 0
+   annullamento) e il telefono scartava i negativi con `isValidTeamNumber`: sul
+   **calcio**, con entrambi i lati aggiornati, il tocco di sottrazione sarebbe
+   diventato inerte. Risolto separando il tipo di intenzione in un campo suo.
+2. La sequenza ripartiva da 1 a ogni riavvio dell'app orologio mentre il telefono
+   ricorda l'ultima vista per nodo: i primi tocchi venivano scartati come «già
+   visti». Ora è seminata dall'orologio di sistema.
+3. Doppio conteggio: l'orologio manda l'intenzione **e poi** l'attribuzione, e
+   ciascuna registrava un gol — un punto, due voci nel registro, due annullamenti.
+
+Il primo e il terzo li ha segnalati l'agente del lato orologio pur non potendoli
+correggere: erano in file non suoi.
+
+### Scopo originale di S3, per riferimento
 
 E' l'ultimo pezzo della Fase S e assorbe anche **B6**. Scopo preciso:
 
@@ -399,9 +416,9 @@ affermata dalla sola dimensione, senza gradini intermedi.
 
 | # | Azione | Costo | Stato |
 |---|---|---|---|
-| D1 | Etichettare il secondo cronometro | una stringa | ⬜ |
+| D1 | Etichettare il secondo cronometro | una stringa | ✅ fatto |
 | D2 | Scegliere UNA strada per segnare: gesto **o** pulsante | piccolo | ⬜ |
-| D3 | Far cambiare segno al `−` quando diventa annulla (le `SportCapabilities` lo sanno già) | piccolo | ⬜ |
+| D3 | Far cambiare segno al `−` quando diventa annulla | piccolo | ✅ fatto |
 | D4 | Portare l'atto primario fuori dallo scorrimento: punteggio e comandi sempre visibili | medio | ⬜ |
 | D5 | Valutare la texture dietro i numeri — **solo dopo** i primi quattro | da guardare a occhio | ⬜ |
 
