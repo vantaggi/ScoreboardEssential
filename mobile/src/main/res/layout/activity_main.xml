@@ -14,10 +14,12 @@
 
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="end" android:layout_marginBottom="8dp">
 
-                        <ImageButton android:id="@+id/settings_button" android:layout_width="32dp" android:layout_height="32dp" android:src="@drawable/ic_settings" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="@string/cd_settings" app:tint="@color/sidewalk_gray" android:layout_marginEnd="16dp"/>
+                        <ImageButton android:id="@+id/settings_button" android:layout_width="48dp" android:layout_height="48dp" android:padding="12dp" android:src="@drawable/ic_settings" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="@string/cd_settings" app:tint="@color/sidewalk_gray" android:layout_marginEnd="16dp"/>
 
                         <ImageView android:id="@+id/wear_status_icon" android:layout_width="32dp" android:layout_height="32dp" android:src="@drawable/ic_watch_disconnected" android:contentDescription="@string/cd_wear_status" tools:src="@drawable/ic_watch_connected"/>
                     </LinearLayout>
+
+                    <TextView android:id="@+id/match_period_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/stencil_white" android:letterSpacing="0.06" android:gravity="center" android:visibility="gone" tools:text="SET 2 - SERVE ROSSI" tools:visibility="visible"/>
 
                     <TextView android:id="@+id/match_time_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_match_time" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp"/>
 
@@ -38,10 +40,10 @@
             </com.google.android.material.card.MaterialCardView>
 
             <!-- Score Section - NUOVA SEZIONE SCORE RESPONSIVE -->
-            <androidx.constraintlayout.widget.ConstraintLayout android:id="@+id/score_section" android:layout_width="0dp" android:layout_height="wrap_content" android:minHeight="300dp" android:layout_marginTop="16dp" app:layout_constraintTop_toBottomOf="@id/timer_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
+            <androidx.constraintlayout.widget.ConstraintLayout android:id="@+id/score_section" android:layout_width="0dp" android:layout_height="wrap_content" android:minHeight="@dimen/score_section_min_height" android:layout_marginTop="16dp" app:layout_constraintTop_toBottomOf="@id/timer_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
 
                 <!-- Team 1 Side with layout migliorato -->
-                <com.google.android.material.card.MaterialCardView android:id="@+id/team1_card" android:layout_width="0dp" android:layout_height="wrap_content" android:minHeight="280dp" app:cardBackgroundColor="@color/team_spray_yellow" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard" app:cardElevation="8dp" android:layout_marginEnd="4dp" app:rippleColor="@color/stencil_white" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toStartOf="@id/guideline_center">
+                <com.google.android.material.card.MaterialCardView android:id="@+id/team1_card" android:layout_width="0dp" android:layout_height="wrap_content" android:minHeight="@dimen/score_card_min_height" app:cardBackgroundColor="@color/team_spray_yellow" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard" app:cardElevation="8dp" android:layout_marginEnd="4dp" app:rippleColor="@color/stencil_white" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toStartOf="@id/guideline_center">
 
                     <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp">
 
@@ -57,7 +59,7 @@
 
                             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="center" android:orientation="vertical" android:gravity="center_horizontal">
 
-                                <TextView android:id="@+id/team1_score_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="0" android:textColor="@color/concrete_gray" android:textSize="86sp" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:includeFontPadding="false" android:shadowColor="@color/asphalt_dark" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="6" />
+                                <TextView android:id="@+id/team1_score_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="0" android:textColor="@color/concrete_gray" android:textSize="@dimen/score_text_size" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:includeFontPadding="false" android:shadowColor="@color/asphalt_dark" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="6" />
 
                                 <!-- Set chiusi e game correnti. Vuoto e invisibile finche' uno sport non lo popola. -->
                                 <TextView android:id="@+id/team1_score_detail_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/concrete_gray" android:includeFontPadding="false" android:visibility="gone" tools:text="6-4 · 3-2" tools:visibility="visible" />
@@ -85,7 +87,7 @@
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- Team 2 Side -->
-                <com.google.android.material.card.MaterialCardView android:id="@+id/team2_card" android:layout_width="0dp" android:layout_height="wrap_content" android:minHeight="280dp" app:cardBackgroundColor="@color/neon_cyan" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard" app:cardElevation="8dp" android:layout_marginStart="4dp" app:rippleColor="@color/stencil_white" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toEndOf="@id/guideline_center" app:layout_constraintEnd_toEndOf="parent">
+                <com.google.android.material.card.MaterialCardView android:id="@+id/team2_card" android:layout_width="0dp" android:layout_height="wrap_content" android:minHeight="@dimen/score_card_min_height" app:cardBackgroundColor="@color/neon_cyan" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard" app:cardElevation="8dp" android:layout_marginStart="4dp" app:rippleColor="@color/stencil_white" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toEndOf="@id/guideline_center" app:layout_constraintEnd_toEndOf="parent">
 
                     <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp">
 
@@ -101,7 +103,7 @@
 
                             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="center" android:orientation="vertical" android:gravity="center_horizontal">
 
-                                <TextView android:id="@+id/team2_score_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="0" android:textColor="@color/concrete_gray" android:textSize="86sp" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:includeFontPadding="false" android:shadowColor="@color/asphalt_dark" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="6" />
+                                <TextView android:id="@+id/team2_score_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="0" android:textColor="@color/concrete_gray" android:textSize="@dimen/score_text_size" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:includeFontPadding="false" android:shadowColor="@color/asphalt_dark" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="6" />
 
                                 <!-- Set chiusi e game correnti. Vuoto e invisibile finche' uno sport non lo popola. -->
                                 <TextView android:id="@+id/team2_score_detail_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/concrete_gray" android:includeFontPadding="false" android:visibility="gone" tools:text="6-4 · 3-2" tools:visibility="visible" />
@@ -207,14 +209,13 @@
             </com.google.android.material.card.MaterialCardView>
 
             <!-- Action Buttons -->
-            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="24dp" android:layout_marginBottom="80dp" app:layout_constraintTop_toBottomOf="@id/formations_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toBottomOf="parent">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="24dp" android:layout_marginBottom="80dp" app:layout_constraintVertical_bias="0" app:layout_constraintTop_toBottomOf="@id/formations_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toBottomOf="parent">
 
                 <com.google.android.material.button.MaterialButton android:id="@+id/match_history_button" style="@style/Widget.App.Button.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="HISTORY" android:layout_marginEnd="8dp"/>
 
                 <com.google.android.material.button.MaterialButton android:id="@+id/reset_scores_button" style="@style/Widget.App.Button.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="END MATCH"/>
 
                 <com.google.android.material.button.MaterialButton android:id="@+id/share_match_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="@string/share_match_report" app:icon="@drawable/ic_share" />
-                <com.google.android.material.button.MaterialButton android:id="@+id/export_match_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="@string/export_match" app:icon="@drawable/ic_share"  android:visibility="gone"/>
             </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>

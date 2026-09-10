@@ -86,6 +86,10 @@ T5→T6 · T6→T9 · T7→T11 · **T10→T14** · T12,T13→T14
   unicode non bastano: aapt rifiuta la risorsa con «Can not extract resource», un
   errore che non nomina ne' il file ne' la riga. La via piu' economica e' **riformulare
   senza apostrofo**. Ci sono inciampato due volte.
+- **`--` non e' ammesso dentro un commento XML.** Un trattino doppio usato come
+  incidentale in italiano fa fallire `mergeDebugResources` con «La stringa "--" non
+  e' consentita nei commenti» — e il messaggio arriva solo a merge delle risorse,
+  non alla scrittura. Stessa famiglia dell'apostrofo: si riformula.
 - **Esiste solo `11.json`**: l'export è stato acceso a schema già alla v11, le
   migrazioni storiche non sono validabili a posteriori. Da v12 in poi sì.
 
@@ -372,6 +376,42 @@ E' l'ultimo pezzo della Fase S e assorbe anche **B6**. Scopo preciso:
 Ordine consigliato: prima il golden test, poi le aggiunte. E la matrice manuale
 2x2 {orologio vecchio, nuovo} x {telefono vecchio, nuovo} con la condizione
 **"orologio vecchio + telefono nuovo + calcio = identico a oggi"**.
+
+---
+
+## Audit dei comandi — 10 settembre 2026
+
+Audit statico di layout, gesti e visibilita' su **orologio e telefono**: 40 rilievi,
+**12 gravi**. Statico perche' l'app non e' mai stata osservata in funzione: si e'
+letto dove stanno i controlli, cosa dicono e quando compaiono, non come si vedono.
+
+**Tutti e 12 i gravi sono chiusi.** Tre erano regressioni mie ed erano i piu'
+dannosi (commit `838449c`); gli altri nove sono di questo commit.
+
+| # | Dove | Rilievo | Rimedio |
+|---|---|---|---|
+| 1 | orologio | Al risveglio dello schermo il punteggio del padel tornava a 0 | i collector v1 scrivono solo finche' il v2 non e' mai arrivato |
+| 2 | orologio | Il polso vibrava «punto preso» anche a messaggio non partito | `sendMessage` ritorna se ha raggiunto un nodo; due pattern distinti |
+| 3 | orologio | Niente diceva che nel padel il meno **annulla** | riga `gestureHint` + `contentDescription` che cambiano con lo sport |
+| 4 | orologio | La meta' bassa di ogni lato toglieva punti, senza dirlo | divisione invisibile rimossa: tocco = +1, tocco lungo = meno |
+| 5 | orologio | La riga dei set rimpiccioliva il numero grande | vista propria per il secondario; il numero tiene la sua altezza |
+| 6 | telefono | Nel padel i due `−` erano identici ma sembravano di due squadre | spariscono; resta l'annullamento dichiarato |
+| 7 | telefono | La riga HISTORY / END MATCH galleggiava staccata dal contenuto | `layout_constraintVertical_bias="0"` |
+| 8 | telefono | Il quarto pulsante schiacciava HISTORY e END MATCH | Esporta entra nella scelta di Condividi: tre comandi in ogni sport |
+| 9 | telefono | Testo del punteggio cablato scuro su una card di colore libero | colore calcolato dalla **luminanza percepita** della card |
+| 10 | telefono | L'ingranaggio impostazioni era 32dp | 48dp con `padding` 12dp: bersaglio a norma, ingombro visivo uguale |
+| 11 | telefono | Il telefono non diceva ne' il set ne' chi serve, l'orologio si' | `match_period_textview` nello spazio del cronometro spento |
+| 12 | telefono | In orizzontale il `+` finiva sotto la piega | le altezze del punteggio diventano `dimen`, con `values-land` |
+
+Il rilievo 4 e' anche mezzo **D2**: sull'orologio esiste ora un solo modo di
+segnare. Sul telefono gesto e pulsante convivono ancora, quindi D2 resta aperto.
+
+Restano 28 rilievi **medi e bassi**, non affrontati: sono di rifinitura
+(spaziature, contrasti minori, etichette) e nessuno impedisce di usare l'app.
+
+*Verifica ancora dovuta:* nessuno di questi rimedi e' stato **visto**. In
+particolare vanno guardati su dispositivo il `gestureHint` sull'orologio tondo
+piccolo e la riga dei set a 14dp, che sono le due misure piu' strette.
 
 ---
 

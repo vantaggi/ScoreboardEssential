@@ -94,6 +94,7 @@
     <string name="padel_link_title">Collegamento a Padel Elite</string>
     <string name="padel_link_hint">Id del giocatore nel tuo gruppo Padel Elite. Vuoto se non collegato.</string>
     <string name="share_match_report">Condividi</string>
+    <string name="score_period_serving">%1$s - serve %2$s</string>
     <string name="export_match">Esporta partita</string>
     <string name="export_ready">Partita esportata</string>
     <string name="export_needs_four">Servono esattamente 4 giocatori distinti per esportare</string>

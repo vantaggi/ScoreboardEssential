@@ -2,9 +2,6 @@ package it.vantaggi.scoreboardessential.wear
 
 import android.content.Intent
 import android.os.Bundle
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.RelativeSizeSpan
 import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
@@ -106,6 +103,7 @@ class MainActivity : ComponentActivity() {
         setContentView(binding.root)
 
         setupClickListeners()
+        applyGestureLabels(decrementIsUndo = false)
         observeViewModel()
 
         val filter =
@@ -173,45 +171,24 @@ class MainActivity : ComponentActivity() {
             .unregisterReceiver(broadcastReceiver)
     }
 
-    private var lastTouchY = 0f
-
     private fun setupClickListeners() {
-        val touchListener =
-            View.OnTouchListener { _, event ->
-                if (event.action == android.view.MotionEvent.ACTION_DOWN) {
-                    lastTouchY = event.y
-                }
-                false
-            }
+        // Un tocco aggiunge, un tocco lungo toglie -- su TUTTO il lato.
+        //
+        // Prima la meta' alta del lato aggiungeva e la meta' bassa toglieva, senza che niente sullo
+        // schermo mostrasse quella divisione: due FrameLayout vuoti, nessuna linea, nessuna
+        // etichetta. Un gesto che toglie punti non puo' stare nascosto meta' schermo: chi teneva
+        // premuto per sbaglio un po' piu' in basso vedeva sparire un punto e non sapeva perche'.
+        // Ora la divisione non esiste piu', e cosa fa il tocco lungo lo dice gestureHint.
+        binding.team1Container.setOnClickListener { viewModel.incrementScore(1) }
+        binding.team2Container.setOnClickListener { viewModel.incrementScore(2) }
 
-        binding.team1Container.setOnTouchListener(touchListener)
-        binding.team2Container.setOnTouchListener(touchListener)
-
-        // Click per incrementare (comportamento standard)
-        binding.team1Container.setOnClickListener {
-            viewModel.incrementScore(1)
-        }
-
-        binding.team2Container.setOnClickListener {
-            viewModel.incrementScore(2)
-        }
-
-        // Long press spaziale: Alto -> Incrementa, Basso -> Decrementa
-        binding.team1Container.setOnLongClickListener { v ->
-            if (lastTouchY < v.height / 2) {
-                viewModel.incrementScore(1)
-            } else {
-                viewModel.decrementScore(1)
-            }
+        binding.team1Container.setOnLongClickListener {
+            viewModel.decrementScore(1)
             true
         }
 
-        binding.team2Container.setOnLongClickListener { v ->
-            if (lastTouchY < v.height / 2) {
-                viewModel.incrementScore(2)
-            } else {
-                viewModel.decrementScore(2)
-            }
+        binding.team2Container.setOnLongClickListener {
+            viewModel.decrementScore(2)
             true
         }
 
@@ -253,10 +230,11 @@ class MainActivity : ComponentActivity() {
      * toglie i comandi che questo sport non ha. Con le capacita' del calcio non cambia nulla.
      */
     private fun renderScoreState(state: WearScoreState) {
-        binding.team1Score.maxLines = if (state.side1Secondary.isEmpty()) 1 else 2
-        binding.team1Score.text = sideText(state.side1Primary, state.side1Secondary)
-        binding.team2Score.maxLines = if (state.side2Secondary.isEmpty()) 1 else 2
-        binding.team2Score.text = sideText(state.side2Primary, state.side2Secondary)
+        binding.team1Score.text = state.side1Primary
+        binding.team2Score.text = state.side2Primary
+        bindDetail(binding.team1ScoreDetail, state.side1Secondary)
+        bindDetail(binding.team2ScoreDetail, state.side2Secondary)
+        applyGestureLabels(state.decrementIsUndo)
 
         // Senza cronometro quel posto in alto e' libero: il periodo non avrebbe dove stare.
         if (!state.hasClock) {
@@ -269,15 +247,35 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** Il secondario sta sotto al primario e piu' piccolo: e' l'unico spazio disponibile. */
-    private fun sideText(
-        primary: String,
-        secondary: String,
-    ): CharSequence {
-        if (secondary.isEmpty()) return primary
-        val text = SpannableString("$primary\n$secondary")
-        text.setSpan(RelativeSizeSpan(0.4f), primary.length + 1, text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        return text
+    /**
+     * La riga dei set ha una vista propria, e rimpicciolisce solo se stessa.
+     *
+     * Prima primario e secondario stavano nella STESSA TextView autoSize, separati da uno span al
+     * 40%: per far entrare "6-4 3-6 2-1" su due righe l'autoSize rimpiccioliva tutto, numero
+     * grande compreso. Nel padel il punteggio corrente -- l'unica cosa che si guarda mentre si
+     * gioca -- finiva piccolo quanto la sua cronologia. Ora il numero tiene la sua altezza e a
+     * stringersi e' la riga dei set.
+     */
+    private fun bindDetail(
+        view: android.widget.TextView,
+        text: String,
+    ) {
+        view.text = text
+        view.visibility = if (text.isEmpty()) View.GONE else View.VISIBLE
+    }
+
+    /**
+     * Dice a parole che cosa fa il tocco lungo, e lo dice in modo diverso nei due casi.
+     *
+     * decrementIsUndo viveva solo dentro il ViewModel: sullo schermo dell'orologio non c'era una
+     * riga, un'icona o una descrizione che distinguesse "togli un punto a questa squadra" da
+     * "annulla l'ultima azione". Sono due cose diverse e ora si leggono.
+     */
+    private fun applyGestureLabels(decrementIsUndo: Boolean) {
+        binding.gestureHint.setText(if (decrementIsUndo) R.string.wear_hint_undo else R.string.wear_hint_minus)
+        val descrizione = if (decrementIsUndo) R.string.cd_score_side_undo else R.string.cd_score_side_minus
+        binding.team1Container.contentDescription = getString(descrizione, 1)
+        binding.team2Container.contentDescription = getString(descrizione, 2)
     }
 
     private fun observeViewModel() {

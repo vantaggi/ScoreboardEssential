@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        In orizzontale un telefono ha circa 360dp di altezza utile. Con le misure del verticale la
+        sezione del punteggio da sola ne chiedeva 300, e i comandi "+" finivano sotto la piega:
+        l'atto principale dell'app, segnare un punto, richiedeva prima di scorrere.
+        Qui le card si accorciano e il numero rimpicciolisce quel tanto che basta a farli rientrare;
+        il verticale, che e' come si usa davvero l'app, resta identico.
+    -->
+    <dimen name="score_section_min_height">200dp</dimen>
+    <dimen name="score_card_min_height">180dp</dimen>
+    <dimen name="score_text_size">56sp</dimen>
+</resources>

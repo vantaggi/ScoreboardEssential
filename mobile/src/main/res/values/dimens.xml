@@ -19,4 +19,9 @@
     <!-- Card Elevation -->
     <dimen name="card_elevation_default">4dp</dimen>
     <dimen name="card_elevation_none">0dp</dimen>
+
+    <!-- Il tabellone in verticale: due card alte, il numero grande da leggere a bordo campo. -->
+    <dimen name="score_section_min_height">300dp</dimen>
+    <dimen name="score_card_min_height">280dp</dimen>
+    <dimen name="score_text_size">86sp</dimen>
 </resources>

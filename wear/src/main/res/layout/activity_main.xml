@@ -79,10 +79,12 @@
             android:layout_marginTop="16dp"/>
 
         <!-- Team 1 Score - Left Side -->
-        <FrameLayout
+        <LinearLayout
             android:id="@+id/team1Container"
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:orientation="vertical"
+            android:gravity="center"
             app:layout_constraintTop_toBottomOf="@id/guideline_top"
             app:layout_constraintBottom_toTopOf="@id/guideline_bottom"
             app:layout_constraintStart_toStartOf="parent"
@@ -91,7 +93,8 @@
             <TextView
                 android:id="@+id/team1Score"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:gravity="center"
                 android:text="0"
                 android:maxLines="1"
@@ -103,13 +106,32 @@
                 android:fontFamily="sans-serif-condensed"
                 android:textStyle="bold"
                 android:textColor="@color/team_spray_yellow"/>
-        </FrameLayout>
+
+            <TextView
+                android:id="@+id/team1ScoreDetail"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/wear_score_detail_height"
+                android:gravity="center"
+                android:maxLines="1"
+                android:visibility="gone"
+                android:includeFontPadding="false"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="7sp"
+                android:autoSizeMaxTextSize="11sp"
+                android:autoSizeStepGranularity="1sp"
+                android:fontFamily="sans-serif-condensed"
+                android:textColor="@color/sidewalk_gray"
+                tools:text="6-4 3-6 2-1"
+                tools:visibility="visible"/>
+        </LinearLayout>
 
         <!-- Team 2 Score - Right Side -->
-        <FrameLayout
+        <LinearLayout
             android:id="@+id/team2Container"
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:orientation="vertical"
+            android:gravity="center"
             app:layout_constraintTop_toBottomOf="@id/guideline_top"
             app:layout_constraintBottom_toTopOf="@id/guideline_bottom"
             app:layout_constraintStart_toEndOf="@id/guideline_center"
@@ -118,7 +140,8 @@
             <TextView
                 android:id="@+id/team2Score"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:gravity="center"
                 android:text="0"
                 android:maxLines="1"
@@ -130,7 +153,24 @@
                 android:fontFamily="sans-serif-condensed"
                 android:textStyle="bold"
                 android:textColor="@color/team_electric_green"/>
-        </FrameLayout>
+
+            <TextView
+                android:id="@+id/team2ScoreDetail"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/wear_score_detail_height"
+                android:gravity="center"
+                android:maxLines="1"
+                android:visibility="gone"
+                android:includeFontPadding="false"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="7sp"
+                android:autoSizeMaxTextSize="11sp"
+                android:autoSizeStepGranularity="1sp"
+                android:fontFamily="sans-serif-condensed"
+                android:textColor="@color/sidewalk_gray"
+                tools:text="6-4 3-6 2-1"
+                tools:visibility="visible"/>
+        </LinearLayout>
 
         <!-- Keeper Timer Interaction Target - Center -->
         <TextView
@@ -144,6 +184,21 @@
             android:textColor="@color/graffiti_pink"
             android:padding="8dp"
             app:layout_constraintTop_toBottomOf="@id/matchTimer"
+            app:layout_constraintBottom_toTopOf="@id/gestureHint"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Che cosa fa tenere premuto. Cambia con lo sport, e senza di essa non lo dice nessuno. -->
+        <TextView
+            android:id="@+id/gestureHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/wear_hint_minus"
+            android:textSize="@dimen/wear_hint_text_size"
+            android:fontFamily="sans-serif-condensed"
+            android:textColor="@color/sidewalk_gray"
+            android:letterSpacing="0.06"
+            android:maxLines="1"
             app:layout_constraintBottom_toTopOf="@id/btn_start_new_match"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />

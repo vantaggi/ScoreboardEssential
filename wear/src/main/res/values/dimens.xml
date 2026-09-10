@@ -17,4 +17,8 @@
     <dimen name="wear_timer_text_size">18sp</dimen>
     <dimen name="wear_keeper_timer_text_size">11sp</dimen>
     <dimen name="wear_button_text_size">10sp</dimen>
+    <!-- Altezza fissa: l'autoSize non funziona su wrap_content, e questa riga deve
+         rimpicciolire il PROPRIO testo invece di far rimpicciolire il numero sopra. -->
+    <dimen name="wear_score_detail_height">14dp</dimen>
+    <dimen name="wear_hint_text_size">9sp</dimen>
 </resources>

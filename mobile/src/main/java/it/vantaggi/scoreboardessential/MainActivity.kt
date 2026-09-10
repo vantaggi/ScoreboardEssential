@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -37,6 +38,7 @@ import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchSummarizer
 import it.vantaggi.scoreboardessential.core.ReportLabels
+import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.SportCapabilities
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
@@ -74,6 +76,7 @@ class MainActivity :
     // Core view references
     private lateinit var team1ScoreTextView: TextView
     private lateinit var team1ScoreDetailTextView: TextView
+    private lateinit var matchPeriodTextView: TextView
     private lateinit var team2ScoreDetailTextView: TextView
     private lateinit var team2ScoreTextView: TextView
     private lateinit var timerTextView: TextView
@@ -187,6 +190,7 @@ class MainActivity :
         // Core views
         team1ScoreTextView = findViewById(R.id.team1_score_textview)
         team1ScoreDetailTextView = findViewById(R.id.team1_score_detail_textview)
+        matchPeriodTextView = findViewById(R.id.match_period_textview)
         team2ScoreDetailTextView = findViewById(R.id.team2_score_detail_textview)
         team2ScoreTextView = findViewById(R.id.team2_score_textview)
         timerTextView = findViewById(R.id.timer_textview)
@@ -249,6 +253,7 @@ class MainActivity :
             team2ScoreTextView.text = display.side2Primary
             bindScoreDetail(team1ScoreDetailTextView, display.side1Secondary)
             bindScoreDetail(team2ScoreDetailTextView, display.side2Secondary)
+            bindPeriod(display)
         }
 
         viewModel.team1Name.observe(this) { name ->
@@ -261,12 +266,24 @@ class MainActivity :
 
         viewModel.team1Color.observe(this) { color ->
             team1Card.setCardBackgroundColor(color)
+            applyReadableTextColor(
+                color,
+                team1NameTextView,
+                team1ScoreTextView,
+                team1ScoreDetailTextView,
+            )
             matchLogAdapter.team1Color = color
             matchLogAdapter.notifyDataSetChanged()
         }
 
         viewModel.team2Color.observe(this) { color ->
             team2Card.setCardBackgroundColor(color)
+            applyReadableTextColor(
+                color,
+                team2NameTextView,
+                team2ScoreTextView,
+                team2ScoreDetailTextView,
+            )
             matchLogAdapter.team2Color = color
             matchLogAdapter.notifyDataSetChanged()
         }
@@ -374,11 +391,6 @@ class MainActivity :
         findViewById<View>(R.id.team1_subtract_button_card).visibility = if (annullaGlobale) View.GONE else View.VISIBLE
         findViewById<View>(R.id.team2_subtract_button_card).visibility = if (annullaGlobale) View.GONE else View.VISIBLE
 
-        // L'export verso Padel Elite compare SOLO nello sport che lo prevede: la schermata del
-        // calcio non guadagna un controllo in piu' per una funzione che li' non esiste.
-        findViewById<View>(R.id.export_match_button).visibility =
-            if (viewModel.activeSport.value == SportRegistry.PADEL) View.VISIBLE else View.GONE
-
         val orologioVisibile = sportCapabilities.clock != ClockMode.NONE
         findViewById<View>(R.id.match_time_label).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
         findViewById<View>(R.id.timer_textview).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
@@ -458,51 +470,25 @@ class MainActivity :
             // e' quello che si manda al gruppo appena finito di giocare; il PDF resta per chi
             // vuole archiviare. Una scelta in piu' al momento dell'uso, zero controlli in piu'
             // sulla schermata -- che e' la direzione della Fase D.
+            // Le voci sono quelle che hanno senso per QUESTO sport. L'export verso Padel Elite
+            // era un quarto pulsante in fila: con quattro comandi sulla stessa riga, i due con
+            // testo (HISTORY, END MATCH) restavano schiacciati dai due con icona. Entra qui, e la
+            // riga torna a tre comandi in ogni sport.
+            val voci =
+                buildList {
+                    add(getString(R.string.share_as_text))
+                    add(getString(R.string.share_as_pdf))
+                    if (viewModel.activeSport.value == SportRegistry.PADEL) add(getString(R.string.export_match))
+                }
             MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.share_choose_title)
-                .setItems(
-                    arrayOf(getString(R.string.share_as_text), getString(R.string.share_as_pdf)),
-                ) { _, quale ->
-                    if (quale == 0) shareMatchSummary() else viewModel.shareMatchResults()
-                }.show()
-        }
-
-        findViewById<Button>(R.id.export_match_button).setOnClickListener {
-            when (val esito = viewModel.buildExport()) {
-                is ExportResult.Ready -> {
-                    MatchExportUtils.shareMatchJson(
-                        this,
-                        MatchExporter.toJson(esito.export),
-                        viewModel.exportFileLabel(),
-                    )
-                }
-
-                is ExportResult.Incomplete -> {
-                    // Il primo problema in ordine e' quello da risolvere per primo: dirne uno solo
-                    // e' piu' utile che elencarli tutti a chi e' in piedi a bordo campo.
-                    val nonCollegati =
-                        esito.problems
-                            .filterIsInstance<ExportProblem.UnlinkedPlayers>()
-                            .flatMap { it.names }
-                    when {
-                        esito.problems.any { it is ExportProblem.NoPoints } -> {
-                            MatchExportUtils.showBlocked(this, ExportBlocked.NO_MATCH)
-                        }
-
-                        nonCollegati.isNotEmpty() -> {
-                            MatchExportUtils.showBlocked(
-                                this,
-                                ExportBlocked.NEEDS_LINK,
-                                nonCollegati.joinToString(", "),
-                            )
-                        }
-
-                        else -> {
-                            MatchExportUtils.showBlocked(this, ExportBlocked.NEEDS_FOUR)
-                        }
+                .setItems(voci.toTypedArray()) { _, quale ->
+                    when (quale) {
+                        0 -> shareMatchSummary()
+                        1 -> viewModel.shareMatchResults()
+                        else -> exportMatchToPadel()
                     }
-                }
-            }
+                }.show()
         }
 
         undoGoalButton.setOnClickListener {
@@ -605,6 +591,45 @@ class MainActivity :
             }.start()
     }
 
+    /** Il file JSON per Padel Elite. Si raggiunge dalla stessa scelta di Condividi. */
+    private fun exportMatchToPadel() {
+        when (val esito = viewModel.buildExport()) {
+            is ExportResult.Ready -> {
+                MatchExportUtils.shareMatchJson(
+                    this,
+                    MatchExporter.toJson(esito.export),
+                    viewModel.exportFileLabel(),
+                )
+            }
+
+            is ExportResult.Incomplete -> {
+                // Il primo problema in ordine e' quello da risolvere per primo: dirne uno solo
+                // e' piu' utile che elencarli tutti a chi e' in piedi a bordo campo.
+                val nonCollegati =
+                    esito.problems
+                        .filterIsInstance<ExportProblem.UnlinkedPlayers>()
+                        .flatMap { it.names }
+                when {
+                    esito.problems.any { it is ExportProblem.NoPoints } -> {
+                        MatchExportUtils.showBlocked(this, ExportBlocked.NO_MATCH)
+                    }
+
+                    nonCollegati.isNotEmpty() -> {
+                        MatchExportUtils.showBlocked(
+                            this,
+                            ExportBlocked.NEEDS_LINK,
+                            nonCollegati.joinToString(", "),
+                        )
+                    }
+
+                    else -> {
+                        MatchExportUtils.showBlocked(this, ExportBlocked.NEEDS_FOUR)
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Compone il riassunto e lo manda a una chat.
      *
@@ -632,6 +657,53 @@ class MainActivity :
                 squadra2 = viewModel.team2Name.value.orEmpty(),
             )
         MatchExportUtils.shareMatchText(this, MatchSummarizer.format(summary, labels))
+    }
+
+    /**
+     * Che periodo si gioca e chi serve.
+     *
+     * L'orologio lo mostrava e il telefono no, pur avendo gli stessi dati: [ScoreDisplay] porta
+     * periodLabel e servingSide, e il telefono li spediva al polso per poi buttarne via meta'.
+     * In un padel al meglio di tre, "che set stiamo giocando" serve a chi guarda il tabellone
+     * almeno quanto il punteggio. Va nello spazio lasciato libero dal cronometro spento.
+     */
+    private fun bindPeriod(display: ScoreDisplay) {
+        val servente =
+            when (display.servingSide) {
+                1 -> viewModel.team1Name.value
+                2 -> viewModel.team2Name.value
+                else -> null
+            }
+        val testo =
+            when {
+                display.periodLabel == null -> null
+                servente.isNullOrBlank() -> display.periodLabel
+                else -> getString(R.string.score_period_serving, display.periodLabel, servente)
+            }
+        matchPeriodTextView.text = testo.orEmpty().uppercase(Locale.getDefault())
+        matchPeriodTextView.visibility = if (testo == null) View.GONE else View.VISIBLE
+    }
+
+    /**
+     * Il testo di una card si adatta al colore che l'utente ha scelto per quella card.
+     *
+     * Nome, punteggio e dettaglio erano cablati su concrete_gray (#1E1E1E) mentre lo sfondo lo
+     * decide il selettore di colore: su una tinta scura il punteggio diventava quasi invisibile.
+     * La soglia sta sulla luminanza percepita e non sulla media dei canali, perche' l'occhio pesa
+     * il verde molto piu' del blu: un blu acceso che alla media "sembra chiaro" e' scuro davvero.
+     */
+    private fun applyReadableTextColor(
+        cardColor: Int,
+        vararg views: TextView,
+    ) {
+        val luminanza =
+            (
+                0.2126 * Color.red(cardColor) +
+                    0.7152 * Color.green(cardColor) +
+                    0.0722 * Color.blue(cardColor)
+            ) / 255.0
+        val colore = if (luminanza < 0.5) R.color.stencil_white else R.color.concrete_gray
+        views.forEach { it.setTextColor(ContextCompat.getColor(this, colore)) }
     }
 
     private fun bindScoreDetail(
