@@ -564,7 +564,7 @@
         errorLine1="                    &lt;LinearLayout android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;wrap_content&quot; android:orientation=&quot;horizontal&quot;>"
         errorLine2="                     ~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="133"
             column="22"/>
     </issue>
@@ -575,7 +575,7 @@
         errorLine1="                    &lt;LinearLayout android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;wrap_content&quot; android:orientation=&quot;horizontal&quot;>"
         errorLine2="                     ~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="175"
             column="22"/>
     </issue>
@@ -984,7 +984,7 @@
         errorLine1="                                &lt;ImageView android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:padding=&quot;16dp&quot; android:src=&quot;@drawable/ic_minus&quot; app:tint=&quot;@color/stencil_white&quot; />"
         errorLine2="                                 ~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="67"
             column="34"/>
     </issue>
@@ -995,7 +995,7 @@
         errorLine1="                                &lt;ImageView android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:padding=&quot;18dp&quot; android:src=&quot;@drawable/ic_plus&quot; app:tint=&quot;@color/stencil_white&quot; />"
         errorLine2="                                 ~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="73"
             column="34"/>
     </issue>
@@ -1006,7 +1006,7 @@
         errorLine1="                                &lt;ImageView android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:padding=&quot;16dp&quot; android:src=&quot;@drawable/ic_minus&quot; app:tint=&quot;@color/stencil_white&quot; />"
         errorLine2="                                 ~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="104"
             column="34"/>
     </issue>
@@ -1017,7 +1017,7 @@
         errorLine1="                                &lt;ImageView android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:padding=&quot;18dp&quot; android:src=&quot;@drawable/ic_plus&quot; app:tint=&quot;@color/stencil_white&quot; />"
         errorLine2="                                 ~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="110"
             column="34"/>
     </issue>
@@ -1402,7 +1402,7 @@
         errorLine1="                    &lt;TextView android:id=&quot;@+id/timer_textview&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;00:00&quot; android:textAppearance=&quot;?attr/textAppearanceDisplayLarge&quot; android:layout_marginTop=&quot;4dp&quot;/>"
         errorLine2="                                                                                                                                        ~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="24"
             column="137"/>
     </issue>
@@ -1413,7 +1413,7 @@
         errorLine1="                    &lt;TextView android:id=&quot;@+id/keeper_timer_textview&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;05:00&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textColor=&quot;?attr/colorPrimary&quot; android:layout_marginTop=&quot;8dp&quot; android:visibility=&quot;visible&quot;/>"
         errorLine2="                                                                                                                                               ~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="26"
             column="144"/>
     </issue>
@@ -1424,7 +1424,7 @@
         errorLine1="                        &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/timer_start_button&quot; style=&quot;@style/Widget.App.Button.Street&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;START&quot; android:onClick=&quot;startStopTimer&quot; android:layout_marginEnd=&quot;8dp&quot;/>"
         errorLine2="                                                                                                                                                                                                                                 ~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="30"
             column="226"/>
     </issue>
@@ -1435,7 +1435,7 @@
         errorLine1="                        &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/reset_timer_button&quot; style=&quot;@style/Widget.App.Button.TextButton.Street&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;RESET&quot; android:onClick=&quot;resetTimer&quot;/>"
         errorLine2="                                                                                                                                                                                                                                            ~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="32"
             column="237"/>
     </issue>
@@ -1446,7 +1446,7 @@
         errorLine1="                    &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/undo_goal_button&quot; style=&quot;@style/Widget.App.Button.TextButton.Street&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:layout_marginTop=&quot;8dp&quot; android:text=&quot;UNDO LAST GOAL&quot; android:textColor=&quot;@color/error_red&quot; app:icon=&quot;@drawable/ic_undo&quot; app:iconTint=&quot;@color/error_red&quot; android:visibility=&quot;gone&quot; tools:visibility=&quot;visible&quot;/>"
         errorLine2="                                                                                                                                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="35"
             column="262"/>
     </issue>
@@ -1457,7 +1457,7 @@
         errorLine1="                            &lt;TextView android:id=&quot;@+id/team1_name_textview&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;TEAM 1&quot; android:textAlignment=&quot;center&quot; android:textColor=&quot;@color/concrete_gray&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textSize=&quot;20sp&quot;/>"
         errorLine2="                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="50"
             column="150"/>
     </issue>
@@ -1468,7 +1468,7 @@
         errorLine1="                            &lt;TextView android:id=&quot;@+id/team1_score_textview&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:layout_gravity=&quot;center&quot; android:text=&quot;0&quot; android:textColor=&quot;@color/concrete_gray&quot; android:textSize=&quot;86sp&quot; android:fontFamily=&quot;sans-serif-condensed&quot; android:textStyle=&quot;bold&quot; android:includeFontPadding=&quot;false&quot; android:shadowColor=&quot;@color/asphalt_dark&quot; android:shadowDx=&quot;3&quot; android:shadowDy=&quot;3&quot; android:shadowRadius=&quot;6&quot; />"
         errorLine2="                                                                                                                                                                                      ~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="57"
             column="183"/>
     </issue>
@@ -1479,7 +1479,7 @@
         errorLine1="                            &lt;TextView android:id=&quot;@+id/team2_name_textview&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;TEAM 2&quot; android:textAlignment=&quot;center&quot; android:textColor=&quot;@color/concrete_gray&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textSize=&quot;20sp&quot;/>"
         errorLine2="                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="87"
             column="150"/>
     </issue>
@@ -1490,7 +1490,7 @@
         errorLine1="                            &lt;TextView android:id=&quot;@+id/team2_score_textview&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:layout_gravity=&quot;center&quot; android:text=&quot;0&quot; android:textColor=&quot;@color/concrete_gray&quot; android:textSize=&quot;86sp&quot; android:fontFamily=&quot;sans-serif-condensed&quot; android:textStyle=&quot;bold&quot; android:includeFontPadding=&quot;false&quot; android:shadowColor=&quot;@color/asphalt_dark&quot; android:shadowDx=&quot;3&quot; android:shadowDy=&quot;3&quot; android:shadowRadius=&quot;6&quot; />"
         errorLine2="                                                                                                                                                                                      ~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="94"
             column="183"/>
     </issue>
@@ -1501,7 +1501,7 @@
         errorLine1="                    &lt;TextView android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;match_parent&quot; android:text=&quot;VS&quot; android:gravity=&quot;center&quot; android:textColor=&quot;@color/neon_cyan&quot; android:textSize=&quot;18sp&quot; android:fontFamily=&quot;sans-serif-black&quot; />"
         errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_live.xml"
             line="119"
             column="104"/>
     </issue>
@@ -1512,7 +1512,7 @@
         errorLine1="                    &lt;TextView android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;TEAM ROSTERS&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textColor=&quot;@color/sidewalk_gray&quot; android:textSize=&quot;14sp&quot; android:layout_marginBottom=&quot;12dp&quot;/>"
         errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="131"
             column="104"/>
     </issue>
@@ -1523,7 +1523,7 @@
         errorLine1="                            &lt;TextView android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Team 1&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineSmall&quot; android:textColor=&quot;?attr/colorPrimary&quot; android:layout_marginBottom=&quot;8dp&quot;/>"
         errorLine2="                                                                                                               ~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="138"
             column="112"/>
     </issue>
@@ -1534,7 +1534,7 @@
         errorLine1="                            &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/add_team1_player_button&quot; style=&quot;@style/Widget.App.Button.TextButton.Street&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Add Player&quot; android:layout_marginTop=&quot;8dp&quot;/>"
         errorLine2="                                                                                                                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="142"
             column="246"/>
     </issue>
@@ -1545,7 +1545,7 @@
         errorLine1="                            &lt;TextView android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Team 2&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineSmall&quot; android:textColor=&quot;?attr/colorSecondary&quot; android:layout_marginBottom=&quot;8dp&quot;/>"
         errorLine2="                                                                                                               ~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="148"
             column="112"/>
     </issue>
@@ -1556,7 +1556,7 @@
         errorLine1="                            &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/add_team2_player_button&quot; style=&quot;@style/Widget.App.Button.TextButton.Street&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Add Player&quot; android:layout_marginTop=&quot;8dp&quot;/>"
         errorLine2="                                                                                                                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="152"
             column="246"/>
     </issue>
@@ -1567,7 +1567,7 @@
         errorLine1="                    &lt;TextView android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;MATCH LOG&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textColor=&quot;@color/sidewalk_gray&quot; android:textSize=&quot;14sp&quot; android:layout_marginBottom=&quot;12dp&quot;/>"
         errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="163"
             column="104"/>
     </issue>
@@ -1578,7 +1578,7 @@
         errorLine1="                    &lt;TextView android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;FORMATIONS&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineMedium&quot; android:textColor=&quot;@color/sidewalk_gray&quot; android:textSize=&quot;14sp&quot; android:layout_marginBottom=&quot;12dp&quot;/>"
         errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="173"
             column="104"/>
     </issue>
@@ -1589,7 +1589,7 @@
         errorLine1="                            &lt;TextView android:id=&quot;@+id/team1_formation_label&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Team 1 (4-4-2)&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineSmall&quot; android:textColor=&quot;?attr/colorPrimary&quot; android:layout_marginBottom=&quot;8dp&quot;/>"
         errorLine2="                                                                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="179"
             column="152"/>
     </issue>
@@ -1600,7 +1600,7 @@
         errorLine1="                            &lt;TextView android:id=&quot;@+id/team2_formation_label&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:text=&quot;Team 2 (4-3-3)&quot; android:textAppearance=&quot;?attr/textAppearanceHeadlineSmall&quot; android:textColor=&quot;?attr/colorSecondary&quot; android:layout_marginBottom=&quot;8dp&quot;/>"
         errorLine2="                                                                                                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="186"
             column="152"/>
     </issue>
@@ -1611,7 +1611,7 @@
         errorLine1="                &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/match_history_button&quot; style=&quot;@style/Widget.App.Button.Street&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;wrap_content&quot; android:layout_weight=&quot;1&quot; android:text=&quot;HISTORY&quot; android:layout_marginEnd=&quot;8dp&quot;/>"
         errorLine2="                                                                                                                                                                                                                                            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="197"
             column="237"/>
     </issue>
@@ -1622,7 +1622,7 @@
         errorLine1="                &lt;com.google.android.material.button.MaterialButton android:id=&quot;@+id/reset_scores_button&quot; style=&quot;@style/Widget.App.Button.Street&quot; android:layout_width=&quot;0dp&quot; android:layout_height=&quot;wrap_content&quot; android:layout_weight=&quot;1&quot; android:text=&quot;END MATCH&quot;/>"
         errorLine2="                                                                                                                                                                                                                                           ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/layout/activity_main.xml"
+            file="src/main/res/layout/content_scoreboard_details.xml"
             line="199"
             column="236"/>
     </issue>

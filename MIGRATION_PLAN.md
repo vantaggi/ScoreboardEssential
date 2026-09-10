@@ -461,9 +461,9 @@ affermata dalla sola dimensione, senza gradini intermedi.
 | # | Azione | Costo | Stato |
 |---|---|---|---|
 | D1 | Etichettare il secondo cronometro | una stringa | ✅ fatto |
-| D2 | Scegliere UNA strada per segnare: gesto **o** pulsante | piccolo | ⬜ |
+| D2 | Scegliere UNA strada per segnare: gesto **o** pulsante | piccolo | ✅ fatto |
 | D3 | Far cambiare segno al `−` quando diventa annulla | piccolo | ✅ fatto |
-| D4 | Portare l'atto primario fuori dallo scorrimento: punteggio e comandi sempre visibili | medio | ⬜ |
+| D4 | Portare l'atto primario fuori dallo scorrimento: punteggio e comandi sempre visibili | medio | ✅ fatto |
 | D5 | Valutare la texture dietro i numeri — **solo dopo** i primi quattro | da guardare a occhio | ⬜ |
 
 **I primi tre cambiano l'esperienza più del quarto**, e D1 da solo toglie la ragione
@@ -480,3 +480,42 @@ Punti di attrito nel flusso, non solo nella grafica:
 
 *Questa analisi è stata fatta su layout, tema e flussi nel codice: l'app non è mai
 stata osservata in funzione. D4 e D5 richiedono l'occhio.*
+
+### D2 e D4 — come sono stati chiusi
+
+**D2: restano i pulsanti, spariscono i gesti.** C'erano tre modi per dare un punto
+(pulsante `+`, swipe verso l'alto, doppio tocco) e due per toglierlo. I gesti erano
+invisibili — nessuna scritta, nessun segno — e il tocco *singolo*, cioe' il primo che
+chiunque prova sul bersaglio piu' grande dello schermo, non faceva niente. In piu' un
+fling verticale partito da una card veniva consumato dal `GestureDetector`: chi provava
+a scorrere la pagina col dito su una squadra le regalava un punto. `ScoreGestureListener`
+e i suoi 5 test sono spariti con la funzione.
+
+Il tutorial di primo avvio faceva **tre** affermazioni e tutte e tre erano false o lo
+sono diventate: «Tap to add points» (un tocco non aggiungeva nulla), «Long-press to
+change team colors» (nessun long click e' mai stato registrato su quelle card: i colori
+stanno nelle impostazioni), «Swipe to remove» (ora non c'e' piu'). Riscritto.
+
+**D4: il tabellone esce dallo scorrimento, in verticale.** `activity_main.xml` era una
+`NestedScrollView` sola con dentro tutto. Ora il contenuto e' diviso in due file
+inclusi — `content_scoreboard_live.xml` (cronometro, punteggi, comandi) e
+`content_scoreboard_details.xml` (rose, registro, formazioni, azioni) — e a cambiare
+e' solo il contenitore:
+
+- **verticale**: il tabellone e' fisso in cima, scorre solo il resto;
+- **orizzontale** (`layout-land/`): scorre tutto, come prima. Fissarlo su 360dp di
+  altezza utile non lascerebbe spazio a nient'altro e renderebbe irraggiungibili i
+  comandi in fondo.
+
+Il contenuto non e' duplicato: i due `activity_main.xml` includono gli stessi due file.
+
+**Nota sulla baseline di lint.** Dividere il layout ha fatto salire gli avvisi da 11 a
+39: erano gli **stessi** avvisi di prima (stringhe cablate, `contentDescription`
+mancanti, `UselessParent`) che la baseline non riconosceva piu' perche' registrati
+contro `activity_main.xml`. Le 27 voci sono state **rimappate sul file nuovo**, non
+rigenerate: rigenerare la baseline avrebbe inghiottito anche gli 11 avvisi che oggi
+sono visibili di proposito. Tre voci restano spaiate perche' gia' obsolete prima
+(testi nel frattempo passati a `@string`).
+
+*Restano da guardare a occhio:* l'equilibrio verticale del tabellone fisso in verticale
+(quanta pagina resta al registro) e D5.

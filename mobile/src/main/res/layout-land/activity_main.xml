@@ -4,33 +4,32 @@
     xmlns:tools="http://schemas.android.com/tools" android:id="@+id/main_root" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_asphalt_main" tools:context=".MainActivity">
 
     <!--
-        In verticale il tabellone e' FISSO in cima e solo il resto scorre.
-        Segnare un punto e' l'atto per cui l'app esiste, e prima era una delle sette regioni
-        che scorrevano: bastava guardare il registro della partita per non poter piu' segnare
-        senza prima tornare su.
+        In orizzontale un telefono ha circa 360dp di altezza utile: fissare il tabellone in cima
+        non lascerebbe spazio a niente altro, e i comandi in fondo diventerebbero irraggiungibili.
+        Qui scorre tutto, come prima. Il contenuto e' lo STESSO di quello verticale, incluso dai
+        due stessi file: cambia il contenitore, non il tabellone.
     -->
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:fillViewport="true">
 
-        <include
-            layout="@layout/content_scoreboard_live"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-        <androidx.core.widget.NestedScrollView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:fillViewport="true">
+            <include
+                layout="@layout/content_scoreboard_live"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
             <include
                 layout="@layout/content_scoreboard_details"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
-        </androidx.core.widget.NestedScrollView>
-    </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
     <!-- FAB for Player Management -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/players_fab" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="bottom|end" android:layout_margin="16dp" app:backgroundTint="?attr/colorSecondary" app:tint="?attr/colorOnSecondary" app:shapeAppearance="@style/ShapeAppearance.App.StreetButton" app:srcCompat="@drawable/ic_person_add" android:contentDescription="@string/cd_manage_players"/>
