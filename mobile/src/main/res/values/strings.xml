@@ -18,7 +18,7 @@
 
     <!-- Onboarding Step 1: Score Management -->
     <string name="onboarding_score_title">EASY SCORE MANAGEMENT</string>
-    <string name="onboarding_score_description">Tap to add points. Swipe to remove. Long-press to change team colors and show your style.</string>
+    <string name="onboarding_score_description">Use the + and - buttons on each team. Colours, sport and timers live behind the gear.</string>
 
     <!-- Onboarding Step 2: Timers and Players -->
     <string name="onboarding_timers_title">MATCH AND KEEPER TIMERS</string>

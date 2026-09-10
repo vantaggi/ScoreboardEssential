@@ -17,7 +17,7 @@
 
     <!-- Onboarding Step 1: Score Management -->
     <string name="onboarding_score_title">GESTIONE PUNTEGGIO FACILE</string>
-    <string name="onboarding_score_description">Tocca per aggiungere punti. Scorri per rimuovere. Tieni premuto per cambiare i colori della squadra e mostrare il tuo stile.</string>
+    <string name="onboarding_score_description">Usa i pulsanti + e - di ogni squadra. Colori, sport e cronometri stanno nelle impostazioni.</string>
 
     <!-- Onboarding Step 2: Timers and Players -->
     <string name="onboarding_timers_title">TIMER PARTITA E PORTIERE</string>

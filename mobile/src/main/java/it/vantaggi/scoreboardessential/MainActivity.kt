@@ -11,7 +11,6 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
-import android.view.GestureDetector
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
@@ -44,7 +43,6 @@ import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
-import it.vantaggi.scoreboardessential.ui.ScoreGestureListener
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
 import it.vantaggi.scoreboardessential.utils.ExportBlocked
@@ -98,10 +96,6 @@ class MainActivity :
     private lateinit var team1NameTextView: TextView
     private lateinit var team2NameTextView: TextView
     private lateinit var vsIndicator: View
-
-    // Gesture detectors
-    private lateinit var team1GestureDetector: GestureDetector
-    private lateinit var team2GestureDetector: GestureDetector
 
     // Team roster recycler views
     private lateinit var team1RosterRecyclerView: RecyclerView
@@ -169,7 +163,6 @@ class MainActivity :
         setupRecyclerViews()
         observeViewModel()
         setupImprovedViews() // Call new setup method
-        setupGestureControls() // Call gesture setup
         requestNotificationPermission()
 
         lifecycleScope.launch {
@@ -527,46 +520,6 @@ class MainActivity :
 
         findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.stats_fab).setOnClickListener {
             startActivity(Intent(this, StatisticsActivity::class.java))
-        }
-    }
-
-    private fun setupGestureControls() {
-        // Swipe up to increase, swipe down to decrease for Team 1
-        team1GestureDetector =
-            GestureDetector(
-                this,
-                ScoreGestureListener(
-                    onIncreaseScore = {
-                        viewModel.addScore(1)
-                        playGoalAnimation(1)
-                    },
-                    onDecreaseScore = {
-                        decrementScore(1)
-                    },
-                ),
-            )
-
-        findViewById<View>(R.id.team1_card).setOnTouchListener { _, event ->
-            team1GestureDetector.onTouchEvent(event)
-        }
-
-        // Swipe up to increase, swipe down to decrease for Team 2
-        team2GestureDetector =
-            GestureDetector(
-                this,
-                ScoreGestureListener(
-                    onIncreaseScore = {
-                        viewModel.addScore(2)
-                        playGoalAnimation(2)
-                    },
-                    onDecreaseScore = {
-                        decrementScore(2)
-                    },
-                ),
-            )
-
-        findViewById<View>(R.id.team2_card).setOnTouchListener { _, event ->
-            team2GestureDetector.onTouchEvent(event)
         }
     }
 
