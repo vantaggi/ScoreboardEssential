@@ -26,6 +26,8 @@ import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.core.MatchPlayer
+import it.vantaggi.scoreboardessential.core.MatchSummarizer
+import it.vantaggi.scoreboardessential.core.MatchSummary
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportCapabilities
@@ -1315,6 +1317,20 @@ class MainViewModel(
             (uno + due).mapNotNull { p -> p.player.padelPlayerId?.let { p.player.playerId to it } }.toMap()
         return MatchExporter.build(engine, roster, padelIds)
     }
+
+    /**
+     * I dati del riassunto. Il TESTO lo compone l'Activity, che e' l'unica a vedere le risorse:
+     * cosi' il report e' traducibile senza duplicare il calcolo.
+     */
+    fun summarizeMatch(): MatchSummary =
+        MatchSummarizer.summarize(
+            engine = engine,
+            players =
+                _team1Players.value.orEmpty().map { MatchPlayer(it.player.playerId, it.player.playerName, 1) } +
+                    _team2Players.value.orEmpty().map { MatchPlayer(it.player.playerId, it.player.playerName, 2) },
+            // Il calcio non scrive i tempi nel log: la durata la sa solo il cronometro.
+            elapsedMillis = _matchTimerValue.value?.takeIf { it > 0L },
+        )
 
     /** Etichetta della partita per il nome del file. Il timestamp lo aggiunge chi scrive. */
     fun exportFileLabel(): String {

@@ -52,6 +52,25 @@ object MatchExportUtils {
         Toast.makeText(context, R.string.export_ready, Toast.LENGTH_SHORT).show()
     }
 
+    /**
+     * Condivide il riassunto come TESTO.
+     *
+     * text/plain e non un file: WhatsApp, Telegram e i messaggi lo incollano direttamente nella
+     * conversazione, mentre un allegato costringerebbe chi lo riceve ad aprirlo. Il report esiste
+     * per essere letto nel gruppo, non archiviato.
+     */
+    fun shareMatchText(
+        context: Context,
+        text: String,
+    ) {
+        val intent =
+            Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, text)
+            }
+        context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_choose_title)))
+    }
+
     /** [unlinkedNames] serve solo a [ExportBlocked.NEEDS_LINK]: dice chi non e' ancora collegato. */
     fun showBlocked(
         context: Context,

@@ -35,6 +35,8 @@ import it.vantaggi.scoreboardessential.core.ClockMode
 import it.vantaggi.scoreboardessential.core.ExportProblem
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchExporter
+import it.vantaggi.scoreboardessential.core.MatchSummarizer
+import it.vantaggi.scoreboardessential.core.ReportLabels
 import it.vantaggi.scoreboardessential.core.SportCapabilities
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
@@ -445,7 +447,17 @@ class MainActivity :
         }
 
         findViewById<Button>(R.id.share_match_button).setOnClickListener {
-            viewModel.shareMatchResults()
+            // Due modi di condividere la stessa partita, non due pulsanti. Il riassunto testuale
+            // e' quello che si manda al gruppo appena finito di giocare; il PDF resta per chi
+            // vuole archiviare. Una scelta in piu' al momento dell'uso, zero controlli in piu'
+            // sulla schermata -- che e' la direzione della Fase D.
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.share_choose_title)
+                .setItems(
+                    arrayOf(getString(R.string.share_as_text), getString(R.string.share_as_pdf)),
+                ) { _, quale ->
+                    if (quale == 0) shareMatchSummary() else viewModel.shareMatchResults()
+                }.show()
         }
 
         findViewById<Button>(R.id.export_match_button).setOnClickListener {
@@ -584,6 +596,35 @@ class MainActivity :
                     .setInterpolator(OvershootInterpolator())
                     .start()
             }.start()
+    }
+
+    /**
+     * Compone il riassunto e lo manda a una chat.
+     *
+     * Le etichette arrivano da qui e non da :core, che e' Kotlin puro e non vede strings.xml: e'
+     * il compromesso che tiene il calcolo testabile senza emulatore e il testo traducibile.
+     */
+    private fun shareMatchSummary() {
+        val summary = viewModel.summarizeMatch()
+        if (summary.totalPoints == 0) {
+            MatchExportUtils.showBlocked(this, ExportBlocked.NO_MATCH)
+            return
+        }
+        val labels =
+            ReportLabels(
+                vince = getString(R.string.report_wins),
+                durata = getString(R.string.report_duration),
+                punti = getString(R.string.report_points),
+                alServizio = getString(R.string.report_on_serve),
+                breakVinti = getString(R.string.report_breaks),
+                serieMigliore = getString(R.string.report_best_run),
+                marcatori = getString(R.string.report_scorers),
+                unitaOre = getString(R.string.report_hours_short),
+                unitaMinuti = getString(R.string.report_minutes_short),
+                squadra1 = viewModel.team1Name.value.orEmpty(),
+                squadra2 = viewModel.team2Name.value.orEmpty(),
+            )
+        MatchExportUtils.shareMatchText(this, MatchSummarizer.format(summary, labels))
     }
 
     private fun bindScoreDetail(

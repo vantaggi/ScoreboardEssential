@@ -100,6 +100,21 @@
     <string name="export_needs_link">Collega prima ogni giocatore a Padel Elite: %1$s</string>
     <string name="export_needs_match">Niente da esportare, per ora</string>
 
+    <string name="share_choose_title">Condividi la partita</string>
+    <string name="share_as_text">Riassunto (testo)</string>
+    <string name="share_as_pdf">Report completo (PDF)</string>
+    <string name="report_hours_short">h</string>
+    <string name="report_minutes_short">min</string>
+    <string name="report_duration">Durata</string>
+    <string name="report_points">punti</string>
+    <string name="report_on_serve">Al servizio</string>
+    <string name="report_breaks">Break</string>
+    <string name="report_best_run">Serie migliore</string>
+    <string name="report_wins">Vince</string>
+    <string name="report_sets">Set</string>
+    <string name="report_scorers">Marcatori</string>
+    <string name="report_draw">Pareggio</string>
+
     <!-- Multi-sport -->
     <string name="settings_sport_title">Sport</string>
     <string name="settings_sport_hint">Si cambia solo a partita ferma</string>

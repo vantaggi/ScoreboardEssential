@@ -101,6 +101,21 @@
     <string name="export_needs_link">Link every player to Padel Elite first: %1$s</string>
     <string name="export_needs_match">Nothing to export yet</string>
 
+    <string name="share_choose_title">Share match</string>
+    <string name="share_as_text">Summary (text)</string>
+    <string name="share_as_pdf">Full report (PDF)</string>
+    <string name="report_hours_short">h</string>
+    <string name="report_minutes_short">min</string>
+    <string name="report_duration">Duration</string>
+    <string name="report_points">points</string>
+    <string name="report_on_serve">On serve</string>
+    <string name="report_breaks">Breaks</string>
+    <string name="report_best_run">Longest run</string>
+    <string name="report_wins">Winner</string>
+    <string name="report_sets">Sets</string>
+    <string name="report_scorers">Scorers</string>
+    <string name="report_draw">Draw</string>
+
     <!-- Multi-sport -->
     <string name="settings_sport_title">Sport</string>
     <string name="settings_sport_hint">Can only be changed between matches</string>
