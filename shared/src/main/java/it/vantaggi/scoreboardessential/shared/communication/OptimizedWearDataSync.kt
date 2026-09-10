@@ -147,10 +147,18 @@ class OptimizedWearDataSync(
         }
     }
 
+    /**
+     * Ritorna `true` se il messaggio ha raggiunto almeno un nodo.
+     *
+     * Prima ritornava Unit e inghiottiva ogni errore. Sull'orologio l'unico riscontro che il
+     * segnapunti ha e' la vibrazione: restituendo Unit, il polso confermava "punto preso" anche a
+     * Bluetooth caduto o telefono fuori portata, e chi segnava se ne accorgeva solo a fine set
+     * quando i numeri non tornavano.
+     */
     suspend fun sendMessage(
         path: String,
         data: ByteArray? = null,
-    ) {
+    ): Boolean =
         withContext(Dispatchers.IO) {
             try {
                 // Use capabilityClient to find nodes that actually have the app and are reachable
@@ -162,12 +170,14 @@ class OptimizedWearDataSync(
 
                 if (nodes.isEmpty()) {
                     Log.w(TAG, "sendMessage: No capable nodes found for path: $path")
-                    return@withContext
+                    return@withContext false
                 }
 
+                var consegnato = false
                 nodes.forEach { node ->
                     try {
                         messageClient.sendMessage(node.id, path, data).await()
+                        consegnato = true
                         if (BuildConfig.DEBUG) {
                             Log.d(TAG, "Message sent to node ${node.displayName} (${node.id}): $path")
                         }
@@ -179,11 +189,12 @@ class OptimizedWearDataSync(
                         }
                     }
                 }
+                consegnato
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to resolve nodes for message: $path", e)
+                false
             }
         }
-    }
 
     suspend fun testConnection(): Boolean {
         return withContext(Dispatchers.IO) {

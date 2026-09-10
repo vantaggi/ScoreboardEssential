@@ -362,17 +362,17 @@ class MainActivity :
         // timer_card: nasconderla intera toglierebbe all'utente l'ingranaggio delle impostazioni,
         // cioe' l'unico modo per tornare a cambiare sport. Si spegne il blocco cronometro, non il
         // contenitore che ospita anche la barra di intestazione.
-        // Il "-" cambia SEGNO quando cambia significato. Negli sport a set sottrarre un punto non
-        // e' un'operazione definita, quindi il comando annulla l'ultima azione: lasciargli il
-        // glifo del meno sarebbe un controllo che dice una cosa e ne fa un'altra.
-        val icona = if (sportCapabilities.decrementIsUndo) R.drawable.ic_undo else R.drawable.ic_minus
-        val descrizione = if (sportCapabilities.decrementIsUndo) R.string.cd_undo_point else R.string.cd_subtract_point
-        listOf(R.id.team1_subtract_icon, R.id.team2_subtract_icon).forEach { id ->
-            findViewById<ImageView>(id).apply {
-                setImageResource(icona)
-                contentDescription = getString(descrizione)
-            }
-        }
+        // Negli sport a set sottrarre un punto non e' un'operazione definita: il comando annulla
+        // l'ultima azione, qualunque lato l'abbia segnata.
+        //
+        // Quindi i DUE "-" dentro le due card spariscono, invece di limitarsi a cambiare icona.
+        // Lasciarli sarebbe peggio: stanno dentro la card di una squadra, e l'unica lettura
+        // possibile di un comando li' dentro e' "togli un punto A QUESTA squadra" -- mentre
+        // annullano l'ultima azione e basta. Due comandi identici che sembrano di squadre diverse.
+        // Al loro posto resta l'unico annullamento che c'e' gia', quello dichiarato.
+        val annullaGlobale = sportCapabilities.decrementIsUndo
+        findViewById<View>(R.id.team1_subtract_button_card).visibility = if (annullaGlobale) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.team2_subtract_button_card).visibility = if (annullaGlobale) View.GONE else View.VISIBLE
 
         // L'export verso Padel Elite compare SOLO nello sport che lo prevede: la schermata del
         // calcio non guadagna un controllo in piu' per una funzione che li' non esiste.
@@ -391,7 +391,14 @@ class MainActivity :
 
     private fun refreshUndoButtonVisibility() {
         // Finche' le capacita' non sono arrivate vale il comportamento storico (il calcio).
-        val allowed = capabilities?.attributesScorer != false
+        //
+        // Serve in due casi diversi: dove si attribuisce il marcatore (il calcio, per disfare un
+        // gol) e dove il "meno" E' l'annullamento (padel e tennis) -- li' e' l'UNICO modo di
+        // correggere, perche' i due "-" per squadra spariscono: annullavano l'ultima azione
+        // qualunque lato l'avesse segnata, ma stando dentro la card di una squadra dicevano il
+        // contrario.
+        val caps = capabilities
+        val allowed = caps == null || caps.attributesScorer || caps.decrementIsUndo
         undoGoalButton.visibility = if (allowed && viewModel.canUndo.value == true) View.VISIBLE else View.GONE
     }
 

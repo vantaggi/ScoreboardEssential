@@ -285,22 +285,30 @@ class MainActivity : ComponentActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 // Observe the pre-formatted v2 state (null until the phone speaks v2)
                 launch {
+                    // collect su uno StateFlow riemette subito il valore corrente, quindi questo
+                    // ridisegna lo stato v2 a ogni ritorno in STARTED: e' il rimedio al risveglio.
                     viewModel.scoreState.collect { state ->
                         state?.let { renderScoreState(it) }
                     }
                 }
 
-                // Observe Team 1 Score
+                // I collector v1 scrivono solo finche' il v2 non e' mai arrivato.
+                //
+                // Sono StateFlow: riemettono l'ultimo valore ogni volta che si ricomincia a
+                // raccogliere, e repeatOnLifecycle(STARTED) ricomincia a OGNI riaccensione dello
+                // schermo. Senza questa guardia, in padel il punteggio a schermo tornava a 0-0 ogni
+                // volta che si alzava il polso -- perche' nel v2 team1Score resta fermo a zero per
+                // costruzione -- fino al punto successivo. Cioe' proprio nel momento per cui
+                // l'orologio esiste.
                 launch {
                     viewModel.team1Score.collect { score ->
-                        binding.team1Score.text = score.toString()
+                        if (viewModel.scoreState.value == null) binding.team1Score.text = score.toString()
                     }
                 }
 
-                // Observe Team 2 Score
                 launch {
                     viewModel.team2Score.collect { score ->
-                        binding.team2Score.text = score.toString()
+                        if (viewModel.scoreState.value == null) binding.team2Score.text = score.toString()
                     }
                 }
 
@@ -317,10 +325,11 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Observe Match Timer
+                // Stessa ragione: senza cronometro il v2 non manda un tempo, e il valore iniziale
+                // "00:00" del flow v1 tornerebbe a schermo a ogni riaccensione.
                 launch {
                     viewModel.matchTimer.collect { time ->
-                        binding.matchTimer.text = time
+                        if (viewModel.scoreState.value == null) binding.matchTimer.text = time
                     }
                 }
 

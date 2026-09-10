@@ -265,8 +265,8 @@ class WearViewModel(
         if (team != 1 && team != 2) return
         sendScoreIntent(team, WearConstants.INTENT_POINT)
         if (protocolV2Seen) {
-            // Il punteggio lo decide il telefono: qui resta solo la risposta al tocco.
-            triggerShortVibration()
+            // Nessuna vibrazione qui: la conferma la da' sendScoreIntent, e SOLO se il messaggio
+            // e' davvero arrivato al telefono.
             if (_scoreState.value?.attributesScorer == true && _allPlayers.value.isNotEmpty()) {
                 _showPlayerSelection.value = team
             }
@@ -285,7 +285,6 @@ class WearViewModel(
                     WearConstants.INTENT_CORRECTION
                 }
             sendScoreIntent(team, tipo)
-            triggerShortVibration()
             return
         }
         modifyScore(team, -1)
@@ -313,8 +312,20 @@ class WearViewModel(
                     putString(WearConstants.KEY_INTENT_KIND, kind)
                     putLong(WearConstants.KEY_SEQ, seq)
                 }
-            connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
+            val consegnato = connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
+            // Il gesto e' cieco: sullo schermo non cambia niente finche' il telefono non risponde.
+            // Quindi il polso deve distinguere "preso" da "non arrivato", altrimenti si continua a
+            // segnare convinti mentre il tabellone e' fermo.
+            if (consegnato) triggerShortVibration() else triggerFailureVibration()
         }
+    }
+
+    /**
+     * Pattern diverso da [triggerShortVibration]: due colpi separati, che al polso non si
+     * confondono con la conferma anche senza guardare.
+     */
+    private fun triggerFailureVibration() {
+        vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 60, 120, 60), -1))
     }
 
     private fun modifyScore(
