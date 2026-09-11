@@ -81,6 +81,12 @@ dependencies {
     implementation libs.androidx.lifecycle.runtime.ktx
     implementation libs.androidx.lifecycle.livedata.ktx
     implementation project(':shared')
+    // Le regole servono SOLO per calcolare il punteggio quando il telefono non risponde. Con il
+    // telefono presente resta autoritativo lui e questo modulo continua a rendere stringhe: e' la
+    // stessa promessa di prima, con una via d'uscita per il caso in cui non ci sia nessuno a
+    // rispondere. Il prezzo, dichiarato: uno sport nuovo ora richiede di aggiornare anche questo
+    // APK per funzionare offline, mentre online ne basta ancora uno solo.
+    implementation project(':core')
     implementation libs.play.services.wearable
     implementation libs.androidx.recyclerview
     implementation libs.androidx.wear

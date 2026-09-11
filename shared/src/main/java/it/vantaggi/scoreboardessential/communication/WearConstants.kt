@@ -107,6 +107,20 @@ object WearConstants {
     /** Vero mentre una partita ha almeno un evento: il cambio sport allora viene rifiutato. */
     const val KEY_MATCH_IN_PROGRESS = "match_in_progress"
 
+    /**
+     * Il registro degli eventi della partita, come lo scrive MatchLogCodec.
+     *
+     * Serve all'orologio per mostrare il punteggio quando il telefono non risponde: senza, il
+     * polso potrebbe calcolare solo i punti che ha segnato LUI da quando e' rimasto solo, e una
+     * partita cominciata col telefono in mano ripartirebbe visivamente da zero. Con il registro,
+     * il polso rifa' esattamente il calcolo che rifara' il telefono, con lo stesso codice.
+     *
+     * Cresce con la partita: un padel lungo sta sotto i 4 KB, molto dentro i limiti di un
+     * DataItem. Viaggia a ogni aggiornamento perche' deve essere gia' li' quando il telefono
+     * sparisce, che e' per definizione un momento che non si annuncia.
+     */
+    const val KEY_EVENT_LOG = "event_log"
+
     // Capacita' che l'orologio deve conoscere per non mostrare comandi privi di senso.
     const val KEY_CAP_HAS_CLOCK = "cap_has_clock"
     const val KEY_CAP_HAS_AUX_TIMER = "cap_has_aux_timer"

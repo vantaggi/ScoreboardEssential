@@ -663,9 +663,12 @@ errore.
 `removeFirst(n)` con uno svuotamento totale, il test che protegge dalla perdita dei
 punti segnati durante la consegna diventa rosso.
 
-### Quello che ancora NON fa
+### ~~Quello che ancora NON fa~~ - fatto l'11 settembre 2026
 
-**Il punteggio non si vede al polso mentre il telefono non c'e'.** L'orologio continua a
+Il testo qui sotto e' rimasto per memoria della decisione. Il seguito e' nella
+sezione successiva.
+
+**Il punteggio non si vedeva al polso mentre il telefono non c'era.** L'orologio continua a
 mostrare l'ultimo stato ricevuto piu' il conteggio in attesa: i tocchi sono salvi, ma
 per un'ora si segna alla cieca. Mostrare il punteggio vero offline richiede che `:wear`
 dipenda da `:core` e tenga un motore locale da usare **solo** senza telefono. E'
@@ -705,3 +708,53 @@ ed e' stato rimosso.
 `settings_saved` e `save_settings` (non c'e' piu' un pulsante SALVA), `ic_back`.
 Lint sul telefono scende da 11 a 8 avvisi; i tre che restano sono di terze parti o
 pre-esistenti.
+
+### Punteggio offline al polso - 11 settembre 2026
+
+Deciso e fatto: `:wear` dipende ora da `:core`, e tiene un motore locale usato
+**solo** finche' il telefono non ha confermato.
+
+**La regola, in una riga:** il polso mostra il proprio calcolo finche' ha tocchi non
+confermati, altrimenti mostra quello che dice il telefono.
+
+**Non e' una seconda autorita'.** E' la STESSA operazione che fara' il telefono, con lo
+stesso codice di `:core`, sugli stessi eventi: il registro ricevuto per ultimo piu' la
+coda locale. Per costruzione i due risultati non possono divergere, perche' non esiste
+un secondo algoritmo da tenere allineato -- c'e' una sola funzione, chiamata due volte.
+E' esattamente per questo che il registro (`KEY_EVENT_LOG`) viaggia nello stato v2:
+senza, il polso potrebbe calcolare solo i punti che ha segnato lui, e una partita
+cominciata col telefono in mano ripartirebbe visivamente da zero.
+
+**Tre decisioni.**
+
+1. **Le capacita' non si salvano su disco.** Sono una funzione dello sport: a freddo si
+   ricavano da `SportRegistry`, che e' piu' giusto che conservarne una copia capace di
+   invecchiare. Su disco stanno solo lo sport e il registro.
+2. **Gli eventi locali si applicano senza tempo.** Il tempo appartiene alla cronaca, non
+   alla regola: il punteggio non dipende da quando e' stato dato il tocco, e gli orari
+   veri li porta la coda quando parte. Convertirli al polso vorrebbe dire tenere li' un
+   secondo orologio di partita per un valore che nessuno legge.
+3. **Mentre un arretrato e' in viaggio non si ridisegna.** Lo stato applicato e l'ack
+   partono dal telefono quasi insieme: ricalcolare in quella finestra significherebbe
+   sommare l'arretrato a un registro che lo contiene gia'.
+
+**Due difetti trovati dai test, non dalla lettura.**
+
+- Con un tocco in coda e un telefono che parla una bozza precedente del v2 (nessuno
+  `sportId`), il calcolo locale usciva prima e **lo schermo restava vuoto**. Ora dice
+  di non esserci riuscito e chi ha chiesto mostra l'ultimo dato vero.
+- `LastKnownMatch` era **a sola scrittura**: nessuno la rileggeva, quindi un orologio
+  riavviato a meta' partita col telefono in borsa avrebbe perso comunque il punteggio --
+  proprio lo scenario per cui la classe esisteva.
+
+**Il prezzo, dichiarato.** Uno sport nuovo ora richiede di aggiornare **anche** l'APK
+dell'orologio per funzionare offline. Online continua a bastarne uno solo: il polso
+rende stringhe come prima.
+
+**Copertura:** `OfflineScoreTest`, 6 test, tutti costruiti confrontando il polso con un
+motore di riferimento invece che con valori scritti a mano. Verificati per
+falsificazione: ignorando la coda locale, due test diventano rossi; togliendo la
+rilettura da disco, quello del riavvio diventa rosso.
+
+*Da guardare su dispositivo:* il passaggio online -> offline -> online, che e' l'unico
+punto in cui due sorgenti si alternano a schermo.

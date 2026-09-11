@@ -9,6 +9,11 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.wearable.DataMap
+import it.vantaggi.scoreboardessential.core.ClockMode
+import it.vantaggi.scoreboardessential.core.MatchEngine
+import it.vantaggi.scoreboardessential.core.MatchLogCodec
+import it.vantaggi.scoreboardessential.core.ScoringEvent
+import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
@@ -43,10 +48,13 @@ data class WearScoreState(
      * parla una bozza precedente del v2 questi elenchi arrivano vuoti, e il comando dello sport
      * semplicemente non compare: nessun ramo speciale, nessun errore.
      */
+    val sportId: String,
     val sportLabel: String,
     val sportIds: List<String>,
     val sportLabels: List<String>,
     val matchInProgress: Boolean,
+    /** Il registro degli eventi del telefono: il punto di partenza quando si resta soli. */
+    val eventLog: String,
 ) {
     companion object {
         private const val TAG = "WearScoreState"
@@ -78,10 +86,12 @@ data class WearScoreState(
                 hasAuxTimer = dataMap.getBoolean(WearConstants.KEY_CAP_HAS_AUX_TIMER, true),
                 attributesScorer = dataMap.getBoolean(WearConstants.KEY_CAP_ATTRIBUTES_SCORER, true),
                 decrementIsUndo = dataMap.getBoolean(WearConstants.KEY_CAP_DECREMENT_IS_UNDO, false),
+                sportId = dataMap.getString(WearConstants.KEY_SPORT_ID, ""),
                 sportLabel = dataMap.getString(WearConstants.KEY_SPORT_LABEL, ""),
                 sportIds = elenco(dataMap.getString(WearConstants.KEY_SPORT_IDS, "")),
                 sportLabels = elenco(dataMap.getString(WearConstants.KEY_SPORT_LABELS, "")),
                 matchInProgress = dataMap.getBoolean(WearConstants.KEY_MATCH_IN_PROGRESS, false),
+                eventLog = dataMap.getString(WearConstants.KEY_EVENT_LOG, ""),
             )
         }
     }
@@ -132,6 +142,12 @@ class WearViewModel(
 
     /** Sequenza dell'arretrato spedito e in attesa di conferma, e quante voci comprendeva. */
     private var batchInVolo: Pair<Long, Int>? = null
+
+    /** L'ultima partita raccontata dal telefono: da qui riparte il conto quando si resta soli. */
+    private val ultimaNota by lazy { LastKnownMatch(getApplication()) }
+
+    /** L'ultimo stato ricevuto, tenuto a parte perche' quello a schermo puo' essere locale. */
+    private var statoDalTelefono: WearScoreState? = null
 
     // Stato v2: il telefono e' autoritativo, qui c'e' solo il testo da mettere a schermo.
     private val _scoreState = MutableStateFlow<WearScoreState?>(null)
@@ -241,10 +257,27 @@ class WearViewModel(
         _team2Score.value = team2Score
     }
 
-    /** Il punteggio arriva gia' impaginato: da qui in poi il v1 sullo stesso telefono e' rumore. */
+    /**
+     * Lo stato che il telefono manda. Vince sempre, tranne finche' il polso ha eventi suoi.
+     *
+     * La regola in una riga: **il polso mostra il proprio calcolo finche' ha tocchi non
+     * confermati, altrimenti mostra quello che dice il telefono.** Senza, al ritorno del telefono
+     * il punteggio tornerebbe visibilmente indietro -- il telefono manda cio' che sa, e cio' che
+     * sa non comprende ancora l'arretrato -- per poi risalire un secondo dopo.
+     *
+     * Mentre un arretrato e' in viaggio non si ridisegna affatto: lo stato applicato e l'ack
+     * partono dal telefono quasi insieme, e ricalcolare in quella finestra significherebbe
+     * sommare l'arretrato a un registro che lo contiene gia'.
+     */
     fun applyStateV2(state: WearScoreState) {
         protocolV2Seen = true
-        _scoreState.value = state
+        statoDalTelefono = state
+        ultimaNota.save(state.sportId, state.eventLog)
+        when {
+            batchInVolo != null -> Unit
+            pending.size > 0 && rebuildLocalState() -> Unit
+            else -> _scoreState.value = state
+        }
     }
 
     // --- Score Management ---
@@ -325,6 +358,81 @@ class WearViewModel(
     }
 
     /**
+     * Ricostruisce un punto di partenza dal disco, per un orologio riavviato senza telefono.
+     *
+     * Le CAPACITA' non vengono salvate: sono una funzione dello sport, e ricavarle dal registro
+     * degli sport e' piu' giusto che conservarne una copia che potrebbe invecchiare. L'elenco
+     * degli sport invece resta vuoto, quindi a freddo e senza telefono il comando SPORT non
+     * compare: sceglierlo richiede comunque qualcuno che accetti la richiesta.
+     */
+    private fun statoDaDisco(): WearScoreState? {
+        val sportId = ultimaNota.sportId
+        if (sportId.isBlank()) return null
+        val capacita = SportRegistry.byId(sportId).capabilities
+        return WearScoreState(
+            side1Primary = "",
+            side1Secondary = "",
+            side2Primary = "",
+            side2Secondary = "",
+            periodLabel = "",
+            hasClock = capacita.clock != ClockMode.NONE,
+            hasAuxTimer = capacita.hasAuxCountdown,
+            attributesScorer = capacita.attributesScorer,
+            decrementIsUndo = capacita.decrementIsUndo,
+            sportId = sportId,
+            sportLabel = "",
+            sportIds = emptyList(),
+            sportLabels = emptyList(),
+            matchInProgress = true,
+            eventLog = ultimaNota.eventLog,
+        )
+    }
+
+    /**
+     * Il punteggio calcolato al polso, valido finche' ci sono tocchi che il telefono non ha
+     * ancora confermato.
+     *
+     * Non e' una seconda autorita': e' la STESSA operazione che fara' il telefono, fatta con lo
+     * stesso codice di :core sugli stessi eventi -- il registro ricevuto per ultimo piu' la coda
+     * locale. Per costruzione i due risultati non possono divergere, perche' non c'e' un secondo
+     * algoritmo da tenere allineato: c'e' una sola funzione, chiamata due volte.
+     *
+     * Gli eventi locali si applicano SENZA tempo. Il tempo appartiene alla cronaca e non alla
+     * regola: il punteggio non dipende da quando e' stato dato il tocco, e gli orari veri li
+     * porta la coda quando parte davvero. Convertirli qui vorrebbe dire mantenere un secondo
+     * orologio di partita al polso per un valore che qui nessuno legge.
+     */
+    private fun rebuildLocalState(): Boolean {
+        val base = statoDalTelefono ?: return false
+        // Senza sport non si puo' calcolare niente: succede con un telefono che parla una bozza
+        // precedente del v2. Si dice di no, e chi ha chiesto mostrera' l'ultimo dato vero invece
+        // di uno schermo vuoto -- e' il caso che il test ha scoperto.
+        if (base.sportId.isBlank()) return false
+
+        val rules = SportRegistry.byId(base.sportId)
+        val engine = MatchEngine(rules)
+        MatchLogCodec.decode(base.eventLog)?.let { engine.restoreLog(it) }
+        pending.all().forEach { intento ->
+            when (intento.kind) {
+                WearConstants.INTENT_UNDO -> engine.undo()
+                WearConstants.INTENT_CORRECTION -> engine.apply(ScoringEvent.Correction(side = intento.side))
+                else -> engine.apply(ScoringEvent.Point(side = intento.side))
+            }
+        }
+        val display = rules.display(engine.state)
+        _scoreState.value =
+            base.copy(
+                side1Primary = display.side1Primary,
+                side1Secondary = display.side1Secondary.orEmpty(),
+                side2Primary = display.side2Primary,
+                side2Secondary = display.side2Secondary.orEmpty(),
+                periodLabel = display.periodLabel.orEmpty(),
+                matchInProgress = engine.log.isNotEmpty(),
+            )
+        return true
+    }
+
+    /**
      * Rilegge quante voci ci sono in coda.
      *
      * La coda e' `by lazy` e il conteggio parte da zero perche' costruire il ViewModel non deve
@@ -334,6 +442,11 @@ class WearViewModel(
      */
     fun refreshPendingCount() {
         _pendingCount.value = pending.size
+        // Un orologio riacceso a meta' partita, col telefono in borsa, deve ritrovare il
+        // punteggio che aveva: non basta sapere quanti tocchi sono in coda.
+        if (pending.size == 0) return
+        if (statoDalTelefono == null) statoDalTelefono = statoDaDisco()
+        rebuildLocalState()
     }
 
     /**
@@ -377,6 +490,10 @@ class WearViewModel(
         pending.removeFirst(inVolo.second)
         batchInVolo = null
         _pendingCount.value = pending.size
+        // Coda vuota: l'autorita' torna al telefono, e a schermo va cio' che ha mandato per ultimo.
+        if (pending.size == 0 || !rebuildLocalState()) {
+            statoDalTelefono?.let { _scoreState.value = it }
+        }
     }
 
     /**
@@ -436,6 +553,9 @@ class WearViewModel(
             // "tenuto da parte", e il conteggio in attesa lo dice a schermo.
             val accodato = pending.add(PendingIntent(kind, side, quando))
             _pendingCount.value = pending.size
+            // Il gesto smette di essere cieco: il punteggio a schermo si aggiorna subito, calcolato
+            // qui, e sara' identico a quello che il telefono calcolera' ricevendo la coda.
+            if (accodato) rebuildLocalState()
             if (accodato) triggerBufferedVibration() else triggerFailureVibration()
         }
     }

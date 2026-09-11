@@ -85,6 +85,7 @@ class WearProtocolGoldenTest {
         assertEquals("sport_ids", WearConstants.KEY_SPORT_IDS)
         assertEquals("sport_labels", WearConstants.KEY_SPORT_LABELS)
         assertEquals("match_in_progress", WearConstants.KEY_MATCH_IN_PROGRESS)
+        assertEquals("event_log", WearConstants.KEY_EVENT_LOG)
         assertEquals("|", WearConstants.SPORT_SEPARATOR)
         assertEquals("at_millis", WearConstants.KEY_AT_MILLIS)
         assertEquals("intent_batch", WearConstants.KEY_INTENT_BATCH)

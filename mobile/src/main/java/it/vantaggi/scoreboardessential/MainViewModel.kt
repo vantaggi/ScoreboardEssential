@@ -809,6 +809,7 @@ class MainViewModel(
         val capacita = sportRules.capabilities
         val scegliibili = SportRegistry.selectable()
         val partitaIniziata = engine.log.isNotEmpty()
+        val registro = MatchLogCodec.encode(engine.log)
         viewModelScope.launch {
             val data =
                 mapOf(
@@ -836,6 +837,9 @@ class MainViewModel(
                     // lo sa PRIMA di chiederlo, e puo' dirlo invece di far partire una richiesta
                     // che sa gia' come finisce.
                     WearConstants.KEY_MATCH_IN_PROGRESS to partitaIniziata,
+                    // Il registro, non il punteggio: e' cio' che permette al polso di rifare lo
+                    // stesso calcolo con lo stesso codice quando resta senza telefono.
+                    WearConstants.KEY_EVENT_LOG to registro,
                 )
             connectionManager.sendData(
                 path = WearConstants.PATH_STATE_V2,
