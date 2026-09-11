@@ -19,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.ClockMode
 import it.vantaggi.scoreboardessential.core.ExportResult
@@ -315,11 +316,20 @@ class MainViewModel(
                         if (side != 1 && side != 2) return
                         // Il lato dice DOVE, il tipo dice COSA. Tenerli separati e' cio' che evita
                         // di caricare un campo di piu' significati.
+                        // Zero da un orologio che non manda l'orario: si usa quello di arrivo.
+                        val quando = intent.getLongExtra(WearConstants.KEY_AT_MILLIS, 0L).takeIf { it > 0L }
                         when (intent.getStringExtra(WearConstants.KEY_INTENT_KIND)) {
                             WearConstants.INTENT_UNDO -> undoLastGoal()
-                            WearConstants.INTENT_CORRECTION -> subtractScore(side)
-                            else -> addRemotePoint(side)
+                            WearConstants.INTENT_CORRECTION -> subtractScore(side, quando)
+                            else -> addRemotePoint(side, quando)
                         }
+                    }
+
+                    SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH -> {
+                        applyWatchBatch(
+                            intent.getStringExtra(WearConstants.KEY_INTENT_BATCH).orEmpty(),
+                            intent.getLongExtra(WearConstants.KEY_SEQ, 0L),
+                        )
                     }
 
                     SimplifiedDataLayerListenerService.ACTION_SPORT_INTENT -> {
@@ -503,6 +513,12 @@ class MainViewModel(
     /** L'orologio ha chiesto un cambio sport a partita gia' cominciata. */
     val sportChangeRejected = SingleLiveEvent<Unit>()
 
+    /** L'orologio ha consegnato una partita registrata da solo, e questi sono i tocchi applicati. */
+    val watchBatchApplied = SingleLiveEvent<Int>()
+
+    /** Consegna rifiutata: c'e' gia' una partita in corso sul telefono. L'arretrato resta al polso. */
+    val watchBatchRejected = SingleLiveEvent<Unit>()
+
     val showOnboarding = SingleLiveEvent<Unit>()
     val showSelectScorerDialog = SingleLiveEvent<Pair<Int, List<PlayerWithRoles>>>()
     val showPlayerSelectionDialog = SingleLiveEvent<Int>()
@@ -580,6 +596,7 @@ class MainViewModel(
                 addAction(SimplifiedDataLayerListenerService.ACTION_REQUEST_SYNC)
                 addAction(SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT)
                 addAction(SimplifiedDataLayerListenerService.ACTION_SPORT_INTENT)
+                addAction(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
                 addAction(SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED)
             }
         androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -936,6 +953,57 @@ class MainViewModel(
     }
 
     /**
+     * Una partita segnata dal solo orologio, consegnata quando il telefono e' tornato.
+     *
+     * Le voci portano l'orario in cui il tocco E' STATO DATO, e vengono ripiegate nel motore a
+     * quegli orari: una partita giocata alle 18 e consegnata alle 20 resta una partita delle 18,
+     * quindi durata, serie e tempi esportati restano quelli veri.
+     *
+     * SI APPLICA SOLO SU UNA PARTITA VUOTA. Se il telefono ha gia' eventi suoi, fondere due
+     * registri sarebbe una scelta arbitraria fatta al posto dell'utente: non si applica, non si
+     * conferma, e l'arretrato resta sull'orologio -- che riprovera' al collegamento successivo.
+     * Nessuna perdita, e la decisione resta a chi sa quale delle due partite conta.
+     */
+    private fun applyWatchBatch(
+        batch: String,
+        seq: Long,
+    ) {
+        if (batch.isBlank() || seq <= 0L) return
+        if (engine.log.isNotEmpty()) {
+            watchBatchRejected.call()
+            return
+        }
+
+        var applicati = 0
+        batch.split(WearConstants.BATCH_SEPARATOR).forEach { voce ->
+            val campi = voce.split(WearConstants.BATCH_FIELD_SEPARATOR)
+            val side = campi.getOrNull(1)?.toIntOrNull() ?: return@forEach
+            val quando = campi.getOrNull(2)?.toLongOrNull() ?: return@forEach
+            if (side != 1 && side != 2) return@forEach
+            when (campi[0]) {
+                WearConstants.INTENT_UNDO -> engine.undo()
+                WearConstants.INTENT_CORRECTION -> engine.apply(ScoringEvent.Correction(side = side), quando)
+                WearConstants.INTENT_POINT -> engine.apply(ScoringEvent.Point(side = side), quando)
+                else -> return@forEach
+            }
+            applicati++
+        }
+        if (applicati == 0) return
+
+        publishEngineState()
+        persistLiveMatch()
+        watchBatchApplied.value = applicati
+
+        // La conferma parte SOLO ora: e' il ViewModel ad averlo applicato, e solo lui puo' dirlo.
+        viewModelScope.launch {
+            connectionManager.sendMessage(
+                WearConstants.MSG_BATCH_ACK,
+                DataMap().apply { putLong(WearConstants.KEY_SEQ, seq) }.toByteArray(),
+            )
+        }
+    }
+
+    /**
      * Applica un punto arrivato come INTENZIONE dall'orologio.
      *
      * Non riusa [addScore] di proposito. [addScore] apre il dialogo del marcatore, che e' una
@@ -949,8 +1017,11 @@ class MainViewModel(
      * Nemmeno la vibrazione viene riprodotta: e' la conferma tattile di un tocco locale, e chi ha
      * toccato sta guardando l'orologio.
      */
-    private fun addRemotePoint(side: Int) {
-        engine.apply(ScoringEvent.Point(side = side))
+    private fun addRemotePoint(
+        side: Int,
+        atMillis: Long? = null,
+    ) {
+        engine.apply(ScoringEvent.Point(side = side), atMillis)
         publishEngineState()
 
         // L'orologio manda l'intenzione E POI, se lo sport attribuisce il marcatore e c'e' un
@@ -965,9 +1036,12 @@ class MainViewModel(
         }
     }
 
-    fun subtractScore(teamId: Int) {
+    fun subtractScore(
+        teamId: Int,
+        atMillis: Long? = null,
+    ) {
         val prima = engine.state.headline()
-        engine.apply(ScoringEvent.Correction(side = teamId))
+        engine.apply(ScoringEvent.Correction(side = teamId), atMillis)
         val dopo = engine.state.headline()
 
         // Come prima: gli effetti collaterali scattano solo se il punteggio e' davvero cambiato.

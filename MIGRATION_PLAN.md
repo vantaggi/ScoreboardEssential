@@ -606,3 +606,70 @@ chiedesse lo stesso, a rifiutare sarebbe comunque il telefono, con uno Snackbar.
 "packed" di larghezze `wrap_content`. Stimati ~122dp in totale, contro i ~136dp del
 quadrato inscritto di un quadrante da 192dp: entrano. Su un quadrante da 160dp non
 entrerebbero, ma non esistono Wear OS moderni cosi' piccoli. Va **verificato**.
+
+### Partita segnata dal solo orologio - 11 settembre 2026
+
+Chiesto: «qualcuno usa solo l'app dal watch per registrare la partita e poi la vuole
+inviare dal telefono». **Prima non funzionava affatto**, e non in modo parziale:
+sull'orologio non esisteva NESSUNA persistenza (nessun `SharedPreferences`, nessun
+file, nessun database), e un tocco non consegnato produceva una vibrazione di errore e
+spariva. Con il telefono in borsa si perdeva la partita intera.
+
+**Il disegno non sposta l'autorita'.** L'orologio registra INTENZIONI con il loro
+orario, non punteggi: quando il telefono non risponde le mette in coda su disco, e al
+ritorno le spedisce. Il telefono le ripiega nel motore ai tempi giusti. Per un motore
+che rifa' il calcolo dall'inizio a ogni annullamento, riapplicare un registro **e'
+letteralmente la stessa operazione** di riceverlo dal vivo.
+
+| Pezzo | Dove |
+|---|---|
+| la coda su disco | `wear/.../PendingIntents.kt` |
+| l'arretrato in un messaggio solo | `MSG_INTENT_BATCH` |
+| la conferma di applicazione | `MSG_BATCH_ACK` |
+| l'orario del tocco | `KEY_AT_MILLIS`, nel singolo e nel blocco |
+
+**Tre decisioni che valgono piu' del codice.**
+
+1. **L'arretrato parte come UN messaggio.** `MessageClient` non garantisce l'ordine:
+   due tocchi che arrivassero invertiti farebbero scartare il piu' vecchio dalla
+   guardia sulla sequenza, cioe' perdere un punto proprio mentre si recupera una
+   partita intera. Un messaggio, una sequenza, applicato in ordine dall'altra parte.
+2. **La coda si svuota sulla CONFERMA, non sulla consegna.** "Consegnato al nodo" non
+   vuol dire "applicato": il messaggio raggiunge il servizio del telefono anche ad app
+   chiusa, e quel servizio non conosce le regole di nessuno sport -- puo' solo inoltrare
+   a un ViewModel che potrebbe non esistere. Il telefono conferma **dopo** aver
+   applicato, e solo allora l'orologio cancella.
+3. **L'orario e' quello del tocco, non della consegna.** Una partita giocata alle 18 e
+   consegnata alle 20 resta una partita delle 18: altrimenti il riassunto direbbe che
+   e' durata due ore, e i tempi esportati verso Padel Elite sarebbero tutti sbagliati
+   nello stesso modo.
+
+**Niente fusioni decise al posto dell'utente.** Se il telefono ha gia' eventi suoi,
+l'arretrato **non** viene applicato e **non** viene confermato: resta sull'orologio, che
+riprovera' al collegamento successivo, e il telefono lo dice. Nessuna perdita, e la
+scelta di quale partita conti resta a chi la sa.
+
+**Il tetto e' 2000 voci.** Un padel lungo sta abbondantemente sotto (3 set da 13 game da
+~7 punti fanno meno di 300 tocchi); il tetto serve al caso in cui l'orologio resti a
+registrare per giorni senza mai trovare il telefono. Oltre, il tocco non viene
+registrato e la vibrazione lo dice.
+
+**Al polso si vede.** La riga in basso diceva «NIENTE TELEFONO», che si legge come «non
+sto registrando niente» -- il contrario di quel che succede. Ora dice anche quanti punti
+stanno aspettando. La vibrazione ha un terzo pattern: conferma, **tenuto da parte**,
+errore.
+
+**Copertura.** `PendingIntentsTest`, 7 test, verificato per falsificazione: sostituendo
+`removeFirst(n)` con uno svuotamento totale, il test che protegge dalla perdita dei
+punti segnati durante la consegna diventa rosso.
+
+### Quello che ancora NON fa
+
+**Il punteggio non si vede al polso mentre il telefono non c'e'.** L'orologio continua a
+mostrare l'ultimo stato ricevuto piu' il conteggio in attesa: i tocchi sono salvi, ma
+per un'ora si segna alla cieca. Mostrare il punteggio vero offline richiede che `:wear`
+dipenda da `:core` e tenga un motore locale da usare **solo** senza telefono. E'
+fattibile e coerente (i due motori folderebbero gli stessi eventi con lo stesso codice,
+quindi non possono divergere), ma e' un cambio di dipendenze fra moduli e va deciso, non
+dedotto: il costo e' che da quel momento un nuovo sport richiede di aggiornare **anche**
+l'APK dell'orologio per funzionare offline.

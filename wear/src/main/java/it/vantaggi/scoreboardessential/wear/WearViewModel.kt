@@ -119,6 +119,20 @@ class WearViewModel(
         private const val TAG = "WearViewModel"
     }
 
+    /**
+     * I tocchi dati mentre il telefono non c'era.
+     *
+     * Prima venivano buttati via con una vibrazione di errore: chi voleva segnare una partita dal
+     * solo polso e mandarla dopo non poteva, perche' non c'era un "dopo".
+     */
+    private val pending by lazy { PendingIntents(getApplication()) }
+
+    private val _pendingCount = MutableStateFlow(0)
+    val pendingCount = _pendingCount.asStateFlow()
+
+    /** Sequenza dell'arretrato spedito e in attesa di conferma, e quante voci comprendeva. */
+    private var batchInVolo: Pair<Long, Int>? = null
+
     // Stato v2: il telefono e' autoritativo, qui c'e' solo il testo da mettere a schermo.
     private val _scoreState = MutableStateFlow<WearScoreState?>(null)
     val scoreState = _scoreState.asStateFlow()
@@ -311,6 +325,61 @@ class WearViewModel(
     }
 
     /**
+     * Rilegge quante voci ci sono in coda.
+     *
+     * La coda e' `by lazy` e il conteggio parte da zero perche' costruire il ViewModel non deve
+     * toccare il disco: sotto test l'Application e' finta e `getSharedPreferences` ritorna null.
+     * Chiamarla all'avvio della schermata e' anche l'unico momento in cui serve davvero -- un
+     * orologio riacceso con una partita in coda deve dirlo subito.
+     */
+    fun refreshPendingCount() {
+        _pendingCount.value = pending.size
+    }
+
+    /**
+     * Spedisce l'arretrato in UN messaggio e aspetta la conferma prima di cancellarlo.
+     *
+     * Un messaggio solo perche' MessageClient non garantisce l'ordine: due tocchi invertiti
+     * farebbero scartare il piu' vecchio dalla guardia sulla sequenza del telefono, cioe'
+     * perdere un punto proprio mentre si recupera una partita intera.
+     *
+     * La coda si svuota su [onBatchAck], non sulla consegna: il messaggio raggiunge il servizio
+     * del telefono anche ad app chiusa, e quel servizio non sa applicare niente.
+     */
+    fun flushPending() {
+        val voci = pending.all()
+        if (voci.isEmpty() || batchInVolo != null) return
+        val seq = ++intentSequence
+        batchInVolo = seq to voci.size
+        viewModelScope.launch {
+            val payload =
+                DataMap().apply {
+                    putString(
+                        WearConstants.KEY_INTENT_BATCH,
+                        voci.joinToString(WearConstants.BATCH_SEPARATOR) {
+                            listOf(it.kind, it.side.toString(), it.atMillis.toString())
+                                .joinToString(WearConstants.BATCH_FIELD_SEPARATOR)
+                        },
+                    )
+                    putLong(WearConstants.KEY_SEQ, seq)
+                }
+            if (!connectionManager.sendMessage(WearConstants.MSG_INTENT_BATCH, payload.toByteArray())) {
+                // Non e' partito: si riprova al prossimo collegamento, con una sequenza nuova.
+                batchInVolo = null
+            }
+        }
+    }
+
+    /** Il telefono ha applicato: solo ora le voci consegnate escono dalla coda. */
+    fun onBatchAck(seq: Long) {
+        val inVolo = batchInVolo ?: return
+        if (seq != inVolo.first) return
+        pending.removeFirst(inVolo.second)
+        batchInVolo = null
+        _pendingCount.value = pending.size
+    }
+
+    /**
      * Chiede al telefono di cambiare sport. La decisione non e' di questo lato.
      *
      * Stesso contatore delle intenzioni di punteggio, perche' la sequenza e' UNA per nodo: se ne
@@ -346,19 +415,40 @@ class WearViewModel(
         kind: String,
     ) {
         val seq = ++intentSequence
+        // L'orario si prende ORA, non quando il messaggio partira': un tocco messo in coda e
+        // consegnato due ore dopo deve restare il tocco delle 18.
+        val quando = System.currentTimeMillis()
         viewModelScope.launch {
             val payload =
                 DataMap().apply {
                     putInt(WearConstants.KEY_SIDE, side)
                     putString(WearConstants.KEY_INTENT_KIND, kind)
                     putLong(WearConstants.KEY_SEQ, seq)
+                    putLong(WearConstants.KEY_AT_MILLIS, quando)
                 }
             val consegnato = connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
-            // Il gesto e' cieco: sullo schermo non cambia niente finche' il telefono non risponde.
-            // Quindi il polso deve distinguere "preso" da "non arrivato", altrimenti si continua a
-            // segnare convinti mentre il tabellone e' fermo.
-            if (consegnato) triggerShortVibration() else triggerFailureVibration()
+            if (consegnato) {
+                triggerShortVibration()
+                return@launch
+            }
+            // Non arrivato: si REGISTRA invece di sparire. Il gesto e' cieco -- sullo schermo non
+            // cambia niente -- quindi il polso deve comunque distinguere "preso dal telefono" da
+            // "tenuto da parte", e il conteggio in attesa lo dice a schermo.
+            val accodato = pending.add(PendingIntent(kind, side, quando))
+            _pendingCount.value = pending.size
+            if (accodato) triggerBufferedVibration() else triggerFailureVibration()
         }
+    }
+
+    /**
+     * Tocco tenuto da parte: un colpo lungo, diverso sia dalla conferma sia dall'errore.
+     *
+     * Non e' un fallimento e non deve suonare come tale -- il punto e' salvo, arrivera' al
+     * telefono da solo -- ma non e' nemmeno la conferma normale, perche' il tabellone del
+     * telefono in quel momento non si sta muovendo.
+     */
+    private fun triggerBufferedVibration() {
+        vibrator?.vibrate(VibrationEffect.createOneShot(180, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 
     /**

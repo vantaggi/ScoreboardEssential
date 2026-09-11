@@ -27,6 +27,7 @@ class WearDataLayerService : WearableListenerService() {
         const val ACTION_RESET_MATCH = "it.vantaggi.scoreboardessential.wear.RESET_MATCH"
         const val ACTION_PLAYERS_UPDATE = "it.vantaggi.scoreboardessential.wear.PLAYERS_UPDATE"
         const val ACTION_STATE_V2_UPDATE = "it.vantaggi.scoreboardessential.wear.STATE_V2_UPDATE"
+        const val ACTION_BATCH_ACK = "it.vantaggi.scoreboardessential.wear.BATCH_ACK"
 
         // Extras
         const val EXTRA_TEAM1_SCORE = "team1_score"
@@ -197,6 +198,16 @@ class WearDataLayerService : WearableListenerService() {
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Message received: ${messageEvent.path}")
         }
-        // Wear currently only consumes data items; reserved for future message handling.
+        if (messageEvent.path != WearConstants.MSG_BATCH_ACK) return
+        // Il telefono dice di AVER APPLICATO l'arretrato. Finche' questo non arriva, la coda
+        // sull'orologio non si tocca: e' l'unica differenza fra "consegnato" e "salvo".
+        val seq =
+            com.google.android.gms.wearable.DataMap
+                .fromByteArray(messageEvent.data)
+                .getLong(WearConstants.KEY_SEQ, 0L)
+        if (seq <= 0L) return
+        LocalBroadcastManager.getInstance(this).sendBroadcast(
+            Intent(ACTION_BATCH_ACK).apply { putExtra(WearConstants.KEY_SEQ, seq) },
+        )
     }
 }

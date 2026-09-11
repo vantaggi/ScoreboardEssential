@@ -27,4 +27,5 @@
     <string name="wear_sport_title">SPORT</string>
     <string name="wear_sport_current">in use</string>
     <string name="wear_sport_locked">Match in progress</string>
+    <string name="wear_hint_pending">NO PHONE - %1$d WAITING</string>
 </resources>

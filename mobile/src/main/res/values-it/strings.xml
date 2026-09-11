@@ -96,6 +96,11 @@
     <string name="padel_link_hint">Id del giocatore nel tuo gruppo Padel Elite. Vuoto se non collegato.</string>
     <string name="share_match_report">Condividi</string>
     <string name="score_period_serving">%1$s - serve %2$s</string>
+    <plurals name="watch_batch_applied">
+        <item quantity="one">Partita dal polso: %1$d azione importata.</item>
+        <item quantity="other">Partita dal polso: %1$d azioni importate.</item>
+    </plurals>
+    <string name="watch_batch_rejected">Qui una partita è già aperta. Chiudila: poi arriverà quella registrata al polso.</string>
     <string name="export_match">Esporta partita</string>
     <string name="export_ready">Partita esportata</string>
     <string name="export_needs_four">Servono esattamente 4 giocatori distinti per esportare</string>

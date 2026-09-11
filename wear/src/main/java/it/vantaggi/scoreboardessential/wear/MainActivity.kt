@@ -40,6 +40,7 @@ class MainActivity : ComponentActivity() {
     // Cosa dice la riga in basso dipende da DUE cose: lo sport e il collegamento.
     private var annullamentoGlobale = false
     private var telefonoRaggiungibile = true
+    private var daConsegnare = 0
     private val viewModel: WearViewModel by viewModels()
 
     private var stateRestored = false
@@ -54,6 +55,10 @@ class MainActivity : ComponentActivity() {
                     WearDataLayerService.ACTION_STATE_V2_UPDATE -> {
                         val payload = intent.getByteArrayExtra(WearDataLayerService.EXTRA_V2_PAYLOAD) ?: return
                         viewModel.applyStateV2(WearScoreState.fromDataMap(DataMap.fromByteArray(payload)))
+                    }
+
+                    WearDataLayerService.ACTION_BATCH_ACK -> {
+                        viewModel.onBatchAck(intent.getLongExtra(WearConstants.KEY_SEQ, 0L))
                     }
 
                     WearDataLayerService.ACTION_SCORE_UPDATE -> {
@@ -121,11 +126,13 @@ class MainActivity : ComponentActivity() {
 
         setupClickListeners()
         applyGestureLabels(decrementIsUndo = false)
+        viewModel.refreshPendingCount()
         observeViewModel()
 
         val filter =
             android.content.IntentFilter().apply {
                 addAction(WearDataLayerService.ACTION_STATE_V2_UPDATE)
+                addAction(WearDataLayerService.ACTION_BATCH_ACK)
                 addAction(WearDataLayerService.ACTION_SCORE_UPDATE)
                 addAction(WearDataLayerService.ACTION_TEAM_NAMES_UPDATE)
                 addAction(WearDataLayerService.ACTION_TEAM_COLOR_UPDATE)
@@ -313,6 +320,8 @@ class MainActivity : ComponentActivity() {
      */
     private fun applyConnectionState(connesso: Boolean) {
         telefonoRaggiungibile = connesso
+        // Il telefono e' tornato: cio' che si e' segnato senza di lui parte adesso, da solo.
+        if (connesso) viewModel.flushPending()
         val colore = if (connesso) R.color.team_electric_green else R.color.error_red
         binding.connectionStatusIndicator.backgroundTintList =
             ColorStateList.valueOf(ContextCompat.getColor(this, colore))
@@ -344,7 +353,15 @@ class MainActivity : ComponentActivity() {
     /** La riga in basso ha una cosa sola da dire, e quale sia lo decide qui. */
     private fun refreshHint() {
         if (!telefonoRaggiungibile) {
-            binding.gestureHint.setText(R.string.wear_hint_disconnected)
+            // Quanti punti sono stati segnati e stanno aspettando il telefono. Senza questo
+            // numero, "NIENTE TELEFONO" si legge come "non sto registrando niente", che e'
+            // esattamente il contrario di quello che sta succedendo.
+            binding.gestureHint.text =
+                if (daConsegnare > 0) {
+                    getString(R.string.wear_hint_pending, daConsegnare)
+                } else {
+                    getString(R.string.wear_hint_disconnected)
+                }
             binding.gestureHint.setTextColor(ContextCompat.getColor(this, R.color.error_red))
             return
         }
@@ -382,6 +399,13 @@ class MainActivity : ComponentActivity() {
                     // ridisegna lo stato v2 a ogni ritorno in STARTED: e' il rimedio al risveglio.
                     viewModel.scoreState.collect { state ->
                         state?.let { renderScoreState(it) }
+                    }
+                }
+
+                launch {
+                    viewModel.pendingCount.collect { quanti ->
+                        daConsegnare = quanti
+                        refreshHint()
                     }
                 }
 

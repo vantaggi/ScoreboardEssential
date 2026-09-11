@@ -57,6 +57,26 @@ object WearConstants {
      */
     const val MSG_SPORT_INTENT = "/scoreboard/v2/sport"
 
+    /**
+     * L'arretrato registrato mentre il telefono non c'era, in UN messaggio solo.
+     *
+     * Non una raffica di [MSG_SCORE_INTENT]: MessageClient non garantisce l'ordine, e due tocchi
+     * che arrivassero invertiti farebbero scartare il piu' vecchio dalla guardia sulla sequenza --
+     * cioe' perdere un punto proprio nel momento in cui si sta recuperando una partita intera.
+     * Un messaggio solo, una sequenza sola, applicato in ordine dall'altra parte.
+     */
+    const val MSG_INTENT_BATCH = "/scoreboard/v2/intent_batch"
+
+    /**
+     * Il telefono conferma di AVER APPLICATO l'arretrato. Senza, l'orologio non lo cancella.
+     *
+     * "Consegnato al nodo" non vuol dire "applicato": il messaggio arriva al servizio anche con
+     * l'app chiusa, e il servizio non conosce le regole -- puo' solo inoltrare a un ViewModel che
+     * potrebbe non esistere. Cancellare la coda sulla consegna butterebbe via una partita intera
+     * proprio nel caso in cui e' piu' probabile che l'app non sia in primo piano.
+     */
+    const val MSG_BATCH_ACK = "/scoreboard/v2/batch_ack"
+
     const val PROTO_VERSION = 2
 
     const val KEY_PROTO_VERSION = "proto_version"
@@ -109,6 +129,21 @@ object WearConstants {
      * inerte. Il tipo esplicito rende quel guasto impossibile invece di allargare una guardia.
      */
     const val KEY_INTENT_KIND = "intent_kind"
+
+    /**
+     * QUANDO il tocco e' stato dato, non quando e' arrivato.
+     *
+     * Durate, serie e tempi esatti dei punti si calcolano da qui. Una partita giocata alle 18 e
+     * consegnata al telefono alle 20 -- perche' il telefono era in borsa -- deve restare una
+     * partita delle 18, altrimenti il riassunto direbbe che e' durata due ore e i tempi esportati
+     * verso Padel Elite sarebbero tutti sbagliati nello stesso modo.
+     */
+    const val KEY_AT_MILLIS = "at_millis"
+
+    /** Le voci dell'arretrato: `kind,side,atMillis` separate da `;`. */
+    const val KEY_INTENT_BATCH = "intent_batch"
+    const val BATCH_SEPARATOR = ";"
+    const val BATCH_FIELD_SEPARATOR = ","
     const val INTENT_POINT = "point"
     const val INTENT_CORRECTION = "correction"
     const val INTENT_UNDO = "undo"

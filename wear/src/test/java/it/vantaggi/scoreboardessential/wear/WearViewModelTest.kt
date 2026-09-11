@@ -56,6 +56,17 @@ class WearViewModelTest {
         Mockito.`when`(packageManager.hasSystemFeature(Mockito.anyString())).thenReturn(false)
         Mockito.`when`(application.applicationContext).thenReturn(application)
 
+        // L'Application e' un mock, quindi getSharedPreferences ritorna null e la coda dei tocchi
+        // non consegnati esplode al primo uso. Si restituisce quella VERA di Robolectric: cosi' la
+        // coda viene esercitata sul serio invece di essere aggirata.
+        Mockito
+            .`when`(application.getSharedPreferences(Mockito.anyString(), Mockito.anyInt()))
+            .thenAnswer { invocazione ->
+                org.robolectric.RuntimeEnvironment
+                    .getApplication()
+                    .getSharedPreferences(invocazione.getArgument(0), invocazione.getArgument(1))
+            }
+
         // I client GMS sono mockati: il costruttore reale li istanzia davvero e il
         // loro GoogleApiHandler muore sul looper di Robolectric, facendo fallire il
         // primo test che tocca il ViewModel.

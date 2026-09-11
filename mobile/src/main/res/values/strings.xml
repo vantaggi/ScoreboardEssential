@@ -97,6 +97,11 @@
     <string name="padel_link_hint">Player id in your Padel Elite group. Leave empty if not linked.</string>
     <string name="share_match_report">Share</string>
     <string name="score_period_serving">%1$s - serve %2$s</string>
+    <plurals name="watch_batch_applied">
+        <item quantity="one">Match from the watch: %1$d action imported.</item>
+        <item quantity="other">Match from the watch: %1$d actions imported.</item>
+    </plurals>
+    <string name="watch_batch_rejected">A match is already open here. End it, and the one from the watch will arrive.</string>
     <string name="export_match">Export match</string>
     <string name="export_ready">Match exported</string>
     <string name="export_needs_four">Padel export needs exactly 4 distinct players</string>

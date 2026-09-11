@@ -25,6 +25,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         const val ACTION_SCORER_SELECTED = "it.vantaggi.scoreboardessential.SCORER_SELECTED"
         const val ACTION_SCORE_INTENT = "it.vantaggi.scoreboardessential.SCORE_INTENT"
         const val ACTION_SPORT_INTENT = "it.vantaggi.scoreboardessential.SPORT_INTENT"
+        const val ACTION_INTENT_BATCH = "it.vantaggi.scoreboardessential.INTENT_BATCH"
 
         /**
          * Ultima sequenza vista, PER NODO.
@@ -160,6 +161,10 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                 WearConstants.MSG_SPORT_INTENT -> {
                     handleSportIntent(messageEvent.sourceNodeId, messageEvent.data)
                 }
+
+                WearConstants.MSG_INTENT_BATCH -> {
+                    handleIntentBatch(messageEvent.sourceNodeId, messageEvent.data)
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error handling message ${messageEvent.path}", e)
@@ -213,11 +218,53 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
             Intent(ACTION_SCORE_INTENT).apply {
                 putExtra(WearConstants.KEY_SIDE, side)
                 putExtra(WearConstants.KEY_INTENT_KIND, kind)
+                // Zero da un orologio che non lo manda: il ViewModel usera' l'ora di arrivo.
+                putExtra(WearConstants.KEY_AT_MILLIS, dataMap.getLong(WearConstants.KEY_AT_MILLIS, 0L))
             }
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Broadcasted score intent $kind for side $side (seq=$seq)")
         }
+    }
+
+    /**
+     * L'arretrato di una partita segnata col telefono lontano.
+     *
+     * Arriva come una stringa sola invece che come tanti messaggi, e viene passata di peso al
+     * ViewModel: questo servizio non conosce le regole di nessuno sport e non deve cominciare ora.
+     * La sequenza vale per il BLOCCO, quindi una riconsegna del messaggio non riapplica niente.
+     */
+    private fun handleIntentBatch(
+        sourceNodeId: String,
+        data: ByteArray?,
+    ) {
+        if (data == null || data.isEmpty()) {
+            Log.w(TAG, "Empty intent-batch payload. Ignoring.")
+            return
+        }
+        val dataMap = DataMap.fromByteArray(data)
+        val batch = dataMap.getString(WearConstants.KEY_INTENT_BATCH, "")
+        val seq = dataMap.getLong(WearConstants.KEY_SEQ, dataMap.getInt(WearConstants.KEY_SEQ, 0).toLong())
+        if (batch.isBlank() || seq <= 0L) {
+            Log.w(TAG, "Invalid intent-batch fields (seq=$seq). Ignoring.")
+            return
+        }
+
+        val ultima = lastSeqByNode[sourceNodeId] ?: 0L
+        if (seq <= ultima) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Intent batch already seen (seq=$seq <= $ultima). Ignoring.")
+            }
+            return
+        }
+        lastSeqByNode[sourceNodeId] = seq
+
+        LocalBroadcastManager.getInstance(this).sendBroadcast(
+            Intent(ACTION_INTENT_BATCH).apply {
+                putExtra(WearConstants.KEY_INTENT_BATCH, batch)
+                putExtra(WearConstants.KEY_SEQ, seq)
+            },
+        )
     }
 
     /**
