@@ -11,7 +11,14 @@ import com.google.android.material.color.MaterialColors
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 
-class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHolder>(MatchEventDiffCallback()) {
+/**
+ * @param onAttribuisci invocato toccando un gol a cui manca il marcatore. E' la strada che ha
+ *   sostituito il dialogo che si apriva da solo dopo ogni gol: la domanda aspetta, e la fa
+ *   l'utente quando gli va invece che l'app mentre si guarda il campo.
+ */
+class MatchLogAdapter(
+    private val onAttribuisci: (MatchEvent) -> Unit = {},
+) : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHolder>(MatchEventDiffCallback()) {
     var team1Color: Int = 0
     var team2Color: Int = 0
 
@@ -30,7 +37,7 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
         holder: MatchEventViewHolder,
         position: Int,
     ) {
-        holder.bind(getItem(position), team1Color, team2Color)
+        holder.bind(getItem(position), team1Color, team2Color, onAttribuisci)
     }
 
     class MatchEventViewHolder(
@@ -44,17 +51,34 @@ class MatchLogAdapter : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHo
             event: MatchEvent,
             team1Color: Int,
             team2Color: Int,
+            onAttribuisci: (MatchEvent) -> Unit,
         ) {
             timestampTextView.text = event.timestamp
 
+            // Un gol senza marcatore E' attribuibile, e la riga deve dirlo. playerId e' il segnale
+            // affidabile: `player` contiene comunque il nome della squadra quando il marcatore
+            // manca, quindi non e' mai nullo e non distingue i due casi.
+            val daAttribuire = event.type == MatchEventType.SCORE && event.playerId == null && event.engineIndex != null
+
             val description =
-                if (event.type == MatchEventType.SCORE && event.player != null) {
-                    val roleInfo = if (event.playerRole?.isNotEmpty() == true) " (${event.playerRole})" else ""
-                    "GOAL! ${event.player}$roleInfo"
-                } else {
-                    event.event
+                when {
+                    event.type == MatchEventType.SCORE && event.playerId != null -> {
+                        val roleInfo = if (event.playerRole?.isNotEmpty() == true) " (${event.playerRole})" else ""
+                        "GOAL! ${event.player}$roleInfo"
+                    }
+
+                    daAttribuire -> {
+                        itemView.context.getString(R.string.log_goal_unattributed, event.player.orEmpty())
+                    }
+
+                    else -> {
+                        event.event
+                    }
                 }
             eventTextView.text = description
+
+            itemView.isClickable = daAttribuire
+            itemView.setOnClickListener(if (daAttribuire) View.OnClickListener { onAttribuisci(event) } else null)
 
             // Set team color indicator
             when (event.team) {

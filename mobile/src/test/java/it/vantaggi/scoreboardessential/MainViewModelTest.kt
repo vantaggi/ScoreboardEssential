@@ -12,6 +12,7 @@ import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
+import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
@@ -208,46 +209,62 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `addScore(1) increments score and shows scorer dialog`() {
-        // Arrange
-        val scoreObserver = Observer<Int> {}
-        val dialogObserver = Observer<Pair<Int, List<PlayerWithRoles>>> {}
-        viewModel.team1Score.observeForever(scoreObserver)
-        viewModel.showSelectScorerDialog.observeForever(dialogObserver)
-        viewModel.addPlayerToTeam(PlayerWithRoles(Player(1, "Player 1", 0, 0), emptyList()), 1)
+    fun `addScore(1) segna il punto e NON interrompe con il dialogo del marcatore`() =
+        runTest {
+            // Il dialogo si apriva qui, subito, nel momento di massima attenzione. Ora il gol si
+            // registra senza marcatore e la riga del registro resta attribuibile quando si vuole.
+            val scoreObserver = Observer<Int> {}
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            viewModel.team1Score.observeForever(scoreObserver)
+            viewModel.matchEvents.observeForever(eventiObserver)
+            viewModel.addPlayerToTeam(PlayerWithRoles(Player(1, "Player 1", 0, 0), emptyList()), 1)
 
-        // Act
-        viewModel.addScore(1)
+            viewModel.addScore(1)
+            // La riga del registro nasce dentro una coroutine: senza questo il test misurerebbe
+            // il momento prima che esista.
+            advanceUntilIdle()
 
-        // Assert
-        assertEquals(1, viewModel.team1Score.value)
-        assert(viewModel.showSelectScorerDialog.value != null)
+            assertEquals(1, viewModel.team1Score.value)
 
-        // Cleanup
-        viewModel.team1Score.removeObserver(scoreObserver)
-        viewModel.showSelectScorerDialog.removeObserver(dialogObserver)
-    }
+            val gol =
+                viewModel.matchEvents.value
+                    .orEmpty()
+                    .first { it.type == MatchEventType.SCORE }
+            assertEquals("il gol e' registrato ma non attribuito", null, gol.playerId)
+            assertEquals("e sa a quale punto del motore si riferisce", 0, gol.engineIndex)
+
+            viewModel.team1Score.removeObserver(scoreObserver)
+            viewModel.matchEvents.removeObserver(eventiObserver)
+        }
 
     @Test
-    fun `addScore(2) increments score and shows scorer dialog`() {
-        // Arrange
-        val scoreObserver = Observer<Int> {}
-        val dialogObserver = Observer<Pair<Int, List<PlayerWithRoles>>> {}
-        viewModel.team2Score.observeForever(scoreObserver)
-        viewModel.showSelectScorerDialog.observeForever(dialogObserver)
-        viewModel.addPlayerToTeam(PlayerWithRoles(Player(2, "Player 2", 0, 0), emptyList()), 2)
+    fun `addScore(2) segna il punto e NON interrompe con il dialogo del marcatore`() =
+        runTest {
+            // Il dialogo si apriva qui, subito, nel momento di massima attenzione. Ora il gol si
+            // registra senza marcatore e la riga del registro resta attribuibile quando si vuole.
+            val scoreObserver = Observer<Int> {}
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            viewModel.team2Score.observeForever(scoreObserver)
+            viewModel.matchEvents.observeForever(eventiObserver)
+            viewModel.addPlayerToTeam(PlayerWithRoles(Player(2, "Player 2", 0, 0), emptyList()), 2)
 
-        // Act
-        viewModel.addScore(2)
+            viewModel.addScore(2)
+            // La riga del registro nasce dentro una coroutine: senza questo il test misurerebbe
+            // il momento prima che esista.
+            advanceUntilIdle()
 
-        // Assert
-        assertEquals(1, viewModel.team2Score.value)
-        assert(viewModel.showSelectScorerDialog.value != null)
+            assertEquals(1, viewModel.team2Score.value)
 
-        // Cleanup
-        viewModel.team2Score.removeObserver(scoreObserver)
-        viewModel.showSelectScorerDialog.removeObserver(dialogObserver)
-    }
+            val gol =
+                viewModel.matchEvents.value
+                    .orEmpty()
+                    .first { it.type == MatchEventType.SCORE }
+            assertEquals("il gol e' registrato ma non attribuito", null, gol.playerId)
+            assertEquals("e sa a quale punto del motore si riferisce", 0, gol.engineIndex)
+
+            viewModel.team2Score.removeObserver(scoreObserver)
+            viewModel.matchEvents.removeObserver(eventiObserver)
+        }
 
     @Test
     fun `subtractScore(1) decrements score when greater than zero`() {
@@ -313,40 +330,6 @@ class MainViewModelTest {
 
         // Cleanup
         viewModel.team2Score.removeObserver(scoreObserver)
-    }
-
-    @Test
-    fun `subtractScore(1) does not show scorer dialog`() {
-        // Arrange
-        val dialogObserver = Observer<Pair<Int, List<PlayerWithRoles>>> {}
-        viewModel.showSelectScorerDialog.observeForever(dialogObserver)
-        viewModel.addScore(1) // Score is now 1
-
-        // Act
-        viewModel.subtractScore(1)
-
-        // Assert
-        assert(viewModel.showSelectScorerDialog.value == null)
-
-        // Cleanup
-        viewModel.showSelectScorerDialog.removeObserver(dialogObserver)
-    }
-
-    @Test
-    fun `subtractScore(2) does not show scorer dialog`() {
-        // Arrange
-        val dialogObserver = Observer<Pair<Int, List<PlayerWithRoles>>> {}
-        viewModel.showSelectScorerDialog.observeForever(dialogObserver)
-        viewModel.addScore(2) // Score is now 1
-
-        // Act
-        viewModel.subtractScore(2)
-
-        // Assert
-        assert(viewModel.showSelectScorerDialog.value == null)
-
-        // Cleanup
-        viewModel.showSelectScorerDialog.removeObserver(dialogObserver)
     }
 
     @Test

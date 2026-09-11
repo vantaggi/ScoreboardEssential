@@ -532,7 +532,6 @@ class MainViewModel(
     val watchBatchRejected = SingleLiveEvent<Unit>()
 
     val showOnboarding = SingleLiveEvent<Unit>()
-    val showSelectScorerDialog = SingleLiveEvent<Pair<Int, List<PlayerWithRoles>>>()
     val showPlayerSelectionDialog = SingleLiveEvent<Int>()
     val showKeeperTimerExpired = SingleLiveEvent<Unit>()
     val shareMatchReportData = SingleLiveEvent<MatchReportData>()
@@ -995,12 +994,11 @@ class MainViewModel(
 
         triggerHapticFeedback()
 
-        val players = if (teamId == 1) team1Players.value else team2Players.value
-        if (!players.isNullOrEmpty()) {
-            showSelectScorerDialog.postValue(Pair(teamId, players))
-        } else {
-            addScorer(teamId, null) // No player to select, just log the goal
-        }
+        // Il gol si registra e basta. Il dialogo del marcatore si apriva QUI, subito, nel
+        // momento di massima attenzione: hai appena visto segnare e stai guardando il campo, e
+        // l'app ti chiede di scegliere un nome da un elenco. Chi non sceglieva in fretta perdeva
+        // l'azione successiva. Ora si attribuisce quando si vuole, toccando la riga nel registro.
+        addScorer(teamId, null, engine.log.lastIndex)
     }
 
     /**
@@ -1083,7 +1081,7 @@ class MainViewModel(
         val roster = if (side == 1) team1Players.value else team2Players.value
         val attribuiraDopo = sportRules.capabilities.attributesScorer && !roster.isNullOrEmpty()
         if (!attribuiraDopo) {
-            addScorer(side, null)
+            addScorer(side, null, engine.log.lastIndex)
         }
     }
 
@@ -1111,6 +1109,7 @@ class MainViewModel(
     fun addScorer(
         team: Int,
         playerWithRoles: PlayerWithRoles?,
+        engineIndex: Int? = null,
     ) {
         viewModelScope.launch {
             val teamName = if (team == 1) _team1Name.value else _team2Name.value
@@ -1121,6 +1120,15 @@ class MainViewModel(
                 // una copia stantia riportava indietro i gol segnati nel frattempo.
                 playerDao.incrementGoals(playerWithRoles.player.playerId)
 
+                // Il marcatore entra anche nel registro del MOTORE, che e' l'unico che viene
+                // salvato. Prima finiva solo qui, in una lista di presentazione tenuta in memoria:
+                // spariva alla morte del processo mentre il punteggio sopravviveva, e non
+                // arrivava mai al riassunto, che legge ScoringEvent.Point.playerId.
+                engineIndex?.let {
+                    engine.attribute(it, playerWithRoles.player.playerId)
+                    persistLiveMatch()
+                }
+
                 val rolesString = playerWithRoles.roles.joinToString(", ") { it.name }
                 addMatchEvent(
                     "Goal",
@@ -1128,13 +1136,21 @@ class MainViewModel(
                     player = playerWithRoles.player.playerName,
                     playerRole = rolesString,
                     type = MatchEventType.SCORE,
+                    engineIndex = engineIndex,
+                    playerId = playerWithRoles.player.playerId,
                 )
 
                 // Track for Undo
                 actionStack.addLast(GoalAction(team, playerWithRoles.player.playerId, System.currentTimeMillis()))
             } else {
                 // No specific player, just log a goal for the team
-                addMatchEvent("Goal", team = team, player = teamName, type = MatchEventType.SCORE)
+                addMatchEvent(
+                    "Goal",
+                    team = team,
+                    player = teamName,
+                    type = MatchEventType.SCORE,
+                    engineIndex = engineIndex,
+                )
 
                 // Track for Undo (null playerId)
                 actionStack.addLast(GoalAction(team, null, System.currentTimeMillis()))
@@ -1162,11 +1178,45 @@ class MainViewModel(
             playerId?.let { id -> roster?.find { it.player.playerId == id } }
                 ?: roster?.find { it.player.playerName == playerName }
         if (match != null) {
-            addScorer(team, match)
+            // Il tocco e la scelta sono due messaggi consecutivi, processati in ordine sul thread
+            // principale: l'ultimo punto applicato e' il suo.
+            addScorer(team, match, engine.log.lastIndex)
         } else {
             addMatchEvent("Goal", team = team, player = playerName, type = MatchEventType.SCORE)
             actionStack.addLast(GoalAction(team, null, System.currentTimeMillis()))
             _canUndo.postValue(true)
+        }
+    }
+
+    /**
+     * Attribuisce un marcatore a un gol gia' registrato, scelto dal registro della partita.
+     *
+     * E' il sostituto del dialogo che si apriva da solo dopo ogni gol. La differenza non e' dove
+     * si tocca: e' QUANDO. Prima l'app interrompeva nel momento in cui si stava guardando il
+     * campo; ora la domanda aspetta, e a farla e' l'utente quando gli va.
+     */
+    fun attributeScorer(
+        engineIndex: Int,
+        playerWithRoles: PlayerWithRoles,
+    ) {
+        viewModelScope.launch {
+            engine.attribute(engineIndex, playerWithRoles.player.playerId)
+            persistLiveMatch()
+            playerDao.incrementGoals(playerWithRoles.player.playerId)
+
+            val ruoli = playerWithRoles.roles.joinToString(", ") { it.name }
+            synchronized(matchEventLog) {
+                val i = matchEventLog.indexOfFirst { it.engineIndex == engineIndex }
+                if (i >= 0) {
+                    matchEventLog[i] =
+                        matchEventLog[i].copy(
+                            player = playerWithRoles.player.playerName,
+                            playerRole = ruoli,
+                            playerId = playerWithRoles.player.playerId,
+                        )
+                    _matchEvents.postValue(matchEventLog.toList())
+                }
+            }
         }
     }
 
@@ -1265,13 +1315,18 @@ class MainViewModel(
         player: String? = null,
         playerRole: String? = null,
         type: MatchEventType = MatchEventType.INFO,
+        engineIndex: Int? = null,
+        playerId: Int? = null,
     ) {
         val timeFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
         val timestamp = timeFormat.format(Date(matchTimerValue.value ?: 0L))
 
         synchronized(matchEventLog) {
             // in testa: ordine cronologico inverso
-            matchEventLog.add(0, MatchEvent(timestamp, event, team, player, playerRole, type))
+            matchEventLog.add(
+                0,
+                MatchEvent(timestamp, event, team, player, playerRole, type, engineIndex, playerId),
+            )
             _matchEvents.postValue(matchEventLog.toList())
         }
     }

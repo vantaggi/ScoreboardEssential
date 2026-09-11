@@ -18,6 +18,7 @@ class SelectScorerDialogFragment : DialogFragment() {
         fun onScorerSelected(
             playerWithRoles: PlayerWithRoles,
             teamId: Int,
+            engineIndex: Int,
         )
     }
 
@@ -25,6 +26,7 @@ class SelectScorerDialogFragment : DialogFragment() {
     private var adapter: SelectScorerAdapter? = null
     private var playerIds: IntArray = IntArray(0)
     private var teamId: Int = 0
+    private var engineIndex: Int = -1
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -42,6 +44,7 @@ class SelectScorerDialogFragment : DialogFragment() {
         arguments?.let {
             playerIds = it.getIntArray(ARG_PLAYER_IDS) ?: IntArray(0)
             teamId = it.getInt(ARG_TEAM_ID)
+            engineIndex = it.getInt(ARG_ENGINE_INDEX, -1)
         }
     }
 
@@ -52,7 +55,7 @@ class SelectScorerDialogFragment : DialogFragment() {
         val recyclerView = view.findViewById<RecyclerView>(R.id.scorers_recyclerview)
         val scorerAdapter =
             SelectScorerAdapter { player ->
-                listener?.onScorerSelected(player, teamId)
+                listener?.onScorerSelected(player, teamId, engineIndex)
                 dismiss()
             }
         adapter = scorerAdapter
@@ -80,15 +83,23 @@ class SelectScorerDialogFragment : DialogFragment() {
 
         private const val ARG_PLAYER_IDS = "player_ids"
         private const val ARG_TEAM_ID = "team_id"
+        private const val ARG_ENGINE_INDEX = "engine_index"
 
+        /**
+         * @param engineIndex il punto a cui il marcatore va attribuito. Serve perche' la scelta
+         *   non arriva piu' subito dopo il gol: puo' arrivare dieci minuti e sei gol dopo, e
+         *   "l'ultimo punto" a quel momento sarebbe quello sbagliato.
+         */
         fun newInstance(
             players: List<PlayerWithRoles>,
             teamId: Int,
+            engineIndex: Int,
         ): SelectScorerDialogFragment {
             val args =
                 Bundle().apply {
                     putIntArray(ARG_PLAYER_IDS, players.map { it.player.playerId }.toIntArray())
                     putInt(ARG_TEAM_ID, teamId)
+                    putInt(ARG_ENGINE_INDEX, engineIndex)
                 }
             return SelectScorerDialogFragment().apply {
                 arguments = args

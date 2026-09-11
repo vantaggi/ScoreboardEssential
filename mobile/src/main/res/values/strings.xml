@@ -117,6 +117,8 @@
     <string name="cd_match_over">Match over</string>
     <string name="btn_discard_match">Discard</string>
     <string name="match_discarded">Match discarded</string>
+    <string name="log_goal_unattributed">GOAL! %1$s - tap to add the scorer</string>
+    <string name="no_players_to_attribute">No players in this team roster</string>
     <string name="export_match">Export match</string>
     <string name="export_ready">Match exported</string>
     <string name="export_needs_four">Padel export needs exactly 4 distinct players</string>

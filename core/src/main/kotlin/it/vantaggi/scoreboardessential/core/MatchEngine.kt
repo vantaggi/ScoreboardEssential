@@ -78,6 +78,33 @@ class MatchEngine(
         return state
     }
 
+    /**
+     * Attribuisce a un giocatore un punto gia' registrato.
+     *
+     * L'attribuzione arriva SEMPRE dopo il punto: sul telefono perche' ora si sceglie il marcatore
+     * quando si vuole invece che subito, sull'orologio perche' il tocco e la scelta sono due
+     * messaggi distinti. Senza questa operazione l'identita' del marcatore finiva solo in un
+     * registro di presentazione tenuto in memoria, e quindi:
+     *  - spariva alla morte del processo, mentre il punteggio sopravviveva;
+     *  - non arrivava mai al riassunto, che legge [ScoringEvent.Point.playerId] -- la riga dei
+     *    marcatori nel report era vuota per costruzione, in ogni partita.
+     *
+     * **Riscrive una voce gia' scritta, e puo' farlo perche' il playerId e' INERTE per le regole:**
+     * nessuna implementazione di [SportRules.apply] lo legge, quindi lo stato non puo' cambiare.
+     * E' l'unica cosa che si puo' modificare in un registro altrimenti in sola aggiunta.
+     *
+     * Un indice fuori intervallo o un evento che non e' un punto non fanno niente: chi chiama
+     * lavora su una lista che l'utente puo' aver accorciato con un annullamento nel frattempo.
+     */
+    fun attribute(
+        index: Int,
+        playerId: Int,
+    ) {
+        val entry = mutableLog.getOrNull(index) ?: return
+        val point = entry.event as? ScoringEvent.Point ?: return
+        mutableLog[index] = entry.copy(event = point.copy(playerId = playerId))
+    }
+
     fun canUndo(): Boolean = mutableLog.isNotEmpty()
 
     /** Su motore vuoto non lancia e non cambia nulla: [apply] e' totale, e anche questo lo e'. */

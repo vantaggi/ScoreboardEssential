@@ -70,14 +70,11 @@ a occhio". Senza vedere l'app non ho una base per deciderla: e' una scelta, non 
 
 **4. ~~L'ultimo debito dichiarato.~~ Chiuso l'11 settembre 2026** -- vedi in fondo.
 
-### Attriti di flusso mai trasformati in attivita'
+### ~~Attriti di flusso mai trasformati in attivita'~~ — entrambi chiusi l'11 settembre 2026
 
-Stanno nella Fase D, sono stati misurati e mai affrontati. Nessuno e' un difetto:
-
-- il **dialogo del marcatore** interrompe nel momento di massima attenzione -- hai appena
-  visto il gol e stai guardando il campo. Attribuire dopo, o dal registro, rispetterebbe
-  l'attenzione;
-- **`reset_scores_button`** confonde "azzera" e "termina": un pulsante, due modelli mentali.
+Vedi le due sezioni in fondo. Erano: il **dialogo del marcatore** che interrompeva nel
+momento di massima attenzione, e **`reset_scores_button`** che confondeva "azzera" e
+"termina".
 
 ### Cose da sapere prima di toccare qualcosa
 
@@ -1021,3 +1018,49 @@ senza poter verificare dove altro siano referenziati non vale il rischio.
 *Da guardare:* l'anteprima e' stata resa e mostrata, ma su un lanciatore vero cambiano
 l'ombra dinamica e il ritaglio effettivo. E' comunque la modifica piu' facile da giudicare
 a colpo d'occhio fra tutte quelle di questa sessione.
+
+### Il marcatore si sceglie quando si vuole - 11 settembre 2026
+
+Secondo attrito di flusso, e dietro c'era un buco piu' grosso.
+
+**L'attrito.** Il dialogo del marcatore si apriva da solo dopo ogni gol, cioe' nel momento
+di massima attenzione: hai appena visto segnare, stai guardando il campo, e l'app ti chiede
+di scegliere un nome da un elenco. Chi non sceglieva in fretta perdeva l'azione successiva.
+Ora il gol si registra e basta; la riga nel registro dice **"tocca per il marcatore"** e la
+domanda aspetta. A farla e' l'utente, quando gli va.
+
+**Il buco trovato mentre si guardava.** `ScoringEvent.Point.playerId` **non veniva mai
+valorizzato**: tutti e cinque i punti di costruzione sul telefono passavano solo `side`. Il
+marcatore finiva solo in `matchEventLog`, una lista di presentazione tenuta **in memoria**.
+Due conseguenze:
+
+- spariva alla morte del processo, mentre il punteggio sopravviveva nel registro salvato;
+- non arrivava mai al riassunto, che legge `ScoringEvent.Point.playerId`: la riga
+  **"Marcatori" del report WhatsApp era vuota per costruzione, in ogni partita**. Il test
+  che la copre passava perche' costruiva gli eventi con i playerId a mano.
+
+E' un buco lasciato da me costruendo `MatchSummarizer`: avevo scritto il consumatore e mai
+il produttore.
+
+**`MatchEngine.attribute(index, playerId)`** riscrive una voce gia' scritta, ed e' l'unica
+modifica permessa in un registro altrimenti in sola aggiunta. Puo' esserlo per una ragione
+precisa: **il playerId e' inerte per le regole** -- nessuna implementazione di
+`SportRules.apply` lo legge -- quindi lo stato non puo' cambiare. Un indice fuori intervallo
+o un evento che non e' un punto non fanno niente, perche' chi chiama lavora su una lista che
+un annullamento puo' aver accorciato nel frattempo.
+
+**Perche' un indice e non "l'ultimo punto".** La scelta non arriva piu' subito dopo il gol:
+puo' arrivare dieci minuti e sei gol dopo. `MatchEvent` porta quindi `engineIndex`, deciso
+quando il gol viene registrato. Porta anche `playerId`, che e' il segnale affidabile di
+"attribuito": `player` non lo e', perche' quando il marcatore manca contiene comunque il
+nome della squadra e non e' mai nullo.
+
+**Copertura:** `MatchEngineAttributeTest`, 5 test -- lo stato non cambia, la voce giusta,
+la sopravvivenza a salvataggio e ripristino, la catena completa fino ai marcatori del
+riassunto, e i casi che non devono fare niente. Verificati per falsificazione: togliendo la
+riga che riscrive, tre diventano rossi.
+
+Due test del ViewModel asserivano il vecchio comportamento ("increments score and shows
+scorer dialog") e sono stati riscritti su quello nuovo: il gol e' registrato, non
+attribuito, e sa a quale punto del motore si riferisce. Altri due ("does not show scorer
+dialog") non hanno piu' oggetto, perche' non lo mostra piu' nessuno.

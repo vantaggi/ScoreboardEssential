@@ -230,7 +230,22 @@ class MainActivity :
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
 
-        matchLogAdapter = MatchLogAdapter()
+        matchLogAdapter =
+            MatchLogAdapter { evento ->
+                // La rosa del lato che ha segnato: attribuire a un giocatore dell'altra squadra
+                // non e' un caso da gestire, e' un caso da non offrire.
+                val rosa = if (evento.team == 1) viewModel.team1Players.value else viewModel.team2Players.value
+                val indice = evento.engineIndex
+                if (rosa.isNullOrEmpty() || indice == null) {
+                    Snackbar
+                        .make(findViewById(R.id.main_root), R.string.no_players_to_attribute, Snackbar.LENGTH_LONG)
+                        .show()
+                } else {
+                    SelectScorerDialogFragment
+                        .newInstance(rosa, evento.team ?: 1, indice)
+                        .show(supportFragmentManager, SelectScorerDialogFragment.TAG)
+                }
+            }
         matchLogRecyclerView.apply {
             adapter = matchLogAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
@@ -326,12 +341,6 @@ class MainActivity :
 
         viewModel.matchEvents.observe(this) { events ->
             matchLogAdapter.submitList(events)
-        }
-
-        viewModel.showSelectScorerDialog.observe(this) { (teamId, players) ->
-            SelectScorerDialogFragment
-                .newInstance(players, teamId)
-                .show(supportFragmentManager, SelectScorerDialogFragment.TAG)
         }
 
         viewModel.isMatchTimerRunning.observe(this) { isRunning ->
@@ -841,8 +850,9 @@ class MainActivity :
     override fun onScorerSelected(
         playerWithRoles: PlayerWithRoles,
         teamId: Int,
+        engineIndex: Int,
     ) {
-        viewModel.addScorer(teamId, playerWithRoles)
+        viewModel.attributeScorer(engineIndex, playerWithRoles)
         Snackbar
             .make(
                 findViewById(android.R.id.content),

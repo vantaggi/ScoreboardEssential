@@ -23,4 +23,20 @@ data class MatchEvent(
     val player: String? = null,
     val playerRole: String? = null,
     val type: MatchEventType = MatchEventType.INFO,
+    /**
+     * Posizione, nel registro del motore, del punto a cui questa riga si riferisce.
+     *
+     * Serve ad attribuire un marcatore DOPO: senza, una riga del registro non avrebbe modo di
+     * dire quale dei punti sia il suo, e l'unico aggancio sarebbe la posizione relativa fra due
+     * liste che contengono cose diverse -- il registro del motore ha solo i punti, questo ha
+     * anche gli avvii, i timer e le correzioni.
+     */
+    val engineIndex: Int? = null,
+    /**
+     * Chi ha segnato, quando lo si sa.
+     *
+     * E' il segnale affidabile di "attribuito". [player] non lo e': quando il marcatore manca
+     * contiene comunque il nome della SQUADRA, quindi non e' mai nullo e non distingue i due casi.
+     */
+    val playerId: Int? = null,
 )

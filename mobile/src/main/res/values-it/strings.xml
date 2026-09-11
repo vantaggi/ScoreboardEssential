@@ -117,6 +117,8 @@
     <string name="cd_match_over">Partita finita</string>
     <string name="btn_discard_match">Scarta</string>
     <string name="match_discarded">Partita scartata</string>
+    <string name="log_goal_unattributed">GOL! %1$s - tocca per il marcatore</string>
+    <string name="no_players_to_attribute">Nessun giocatore nella rosa di questa squadra</string>
     <string name="export_match">Esporta partita</string>
     <string name="export_ready">Partita esportata</string>
     <string name="export_needs_four">Servono esattamente 4 giocatori distinti per esportare</string>
