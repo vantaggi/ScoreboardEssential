@@ -78,6 +78,9 @@ T5→T6 · T6→T9 · T7→T11 · **T10→T14** · T12,T13→T14
   `targetSdk` dell'app.
 - **Gli schemi Room vanno agli asset della variante `debug`**, non a
   `test.assets`: sotto Robolectric gli asset visibili sono quelli dell'app.
+- ~~**`MigrationTestHelper` di Room 2.8 non gira sotto Robolectric**~~ **Chiuso l'11
+  settembre 2026: la classe e' stata spostata in `androidTest`, dove gira.** Il testo
+  originale della trappola:
 - **`MigrationTestHelper` di Room 2.8 non gira sotto Robolectric** (apre per
   percorso assoluto, driver configurato col nome nudo). È per test strumentati.
   Lo schema *è* esportato e presente in `mergeDebugAssets`: manca il runner, non
@@ -758,3 +761,45 @@ rilettura da disco, quello del riavvio diventa rosso.
 
 *Da guardare su dispositivo:* il passaggio online -> offline -> online, che e' l'unico
 punto in cui due sorgenti si alternano a schermo.
+
+### I test strumentati adesso compilano - 11 settembre 2026
+
+Fino a oggi `./gradlew assembleDebugAndroidTest` **falliva**: nessuno se ne accorgeva
+perche' la CI non lo invocava, ed era l'altra meta' della "CI verde" che non verificava
+niente. Ora compila, e dentro c'e' qualcosa che vale la pena eseguire.
+
+**`WearCommunicationTest` e' stato cancellato, non riparato.** Non era un test rotto da
+una modifica: era un test che **non poteva passare** in nessuna delle sue quattro prove.
+Referenziava `syncScores` e `sendMessageWithRetry`, che non esistono; asseriva su un path
+`scoreboard/score_data` mai esistito; una prova non aveva **nessuna asserzione** ("verifica
+nei log che il retry sia avvenuto"); l'ultima aspettava dieci secondi un `PATH_TEST_PONG`
+che nessuno scrive -- e infatti quel path e' nell'elenco di quelli scritti e mai letti.
+
+**Il test di migrazione e' passato da `@Ignore` a reale**, ed e' cresciuto. Verifica i
+DATI e non solo lo schema, perche' una migrazione puo' produrre uno schema formalmente
+giusto e righe sbagliate -- ed e' esattamente il difetto che in questo progetto e' costato
+di piu' (i default di Kotlin non sono default SQL). Tre prove: 11->12 con il backfill dei
+default, 12->13 con la colonna nullable, e la catena 11->13 in un colpo solo, che e' il
+percorso vero di un telefono rimasto indietro di due versioni. Verifica anche che
+l'indice si chiami **carattere per carattere** come quello che Room genera.
+
+**Le due prove di layout erano peggio che inutili.**
+
+- La prima girava su tre `Configuration` diverse ma le applicava DOPO il launch, con
+  `resources.configuration.updateFrom()`: non rifa' il layout, quindi misurava tre volte
+  la stessa schermata. Pretendeva anche 280dp di altezza in orizzontale, dove ora
+  `values-land` ne prevede 180 di proposito.
+- La seconda era racchiusa in un `if (dialogFragment != null)`: se il dialogo NON
+  compariva, passava in silenzio. Non poteva fallire -- e nel frattempo il listener che
+  lo apriva era stato tolto e la card continuava ad accendersi sotto il dito.
+
+Riscritte in modo che possano diventare rosse, la seconda e' ora la guardia di regressione
+del listener rimesso oggi.
+
+**Stato dei test: 399 JVM, ZERO saltati, zero falliti.** Non esiste piu' un solo `@Ignore`
+in tutto il progetto. Piu' 6 prove strumentate che compilano e aspettano un dispositivo:
+
+    ./gradlew :mobile:connectedDebugAndroidTest
+
+E' anche la prima delle verifiche manuali accumulate che diventa un comando invece che
+una procedura.

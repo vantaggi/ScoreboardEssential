@@ -141,6 +141,8 @@ dependencies {
     androidTestImplementation libs.androidx.test.espresso.core
     androidTestImplementation libs.mockito.android
     androidTestImplementation libs.androidx.test.rules
+    // Il test di migrazione vive fra i test STRUMENTATI: MigrationTestHelper non gira su JVM.
+    androidTestImplementation libs.androidx.room.testing
 
     implementation libs.androidx.room.runtime
     implementation libs.androidx.room.ktx

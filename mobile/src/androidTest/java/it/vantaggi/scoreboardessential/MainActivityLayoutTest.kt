@@ -1,0 +1,66 @@
+package it.vantaggi.scoreboardessential
+
+import android.view.View
+import androidx.fragment.app.DialogFragment
+import androidx.test.core.app.ActivityScenario
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/**
+ * La schermata di gioco, montata davvero.
+ *
+ * **Perche' e' un test strumentato.** Sotto Robolectric `ActivityScenario.launch` falliva con
+ * `PackageParserException`, e le due prove qui sotto vivevano con un `@Ignore` che lo diceva.
+ * Montare questa Activity richiede il vero package manager: qui ce l'ha.
+ *
+ * **Due cose che queste prove NON facevano piu'.**
+ *
+ * La prima girava su tre `Configuration` diverse, ma le applicava con
+ * `activity.resources.configuration.updateFrom(config)` DOPO il launch: cambiare quell'oggetto
+ * non rifa' il layout, quindi misurava tre volte la stessa schermata e chiamava "tre dimensioni
+ * di schermo" una sola. Per giunta pretendeva 280dp di altezza anche in orizzontale, dove ora
+ * `values-land` ne prevede 180 di proposito. Il ciclo e' stato tolto: resta la verifica che il
+ * bersaglio primario ci sia e sia grande abbastanza, che e' cio' che davvero non deve regredire.
+ *
+ * La seconda era racchiusa in un `if (dialogFragment != null)`: se il dialogo NON compariva, il
+ * test passava in silenzio. Non poteva fallire, quindi non provava niente -- proprio mentre il
+ * listener che lo apre era stato tolto e la card continuava ad accendersi sotto il dito.
+ */
+@RunWith(AndroidJUnit4::class)
+class MainActivityLayoutTest {
+    @Test
+    fun ilComandoPrimario_esiste_ed_e_un_bersaglio_vero() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val sezione = activity.findViewById<View>(R.id.score_section)
+                assertTrue("la sezione del punteggio deve essere visibile", sezione.visibility == View.VISIBLE)
+
+                val piu = activity.findViewById<View>(R.id.team1_add_button_card)
+                assertTrue("il + deve essere cliccabile", piu.isClickable)
+                val minimo = (48 * activity.resources.displayMetrics.density).toInt()
+                assertTrue("il + e' largo ${piu.width}px, sotto i $minimo minimi", piu.width >= minimo)
+                assertTrue("il + e' alto ${piu.height}px, sotto i $minimo minimi", piu.height >= minimo)
+            }
+        }
+    }
+
+    @Test
+    fun toccareIlNomeSquadra_apre_il_dialogo_di_rinomina() {
+        // I due contenitori del nome hanno il ripple e una contentDescription che promette di
+        // poterli toccare. Per un po' non avevano nessun listener: questa e' la prova che la
+        // promessa e' mantenuta, ed e' scritta in modo da diventare rossa se sparisce di nuovo.
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                activity.findViewById<View>(R.id.team1_name_container).performClick()
+                activity.supportFragmentManager.executePendingTransactions()
+
+                val dialogo = activity.supportFragmentManager.findFragmentByTag(TeamNameDialogFragment.TAG)
+                assertNotNull("toccare il nome deve aprire il dialogo di rinomina", dialogo)
+                assertTrue("e deve essere un dialogo", dialogo is DialogFragment)
+            }
+        }
+    }
+}
