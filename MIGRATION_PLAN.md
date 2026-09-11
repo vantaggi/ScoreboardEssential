@@ -316,7 +316,12 @@ In tutta la Fase S **nessun file sotto `src/test` e' stato toccato**: la promess
 
 ### Debiti dichiarati, da chiudere
 
-- **`@string/sport_change_blocked` e' inutilizzata.** La schermata impostazioni non
+- ~~**`@string/sport_change_blocked` e' inutilizzata.**~~ **Chiuso l'11 settembre 2026:**
+  ora ha il suo caso, il cambio sport chiesto dall'orologio. Resta vero che sul telefono
+  il cambio a partita viva viene scritto nelle preferenze e applicato alla partita
+  successiva in silenzio; sull'orologio invece viene rifiutato subito e detto.
+  Il testo originale del debito:
+- **`@string/sport_change_blocked` era inutilizzata.** La schermata impostazioni non
   puo' sapere se una partita e' in corso senza duplicare la guardia che vive in
   `MainViewModel.selectSport()`. Oggi il cambio a partita viva viene scritto nelle
   preferenze e applicato alla partita **successiva**, in silenzio. Il sottotitolo
@@ -553,3 +558,51 @@ e' una funzione, non una correzione. Entrambe vanno decise, non dedotte.
 *Da guardare su dispositivo:* il "K" da 48dp toglie 48dp di larghezza ai due
 punteggi (che pero' si ridimensionano da soli), e su quadranti piccoli la colonna
 centrale potrebbe risultare troppo larga.
+
+### Cambio sport anche dall'orologio - 11 settembre 2026
+
+Chiesto esplicitamente. Implementato **senza spostare l'autorita'**: l'orologio non
+conosce gli sport, non ne decide nessuno, e continua a non dipendere da `:core`.
+
+**Come.** Lo stato v2 guadagna quattro chiavi *additive*:
+
+| Chiave | Cosa porta |
+|---|---|
+| `sport_label` | il nome dello sport corrente, gia' tradotto dal telefono |
+| `sport_ids` | gli id scegliibili, separati da una barra verticale |
+| `sport_labels` | le rispettive etichette, gia' tradotte |
+| `match_in_progress` | vero se la partita ha almeno un evento |
+
+e un path nuovo, `/scoreboard/v2/sport`, su `MessageClient`. Il golden test in
+`:shared` li congela come tutti gli altri.
+
+**Perche' le etichette viaggiano.** Se l'elenco degli sport vivesse anche
+sull'orologio, aggiungerne uno vorrebbe dire aggiornare **due** APK invece di uno:
+esattamente cio' che il v2 e' fatto per evitare. Le traduzioni vivono solo sul
+telefono, quindi partono da li' gia' risolte. Su un telefono che parla una bozza
+precedente del v2 gli elenchi arrivano vuoti e il comando **non compare**: nessun
+ramo speciale, nessun errore.
+
+**Perche' gli elenchi sono stringhe e non array.** `OptimizedWearDataSync.sendData`
+serializza solo tipi scalari. Allargare quel `when` per un caso solo sarebbe stato un
+cambio piu' rischioso di un separatore.
+
+**Il numero di sequenza resta UNO per nodo.** La schermata di scelta **non spedisce
+niente**: restituisce l'id alla schermata principale, che chiede al telefono usando lo
+stesso contatore delle intenzioni di punteggio. Un `WearViewModel` creato dentro la
+schermata di scelta ne avrebbe avuto uno suo, seminato da un orologio di sistema
+diverso: due contatori indipendenti sullo stesso nodo sono il modo in cui un messaggio
+nuovo viene scartato come «gia' visto». E' stata la prima stesura, ed e' stata cambiata.
+
+**La guardia resta una sola.** `MainViewModel.selectSport` rifiuta a partita iniziata,
+e nessuno la duplica: il servizio non valida l'id contro un elenco (`:core` e' l'unico
+posto che sa quali sport esistono; un id sconosciuto viene assorbito da
+`SportRegistry.byId`, che ripiega sul calcio), e il ramo del broadcast non ricontrolla
+se la partita sia cominciata. L'orologio conosce `match_in_progress` e lo dice **prima**
+di chiedere, per non far partire una richiesta di cui sa gia' la risposta -- ma se la
+chiedesse lo stesso, a rifiutare sarebbe comunque il telefono, con uno Snackbar.
+
+*Da guardare su dispositivo:* i due comandi in fondo (SPORT e AZZERA) sono una catena
+"packed" di larghezze `wrap_content`. Stimati ~122dp in totale, contro i ~136dp del
+quadrato inscritto di un quadrante da 192dp: entrano. Su un quadrante da 160dp non
+entrerebbero, ma non esistono Wear OS moderni cosi' piccoli. Va **verificato**.

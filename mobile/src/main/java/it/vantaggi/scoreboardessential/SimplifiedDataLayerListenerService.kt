@@ -24,6 +24,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         const val ACTION_REQUEST_SYNC = "it.vantaggi.scoreboardessential.REQUEST_SYNC"
         const val ACTION_SCORER_SELECTED = "it.vantaggi.scoreboardessential.SCORER_SELECTED"
         const val ACTION_SCORE_INTENT = "it.vantaggi.scoreboardessential.SCORE_INTENT"
+        const val ACTION_SPORT_INTENT = "it.vantaggi.scoreboardessential.SPORT_INTENT"
 
         /**
          * Ultima sequenza vista, PER NODO.
@@ -155,6 +156,10 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                 WearConstants.MSG_SCORE_INTENT -> {
                     handleScoreIntent(messageEvent.sourceNodeId, messageEvent.data)
                 }
+
+                WearConstants.MSG_SPORT_INTENT -> {
+                    handleSportIntent(messageEvent.sourceNodeId, messageEvent.data)
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error handling message ${messageEvent.path}", e)
@@ -213,6 +218,47 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Broadcasted score intent $kind for side $side (seq=$seq)")
         }
+    }
+
+    /**
+     * L'orologio CHIEDE di cambiare sport. La decisione resta al telefono.
+     *
+     * Qui non si valida nessun id contro un elenco: :core e' l'unico posto che sa quali sport
+     * esistono, e duplicarne l'elenco in questo servizio significherebbe doverlo aggiornare ogni
+     * volta che se ne aggiunge uno -- esattamente cio' che il v2 e' fatto per evitare. Un id
+     * sconosciuto viene assorbito piu' avanti da SportRegistry.byId, che ripiega sul calcio.
+     *
+     * La sequenza e' la STESSA di [handleScoreIntent], perche' e' una sola per nodo: un tocco e
+     * una richiesta di cambio sport partono dallo stesso contatore sull'orologio.
+     */
+    private fun handleSportIntent(
+        sourceNodeId: String,
+        data: ByteArray?,
+    ) {
+        if (data == null || data.isEmpty()) {
+            Log.w(TAG, "Empty sport-intent payload. Ignoring.")
+            return
+        }
+        val dataMap = DataMap.fromByteArray(data)
+        val sportId = dataMap.getString(WearConstants.KEY_SPORT_ID, "")
+        val seq = dataMap.getLong(WearConstants.KEY_SEQ, dataMap.getInt(WearConstants.KEY_SEQ, 0).toLong())
+        if (sportId.isBlank() || seq <= 0L) {
+            Log.w(TAG, "Invalid sport-intent fields (sportId=$sportId, seq=$seq). Ignoring.")
+            return
+        }
+
+        val ultima = lastSeqByNode[sourceNodeId] ?: 0L
+        if (seq <= ultima) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Sport intent already seen (seq=$seq <= $ultima). Ignoring.")
+            }
+            return
+        }
+        lastSeqByNode[sourceNodeId] = seq
+
+        LocalBroadcastManager.getInstance(this).sendBroadcast(
+            Intent(ACTION_SPORT_INTENT).apply { putExtra(WearConstants.KEY_SPORT_ID, sportId) },
+        )
     }
 
     /**

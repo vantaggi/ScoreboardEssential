@@ -190,6 +190,32 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
+        <!--
+            In basso due comandi: lo sport e la fine della partita. Sono l'unica coppia della
+            schermata, quindi una catena "packed" invece di misure fisse: le etichette sono corte
+            e restano entro il quadrato inscritto anche sui quadranti tondi.
+        -->
+        <Button
+            android:id="@+id/btn_sport"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/wear_sport"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:textColor="@color/sidewalk_gray"
+            android:fontFamily="sans-serif-condensed"
+            android:textStyle="bold"
+            android:textSize="@dimen/wear_button_text_size"
+            android:minWidth="48dp"
+            android:minHeight="48dp"
+            android:paddingHorizontal="8dp"
+            android:visibility="gone"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btn_start_new_match"
+            android:layout_marginBottom="12dp"
+            tools:visibility="visible" />
+
         <!-- Reset Button - Bottom Center -->
         <Button
             android:id="@+id/btn_start_new_match"
@@ -203,9 +229,9 @@
             android:textSize="@dimen/wear_button_text_size"
             android:minWidth="48dp"
             android:minHeight="48dp"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toEndOf="@id/btn_sport"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginBottom="12dp"/>
 

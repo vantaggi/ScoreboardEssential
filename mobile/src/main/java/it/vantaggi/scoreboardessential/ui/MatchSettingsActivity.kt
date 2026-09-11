@@ -12,6 +12,7 @@ import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.databinding.ActivityMatchSettingsBinding
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
+import it.vantaggi.scoreboardessential.sportLabel
 
 class MatchSettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMatchSettingsBinding
@@ -66,7 +67,7 @@ class MatchSettingsActivity : AppCompatActivity() {
             android.widget.ArrayAdapter(
                 this,
                 android.R.layout.simple_dropdown_item_1line,
-                sportIds.map(::sportLabel),
+                sportIds.map { sportLabel(this, it) },
             )
         binding.sportAutoComplete.setAdapter(adapter)
 
@@ -77,20 +78,6 @@ class MatchSettingsActivity : AppCompatActivity() {
             }
         }
     }
-
-    /**
-     * Uno sport senza etichetta ripiega sul proprio id.
-     *
-     * Il registro delle regole vive in :core e puo' guadagnare uno sport prima che ne arrivi la
-     * traduzione: in quel caso il selettore mostra "volley" invece di far crashare le impostazioni.
-     */
-    private fun sportLabel(sportId: String): String =
-        when (sportId) {
-            SportRegistry.FOOTBALL -> getString(R.string.sport_football)
-            SportRegistry.PADEL -> getString(R.string.sport_padel)
-            SportRegistry.TENNIS -> getString(R.string.sport_tennis)
-            else -> sportId
-        }
 
     private fun observeViewModel() {
         viewModel.team1Name.observe(this) { name ->
@@ -122,7 +109,7 @@ class MatchSettingsActivity : AppCompatActivity() {
         // La voce mostrata segue sempre il ViewModel: se una scrittura non passasse, il selettore
         // tornerebbe da solo sulla scelta precedente invece di mentire.
         viewModel.activeSport.observe(this) { sportId ->
-            val label = sportLabel(sportId)
+            val label = sportLabel(this, sportId)
             if (binding.sportAutoComplete.text.toString() != label) {
                 binding.sportAutoComplete.setText(label, false)
             }

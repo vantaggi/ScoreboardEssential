@@ -299,6 +299,15 @@ class MainActivity :
             updateFormation(2, players)
         }
 
+        viewModel.sportChangeRejected.observe(this) {
+            // @string/sport_change_blocked era dichiarata e mai usata: era un debito registrato
+            // nel piano. Ora ha il suo caso -- l'unico punto dell'app in cui un cambio sport puo'
+            // essere chiesto da qualcuno che non vede la guardia.
+            Snackbar
+                .make(findViewById(R.id.main_root), R.string.sport_change_blocked, Snackbar.LENGTH_LONG)
+                .show()
+        }
+
         viewModel.matchEvents.observe(this) { events ->
             matchLogAdapter.submitList(events)
         }

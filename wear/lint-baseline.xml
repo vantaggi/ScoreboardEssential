@@ -97,6 +97,17 @@
     </issue>
 
     <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `@color/asphalt_dark` with a theme that also paints a background (inferred theme is `@style/Theme.ScoreboardEssential`)"
+        errorLine1="    android:background=&quot;@color/asphalt_dark&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_sport_selection.xml"
+            line="6"
+            column="5"/>
+    </issue>
+
+    <issue
         id="UnusedResources"
         message="The resource `R.color.background` appears to be unused"
         errorLine1="    &lt;color name=&quot;background&quot;>@color/asphalt_dark&lt;/color>"

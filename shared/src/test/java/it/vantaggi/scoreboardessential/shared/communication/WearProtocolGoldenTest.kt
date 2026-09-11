@@ -75,9 +75,15 @@ class WearProtocolGoldenTest {
     fun `il protocollo v2 e' additivo e non collide con il v1`() {
         assertEquals("/scoreboard/v2/state", WearConstants.PATH_STATE_V2)
         assertEquals("/scoreboard/v2/intent", WearConstants.MSG_SCORE_INTENT)
+        assertEquals("/scoreboard/v2/sport", WearConstants.MSG_SPORT_INTENT)
         assertEquals(2, WearConstants.PROTO_VERSION)
 
         assertEquals("proto_version", WearConstants.KEY_PROTO_VERSION)
+        assertEquals("sport_label", WearConstants.KEY_SPORT_LABEL)
+        assertEquals("sport_ids", WearConstants.KEY_SPORT_IDS)
+        assertEquals("sport_labels", WearConstants.KEY_SPORT_LABELS)
+        assertEquals("match_in_progress", WearConstants.KEY_MATCH_IN_PROGRESS)
+        assertEquals("|", WearConstants.SPORT_SEPARATOR)
         assertEquals("sport_id", WearConstants.KEY_SPORT_ID)
         assertEquals("side1_primary", WearConstants.KEY_SIDE1_PRIMARY)
         assertEquals("side1_secondary", WearConstants.KEY_SIDE1_SECONDARY)

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -23,6 +24,18 @@ class MainActivity : ComponentActivity() {
     }
 
     private lateinit var binding: ActivityMainBinding
+
+    /**
+     * La scelta dello sport torna qui, e da qui parte la richiesta al telefono: il numero di
+     * sequenza e' uno solo per nodo e vive nel ViewModel di questa schermata.
+     */
+    private val sceltaSport =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { esito ->
+            val sportId = esito.data?.getStringExtra(SportSelectionActivity.EXTRA_CHOSEN)
+            if (esito.resultCode == android.app.Activity.RESULT_OK && !sportId.isNullOrBlank()) {
+                viewModel.requestSport(sportId)
+            }
+        }
 
     // Cosa dice la riga in basso dipende da DUE cose: lo sport e il collegamento.
     private var annullamentoGlobale = false
@@ -208,6 +221,25 @@ class MainActivity : ComponentActivity() {
             viewModel.toggleKeeperTimer()
         }
 
+        binding.btnSport.setOnClickListener {
+            val stato = viewModel.scoreState.value ?: return@setOnClickListener
+            if (stato.matchInProgress) {
+                // Il telefono rifiuterebbe comunque: dirlo QUI evita di far partire una richiesta
+                // che si sa gia' come finisce, e di far aspettare una risposta che non cambia niente.
+                android.widget.Toast
+                    .makeText(this, R.string.wear_sport_locked, android.widget.Toast.LENGTH_SHORT)
+                    .show()
+                return@setOnClickListener
+            }
+            sceltaSport.launch(
+                Intent(this, SportSelectionActivity::class.java).apply {
+                    putExtra(SportSelectionActivity.EXTRA_IDS, ArrayList(stato.sportIds))
+                    putExtra(SportSelectionActivity.EXTRA_LABELS, ArrayList(stato.sportLabels))
+                    putExtra(SportSelectionActivity.EXTRA_CURRENT, stato.sportLabel)
+                },
+            )
+        }
+
         binding.btnStartNewMatch.setOnClickListener {
             android.app.AlertDialog
                 .Builder(this)
@@ -230,6 +262,9 @@ class MainActivity : ComponentActivity() {
         bindDetail(binding.team1ScoreDetail, state.side1Secondary)
         bindDetail(binding.team2ScoreDetail, state.side2Secondary)
         applyGestureLabels(state.decrementIsUndo)
+        // Senza elenco non c'e' niente da scegliere: succede con un telefono che parla una bozza
+        // precedente del v2. Il comando non compare invece di aprire una lista vuota.
+        binding.btnSport.visibility = if (state.sportIds.size > 1) View.VISIBLE else View.GONE
 
         applyClockRole(state)
 

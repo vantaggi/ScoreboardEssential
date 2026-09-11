@@ -23,4 +23,8 @@
     <string name="cd_keeper_timer">Conto alla rovescia del portiere</string>
     <string name="cd_connection_ok">Telefono collegato</string>
     <string name="cd_connection_lost">Telefono non raggiungibile</string>
+    <string name="wear_sport">SPORT</string>
+    <string name="wear_sport_title">SPORT</string>
+    <string name="wear_sport_current">in uso</string>
+    <string name="wear_sport_locked">Partita in corso</string>
 </resources>

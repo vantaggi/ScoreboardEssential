@@ -23,6 +23,8 @@
 
         <activity android:name=".PlayerSelectionActivity" android:exported="false" android:label="Select Scorer" />
 
+        <activity android:name=".SportSelectionActivity" android:exported="false" android:taskAffinity="" android:label="@string/wear_sport" />
+
         <service
             android:name=".WearDataLayerService"
             android:exported="true"

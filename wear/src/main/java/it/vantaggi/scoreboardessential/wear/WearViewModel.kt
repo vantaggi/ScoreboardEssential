@@ -35,9 +35,25 @@ data class WearScoreState(
     val hasAuxTimer: Boolean,
     val attributesScorer: Boolean,
     val decrementIsUndo: Boolean,
+    /**
+     * Lo sport corrente e quelli scegliibili, gia' tradotti dal telefono.
+     *
+     * L'orologio non conosce :core e non deve conoscerlo: se l'elenco vivesse anche qui,
+     * aggiungere uno sport vorrebbe dire aggiornare due APK invece di uno. Su un telefono che
+     * parla una bozza precedente del v2 questi elenchi arrivano vuoti, e il comando dello sport
+     * semplicemente non compare: nessun ramo speciale, nessun errore.
+     */
+    val sportLabel: String,
+    val sportIds: List<String>,
+    val sportLabels: List<String>,
+    val matchInProgress: Boolean,
 ) {
     companion object {
         private const val TAG = "WearScoreState"
+
+        /** Una stringa vuota da' una lista vuota, non una lista con dentro il vuoto. */
+        private fun elenco(grezzo: String): List<String> =
+            if (grezzo.isEmpty()) emptyList() else grezzo.split(WearConstants.SPORT_SEPARATOR)
 
         /**
          * Nessuna versione viene mai rifiutata: un telefono piu' recente puo' aggiungere chiavi, e
@@ -62,6 +78,10 @@ data class WearScoreState(
                 hasAuxTimer = dataMap.getBoolean(WearConstants.KEY_CAP_HAS_AUX_TIMER, true),
                 attributesScorer = dataMap.getBoolean(WearConstants.KEY_CAP_ATTRIBUTES_SCORER, true),
                 decrementIsUndo = dataMap.getBoolean(WearConstants.KEY_CAP_DECREMENT_IS_UNDO, false),
+                sportLabel = dataMap.getString(WearConstants.KEY_SPORT_LABEL, ""),
+                sportIds = elenco(dataMap.getString(WearConstants.KEY_SPORT_IDS, "")),
+                sportLabels = elenco(dataMap.getString(WearConstants.KEY_SPORT_LABELS, "")),
+                matchInProgress = dataMap.getBoolean(WearConstants.KEY_MATCH_IN_PROGRESS, false),
             )
         }
     }
@@ -288,6 +308,27 @@ class WearViewModel(
             return
         }
         modifyScore(team, -1)
+    }
+
+    /**
+     * Chiede al telefono di cambiare sport. La decisione non e' di questo lato.
+     *
+     * Stesso contatore delle intenzioni di punteggio, perche' la sequenza e' UNA per nodo: se ne
+     * usasse uno suo, i due flussi si scavalcherebbero e il telefono scarterebbe come "gia' visto"
+     * un messaggio nuovo. La risposta e' lo stato v2 che torna: se lo sport cambia, la schermata
+     * si ridisegna da sola; se il telefono rifiuta, non cambia niente e a dirlo e' il telefono.
+     */
+    fun requestSport(sportId: String) {
+        val seq = ++intentSequence
+        viewModelScope.launch {
+            val payload =
+                DataMap().apply {
+                    putString(WearConstants.KEY_SPORT_ID, sportId)
+                    putLong(WearConstants.KEY_SEQ, seq)
+                }
+            val consegnato = connectionManager.sendMessage(WearConstants.MSG_SPORT_INTENT, payload.toByteArray())
+            if (consegnato) triggerShortVibration() else triggerFailureVibration()
+        }
     }
 
     /**

@@ -47,6 +47,16 @@ object WearConstants {
     /** Il tocco sull'orologio e' un'INTENZIONE, non uno stato. Su MessageClient: non coalescente. */
     const val MSG_SCORE_INTENT = "/scoreboard/v2/intent"
 
+    /**
+     * Anche cambiare sport e' un'INTENZIONE, non uno stato.
+     *
+     * L'orologio non conosce gli sport e non ne decide nessuno: chiede, e il telefono -- che e'
+     * l'unico a sapere se una partita e' in corso -- accetta o rifiuta. La risposta non e' un
+     * messaggio a parte: e' lo stato v2 che torna indietro con lo sport nuovo, o senza.
+     * Condivide [KEY_SEQ] con [MSG_SCORE_INTENT], perche' la sequenza e' UNA per nodo.
+     */
+    const val MSG_SPORT_INTENT = "/scoreboard/v2/sport"
+
     const val PROTO_VERSION = 2
 
     const val KEY_PROTO_VERSION = "proto_version"
@@ -57,6 +67,25 @@ object WearConstants {
     const val KEY_SIDE2_SECONDARY = "side2_secondary"
     const val KEY_PERIOD_LABEL = "period_label"
     const val KEY_SERVING_SIDE = "serving_side"
+
+    /**
+     * Lo sport corrente e quelli scegliibili, gia' tradotti dal telefono.
+     *
+     * L'orologio non dipende da :core e non deve dipendervi: se conoscesse l'elenco degli sport,
+     * aggiungerne uno richiederebbe di aggiornare DUE APK invece di uno. Quindi l'elenco arriva
+     * dal telefono, che e' anche l'unico posto dove vivono le traduzioni.
+     *
+     * Gli elenchi viaggiano come stringhe separate da "|" e non come array: [OptimizedWearDataSync]
+     * serializza solo tipi scalari, e allargare quel `when` per un caso solo sarebbe un cambio
+     * piu' rischioso di un separatore. Gli id sono [a-z], le etichette vengono da strings.xml.
+     */
+    const val KEY_SPORT_LABEL = "sport_label"
+    const val KEY_SPORT_IDS = "sport_ids"
+    const val KEY_SPORT_LABELS = "sport_labels"
+    const val SPORT_SEPARATOR = "|"
+
+    /** Vero mentre una partita ha almeno un evento: il cambio sport allora viene rifiutato. */
+    const val KEY_MATCH_IN_PROGRESS = "match_in_progress"
 
     // Capacita' che l'orologio deve conoscere per non mostrare comandi privi di senso.
     const val KEY_CAP_HAS_CLOCK = "cap_has_clock"

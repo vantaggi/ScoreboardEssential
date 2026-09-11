@@ -23,4 +23,8 @@
     <string name="cd_keeper_timer">Goalkeeper countdown</string>
     <string name="cd_connection_ok">Phone connected</string>
     <string name="cd_connection_lost">Phone not reachable</string>
+    <string name="wear_sport">SPORT</string>
+    <string name="wear_sport_title">SPORT</string>
+    <string name="wear_sport_current">in use</string>
+    <string name="wear_sport_locked">Match in progress</string>
 </resources>

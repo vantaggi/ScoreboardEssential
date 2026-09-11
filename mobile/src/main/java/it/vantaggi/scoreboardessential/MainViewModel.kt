@@ -322,6 +322,14 @@ class MainViewModel(
                         }
                     }
 
+                    SimplifiedDataLayerListenerService.ACTION_SPORT_INTENT -> {
+                        // La guardia e' UNA sola e vive in selectSport: qui non si ricontrolla se
+                        // la partita sia iniziata, perche' due guardie che dicono la stessa cosa
+                        // finiscono prima o poi per non dirla piu' uguale.
+                        val sportId = intent.getStringExtra(WearConstants.KEY_SPORT_ID) ?: return
+                        if (!selectSport(sportId)) sportChangeRejected.call()
+                    }
+
                     SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED -> {
                         val playerName = intent.getStringExtra(WearConstants.KEY_PLAYER_NAME) ?: return
                         val team = intent.getIntExtra(WearConstants.EXTRA_TEAM_NUMBER, 1)
@@ -491,6 +499,10 @@ class MainViewModel(
     val matchEvents: LiveData<List<MatchEvent>> = _matchEvents
 
     // UI Events
+
+    /** L'orologio ha chiesto un cambio sport a partita gia' cominciata. */
+    val sportChangeRejected = SingleLiveEvent<Unit>()
+
     val showOnboarding = SingleLiveEvent<Unit>()
     val showSelectScorerDialog = SingleLiveEvent<Pair<Int, List<PlayerWithRoles>>>()
     val showPlayerSelectionDialog = SingleLiveEvent<Int>()
@@ -567,6 +579,7 @@ class MainViewModel(
                 addAction(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
                 addAction(SimplifiedDataLayerListenerService.ACTION_REQUEST_SYNC)
                 addAction(SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT)
+                addAction(SimplifiedDataLayerListenerService.ACTION_SPORT_INTENT)
                 addAction(SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED)
             }
         androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -764,6 +777,8 @@ class MainViewModel(
         // di un giro rispetto al motore.
         val display = sportRules.display(engine.state)
         val capacita = sportRules.capabilities
+        val scegliibili = SportRegistry.selectable()
+        val partitaIniziata = engine.log.isNotEmpty()
         viewModelScope.launch {
             val data =
                 mapOf(
@@ -779,6 +794,18 @@ class MainViewModel(
                     WearConstants.KEY_CAP_HAS_AUX_TIMER to capacita.hasAuxCountdown,
                     WearConstants.KEY_CAP_ATTRIBUTES_SCORER to capacita.attributesScorer,
                     WearConstants.KEY_CAP_DECREMENT_IS_UNDO to capacita.decrementIsUndo,
+                    // Lo sport corrente e quelli fra cui si puo' scegliere, gia' tradotti: e'
+                    // l'unico modo perche' l'orologio offra il cambio sport senza conoscere :core.
+                    WearConstants.KEY_SPORT_LABEL to sportLabel(getApplication(), sportRules.id),
+                    WearConstants.KEY_SPORT_IDS to scegliibili.joinToString(WearConstants.SPORT_SEPARATOR) { it.id },
+                    WearConstants.KEY_SPORT_LABELS to
+                        scegliibili.joinToString(WearConstants.SPORT_SEPARATOR) {
+                            sportLabel(getApplication(), it.id)
+                        },
+                    // Con una partita gia' cominciata il cambio sport viene rifiutato: l'orologio
+                    // lo sa PRIMA di chiederlo, e puo' dirlo invece di far partire una richiesta
+                    // che sa gia' come finisce.
+                    WearConstants.KEY_MATCH_IN_PROGRESS to partitaIniziata,
                 )
             connectionManager.sendData(
                 path = WearConstants.PATH_STATE_V2,
