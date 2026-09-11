@@ -12,8 +12,6 @@
         android:layout_height="?attr/actionBarSize"
         android:background="@color/asphalt_black"
         app:layout_constraintTop_toTopOf="parent"
-        app:navigationIcon="@drawable/ic_back"
-        app:title="Stats &amp; Leaderboard"
         app:titleTextColor="@color/stencil_white" />
 
     <com.google.android.material.tabs.TabLayout

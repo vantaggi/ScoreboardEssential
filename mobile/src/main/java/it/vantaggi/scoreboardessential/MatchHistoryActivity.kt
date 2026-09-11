@@ -16,6 +16,12 @@ class MatchHistoryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_match_history)
+        // La stessa barra con la stessa freccia di PlayersManagementActivity e
+        // AddEditPlayerActivity. parentActivityName e' gia' dichiarato nel manifest per tutte
+        // e cinque le schermate: mancava solo chi lo usasse, e due di queste non avevano
+        // NESSUN modo di tornare indietro che non fosse il gesto di sistema.
+        setSupportActionBar(findViewById(R.id.toolbar))
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         // Edge-to-edge: gli insets di sistema diventano padding del contenitore radice.
         ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(R.id.match_history_root)) { view, windowInsets ->

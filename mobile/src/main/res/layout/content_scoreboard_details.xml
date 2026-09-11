@@ -14,28 +14,28 @@
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_concrete_card" android:orientation="vertical" android:padding="16dp">
 
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TEAM ROSTERS" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:layout_marginBottom="12dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_team_rosters" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:layout_marginBottom="12dp"/>
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
 
                     <!-- Team 1 Roster -->
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginEnd="8dp">
 
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Team 1" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="?attr/colorPrimary" android:layout_marginBottom="8dp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_team_1" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="?attr/colorPrimary" android:layout_marginBottom="8dp"/>
 
                         <androidx.recyclerview.widget.RecyclerView android:id="@+id/team1_roster_recyclerview" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
 
-                        <com.google.android.material.button.MaterialButton android:id="@+id/add_team1_player_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Add Player" android:layout_marginTop="8dp"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/add_team1_player_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_add_player" android:layout_marginTop="8dp"/>
                     </LinearLayout>
 
                     <!-- Team 2 Roster -->
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="8dp">
 
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Team 2" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="?attr/colorSecondary" android:layout_marginBottom="8dp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_team_2" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="?attr/colorSecondary" android:layout_marginBottom="8dp"/>
 
                         <androidx.recyclerview.widget.RecyclerView android:id="@+id/team2_roster_recyclerview" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
 
-                        <com.google.android.material.button.MaterialButton android:id="@+id/add_team2_player_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Add Player" android:layout_marginTop="8dp"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/add_team2_player_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_add_player" android:layout_marginTop="8dp"/>
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
@@ -46,7 +46,7 @@
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_concrete_card" android:orientation="vertical" android:padding="16dp">
 
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MATCH LOG" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:layout_marginBottom="12dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_match_log" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:layout_marginBottom="12dp"/>
 
                 <androidx.recyclerview.widget.RecyclerView android:id="@+id/match_log_recyclerview" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
             </LinearLayout>
@@ -56,20 +56,20 @@
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_concrete_card" android:orientation="vertical" android:padding="16dp">
 
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="FORMATIONS" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:layout_marginBottom="12dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_formations" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:layout_marginBottom="12dp"/>
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginEnd="8dp">
 
-                        <TextView android:id="@+id/team1_formation_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Team 1 (4-4-2)" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="?attr/colorPrimary" android:layout_marginBottom="8dp"/>
+                        <TextView android:id="@+id/team1_formation_label" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="Team 1 (4-4-2)" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="?attr/colorPrimary" android:layout_marginBottom="8dp"/>
 
                         <it.vantaggi.scoreboardessential.views.FormationView android:id="@+id/team1_formation_view" android:layout_width="match_parent" android:layout_height="200dp"/>
                     </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="8dp">
 
-                        <TextView android:id="@+id/team2_formation_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Team 2 (4-3-3)" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="?attr/colorSecondary" android:layout_marginBottom="8dp"/>
+                        <TextView android:id="@+id/team2_formation_label" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="Team 2 (4-3-3)" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="?attr/colorSecondary" android:layout_marginBottom="8dp"/>
 
                         <it.vantaggi.scoreboardessential.views.FormationView android:id="@+id/team2_formation_view" android:layout_width="match_parent" android:layout_height="200dp"/>
                     </LinearLayout>
@@ -80,9 +80,9 @@
         <!-- Action Buttons -->
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="24dp" android:layout_marginBottom="80dp" app:layout_constraintVertical_bias="0" app:layout_constraintTop_toBottomOf="@id/formations_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toBottomOf="parent">
 
-            <com.google.android.material.button.MaterialButton android:id="@+id/match_history_button" style="@style/Widget.App.Button.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="HISTORY" android:layout_marginEnd="8dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/match_history_button" style="@style/Widget.App.Button.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/label_match_history" android:layout_marginEnd="8dp"/>
 
-            <com.google.android.material.button.MaterialButton android:id="@+id/reset_scores_button" style="@style/Widget.App.Button.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="END MATCH"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/reset_scores_button" style="@style/Widget.App.Button.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/label_end_match"/>
 
             <com.google.android.material.button.MaterialButton android:id="@+id/share_match_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="@string/share_match_report" app:icon="@drawable/ic_share" />
         </LinearLayout>

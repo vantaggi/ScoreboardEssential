@@ -8,6 +8,16 @@
     android:background="@drawable/bg_asphalt_main"
     tools:context=".MatchHistoryActivity">
 
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        app:titleTextColor="@color/stencil_white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/summary_card"
         style="?attr/materialCardViewElevatedStyle"
@@ -16,7 +26,7 @@
         android:layout_margin="8dp"
         app:cardBackgroundColor="@color/concrete_gray"
         app:shapeAppearance="@style/ShapeAppearance.App.StreetCard"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 

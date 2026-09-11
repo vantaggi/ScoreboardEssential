@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_asphalt_main" android:fitsSystemWindows="true" tools:context=".ui.MatchSettingsActivity">
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@drawable/bg_asphalt_main" android:fitsSystemWindows="true" tools:context=".ui.MatchSettingsActivity">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        app:titleTextColor="@color/stencil_white" />
+
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent">
 
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
 
@@ -36,7 +45,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Timer Settings -->
-        <com.google.android.material.card.MaterialCardView style="?attr/materialCardViewFilledStyle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:cardBackgroundColor="@color/concrete_gray" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard">
+        <com.google.android.material.card.MaterialCardView android:id="@+id/keeperTimerCard" style="?attr/materialCardViewFilledStyle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:cardBackgroundColor="@color/concrete_gray" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard">
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
 
@@ -78,7 +87,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <Button android:id="@+id/saveSettingsButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:text="@string/save_settings" style="@style/Widget.App.Button.Street" />
 
     </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</LinearLayout>

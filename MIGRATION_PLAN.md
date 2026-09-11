@@ -411,8 +411,8 @@ dannosi (commit `838449c`); gli altri nove sono di questo commit.
 Il rilievo 4 e' anche mezzo **D2**: sull'orologio esiste ora un solo modo di
 segnare. Sul telefono gesto e pulsante convivono ancora, quindi D2 resta aperto.
 
-Dei 28 rilievi **medi e bassi**, i 16 dell'orologio sono chiusi (vedi sotto);
-restano i 12 del telefono.
+I 28 rilievi **medi e bassi** sono chiusi: 16 sull'orologio e 12 sul telefono
+(vedi sotto). L'audit e' esaurito.
 
 *Verifica ancora dovuta:* nessuno di questi rimedi e' stato **visto**. In
 particolare vanno guardati su dispositivo il `gestureHint` sull'orologio tondo
@@ -673,3 +673,35 @@ fattibile e coerente (i due motori folderebbero gli stessi eventi con lo stesso 
 quindi non possono divergere), ma e' un cambio di dipendenze fra moduli e va deciso, non
 dedotto: il costo e' che da quel momento un nuovo sport richiede di aggiornare **anche**
 l'APK dell'orologio per funzionare offline.
+
+### La passata sul telefono - 11 settembre 2026
+
+Gli ultimi 12 rilievi dell'audit. Uno era gia' rientrato da solo, gli altri 11 sono chiusi.
+
+| Rilievo | Rimedio |
+|---|---|
+| La descrizione parlata del `−` veniva aggiornata sulla vista sbagliata | **gia' rientrato**: il codice che la aggiornava e' sparito quando i due `−` sono stati nascosti nel padel. L'`ImageView` interna diventa `importantForAccessibility="no"`, cosi' la descrizione la da' solo il comando |
+| Il punteggio cambia da solo quando arriva dall'orologio e nessuno lo annuncia | `accessibilityLiveRegion="polite"` sulle due cifre |
+| I nomi squadra sembravano toccabili e non lo erano | **rimesso il listener**: `TeamNameDialogFragment` esisteva gia', completo, e non lo apriva nessuno |
+| Ogni schermata tornava indietro in modo diverso, due non tornavano affatto | barra e freccia su cronologia, impostazioni e statistiche, come le due schermate che gia' funzionavano |
+| Nelle impostazioni sport e lingua si salvavano subito, il resto no | **via il pulsante SALVA**: i tre campi si salvano alla perdita del fuoco e in `onPause` |
+| Il campo del cambio portiere restava visibile giocando a padel | segue `hasAuxCountdown`, come la schermata principale |
+| Nome squadra e punteggio potevano crescere senza limite | `maxLines` e `ellipsize` sul nome, `maxLines` sulla cifra |
+| `values-night/themes.xml` era una copia identica | cancellato |
+| Lo stato dell'orologio si leggeva solo dal colore di un'icona | `contentDescription` aggiornata nei due rami, con le stesse parole del tooltip |
+| Testi cablati in inglese nella schermata principale | in `strings.xml` con la traduzione; i segnaposto riscritti a runtime diventano `tools:text` |
+| Le misure del tabellone erano cablate nel layout | gia' fatto con i rilievi gravi (`score_section_min_height`, `score_card_min_height`, `score_text_size`) |
+| La cifra grande scattava verso l'alto quando compariva il dettaglio | `layout_constraintVertical_bias="0"` sui due contenitori |
+
+**Le statistiche avevano una freccia solo disegnata.** `activity_statistics.xml` portava
+`app:navigationIcon="@drawable/ic_back"` e un titolo cablato in inglese, ma
+`StatisticsActivity` non chiamava mai `setSupportActionBar` ne' registrava un listener:
+quella freccia non era mai stata cliccabile. Ora la mette AppCompat, e il titolo arriva
+dall'`android:label` gia' dichiarato nel manifest. `ic_back` e' rimasto senza referenti
+ed e' stato rimosso.
+
+**Quattro stringhe e un disegno spariti perche' i rimedi li hanno resi orfani:**
+`cd_subtract_point` e `cd_undo_point` (i due `−` del padel non esistono piu'),
+`settings_saved` e `save_settings` (non c'e' piu' un pulsante SALVA), `ic_back`.
+Lint sul telefono scende da 11 a 8 avvisi; i tre che restano sono di terze parti o
+pre-esistenti.

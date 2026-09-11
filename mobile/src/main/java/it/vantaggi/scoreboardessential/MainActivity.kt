@@ -341,12 +341,16 @@ class MainActivity :
             val statusIcon = findViewById<ImageView>(R.id.wear_status_icon)
             if (isConnected) {
                 statusIcon.setImageResource(R.drawable.ic_watch_connected)
+                // Il tooltip si vede solo tenendo premuto, e chi usa TalkBack non lo incontra:
+                // la contentDescription restava quella cablata nel layout, uguale nei due stati.
+                statusIcon.contentDescription = getString(R.string.wear_connected_tooltip)
                 statusIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.team_electric_green))
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     statusIcon.tooltipText = getString(R.string.wear_connected_tooltip)
                 }
             } else {
                 statusIcon.setImageResource(R.drawable.ic_watch_disconnected)
+                statusIcon.contentDescription = getString(R.string.wear_disconnected_tooltip)
                 statusIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.sidewalk_gray))
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     statusIcon.tooltipText = getString(R.string.wear_disconnected_tooltip)
@@ -439,7 +443,24 @@ class MainActivity :
     }
 
     private fun setupScoreButtons() {
-        // Team name containers are no longer clickable
+        // I due contenitori del nome avevano il ripple e una contentDescription che prometteva
+        // "tocca per cambiare il nome", ma nessun listener: il commento qui diceva "no longer
+        // clickable" mentre la card continuava ad accendersi sotto il dito. TeamNameDialogFragment
+        // esisteva gia', completo, e non lo apriva nessuno. O si toglieva l'apparenza, o si
+        // rimetteva la sostanza: a bordo campo rinominare senza passare dalle impostazioni vale
+        // piu' di un controllo in meno.
+        findViewById<View>(R.id.team1_name_container).setOnClickListener {
+            TeamNameDialogFragment
+                .newInstance(1, viewModel.team1Name.value.orEmpty())
+                .show(supportFragmentManager, TeamNameDialogFragment.TAG)
+        }
+
+        findViewById<View>(R.id.team2_name_container).setOnClickListener {
+            TeamNameDialogFragment
+                .newInstance(2, viewModel.team2Name.value.orEmpty())
+                .show(supportFragmentManager, TeamNameDialogFragment.TAG)
+        }
+
         // New buttons with improved feedback
         findViewById<View>(R.id.team1_add_button_card).setOnClickListener {
             it.animateScoreButton()

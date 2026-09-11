@@ -58,9 +58,9 @@ class TeamNameDialogFragment : DialogFragment() {
         }
 
         return MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_App_MaterialAlertDialog)
-            .setTitle("Edit Team $teamNumber")
+            .setTitle(getString(R.string.team_name_dialog_title, teamNumber))
             .setView(dialogView)
-            .setPositiveButton("SAVE") { _, _ ->
+            .setPositiveButton(R.string.save) { _, _ ->
                 val newName = editText.text.toString().trim()
                 if (newName.isNotEmpty()) {
                     if (teamNumber == 1) {
@@ -69,7 +69,7 @@ class TeamNameDialogFragment : DialogFragment() {
                         viewModel.setTeam2Name(newName)
                     }
                 }
-            }.setNegativeButton("CANCEL", null)
+            }.setNegativeButton(R.string.cancel, null)
             .create()
     }
 

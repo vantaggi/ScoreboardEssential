@@ -10,6 +10,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.tabs.TabLayout
+import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.databinding.ActivityStatisticsBinding
 import kotlinx.coroutines.launch
 
@@ -25,6 +26,12 @@ class StatisticsActivity : AppCompatActivity() {
         enableEdgeToEdge()
         binding = ActivityStatisticsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        // La stessa barra con la stessa freccia di PlayersManagementActivity e
+        // AddEditPlayerActivity. parentActivityName e' gia' dichiarato nel manifest per tutte
+        // e cinque le schermate: mancava solo chi lo usasse, e due di queste non avevano
+        // NESSUN modo di tornare indietro che non fosse il gesto di sistema.
+        setSupportActionBar(findViewById(R.id.toolbar))
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         // Edge-to-edge: gli insets di sistema diventano padding del contenitore radice,
         // cosi' la toolbar scende sotto la status bar e la lista si ferma sopra la barra di navigazione.

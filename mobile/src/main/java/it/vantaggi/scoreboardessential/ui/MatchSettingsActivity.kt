@@ -33,6 +33,12 @@ class MatchSettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMatchSettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        // La stessa barra con la stessa freccia di PlayersManagementActivity e
+        // AddEditPlayerActivity. parentActivityName e' gia' dichiarato nel manifest per tutte
+        // e cinque le schermate: mancava solo chi lo usasse, e due di queste non avevano
+        // NESSUN modo di tornare indietro che non fosse il gesto di sistema.
+        setSupportActionBar(findViewById(R.id.toolbar))
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         setupLanguageDropdown() // setup before observing
         setupSportDropdown()
@@ -113,6 +119,15 @@ class MatchSettingsActivity : AppCompatActivity() {
             if (binding.sportAutoComplete.text.toString() != label) {
                 binding.sportAutoComplete.setText(label, false)
             }
+            // Le stesse capacita' che la schermata principale usa per spegnere il cronometro:
+            // nel padel non c'e' un portiere da cambiare, quindi non c'e' niente da impostare.
+            // Prima il campo restava li' a chiedere un numero che nessuno avrebbe mai usato.
+            binding.keeperTimerCard.visibility =
+                if (SportRegistry.byId(sportId).capabilities.hasAuxCountdown) {
+                    android.view.View.VISIBLE
+                } else {
+                    android.view.View.GONE
+                }
         }
 
         viewModel.appLanguage.observe(this) { lang ->
@@ -154,25 +169,37 @@ class MatchSettingsActivity : AppCompatActivity() {
             showColorPickerDialog(2)
         }
 
-        binding.saveSettingsButton.setOnClickListener {
-            val vibrator = getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
-            vibrator?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_CONFIRM, -1))
-            viewModel.saveTeam1Name(binding.team1NameEdittext.text.toString())
-            viewModel.saveTeam2Name(binding.team2NameEdittext.text.toString())
+        // Nella stessa schermata sport e lingua si applicavano SUBITO mentre nomi, colori e
+        // secondi del portiere aspettavano un pulsante SALVA: due modelli mentali in un posto
+        // solo, e nessun modo di sapere quale valesse per il controllo che si stava toccando.
+        // Ora e' tutto immediato, che e' anche la forma giusta per una schermata che si apre a
+        // bordo campo per cambiare una cosa sola.
+        listOf(binding.team1NameEdittext, binding.team2NameEdittext, binding.keeperTimerEdittext)
+            .forEach { campo ->
+                campo.setOnFocusChangeListener { _, haIlFuoco -> if (!haIlFuoco) salvaCampi() }
+            }
+    }
 
-            val keeperDuration =
-                binding.keeperTimerEdittext.text
-                    .toString()
-                    .toLongOrNull() ?: 30L
-            viewModel.saveKeeperTimerDuration(keeperDuration)
+    /**
+     * Salva i tre campi di testo.
+     *
+     * Alla perdita del fuoco e in onPause, non a ogni battuta: scrivere a ogni carattere
+     * significherebbe un giro di preferenze per lettera, e un nome a meta' spedito all'orologio.
+     */
+    private fun salvaCampi() {
+        viewModel.saveTeam1Name(binding.team1NameEdittext.text.toString())
+        viewModel.saveTeam2Name(binding.team2NameEdittext.text.toString())
+        viewModel.saveKeeperTimerDuration(
+            binding.keeperTimerEdittext.text
+                .toString()
+                .toLongOrNull() ?: 30L,
+        )
+    }
 
-            com.google.android.material.snackbar.Snackbar
-                .make(
-                    binding.root,
-                    getString(R.string.settings_saved),
-                    com.google.android.material.snackbar.Snackbar.LENGTH_SHORT,
-                ).show()
-        }
+    override fun onPause() {
+        super.onPause()
+        // Chi esce con la freccia o col gesto non deve perdere quello che ha appena scritto.
+        salvaCampi()
     }
 
     private fun showColorPickerDialog(team: Int) {
