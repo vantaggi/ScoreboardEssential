@@ -65,7 +65,7 @@
 
                         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="center" android:orientation="vertical" android:gravity="center_horizontal">
 
-                            <TextView android:id="@+id/team1_score_textview" android:accessibilityLiveRegion="polite" android:maxLines="1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="0" android:textColor="@color/concrete_gray" android:textSize="@dimen/score_text_size" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:includeFontPadding="false" android:shadowColor="@color/asphalt_dark" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="6" />
+                            <TextView android:id="@+id/team1_score_textview" android:accessibilityLiveRegion="polite" android:maxLines="1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="0" android:textColor="@color/concrete_gray" android:textSize="@dimen/score_text_size" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:includeFontPadding="false" />
 
                             <!-- Set chiusi e game correnti. Vuoto e invisibile finche' uno sport non lo popola. -->
                             <TextView android:id="@+id/team1_score_detail_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/concrete_gray" android:includeFontPadding="false" android:visibility="gone" tools:text="6-4 · 3-2" tools:visibility="visible" />
@@ -109,7 +109,7 @@
 
                         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="center" android:orientation="vertical" android:gravity="center_horizontal">
 
-                            <TextView android:id="@+id/team2_score_textview" android:accessibilityLiveRegion="polite" android:maxLines="1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="0" android:textColor="@color/concrete_gray" android:textSize="@dimen/score_text_size" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:includeFontPadding="false" android:shadowColor="@color/asphalt_dark" android:shadowDx="3" android:shadowDy="3" android:shadowRadius="6" />
+                            <TextView android:id="@+id/team2_score_textview" android:accessibilityLiveRegion="polite" android:maxLines="1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="0" android:textColor="@color/concrete_gray" android:textSize="@dimen/score_text_size" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:includeFontPadding="false" />
 
                             <!-- Set chiusi e game correnti. Vuoto e invisibile finche' uno sport non lo popola. -->
                             <TextView android:id="@+id/team2_score_detail_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/concrete_gray" android:includeFontPadding="false" android:visibility="gone" tools:text="6-4 · 3-2" tools:visibility="visible" />

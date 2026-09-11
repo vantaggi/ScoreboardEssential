@@ -563,7 +563,7 @@ affermata dalla sola dimensione, senza gradini intermedi.
 | D2 | Scegliere UNA strada per segnare: gesto **o** pulsante | piccolo | ✅ fatto |
 | D3 | Far cambiare segno al `−` quando diventa annulla | piccolo | ✅ fatto |
 | D4 | Portare l'atto primario fuori dallo scorrimento: punteggio e comandi sempre visibili | medio | ✅ fatto |
-| D5 | Valutare la texture dietro i numeri — **solo dopo** i primi quattro | da guardare a occhio | ⬜ |
+| D5 | Valutare la texture dietro i numeri — **solo dopo** i primi quattro | da guardare a occhio | ✅ fatto |
 
 **I primi tre cambiano l'esperienza più del quarto**, e D1 da solo toglie la ragione
 principale per cui esiste il tutorial.
@@ -1064,3 +1064,35 @@ Due test del ViewModel asserivano il vecchio comportamento ("increments score an
 scorer dialog") e sono stati riscritti su quello nuovo: il gol e' registrato, non
 attribuito, e sa a quale punto del motore si riferisce. Altri due ("does not show scorer
 dialog") non hanno piu' oggetto, perche' non lo mostra piu' nessuno.
+
+### D5 — la texture che non c'era - 11 settembre 2026
+
+Il piano classificava D5 come "da guardare a occhio". Guardando il codice invece che lo
+schermo, si e' scoperto che la domanda era mal posta.
+
+**Le due texture non esistono.** `bg_asphalt_main` e `bg_concrete_card` sono `<shape>` con
+un `<solid>` dentro: `#121212` e `#1E1E1E`, tinte piatte. E in tutto il progetto non c'e'
+un solo `<bitmap>`. L'analisi di Fase D descriveva "texture di asfalto e cemento": era una
+descrizione dei NOMI, non dei file. L'ho scritta io, ed era sbagliata.
+
+**Quello che c'era davvero dietro i numeri era un'ombra**, ed era diventata un difetto
+misurabile il giorno prima. Le due cifre avevano
+`shadowColor="@color/asphalt_dark"` (#121212) fissa, con `dx=3 dy=3 radius=6`. Ma da ieri
+il colore del testo si adatta alla luminanza della card scelta dall'utente:
+
+- **card chiara** (spray yellow, il default): testo `#1E1E1E`, ombra `#121212`. Sono lo
+  stesso colore. A 86sp condensed bold, con 3px di scarto e 6 di sfocatura, non e'
+  un'ombra: e' il glifo disegnato due volte, sfalsato. Il numero risulta piu' spesso e
+  sbavato su un lato.
+- **card scura**: l'ombra si vede e non disturba, ma non sta separando niente -- il
+  contrasto fra `#E0E0E0` e la card basta gia', e sotto non c'e' nessuna texture da cui
+  staccarsi.
+
+**Rimossa.** Su una tinta piatta un'ombra sul testo non ha un mestiere: non separa, non
+aggiunge profondita' a un piano che non ne ha, e nel caso di default peggiora la forma
+della cifra che e' l'oggetto piu' importante dello schermo. E' la riduzione di Fase D
+applicata dove era stata promessa, con un argomento misurabile invece che di gusto.
+
+**Anteprima resa e mostrata** prima di procedere: quattro casi, card chiara e scura, con e
+senza. Resta l'unica cosa da confermare su un dispositivo vero, dove il rendering del
+testo non e' quello di un SVG.
