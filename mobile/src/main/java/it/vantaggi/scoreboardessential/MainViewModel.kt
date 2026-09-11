@@ -455,6 +455,10 @@ class MainViewModel(
         sportRules = SportRegistry.forMatch(sportRules.id, ordine)
         engine = MatchEngine(sportRules)
         _scoreDisplay.value = sportRules.display(engine.state)
+        // Le regole sono cambiate, quindi lo stato autoritativo e' cambiato: l'orologio va
+        // riallineato anche se oggi l'unico campo diverso -- chi serve -- non lo mostra ancora.
+        // Uno stato spedito solo a meta' e' il modo in cui nascono le divergenze.
+        sendStateV2()
     }
 
     private fun applySport(sportId: String) {

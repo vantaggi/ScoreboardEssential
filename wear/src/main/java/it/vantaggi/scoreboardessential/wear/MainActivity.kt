@@ -233,10 +233,7 @@ class MainActivity : ComponentActivity() {
 
         applyClockRole(state)
 
-        if (!state.hasAuxTimer) {
-            binding.keeperTimer.visibility = View.GONE
-            binding.keeperProgressBar.visibility = View.INVISIBLE
-        }
+        applyAuxTimerRole(state)
     }
 
     /**
@@ -287,6 +284,26 @@ class MainActivity : ComponentActivity() {
         binding.connectionStatusIndicator.contentDescription =
             getString(if (connesso) R.string.cd_connection_ok else R.string.cd_connection_lost)
         refreshHint()
+    }
+
+    /**
+     * Il comando del portiere c'e' o non c'e', e deve poter TORNARE.
+     *
+     * Prima questo era un `if (!state.hasAuxTimer)` senza ramo contrario: passando a padel il "K"
+     * spariva, e tornando al calcio non ricompariva piu' -- restava nascosto fino al primo
+     * cambiamento del timer del portiere o alla prima riaccensione dello schermo, perche' l'unico
+     * altro posto che ne decide la visibilita' e' il collector di keeperTimer. Ogni capacita' che
+     * nasconde qualcosa deve avere il ramo che lo rimostra: e' la stessa regola per cui il
+     * cronometro, i dettagli dei set e l'etichetta del gesto sono tutti scritti con un ternario.
+     *
+     * L'anello invece si spegne e basta: riaccenderlo NON spetta a questa funzione, perche'
+     * dipende da se il conto alla rovescia stia girando, e quello lo sa solo il suo collector.
+     */
+    private fun applyAuxTimerRole(state: WearScoreState) {
+        binding.keeperTimer.visibility = if (state.hasAuxTimer) View.VISIBLE else View.GONE
+        if (!state.hasAuxTimer) {
+            binding.keeperProgressBar.visibility = View.INVISIBLE
+        }
     }
 
     /** La riga in basso ha una cosa sola da dire, e quale sia lo decide qui. */
