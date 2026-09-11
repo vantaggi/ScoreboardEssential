@@ -23,6 +23,7 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.ClockMode
 import it.vantaggi.scoreboardessential.core.ExportResult
+import it.vantaggi.scoreboardessential.core.MatchClock
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
@@ -416,6 +417,16 @@ class MainViewModel(
      */
     private var engine = MatchEngine(sportRules)
 
+    /**
+     * Traduce l'epoch nel tempo di partita, che e' cio' che il log vuole davvero.
+     *
+     * Prima del suo arrivo: i punti segnati sul telefono non portavano NESSUN tempo, quindi il
+     * riassunto del padel non aveva una durata (il cronometro, unica alternativa, nel padel non
+     * gira); quelli arrivati dall'orologio portavano un epoch, che letto come tempo di partita
+     * diceva cinquantacinque anni. Ora la conversione sta in un posto solo e la fanno tutti.
+     */
+    private val matchClock = MatchClock()
+
     private val _activeSport = MutableLiveData(SportRegistry.FOOTBALL)
 
     /** Identificativo dello sport in corso. L'interfaccia lo usa solo per la selezione. */
@@ -482,6 +493,7 @@ class MainViewModel(
     private fun applySport(sportId: String) {
         sportRules = SportRegistry.byId(sportId)
         engine = MatchEngine(sportRules)
+        matchClock.reset()
         _activeSport.value = sportRules.id
         _sportCapabilities.value = sportRules.capabilities
         currentMatchId = null
@@ -658,6 +670,7 @@ class MainViewModel(
 
     private fun startNewMatch() {
         engine.reset()
+        matchClock.reset()
         currentMatchId = null
         updateScore(0, 0)
         synchronized(matchEventLog) {
@@ -904,6 +917,8 @@ class MainViewModel(
             val eventi = MatchLogCodec.decode(attiva.eventLog)
             if (eventi != null) {
                 engine.restoreLog(eventi)
+                // Il tempo in cui l'app e' rimasta chiusa non e' tempo di gioco.
+                eventi.lastOrNull()?.atMillis?.let { matchClock.resume(it, System.currentTimeMillis()) }
                 val (uno, due) = engine.state.headline()
                 _scoreDisplay.postValue(sportRules.display(engine.state))
                 updateScore(uno, due)
@@ -939,7 +954,7 @@ class MainViewModel(
     }
 
     fun addScore(teamId: Int) {
-        engine.apply(ScoringEvent.Point(side = teamId))
+        engine.apply(ScoringEvent.Point(side = teamId), matchClock.relative(System.currentTimeMillis()))
         publishEngineState()
 
         triggerHapticFeedback()
@@ -982,8 +997,8 @@ class MainViewModel(
             if (side != 1 && side != 2) return@forEach
             when (campi[0]) {
                 WearConstants.INTENT_UNDO -> engine.undo()
-                WearConstants.INTENT_CORRECTION -> engine.apply(ScoringEvent.Correction(side = side), quando)
-                WearConstants.INTENT_POINT -> engine.apply(ScoringEvent.Point(side = side), quando)
+                WearConstants.INTENT_CORRECTION -> engine.apply(ScoringEvent.Correction(side = side), matchClock.relative(quando))
+                WearConstants.INTENT_POINT -> engine.apply(ScoringEvent.Point(side = side), matchClock.relative(quando))
                 else -> return@forEach
             }
             applicati++
@@ -1021,7 +1036,7 @@ class MainViewModel(
         side: Int,
         atMillis: Long? = null,
     ) {
-        engine.apply(ScoringEvent.Point(side = side), atMillis)
+        engine.apply(ScoringEvent.Point(side = side), tempoDiPartita(atMillis))
         publishEngineState()
 
         // L'orologio manda l'intenzione E POI, se lo sport attribuisce il marcatore e c'e' un
@@ -1036,12 +1051,15 @@ class MainViewModel(
         }
     }
 
+    /** L'epoch di chi ha generato l'evento; in sua assenza, adesso. */
+    private fun tempoDiPartita(atEpoch: Long?): Long = matchClock.relative(atEpoch ?: System.currentTimeMillis())
+
     fun subtractScore(
         teamId: Int,
         atMillis: Long? = null,
     ) {
         val prima = engine.state.headline()
-        engine.apply(ScoringEvent.Correction(side = teamId), atMillis)
+        engine.apply(ScoringEvent.Correction(side = teamId), tempoDiPartita(atMillis))
         val dopo = engine.state.headline()
 
         // Come prima: gli effetti collaterali scattano solo se il punteggio e' davvero cambiato.
