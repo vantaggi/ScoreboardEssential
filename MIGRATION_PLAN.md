@@ -31,7 +31,7 @@ progetto. Piu' 6 prove strumentate che compilano e aspettano un dispositivo.
 | **I** (Padel Elite) | I1-I3 fatti; **I4-I5 fermi, servono autorizzazioni** |
 | **D** (interfaccia, via di mezzo di Ive) | D1-D4 fatti; **D5 aperto** |
 | **Audit dei comandi** (40 rilievi) | **esaurito**: 12 gravi, 20 medi, 8 bassi |
-| Debiti dichiarati | 2 su 3 chiusi |
+| Debiti dichiarati | **tutti e 3 chiusi** |
 
 Oltre al piano originale, in questa sessione sono nate tre cose che non c'erano:
 il **cambio sport dall'orologio**, la **partita registrata dal solo polso** con coda
@@ -68,13 +68,7 @@ su file (I3) resta la strada completa e senza rete.
 **3. D5 -- la texture dietro i numeri.** Il piano stesso la classifica come "da guardare
 a occhio". Senza vedere l'app non ho una base per deciderla: e' una scelta, non un difetto.
 
-**4. L'ultimo debito dichiarato.** `MatchEngine` registra anche gli eventi **senza
-effetto** (un tocco a partita finita): serve a tenere vera la proprieta' "applica poi
-annulla = stato di prima", ma significa che dopo un tocco inerte servono **due**
-annullamenti per togliere il punto precedente. E' l'unica cosa rimasta che possa dare
-fastidio nell'uso reale. Due strade: filtrare gli eventi inerti all'ingresso (e rinunciare
-alla proprieta'), oppure far si' che l'annullamento salti quelli senza effetto (e tenerla).
-La seconda e' piu' lavoro e non rompe niente.
+**4. ~~L'ultimo debito dichiarato.~~ Chiuso l'11 settembre 2026** -- vedi in fondo.
 
 ### Attriti di flusso mai trasformati in attivita'
 
@@ -423,10 +417,13 @@ In tutta la Fase S **nessun file sotto `src/test` e' stato toccato**: la promess
   `MainViewModel.selectSport()`. Oggi il cambio a partita viva viene scritto nelle
   preferenze e applicato alla partita **successiva**, in silenzio. Il sottotitolo
   del selettore lo dichiara, ma un avviso esplicito sarebbe meglio.
-- **`MatchEngine` registra anche gli eventi senza effetto** (un tocco a partita
-  finita). Serve a mantenere vera la proprieta' "applica poi annulla = stato di
-  prima", ma significa che dopo un tocco inerte servono **due** annullamenti per
-  togliere il punto precedente. Scelta consapevole, da ridiscutere se da' fastidio.
+- ~~**`MatchEngine` registra anche gli eventi senza effetto.**~~ **Chiuso l'11
+  settembre 2026: la decisione e' stata rovesciata.** Un evento che non cambia lo stato
+  non entra piu' nella storia. Il testo originale del debito:
+- **`MatchEngine` registrava anche gli eventi senza effetto** (un tocco a partita
+  finita). Serviva a mantenere vera la proprieta' "applica poi annulla = stato di
+  prima", ma significava che dopo un tocco inerte servivano **due** annullamenti per
+  togliere il punto precedente.
 - **`MatchLogCodec` non scrive `sportId`**: lo sport e' gia' una colonna della stessa
   riga. Deviazione voluta rispetto alla proposta originale.
 
@@ -922,3 +919,40 @@ Resta la finestra di pochi millisecondi fra il primo punto e la sua persistenza,
 la schermata potrebbe ancora accettare: in quel caso si ricade nel comportamento di
 prima, cioe' `selectSport` rifiuta. Nessuna regressione, e nessuna pretesa di atomicita'
 fra due schermate che non condividono un motore.
+
+### L'ultimo debito: un annullamento che sembrava non fare niente - 11 settembre 2026
+
+**Decisione rovesciata.** `MatchEngine.apply` registrava anche gli eventi senza effetto --
+un tocco a partita finita, un lato fuori da 1..2, una correzione a zero -- per tenere vera
+la proprieta' algebrica "applica poi annulla = esattamente lo stato di prima". Ora un
+evento che non cambia lo stato **non entra nella storia**, perche' non e' accaduto.
+
+**Perche'.** La proprieta' era vera e il prezzo lo pagava chi usa l'app: dopo un tocco
+inerte servivano DUE annullamenti per togliere il punto precedente, e **il primo sembrava
+non fare niente**. Un comando che appare inerte e' il difetto piu' grave che
+un'interfaccia possa avere, perche' l'utente non ha modo di distinguerlo da un'app
+bloccata. Vale piu' di un'identita' che nessuno all'infuori del motore puo' osservare.
+
+**Un argomento che sembrava decisivo e non lo era.** Avevo ipotizzato che gli eventi
+inerti inquinassero anche il riassunto e l'export verso Padel Elite con punti fantasma.
+Controllato: **no.** `MatchSummarizer` e `MatchExporter` li saltano gia' entrambi con
+`if (next == state) continue`. Quei filtri restano, e non sono ridondanza: sono cio' che
+mantiene leggibili i registri **gia' salvati** dalle versioni che scrivevano gli eventi
+inerti. Il test dell'export e' stato riscritto per costruire proprio quel caso con
+`restoreLog`, invece di fabbricarlo applicando eventi che il motore non registra piu'.
+
+**Una incoerenza trovata mentre si guardava.** `subtractScore` aveva gia' la guardia
+giusta -- "gli effetti collaterali scattano solo se il punteggio e' davvero cambiato" --
+mentre `addScore` non ce l'aveva: a partita finita apriva comunque il dialogo del
+marcatore e scriveva un gol nel registro a schermo. Il tabellone diceva una cosa e la
+cronaca un'altra. Ora le due funzioni si comportano allo stesso modo.
+
+**Test.** La proprieta' centrale e' stata riscritta nella forma in cui e' osservabile, e
+il ciclo da 200 passi ora verifica **entrambi** i rami (e fallisce se non li esercita tutti
+e due). Piu' un test sul caso vero: partita di padel finita, tocco in piu', **un solo**
+annullamento e un solo cambiamento visibile. Verificati per falsificazione: togliendo la
+riga di guardia, entrambi diventano rossi.
+
+**Resta aperto, e non e' un difetto:** a partita finita i comandi `+` sono ancora premibili
+e non fanno nulla. Disattivarli sarebbe piu' onesto, ma `applyCapabilities` oggi non sa se
+la partita sia finita: e' un cambio di interfaccia, non una correzione, e va deciso.

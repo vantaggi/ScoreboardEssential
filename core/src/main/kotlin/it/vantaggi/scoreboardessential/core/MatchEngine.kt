@@ -47,19 +47,34 @@ class MatchEngine(
         private set
 
     /**
-     * Registra [event] e avanza di un passo.
+     * Registra [event] e avanza di un passo -- ma solo se e' successo qualcosa.
      *
-     * Anche un evento senza effetto (partita gia' finita, lato fuori da 1..2) viene registrato: e'
-     * cio' che rende vera la proprieta' "applica poi annulla torna esattamente allo stato di
-     * prima". Se lo si scartasse, l'annullamento subito dopo un evento innocuo mangerebbe invece
-     * l'ultimo punto valido.
+     * Un evento che non cambia lo stato (partita gia' finita, lato fuori da 1..2, correzione a
+     * zero) **non entra nella storia**, perche' non e' accaduto.
+     *
+     * Questa e' una decisione ROVESCIATA rispetto alla prima stesura, che li registrava tutti per
+     * tenere vera la proprieta' algebrica "applica poi annulla = esattamente lo stato di prima".
+     * La proprieta' era vera e il prezzo lo pagava chi usa l'app: dopo un tocco inerte servivano
+     * DUE annullamenti per togliere il punto precedente, e il primo sembrava non fare niente.
+     * Un comando che appare inerte e' il difetto piu' grave che un'interfaccia possa avere --
+     * l'utente non ha modo di distinguerlo da un'app bloccata -- e vale piu' di un'identita' che
+     * nessuno all'infuori del motore puo' osservare.
+     *
+     * La proprieta' resta vera dove e' osservabile: per ogni evento CON effetto, applicare e poi
+     * annullare riporta allo stesso stato e alla stessa storia.
+     *
+     * I consumatori del registro ([MatchSummarizer], [MatchExporter]) continuano a saltare gli
+     * eventi senza effetto con `if (next == state) continue`: non e' ridondanza, e' cio' che
+     * mantiene leggibili i registri gia' salvati dalle versioni che li scrivevano.
      */
     fun apply(
         event: ScoringEvent,
         atMillis: Long? = null,
     ): ScoreState {
+        val next = rules.apply(state, event)
+        if (next == state) return state
         mutableLog.add(LoggedEvent(event, atMillis))
-        state = rules.apply(state, event)
+        state = next
         return state
     }
 

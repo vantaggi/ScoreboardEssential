@@ -19,7 +19,7 @@ class MatchEngineTest {
     /**
      * Sequenza deterministica ma irregolare, senza librerie: i due moduli primi tra loro evitano
      * che lato e tipo di evento cadano in fase. Include di proposito i lati 0 e 3 -- eventi senza
-     * senso, che il motore deve registrare e le regole ignorare.
+     * senso, che le regole ignorano e che quindi non entrano nella storia.
      */
     private fun evento(i: Int): ScoringEvent {
         val side = (i * 7 + 1) % 4
@@ -64,26 +64,75 @@ class MatchEngineTest {
     }
 
     /**
-     * La proprieta' centrale: per QUALUNQUE sequenza, applicare e poi annullare riporta esattamente
-     * allo stato di prima -- e alla stessa storia. Duecento passi con eventi anche assurdi.
+     * La proprieta' centrale, nella forma in cui e' osservabile: per ogni evento **con effetto**,
+     * applicare e poi annullare riporta esattamente allo stato di prima e alla stessa storia.
+     *
+     * L'altra meta' del contratto e' altrettanto importante e sta nello stesso ciclo: un evento
+     * senza effetto non cambia ne' lo stato ne' la storia, quindi non c'e' niente da annullare.
+     * Duecento passi con eventi anche assurdi -- lati 0 e 3 compresi, che le regole ignorano.
      */
     @Test
     fun applicarePoiAnnullareTornaEsattamenteAlloStatoPrecedente() {
         val engine = MatchEngine(FootballRules)
+        var conEffetto = 0
+        var senzaEffetto = 0
 
         for (i in 0 until 200) {
             val statoPrima = engine.state
             val storiaPrima = engine.events
 
             engine.apply(evento(i))
-            engine.undo()
 
-            assertEquals(statoPrima, engine.state)
-            assertEquals(storiaPrima, engine.events)
+            if (engine.events == storiaPrima) {
+                // Non e' successo niente: non e' entrato nella storia, e lo stato e' fermo.
+                senzaEffetto++
+                assertEquals(statoPrima, engine.state)
+            } else {
+                conEffetto++
+                engine.undo()
+                assertEquals(statoPrima, engine.state)
+                assertEquals(storiaPrima, engine.events)
+            }
 
             // Si avanza sul serio, altrimenti la sequenza resterebbe lunga zero per sempre.
             engine.apply(evento(i + 1))
         }
+
+        // Il ciclo deve aver esercitato ENTRAMBI i rami, altrimenti meta' contratto non e' provata.
+        assertTrue("nessun evento con effetto", conEffetto > 0)
+        assertTrue("nessun evento senza effetto", senzaEffetto > 0)
+    }
+
+    /**
+     * Il caso che ha fatto rovesciare la decisione: un tocco a partita finita non deve consumare
+     * un annullamento.
+     *
+     * Prima veniva registrato, quindi il primo annullamento lo toglieva e **sembrava non fare
+     * niente**; per togliere davvero il punto precedente ne servivano due. Un comando che appare
+     * inerte non si distingue da un'app bloccata.
+     */
+    @Test
+    fun unToccoDopoLaFineNonConsumaUnAnnullamento() {
+        val regole =
+            RacketRules(
+                id = SportRegistry.PADEL,
+                config = SportConfig(mode = ScoringMode.POINTS, deuce = DeuceRule.GOLDEN_POINT, sets = 1),
+            )
+        val engine = MatchEngine(regole)
+        // Col golden point un game si chiude a 4 punti: 24 punti di fila sono 6-0, set e partita.
+        repeat(24) { engine.apply(ScoringEvent.Point(side = 1)) }
+        val finita = engine.state
+        assertEquals(1, finita.wonBy)
+
+        engine.apply(ScoringEvent.Point(side = 2))
+
+        assertEquals("un tocco a partita finita non e' successo", 24, engine.log.size)
+        assertEquals(finita, engine.state)
+
+        // UN solo annullamento, UN cambiamento visibile.
+        engine.undo()
+        assertEquals(23, engine.log.size)
+        assertEquals(null, engine.state.wonBy)
     }
 
     @Test

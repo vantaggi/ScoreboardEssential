@@ -71,11 +71,20 @@ class MatchExportTest {
     /** Correzioni e tocchi a partita finita restano nel log ma non sono punti giocati. */
     @Test
     fun soloCioCheHaCambiatoIlPunteggioEntraNellaTimeline() {
+        // Il motore non scrive piu' gli eventi senza effetto, ma un registro SALVATO dalle
+        // versioni che lo facevano puo' contenerli: l'export deve continuare a saltarli, o quelle
+        // partite arriverebbero a Padel Elite con punti fantasma. Si ricostruisce quel caso.
         val engine = setVinto()
-        engine.apply(ScoringEvent.Correction(side = 1))
-        engine.apply(ScoringEvent.Point(side = 2), atMillis = 900_000L)
-        val export = ready(MatchExporter.build(engine, roster, padelIds))
+        val conRumore =
+            engine.log +
+                listOf(
+                    LoggedEvent(ScoringEvent.Correction(side = 1)),
+                    LoggedEvent(ScoringEvent.Point(side = 2), 900_000L),
+                )
+        engine.restoreLog(conRumore)
         assertEquals(26, engine.log.size)
+
+        val export = ready(MatchExporter.build(engine, roster, padelIds))
         assertEquals(24, export.timeline.size)
     }
 

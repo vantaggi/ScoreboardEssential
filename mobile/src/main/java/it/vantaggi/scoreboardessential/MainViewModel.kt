@@ -958,7 +958,16 @@ class MainViewModel(
     }
 
     fun addScore(teamId: Int) {
+        val prima = engine.state
         engine.apply(ScoringEvent.Point(side = teamId), matchClock.relative(System.currentTimeMillis()))
+
+        // Stessa guardia che subtractScore aveva gia': gli effetti collaterali scattano solo se
+        // e' successo qualcosa. A partita finita il tocco non cambia il punteggio, e senza questa
+        // riga apriva comunque il dialogo del marcatore e scriveva un gol nel registro a schermo:
+        // il tabellone diceva una cosa e la cronaca un'altra. Il confronto e' sullo stato intero
+        // e non sul punteggio di testata, perche' negli sport a set cambiano anche game e servizio.
+        if (engine.state == prima) return
+
         publishEngineState()
 
         triggerHapticFeedback()
