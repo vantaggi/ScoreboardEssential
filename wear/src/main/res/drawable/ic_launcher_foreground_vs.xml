@@ -1,43 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Due colonne di punteggio, allineate in basso, di altezza diversa.
+
+    E' lo stesso marchio della schermata di gioco ridotto all'osso: due lati, due colori, uno
+    avanti all'altro. Non c'e' niente da leggere, quindi regge a 24dp in una notifica quanto a
+    108dp nelle impostazioni.
+
+    Il disegno precedente sovrapponeva una "V" e una "S", entrambe con bordo nero, sopra un cerchio
+    bianco traslucido di raggio 40, piu' due schegge decorative. Tre problemi misurabili:
+      - a 48dp le due lettere sovrapposte diventavano una macchia;
+      - la zona sicura di un'icona adattiva e' un cerchio di RAGGIO 33 attorno a (54,54): il
+        cerchio a raggio 40 e le schegge a x 80-85 finivano fuori, e la maschera li tagliava;
+      - `monochrome` puntava a quello stesso disegno, e l'icona a tema usa solo il canale alfa:
+        il risultato era una macchia piena con le lettere invisibili dentro.
+
+    Qui l'estremo piu' lontano e' a distanza 32,7 dal centro: dentro la zona sicura con un
+    margine, quindi nessuna maschera (tonda, squircle o quadrata) taglia niente.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <!-- Background Circle/Glow -->
+
+    <!-- Colonna di sinistra, piu' alta: x 30..51, y 33..75, raccordo 4 -->
     <path
-        android:fillColor="#33FFFFFF"
-        android:pathData="M54,54 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0" />
+        android:fillColor="@color/team_spray_yellow"
+        android:pathData="M34,33 L47,33 A4,4 0 0,1 51,37 L51,71 A4,4 0 0,1 47,75 L34,75 A4,4 0 0,1 30,71 L30,37 A4,4 0 0,1 34,33 Z" />
 
-    <group
-        android:scaleX="1.2"
-        android:scaleY="1.2"
-        android:translateX="-10.8"
-        android:translateY="-10.8">
-        
-        <!-- V Shape - Spray Yellow - Bottom Layer -->
-        <path
-            android:fillColor="@color/team_spray_yellow"
-            android:pathData="M30,30 L45,30 L54,55 L63,30 L78,30 L54,80 Z"
-            android:strokeWidth="2"
-            android:strokeColor="#000000"
-            android:strokeAlpha="0.5"/>
-
-        <!-- S Shape - Electric Green - Top Layer -->
-        <path
-            android:fillColor="@color/team_electric_green"
-            android:pathData="M75,35 L75,50 L55,50 L55,55 L75,55 L75,80 L45,80 L45,65 L65,65 L65,60 L45,60 L45,35 Z"
-            android:strokeWidth="2"
-            android:strokeColor="#000000"
-            android:strokeAlpha="0.5"/>
-            
-        <!-- Graffiti Accents -->
-        <path
-            android:fillColor="@color/graffiti_pink"
-            android:pathData="M80,25 l5,0 l-2,10 l-5,0 Z" />
-        <path
-            android:fillColor="@color/neon_cyan"
-            android:pathData="M25,75 l10,-5 l0,5 Z" />
-            
-    </group>
+    <!-- Colonna di destra, piu' bassa: x 57..78, y 47..75, raccordo 4 -->
+    <path
+        android:fillColor="@color/neon_cyan"
+        android:pathData="M61,47 L74,47 A4,4 0 0,1 78,51 L78,71 A4,4 0 0,1 74,75 L61,75 A4,4 0 0,1 57,71 L57,51 A4,4 0 0,1 61,47 Z" />
 </vector>

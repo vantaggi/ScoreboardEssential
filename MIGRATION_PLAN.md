@@ -171,6 +171,9 @@ T5→T6 · T6→T9 · T7→T11 · **T10→T14** · T12,T13→T14
   percorso assoluto, driver configurato col nome nudo). È per test strumentati.
   Lo schema *è* esportato e presente in `mergeDebugAssets`: manca il runner, non
   il dato. Il test resta `@Ignore` con la ragione vera scritta dentro.
+- **`--` nei commenti XML: pagata TRE volte.** Un trattino doppio usato come incidentale
+  in italiano fa fallire `mergeDebugResources`. Vale per ogni file di risorse, non solo per
+  i valori: layout, drawable, vettori. Vedi anche la voce piu' avanti.
 - **Gli apostrofi nelle stringhe Android vanno sfuggiti**, e le sequenze di escape
   unicode non bastano: aapt rifiuta la risorsa con «Can not extract resource», un
   errore che non nomina ne' il file ne' la riga. La via piu' economica e' **riformulare
@@ -981,3 +984,40 @@ comandi si riaccendono da soli, senza un ramo dedicato.
 **Anche offline.** Il polso lo calcola da solo quando il telefono non c'e', con lo stesso
 codice: `rebuildLocalState` prende `matchOver` dal proprio `ScoreDisplay`. Coperto da un
 test che chiude la partita con un punto in coda, verificato per falsificazione.
+
+### L'icona, rifatta - 11 settembre 2026
+
+Non era una questione di gusto: tre problemi misurabili.
+
+1. **Una "V" e una "S" sovrapposte**, entrambe con bordo nero, sopra un cerchio bianco
+   traslucido, piu' due schegge decorative. A 48dp -- la misura a cui un'icona vive -- le
+   due lettere sovrapposte diventavano una macchia.
+2. **Fuori dalla zona sicura.** Un'icona adattiva puo' contare solo su un cerchio di
+   **raggio 33** attorno a (54,54): il cerchio bianco aveva raggio 40 e le schegge stavano
+   a x 80-85. La maschera del lanciatore li tagliava.
+3. **`monochrome` puntava al disegno a colori.** L'icona a tema usa solo il canale ALFA:
+   la silhouette di quel disegno era il cerchio pieno, quindi l'icona a tema era un disco
+   con le lettere invisibili dentro.
+
+**Il marchio nuovo:** due colonne di punteggio, allineate in basso, di altezza diversa,
+nei due colori delle squadre. E' la schermata di gioco ridotta all'osso -- due lati, due
+colori, uno avanti all'altro -- e non c'e' niente da leggere, quindi regge a 24dp in una
+notifica quanto a 108dp nelle impostazioni. L'estremo piu' lontano sta a 32,7 dal centro:
+dentro la zona sicura con un margine, quindi nessuna maschera taglia niente.
+
+`ic_launcher_monochrome_vs.xml` e' un disegno **dedicato**, non un riuso: stesse due
+colonne, tinta unica, silhouette che coincide col marchio. Il tint lo applica il sistema,
+quindi nel file non c'e' nessun attributo di tema da risolvere -- un `?attr/` li' dentro e'
+un rischio, perche' il drawable viene gonfiato fuori dal contesto di un'activity.
+
+Aggiunta anche la variante tonda su `mipmap-anydpi-v33`, che prima esisteva solo su v26 e
+quindi su Android 13+ ricadeva su una versione senza monocromatica.
+
+**I PNG legacy in `mipmap-hdpi` e compagni non sono stati toccati**: con `minSdk 31` le
+icone adattive coprono ogni dispositivo supportato e quei bitmap non vengono mai usati come
+icona di lancio. Sono peso morto, ma rigenerarli non e' possibile da qui e cancellarli
+senza poter verificare dove altro siano referenziati non vale il rischio.
+
+*Da guardare:* l'anteprima e' stata resa e mostrata, ma su un lanciatore vero cambiano
+l'ombra dinamica e il ritaglio effettivo. E' comunque la modifica piu' facile da giudicare
+a colpo d'occhio fra tutte quelle di questa sessione.

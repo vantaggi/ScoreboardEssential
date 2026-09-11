@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    L'icona a tema ha un disegno SUO, e non e' un dettaglio.
+
+    Android non colora il disegno a colori: ne prende la SILHOUETTE, cioe' il solo canale alfa.
+    Riusare il foreground a colori funziona solo se la sua silhouette e' gia' il marchio, e
+    quella precedente era un cerchio pieno di raggio 40: l'icona a tema diventava un disco con le
+    lettere invisibili dentro.
+
+    Stesse due colonne, tinta unica. La silhouette E' il marchio, quindi non c'e' niente da
+    perdere nella conversione.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,33 L47,33 A4,4 0 0,1 51,37 L51,71 A4,4 0 0,1 47,75 L34,75 A4,4 0 0,1 30,71 L30,37 A4,4 0 0,1 34,33 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M61,47 L74,47 A4,4 0 0,1 78,51 L78,71 A4,4 0 0,1 74,75 L61,75 A4,4 0 0,1 57,71 L57,51 A4,4 0 0,1 61,47 Z" />
+</vector>

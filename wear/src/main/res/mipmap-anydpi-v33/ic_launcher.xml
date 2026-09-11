@@ -2,5 +2,6 @@
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@drawable/ic_launcher_background_vs" />
     <foreground android:drawable="@drawable/ic_launcher_foreground_vs" />
-    <monochrome android:drawable="@drawable/ic_launcher_foreground_vs" />
+    <!-- Disegno dedicato: l'icona a tema usa la silhouette, non i colori. -->
+    <monochrome android:drawable="@drawable/ic_launcher_monochrome_vs" />
 </adaptive-icon>
