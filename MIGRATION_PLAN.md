@@ -9,6 +9,98 @@ protocollo Wear, UI): <https://claude.ai/code/artifact/ef50b80a-0764-4591-a79e-b
 
 ---
 
+## RIPRENDI DA QUI — stato all'11 settembre 2026
+
+`main` e il branch sono su `origin`, allineati a `a344b15`. **60 commit** oltre il
+vecchio `origin/main`.
+
+```bash
+./gradlew clean test ktlintCheck lintDebug assembleDebug assembleDebugAndroidTest
+```
+
+**399 test JVM, zero saltati, zero falliti.** Non esiste piu' un solo `@Ignore` nel
+progetto. Piu' 6 prove strumentate che compilano e aspettano un dispositivo.
+
+### Che cosa e' finito
+
+| Fase | Stato |
+|---|---|
+| **T** (ammodernamento SDK/JDK/AGP) | completa |
+| **B** (fondazioni) | completa |
+| **S** (multi-sport: dominio, padel, tennis, protocollo Wear v2) | completa |
+| **I** (Padel Elite) | I1-I3 fatti; **I4-I5 fermi, servono autorizzazioni** |
+| **D** (interfaccia, via di mezzo di Ive) | D1-D4 fatti; **D5 aperto** |
+| **Audit dei comandi** (40 rilievi) | **esaurito**: 12 gravi, 20 medi, 8 bassi |
+| Debiti dichiarati | 2 su 3 chiusi |
+
+Oltre al piano originale, in questa sessione sono nate tre cose che non c'erano:
+il **cambio sport dall'orologio**, la **partita registrata dal solo polso** con coda
+su disco e consegna al telefono, e il **punteggio calcolato offline al polso**.
+
+### Le quattro cose aperte, in ordine di peso
+
+**1. LE VERIFICHE SU DISPOSITIVO. E' qui il rischio, ed e' quasi tutto.**
+Niente di quanto scritto in questi giorni e' mai stato **visto** girare. Il codice
+compila, i test passano, il lint tace: nessuna di queste tre cose guarda uno schermo.
+In ordine di probabilita' di sorpresa:
+
+- il **tabellone fisso** in verticale (D4): quanta pagina resta al registro sotto di esso;
+- l'orologio: il **"K" da 48dp** toglie 48dp di larghezza ai due punteggi, e i due comandi
+  in fondo (SPORT e AZZERA) sono stimati ~122dp contro i ~136dp del quadrato inscritto di
+  un quadrante da 192dp -- entrano sulla carta, non e' stato verificato;
+- il passaggio **online -> offline -> online**, unico punto in cui due sorgenti si
+  alternano a schermo;
+- le **impostazioni**, la cui radice e' passata da `ScrollView` a `LinearLayout` con la
+  barra sopra, e la **cronologia**, dove la prima card ora si aggancia alla barra;
+- l'**orizzontale**, che ha un `layout-land` nuovo di zecca;
+- la matrice 2x2 {orologio vecchio, nuovo} x {telefono vecchio, nuovo}, con la condizione
+  "orologio vecchio + telefono nuovo + calcio = identico a oggi".
+
+La prima di queste e' ora un comando invece che una procedura:
+`./gradlew :mobile:connectedDebugAndroidTest`.
+
+**2. I4-I5: import e caricamento diretto su Padel Elite.** Fermi da giorni, e non per
+mancanza di tempo: il Supabase di quel progetto e' **produzione**, usato ogni settimana
+con dati veri. Servono due permessi distinti, ed e' bene tenerli distinti:
+lettura/scrittura sullo schema, e l'uso di `create_match()`. Finche' non arrivano, l'export
+su file (I3) resta la strada completa e senza rete.
+
+**3. D5 -- la texture dietro i numeri.** Il piano stesso la classifica come "da guardare
+a occhio". Senza vedere l'app non ho una base per deciderla: e' una scelta, non un difetto.
+
+**4. L'ultimo debito dichiarato.** `MatchEngine` registra anche gli eventi **senza
+effetto** (un tocco a partita finita): serve a tenere vera la proprieta' "applica poi
+annulla = stato di prima", ma significa che dopo un tocco inerte servono **due**
+annullamenti per togliere il punto precedente. E' l'unica cosa rimasta che possa dare
+fastidio nell'uso reale. Due strade: filtrare gli eventi inerti all'ingresso (e rinunciare
+alla proprieta'), oppure far si' che l'annullamento salti quelli senza effetto (e tenerla).
+La seconda e' piu' lavoro e non rompe niente.
+
+### Attriti di flusso mai trasformati in attivita'
+
+Stanno nella Fase D, sono stati misurati e mai affrontati. Nessuno e' un difetto:
+
+- il **dialogo del marcatore** interrompe nel momento di massima attenzione -- hai appena
+  visto il gol e stai guardando il campo. Attribuire dopo, o dal registro, rispetterebbe
+  l'attenzione;
+- **`reset_scores_button`** confonde "azzera" e "termina": un pulsante, due modelli mentali.
+
+### Cose da sapere prima di toccare qualcosa
+
+- **AGP 9: rimandato, non bloccato.** Non accettare l'Upgrade Assistant di Android Studio:
+  riscrive i file di build senza sapere del version catalog ne' di
+  `gradle-daemon-jvm.properties`.
+- **Le trappole gia' pagate** stanno nella sezione "Trappole gia' incontrate": apostrofi
+  nelle stringhe Android, `--` nei commenti XML, i default di Kotlin che non sono default
+  SQL, `mockito-android` sul classpath dei test unitari. Costano tutte un ciclo di build.
+- **Il golden test in `:shared`** congela i valori letterali del protocollo. Se diventa
+  rosso, la risposta quasi certamente **non** e' aggiornare il valore atteso: e' aggiungere
+  un path nuovo e lasciare il vecchio in scrittura per una release.
+- **`origin/main` ha una branch protection** che richiede le pull request. Il push del
+  10 settembre l'ha aggirata con un bypass autorizzato dal proprietario del repo.
+
+---
+
 ## Come si costruisce e si verifica
 
 ```bash
