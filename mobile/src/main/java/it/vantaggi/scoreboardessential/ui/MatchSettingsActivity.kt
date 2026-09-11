@@ -19,6 +19,9 @@ class MatchSettingsActivity : AppCompatActivity() {
     private val viewModel: MatchSettingsViewModel by viewModels {
         MatchSettingsViewModelFactory(
             (application as it.vantaggi.scoreboardessential.ScoreboardEssentialApplication).matchSettingsRepository,
+            it.vantaggi.scoreboardessential.database.AppDatabase
+                .getDatabase(application)
+                .matchDao(),
         )
     }
 
@@ -114,6 +117,12 @@ class MatchSettingsActivity : AppCompatActivity() {
 
         // La voce mostrata segue sempre il ViewModel: se una scrittura non passasse, il selettore
         // tornerebbe da solo sulla scelta precedente invece di mentire.
+        viewModel.sportChangeBlocked.observe(this) {
+            com.google.android.material.snackbar.Snackbar
+                .make(binding.root, R.string.sport_change_blocked, com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                .show()
+        }
+
         viewModel.activeSport.observe(this) { sportId ->
             val label = sportLabel(this, sportId)
             if (binding.sportAutoComplete.text.toString() != label) {

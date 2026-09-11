@@ -319,10 +319,12 @@ In tutta la Fase S **nessun file sotto `src/test` e' stato toccato**: la promess
 
 ### Debiti dichiarati, da chiudere
 
-- ~~**`@string/sport_change_blocked` e' inutilizzata.**~~ **Chiuso l'11 settembre 2026:**
-  ora ha il suo caso, il cambio sport chiesto dall'orologio. Resta vero che sul telefono
-  il cambio a partita viva viene scritto nelle preferenze e applicato alla partita
-  successiva in silenzio; sull'orologio invece viene rifiutato subito e detto.
+- ~~**`@string/sport_change_blocked` e' inutilizzata.**~~ **Chiuso interamente l'11
+  settembre 2026:** prima sull'orologio, poi anche sul telefono. Il selettore delle
+  impostazioni non scrive piu' la preferenza a partita cominciata: rifiuta e lo dice,
+  e la voce mostrata torna quella vera. La condizione non e' duplicata -- e' la STESSA
+  (`il registro eventi non e' vuoto`) letta dalla copia persistita, che e' l'unica a cui
+  quella schermata puo' arrivare.
   Il testo originale del debito:
 - **`@string/sport_change_blocked` era inutilizzata.** La schermata impostazioni non
   puo' sapere se una partita e' in corso senza duplicare la guardia che vive in
@@ -803,3 +805,28 @@ in tutto il progetto. Piu' 6 prove strumentate che compilano e aspettano un disp
 
 E' anche la prima delle verifiche manuali accumulate che diventa un comando invece che
 una procedura.
+
+### Il selettore dello sport non mente piu' - 11 settembre 2026
+
+Ultimo debito dichiarato ancora aperto, e il piu' sgradevole dei tre: era anche una
+violazione del principio per cui **il sistema non deve mai fare qualcosa di diverso da
+cio' che e' sembrato fare.**
+
+Cosa succedeva: si sceglieva un altro sport a partita in corso; la preferenza veniva
+scritta **sempre**; `MainViewModel.selectSport` rifiutava di applicarla, giustamente,
+perche' convertire un punteggio vivo fra due regolamenti non ha una risposta giusta. Ma
+nessuno lo diceva alla schermata impostazioni, che intanto mostrava lo sport nuovo nel
+menu. Risultato: il tabellone continuava col vecchio, il menu diceva il nuovo, e il
+cambio scattava da solo alla partita **successiva**. Tre bugie in fila.
+
+Ora il selettore controlla, rifiuta, lo dice con `@string/sport_change_blocked` e rimette
+nel menu la voce vera. **La guardia non e' duplicata:** e' la stessa condizione -- il
+registro eventi non e' vuoto -- letta dalla copia persistita invece che dal motore, che
+quella schermata non ha. La nota originale del debito diceva che duplicarla avrebbe
+creato due verita' capaci di divergere; leggere la stessa verita' da dove e' scritta non
+ne crea una seconda.
+
+Resta la finestra di pochi millisecondi fra il primo punto e la sua persistenza, in cui
+la schermata potrebbe ancora accettare: in quel caso si ricade nel comportamento di
+prima, cioe' `selectSport` rifiuta. Nessuna regressione, e nessuna pretesa di atomicita'
+fra due schermate che non condividono un motore.

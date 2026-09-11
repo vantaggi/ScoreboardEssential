@@ -5,12 +5,18 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
+import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import kotlinx.coroutines.launch
 
 class MatchSettingsViewModel(
     private val repository: MatchSettingsRepository,
+    private val matchDao: MatchDao,
 ) : ViewModel() {
+    /** Il cambio sport e' stato rifiutato perche' una partita e' gia' cominciata. */
+    val sportChangeBlocked = SingleLiveEvent<Unit>()
+
     private val _team1Name = MutableLiveData<String>()
     val team1Name: LiveData<String> = _team1Name
 
@@ -86,15 +92,28 @@ class MatchSettingsViewModel(
     }
 
     /**
-     * Scrive soltanto la preferenza.
+     * Cambia sport, ma non a partita cominciata.
      *
-     * La guardia "non si cambia sport a partita in corso" vive nel ViewModel della schermata
-     * principale, che e' l'unico a sapere se il punteggio e' gia' stato toccato: duplicarla qui
-     * significherebbe avere due verita' che possono divergere. Qui la scelta si registra e basta;
-     * di la' viene applicata appena la partita e' ferma.
+     * Prima la preferenza veniva scritta SEMPRE. La guardia vera vive in
+     * [it.vantaggi.scoreboardessential.MainViewModel.selectSport], che a partita viva rifiuta di
+     * applicare -- ma nessuno lo diceva a questa schermata, che intanto mostrava lo sport nuovo
+     * nel selettore. Risultato: il tabellone continuava col vecchio, il menu diceva il nuovo, e
+     * il cambio scattava da solo alla partita SUCCESSIVA. Tre bugie in fila, e la terza e' la
+     * peggiore: il sistema faceva una cosa diversa da quella che era sembrata.
+     *
+     * Non e' una guardia duplicata: e' la STESSA condizione (`il registro eventi non e' vuoto`)
+     * letta dalla copia persistita, invece che dal motore che questa schermata non ha.
      */
     fun saveActiveSport(sportId: String) {
         viewModelScope.launch {
+            val partitaIniziata = matchDao.getActiveMatchOnce()?.eventLog?.isNotEmpty() == true
+            if (partitaIniziata) {
+                sportChangeBlocked.call()
+                // Rimette nel selettore la voce vera. LiveData ridistribuisce anche un valore
+                // uguale, quindi l'osservatore riscrive l'etichetta e il menu smette di mentire.
+                _activeSport.value = _activeSport.value
+                return@launch
+            }
             repository.setActiveSport(sportId)
             _activeSport.value = sportId
         }
@@ -110,11 +129,12 @@ class MatchSettingsViewModel(
 
 class MatchSettingsViewModelFactory(
     private val repository: MatchSettingsRepository,
+    private val matchDao: MatchDao,
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MatchSettingsViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MatchSettingsViewModel(repository) as T
+            return MatchSettingsViewModel(repository, matchDao) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
