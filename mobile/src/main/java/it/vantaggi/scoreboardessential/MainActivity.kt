@@ -876,6 +876,15 @@ class MainActivity :
                             Snackbar.LENGTH_LONG,
                         ).show()
                 }
+            }.setNeutralButton(getString(R.string.btn_discard_match)) { _, _ ->
+                // "Termina" salva, "scarta" butta via: due intenzioni diverse, due comandi
+                // diversi. Prima esisteva solo la prima, quindi una partita cominciata per
+                // sbaglio poteva solo finire nello storico.
+                val messaggio =
+                    if (viewModel.discardMatch()) R.string.match_discarded else R.string.match_not_started_error
+                Snackbar
+                    .make(findViewById(android.R.id.content), getString(messaggio), Snackbar.LENGTH_LONG)
+                    .show()
             }.setNegativeButton(getString(R.string.continue_action), null)
             .show()
     }

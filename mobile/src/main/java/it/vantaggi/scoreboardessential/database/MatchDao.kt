@@ -30,6 +30,17 @@ interface MatchDao {
     @Delete
     suspend fun delete(match: Match)
 
+    /**
+     * Butta via una partita viva.
+     *
+     * Per ID e non "quella attiva": l'id lo possiede gia' il ViewModel, e cancellare per
+     * condizione significherebbe rileggere quale sia la riga attiva un istante prima di
+     * distruggerla. Una riga viva non ha ancora MatchPlayerCrossRef -- quelle nascono solo
+     * quando la partita viene chiusa e salvata -- quindi non resta niente di orfano.
+     */
+    @Query("DELETE FROM matches WHERE matchId = :matchId")
+    suspend fun deleteById(matchId: Int)
+
     @Query("SELECT * FROM matches WHERE isActive = 1 LIMIT 1")
     fun getActiveMatch(): Flow<Match?>
 

@@ -72,7 +72,10 @@
     <string name="player_removed_message">%1$s rimosso da %2$s</string>
     <string name="goal_by_message">⚽ Gol di %s!</string>
     <string name="end_match_title">Termina Partita?</string>
-    <string name="end_match_message">%1$s: %2$d\n%3$s: %4$d\n\nSalvare questa partita e iniziarne una nuova?</string>
+    <string name="end_match_message">Che cosa vuoi farne?
+
+%1$s: %2$d
+%3$s: %4$d</string>
     <string name="btn_end_match">Termina Partita</string>
     <string name="continue_action">Continua</string>
     <string name="match_saved">Partita salvata!</string>
@@ -112,6 +115,8 @@
     <string name="team_name_dialog_title">Rinomina squadra %1$d</string>
     <string name="save">SALVA</string>
     <string name="cd_match_over">Partita finita</string>
+    <string name="btn_discard_match">Scarta</string>
+    <string name="match_discarded">Partita scartata</string>
     <string name="export_match">Esporta partita</string>
     <string name="export_ready">Partita esportata</string>
     <string name="export_needs_four">Servono esattamente 4 giocatori distinti per esportare</string>

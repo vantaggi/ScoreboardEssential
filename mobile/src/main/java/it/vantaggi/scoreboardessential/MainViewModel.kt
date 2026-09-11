@@ -668,6 +668,28 @@ class MainViewModel(
         }
     }
 
+    /**
+     * Butta via la partita in corso senza salvarla.
+     *
+     * Mancava, e la sua assenza era il vero attrito dietro "un pulsante, due modelli mentali":
+     * chi cominciava a segnare per sbaglio, o si accorgeva che il punteggio era sbagliato oltre
+     * ogni correzione, aveva UNA sola uscita -- salvare la partita nello storico, e sporcarlo.
+     * "Termina" e "azzera" sono due intenzioni diverse e ora sono due scelte diverse.
+     *
+     * Ritorna `false` quando non c'e' niente da scartare, cosi' chi chiama puo' dirlo invece di
+     * far finta di aver fatto qualcosa.
+     */
+    fun discardMatch(): Boolean {
+        val id = currentMatchId
+        if (id == null && engine.log.isEmpty()) return false
+        if (id != null) {
+            viewModelScope.launch { matchDao.deleteById(id.toInt()) }
+        }
+        startNewMatch()
+        sendResetUpdate()
+        return true
+    }
+
     private fun startNewMatch() {
         engine.reset()
         matchClock.reset()

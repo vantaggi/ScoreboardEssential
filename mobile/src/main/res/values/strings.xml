@@ -73,7 +73,10 @@
     <string name="player_removed_message">%1$s removed from %2$s</string>
     <string name="goal_by_message">⚽ Goal by %s!</string>
     <string name="end_match_title">End Match?</string>
-    <string name="end_match_message">%1$s: %2$d\n%3$s: %4$d\n\nSave this match and start a new one?</string>
+    <string name="end_match_message">What do you want to do with it?
+
+%1$s: %2$d
+%3$s: %4$d</string>
     <string name="btn_end_match">End Match</string>
     <string name="continue_action">Continue</string>
     <string name="match_saved">Match saved!</string>
@@ -112,6 +115,8 @@
     <string name="team_name_dialog_title">Rename team %1$d</string>
     <string name="save">SAVE</string>
     <string name="cd_match_over">Match over</string>
+    <string name="btn_discard_match">Discard</string>
+    <string name="match_discarded">Match discarded</string>
     <string name="export_match">Export match</string>
     <string name="export_ready">Match exported</string>
     <string name="export_needs_four">Padel export needs exactly 4 distinct players</string>
