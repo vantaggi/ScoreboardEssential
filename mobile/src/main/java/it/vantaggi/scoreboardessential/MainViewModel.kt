@@ -840,6 +840,7 @@ class MainViewModel(
                     // Il registro, non il punteggio: e' cio' che permette al polso di rifare lo
                     // stesso calcolo con lo stesso codice quando resta senza telefono.
                     WearConstants.KEY_EVENT_LOG to registro,
+                    WearConstants.KEY_MATCH_OVER to display.matchOver,
                 )
             connectionManager.sendData(
                 path = WearConstants.PATH_STATE_V2,

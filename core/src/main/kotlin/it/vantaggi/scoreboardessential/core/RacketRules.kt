@@ -73,6 +73,7 @@ class RacketRules(
             servingSide = if (ended) null else state.serveIndex % 2 + 1,
             servingPlayerId =
                 if (ended || config.serveOrder.size != 4) null else config.serveOrder[state.serveIndex % 4],
+            matchOver = ended,
         )
     }
 

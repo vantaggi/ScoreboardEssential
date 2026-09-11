@@ -28,4 +28,5 @@
     <string name="wear_sport_current">in uso</string>
     <string name="wear_sport_locked">Partita in corso</string>
     <string name="wear_hint_pending">NIENTE TELEFONO - %1$d IN ATTESA</string>
+    <string name="wear_match_over">PARTITA FINITA</string>
 </resources>

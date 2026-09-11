@@ -121,6 +121,9 @@ object WearConstants {
      */
     const val KEY_EVENT_LOG = "event_log"
 
+    /** La partita e' finita: l'orologio spegne i comandi invece di lasciarli premibili a vuoto. */
+    const val KEY_MATCH_OVER = "match_over"
+
     // Capacita' che l'orologio deve conoscere per non mostrare comandi privi di senso.
     const val KEY_CAP_HAS_CLOCK = "cap_has_clock"
     const val KEY_CAP_HAS_AUX_TIMER = "cap_has_aux_timer"

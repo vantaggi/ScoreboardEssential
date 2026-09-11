@@ -109,6 +109,15 @@ data class ScoreDisplay(
     val servingSide: Int? = null,
     /** Giocatore al servizio, quando l'ordine di servizio e' stato impostato. */
     val servingPlayerId: Int? = null,
+    /**
+     * La partita e' finita: da qui in poi nessun punto puo' cambiare il risultato.
+     *
+     * Vive qui e non in una LiveData a parte perche' il display e' costruito da UN solo punto per
+     * sport, a ogni cambiamento di stato: cosi' non esiste un posto in cui qualcuno possa
+     * dimenticarsi di aggiornarlo. Serve all'interfaccia per spegnere i comandi che non possono
+     * piu' fare niente -- un comando premibile che non fa nulla non si distingue da un'app rotta.
+     */
+    val matchOver: Boolean = false,
 )
 
 /**

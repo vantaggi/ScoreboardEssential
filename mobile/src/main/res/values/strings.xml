@@ -111,6 +111,7 @@
     <string name="label_team_2">Team 2</string>
     <string name="team_name_dialog_title">Rename team %1$d</string>
     <string name="save">SAVE</string>
+    <string name="cd_match_over">Match over</string>
     <string name="export_match">Export match</string>
     <string name="export_ready">Match exported</string>
     <string name="export_needs_four">Padel export needs exactly 4 distinct players</string>

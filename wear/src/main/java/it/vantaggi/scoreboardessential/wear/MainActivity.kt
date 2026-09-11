@@ -41,6 +41,7 @@ class MainActivity : ComponentActivity() {
     private var annullamentoGlobale = false
     private var telefonoRaggiungibile = true
     private var daConsegnare = 0
+    private var partitaFinita = false
     private val viewModel: WearViewModel by viewModels()
 
     private var stateRestored = false
@@ -272,6 +273,7 @@ class MainActivity : ComponentActivity() {
         // Senza elenco non c'e' niente da scegliere: succede con un telefono che parla una bozza
         // precedente del v2. Il comando non compare invece di aprire una lista vuota.
         binding.btnSport.visibility = if (state.sportIds.size > 1) View.VISIBLE else View.GONE
+        applyMatchOver(state.matchOver)
 
         applyClockRole(state)
 
@@ -350,6 +352,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * A partita finita i due lati smettono di essere bersagli.
+     *
+     * Sull'orologio il "+" e' tutto il lato: restava premibile e non faceva niente, perche' il
+     * motore ignora un punto dopo la fine. Qui e' anche piu' facile che sul telefono continuare a
+     * toccare senza guardare, quindi il tocco lungo -- che annulla -- resta acceso: e' l'unica
+     * cosa sensata da fare a quel punto, e riportando indietro l'ultimo punto riaccende tutto.
+     */
+    private fun applyMatchOver(finita: Boolean) {
+        partitaFinita = finita
+        listOf(binding.team1Container, binding.team2Container).forEach { lato ->
+            lato.isClickable = !finita
+            lato.alpha = if (finita) 0.4f else 1f
+        }
+        refreshHint()
+    }
+
     /** La riga in basso ha una cosa sola da dire, e quale sia lo decide qui. */
     private fun refreshHint() {
         if (!telefonoRaggiungibile) {
@@ -363,6 +382,12 @@ class MainActivity : ComponentActivity() {
                     getString(R.string.wear_hint_disconnected)
                 }
             binding.gestureHint.setTextColor(ContextCompat.getColor(this, R.color.error_red))
+            return
+        }
+        if (partitaFinita) {
+            // Spegnere i due lati senza dire perche' li farebbe sembrare rotti.
+            binding.gestureHint.setText(R.string.wear_match_over)
+            binding.gestureHint.setTextColor(ContextCompat.getColor(this, R.color.stencil_white))
             return
         }
         binding.gestureHint.setText(if (annullamentoGlobale) R.string.wear_hint_undo else R.string.wear_hint_minus)

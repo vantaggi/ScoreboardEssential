@@ -953,6 +953,31 @@ e due). Piu' un test sul caso vero: partita di padel finita, tocco in piu', **un
 annullamento e un solo cambiamento visibile. Verificati per falsificazione: togliendo la
 riga di guardia, entrambi diventano rossi.
 
-**Resta aperto, e non e' un difetto:** a partita finita i comandi `+` sono ancora premibili
-e non fanno nulla. Disattivarli sarebbe piu' onesto, ma `applyCapabilities` oggi non sa se
-la partita sia finita: e' un cambio di interfaccia, non una correzione, e va deciso.
+**~~Resta aperto:~~ chiuso subito dopo, su richiesta** -- vedi la sezione seguente.
+
+### I comandi si spengono a partita finita - 11 settembre 2026
+
+Seguito diretto del punto precedente: restavano premibili e non facevano nulla.
+
+**Dove vive l'informazione.** `ScoreDisplay` guadagna `matchOver`, e non una LiveData a
+parte. Il motivo e' la classe di difetto inseguita per tutta la sessione: il display e'
+costruito da **un solo punto per sport**, a ogni cambiamento di stato, quindi non esiste un
+posto in cui qualcuno possa dimenticarsi di aggiornarlo. Una LiveData separata avrebbe
+avuto cinque punti di aggiornamento -- `publishEngineState`, `applySport`, `startNewMatch`,
+il ripristino dal database, l'arretrato dall'orologio -- e sarebbe bastato saltarne uno.
+
+**Telefono.** I due `+` diventano non cliccabili, si attenuano al 40% e la loro
+descrizione parlata dice perche'.
+
+**Orologio.** Li' il `+` e' **tutto il lato**, ed e' anche il posto dove e' piu' facile
+continuare a toccare senza guardare. I due lati si spengono allo stesso modo, e la riga in
+basso -- quella costruita per il gesto e poi riusata per "niente telefono" -- dice
+**PARTITA FINITA**. Spegnere due bersagli senza dire perche' li farebbe sembrare rotti.
+
+**L'annullamento resta acceso da entrambe le parti.** E' esattamente cio' che serve se
+l'ultimo punto era sbagliato, e riportandolo indietro lo stato torna "non finita": i
+comandi si riaccendono da soli, senza un ramo dedicato.
+
+**Anche offline.** Il polso lo calcola da solo quando il telefono non c'e', con lo stesso
+codice: `rebuildLocalState` prende `matchOver` dal proprio `ScoreDisplay`. Coperto da un
+test che chiude la partita con un punto in coda, verificato per falsificazione.

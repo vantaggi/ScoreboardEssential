@@ -247,6 +247,7 @@ class MainActivity :
             bindScoreDetail(team1ScoreDetailTextView, display.side1Secondary)
             bindScoreDetail(team2ScoreDetailTextView, display.side2Secondary)
             bindPeriod(display)
+            applyMatchOver(display.matchOver)
         }
 
         viewModel.team1Name.observe(this) { name ->
@@ -656,6 +657,36 @@ class MainActivity :
             )
         MatchExportUtils.shareMatchText(this, MatchSummarizer.format(summary, labels))
     }
+
+    /**
+     * A partita finita i due "+" si spengono.
+     *
+     * Restavano premibili e non facevano niente: il motore ignora un punto dopo la fine, quindi
+     * il numero non cambiava e il tocco spariva nel vuoto. Un comando che si puo' premere e non
+     * fa nulla non si distingue da un'app bloccata, ed e' lo stesso difetto per cui il primo
+     * annullamento dopo un tocco inerte sembrava non funzionare.
+     *
+     * L'annullamento NON si spegne: e' esattamente cio' che serve se l'ultimo punto era sbagliato,
+     * e riportarlo indietro riaccende tutto perche' lo stato torna "non finita".
+     */
+    private fun applyMatchOver(finita: Boolean) {
+        listOf(R.id.team1_add_button_card, R.id.team2_add_button_card).forEach { id ->
+            findViewById<View>(id).apply {
+                isClickable = !finita
+                isFocusable = !finita
+                alpha = if (finita) 0.4f else 1f
+                contentDescription =
+                    if (finita) getString(R.string.cd_match_over) else getString(cdIncrease(id))
+            }
+        }
+    }
+
+    private fun cdIncrease(id: Int): Int =
+        if (id == R.id.team1_add_button_card) {
+            R.string.cd_increase_team_1
+        } else {
+            R.string.cd_increase_team_2
+        }
 
     /**
      * Che periodo si gioca e chi serve.

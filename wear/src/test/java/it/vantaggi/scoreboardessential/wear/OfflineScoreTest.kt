@@ -21,6 +21,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -121,6 +122,7 @@ class OfflineScoreTest {
         sportIds = listOf(SportRegistry.PADEL),
         sportLabels = listOf("Padel"),
         matchInProgress = registro.isNotEmpty(),
+        matchOver = false,
         eventLog = registro,
     )
 
@@ -203,6 +205,21 @@ class OfflineScoreTest {
         val atteso = SportRegistry.byId(SportRegistry.PADEL).display(telefono.state)
         assertEquals(atteso.side1Primary, viewModel.scoreState.value?.side1Primary)
         assertEquals(atteso.side2Primary, viewModel.scoreState.value?.side2Primary)
+    }
+
+    @Test
+    fun `il punto che chiude la partita spegne i comandi anche offline`() {
+        // Col telefono lontano, il polso deve sapere DA SOLO che la partita e' finita: altrimenti
+        // i due lati resterebbero premibili a vuoto proprio dove e' piu' facile toccare senza
+        // guardare. E' lo stesso calcolo che fara' il telefono, quindi dice la stessa cosa.
+        val telefono = motorePadel()
+        // 23 punti: manca l'ultimo per chiudere 6-0 con il golden point.
+        repeat(23) { telefono.apply(ScoringEvent.Point(side = 1)) }
+        coda.add(PendingIntent(WearConstants.INTENT_POINT, 1, 1_000L))
+
+        viewModel.applyStateV2(statoDalTelefono(MatchLogCodec.encode(telefono.log)))
+
+        assertTrue("il 24esimo punto chiude la partita", viewModel.scoreState.value?.matchOver == true)
     }
 
     @Test

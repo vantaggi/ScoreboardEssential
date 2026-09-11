@@ -53,6 +53,8 @@ data class WearScoreState(
     val sportIds: List<String>,
     val sportLabels: List<String>,
     val matchInProgress: Boolean,
+    /** La partita e' finita: nessun tocco puo' piu' cambiare il risultato. */
+    val matchOver: Boolean,
     /** Il registro degli eventi del telefono: il punto di partenza quando si resta soli. */
     val eventLog: String,
 ) {
@@ -91,6 +93,7 @@ data class WearScoreState(
                 sportIds = elenco(dataMap.getString(WearConstants.KEY_SPORT_IDS, "")),
                 sportLabels = elenco(dataMap.getString(WearConstants.KEY_SPORT_LABELS, "")),
                 matchInProgress = dataMap.getBoolean(WearConstants.KEY_MATCH_IN_PROGRESS, false),
+                matchOver = dataMap.getBoolean(WearConstants.KEY_MATCH_OVER, false),
                 eventLog = dataMap.getString(WearConstants.KEY_EVENT_LOG, ""),
             )
         }
@@ -384,6 +387,8 @@ class WearViewModel(
             sportIds = emptyList(),
             sportLabels = emptyList(),
             matchInProgress = true,
+            // A freddo non si sa: lo dira' il ricalcolo, che parte subito dopo.
+            matchOver = false,
             eventLog = ultimaNota.eventLog,
         )
     }
@@ -428,6 +433,7 @@ class WearViewModel(
                 side2Secondary = display.side2Secondary.orEmpty(),
                 periodLabel = display.periodLabel.orEmpty(),
                 matchInProgress = engine.log.isNotEmpty(),
+                matchOver = display.matchOver,
             )
         return true
     }

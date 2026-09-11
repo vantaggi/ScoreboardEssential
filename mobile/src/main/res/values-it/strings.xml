@@ -111,6 +111,7 @@
     <string name="label_team_2">Squadra 2</string>
     <string name="team_name_dialog_title">Rinomina squadra %1$d</string>
     <string name="save">SALVA</string>
+    <string name="cd_match_over">Partita finita</string>
     <string name="export_match">Esporta partita</string>
     <string name="export_ready">Partita esportata</string>
     <string name="export_needs_four">Servono esattamente 4 giocatori distinti per esportare</string>
