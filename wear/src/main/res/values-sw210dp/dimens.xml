@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+    Quadranti grandi. La soglia era sw320dp, che NESSUN orologio raggiunge: i Wear OS reali
+    stanno fra 160dp e 240dp, quindi quel file non si e' mai applicato e i valori "grandi"
+    non sono mai stati usati da nessuno. 210dp e' la soglia dei template Wear.
+    -->
+    <dimen name="wear_timer_text_size">22sp</dimen>
+    <dimen name="wear_keeper_timer_text_size">18sp</dimen>
+    <dimen name="wear_button_text_size">16sp</dimen>
+</resources>

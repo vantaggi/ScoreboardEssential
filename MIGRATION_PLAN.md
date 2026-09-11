@@ -406,8 +406,8 @@ dannosi (commit `838449c`); gli altri nove sono di questo commit.
 Il rilievo 4 e' anche mezzo **D2**: sull'orologio esiste ora un solo modo di
 segnare. Sul telefono gesto e pulsante convivono ancora, quindi D2 resta aperto.
 
-Restano 28 rilievi **medi e bassi**, non affrontati: sono di rifinitura
-(spaziature, contrasti minori, etichette) e nessuno impedisce di usare l'app.
+Dei 28 rilievi **medi e bassi**, i 16 dell'orologio sono chiusi (vedi sotto);
+restano i 12 del telefono.
 
 *Verifica ancora dovuta:* nessuno di questi rimedi e' stato **visto**. In
 particolare vanno guardati su dispositivo il `gestureHint` sull'orologio tondo
@@ -519,3 +519,37 @@ sono visibili di proposito. Tre voci restano spaiate perche' gia' obsolete prima
 
 *Restano da guardare a occhio:* l'equilibrio verticale del tabellone fisso in verticale
 (quanta pagina resta al registro) e D5.
+
+### La passata sull'orologio - 11 settembre 2026
+
+Sedici rilievi medi e bassi, tutti sul modulo `:wear`. Quattordici chiusi, due
+**deliberatamente non fatti**.
+
+| Dove | Rilievo | Rimedio |
+|---|---|---|
+| layout | RESET aveva un'area di tocco di ~21dp | `minHeight` 48dp; lo stile e' borderless, quindi cresce l'area, non il rettangolo |
+| layout | Il "K" stava a cavallo della cucitura fra i due lati | il "K" **diventa** la cucitura: i lati si fermano su di lui, non su una guida che ci passava sotto |
+| layout | Contrasto del "K" al limite (14sp rosa su nero) | 16sp in grassetto, da `@dimen` |
+| layout | Le due guide invisibili si sovrapponevano ai comandi | `guideline_center` e `guideline_bottom` rimosse: i lati si vincolano a viste vere |
+| layout | Lo stato del collegamento era un punto di 8dp distinto solo dal colore | 12dp, `contentDescription` che cambia, e la riga in basso che dice **NIENTE TELEFONO** |
+| layout | Nessuna `contentDescription` in tutto il modulo | sui due lati, sul "K" e sull'indicatore |
+| layout | Due figli `match_parent` nello stesso `LinearLayout` verticale | peso alla lista, `wrap_content` al testo di stato |
+| misure | `values-sw320dp` non si applica a nessun orologio reale | soglia portata a `sw210dp` (i quadranti veri stanno fra 160 e 240dp) |
+| misure | Due dei quattro `dimen` non erano usati da nessun layout | `wear_score_text_size` rimosso (il punteggio fa autoSize); `wear_keeper_timer_text_size` **collegato** al "K" |
+| stringhe | Testi scritti nei layout e nel codice, nessun `values-it` | tutti in `strings.xml` con la traduzione italiana |
+| stringhe | Il commento di `strings.xml` descriveva una sovrascrittura mai esistita | commento e cartella `values-round` vuota rimossi |
+| codice | Il dialogo di reset era un `AlertDialog` con testo lungo in inglese nel codice | stringhe da risorsa, messaggio accorciato |
+| codice | Nel padel l'anello del portiere poteva ricomparire | i rami `Running` e `Finished` rispettano `auxAvailable`, come gia' faceva il "K" |
+| codice | Senza cronometro la stessa riga sembrava ancora un comando | il periodo e' piu' quieto del cronometro e non e' piu' cliccabile |
+| codice | La schermata "chi ha segnato" non aveva una via d'uscita visibile | voce **NESSUNO** in coda alla rosa: uscire e' un bersaglio come gli altri |
+| codice | `showTeamNameInput` non era raggiungibile da nessun comando | rimossa |
+
+**Non fatti, e perche'.** *Keep-screen-on e supporto ambient* durante la partita:
+tenere acceso lo schermo di un orologio costa batteria, e "partita attiva" oggi sul
+polso non ha una definizione pulita - `scoreState` resta valorizzato anche a partita
+finita. L'ambient vero richiede un `AmbientLifecycleObserver` e un layout dedicato:
+e' una funzione, non una correzione. Entrambe vanno decise, non dedotte.
+
+*Da guardare su dispositivo:* il "K" da 48dp toglie 48dp di larghezza ai due
+punteggi (che pero' si ridimensionano da soli), e su quadranti piccoli la colonna
+centrale potrebbe risultare troppo larga.

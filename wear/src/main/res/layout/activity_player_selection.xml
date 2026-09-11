@@ -15,7 +15,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="WHO SCORED?"
+            android:text="@string/wear_who_scored"
             android:textAppearance="?attr/textAppearanceHeadlineMedium"
             android:gravity="center"
             android:layout_marginBottom="8dp" />
@@ -23,13 +23,14 @@
         <androidx.wear.widget.WearableRecyclerView
             android:id="@+id/player_list"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
         <TextView
             android:id="@+id/empty_state_text"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="No players found."
+            android:layout_height="wrap_content"
+            android:text="@string/wear_no_players"
             android:textAppearance="?attr/textAppearanceBodyLarge"
             android:gravity="center"
             android:visibility="gone" />

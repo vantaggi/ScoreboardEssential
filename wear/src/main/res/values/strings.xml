@@ -1,13 +1,26 @@
 <resources>
     <string name="app_name">Scoreboard Essential</string>
-    <!--
-    This string is used for square devices and overridden by hello_world in
-    values-round/strings.xml for round devices.
-    -->
+
     <!-- Il gesto lungo cambia significato con lo sport: nel calcio toglie un punto a quella
          squadra, negli sport a set annulla l'ultima azione qualunque lato l'abbia segnata. -->
     <string name="wear_hint_minus">HOLD: -1</string>
     <string name="wear_hint_undo">HOLD: UNDO</string>
     <string name="cd_score_side_minus">Team %1$d. Tap to add a point, press and hold to remove one.</string>
     <string name="cd_score_side_undo">Team %1$d. Tap to add a point, press and hold to undo the last action.</string>
+
+    <string name="wear_reset">RESET</string>
+    <string name="wear_reset_title">End match?</string>
+    <string name="wear_reset_message">Scores and timers go back to zero.</string>
+    <string name="wear_reset_confirm">End</string>
+    <string name="wear_reset_cancel">Cancel</string>
+    <string name="wear_who_scored">WHO SCORED?</string>
+    <string name="wear_no_players">No players</string>
+    <string name="wear_nobody">NOBODY</string>
+    <string name="wear_no_role">No role</string>
+    <string name="wear_player_name">Player name</string>
+    <string name="wear_player_position">Position</string>
+    <string name="wear_hint_disconnected">NO PHONE</string>
+    <string name="cd_keeper_timer">Goalkeeper countdown</string>
+    <string name="cd_connection_ok">Phone connected</string>
+    <string name="cd_connection_lost">Phone not reachable</string>
 </resources>

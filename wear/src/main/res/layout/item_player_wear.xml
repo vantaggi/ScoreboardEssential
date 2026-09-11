@@ -21,7 +21,7 @@
             android:id="@+id/player_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Player Name"
+            android:text="@string/wear_player_name"
             android:textAppearance="?attr/textAppearanceHeadlineSmall"
             android:textColor="@color/stencil_white"
             android:gravity="center" />
@@ -30,7 +30,7 @@
             android:id="@+id/player_role"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Position"
+            android:text="@string/wear_player_position"
             android:textAppearance="?attr/textAppearanceBodyLarge"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:gravity="center"

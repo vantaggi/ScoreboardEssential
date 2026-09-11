@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">Scoreboard Essential</string>
+
+    <!-- Il gesto lungo cambia significato con lo sport: nel calcio toglie un punto a quella
+         squadra, negli sport a set annulla l'ultima azione qualunque lato l'abbia segnata. -->
+    <string name="wear_hint_minus">TIENI: -1</string>
+    <string name="wear_hint_undo">TIENI: ANNULLA</string>
+    <string name="cd_score_side_minus">Squadra %1$d. Tocca per segnare, tieni premuto per togliere un punto.</string>
+    <string name="cd_score_side_undo">Squadra %1$d. Tocca per segnare, tieni premuto per annullare l ultima azione.</string>
+
+    <string name="wear_reset">AZZERA</string>
+    <string name="wear_reset_title">Finire la partita?</string>
+    <string name="wear_reset_message">Punteggi e cronometri tornano a zero.</string>
+    <string name="wear_reset_confirm">Finisci</string>
+    <string name="wear_reset_cancel">Annulla</string>
+    <string name="wear_who_scored">CHI HA SEGNATO?</string>
+    <string name="wear_no_players">Nessun giocatore</string>
+    <string name="wear_nobody">NESSUNO</string>
+    <string name="wear_no_role">Senza ruolo</string>
+    <string name="wear_player_name">Nome giocatore</string>
+    <string name="wear_player_position">Ruolo</string>
+    <string name="wear_hint_disconnected">NIENTE TELEFONO</string>
+    <string name="cd_keeper_timer">Conto alla rovescia del portiere</string>
+    <string name="cd_connection_ok">Telefono collegato</string>
+    <string name="cd_connection_lost">Telefono non raggiungibile</string>
+</resources>

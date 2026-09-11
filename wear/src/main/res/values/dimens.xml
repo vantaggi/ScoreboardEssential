@@ -1,22 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-    Because the window insets on round devices are larger than 15dp, this padding only applies
-    to square screens.
+    Il rotondo lo gestisce BoxInsetLayout, che calcola da solo il rientro sui bordi curvi:
+    qui resta solo il padding aggiuntivo per gli schermi quadrati.
     -->
     <dimen name="box_inset_layout_padding">0dp</dimen>
 
-    <!--
-    This padding applies to both square and round screens. The total padding between the buttons
-    and the window insets is box_inset_layout_padding (above variable) on square screens and
-    inner_frame_layout_padding (below variable) on round screens.
-    -->
-
-    <!-- Wear OS Scoreboard Dimensions - Base (Small screens) -->
-    <dimen name="wear_score_text_size">52sp</dimen>
+    <!-- Il punteggio non compare qui: si ridimensiona da solo (autoSize nel layout). -->
     <dimen name="wear_timer_text_size">18sp</dimen>
-    <dimen name="wear_keeper_timer_text_size">11sp</dimen>
-    <dimen name="wear_button_text_size">10sp</dimen>
+    <dimen name="wear_keeper_timer_text_size">16sp</dimen>
+    <dimen name="wear_button_text_size">14sp</dimen>
     <!-- Altezza fissa: l'autoSize non funziona su wrap_content, e questa riga deve
          rimpicciolire il PROPRIO testo invece di far rimpicciolire il numero sopra. -->
     <dimen name="wear_score_detail_height">14dp</dimen>

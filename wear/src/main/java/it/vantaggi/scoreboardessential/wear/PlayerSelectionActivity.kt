@@ -28,6 +28,11 @@ data class WearPlayer(
  * [WearConstants.MSG_SCORER_SELECTED] message, which the phone attributes to the goal.
  */
 class PlayerSelectionActivity : ComponentActivity() {
+    companion object {
+        /** Id della voce di uscita: nessun giocatore vero puo' averlo. */
+        private const val NESSUNO = -1
+    }
+
     private lateinit var playerList: WearableRecyclerView
     private lateinit var adapter: PlayerAdapter
     private var teamNumber: Int = 1
@@ -55,7 +60,16 @@ class PlayerSelectionActivity : ComponentActivity() {
 
     private fun showPlayers(players: List<PlayerData>) {
         val wearPlayers = players.map { WearPlayer(it.id, it.name, it.roles) }
-        adapter.submitList(wearPlayers)
+        // In coda alla rosa una voce per uscire senza attribuire. La schermata si apre DA SOLA
+        // dopo ogni gol: senza questa voce l'unico modo di uscire era un gesto di sistema, e chi
+        // non sapeva chi avesse segnato doveva comunque scegliere qualcuno.
+        adapter.submitList(
+            if (wearPlayers.isEmpty()) {
+                wearPlayers
+            } else {
+                wearPlayers + WearPlayer(NESSUNO, getString(R.string.wear_nobody), emptyList())
+            },
+        )
 
         val emptyStateText = findViewById<TextView>(R.id.empty_state_text)
         if (wearPlayers.isEmpty()) {
@@ -68,6 +82,11 @@ class PlayerSelectionActivity : ComponentActivity() {
     }
 
     private fun selectPlayer(player: WearPlayer) {
+        if (player.id == NESSUNO) {
+            // Il gol resta, il marcatore no: il telefono ne registra gia' uno senza nome.
+            finish()
+            return
+        }
         val rolesString = player.roles.joinToString(",")
         // L'id e' un QUARTO campo aggiunto in coda, non una sostituzione del nome: un
         // telefono non aggiornato legge i primi tre e ignora il resto, quindi la coppia
@@ -143,7 +162,7 @@ class PlayerAdapter(
             }
 
             if (rolesText.isEmpty()) {
-                playerRole.text = "No role"
+                playerRole.text = itemView.context.getString(R.string.wear_no_role)
                 playerRole.visibility = View.GONE
             } else {
                 playerRole.text = rolesText

@@ -1,6 +1,7 @@
 package it.vantaggi.scoreboardessential.wear
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -10,7 +11,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.wear.remote.interactions.RemoteActivityHelper
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
@@ -23,6 +23,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private lateinit var binding: ActivityMainBinding
+
+    // Cosa dice la riga in basso dipende da DUE cose: lo sport e il collegamento.
+    private var annullamentoGlobale = false
+    private var telefonoRaggiungibile = true
     private val viewModel: WearViewModel by viewModels()
 
     private var stateRestored = false
@@ -207,22 +211,13 @@ class MainActivity : ComponentActivity() {
         binding.btnStartNewMatch.setOnClickListener {
             android.app.AlertDialog
                 .Builder(this)
-                .setTitle("Reset Match")
-                .setMessage("Are you sure you want to end this match? This will reset all scores and timers.")
-                .setPositiveButton("Reset") { _, _ ->
+                .setTitle(R.string.wear_reset_title)
+                .setMessage(R.string.wear_reset_message)
+                .setPositiveButton(R.string.wear_reset_confirm) { _, _ ->
                     viewModel.resetMatch()
-                }.setNegativeButton("Cancel", null)
+                }.setNegativeButton(R.string.wear_reset_cancel, null)
                 .show()
         }
-    }
-
-    private fun showTeamNameInput(team: Int) {
-        val intent =
-            Intent(Intent.ACTION_MAIN).apply {
-                action = "com.google.android.wearable.action.INPUT_TEXT"
-                putExtra("com.google.android.wearable.extra.PROMPT", "Team $team name:")
-            }
-        RemoteActivityHelper(this).startRemoteActivity(intent)
     }
 
     /**
@@ -236,10 +231,7 @@ class MainActivity : ComponentActivity() {
         bindDetail(binding.team2ScoreDetail, state.side2Secondary)
         applyGestureLabels(state.decrementIsUndo)
 
-        // Senza cronometro quel posto in alto e' libero: il periodo non avrebbe dove stare.
-        if (!state.hasClock) {
-            binding.matchTimer.text = state.periodLabel
-        }
+        applyClockRole(state)
 
         if (!state.hasAuxTimer) {
             binding.keeperTimer.visibility = View.GONE
@@ -272,10 +264,61 @@ class MainActivity : ComponentActivity() {
      * "annulla l'ultima azione". Sono due cose diverse e ora si leggono.
      */
     private fun applyGestureLabels(decrementIsUndo: Boolean) {
-        binding.gestureHint.setText(if (decrementIsUndo) R.string.wear_hint_undo else R.string.wear_hint_minus)
+        annullamentoGlobale = decrementIsUndo
         val descrizione = if (decrementIsUndo) R.string.cd_score_side_undo else R.string.cd_score_side_minus
         binding.team1Container.contentDescription = getString(descrizione, 1)
         binding.team2Container.contentDescription = getString(descrizione, 2)
+        refreshHint()
+    }
+
+    /**
+     * Quando il telefono non risponde, il tocco non fa NIENTE.
+     *
+     * Prima l'unica differenza fra collegato e non collegato era il colore di un punto da 8dp:
+     * chi non distingue il rosso dal verde, o semplicemente non guarda in cima, continuava a
+     * segnare su un tabellone fermo. Ora il punto e' piu' grande, ha una descrizione parlata, e
+     * soprattutto la riga in basso smette di spiegare un gesto che in quel momento non funziona.
+     */
+    private fun applyConnectionState(connesso: Boolean) {
+        telefonoRaggiungibile = connesso
+        val colore = if (connesso) R.color.team_electric_green else R.color.error_red
+        binding.connectionStatusIndicator.backgroundTintList =
+            ColorStateList.valueOf(ContextCompat.getColor(this, colore))
+        binding.connectionStatusIndicator.contentDescription =
+            getString(if (connesso) R.string.cd_connection_ok else R.string.cd_connection_lost)
+        refreshHint()
+    }
+
+    /** La riga in basso ha una cosa sola da dire, e quale sia lo decide qui. */
+    private fun refreshHint() {
+        if (!telefonoRaggiungibile) {
+            binding.gestureHint.setText(R.string.wear_hint_disconnected)
+            binding.gestureHint.setTextColor(ContextCompat.getColor(this, R.color.error_red))
+            return
+        }
+        binding.gestureHint.setText(if (annullamentoGlobale) R.string.wear_hint_undo else R.string.wear_hint_minus)
+        binding.gestureHint.setTextColor(ContextCompat.getColor(this, R.color.sidewalk_gray))
+    }
+
+    /**
+     * La stessa riga mostra due cose diverse e va detto quale.
+     *
+     * Con il cronometro e' "12:34" e si tocca per avviare; senza, e' "Set 2" e il tocco era gia'
+     * disattivato -- ma restavano lo stesso stile, lo stesso peso e lo stesso riscontro al tocco,
+     * quindi continuava a sembrare un comando. Ora il periodo e' piu' quieto del cronometro, e
+     * non e' nemmeno piu' cliccabile.
+     */
+    private fun applyClockRole(state: WearScoreState) {
+        if (state.hasClock) {
+            binding.matchTimer.setTextColor(ContextCompat.getColor(this, R.color.stencil_white))
+            binding.matchTimer.setTypeface(binding.matchTimer.typeface, android.graphics.Typeface.BOLD)
+            binding.matchTimer.isClickable = true
+            return
+        }
+        binding.matchTimer.text = state.periodLabel
+        binding.matchTimer.setTextColor(ContextCompat.getColor(this, R.color.sidewalk_gray))
+        binding.matchTimer.setTypeface(android.graphics.Typeface.create("sans-serif-condensed", android.graphics.Typeface.NORMAL))
+        binding.matchTimer.isClickable = false
     }
 
     private fun observeViewModel() {
@@ -347,13 +390,15 @@ class MainActivity : ComponentActivity() {
                             is KeeperTimerState.Running -> {
                                 binding.keeperTimer.text = "K"
                                 binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.graffiti_pink))
-                                binding.keeperProgressBar.visibility = View.VISIBLE
+                                binding.keeperProgressBar.visibility =
+                                    if (auxAvailable) View.VISIBLE else View.INVISIBLE
                             }
 
                             is KeeperTimerState.Finished -> {
                                 binding.keeperTimer.text = "K"
                                 binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.error_red))
-                                binding.keeperProgressBar.visibility = View.VISIBLE
+                                binding.keeperProgressBar.visibility =
+                                    if (auxAvailable) View.VISIBLE else View.INVISIBLE
                             }
                         }
                     }
@@ -385,27 +430,9 @@ class MainActivity : ComponentActivity() {
                 // Observe Connection State
                 launch {
                     viewModel.connectionState.collect { state ->
-                        when (state) {
-                            is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Connected -> {
-                                binding.connectionStatusIndicator.backgroundTintList =
-                                    android.content.res.ColorStateList.valueOf(
-                                        ContextCompat.getColor(
-                                            this@MainActivity,
-                                            R.color.team_electric_green,
-                                        ),
-                                    )
-                            }
-
-                            else -> {
-                                binding.connectionStatusIndicator.backgroundTintList =
-                                    android.content.res.ColorStateList.valueOf(
-                                        ContextCompat.getColor(
-                                            this@MainActivity,
-                                            R.color.error_red,
-                                        ),
-                                    )
-                            }
-                        }
+                        applyConnectionState(
+                            state is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Connected,
+                        )
                     }
                 }
             }
