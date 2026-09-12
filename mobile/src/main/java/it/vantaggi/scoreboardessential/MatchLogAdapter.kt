@@ -22,6 +22,13 @@ class MatchLogAdapter(
     var team1Color: Int = 0
     var team2Color: Int = 0
 
+    /**
+     * Se lo sport attribuisce i punti a un giocatore. Falso in padel e tennis: li' un punto non e'
+     * un "GOAL!" e non c'e' nessun marcatore da scegliere, quindi la riga non si offre al tocco.
+     * Vero finche' le capacita' non arrivano, come il resto della schermata.
+     */
+    var attribuisceMarcatore: Boolean = true
+
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int,
@@ -37,7 +44,7 @@ class MatchLogAdapter(
         holder: MatchEventViewHolder,
         position: Int,
     ) {
-        holder.bind(getItem(position), team1Color, team2Color, onAttribuisci)
+        holder.bind(getItem(position), team1Color, team2Color, attribuisceMarcatore, onAttribuisci)
     }
 
     class MatchEventViewHolder(
@@ -51,6 +58,7 @@ class MatchLogAdapter(
             event: MatchEvent,
             team1Color: Int,
             team2Color: Int,
+            attribuisceMarcatore: Boolean,
             onAttribuisci: (MatchEvent) -> Unit,
         ) {
             timestampTextView.text = event.timestamp
@@ -58,10 +66,15 @@ class MatchLogAdapter(
             // Un gol senza marcatore E' attribuibile, e la riga deve dirlo. playerId e' il segnale
             // affidabile: `player` contiene comunque il nome della squadra quando il marcatore
             // manca, quindi non e' mai nullo e non distingue i due casi.
-            val daAttribuire = event.type == MatchEventType.SCORE && event.playerId == null && event.engineIndex != null
+            val daAttribuire =
+                attribuisceMarcatore && event.type == MatchEventType.SCORE && event.playerId == null && event.engineIndex != null
 
             val description =
                 when {
+                    event.type == MatchEventType.SCORE && !attribuisceMarcatore -> {
+                        itemView.context.getString(R.string.log_point, event.player.orEmpty())
+                    }
+
                     event.type == MatchEventType.SCORE && event.playerId != null -> {
                         val roleInfo = if (event.playerRole?.isNotEmpty() == true) " (${event.playerRole})" else ""
                         "GOAL! ${event.player}$roleInfo"
@@ -77,8 +90,10 @@ class MatchLogAdapter(
                 }
             eventTextView.text = description
 
-            itemView.isClickable = daAttribuire
+            // In quest'ordine: setOnClickListener rende la view cliccabile anche quando riceve null,
+            // quindi scritto dopo annullava isClickable e ogni riga restava un bersaglio.
             itemView.setOnClickListener(if (daAttribuire) View.OnClickListener { onAttribuisci(event) } else null)
+            itemView.isClickable = daAttribuire
 
             // Set team color indicator
             when (event.team) {

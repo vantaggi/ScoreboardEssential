@@ -1257,7 +1257,8 @@ class MainViewModel(
                     }
                 }
 
-                addMatchEvent("Undo: Goal removed", team = lastAction.teamId)
+                val cosa = if (sportRules.capabilities.attributesScorer) "Goal" else "Point"
+                addMatchEvent("Undo: $cosa removed", team = lastAction.teamId)
             }
         }
     }

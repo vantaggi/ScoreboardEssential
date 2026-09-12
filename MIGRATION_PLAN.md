@@ -1280,7 +1280,29 @@ connessione in 25 secondi; l'accoppiamento va rifatto dalla companion app, a man
 **Visto di passaggio sul telefono, in padel:** il pulsante dice "UNDO LAST GOAL" / "ANNULLA
 ULTIMO GOL" e la riga del registro "GOAL! Team 1 - tap to add the scorer" (`label_undo_last_goal`,
 `log_goal_unattributed` in `MatchLogAdapter`). Parole del calcio in uno sport senza gol e senza
-marcatori. Da sistemare.
+marcatori.
+
+**Sistemato, e visto su emulatore in padel.** Il criterio e' `attributesScorer` (vero solo nel
+calcio), nessun `when` sullo sport. Pulsante "UNDO LAST POINT", dialogo "Undo Last Point?", riga
+del registro "Point - Team 1", riga dopo l'annullamento "Undo: Point removed"; l'errore di fine
+partita ora e' neutro per tutti gli sport ("score before ending it"). Toccare la riga di un punto
+non apre piu' niente.
+
+**Un difetto gia' presente, trovato dal test:** `setOnClickListener` rende la view cliccabile
+anche quando riceve `null`, e nell'adapter stava DOPO `isClickable = daAttribuire`: ogni riga del
+registro restava un bersaglio, anche nel calcio le righe gia' attribuite. Invertito l'ordine.
+`MatchLogAdapterTest`, 2 test, verificato per falsificazione: togliendo il rimedio e' rosso con
+"expected Point - Team 1 but was GOAL! Team 1 - tap to add the scorer".
+
+**Visti nello stesso giro, NON sistemati:**
+- Dopo "Partita ripresa" i punti ripristinati non hanno righe nel registro e non si possono
+  annullare: l'annullamento passa da `actionStack`, che al ripristino non viene ricostruito. Col
+  punteggio a 15 ripreso, il pulsante di annullamento non c'e'.
+- Quando compare il pulsante di annullamento la schermata scende di una riga e i due FAB in basso
+  coprono HISTORY e SHARE. L'esame precedente dei FAB era stato fatto senza quel pulsante.
+- Il telefono mostra "Wear OS Connected" con gli emulatori scollegati: stessa causa del pallino.
+- In `MatchLogAdapter` l'evidenziazione `event.event.contains("GOAL!")` non scatta mai: il testo
+  salvato e' "Goal". Codice morto da prima.
 
 ### Una lezione di metodo
 

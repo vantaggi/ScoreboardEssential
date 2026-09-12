@@ -435,6 +435,13 @@ class MainActivity :
         rostersCard.visibility = if (sportCapabilities.hasRoles) View.VISIBLE else View.GONE
         formationsCard.visibility = if (sportCapabilities.hasRoles) View.VISIBLE else View.GONE
         refreshUndoButtonVisibility()
+        // Negli sport senza marcatore non esistono gol: pulsante, dialogo e registro parlano di
+        // punti, e le righe del registro smettono di offrire un marcatore da scegliere.
+        undoGoalButton.setText(
+            if (sportCapabilities.attributesScorer) R.string.label_undo_last_goal else R.string.label_undo_last_point,
+        )
+        matchLogAdapter.attribuisceMarcatore = sportCapabilities.attributesScorer
+        matchLogAdapter.notifyDataSetChanged()
         updateKeeperTimerTextView(viewModel.keeperTimerValue.value ?: 0L)
     }
 
@@ -567,9 +574,11 @@ class MainActivity :
         }
 
         undoGoalButton.setOnClickListener {
+            // Finche' le capacita' non sono arrivate vale il calcio, come per la visibilita'.
+            val gol = capabilities?.attributesScorer != false
             MaterialAlertDialogBuilder(this)
-                .setTitle(getString(R.string.undo_goal_title))
-                .setMessage(getString(R.string.undo_goal_message))
+                .setTitle(getString(if (gol) R.string.undo_goal_title else R.string.undo_point_title))
+                .setMessage(getString(if (gol) R.string.undo_goal_message else R.string.undo_point_message))
                 .setPositiveButton(getString(R.string.undo)) { _, _ ->
                     viewModel.undoLastGoal()
                 }.setNegativeButton(getString(R.string.cancel), null)

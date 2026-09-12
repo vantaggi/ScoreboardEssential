@@ -62,6 +62,8 @@
     <string name="share_match_results">Share Match Results</string>
     <string name="undo_goal_title">Undo Last Goal?</string>
     <string name="undo_goal_message">This will revert the score and remove the goal from the log.</string>
+    <string name="undo_point_title">Undo Last Point?</string>
+    <string name="undo_point_message">This will revert the score to before the last point.</string>
     <string name="undo">Undo</string>
     <string name="no_available_players">No available players. Create new players in Player Management.</string>
     <string name="manage">MANAGE</string>
@@ -80,7 +82,7 @@
     <string name="btn_end_match">End Match</string>
     <string name="continue_action">Continue</string>
     <string name="match_saved">Match saved!</string>
-    <string name="match_not_started_error">Start the match or score a goal before ending it.</string>
+    <string name="match_not_started_error">Start the match or score before ending it.</string>
     <string name="keeper_change_title">⏰ KEEPER CHANGE!</string>
     <string name="keeper_change_message">Time to change the goalkeeper!</string>
     <string name="reset_timer_title">Reset Timer?</string>
@@ -103,6 +105,7 @@
     <string name="watch_batch_rejected">A match is already open here. End it, and the one from the watch will arrive.</string>
     <string name="label_reset_timer">RESET</string>
     <string name="label_undo_last_goal">UNDO LAST GOAL</string>
+    <string name="label_undo_last_point">UNDO LAST POINT</string>
     <string name="label_vs">VS</string>
     <string name="label_match_history">HISTORY</string>
     <string name="label_end_match">END MATCH</string>
@@ -118,6 +121,7 @@
     <string name="btn_discard_match">Discard</string>
     <string name="match_discarded">Match discarded</string>
     <string name="log_goal_unattributed">GOAL! %1$s - tap to add the scorer</string>
+    <string name="log_point">Point - %1$s</string>
     <string name="no_players_to_attribute">No players in this team roster</string>
     <string name="export_match">Export match</string>
     <string name="export_ready">Match exported</string>
