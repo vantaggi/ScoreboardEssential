@@ -1,11 +1,14 @@
 package it.vantaggi.scoreboardessential
 
 import android.content.Context
+import android.graphics.Rect
 import android.view.View
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.DialogFragment
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -82,6 +85,62 @@ class MainActivityLayoutTest {
                 val dialogo = activity.supportFragmentManager.findFragmentByTag(TeamNameDialogFragment.TAG)
                 assertNotNull("toccare il nome deve aprire il dialogo di rinomina", dialogo)
                 assertTrue("e deve essere un dialogo", dialogo is DialogFragment)
+            }
+        }
+    }
+
+    @Test
+    fun inNessunaPosizioneDiScorrimento_unFabCopreIComandiDiFinePartita() {
+        // In posizione di riposo la riga HISTORY / END MATCH / SHARE cadeva sotto i FAB. La prova
+        // scorre dall'inizio alla fine e a ogni passo pretende due cose: se un comando e' nella
+        // fascia di un FAB, quel FAB non e' visibile; se nessun comando lo e', i FAB ci sono.
+        // La geometria e' calcolata qui con Rect, non con la funzione che decide nell'activity.
+        val azioni = listOf(R.id.match_history_button, R.id.reset_scores_button, R.id.share_match_button)
+        val fab = listOf(R.id.stats_fab, R.id.players_fab)
+        val strumentazione = InstrumentationRegistry.getInstrumentation()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            strumentazione.waitForIdleSync()
+            var scorrimento: NestedScrollView? = null
+            var massimo = 0
+            scenario.onActivity { activity ->
+                // Il contenitore che scorre e' diverso in verticale e in orizzontale: si risale
+                // dal pulsante invece di dipendere da un id.
+                var genitore = activity.findViewById<View>(R.id.share_match_button).parent
+                while (genitore !is NestedScrollView) genitore = (genitore as View).parent
+                scorrimento = genitore
+                massimo = maxOf(0, genitore.getChildAt(0).height - genitore.height)
+            }
+
+            val passi = 12
+            for (passo in 0..passi) {
+                val y = massimo * passo / passi
+                scenario.onActivity { scorrimento!!.scrollTo(0, y) }
+                strumentazione.waitForIdleSync()
+                // Il tempo delle animazioni di hide()/show().
+                Thread.sleep(600)
+                strumentazione.waitForIdleSync()
+
+                scenario.onActivity { activity ->
+                    // Posizione nella finestra anche per i pulsanti, non l'area visibile: un pulsante
+                    // fuori schermo darebbe un rettangolo visibile senza significato.
+                    fun rettangolo(id: Int): Rect {
+                        val vista = activity.findViewById<View>(id)
+                        val xy = IntArray(2)
+                        vista.getLocationInWindow(xy)
+                        return Rect(xy[0], xy[1], xy[0] + vista.width, xy[1] + vista.height)
+                    }
+                    val rettangoliAzioni = azioni.map { rettangolo(it) }
+                    val coperto = fab.any { f -> rettangoliAzioni.any { Rect.intersects(it, rettangolo(f)) } }
+                    for (id in fab) {
+                        val visibile = activity.findViewById<View>(id).visibility == View.VISIBLE
+                        if (coperto) {
+                            assertFalse("a scorrimento $y un FAB copre un comando di fine partita", visibile)
+                        } else {
+                            assertTrue("a scorrimento $y la riga e' lontana ma il FAB non c'e'", visibile)
+                        }
+                    }
+                }
             }
         }
     }

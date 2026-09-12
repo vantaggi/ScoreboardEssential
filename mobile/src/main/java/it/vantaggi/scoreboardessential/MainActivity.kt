@@ -46,6 +46,7 @@ import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
 import it.vantaggi.scoreboardessential.utils.ExportBlocked
+import it.vantaggi.scoreboardessential.utils.FabOverlap
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import it.vantaggi.scoreboardessential.utils.MatchReportUtils
 import it.vantaggi.scoreboardessential.utils.TimeUtils
@@ -463,6 +464,42 @@ class MainActivity :
         setupMatchActions()
         setupPlayerManagementButtons()
         setupNavigationButtons()
+        keepFabsOffMatchActions()
+    }
+
+    /**
+     * I due FAB non devono mai stare sopra HISTORY, END MATCH o SHARE.
+     *
+     * Si confrontano i rettangoli veri a schermo, non un margine: quanto spazio serva dipende
+     * dall'altezza dello schermo e da cosa c'e' nell'intestazione fissa (l'annulla che compare
+     * spinge giu' la riga). Si ricalcola a ogni scorrimento e a ogni cambio di layout, sull'intera
+     * finestra: cosi' vale uguale in verticale e in orizzontale, dove scorre un contenitore diverso.
+     * Quando la riga non e' nella fascia dei FAB, i FAB tornano: restano raggiungibili ovunque
+     * tranne proprio li', e a fine scorrimento il margine in fondo la porta sopra di loro.
+     */
+    private fun keepFabsOffMatchActions() {
+        val fabs =
+            listOf(R.id.stats_fab, R.id.players_fab)
+                .map { findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(it) }
+        val azioni =
+            listOf(R.id.match_history_button, R.id.reset_scores_button, R.id.share_match_button)
+                .map { findViewById<View>(it) }
+
+        // La posizione di un FAB nascosto resta quella dell'ultimo layout, quindi il confronto
+        // continua a valere anche mentre e' nascosto. show()/hide() ripetuti non fanno nulla.
+        val aggiorna = {
+            val nascondi = FabOverlap.fabsMustHide(azioni.map { it.boxInWindow() }, fabs.map { it.boxInWindow() })
+            fabs.forEach { if (nascondi) it.hide() else it.show() }
+        }
+        val osservatore = window.decorView.viewTreeObserver
+        osservatore.addOnScrollChangedListener { aggiorna() }
+        osservatore.addOnGlobalLayoutListener { aggiorna() }
+    }
+
+    private fun View.boxInWindow(): FabOverlap.Box {
+        val xy = IntArray(2)
+        getLocationInWindow(xy)
+        return FabOverlap.Box(xy[0], xy[1], xy[0] + width, xy[1] + height)
     }
 
     /**
