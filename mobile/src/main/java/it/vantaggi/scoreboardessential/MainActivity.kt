@@ -241,9 +241,10 @@ class MainActivity :
                         .make(findViewById(R.id.main_root), R.string.no_players_to_attribute, Snackbar.LENGTH_LONG)
                         .show()
                 } else {
-                    SelectScorerDialogFragment
-                        .newInstance(rosa, evento.team ?: 1, indice)
-                        .show(supportFragmentManager, SelectScorerDialogFragment.TAG)
+                    mostraDialogo(
+                        SelectScorerDialogFragment.newInstance(rosa, evento.team ?: 1, indice),
+                        SelectScorerDialogFragment.TAG,
+                    )
                 }
             }
         matchLogRecyclerView.apply {
@@ -452,6 +453,25 @@ class MainActivity :
         setupNavigationButtons()
     }
 
+    /**
+     * Mostra un dialogo solo se l'activity puo' ancora ospitarlo.
+     *
+     * `DialogFragment.show` usa `commit()`, che dopo `onSaveInstanceState` lancia
+     * `IllegalStateException` e porta giu' l'app. Non e' teoria: e' il modo in cui questo test
+     * strumentato e' diventato rosso la prima volta che ha girato su un dispositivo vero.
+     *
+     * Un tocco che arriva mentre l'activity sta salvando lo stato non viene eseguito, e va bene
+     * cosi': in quel momento l'activity sta andando via e non c'e' nessuna schermata su cui
+     * mostrare un dialogo. Meglio un tocco perso di un'app chiusa.
+     */
+    private fun mostraDialogo(
+        fragment: androidx.fragment.app.DialogFragment,
+        tag: String,
+    ) {
+        if (supportFragmentManager.isStateSaved) return
+        fragment.show(supportFragmentManager, tag)
+    }
+
     private fun setupScoreButtons() {
         // I due contenitori del nome avevano il ripple e una contentDescription che prometteva
         // "tocca per cambiare il nome", ma nessun listener: il commento qui diceva "no longer
@@ -460,15 +480,17 @@ class MainActivity :
         // rimetteva la sostanza: a bordo campo rinominare senza passare dalle impostazioni vale
         // piu' di un controllo in meno.
         findViewById<View>(R.id.team1_name_container).setOnClickListener {
-            TeamNameDialogFragment
-                .newInstance(1, viewModel.team1Name.value.orEmpty())
-                .show(supportFragmentManager, TeamNameDialogFragment.TAG)
+            mostraDialogo(
+                TeamNameDialogFragment.newInstance(1, viewModel.team1Name.value.orEmpty()),
+                TeamNameDialogFragment.TAG,
+            )
         }
 
         findViewById<View>(R.id.team2_name_container).setOnClickListener {
-            TeamNameDialogFragment
-                .newInstance(2, viewModel.team2Name.value.orEmpty())
-                .show(supportFragmentManager, TeamNameDialogFragment.TAG)
+            mostraDialogo(
+                TeamNameDialogFragment.newInstance(2, viewModel.team2Name.value.orEmpty()),
+                TeamNameDialogFragment.TAG,
+            )
         }
 
         // New buttons with improved feedback

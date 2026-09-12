@@ -1,11 +1,14 @@
 package it.vantaggi.scoreboardessential
 
+import android.content.Context
 import android.view.View
 import androidx.fragment.app.DialogFragment
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -31,6 +34,25 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class MainActivityLayoutTest {
+    /**
+     * Spegne il tutorial di primo avvio prima di montare la schermata.
+     *
+     * Su un'installazione pulita `MainActivity` lancia subito `OnboardingActivity`, che la mette
+     * in PAUSA: lo stato del FragmentManager risulta gia' salvato, e un tocco che apre un dialogo
+     * non puo' essere eseguito. Senza questo, il test non misurava la schermata di gioco --
+     * misurava una schermata gia' coperta da un'altra.
+     */
+    @Before
+    fun spegniIlTutorial() {
+        InstrumentationRegistry
+            .getInstrumentation()
+            .targetContext
+            .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean("onboarding_completed", true)
+            .commit()
+    }
+
     @Test
     fun ilComandoPrimario_esiste_ed_e_un_bersaglio_vero() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->

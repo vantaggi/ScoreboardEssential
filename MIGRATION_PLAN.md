@@ -39,7 +39,11 @@ su disco e consegna al telefono, e il **punteggio calcolato offline al polso**.
 
 ### Le quattro cose aperte, in ordine di peso
 
-**1. LE VERIFICHE SU DISPOSITIVO. E' qui il rischio, ed e' quasi tutto.**
+**1. LE VERIFICHE SU DISPOSITIVO. Il primo giro e' stato fatto il 12 settembre** (vedi in
+fondo): l'app si installa, si avvia e i 6 test strumentati passano su emulatore API 36.
+Restano da guardare a occhio le superfici grafiche. Il testo qui sotto e' quello originale.
+
+**LE VERIFICHE SU DISPOSITIVO.**
 Niente di quanto scritto in questi giorni e' mai stato **visto** girare. Il codice
 compila, i test passano, il lint tace: nessuna di queste tre cose guarda uno schermo.
 In ordine di probabilita' di sorpresa:
@@ -1096,3 +1100,63 @@ applicata dove era stata promessa, con un argomento misurabile invece che di gus
 **Anteprima resa e mostrata** prima di procedere: quattro casi, card chiara e scura, con e
 senza. Resta l'unica cosa da confermare su un dispositivo vero, dove il rendering del
 testo non e' quello di un SVG.
+
+### L'emulatore non partiva, e cosa e' venuto fuori - 12 settembre 2026
+
+**La causa.** Nascosta in mezzo a 257 righe di log verboso, una sola riga:
+
+    FATAL | Running multiple emulators with the same AVD is an experimental feature.
+            Please use -read-only flag to enable this feature.
+
+L'emulatore credeva che un'altra istanza stesse gia' usando l'AVD `Pixel_9a`, a causa di un
+**lock orfano**: `hardware-qemu.ini.lock/` (una cartella, con dentro un file `pid`) e
+`multiinstance.lock`. Android Studio non mostra quella riga, quindi il sintomo che si vede
+e' "non parte" senza altro.
+
+**Come ci si finisce.** Fermando il processo `emulator.exe` senza fermare il `qemu-system`
+che ha generato: il figlio resta vivo, tiene il lock, e ogni avvio successivo fallisce. Nel
+corso della diagnosi l'ho riprodotto **io stesso** con un `Stop-Process` sul lanciatore.
+All'inizio della sessione c'erano gia' 6 `crashpad_handler` orfani senza nessun emulatore
+vivo: la stessa cosa era successa prima, piu' volte.
+
+**Il rimedio** (da tenere a portata di mano, perche' ricapitera'):
+
+```bash
+adb kill-server
+taskkill /F /IM qemu-system-x86_64.exe /IM qemu-system-x86_64-headless.exe /IM crashpad_handler.exe /IM netsimd.exe
+rmdir /s /q "%USERPROFILE%\.android\avd\Pixel_9a.avd\hardware-qemu.ini.lock"
+del /q "%USERPROFILE%\.android\avd\Pixel_9a.avd\multiinstance.lock"
+```
+
+Verificato: dopo la pulizia l'emulatore parte con la finestra e `adb devices` lo vede.
+WHPX, l'AVD e le immagini di sistema erano sempre stati a posto, e anche il backend grafico
+non c'entrava (falliva identico con `host`, `angle_indirect` e `swiftshader_indirect`).
+
+### Il primo giro su dispositivo vero - 12 settembre 2026
+
+Con l'emulatore in piedi, i 6 test strumentati hanno girato per la prima volta. **Hanno
+trovato subito due cose che nessun build verde aveva visto in giorni.**
+
+**1. Un crash che avevo introdotto io.** `dialog_team_name.xml` aveva quattro `Chip` senza
+`layout_width`/`layout_height`:
+
+    InflateException: Binary XML file line #79: You must supply a layout_width attribute
+
+`TeamNameDialogFragment` era codice morto da tempo e nessuno poteva aprirlo. **L'11 settembre
+ho rimesso il listener sul nome squadra** -- chiudendo il rilievo "i nomi sembrano toccabili
+e non lo sono" -- e da quel momento toccare il nome di una squadra **chiudeva l'app**. Il
+crash abortiva l'intera esecuzione: giravano 2 test su 6.
+
+**2. Un difetto di robustezza vero.** `DialogFragment.show` usa `commit()`, che dopo
+`onSaveInstanceState` lancia `IllegalStateException` e porta giu' l'app. Ora i dialoghi
+aperti da un tocco passano tutti da una sola funzione che controlla `isStateSaved`: un tocco
+che arriva mentre l'activity sta andando via si perde, invece di chiudere l'app.
+
+**3. Una premessa sbagliata nel mio test.** Con la guardia, il test e' passato da crash ad
+asserzione fallita -- il che ha provato che lo stato *era* davvero salvato. Il motivo: su
+un'installazione pulita `MainActivity` lancia subito `OnboardingActivity`, che la mette in
+pausa. Il test non misurava la schermata di gioco, misurava una schermata gia' coperta da
+un'altra. Ora spegne il tutorial prima di montarla.
+
+**Esito: 6 test strumentati su 6 verdi**, comprese le tre migrazioni Room, che fino a ieri
+erano `@Ignore` e non erano mai state eseguite in tutta la vita del progetto.
