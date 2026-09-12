@@ -186,6 +186,11 @@ class WearViewModel(
 
     val connectionState = connectionManager.connectionState
 
+    /** Il listener della capability non vede il Bluetooth che cade: lo stato va chiesto di nuovo. */
+    fun refreshConnection() {
+        viewModelScope.launch { connectionManager.refreshConnection() }
+    }
+
     // Team Scores
     private val _team1Score = MutableStateFlow(0)
     val team1Score = _team1Score.asStateFlow()

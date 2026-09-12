@@ -7,6 +7,7 @@ import com.google.android.gms.wearable.Asset
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
@@ -65,32 +66,61 @@ class OptimizedWearDataSync(
     }
 
     private fun updateConnectedNodes() {
-        coroutineScope.launch {
-            try {
-                val nodes =
-                    capabilityClient
-                        .getCapability(WearConstants.CAPABILITY_SCOREBOARD_APP, CapabilityClient.FILTER_REACHABLE)
-                        .await()
-                        .nodes
+        coroutineScope.launch { refreshConnection() }
+    }
 
-                if (nodes.isNotEmpty()) {
-                    _connectionState.value = ConnectionState.Connected(nodes.size)
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "Connected to ${nodes.size} nodes: ${nodes.joinToString { it.displayName }}")
-                    }
-                } else {
-                    _connectionState.value = ConnectionState.Disconnected
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "No connected nodes found.")
-                    }
+    /**
+     * I nodi dell'app che sono DAVVERO collegati adesso.
+     *
+     * La capability con FILTER_REACHABLE da sola non basta: continua a restituire il nodo anche a
+     * connessione chiusa da giorni (verificato con dumpsys su due emulatori, "0 connected out of 1"
+     * mentre l'app scriveva "Connected to 1 nodes"). L'effetto era il pallino verde sull'orologio e
+     * il toast "Wear OS Connected" sul telefono con i dati che non passavano. connectedNodes invece
+     * rispecchia il collegamento reale, ma non dice se sull'altro lato c'e' la nostra app: servono
+     * entrambi, e il confronto si fa per id.
+     */
+    private suspend fun nodiCollegati(): List<Node> {
+        val capaci =
+            capabilityClient
+                .getCapability(WearConstants.CAPABILITY_SCOREBOARD_APP, CapabilityClient.FILTER_REACHABLE)
+                .await()
+                .nodes
+        if (capaci.isEmpty()) return emptyList()
+        val collegati =
+            nodeClient.connectedNodes
+                .await()
+                .map { it.id }
+                .toSet()
+        return capaci.filter { it.id in collegati }
+    }
+
+    /**
+     * Ricalcola lo stato del collegamento su richiesta.
+     *
+     * Il listener della capability non scatta quando il Bluetooth cade, quindi lo stato restava
+     * quello dell'avvio: va rinfrescato quando la schermata torna in primo piano.
+     */
+    suspend fun refreshConnection() {
+        try {
+            val nodes = nodiCollegati()
+
+            if (nodes.isNotEmpty()) {
+                _connectionState.value = ConnectionState.Connected(nodes.size)
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "Connected to ${nodes.size} nodes: ${nodes.joinToString { it.displayName }}")
                 }
-            } catch (e: ApiException) {
-                _connectionState.value = ConnectionState.Error("API Exception: ${e.message}")
-                Log.e(TAG, "Error monitoring connection", e)
-            } catch (e: Exception) {
-                _connectionState.value = ConnectionState.Error("Generic error: ${e.message}")
-                Log.e(TAG, "An unexpected error occurred", e)
+            } else {
+                _connectionState.value = ConnectionState.Disconnected
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "No connected nodes found.")
+                }
             }
+        } catch (e: ApiException) {
+            _connectionState.value = ConnectionState.Error("API Exception: ${e.message}")
+            Log.e(TAG, "Error monitoring connection", e)
+        } catch (e: Exception) {
+            _connectionState.value = ConnectionState.Error("Generic error: ${e.message}")
+            Log.e(TAG, "An unexpected error occurred", e)
         }
     }
 
@@ -161,12 +191,9 @@ class OptimizedWearDataSync(
     ): Boolean =
         withContext(Dispatchers.IO) {
             try {
-                // Use capabilityClient to find nodes that actually have the app and are reachable
-                val nodes =
-                    capabilityClient
-                        .getCapability(WearConstants.CAPABILITY_SCOREBOARD_APP, CapabilityClient.FILTER_REACHABLE)
-                        .await()
-                        .nodes
+                // Stesso criterio del pallino: se il nodo non e' collegato davvero il tocco deve finire
+                // nella coda offline, non essere confermato con la vibrazione e poi perso.
+                val nodes = nodiCollegati()
 
                 if (nodes.isEmpty()) {
                     Log.w(TAG, "sendMessage: No capable nodes found for path: $path")
@@ -199,12 +226,8 @@ class OptimizedWearDataSync(
     suspend fun testConnection(): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                // Use capabilityClient for consistent testing with sendMessage
-                val nodes =
-                    capabilityClient
-                        .getCapability(WearConstants.CAPABILITY_SCOREBOARD_APP, CapabilityClient.FILTER_REACHABLE)
-                        .await()
-                        .nodes
+                // Stesso criterio di sendMessage: e' questo esito che decide il toast del telefono.
+                val nodes = nodiCollegati()
 
                 if (nodes.isEmpty()) {
                     Log.w(TAG, "Test Connection: No capable nodes found.")
