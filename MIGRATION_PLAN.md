@@ -1160,3 +1160,37 @@ un'altra. Ora spegne il tutorial prima di montarla.
 
 **Esito: 6 test strumentati su 6 verdi**, comprese le tre migrazioni Room, che fino a ieri
 erano `@Ignore` e non erano mai state eseguite in tutta la vita del progetto.
+
+### Guardata davvero, sull'emulatore - 12 settembre 2026
+
+L'app e' stata installata e vista per la prima volta. Confermato a occhio: il tabellone
+fisso in cima (D4), i numeri netti senza ombra (D5), il testo scuro sulle card chiare, la
+riga di tre comandi (HISTORY / END MATCH / SHARE), la barra con la freccia nelle
+impostazioni, il pulsante SALVA sparito, e l'icona nuova che si legge nel dock.
+
+**Un difetto grave trovato subito.** Nelle impostazioni i valori dei campi -- nome squadra,
+secondi del portiere, lingua, sport -- erano **testo scuro su card scure**, illeggibili.
+
+Il tema dichiarava `Theme.Material3.DayNight.NoActionBar`, ma l'app dipinge asfalto e
+cemento **sempre**: non ha mai seguito il tema di sistema. Su un dispositivo in modalita'
+chiara quel parent risolve alla base **Light**, e da li' arriva `android:textColorPrimary`
+scuro. Le sovrascritture di Material3 (`colorSurface`, `colorOnSurface`...) c'erano gia' ed
+erano giuste: il buco stava nei colori del **framework**, che `TextInputEditText` usa per il
+testo digitato. Base cambiata a `Theme.Material3.Dark.NoActionBar`: li sistema tutti in una
+volta, e la dichiarazione coincide con il comportamento. **Verificato a occhio dopo il fix.**
+
+### Da guardare la prossima volta (visto, non ancora sistemato)
+
+1. **Due lastroni verdi vuoti.** Le `FormationView` (200dp ciascuna) senza giocatori sono due
+   rettangoli verdi pieni, senza campo ne' segni. Occupano piu' spazio del registro.
+2. **Le etichette delle rose contraddicono le card.** Nel riquadro TEAM ROSTERS "Team 1" e'
+   rosa e "Team 2" ciano (`colorPrimary`/`colorSecondary`), mentre le card sopra sono gialla
+   e verde. Sono le stesse due squadre con due coppie di colori diverse.
+3. **I FAB coprono il contenuto.** Il FAB statistiche e quello giocatori si sovrappongono al
+   titolo "MATCH LOG" quando si scorre: manca un padding in fondo alla lista.
+4. **Il blocco cronometro occupa circa un quinto dello schermo** nell'intestazione fissa, per
+   mostrare "00:00" piu' START e RESET. Con D4 quello spazio e' ora permanente, e al
+   contenuto scorrevole resta poco piu' di un quarto della pagina.
+5. **L'icona usa giallo e ciano**, mentre la coppia predefinita delle squadre e' giallo e
+   **verde**. Va scelto uno dei due.
+6. **Il padel non e' stato guardato:** manca il giro sullo sport che si usa davvero.

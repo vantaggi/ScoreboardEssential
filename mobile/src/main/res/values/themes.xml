@@ -1,6 +1,20 @@
 <resources>
     <!-- Base application theme. -->
-    <style name="Theme.ScoreboardEssential" parent="Theme.Material3.DayNight.NoActionBar">
+    <!--
+        Base SCURA, non DayNight.
+
+        L'app dipinge asfalto e cemento in ogni caso: non ha mai seguito il tema di sistema, e
+        dichiarare DayNight era una promessa che non manteneva. Su un dispositivo in modalita'
+        chiara quel parent risolveva alla base Light, e da li' arrivava android:textColorPrimary
+        SCURO, che il tema non sovrascriveva. Risultato visto su emulatore: nelle impostazioni
+        i valori dei campi (nome squadra, secondi del portiere, lingua, sport) erano testo scuro
+        su card scure, praticamente illeggibili.
+
+        Le sovrascritture di Material3 (colorSurface, colorOnSurface...) c'erano gia' ed erano
+        giuste: il buco stava nei colori del FRAMEWORK, che TextInputEditText usa per il testo
+        digitato. Cambiare base li sistema tutti in una volta invece di rincorrerli uno per uno.
+    -->
+    <style name="Theme.ScoreboardEssential" parent="Theme.Material3.Dark.NoActionBar">
         <!-- Street Vibe Color Palette -->
         <item name="colorPrimary">@color/graffiti_pink</item>
         <item name="colorOnPrimary">@color/stencil_white</item>
