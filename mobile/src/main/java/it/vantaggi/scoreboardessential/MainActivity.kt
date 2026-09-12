@@ -282,6 +282,10 @@ class MainActivity :
                 team1ScoreTextView,
                 team1ScoreDetailTextView,
             )
+            // Nel riquadro delle rose la squadra aveva il colore del TEMA (rosa o ciano)
+            // mentre la sua card sopra aveva quello scelto dall'utente: le stesse due
+            // squadre con due coppie di colori diverse sulla stessa schermata.
+            findViewById<TextView>(R.id.team1_roster_label).setTextColor(color)
             matchLogAdapter.team1Color = color
             matchLogAdapter.notifyDataSetChanged()
         }
@@ -294,6 +298,7 @@ class MainActivity :
                 team2ScoreTextView,
                 team2ScoreDetailTextView,
             )
+            findViewById<TextView>(R.id.team2_roster_label).setTextColor(color)
             matchLogAdapter.team2Color = color
             matchLogAdapter.notifyDataSetChanged()
         }

@@ -7,6 +7,7 @@ import android.os.Looper
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import androidx.test.core.app.ApplicationProvider
+import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
@@ -14,6 +15,7 @@ import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.repository.MatchRepository
+import it.vantaggi.scoreboardessential.repository.MatchSettings
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
@@ -22,7 +24,9 @@ import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -508,5 +512,47 @@ class MainViewModelTest {
             viewModel.team1Score.removeObserver(score1Observer)
             viewModel.team2Score.removeObserver(score2Observer)
             viewModel.matchEvents.removeObserver(eventsObserver)
+        }
+
+    /**
+     * Con uno sport diverso dal calcio gia' salvato, il ViewModel si costruisce senza crash.
+     *
+     * Visto su emulatore: con `active_sport = padel` l'app crashava a OGNI apertura. Il
+     * collettore delle impostazioni, lanciato in init, riceve la prima emissione subito e chiama
+     * applySport, che scriveva _scoreDisplay quando era ancora null perche' dichiarato dopo init.
+     *
+     * Tre dettagli, e ciascuno serve a far fallire questo test quando il difetto c'e':
+     *
+     * - il dispatcher e' IMMEDIATO. Con lo StandardTestDispatcher del setup la coroutine di init
+     *   partirebbe solo dopo il costruttore, quando tutti i campi esistono gia'. In produzione
+     *   Main.immediate la esegue DENTRO il costruttore;
+     * - il corpo sta dentro `runTest`. L'NPE nasce in una coroutine di viewModelScope: fuori da
+     *   runTest finisce nel gestore delle eccezioni non catturate e il test passa lo stesso.
+     *   runTest invece raccoglie le eccezioni non gestite anche fuori dal proprio scope e fallisce;
+     * - l'asserzione su activeSport da sola NON basta: applySport lo scrive prima della riga che
+     *   crashava. La prima stesura di questo test si fermava li', e una falsificazione -- difetto
+     *   rimesso, test ancora verde -- ha dimostrato che non proteggeva niente.
+     */
+    @Test
+    fun `con padel salvato il ViewModel si costruisce senza crash`() =
+        runTest(UnconfinedTestDispatcher()) {
+            Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+            whenever(mockMatchSettingsRepository.getSettingsFlow()).thenReturn(
+                flowOf(
+                    MatchSettings(
+                        team1Name = "Team 1",
+                        team2Name = "Team 2",
+                        team1Color = Color.RED,
+                        team2Color = Color.BLUE,
+                        keeperTimerDuration = 300L,
+                        activeSport = SportRegistry.PADEL,
+                    ),
+                ),
+            )
+
+            val conPadel =
+                MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
+
+            assertEquals(SportRegistry.PADEL, conPadel.activeSport.value)
         }
 }

@@ -30,6 +30,6 @@
 
     <!-- Colonna di destra, piu' bassa: x 57..78, y 47..75, raccordo 4 -->
     <path
-        android:fillColor="@color/neon_cyan"
+        android:fillColor="@color/team_electric_green"
         android:pathData="M61,47 L74,47 A4,4 0 0,1 78,51 L78,71 A4,4 0 0,1 74,75 L61,75 A4,4 0 0,1 57,71 L57,51 A4,4 0 0,1 61,47 Z" />
 </vector>

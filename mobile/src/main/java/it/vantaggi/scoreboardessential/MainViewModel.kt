@@ -545,6 +545,23 @@ class MainViewModel(
     // Current Match ID
     private var currentMatchId: Long? = null
 
+    // DEVE stare sopra init. Il collettore delle impostazioni, lanciato in init, riceve la
+    // prima emissione subito e chiama applySport quando lo sport salvato non e' il calcio:
+    // applySport scrive _scoreDisplay, che dichiarato piu' in basso era ancora null. Visto su
+    // emulatore: con padel salvato l'app crashava a OGNI apertura. Stesso difetto, gia'
+    // pagato una volta, di matchEventLog dichiarato dopo init.
+    private val _scoreDisplay = MutableLiveData(sportRules.display(sportRules.initial()))
+
+    /**
+     * Il punteggio gia' impaginato dalle regole dello sport.
+     *
+     * L'interfaccia mostra STRINGHE, non interi. Per il calcio `side1Primary` e' "3" e il
+     * dettaglio e' null, quindi il risultato a schermo e' identico a prima; per il padel il
+     * primario e' "40" o "AV" e il dettaglio "6-4 - 3-2". Cosi' la schermata non deve sapere che
+     * sport si sta giocando, ed e' anche la stessa forma che l'orologio ricevera' gia' pronta.
+     */
+    val scoreDisplay: LiveData<ScoreDisplay> = _scoreDisplay
+
     init {
         viewModelScope.launch {
             matchSettingsRepository.getSettingsFlow().collect { settings ->
@@ -870,18 +887,6 @@ class MainViewModel(
             )
         }
     }
-
-    private val _scoreDisplay = MutableLiveData(sportRules.display(sportRules.initial()))
-
-    /**
-     * Il punteggio gia' impaginato dalle regole dello sport.
-     *
-     * L'interfaccia mostra STRINGHE, non interi. Per il calcio `side1Primary` e' "3" e il
-     * dettaglio e' null, quindi il risultato a schermo e' identico a prima; per il padel il
-     * primario e' "40" o "AV" e il dettaglio "6-4 - 3-2". Cosi' la schermata non deve sapere che
-     * sport si sta giocando, ed e' anche la stessa forma che l'orologio ricevera' gia' pronta.
-     */
-    val scoreDisplay: LiveData<ScoreDisplay> = _scoreDisplay
 
     /** Proietta lo stato del motore sulle LiveData e lo propaga all'orologio. */
     private fun publishEngineState() {

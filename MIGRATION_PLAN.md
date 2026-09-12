@@ -1181,16 +1181,84 @@ volta, e la dichiarazione coincide con il comportamento. **Verificato a occhio d
 
 ### Da guardare la prossima volta (visto, non ancora sistemato)
 
-1. **Due lastroni verdi vuoti.** Le `FormationView` (200dp ciascuna) senza giocatori sono due
-   rettangoli verdi pieni, senza campo ne' segni. Occupano piu' spazio del registro.
-2. **Le etichette delle rose contraddicono le card.** Nel riquadro TEAM ROSTERS "Team 1" e'
+1. **Due campi verdi vuoti.** Le `FormationView` (200dp ciascuna) senza giocatori mostrano solo lo
+   sfondo. *Correzione del 13 settembre:* non e' vero che sono "senza segni" -- `bg_football_field`
+   ha bordo, linea di meta' campo e cerchio; a quella misura si leggono poco. Solo calcio: nel
+   padel la card e' nascosta.
+2. ~~**Le etichette delle rose contraddicono le card.**~~ **Chiuso il 13 settembre**, vedi sotto. Nel riquadro TEAM ROSTERS "Team 1" e'
    rosa e "Team 2" ciano (`colorPrimary`/`colorSecondary`), mentre le card sopra sono gialla
    e verde. Sono le stesse due squadre con due coppie di colori diverse.
-3. **I FAB coprono il contenuto.** Il FAB statistiche e quello giocatori si sovrappongono al
-   titolo "MATCH LOG" quando si scorre: manca un padding in fondo alla lista.
+3. ~~**I FAB coprono il contenuto.**~~ **Ritirato il 13 settembre:** la riga delle azioni ha
+   gia' `marginBottom 80dp`, quindi la fine della lista e' libera. Un FAB che passa sopra il
+   contenuto mentre si scorre e' il comportamento standard di un FAB, non un difetto.
 4. **Il blocco cronometro occupa circa un quinto dello schermo** nell'intestazione fissa, per
    mostrare "00:00" piu' START e RESET. Con D4 quello spazio e' ora permanente, e al
    contenuto scorrevole resta poco piu' di un quarto della pagina.
-5. **L'icona usa giallo e ciano**, mentre la coppia predefinita delle squadre e' giallo e
-   **verde**. Va scelto uno dei due.
+5. ~~**L'icona usa giallo e ciano.**~~ **Chiuso il 13 settembre:** la seconda colonna ora e'
+   `team_electric_green`, come la squadra 2 di default in `ColorRepository`. Verificato a occhio
+   nello splash del telefono.
 6. **Il padel non e' stato guardato:** manca il giro sullo sport che si usa davvero.
+
+### Il padel crashava a ogni apertura - 13 settembre 2026
+
+**Il difetto piu' grave trovato finora, e solo perche' l'app e' stata aperta davvero.**
+
+    NullPointerException: MutableLiveData.setValue on a null object reference
+      at MainViewModel.applySport(MainViewModel.kt:502)
+      at MainViewModel.<init>(MainViewModel.kt:549)
+
+`init` stava alla riga 548, `_scoreDisplay` alla **874**. Il collettore delle impostazioni,
+lanciato in `init`, riceve la prima emissione subito e -- quando lo sport salvato non e' il
+calcio -- chiama `applySport`, che scriveva `_scoreDisplay` quando era ancora null. Sul
+telefono c'era `active_sport = padel`. **Chiunque avesse scelto padel crashava a ogni avvio**,
+cioe' esattamente l'uso reale. E' la stessa famiglia del crash di `matchEventLog` dichiarato
+dopo `init`, gia' pagato una volta.
+
+**Rimedio:** `_scoreDisplay` spostato sopra `init`, con un commento che dice perche' deve
+restare li'. Era l'unico campo toccato da quel percorso dichiarato dopo `init`.
+
+**Perche' nessun test l'aveva visto, per due ragioni.** `MainViewModelTest` simulava le
+impostazioni con `emptyFlow()`, quindi quel percorso non veniva mai percorso. E usava
+`StandardTestDispatcher`, che fa partire la coroutine di `init` solo DOPO il costruttore,
+quando tutti i campi esistono gia'. In produzione `Main.immediate` la esegue DENTRO il
+costruttore. Il test nuovo usa un `UnconfinedTestDispatcher` apposta: con il dispatcher del
+setup passerebbe anche col difetto.
+
+**La prima stesura del test non proteggeva niente, e lo ha detto la falsificazione.** Rimesso
+`_scoreDisplay` dopo `init`, il test restava VERDE per due motivi: l'NPE nasceva in una
+coroutine di `viewModelScope` e, fuori da `runTest`, finiva nel gestore delle eccezioni non
+catturate senza toccare il thread del test; e l'asserzione su `activeSport` passava comunque,
+perche' `applySport` lo scrive prima della riga che crashava. Rimedio: il corpo sta dentro
+`runTest(UnconfinedTestDispatcher())`, che raccoglie le eccezioni non gestite e fa fallire il
+test. **Verificato per falsificazione:** col difetto rimesso il test e' ROSSO con esattamente
+l'NPE visto su emulatore (`applySport` <- `emit` del collettore di `init`), 18 test / 1
+fallito; ripristinato, 18 / 0.
+
+Verificato su emulatore: con padel salvato l'app ora parte, nessun crash nel buffer, schermata
+del padel corretta (punteggio, riga dei set, solo i `+`, cronometro nascosto, ingranaggio
+raggiungibile).
+
+**Anche le etichette delle rose** ora prendono il colore della squadra nello stesso observer
+che colora la card, invece di `colorPrimary`/`colorSecondary` del tema. Compilato e verificato
+dalla suite, **non ancora guardato a schermo** (serve il calcio con le rose aperte).
+
+### L'orologio, visto - 13 settembre 2026
+
+Avviato l'emulatore `Wear_OS_Small_Round`, installata e aperta l'app: **gira in padel senza
+crash**. Punteggio, riga dei set, `HOLD: UNDO`, RESET, il "K" nascosto, nulla tagliato sul
+quadrante tondo piccolo. Il "K" da 48dp e i due comandi in fondo, che erano i punti a rischio,
+non si sovrappongono.
+
+**Quello che NON e' stato possibile verificare:** i due emulatori non sono accoppiati. Sul
+telefono c'e' la companion app e una configurazione verso l'orologio, ma da entrambi i lati
+`IsConnected=false`. Lo stato a schermo sull'orologio ("15 15", lime e rosa) e' quindi vecchio,
+e sincronizzazione e colori restano da provare. L'accoppiamento passa dalla companion app, che
+chiede l'accesso a un account: va fatto a mano.
+
+**Da indagare:** l'orologio mostra il pallino di collegamento VERDE mentre il Data Layer dice
+`IsConnected=false`. Se non e' uno stato rimasto in cache, l'indicatore mente.
+
+### Una lezione di metodo
+
+Dopo il riavvio dell'emulatore ho mandato due tocchi a coordinate fisse senza guardare: sono
+finiti su Google Calendar. Da allora ogni tocco e' preceduto da uno screenshot.
