@@ -49,10 +49,16 @@
                     ancora leggibile a distanza di braccio; i pulsanti restano
                     MaterialButton con i loro 48dp minimi. Se lo sport non ha cronometro i figli sono
                     tutti spenti e questa riga misura zero.
+                    Flow e non un LinearLayout con i pesi: con caratteri ingranditi, tempo a tre cifre o
+                    PAUSA al posto di START la riga non basta, e i pesi toglievano lo spazio al tempo,
+                    che andava a capo dentro una riga sola e si vedeva tagliato. Flow invece manda i
+                    pulsanti sotto, interi: si perde un po' di altezza solo quando serve davvero.
                 -->
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content">
 
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                    <androidx.constraintlayout.helper.widget.Flow android:layout_width="0dp" android:layout_height="wrap_content" app:constraint_referenced_ids="timer_time_column,timer_controls_row" app:flow_wrapMode="chain" app:flow_horizontalStyle="spread_inside" app:flow_verticalAlign="center" app:flow_horizontalGap="8dp" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"/>
+
+                    <LinearLayout android:id="@+id/timer_time_column" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="vertical">
 
                         <TextView android:id="@+id/match_time_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_match_time" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:lineHeight="18sp"/>
 
@@ -66,7 +72,7 @@
 
                         <com.google.android.material.button.MaterialButton android:id="@+id/reset_timer_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_reset_timer" android:onClick="resetTimer"/>
                     </LinearLayout>
-                </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <!-- Il portiere su una riga sola, etichetta e valore affiancati: compare solo quando conta. -->
                 <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:orientation="horizontal" android:gravity="center_vertical">

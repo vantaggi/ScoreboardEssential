@@ -105,18 +105,21 @@ class MainActivityLayoutTest {
     @Test
     fun senzaCronometro_l_intestazione_e_una_riga_sola() {
         // Padel e tennis: dentro restano ingranaggio e icona dell'orologio. Prima la card era alta
-        // circa 88dp di cui due terzi vuoti, e sta FISSA in cima: ogni dp e' tolto al registro.
+        // circa 100dp di cui due terzi vuoti, e sta FISSA in cima: ogni dp e' tolto al registro.
+        // 80 e non 72: agli angoli tagliati MaterialCardView aggiunge 6dp sopra e sotto (misurato
+        // in IntestazioneCronometroTest: 76dp), che una stima fatta sommando l'XML non vede.
         val (altezza, _) = altezzaIntestazioneDp(conCronometro = false)
-        assertTrue("l'intestazione senza cronometro e' alta ${altezza}dp, oltre i 72 ammessi", altezza <= 72f)
+        assertTrue("l'intestazione senza cronometro e' alta ${altezza}dp, oltre gli 80 ammessi", altezza <= 80f)
     }
 
     @Test
     fun conCronometro_tempo_e_comandi_stanno_compatti_ma_restano_bersagli() {
-        // Calcio: prima etichetta, tempo e pulsanti erano impilati e la card sfiorava i 235dp.
+        // Calcio: prima etichetta, tempo e pulsanti erano impilati e la card superava i 230dp.
         // Il limite lascia la riga di testa (48), una riga di tempo (etichetta 18 + tempo 52),
-        // i margini interni e un po' di tolleranza per le metriche del carattere.
+        // i margini interni, i 12dp degli angoli della card e un po' di tolleranza per le
+        // metriche del carattere: in JVM con i caratteri veri misura 159dp.
         val (altezza, start) = altezzaIntestazioneDp(conCronometro = true)
-        assertTrue("l'intestazione col cronometro e' alta ${altezza}dp, oltre i 150 ammessi", altezza <= 150f)
+        assertTrue("l'intestazione col cronometro e' alta ${altezza}dp, oltre i 175 ammessi", altezza <= 175f)
         assertTrue("START e' alto ${start}dp, sotto i 48 minimi", start >= 48f)
     }
 
