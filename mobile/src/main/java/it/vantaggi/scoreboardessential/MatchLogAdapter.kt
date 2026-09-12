@@ -112,8 +112,9 @@ class MatchLogAdapter(
                 }
             }
 
-            // Highlight goals
-            if (event.event.contains("GOAL!")) {
+            // Highlight goals. La chiave e' il tipo, non il testo: event.event di un punto vale "Goal"
+            // (la riga "GOAL! ..." e' costruita sopra), quindi cercarci "GOAL!" non era mai vero.
+            if (event.type == MatchEventType.SCORE) {
                 val goalColor = if (event.team == 1) team1Color else team2Color
                 eventTextView.setTextColor(goalColor)
                 eventTextView.textSize = 16f

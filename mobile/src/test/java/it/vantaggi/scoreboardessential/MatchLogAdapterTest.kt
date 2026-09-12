@@ -10,6 +10,7 @@ import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -60,5 +61,41 @@ class MatchLogAdapterTest {
             riga.findViewById<TextView>(R.id.event_description).text.toString(),
         )
         assertTrue(riga.isClickable)
+    }
+
+    private fun testoDellaRiga(
+        adapter: MatchLogAdapter,
+        evento: MatchEvent,
+    ): TextView {
+        adapter.submitList(listOf(evento))
+        val holder = adapter.onCreateViewHolder(FrameLayout(context), 0)
+        adapter.onBindViewHolder(holder, 0)
+        return holder.itemView.findViewById(R.id.event_description)
+    }
+
+    // Il testo salvato di un punto e' "Goal", non "GOAL!": l'evidenziazione cercava la stringa
+    // sbagliata e nessuna riga prendeva mai il colore della squadra.
+    @Test
+    fun `la riga di un punto prende il colore della squadra`() {
+        val coloreSquadra1 = 0xFF123456.toInt()
+        val adapter = MatchLogAdapter().apply { team1Color = coloreSquadra1 }
+
+        val testo =
+            testoDellaRiga(
+                adapter,
+                MatchEvent("00:00", "Goal", team = 1, player = "Team 1", type = MatchEventType.SCORE, engineIndex = 0),
+            )
+
+        assertEquals(coloreSquadra1, testo.currentTextColor)
+    }
+
+    @Test
+    fun `una riga informativa non prende il colore della squadra`() {
+        val coloreSquadra1 = 0xFF123456.toInt()
+        val adapter = MatchLogAdapter().apply { team1Color = coloreSquadra1 }
+
+        val testo = testoDellaRiga(adapter, MatchEvent("00:00", "Match started", team = 1))
+
+        assertNotEquals(coloreSquadra1, testo.currentTextColor)
     }
 }
