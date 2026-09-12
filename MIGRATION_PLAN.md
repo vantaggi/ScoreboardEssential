@@ -1255,8 +1255,32 @@ telefono c'e' la companion app e una configurazione verso l'orologio, ma da entr
 e sincronizzazione e colori restano da provare. L'accoppiamento passa dalla companion app, che
 chiede l'accesso a un account: va fatto a mano.
 
-**Da indagare:** l'orologio mostra il pallino di collegamento VERDE mentre il Data Layer dice
-`IsConnected=false`. Se non e' uno stato rimasto in cache, l'indicatore mente.
+**Il pallino verde mente: indagato.** Prova controllata: `+` sul telefono, il telefono salva
+`/scoreboard/v2/state` con 15-0, sull'orologio in 36 secondi non arriva niente e resta 15-15.
+Il dump di `WearableService` su entrambi dice `0 connected out of 1`; l'ultima connessione
+vera dell'orologio si e' chiusa il 7 settembre dopo 1'32". Eppure l'app, da tutti e due i lati,
+logga "Connected to 1 nodes".
+
+Causa: `OptimizedWearDataSync.updateConnectedNodes` deduce il collegamento da
+`getCapability(..., FILTER_REACHABLE)`, che restituisce il nodo anche a connessione chiusa, e lo
+ricalcola solo quando la capability CAMBIA -- mai a intervalli. Il 15-15 a schermo e' il
+DataItem rimasto in cache, riletto da `restoreStateFromDataItems` all'avvio. Quindi il pallino
+dice "telefono raggiungibile" e il numero sotto e' vecchio, senza nessun segnale che lo sia.
+**Correzione a una lettura precedente:** "Syncing all data" sul telefono subito dopo il
+`request_sync` dell'orologio NON prova che il messaggio sia arrivato: puo' averlo innescato il
+listener della capability del telefono stesso.
+
+**Rimedio proposto, non applicato:** incrociare i nodi della capability con
+`nodeClient.connectedNodes` (il `NodeClient` e' gia' iniettato e inutilizzato), e rinfrescare lo
+stato anche al ritorno in primo piano. Non applicato perche' non verificabile finche' i due
+emulatori non sono davvero accoppiati: un indicatore di connessione corretto "a occhio" e'
+esattamente il difetto da togliere. `adb forward tcp:5601 tcp:5601` non ha riaperto la
+connessione in 25 secondi; l'accoppiamento va rifatto dalla companion app, a mano.
+
+**Visto di passaggio sul telefono, in padel:** il pulsante dice "UNDO LAST GOAL" / "ANNULLA
+ULTIMO GOL" e la riga del registro "GOAL! Team 1 - tap to add the scorer" (`label_undo_last_goal`,
+`log_goal_unattributed` in `MatchLogAdapter`). Parole del calcio in uno sport senza gol e senza
+marcatori. Da sistemare.
 
 ### Una lezione di metodo
 
