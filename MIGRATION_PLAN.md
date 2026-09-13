@@ -1339,3 +1339,10 @@ raggiungibile): quello resta da vedere con i due emulatori accoppiati.
 **Non eseguito:** `connectedDebugAndroidTest`. L'emulatore ha la partizione dati al 95%
 (363 MB liberi su 6 GB) e l'installazione fallisce con `INSTALL_FAILED_INSUFFICIENT_STORAGE`,
 zero test partiti. Svuotare le cache non libera niente; servono spazio o un emulatore dedicato.
+
+**Visto anche nel calcio**, con l'app installata da sola su un'installazione pulita: ingranaggio e
+orologio in alto, "MATCH TIME 00:00" con START e RESET sulla stessa riga. Nessun crash, tutorial
+e richiesta dei permessi di notifica come previsto (la richiesta non e' stata toccata).
+
+**Visto di passaggio:** il tutorial dice "Use the + and - buttons on each team", ma in padel e
+tennis il "-" dentro le card non c'e' piu'. Da riscrivere senza nominare il "-".
