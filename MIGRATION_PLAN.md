@@ -1336,9 +1336,14 @@ il secondo punto annullabile. Il messaggio del telefono dice "Wear OS Not Connec
 con l'orologio spento, ma non prova il caso sbagliato (connessione chiusa con capability ancora
 raggiungibile): quello resta da vedere con i due emulatori accoppiati.
 
-**Non eseguito:** `connectedDebugAndroidTest`. L'emulatore ha la partizione dati al 95%
-(363 MB liberi su 6 GB) e l'installazione fallisce con `INSTALL_FAILED_INSUFFICIENT_STORAGE`,
-zero test partiti. Svuotare le cache non libera niente; servono spazio o un emulatore dedicato.
+**`connectedDebugAndroidTest`: 9 test, zero falliti**, compresi i tre nuovi
+(`inNessunaPosizioneDiScorrimento_unFabCopreIComandiDiFinePartita`,
+`senzaCronometro_l_intestazione_e_una_riga_sola`,
+`conCronometro_tempo_e_comandi_stanno_compatti_ma_restano_bersagli`). Al primo tentativo non era
+partito nessun test: la partizione dati dell'emulatore era al 95% e l'installazione falliva con
+`INSTALL_FAILED_INSUFFICIENT_STORAGE`. Svuotare le cache non liberava niente; su indicazione del
+proprietario e' stata disinstallata `LiveMatchFinder` dall'emulatore (da 328 a 472 MB liberi).
+Resta poco margine: una prossima installazione di qualcos'altro puo' riportare il problema.
 
 **Visto anche nel calcio**, con l'app installata da sola su un'installazione pulita: ingranaggio e
 orologio in alto, "MATCH TIME 00:00" con START e RESET sulla stessa riga. Nessun crash, tutorial
