@@ -1308,3 +1308,34 @@ registro restava un bersaglio, anche nel calcio le righe gia' attribuite. Invert
 
 Dopo il riavvio dell'emulatore ho mandato due tocchi a coordinate fisse senza guardare: sono
 finiti su Google Calendar. Da allora ogni tocco e' preceduto da uno screenshot.
+
+### Cinque voci chiuse con un workflow di agenti - 13 settembre 2026
+
+Chiesto dal proprietario: "implementa il piano con subagent e dynamic workflow". Cinque voci,
+ognuna implementata da un agente in un worktree isolato (branch `wf/<voce>`), poi un revisore
+indipendente in sola lettura con il compito di smontarla, e un giro di correzione solo dove il
+revisore ha trovato problemi seri. Uniti a mano senza conflitti; verifica completa verde,
+**445 test JVM, zero falliti**, lint senza avvisi nuovi.
+
+| Voce | Rimedio | Revisione |
+|---|---|---|
+| FAB sopra HISTORY/END MATCH/SHARE | `FabOverlap.fabsMustHide` confronta i rettangoli veri a schermo; i FAB si nascondono solo mentre la riga delle azioni e' sotto di loro, ricalcolato a ogni scorrimento e cambio di layout | approvato (3 note basse) |
+| Partita ripresa senza righe ne' annullamento | `rebuildEventsAndUndo()` ripercorre il registro del motore e ricostruisce righe SCORE, pila degli annullamenti e `canUndo`, senza ricontare i gol nel database | approvato |
+| Collegamento Wear dichiarato falsamente | `nodiCollegati()`: un nodo conta solo se sta sia nella capability sia in `nodeClient.connectedNodes`; `refreshConnection()` al ritorno in primo piano su telefono e orologio; stesso criterio per `sendMessage` e `testConnection` | approvato |
+| Evidenziazione dei punti mai attiva | chiave `event.type == SCORE` invece del testo "GOAL!" | approvato |
+| Intestazione fissa troppo alta | righe orizzontali: annulla, ingranaggio e orologio sulla prima; tempo e START/RESET su una riga con `Flow`, che manda i pulsanti sotto invece di tagliare il tempo | **corretto**: la prima versione tagliava "100:00" con PAUSA gia' a scala 1.0 |
+
+Tutti con falsificazione dichiarata dei test JVM; i test strumentati nuovi (FAB e intestazione)
+sono stati solo compilati dagli agenti, per regola.
+
+**Visto su emulatore, in padel, sull'app unita:** intestazione su una riga sola; partita ripresa
+a 30-0 con le sue due righe "Point - Team 1" e l'annullamento presente; le righe dei punti nel
+giallo della squadra; a riposo i FAB nascosti con HISTORY e SHARE liberi, a fine scorrimento i FAB
+tornano e la riga resta libera; annullare dopo la ripresa porta a 15-0, toglie una riga e lascia
+il secondo punto annullabile. Il messaggio del telefono dice "Wear OS Not Connected", coerente
+con l'orologio spento, ma non prova il caso sbagliato (connessione chiusa con capability ancora
+raggiungibile): quello resta da vedere con i due emulatori accoppiati.
+
+**Non eseguito:** `connectedDebugAndroidTest`. L'emulatore ha la partizione dati al 95%
+(363 MB liberi su 6 GB) e l'installazione fallisce con `INSTALL_FAILED_INSUFFICIENT_STORAGE`,
+zero test partiti. Svuotare le cache non libera niente; servono spazio o un emulatore dedicato.
