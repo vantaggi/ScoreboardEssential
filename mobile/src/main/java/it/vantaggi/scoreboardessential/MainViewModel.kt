@@ -59,6 +59,7 @@ import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -961,8 +962,64 @@ class MainViewModel(
                 seedEngineFromAbsolute(attiva.team1Score, attiva.team2Score)
                 updateScore(attiva.team1Score, attiva.team2Score)
             }
+            rebuildEventsAndUndo()
             addMatchEvent("Partita ripresa")
         }
+    }
+
+    /**
+     * Ricostruisce dal registro del motore le righe del registro a schermo e la pila degli
+     * annullamenti, come le avrebbero lasciate [addScorer] e [subtractScore] se la partita non
+     * fosse mai stata interrotta.
+     *
+     * Senza, dopo "Partita ripresa" il tabellone diceva 15-0 ma il registro non aveva nessuna
+     * riga di punto e il pulsante di annullamento non c'era: i punti recuperati erano definitivi.
+     *
+     * Si ripercorre il fold e si salta l'evento che non cambia lo stato, con la stessa guardia
+     * dei percorsi dal vivo: i registri scritti dalle versioni precedenti contengono ancora
+     * tocchi inerti, che dal vivo non avevano prodotto righe.
+     *
+     * I gol dei giocatori NON si toccano: erano gia' stati contati quando il punto e' stato
+     * attribuito. Li decrementera' [undoLastGoal], come per un punto segnato adesso.
+     */
+    private suspend fun rebuildEventsAndUndo() {
+        val log = engine.log
+        val rosa =
+            if (log.any { (it.event as? ScoringEvent.Point)?.playerId != null }) {
+                playerDao.getAllPlayers().first()
+            } else {
+                emptyList()
+            }
+        var stato = engine.rules.initial()
+        log.forEachIndexed { indice, voce ->
+            val dopo = engine.rules.apply(stato, voce.event)
+            if (dopo == stato) return@forEachIndexed
+            stato = dopo
+            val squadra = voce.event.side
+            val nomeSquadra = if (squadra == 1) _team1Name.value else _team2Name.value
+            when (val evento = voce.event) {
+                is ScoringEvent.Point -> {
+                    val giocatore = evento.playerId?.let { id -> rosa.find { it.player.playerId == id } }
+                    addMatchEvent(
+                        "Goal",
+                        team = squadra,
+                        // Giocatore non piu' in rosa: resta attribuito (e annullabile con il suo
+                        // decremento), ma si mostra il nome della squadra invece di niente.
+                        player = giocatore?.player?.playerName ?: nomeSquadra,
+                        playerRole = giocatore?.roles?.joinToString(", ") { it.name },
+                        type = MatchEventType.SCORE,
+                        engineIndex = indice,
+                        playerId = evento.playerId,
+                    )
+                    actionStack.addLast(GoalAction(squadra, evento.playerId, System.currentTimeMillis()))
+                }
+
+                is ScoringEvent.Correction -> {
+                    addMatchEvent("Score correction for $nomeSquadra", team = squadra)
+                }
+            }
+        }
+        _canUndo.postValue(actionStack.isNotEmpty())
     }
 
     /**

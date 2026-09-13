@@ -8,6 +8,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import androidx.test.core.app.ApplicationProvider
 import it.vantaggi.scoreboardessential.core.SportRegistry
+import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
@@ -554,5 +555,110 @@ class MainViewModelTest {
                 MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
 
             assertEquals(SportRegistry.PADEL, conPadel.activeSport.value)
+        }
+
+    /**
+     * Prepara una partita aperta con [eventLog] come se l'app fosse stata chiusa e riaperta.
+     *
+     * Va chiamata dentro runTest, e seguita da advanceUntilIdle: il ripristino gira in coroutine.
+     */
+    private fun partitaSalvata(
+        eventLog: String,
+        rosa: List<PlayerWithRoles> = emptyList(),
+    ): PlayerDao {
+        val playerDao = campo("playerDao") as PlayerDao
+        val matchDao = campo("matchDao") as MatchDao
+        whenever(playerDao.getAllPlayers()).thenReturn(flowOf(rosa))
+        val salvata =
+            Match(
+                matchId = 5,
+                team1Id = 1,
+                team2Id = 2,
+                team1Score = 0,
+                team2Score = 0,
+                timestamp = 0L,
+                isActive = true,
+                eventLog = eventLog,
+            )
+        kotlinx.coroutines.runBlocking {
+            whenever(matchDao.getActiveMatchOnce()).thenReturn(salvata)
+        }
+        // Il ripristino lanciato in init e' gia' girato, a vuoto, quando runTest ha smaltito le
+        // coroutine accodate prima del corpo del test. Lo si rilancia sopra la partita appena
+        // azzerata: e' lo stesso ordine della produzione (startNewMatch, poi ripristino).
+        val ripristino = MainViewModel::class.java.getDeclaredMethod("restoreActiveMatchIfAny")
+        ripristino.isAccessible = true
+        ripristino.invoke(viewModel)
+        return playerDao
+    }
+
+    private fun campo(nome: String): Any? {
+        val field = MainViewModel::class.java.getDeclaredField(nome)
+        field.isAccessible = true
+        return field.get(viewModel)
+    }
+
+    private fun righeDiPunto(): List<MatchEvent> =
+        viewModel.matchEvents.value
+            .orEmpty()
+            .filter { it.type == MatchEventType.SCORE }
+
+    /**
+     * Visto su emulatore: partita salvata a 15-0, app riaperta, punteggio giusto ma nel registro
+     * solo "Partita ripresa" e nessun annullamento. I punti recuperati erano diventati definitivi.
+     */
+    @Test
+    fun `alla ripresa il registro ha una riga per punto e si puo' annullare`() =
+        runTest {
+            val mario = PlayerWithRoles(Player(7, "Mario", 3, 0), emptyList())
+            val playerDao = partitaSalvata("1|1:7,2", rosa = listOf(mario))
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            val undoObserver = Observer<Boolean> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            viewModel.canUndo.observeForever(undoObserver)
+
+            advanceUntilIdle()
+
+            val punti = righeDiPunto()
+            assertEquals(2, punti.size)
+            // In testa il piu' recente, come per i punti segnati dal vivo.
+            assertEquals(2, punti[0].team)
+            assertEquals(1, punti[0].engineIndex)
+            assertEquals(null, punti[0].playerId)
+            assertEquals(1, punti[1].team)
+            assertEquals(0, punti[1].engineIndex)
+            assertEquals(7, punti[1].playerId)
+            assertEquals("Mario", punti[1].player)
+            assertEquals(true, viewModel.canUndo.value)
+            // Il gol di Mario era gia' stato contato quando e' stato attribuito.
+            verify(playerDao, times(0)).incrementGoals(any())
+
+            viewModel.matchEvents.removeObserver(eventiObserver)
+            viewModel.canUndo.removeObserver(undoObserver)
+        }
+
+    @Test
+    fun `annullare dopo la ripresa toglie il punto, la riga e il gol del giocatore`() =
+        runTest {
+            val mario = PlayerWithRoles(Player(7, "Mario", 3, 0), emptyList())
+            val playerDao = partitaSalvata("1|1,1:7", rosa = listOf(mario))
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            val scoreObserver = Observer<Int> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            viewModel.team1Score.observeForever(scoreObserver)
+            advanceUntilIdle()
+            assertEquals(2, viewModel.team1Score.value)
+
+            viewModel.undoLastGoal()
+            advanceUntilIdle()
+
+            assertEquals(1, viewModel.team1Score.value)
+            val punti = righeDiPunto()
+            assertEquals(1, punti.size)
+            assertEquals(0, punti[0].engineIndex)
+            verify(playerDao).decrementGoals(7)
+
+            viewModel.matchEvents.removeObserver(eventiObserver)
+            viewModel.team1Score.removeObserver(scoreObserver)
         }
 }
