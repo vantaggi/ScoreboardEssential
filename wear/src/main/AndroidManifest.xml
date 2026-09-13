@@ -25,10 +25,16 @@
 
         <activity android:name=".SportSelectionActivity" android:exported="false" android:taskAffinity="" android:label="@string/wear_sport" />
 
+        <!--
+            Nessun android:permission su questo servizio. Qui c'era BIND_WEARABLE_LISTENER_SERVICE,
+            messo per restringere chi puo' collegarsi: ma Google Play Services quel permesso non
+            lo possiede, e su emulatore WearableService riceveva i DATA_CHANGED dal telefono senza
+            poterli consegnare ("Permission Denial"). Il quadrante si aggiornava solo rileggendo i
+            DataItem al risveglio. Il controllo su chi chiama lo fa gia' WearableListenerService.
+        -->
         <service
             android:name=".WearDataLayerService"
-            android:exported="true"
-            android:permission="android.permission.BIND_WEARABLE_LISTENER_SERVICE">
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />

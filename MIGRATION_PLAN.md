@@ -1351,3 +1351,43 @@ e richiesta dei permessi di notifica come previsto (la richiesta non e' stata to
 
 **Visto di passaggio:** il tutorial dice "Use the + and - buttons on each team", ma in padel e
 tennis il "-" dentro le card non c'e' piu'. Da riscrivere senza nominare il "-".
+
+### Il crash delle impostazioni e la sincronizzazione che non arrivava - 13 settembre 2026
+
+**Il crash, segnalato dal proprietario con il logcat.** Cambiare sport a partita cominciata
+chiudeva le impostazioni: `NullPointerException ... MatchSettingsActivity.observeViewModel$lambda$5,
+parameter it`. `SingleLiveEvent.call()` pubblicava null anche sugli eventi `Unit`, e l'osservatore
+Kotlin ha il parametro non nullo. `call()` e' stato tolto: i tre eventi `Unit` (`sportChangeBlocked`,
+`sportChangeRejected`, `watchBatchRejected`) pubblicano `Unit`, e pubblicare null per sbaglio non
+compila piu'. Commit `9f17103`, visto su emulatore: al posto del crash compare "Finish the current
+match to change sport" e il selettore resta sul calcio.
+
+**Lezione sul test.** La prima stesura contava gli avvisi ed era verde anche col difetto. Il
+bytecode mostra perche': la lambda dell'Activity ha `checkNotNullParameter`, quella scritta dentro
+`runTest` no. Il test ora verifica il contratto (l'evento pubblica un valore non nullo): rosso
+prima del rimedio, verde dopo.
+
+**Correzione a "Il pallino verde mente".** Quella diagnosi era sbagliata. Con i due emulatori
+accesi il telefono diceva "Wear OS Connected", `nodiCollegati()` trovava `Wear_OS_Small_Round` e il
+ping partiva, mentre `dumpsys` diceva ancora `0 connected out of 1`. Il log dell'orologio ha
+chiuso la questione: **i `DATA_CHANGED` dal telefono arrivavano, un secondo dopo l'invio.**
+`dumpsys` contava solo il canale di rete dell'emulatore, non l'unica strada del Data Layer. Il
+collegamento c'era; il rimedio `wf/connessione` resta innocuo, ma non curava la causa.
+
+**La causa vera: un permesso che Play Services non ha.** Subito dopo, sull'orologio:
+`Permission Denial: Accessing service ...wear.WearDataLayerService ... requires
+android.permission.BIND_WEARABLE_LISTENER_SERVICE`. Entrambi i servizi di ascolto
+(`WearDataLayerService` e `SimplifiedDataLayerListenerService`) dichiaravano quel permesso, aggiunto
+l'11 marzo 2026 dal commit `3aa5132` (google-labs-jules) per restringere chi puo' collegarsi. Ma
+Google Play Services non lo possiede: nessun `onDataChanged` e nessun `onMessageReceived` ha mai
+raggiunto l'app. E' la spiegazione del quadrante fermo su 15-15: si aggiornava solo rileggendo i
+DataItem al risveglio (`restoreStateFromDataItems`), mai in tempo reale. Il permesso e' stato
+tolto da entrambi i manifest; il controllo su chi chiama lo fa gia' `WearableListenerService`.
+`ListenerServiceManifestTest` (uno in `:mobile`, uno in `:wear`) e' rosso prima del rimedio e
+verde dopo. Suite completa verde: 451 test JVM, lint senza avvisi nuovi.
+
+**Non ancora verificato su dispositivo:** che dopo il rimedio un punto segnato sul telefono arrivi
+all'orologio in tempo reale, e che un tocco sull'orologio arrivi al telefono. Durante
+l'installazione degli APK nuovi i due emulatori sono stati chiusi. E' la prima cosa da fare alla
+riaccensione: segnare un punto sul telefono senza toccare l'orologio e cercare nel suo log
+"Broadcasted v2 state" invece di "Permission Denial".
