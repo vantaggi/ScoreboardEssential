@@ -168,6 +168,8 @@ class MainActivity :
         lifecycleScope.launch {
             delay(2000) // Aspetta che il servizio si registri
 
+            // Prima si riallinea lo stato, cosi' toast e icona in barra dicono la stessa cosa.
+            viewModel.connectionManager.refreshConnection()
             val testResult = viewModel.connectionManager.testConnection()
             if (testResult) {
                 Log.d("ConnectionTest", "✅ CONNECTION TEST PASSED")
@@ -177,6 +179,13 @@ class MainActivity :
                 Toast.makeText(this@MainActivity, getString(R.string.wear_not_connected), Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Il Bluetooth puo' essere caduto mentre l'app era in secondo piano, e nessun listener lo
+        // segnala: senza questo l'icona dell'orologio restava "collegato".
+        lifecycleScope.launch { viewModel.connectionManager.refreshConnection() }
     }
 
     private fun initializeViews() {

@@ -150,6 +150,8 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         restoreStateFromDataItems()
+        // Al risveglio il pallino deve dire com'e' il collegamento ADESSO, non com'era all'avvio.
+        viewModel.refreshConnection()
     }
 
     /**
