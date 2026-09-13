@@ -72,6 +72,60 @@ class MainActivityLayoutTest {
         }
     }
 
+    /**
+     * Spegne i blocchi dell'intestazione come farebbero le capacita' di uno sport, aspetta il
+     * layout e ritorna l'altezza della card in dp.
+     *
+     * Le visibilita' si impostano a mano invece di passare da `selectSport`: cambiare sport
+     * scriverebbe la scelta nelle impostazioni del dispositivo (e verrebbe rifiutato a partita
+     * iniziata), quindi la misura dipenderebbe da cosa e' rimasto dalla volta prima. Qui si prova
+     * il layout, che e' cio' che deve restare compatto; chi spegne cosa lo decide applyCapabilities.
+     */
+    private fun altezzaIntestazioneDp(conCronometro: Boolean): Pair<Float, Float> {
+        var altezza = 0f
+        var start = 0f
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val cronometro = if (conCronometro) View.VISIBLE else View.GONE
+                activity.findViewById<View>(R.id.match_time_label).visibility = cronometro
+                activity.findViewById<View>(R.id.timer_textview).visibility = cronometro
+                activity.findViewById<View>(R.id.timer_controls_row).visibility = cronometro
+                activity.findViewById<View>(R.id.keeper_timer_label).visibility = View.GONE
+                activity.findViewById<View>(R.id.keeper_timer_textview).visibility = View.GONE
+                activity.findViewById<View>(R.id.match_period_textview).visibility = View.GONE
+                activity.findViewById<View>(R.id.undo_goal_button).visibility = View.GONE
+            }
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            scenario.onActivity { activity ->
+                val densita = activity.resources.displayMetrics.density
+                altezza = activity.findViewById<View>(R.id.timer_card).height / densita
+                start = activity.findViewById<View>(R.id.timer_start_button).height / densita
+            }
+        }
+        return altezza to start
+    }
+
+    @Test
+    fun senzaCronometro_l_intestazione_e_una_riga_sola() {
+        // Padel e tennis: dentro restano ingranaggio e icona dell'orologio. Prima la card era alta
+        // circa 100dp di cui due terzi vuoti, e sta FISSA in cima: ogni dp e' tolto al registro.
+        // 80 e non 72: agli angoli tagliati MaterialCardView aggiunge 6dp sopra e sotto (misurato
+        // in IntestazioneCronometroTest: 76dp), che una stima fatta sommando l'XML non vede.
+        val (altezza, _) = altezzaIntestazioneDp(conCronometro = false)
+        assertTrue("l'intestazione senza cronometro e' alta ${altezza}dp, oltre gli 80 ammessi", altezza <= 80f)
+    }
+
+    @Test
+    fun conCronometro_tempo_e_comandi_stanno_compatti_ma_restano_bersagli() {
+        // Calcio: prima etichetta, tempo e pulsanti erano impilati e la card superava i 230dp.
+        // Il limite lascia la riga di testa (48), una riga di tempo (etichetta 18 + tempo 52),
+        // i margini interni, i 12dp degli angoli della card e un po' di tolleranza per le
+        // metriche del carattere: in JVM con i caratteri veri misura 159dp.
+        val (altezza, start) = altezzaIntestazioneDp(conCronometro = true)
+        assertTrue("l'intestazione col cronometro e' alta ${altezza}dp, oltre i 175 ammessi", altezza <= 175f)
+        assertTrue("START e' alto ${start}dp, sotto i 48 minimi", start >= 48f)
+    }
+
     @Test
     fun toccareIlNomeSquadra_apre_il_dialogo_di_rinomina() {
         // I due contenitori del nome hanno il ripple e una contentDescription che promette di

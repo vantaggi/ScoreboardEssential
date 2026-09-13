@@ -16,32 +16,70 @@
         <!-- Match Timer Section -->
         <com.google.android.material.card.MaterialCardView android:id="@+id/timer_card" android:layout_width="0dp" android:layout_height="wrap_content" style="?attr/materialCardViewElevatedStyle" app:cardBackgroundColor="@android:color/transparent" app:cardElevation="4dp" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard" app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_concrete_card" android:orientation="vertical" android:padding="16dp" android:gravity="center">
+            <!--
+                L'intestazione e' FISSA in cima (activity_main verticale): ogni dp che occupa e' tolto
+                per sempre al registro che scorre sotto. Per questo e' alta quanto il suo contenuto e
+                niente di piu': righe orizzontali invece di una colonna di elementi centrati.
+                Negli sport senza cronometro (padel, tennis) applyCapabilities spegne i blocchi del
+                tempo e resta la sola prima riga, circa 64dp invece dei quasi 90 di prima.
+            -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_concrete_card" android:orientation="vertical" android:paddingHorizontal="12dp" android:paddingVertical="8dp">
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="end" android:layout_marginBottom="8dp">
+                <!--
+                    Prima riga: annulla a sinistra, ingranaggio e orologio a destra. L'annulla stava in
+                    fondo alla card su una riga tutta sua; qui usa lo spazio che l'intestazione aveva
+                    comunque vuoto. constrainedWidth: con un testo lungo (o caratteri ingranditi) e'
+                    l'annulla ad accorciarsi, mai l'ingranaggio a sparire, perche' e' l'unico modo di
+                    tornare a cambiare sport.
+                -->
+                <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content">
 
-                    <ImageButton android:id="@+id/settings_button" android:layout_width="48dp" android:layout_height="48dp" android:padding="12dp" android:src="@drawable/ic_settings" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="@string/cd_settings" app:tint="@color/sidewalk_gray" android:layout_marginEnd="16dp"/>
+                    <com.google.android.material.button.MaterialButton android:id="@+id/undo_goal_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end" android:text="@string/label_undo_last_goal" android:textColor="@color/error_red" app:icon="@drawable/ic_undo" app:iconTint="@color/error_red" android:visibility="gone" tools:visibility="visible" app:layout_constrainedWidth="true" app:layout_constraintHorizontal_bias="0" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toStartOf="@id/settings_button" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
 
-                    <ImageView android:id="@+id/wear_status_icon" android:layout_width="32dp" android:layout_height="32dp" android:src="@drawable/ic_watch_disconnected" android:contentDescription="@string/cd_wear_status" tools:src="@drawable/ic_watch_connected"/>
+                    <ImageButton android:id="@+id/settings_button" android:layout_width="48dp" android:layout_height="48dp" android:padding="12dp" android:src="@drawable/ic_settings" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="@string/cd_settings" app:tint="@color/sidewalk_gray" android:layout_marginEnd="8dp" app:layout_constraintEnd_toStartOf="@id/wear_status_icon" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
+
+                    <ImageView android:id="@+id/wear_status_icon" android:layout_width="32dp" android:layout_height="32dp" android:src="@drawable/ic_watch_disconnected" android:contentDescription="@string/cd_wear_status" tools:src="@drawable/ic_watch_connected" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"/>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <TextView android:id="@+id/match_period_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/stencil_white" android:letterSpacing="0.06" android:gravity="center" android:visibility="gone" tools:text="SET 2 - SERVE ROSSI" tools:visibility="visible"/>
+
+                <!--
+                    Tempo e comandi sulla stessa riga: prima erano impilati (etichetta, tempo, pulsanti)
+                    e il solo cronometro chiedeva un quinto dello schermo. Il tempo scende da 57 a 48sp,
+                    ancora leggibile a distanza di braccio; i pulsanti restano
+                    MaterialButton con i loro 48dp minimi. Se lo sport non ha cronometro i figli sono
+                    tutti spenti e questa riga misura zero.
+                    Flow e non un LinearLayout con i pesi: con caratteri ingranditi, tempo a tre cifre o
+                    PAUSA al posto di START la riga non basta, e i pesi toglievano lo spazio al tempo,
+                    che andava a capo dentro una riga sola e si vedeva tagliato. Flow invece manda i
+                    pulsanti sotto, interi: si perde un po' di altezza solo quando serve davvero.
+                -->
+                <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content">
+
+                    <androidx.constraintlayout.helper.widget.Flow android:layout_width="0dp" android:layout_height="wrap_content" app:constraint_referenced_ids="timer_time_column,timer_controls_row" app:flow_wrapMode="chain" app:flow_horizontalStyle="spread_inside" app:flow_verticalAlign="center" app:flow_horizontalGap="8dp" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"/>
+
+                    <LinearLayout android:id="@+id/timer_time_column" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="vertical">
+
+                        <TextView android:id="@+id/match_time_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_match_time" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:lineHeight="18sp"/>
+
+                        <!-- Stesso stile di prima (condensato, grassetto) ma 48sp: DisplayLarge porta con se' una riga da 64sp, qui ridotta per non riaprire il vuoto. -->
+                        <TextView android:id="@+id/timer_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="1" android:text="00:00" android:textAppearance="?attr/textAppearanceDisplayLarge" android:textSize="48sp" android:lineHeight="52sp"/>
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/timer_controls_row" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+
+                        <com.google.android.material.button.MaterialButton android:id="@+id/timer_start_button" style="@style/Widget.App.Button.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/start" android:onClick="startStopTimer" android:layout_marginEnd="8dp"/>
+
+                        <com.google.android.material.button.MaterialButton android:id="@+id/reset_timer_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_reset_timer" android:onClick="resetTimer"/>
+                    </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Il portiere su una riga sola, etichetta e valore affiancati: compare solo quando conta. -->
+                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:orientation="horizontal" android:gravity="center_vertical">
+
+                    <TextView android:id="@+id/keeper_timer_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_keeper_timer" android:textAppearance="?attr/textAppearanceLabelMedium" android:textColor="@color/sidewalk_gray" android:letterSpacing="0.08"/>
+                    <TextView android:id="@+id/keeper_timer_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="05:00" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="?attr/colorPrimary" android:layout_marginStart="8dp" android:visibility="visible"/>
                 </LinearLayout>
-
-                <TextView android:id="@+id/match_period_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/stencil_white" android:letterSpacing="0.06" android:gravity="center" android:visibility="gone" tools:text="SET 2 - SERVE ROSSI" tools:visibility="visible"/>
-
-                <TextView android:id="@+id/match_time_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_match_time" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp"/>
-
-                <TextView android:id="@+id/timer_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="00:00" android:textAppearance="?attr/textAppearanceDisplayLarge" android:layout_marginTop="4dp"/>
-
-                <TextView android:id="@+id/keeper_timer_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_keeper_timer" android:textAppearance="?attr/textAppearanceLabelMedium" android:textColor="@color/sidewalk_gray" android:letterSpacing="0.08" android:layout_marginTop="8dp"/>
-                <TextView android:id="@+id/keeper_timer_textview" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="05:00" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="?attr/colorPrimary" android:layout_marginTop="8dp" android:visibility="visible"/>
-
-                <LinearLayout android:id="@+id/timer_controls_row" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="12dp">
-
-                    <com.google.android.material.button.MaterialButton android:id="@+id/timer_start_button" style="@style/Widget.App.Button.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/start" android:onClick="startStopTimer" android:layout_marginEnd="8dp"/>
-
-                    <com.google.android.material.button.MaterialButton android:id="@+id/reset_timer_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_reset_timer" android:onClick="resetTimer"/>
-                </LinearLayout>
-
-                <com.google.android.material.button.MaterialButton android:id="@+id/undo_goal_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/label_undo_last_goal" android:textColor="@color/error_red" app:icon="@drawable/ic_undo" app:iconTint="@color/error_red" android:visibility="gone" tools:visibility="visible"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
