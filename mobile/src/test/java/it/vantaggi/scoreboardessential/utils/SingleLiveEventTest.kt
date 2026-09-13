@@ -75,11 +75,13 @@ class SingleLiveEventTest {
     }
 
     @Test
-    fun `call notifies observer with null`() {
+    fun `a nullable event can still deliver null`() {
+        // call() e' stato tolto: pubblicava null anche sugli eventi Unit e li faceva crashare.
+        // Per un evento dichiarato nullabile il null resta un valore lecito, scritto in chiaro.
         val nullableEvent = SingleLiveEvent<Int?>()
         val nullableObserver = mock(Observer::class.java) as Observer<Int?>
         nullableEvent.observe(owner, nullableObserver)
-        nullableEvent.call()
+        nullableEvent.value = null
         verify(nullableObserver).onChanged(null)
     }
 

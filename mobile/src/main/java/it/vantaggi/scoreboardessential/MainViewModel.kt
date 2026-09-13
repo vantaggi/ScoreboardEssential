@@ -339,7 +339,7 @@ class MainViewModel(
                         // la partita sia iniziata, perche' due guardie che dicono la stessa cosa
                         // finiscono prima o poi per non dirla piu' uguale.
                         val sportId = intent.getStringExtra(WearConstants.KEY_SPORT_ID) ?: return
-                        if (!selectSport(sportId)) sportChangeRejected.call()
+                        if (!selectSport(sportId)) sportChangeRejected.value = Unit
                     }
 
                     SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED -> {
@@ -1081,7 +1081,7 @@ class MainViewModel(
     ) {
         if (batch.isBlank() || seq <= 0L) return
         if (engine.log.isNotEmpty()) {
-            watchBatchRejected.call()
+            watchBatchRejected.value = Unit
             return
         }
 

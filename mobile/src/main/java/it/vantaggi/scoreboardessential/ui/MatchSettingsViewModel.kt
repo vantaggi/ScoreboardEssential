@@ -108,7 +108,7 @@ class MatchSettingsViewModel(
         viewModelScope.launch {
             val partitaIniziata = matchDao.getActiveMatchOnce()?.eventLog?.isNotEmpty() == true
             if (partitaIniziata) {
-                sportChangeBlocked.call()
+                sportChangeBlocked.value = Unit
                 // Rimette nel selettore la voce vera. LiveData ridistribuisce anche un valore
                 // uguale, quindi l'osservatore riscrive l'etichetta e il menu smette di mentire.
                 _activeSport.value = _activeSport.value

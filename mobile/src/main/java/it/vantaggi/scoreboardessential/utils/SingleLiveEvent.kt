@@ -27,7 +27,9 @@ class SingleLiveEvent<T> : MutableLiveData<T>() {
         super.setValue(t)
     }
 
-    fun call() {
-        value = null
-    }
+    // Qui c'era `fun call() { value = null }`, pensato per gli eventi senza dato. Ma quegli eventi
+    // sono SingleLiveEvent<Unit>, e un osservatore Kotlin ha il parametro Unit non nullo: il null
+    // lo faceva crashare (visto nelle impostazioni, cambiando sport a partita cominciata). Tolto
+    // invece che corretto, perche' non puo' sapere quale valore pubblicare: chi lancia un evento
+    // Unit scrive `value = Unit`, e nessuno puo' piu' pubblicare null per sbaglio.
 }
