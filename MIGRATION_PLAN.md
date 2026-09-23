@@ -1412,3 +1412,25 @@ sopra lo stesso registro; il totale "451 test JVM" somma debug e release.
 
 **Ordine consigliato:** prima le prove su dispositivo elencate in fondo a `VALIDAZIONE.md`
 (decidono la gravita' reale di L4-L6), poi L1, L3 e L9, che non ne hanno bisogno.
+
+### Design per telefono e orologio - 24 settembre 2026
+
+**Il progetto intero sta in `DESIGN.md`, le bozze in `design/`.** Un workflow di agenti in sola
+lettura: per ciascuna piattaforma tre proposte indipendenti, un giudice che le ha confrontate
+ricalcolando i contrasti WCAG e aprendo i file citati, una sintesi dalla vincente.
+
+- **Telefono, "Bordo campo" (8,5/10):** il numero in alto, il pollice in basso, niente che si
+  sposta sotto il dito. Slot fissi al posto dell'intestazione che cambia altezza (e' la causa
+  che `FabOverlap` tampona), numero bianco su nero con il colore di squadra sulle zone del `+`,
+  rose, registro e formazioni in un foglio PARTITA nella stessa Activity. Lo street resta nel
+  contorno, come da Fase D.
+- **Orologio, "Mezzo secondo" (8/10):** due cifre bianche a dimensione fissa, un secondo numero
+  sempre nello stesso posto, una riga di stato che parla solo quando qualcosa non va (scollegato,
+  punti in coda, partita finita). Il colore di squadra diventa una striscia e non e' mai testo.
+- **Una sola regola per il colore squadra, `TeamInk` in `:core`,** cosi' da dare lo stesso
+  risultato sui due lati: oggi un colore scuro scelto dall'utente fa sparire il punteggio.
+
+Il piano di ciascuna pista mette per primi i passi piccoli e sicuri (testi che oggi fanno danni,
+contrasti, schermo acceso). La schermata di gioco nuova aspetta L1-L3 della validazione. Le
+decisioni di gusto, identita' e priorita' sono elencate in fondo a ogni pista di `DESIGN.md`:
+nessun passo di design e' stato avviato.
