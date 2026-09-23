@@ -1391,3 +1391,24 @@ all'orologio in tempo reale, e che un tocco sull'orologio arrivi al telefono. Du
 l'installazione degli APK nuovi i due emulatori sono stati chiusi. E' la prima cosa da fare alla
 riaccensione: segnare un punto sul telefono senza toccare l'orologio e cercare nel suo log
 "Broadcasted v2 state" invece di "Permission Denial".
+
+### Validazione completa con un workflow di agenti - 23 settembre 2026
+
+**Il rapporto intero sta in `VALIDAZIONE.md`**: 70 difetti (16 alti, 25 medi, 29 bassi) in 12
+lotti, ognuno con file, scenario e rimedio. Dieci aree cercate da un agente e smontate da un
+revisore indipendente: 98 rilievi confermati, 8 respinti. Tutto in sola lettura, niente eseguito.
+
+Il giudizio in breve: il dominio in `:core` regge; il problema sta nei bordi. Usata dal solo
+telefono e senza rose l'app e' affidabile. Tre difetti alti colpiscono anche chi non usa
+l'orologio: la fine partita riporta indietro i gol dei giocatori (L1), il padel non finito non si
+puo' salvare (L1), e nel calcio ANNULLA dopo una correzione toglie l'evento sbagliato (L3). Tutto
+il percorso con l'orologio (L4-L7) ha modi dimostrabili di perdere o raddoppiare punti, e non ha
+mai girato su un dispositivo: fino a `cc142d7` i servizi di ascolto non ricevevano niente.
+
+**Correzione a note precedenti di questo piano:** B5 (gol riportati indietro) e' chiuso a meta';
+la Fase T lascia `:wear` a targetSdk 34, che Play non accetta piu' dal 31 agosto 2026; la
+decisione "niente fusioni" sull'arretrato dell'orologio contraddice il calcolo offline costruito
+sopra lo stesso registro; il totale "451 test JVM" somma debug e release.
+
+**Ordine consigliato:** prima le prove su dispositivo elencate in fondo a `VALIDAZIONE.md`
+(decidono la gravita' reale di L4-L6), poi L1, L3 e L9, che non ne hanno bisogno.
