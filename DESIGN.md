@@ -1092,3 +1092,32 @@ Affermazioni sul codice che ho verificato vere:
 - NESSUNO è in fondo alla lista del marcatore.
 
 Nessun file inesistente è citato come esistente. I file indicati come nuovi sono dichiarati tali.
+
+## Decisioni prese - 24 settembre 2026
+
+Il proprietario ha lasciato la scelta ("hai liberta' di scelta, procedi"). Queste sono le
+risposte alle domande delle due piste; ognuna si puo' rivedere, e nessuna e' irreversibile.
+
+**Telefono**
+1. Il colore della squadra esce da dietro il numero: **si'**. Al sole il caso peggiore passa da
+   1,90:1 a 6,0:1, e l'identita' street resta nelle schermate di contorno, come da Fase D.
+2. Rose, registro, formazioni e fine partita nel foglio PARTITA: **si'**.
+3. ANNULLA con un tocco, senza dialogo, nel padel e nel tennis: **si', ma solo dopo L3** e la
+   guardia di L7. Il calcio tiene il dialogo.
+4. Schermata di gioco bloccata in verticale: **si'**. Nessun caso d'uso a bordo campo chiede
+   l'orizzontale, e toglie una variante da mantenere. Si puo' riaprire.
+5. Ordine: **passi 1-4 subito**, la schermata di gioco nuova (passi 5-9) dopo L1-L3.
+6. Colori predefiniti delle squadre: **giallo #FFD600 e verde #76FF03** di ColorRepository.
+
+**Orologio**
+1. Cifre bianche e colore della squadra come striscia: **si'**.
+2. Ambient **si'**, schermo sempre acceso **no**. Consumo da misurare su un orologio vero.
+3. Niente chiusura con lo swipe durante la partita, si esce col tasto: **si'**.
+4. Marcatore non automatico, finestra CHI? di 8 secondi: **si'**.
+5. FINE PARTITA dal polso bloccata nel calcio finche' L4 non e' corretto: **si'**. Oggi quel
+   percorso perde la partita; un comando assente e' meglio di uno che distrugge.
+
+**Collocazione della regola del colore:** una sola implementazione, `TeamInk` in `:core`, usata
+da entrambi i moduli (`:wear` dipende gia' da `:core` per il calcolo offline). La sintesi
+dell'orologio proponeva `ReadableColor` in `:shared`: diventa una seconda funzione dello stesso
+oggetto (`graphicOnBlack`), non un secondo file.
