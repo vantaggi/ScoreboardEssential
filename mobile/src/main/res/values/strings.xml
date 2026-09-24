@@ -92,8 +92,6 @@
     <string name="label_keeper_timer">GOALKEEPER</string>
 
 
-    <string name="padel_link_title">Padel Elite link</string>
-    <string name="padel_link_hint">Player id in your Padel Elite group. Leave empty if not linked.</string>
     <string name="share_match_report">Share</string>
     <string name="score_period_serving">%1$s - serve %2$s</string>
     <plurals name="watch_batch_applied">
@@ -127,7 +125,6 @@
     <string name="export_match">Export match</string>
     <string name="export_ready">Match exported</string>
     <string name="export_needs_four">Padel export needs exactly 4 distinct players</string>
-    <string name="export_needs_link">Link every player to Padel Elite first: %1$s</string>
     <string name="export_needs_match">Nothing to export yet</string>
 
     <string name="share_choose_title">Share match</string>

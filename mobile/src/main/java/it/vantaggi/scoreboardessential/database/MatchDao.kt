@@ -6,10 +6,32 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import it.vantaggi.scoreboardessential.core.MatchPlayer
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MatchDao {
+    @Query("SELECT * FROM matches WHERE matchId = :matchId")
+    suspend fun getMatchById(matchId: Int): Match?
+
+    /**
+     * I giocatori di una partita chiusa CON IL LORO LATO, nella forma che l'export si aspetta.
+     *
+     * [MatchWithPlayers] non basta: la relazione attraverso la tabella ponte restituisce le
+     * righe dei giocatori e perde `teamNumber`, cioe' proprio il lato. L'ordine e' quello in cui
+     * [closeMatch] le ha scritte, prima il roster 1 e poi il 2, come nell'export dal vivo.
+     */
+    @Query(
+        """
+        SELECT p.playerId AS localId, p.playerName AS name, cr.teamNumber AS side
+        FROM MatchPlayerCrossRef cr
+        INNER JOIN players p ON p.playerId = cr.playerId
+        WHERE cr.matchId = :matchId
+        ORDER BY cr.teamNumber, cr.rowid
+    """,
+    )
+    suspend fun getMatchLineup(matchId: Int): List<MatchPlayer>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(match: Match): Long
 

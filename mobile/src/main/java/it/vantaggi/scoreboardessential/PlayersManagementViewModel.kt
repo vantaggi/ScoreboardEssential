@@ -84,7 +84,6 @@ class PlayersManagementViewModel(
     fun createPlayer(
         name: String,
         roleIds: List<Int>,
-        padelPlayerId: Int? = null,
     ) {
         viewModelScope.launch {
             val player =
@@ -92,7 +91,6 @@ class PlayersManagementViewModel(
                     playerName = name,
                     appearances = 0,
                     goals = 0,
-                    padelPlayerId = padelPlayerId,
                 )
             playerRepository.insertPlayerWithRoles(player, roleIds)
         }

@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
         Match::class, Player::class, MatchPlayerCrossRef::class,
         Team::class, Role::class, PlayerRoleCrossRef::class,
     ],
-    version = 13,
+    version = 14,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -27,7 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         /** Versione dello schema. Tenuta qui cosi' che i test non la ripetano a mano. */
-        const val SCHEMA_VERSION = 13
+        const val SCHEMA_VERSION = 14
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -178,6 +178,24 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
 
+        internal val MIGRATION_13_14 =
+            object : Migration(13, 14) {
+                override fun migrate(database: SupportSQLiteDatabase) {
+                    // Additiva come la 11 -> 12: tre ALTER TABLE, nessuna riga riscritta. Servono
+                    // a esportare una partita gia' chiusa: ordine di servizio, ora del primo punto
+                    // e id del file. Il lato dei giocatori c'e' gia', in
+                    // MatchPlayerCrossRef.teamNumber, dalla versione 11.
+                    //
+                    // serveOrder e' NOT NULL con DEFAULT '', dichiarato uguale in @ColumnInfo:
+                    // le partite di prima diventano "ordine non impostato". startedAt e
+                    // matchUuid sono nullable senza default, e null vuol dire "non si sa": i
+                    // campi mancano dal file invece di inventarli.
+                    database.execSQL("ALTER TABLE `matches` ADD COLUMN `serveOrder` TEXT NOT NULL DEFAULT ''")
+                    database.execSQL("ALTER TABLE `matches` ADD COLUMN `startedAt` INTEGER")
+                    database.execSQL("ALTER TABLE `matches` ADD COLUMN `matchUuid` TEXT")
+                }
+            }
+
         fun getDatabase(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 val instance =
@@ -208,6 +226,7 @@ abstract class AppDatabase : RoomDatabase() {
                             MIGRATION_10_11,
                             MIGRATION_11_12,
                             MIGRATION_12_13,
+                            MIGRATION_13_14,
                         )
                         // Non esiste alcun percorso di migrazione dalle versioni 1-5: un
                         // dispositivo fermo li' crasherebbe a ogni avvio, per sempre. La

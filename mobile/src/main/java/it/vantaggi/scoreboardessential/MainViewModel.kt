@@ -22,6 +22,7 @@ import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.ClockMode
+import it.vantaggi.scoreboardessential.core.ExportOrigin
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchClock
 import it.vantaggi.scoreboardessential.core.MatchEngine
@@ -56,6 +57,7 @@ import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSyn
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
+import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import it.vantaggi.scoreboardessential.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +65,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.time.ZoneId
+import java.util.UUID
 
 /**
  * The primary ViewModel for the application's main scoring screen.
@@ -487,6 +491,8 @@ class MainViewModel(
         _activeSport.value = sportRules.id
         _sportCapabilities.value = sportRules.capabilities
         currentMatchId = null
+        matchUuid = null
+        matchStartedAt = null
         _team1Score.value = 0
         _team2Score.value = 0
         _scoreDisplay.value = sportRules.display(engine.state)
@@ -534,6 +540,12 @@ class MainViewModel(
 
     // Current Match ID
     private var currentMatchId: Long? = null
+
+    // L'id del file esportato e l'inizio della partita in corso: nascono con la riga viva, al
+    // primo punto, e tornano col ripristino. Sopra init perche' il ripristino, lanciato da init,
+    // li scrive.
+    private var matchUuid: String? = null
+    private var matchStartedAt: Long? = null
 
     // DEVE stare sopra init. Il collettore delle impostazioni, lanciato in init, riceve la
     // prima emissione subito e chiama applySport quando lo sport salvato non e' il calcio:
@@ -700,6 +712,8 @@ class MainViewModel(
         engine.reset()
         matchClock.reset()
         currentMatchId = null
+        matchUuid = null
+        matchStartedAt = null
         updateScore(0, 0)
         synchronized(matchEventLog) {
             matchEventLog.clear()
@@ -909,6 +923,13 @@ class MainViewModel(
             val id = currentMatchId
             if (id == null) {
                 if (uno == 0 && due == 0 && engine.log.isEmpty()) return@launch
+                // L'id del file nasce qui, col primo punto, e non all'export: due export della
+                // stessa partita devono portare lo stesso id. L'inizio e' quello dell'orologio
+                // della partita, cioe' del primo punto, anche per una partita consegnata
+                // dall'orologio ore dopo. L'ordine di servizio qui e' gia' definitivo:
+                // refreshServeOrder non lo cambia piu' dopo il primo punto.
+                val uuid = matchUuid ?: UUID.randomUUID().toString().also { matchUuid = it }
+                val inizio = matchStartedAt ?: (matchClock.startEpoch ?: System.currentTimeMillis()).also { matchStartedAt = it }
                 currentMatchId =
                     matchDao.insert(
                         Match(
@@ -920,6 +941,9 @@ class MainViewModel(
                             isActive = true,
                             sportId = sportRules.id,
                             eventLog = log,
+                            serveOrder = Match.encodeServeOrder(sportRules.config.serveOrder),
+                            startedAt = inizio,
+                            matchUuid = uuid,
                         ),
                     )
             } else {
@@ -940,6 +964,10 @@ class MainViewModel(
         viewModelScope.launch {
             val attiva = matchDao.getActiveMatchOnce() ?: return@launch
             currentMatchId = attiva.matchId.toLong()
+            // Dalla riga e non dall'orologio: dopo il ripristino l'inizio dell'orologio e'
+            // spostato apposta, per non contare il tempo in cui l'app e' rimasta chiusa.
+            matchUuid = attiva.matchUuid
+            matchStartedAt = attiva.startedAt
             val eventi = MatchLogCodec.decode(attiva.eventLog)
             if (eventi != null) {
                 engine.restoreLog(eventi)
@@ -1430,6 +1458,11 @@ class MainViewModel(
                     timestamp = adesso,
                     sportId = sportRules.id,
                     eventLog = log,
+                    // Contano solo se la riga viva non c'era e si inserisce: chiudendo una riga
+                    // viva, finalizeMatch non tocca i valori scritti al primo punto.
+                    serveOrder = Match.encodeServeOrder(sportRules.config.serveOrder),
+                    startedAt = matchStartedAt,
+                    matchUuid = matchUuid,
                 ),
                 // Solo gli id: le presenze si incrementano nel database. Le copie dei giocatori
                 // tenute nelle rose sono ferme a quando sono state aggiunte, e riscriverle con
@@ -1570,11 +1603,10 @@ class MainViewModel(
     }
 
     /**
-     * Prepara l'export della partita corrente verso Padel Elite.
+     * Prepara l'export della partita corrente.
      *
      * La validazione la fa :core e ritorna un risultato TIPIZZATO invece di lanciare: cosi'
-     * l'interfaccia puo' dire all'utente che cosa manca -- quali giocatori non sono collegati,
-     * per nome -- invece di limitarsi a rifiutare.
+     * l'interfaccia puo' dire all'utente che cosa manca invece di limitarsi a rifiutare.
      */
     fun buildExport(): ExportResult {
         val uno = _team1Players.value.orEmpty()
@@ -1582,9 +1614,20 @@ class MainViewModel(
         val roster =
             uno.map { MatchPlayer(it.player.playerId, it.player.playerName, 1) } +
                 due.map { MatchPlayer(it.player.playerId, it.player.playerName, 2) }
-        val padelIds =
-            (uno + due).mapNotNull { p -> p.player.padelPlayerId?.let { p.player.playerId to it } }.toMap()
-        return MatchExporter.build(engine, roster, padelIds)
+        // La versione la conosce solo :mobile; il fuso e' quello del telefono che ha giocato.
+        val origine = ExportOrigin(matchUuid, matchStartedAt, ZoneId.systemDefault(), BuildConfig.VERSION_NAME)
+        return MatchExporter.build(engine, roster, origine)
+    }
+
+    /**
+     * L'export di una partita gia' chiusa, dallo storico: registro, ordine di servizio, id e
+     * inizio salvati sulla riga, giocatori e lati dalla tabella ponte. Null se la riga non
+     * esiste piu' (cancellata da un'altra schermata nel frattempo).
+     */
+    suspend fun buildSavedExport(matchId: Int): ExportResult? {
+        val partita = matchDao.getMatchById(matchId) ?: return null
+        val schieramento = matchDao.getMatchLineup(matchId)
+        return MatchExportUtils.savedMatchExport(partita, schieramento, BuildConfig.VERSION_NAME, ZoneId.systemDefault())
     }
 
     /**

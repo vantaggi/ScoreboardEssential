@@ -1697,3 +1697,38 @@ looper di Robolectric) in un ciclo con un limite di tempo, invece di un solo `ad
 **Resta aperto:** se il telefono cade tra il punto consegnato e la scelta, il nome non si accoda;
 ora pero' il polso lo dice. La scelta si apre qualche decimo di secondo dopo il tocco, il tempo
 dell'invio: da guardare su dispositivo.
+### Formato v2 ed export dallo storico - 24 settembre 2026
+
+Richieste 0-3 della sezione 4 di `docs/dashboard/SCOREBOARD_FORMAT.md` (branch `wf4/formato`).
+Il contratto aggiornato e' in `EXPORT_PADEL_ELITE.md`.
+
+- **Via il numero Padel Elite.** Tolti il campo dalla scheda del giocatore, `ExportProblem.UnlinkedPlayers`,
+  `ExportBlocked.NEEDS_LINK` e le tre stringhe; `ExportedPlayer` non serve piu', nel file vanno i
+  `MatchPlayer`. La colonna `players.padelPlayerId` resta nel database e nell'entita', dismessa:
+  toglierla chiederebbe di ricostruire la tabella.
+- **Migrazione 13 -> 14, additiva** su `matches`: `serveOrder` (TEXT NOT NULL DEFAULT '', con lo
+  stesso default in `@ColumnInfo`), `startedAt` e `matchUuid` (nullable, senza default). Il lato dei
+  giocatori c'era gia' (`MatchPlayerCrossRef.teamNumber`, v11). `14.json` committato; in
+  `DatabaseMigrationTest` la 13 -> 14 e la catena 11 -> 14, solo compilate.
+- **Id, inizio e ordine si scrivono con la riga viva, al primo punto.** L'inizio viene da
+  `MatchClock.startEpoch` (ora leggibile): per una partita consegnata dall'orologio e' il primo
+  tocco. Il ripristino li rilegge dalla riga.
+- **Export dallo storico:** "Esporta partita" sulla card delle partite di padel chiuse con un
+  registro; `MatchExportUtils.savedMatchExport` rifa' il motore con `SportRegistry.forMatch(sportId,
+  serveOrder)` e `MatchDao.getMatchLineup` da' i giocatori col lato. Stessa condivisione di prima,
+  ora in `MatchExportUtils.shareExport` per entrambi i posti.
+- **Formato 2:** `matchId`, `startedAt` (offset sempre in cifre, `+00:00` e non `Z`) e `appVersion`
+  da `BuildConfig.VERSION_NAME`; id e inizio ignoti si omettono. Fixture condiviso
+  `core/src/test/resources/export-v2-sample.json`: la partita di `v1-tre-set.json` rigiocata dal
+  nostro motore, con servitori e set identici e, tolti i campi nuovi, byte per byte il v1.
+
+**Trappola nuova:** con `core.autocrlf` il fixture torna dal checkout con CRLF; il confronto del
+test usa `trimEnd()`.
+
+**Resta aperto:** la configurazione dello sport non e' salvata con la partita, si ricava dal
+registro di `:core`; se un giorno cambiasse (per esempio il padel a tre set), le partite vecchie
+si rigiocherebbero con le regole nuove. Sospetto, non verificato: in `persistLiveMatch` due
+chiamate ravvicinate (come le due di `applyWatchBatch`) vedono entrambe `currentMatchId` null
+mentre la prima INSERT e' sospesa, e inseriscono due righe vive. Non toccato; id e inizio pero'
+restano gli stessi nelle due righe. **Da provare su dispositivo:** padel con quattro giocatori, qualche punto, fine partita,
+poi "Esporta partita" dallo storico, confrontato con l'export dal vivo.

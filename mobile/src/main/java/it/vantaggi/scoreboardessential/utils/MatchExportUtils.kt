@@ -5,8 +5,18 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import it.vantaggi.scoreboardessential.R
+import it.vantaggi.scoreboardessential.core.ExportOrigin
+import it.vantaggi.scoreboardessential.core.ExportProblem
+import it.vantaggi.scoreboardessential.core.ExportResult
+import it.vantaggi.scoreboardessential.core.MatchEngine
+import it.vantaggi.scoreboardessential.core.MatchExporter
+import it.vantaggi.scoreboardessential.core.MatchLogCodec
+import it.vantaggi.scoreboardessential.core.MatchPlayer
+import it.vantaggi.scoreboardessential.core.SportRegistry
+import it.vantaggi.scoreboardessential.database.Match
 import java.io.File
 import java.text.SimpleDateFormat
+import java.time.ZoneId
 import java.util.Date
 import java.util.Locale
 
@@ -17,7 +27,6 @@ import java.util.Locale
 enum class ExportBlocked {
     NO_MATCH,
     NEEDS_FOUR,
-    NEEDS_LINK,
 }
 
 object MatchExportUtils {
@@ -26,17 +35,71 @@ object MatchExportUtils {
     private const val MAX_SLUG_LENGTH = 40
 
     /**
+     * L'export di una partita gia' chiusa, ricostruito dallo storico.
+     *
+     * Il motore si rifa' dal registro salvato con lo sport e l'ordine di servizio della riga:
+     * sono le stesse regole con cui la partita si e' giocata, perche' la configurazione di uno
+     * sport sta nel registro di `:core` e dalla partita dipende solo l'ordine di servizio. Id e
+     * inizio sono quelli salvati al primo punto, quindi il file coincide con quello che si
+     * sarebbe esportato dal vivo.
+     *
+     * Un registro illeggibile vale come "niente da esportare": meglio nessun file che un file
+     * con una partita ricostruita a meta'.
+     */
+    fun savedMatchExport(
+        match: Match,
+        lineup: List<MatchPlayer>,
+        appVersion: String,
+        zone: ZoneId,
+    ): ExportResult {
+        val registro =
+            MatchLogCodec.decode(match.eventLog)
+                ?: return ExportResult.Incomplete(listOf(ExportProblem.NoPoints))
+        val engine = MatchEngine(SportRegistry.forMatch(match.sportId, Match.decodeServeOrder(match.serveOrder)))
+        engine.restoreLog(registro)
+        return MatchExporter.build(engine, lineup, ExportOrigin(match.matchUuid, match.startedAt, zone, appVersion))
+    }
+
+    /**
+     * Condivide il file se l'export e' pronto, altrimenti dice perche' no. Lo usano la partita in
+     * corso e lo storico: stesso file, stessi messaggi.
+     *
+     * Del motivo se ne dice uno solo, il primo da risolvere: e' piu' utile che elencarli tutti a
+     * chi e' in piedi a bordo campo.
+     */
+    fun shareExport(
+        context: Context,
+        result: ExportResult,
+        matchName: String,
+        atMillis: Long = System.currentTimeMillis(),
+    ) {
+        when (result) {
+            is ExportResult.Ready -> {
+                shareMatchJson(context, MatchExporter.toJson(result.export), matchName, atMillis)
+            }
+
+            is ExportResult.Incomplete -> {
+                val motivo =
+                    if (result.problems.any { it is ExportProblem.NoPoints }) ExportBlocked.NO_MATCH else ExportBlocked.NEEDS_FOUR
+                showBlocked(context, motivo)
+            }
+        }
+    }
+
+    /**
      * Scrive il JSON gia' pronto in un file e apre il selettore di condivisione.
      *
      * [context] deve essere quello di un'Activity: il selettore parte dal task in corso.
-     * [matchName] finisce nel nome del file, quindi vi si includa lo sport.
+     * [matchName] finisce nel nome del file, quindi vi si includa lo sport. [atMillis] e' la
+     * data nel nome: dallo storico e' quella della partita, non quella dell'export.
      */
     fun shareMatchJson(
         context: Context,
         json: String,
         matchName: String,
+        atMillis: Long = System.currentTimeMillis(),
     ) {
-        val stamp = SimpleDateFormat(FILE_NAME_STAMP, Locale.US).format(Date())
+        val stamp = SimpleDateFormat(FILE_NAME_STAMP, Locale.US).format(Date(atMillis))
         val file = File(context.cacheDir, "${stamp}_${slug(matchName)}.json")
         file.writeText(json)
 
@@ -71,17 +134,14 @@ object MatchExportUtils {
         context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_choose_title)))
     }
 
-    /** [unlinkedNames] serve solo a [ExportBlocked.NEEDS_LINK]: dice chi non e' ancora collegato. */
     fun showBlocked(
         context: Context,
         reason: ExportBlocked,
-        unlinkedNames: String = "",
     ) {
         val message =
             when (reason) {
                 ExportBlocked.NO_MATCH -> context.getString(R.string.export_needs_match)
                 ExportBlocked.NEEDS_FOUR -> context.getString(R.string.export_needs_four)
-                ExportBlocked.NEEDS_LINK -> context.getString(R.string.export_needs_link, unlinkedNames)
             }
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }

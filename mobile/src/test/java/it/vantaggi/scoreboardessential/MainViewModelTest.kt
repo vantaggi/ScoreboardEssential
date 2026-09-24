@@ -11,7 +11,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchEngine
+import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportRegistry
@@ -32,6 +34,7 @@ import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
@@ -603,6 +606,98 @@ class MainViewModelTest {
             }
         }
 
+    /** Database vero in memoria con esecutori diretti, come nel test delle presenze qui sopra. */
+    private fun databaseInMemoria(): AppDatabase =
+        Room
+            .inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java)
+            .allowMainThreadQueries()
+            .setQueryExecutor { it.run() }
+            .setTransactionExecutor { it.run() }
+            .build()
+
+    /**
+     * Richieste 1 e 2 di docs/dashboard/SCOREBOARD_FORMAT.md: una partita di padel chiusa si
+     * esporta dallo storico, ed e' lo STESSO file che si sarebbe esportato dal vivo, id compreso.
+     *
+     * Prima della 14 l'export esisteva solo dal vivo: endMatch azzera il motore, e la riga chiusa
+     * non aveva ne' l'ordine di servizio ne' l'inizio. Il confronto e' sul JSON intero: id e
+     * inizio salvati al primo punto, ordine di servizio, giocatori con il loro lato, punti.
+     */
+    @Test
+    fun `una partita di padel chiusa si esporta dallo storico con lo stesso file e lo stesso id`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                val matchDao = db.matchDao()
+                imposta("playerDao", playerDao)
+                imposta("matchDao", matchDao)
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val nomi = listOf("Marco", "Anna", "Luca", "Sara")
+                val ids = nomi.map { playerDao.insert(Player(playerName = it, appearances = 0, goals = 0)).toInt() }
+                // Marco e Luca nel roster 1, Anna e Sara nel 2: l'ordine di servizio che ne
+                // deriva e' Marco, Anna, Luca, Sara.
+                nomi.forEachIndexed { i, nome ->
+                    viewModel.addPlayerToTeam(PlayerWithRoles(Player(ids[i], nome, 0, 0), emptyList()), if (i % 2 == 0) 1 else 2)
+                }
+
+                repeat(5) { viewModel.addScore(1) }
+                repeat(2) { viewModel.addScore(2) }
+                advanceUntilIdle()
+
+                val viva = matchDao.getActiveMatchOnce()!!
+                assertEquals("l'ordine si salva al primo punto", ids.joinToString(","), viva.serveOrder)
+                assertTrue("l'inizio si salva al primo punto", viva.startedAt != null)
+                assertTrue("l'id si salva al primo punto", viva.matchUuid != null)
+
+                val dalVivo = viewModel.buildExport()
+                assertTrue("atteso Ready, ottenuto $dalVivo", dalVivo is ExportResult.Ready)
+                val fileDalVivo = MatchExporter.toJson((dalVivo as ExportResult.Ready).export)
+                assertEquals(viva.matchUuid, dalVivo.export.matchId)
+
+                assertEquals(true, viewModel.endMatch())
+                advanceUntilIdle()
+                assertTrue("endMatch azzera il motore: dal vivo non resta niente", viewModel.buildExport() is ExportResult.Incomplete)
+
+                val dalloStorico = viewModel.buildSavedExport(viva.matchId)
+                assertTrue("atteso Ready, ottenuto $dalloStorico", dalloStorico is ExportResult.Ready)
+                assertEquals(fileDalVivo, MatchExporter.toJson((dalloStorico as ExportResult.Ready).export))
+                // Nell'ordine dei roster, come dal vivo: prima il lato 1, poi il 2.
+                assertEquals(listOf("Marco", "Luca", "Anna", "Sara"), dalloStorico.export.players.map { it.name })
+                assertEquals(listOf(1, 1, 2, 2), dalloStorico.export.players.map { it.side })
+            } finally {
+                db.close()
+            }
+        }
+
+    /**
+     * Una partita segnata dal solo orologio e consegnata piu' tardi e' una partita di QUANDO la
+     * si e' giocata: l'inizio salvato e' il primo tocco, non l'ora della consegna.
+     */
+    @Test
+    fun `una partita consegnata dall'orologio salva come inizio il primo tocco`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                imposta("matchDao", db.matchDao())
+                val ore18 = 1_757_000_000_000L
+                val punto = WearConstants.INTENT_POINT
+                val sep = WearConstants.BATCH_FIELD_SEPARATOR
+                val batch =
+                    listOf("$punto${sep}1$sep$ore18", "$punto${sep}2$sep${ore18 + 30_000L}")
+                        .joinToString(WearConstants.BATCH_SEPARATOR)
+                val applica = MainViewModel::class.java.getDeclaredMethod("applyWatchBatch", String::class.java, Long::class.java)
+                applica.isAccessible = true
+                applica.invoke(viewModel, batch, 1L)
+                advanceUntilIdle()
+
+                assertEquals(ore18, db.matchDao().getActiveMatchOnce()?.startedAt)
+            } finally {
+                db.close()
+            }
+        }
+
     /**
      * Con uno sport diverso dal calcio gia' salvato, il ViewModel si costruisce senza crash.
      *
@@ -646,6 +741,30 @@ class MainViewModelTest {
         }
 
     /**
+     * Una partita ripresa dopo la chiusura dell'app resta la STESSA partita anche nel file: id e
+     * inizio si rileggono dalla riga, altrimenti l'export dopo la ripresa ne mancherebbe e chi
+     * importa non riconoscerebbe il doppione con un export fatto prima.
+     */
+    @Test
+    fun `alla ripresa l'export porta l'id e l'inizio salvati sulla riga`() =
+        runTest {
+            val ore18 = 1_757_000_000_000L
+            partitaSalvata("1|1@0,2@30000", matchUuid = "3f2a9c1e-5b7d-4e8a-9c01-2d4f6a8b0c1e", startedAt = ore18)
+            advanceUntilIdle()
+            listOf(1, 2, 3, 4).forEach { id ->
+                viewModel.addPlayerToTeam(PlayerWithRoles(Player(id, "G$id", 0, 0), emptyList()), if (id <= 2) 1 else 2)
+            }
+
+            val esito = viewModel.buildExport()
+            assertTrue("atteso Ready, ottenuto $esito", esito is ExportResult.Ready)
+            val export = (esito as ExportResult.Ready).export
+            assertEquals("3f2a9c1e-5b7d-4e8a-9c01-2d4f6a8b0c1e", export.matchId)
+            // Il fuso e' quello della macchina che fa girare il test: si confronta l'istante.
+            val inizio = java.time.OffsetDateTime.parse(export.startedAt)
+            assertEquals(ore18, inizio.toInstant().toEpochMilli())
+        }
+
+    /**
      * Prepara una partita aperta con [eventLog] come se l'app fosse stata chiusa e riaperta.
      *
      * Va chiamata dentro runTest, e seguita da advanceUntilIdle: il ripristino gira in coroutine.
@@ -653,6 +772,8 @@ class MainViewModelTest {
     private fun partitaSalvata(
         eventLog: String,
         rosa: List<PlayerWithRoles> = emptyList(),
+        matchUuid: String? = null,
+        startedAt: Long? = null,
     ): PlayerDao {
         val playerDao = campo("playerDao") as PlayerDao
         val matchDao = campo("matchDao") as MatchDao
@@ -667,6 +788,8 @@ class MainViewModelTest {
                 timestamp = 0L,
                 isActive = true,
                 eventLog = eventLog,
+                startedAt = startedAt,
+                matchUuid = matchUuid,
             )
         kotlinx.coroutines.runBlocking {
             whenever(matchDao.getActiveMatchOnce()).thenReturn(salvata)

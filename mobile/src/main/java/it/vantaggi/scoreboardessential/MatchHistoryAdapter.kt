@@ -15,6 +15,7 @@ import java.util.Locale
 
 class MatchHistoryAdapter(
     private val onDeleteClicked: (MatchWithTeams) -> Unit,
+    private val onExportClicked: (MatchWithTeams) -> Unit,
 ) : ListAdapter<MatchHistoryUiState, MatchHistoryAdapter.MatchViewHolder>(MatchDiffCallback()) {
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -24,7 +25,7 @@ class MatchHistoryAdapter(
             LayoutInflater
                 .from(parent.context)
                 .inflate(R.layout.match_item, parent, false)
-        return MatchViewHolder(view, onDeleteClicked)
+        return MatchViewHolder(view, onDeleteClicked, onExportClicked)
     }
 
     override fun onBindViewHolder(
@@ -38,6 +39,7 @@ class MatchHistoryAdapter(
     class MatchViewHolder(
         itemView: View,
         private val onDeleteClicked: (MatchWithTeams) -> Unit,
+        private val onExportClicked: (MatchWithTeams) -> Unit,
     ) : RecyclerView.ViewHolder(itemView) {
         private val team1NameTextView: TextView = itemView.findViewById(R.id.team1_name_textview)
         private val team2NameTextView: TextView = itemView.findViewById(R.id.team2_name_textview)
@@ -46,6 +48,7 @@ class MatchHistoryAdapter(
         private val timestampTextView: TextView = itemView.findViewById(R.id.timestamp_textview)
         private val playersTextView: TextView = itemView.findViewById(R.id.players_textview)
         private val deleteButton: View = itemView.findViewById(R.id.delete_match_button)
+        private val exportButton: View = itemView.findViewById(R.id.export_match_button)
 
         private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
@@ -68,6 +71,12 @@ class MatchHistoryAdapter(
 
             deleteButton.setOnClickListener {
                 onDeleteClicked(matchWithTeams)
+            }
+
+            // Le card si riciclano: la visibilita' va scritta in entrambi i casi.
+            exportButton.visibility = if (item.canExport) View.VISIBLE else View.GONE
+            exportButton.setOnClickListener {
+                onExportClicked(matchWithTeams)
             }
         }
     }

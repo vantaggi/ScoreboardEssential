@@ -20,6 +20,16 @@ class MatchClockTest {
         assertTrue(clock.started)
     }
 
+    /** L'inizio salvato con la partita (startedAt del formato 2) e' quello del primo evento. */
+    @Test
+    fun `l'inizio e' l'epoch del primo evento, anche se arriva dopo`() {
+        val clock = MatchClock()
+        assertEquals(null, clock.startEpoch)
+        clock.relative(ore18)
+        clock.relative(ore18 + 60_000L)
+        assertEquals(ore18, clock.startEpoch)
+    }
+
     @Test
     fun `gli eventi successivi misurano la distanza dal primo`() {
         val clock = MatchClock()

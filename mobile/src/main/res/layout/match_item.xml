@@ -98,15 +98,33 @@
             android:fontFamily="sans-serif-condensed"
             tools:text="Players: John, Doe, Jane, Smith" />
 
-        <ImageButton
-            android:id="@+id/delete_match_button"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+        <!-- Esporta sta accanto a Elimina: i comandi di una partita dello storico stanno sulla sua card. -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/delete_match"
-            app:tint="@color/error_red"
-            app:srcCompat="@drawable/ic_delete" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/export_match_button"
+                style="@style/Widget.App.Button.TextButton.Street"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/export_match"
+                android:visibility="gone"
+                app:icon="@drawable/ic_share"
+                tools:visibility="visible" />
+
+            <ImageButton
+                android:id="@+id/delete_match_button"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/delete_match"
+                app:tint="@color/error_red"
+                app:srcCompat="@drawable/ic_delete" />
+        </LinearLayout>
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

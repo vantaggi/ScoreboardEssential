@@ -15,7 +15,16 @@ package it.vantaggi.scoreboardessential.core
  * Non e' thread-safe: vive dentro un ViewModel, sul thread principale, accanto al motore.
  */
 class MatchClock {
-    private var startEpoch: Long? = null
+    /**
+     * L'epoch del primo evento, cioe' dell'inizio della partita; null prima del primo evento.
+     *
+     * Leggibile perche' e' l'inizio VERO anche per una partita consegnata dall'orologio ore
+     * dopo: l'ora in cui il telefono la riceve e' l'ora della consegna, non della partita. Dopo
+     * [resume] invece e' spostato apposta, quindi per una partita ripresa l'inizio si legge dal
+     * database e non da qui.
+     */
+    var startEpoch: Long? = null
+        private set
 
     /** Vero quando la partita ha gia' un inizio, cioe' e' gia' arrivato almeno un evento. */
     val started: Boolean get() = startEpoch != null

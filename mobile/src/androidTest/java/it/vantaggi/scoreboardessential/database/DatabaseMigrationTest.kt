@@ -98,10 +98,46 @@ class DatabaseMigrationTest {
         db.close()
     }
 
+    /**
+     * La 13 -> 14 aggiunge cio' che serve a esportare dallo storico. Una partita di padel gia'
+     * chiusa deve uscirne intatta, registro e lati dei giocatori compresi, con i campi nuovi
+     * "non noti": ordine vuoto, inizio e id null. E' il valore che fa mancare i campi dal file
+     * invece di inventarli.
+     */
     @Test
     @Throws(IOException::class)
-    fun laCatena11a13_arriva_in_fondo_in_un_colpo_solo() {
-        // E' il percorso che fa davvero un telefono rimasto indietro di due versioni: Room
+    fun migrazione13a14_aggiunge_ordine_inizio_e_id_lasciando_intatta_la_partita() {
+        helper.createDatabase(TEST_DB, 13).apply {
+            execSQL(
+                "INSERT INTO matches (matchId, team1Id, team2Id, team1Score, team2Score, timestamp, isActive, sportId, eventLog) " +
+                    "VALUES (2, 1, 2, 0, 0, 1790190240000, 0, 'padel', '1|1@0,2@30000')",
+            )
+            execSQL("INSERT INTO players (playerId, playerName, appearances, goals) VALUES (7, 'Anna', 5, 2)")
+            execSQL("INSERT INTO MatchPlayerCrossRef (matchId, playerId, teamNumber) VALUES (2, 7, 2)")
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 14, true, AppDatabase.MIGRATION_13_14)
+
+        db.query("SELECT sportId, eventLog, serveOrder, startedAt, matchUuid FROM matches WHERE matchId = 2").use { c ->
+            assertTrue("la partita della v13 deve sopravvivere", c.moveToFirst())
+            assertEquals("padel", c.getString(0))
+            assertEquals("1|1@0,2@30000", c.getString(1))
+            assertEquals("ordine non impostato", "", c.getString(2))
+            assertTrue("inizio ignoto", c.isNull(3))
+            assertTrue("nessun id", c.isNull(4))
+        }
+        db.query("SELECT teamNumber FROM MatchPlayerCrossRef WHERE matchId = 2 AND playerId = 7").use { c ->
+            assertTrue("il giocatore resta nella partita", c.moveToFirst())
+            assertEquals("con il suo lato", 2, c.getInt(0))
+        }
+        db.close()
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun laCatena11a14_arriva_in_fondo_in_un_colpo_solo() {
+        // E' il percorso che fa davvero un telefono rimasto indietro di tre versioni: Room
         // incatena le migrazioni da solo, e l'ordine in cui le applica non e' garantito da
         // nessun test che le provi una per una.
         helper.createDatabase(TEST_DB, 11).apply {
@@ -116,11 +152,14 @@ class DatabaseMigrationTest {
                 true,
                 AppDatabase.MIGRATION_11_12,
                 AppDatabase.MIGRATION_12_13,
+                AppDatabase.MIGRATION_13_14,
             )
 
-        db.query("SELECT sportId FROM matches WHERE matchId = 1").use { c ->
+        db.query("SELECT sportId, serveOrder, matchUuid FROM matches WHERE matchId = 1").use { c ->
             assertTrue(c.moveToFirst())
             assertEquals("football", c.getString(0))
+            assertEquals("", c.getString(1))
+            assertTrue(c.isNull(2))
         }
         // L'indice deve chiamarsi ESATTAMENTE come quello che Room genera da @Index: un nome
         // diverso fa fallire la validazione all'avvio, a ogni avvio, senza fix remoto possibile.

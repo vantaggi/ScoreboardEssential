@@ -1,11 +1,14 @@
 package it.vantaggi.scoreboardessential.core
 
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
 /**
  * Un giocatore cosi' come il tabellone lo conosce: l'id della sua riga locale, il nome e il lato.
  *
- * Non c'e' l'id di Padel Elite. Il collegamento fra i due spazi di identificatori vive nella
- * mappa passata a [MatchExporter.build]: `:core` non conosce Room e non deve conoscerlo, e tenere
- * il collegamento fuori dal roster impedisce di esportare un id preso da una riga stantia.
+ * E' anche la forma in cui finisce nel file. Non c'e' nessun id esterno: l'app e' a se', e chi
+ * importa sceglie i giocatori del proprio gruppo seguendo l'ordine di servizio.
  */
 data class MatchPlayer(
     val localId: Int,
@@ -14,12 +17,29 @@ data class MatchPlayer(
     val side: Int,
 )
 
-/** Il giocatore come finisce nel file: entrambi gli identificatori, cosi' l'import puo' scegliere. */
-data class ExportedPlayer(
-    val localId: Int,
-    val name: String,
-    val side: Int,
-    val padelPlayerId: Int?,
+/**
+ * Le tre cose che il formato 2 aggiunge e che il motore non sa: quale partita e', quando e'
+ * cominciata e quale versione dell'app ha scritto il file.
+ *
+ * Arrivano da fuori perche' `:core` non ha ne' il database, dove id e inizio sono salvati, ne'
+ * `BuildConfig`, dove sta la versione.
+ */
+data class ExportOrigin(
+    /**
+     * UUID generato al primo punto e salvato con la partita: due export della stessa partita
+     * portano lo stesso id, ed e' cosi' che chi importa riconosce un doppione. Null per le
+     * partite salvate prima che esistesse; nel file il campo allora manca.
+     */
+    val matchId: String?,
+    /** Epoch in millisecondi del primo punto; null per le partite salvate prima che esistesse. */
+    val startedAtMillis: Long?,
+    /**
+     * Il fuso in cui scrivere l'inizio. Serve l'offset di QUEL giorno, ora legale compresa: chi
+     * importa legge data e ora locali dalla stringa, e un offset sbagliato sposta la partita di
+     * un'ora o di un giorno.
+     */
+    val zone: ZoneId,
+    val appVersion: String,
 )
 
 /**
@@ -50,8 +70,14 @@ data class TimelinePoint(
 data class MatchExport(
     val formatVersion: Int,
     val sportId: String,
+    /** v2: l'UUID della partita, o null se la partita non ne ha uno. */
+    val matchId: String?,
+    /** v2: l'inizio in ISO 8601 con offset, `2026-09-23T21:04:00+02:00`, o null se ignoto. */
+    val startedAt: String?,
+    /** v2: la versione dell'app che ha scritto il file. */
+    val appVersion: String,
     val config: SportConfig,
-    val players: List<ExportedPlayer>,
+    val players: List<MatchPlayer>,
     val scoreTeam1: Int,
     val scoreTeam2: Int,
     /** 1, 2 o null se la partita non e' arrivata in fondo. */
@@ -64,8 +90,8 @@ data class MatchExport(
 /**
  * Cosa manca per poter esportare.
  *
- * Casi tipizzati e non stringhe: l'interfaccia deve poter dire all'utente quali NOMI mancano --
- * "collega Marco e Sara a Padel Elite" e' azionabile, "2 giocatori non collegati" no.
+ * Casi tipizzati e non stringhe: l'interfaccia sceglie il messaggio, e un caso nuovo diventa un
+ * ramo da scrivere invece di un testo che nessuno mostra.
  */
 sealed interface ExportProblem {
     /**
@@ -84,11 +110,6 @@ sealed interface ExportProblem {
 
     /** Lo stesso giocatore compare piu' volte: i quattro devono essere distinti. */
     data class DuplicatePlayers(
-        val names: List<String>,
-    ) : ExportProblem
-
-    /** Giocatori senza `padelPlayerId`: la dashboard non saprebbe a chi attribuire la partita. */
-    data class UnlinkedPlayers(
         val names: List<String>,
     ) : ExportProblem
 
@@ -119,8 +140,20 @@ sealed interface ExportResult {
  * e' l'escaping delle stringhe, ed e' isolato in [quote].
  */
 object MatchExporter {
-    /** Versione del formato del file. Un bump la incrementa; chi importa deve controllarla. */
-    const val FORMAT_VERSION = 1
+    /**
+     * Versione del formato del file. Un bump la incrementa; chi importa deve controllarla.
+     *
+     * La 2 aggiunge `matchId`, `startedAt` e `appVersion` e toglie `padelPlayerId` dai giocatori.
+     * Tutti gli altri campi hanno lo stesso nome e lo stesso significato della 1.
+     */
+    const val FORMAT_VERSION = 2
+
+    /**
+     * Con i secondi e con l'offset sempre in cifre: `xxx` scrive `+00:00` anche dove il
+     * formatter ISO scriverebbe `Z`. Il contratto chiede l'offset, e una forma sola e' una cosa
+     * in meno da gestire per chi legge.
+     */
+    private val STARTED_AT_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssxxx")
 
     private const val PLAYERS_PER_MATCH = 4
 
@@ -132,8 +165,7 @@ object MatchExporter {
     fun validate(
         engine: MatchEngine,
         players: List<MatchPlayer>,
-        padelIds: Map<Int, Int>,
-    ): List<ExportProblem> = problems(players, padelIds, replay(engine).timeline)
+    ): List<ExportProblem> = problems(players, replay(engine).timeline)
 
     /**
      * Costruisce l'export, o dice cosa manca.
@@ -148,10 +180,10 @@ object MatchExporter {
     fun build(
         engine: MatchEngine,
         players: List<MatchPlayer>,
-        padelIds: Map<Int, Int>,
+        origin: ExportOrigin,
     ): ExportResult {
         val replayed = replay(engine)
-        val missing = problems(players, padelIds, replayed.timeline)
+        val missing = problems(players, replayed.timeline)
         if (missing.isNotEmpty()) return ExportResult.Incomplete(missing)
 
         val state = replayed.finalState
@@ -160,8 +192,14 @@ object MatchExporter {
             MatchExport(
                 formatVersion = FORMAT_VERSION,
                 sportId = engine.rules.id,
+                matchId = origin.matchId,
+                startedAt =
+                    origin.startedAtMillis?.let {
+                        STARTED_AT_FORMAT.format(Instant.ofEpochMilli(it).atZone(origin.zone))
+                    },
+                appVersion = origin.appVersion,
                 config = engine.rules.config,
-                players = players.map { ExportedPlayer(it.localId, it.name, it.side, padelIds[it.localId]) },
+                players = players,
                 scoreTeam1 = headline.first,
                 scoreTeam2 = headline.second,
                 winnerTeam = state.wonBy,
@@ -171,11 +209,19 @@ object MatchExporter {
         return ExportResult.Ready(export)
     }
 
-    /** JSON compatto, senza spazi: il file finisce in una cartella, non sotto gli occhi di nessuno. */
+    /**
+     * JSON compatto, senza spazi: il file finisce in una cartella, non sotto gli occhi di nessuno.
+     *
+     * `matchId` e `startedAt` ignoti si OMETTONO invece di scriverli null: sono campi facoltativi
+     * del contratto, e chi importa ripiega sul comportamento della versione 1 quando mancano.
+     */
     fun toJson(export: MatchExport): String {
         val sb = StringBuilder(64 * export.timeline.size + 512)
         sb.append("{\"formatVersion\":").append(export.formatVersion)
         sb.append(",\"sportId\":").append(quote(export.sportId))
+        export.matchId?.let { sb.append(",\"matchId\":").append(quote(it)) }
+        export.startedAt?.let { sb.append(",\"startedAt\":").append(quote(it)) }
+        sb.append(",\"appVersion\":").append(quote(export.appVersion))
         sb.append(",\"config\":")
         appendConfig(sb, export.config)
         sb.append(",\"players\":[")
@@ -184,7 +230,6 @@ object MatchExporter {
             sb.append("{\"localId\":").append(player.localId)
             sb.append(",\"name\":").append(quote(player.name))
             sb.append(",\"side\":").append(player.side)
-            sb.append(",\"padelPlayerId\":").append(number(player.padelPlayerId))
             sb.append('}')
         }
         sb.append("],\"scoreTeam1\":").append(export.scoreTeam1)
@@ -261,7 +306,6 @@ object MatchExporter {
 
     private fun problems(
         players: List<MatchPlayer>,
-        padelIds: Map<Int, Int>,
         timeline: List<TimelinePoint>,
     ): List<ExportProblem> {
         val found = mutableListOf<ExportProblem>()
@@ -281,8 +325,6 @@ object MatchExporter {
                 .filter { it.size > 1 }
                 .map { it.first().name }
         if (duplicates.isNotEmpty()) found.add(ExportProblem.DuplicatePlayers(duplicates))
-        val unlinked = players.filter { padelIds[it.localId] == null }.map { it.name }
-        if (unlinked.isNotEmpty()) found.add(ExportProblem.UnlinkedPlayers(unlinked))
         if (timeline.isEmpty()) found.add(ExportProblem.NoPoints)
         return found
     }

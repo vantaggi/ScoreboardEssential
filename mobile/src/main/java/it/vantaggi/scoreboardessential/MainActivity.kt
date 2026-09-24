@@ -31,9 +31,6 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import it.vantaggi.scoreboardessential.core.ClockMode
-import it.vantaggi.scoreboardessential.core.ExportProblem
-import it.vantaggi.scoreboardessential.core.ExportResult
-import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchSummarizer
 import it.vantaggi.scoreboardessential.core.ReportLabels
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
@@ -690,43 +687,9 @@ class MainActivity :
             }.start()
     }
 
-    /** Il file JSON per Padel Elite. Si raggiunge dalla stessa scelta di Condividi. */
+    /** Il file JSON della partita. Si raggiunge dalla stessa scelta di Condividi. */
     private fun exportMatchToPadel() {
-        when (val esito = viewModel.buildExport()) {
-            is ExportResult.Ready -> {
-                MatchExportUtils.shareMatchJson(
-                    this,
-                    MatchExporter.toJson(esito.export),
-                    viewModel.exportFileLabel(),
-                )
-            }
-
-            is ExportResult.Incomplete -> {
-                // Il primo problema in ordine e' quello da risolvere per primo: dirne uno solo
-                // e' piu' utile che elencarli tutti a chi e' in piedi a bordo campo.
-                val nonCollegati =
-                    esito.problems
-                        .filterIsInstance<ExportProblem.UnlinkedPlayers>()
-                        .flatMap { it.names }
-                when {
-                    esito.problems.any { it is ExportProblem.NoPoints } -> {
-                        MatchExportUtils.showBlocked(this, ExportBlocked.NO_MATCH)
-                    }
-
-                    nonCollegati.isNotEmpty() -> {
-                        MatchExportUtils.showBlocked(
-                            this,
-                            ExportBlocked.NEEDS_LINK,
-                            nonCollegati.joinToString(", "),
-                        )
-                    }
-
-                    else -> {
-                        MatchExportUtils.showBlocked(this, ExportBlocked.NEEDS_FOUR)
-                    }
-                }
-            }
-        }
+        MatchExportUtils.shareExport(this, viewModel.buildExport(), viewModel.exportFileLabel())
     }
 
     /**
