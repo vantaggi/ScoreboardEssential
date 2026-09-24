@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/asphalt_dark"
+    android:background="@color/ink_black"
     tools:context=".MainActivity"
     tools:deviceIds="wear">
 
@@ -91,6 +91,7 @@
                 android:autoSizeStepGranularity="2sp"
                 android:fontFamily="sans-serif-condensed"
                 android:textStyle="bold"
+                android:accessibilityLiveRegion="polite"
                 android:textColor="@color/team_spray_yellow"/>
 
             <TextView
@@ -138,6 +139,7 @@
                 android:autoSizeStepGranularity="2sp"
                 android:fontFamily="sans-serif-condensed"
                 android:textStyle="bold"
+                android:accessibilityLiveRegion="polite"
                 android:textColor="@color/team_electric_green"/>
 
             <TextView

@@ -5,8 +5,10 @@
          squadra, negli sport a set annulla l'ultima azione qualunque lato l'abbia segnata. -->
     <string name="wear_hint_minus">HOLD: -1</string>
     <string name="wear_hint_undo">HOLD: UNDO</string>
-    <string name="cd_score_side_minus">Team %1$d. Tap to add a point, press and hold to remove one.</string>
-    <string name="cd_score_side_undo">Team %1$d. Tap to add a point, press and hold to undo the last action.</string>
+    <!-- Nome della squadra e punteggio a schermo: TalkBack legge questa frase al posto delle cifre. -->
+    <string name="cd_score_side_minus">%1$s, %2$s. Tap to add a point, press and hold to remove one.</string>
+    <string name="cd_score_side_undo">%1$s, %2$s. Tap to add a point, press and hold to undo the last action.</string>
+    <string name="cd_team_fallback">Team %1$d</string>
 
     <string name="wear_reset">RESET</string>
     <string name="wear_reset_title">End match?</string>
@@ -21,6 +23,8 @@
     <string name="wear_player_position">Position</string>
     <string name="wear_hint_disconnected">NO PHONE</string>
     <string name="cd_keeper_timer">Goalkeeper countdown</string>
+    <!-- Uguale nelle due lingue: K e i minuti:secondi che restano al portiere. -->
+    <string name="wear_keeper_running" translatable="false">K %1$d:%2$02d</string>
     <string name="cd_connection_ok">Phone connected</string>
     <string name="cd_connection_lost">Phone not reachable</string>
     <string name="wear_sport">SPORT</string>

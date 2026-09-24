@@ -231,4 +231,21 @@ class OfflineScoreTest {
         // Non si inventa un calcolo con regole indovinate: si mostra l'ultimo dato vero.
         assertEquals("7", viewModel.scoreState.value?.side1Primary)
     }
+
+    @Test
+    fun `chi serve si ricalcola al polso con i game segnati in coda`() {
+        // Il telefono ha mandato l'inizio partita: serve la squadra 1. Poi, da soli, quattro punti
+        // alla squadra 1 chiudono il primo game col golden point, e il servizio passa alla 2.
+        viewModel.applyStateV2(statoDalTelefono(registro = "").copy(servingSide = 1))
+        repeat(4) { i -> coda.add(PendingIntent(WearConstants.INTENT_POINT, 1, (i + 1) * 1_000L)) }
+        viewModel.refreshPendingCount()
+
+        val telefono = motorePadel()
+        repeat(4) { telefono.apply(ScoringEvent.Point(side = 1)) }
+        val atteso = SportRegistry.byId(SportRegistry.PADEL).display(telefono.state).servingSide
+
+        assertEquals(2, atteso)
+        // Senza il ricalcolo resterebbe l'1 del telefono: il pallino, quando ci sara', mentirebbe.
+        assertEquals(atteso, viewModel.scoreState.value?.servingSide)
+    }
 }
