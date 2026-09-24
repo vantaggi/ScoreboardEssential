@@ -1623,3 +1623,39 @@ strumentata nuova, rossa senza il rimedio; suite verde, strumentati 10 su 10.
 repository: formato v1, regole di validita', i casi da trattare (partita interrotta, tiebreak) e
 una sezione dove la dashboard scrive cosa le serve. I4 e I5 restano fermi: servono le due
 autorizzazioni del proprietario sul Supabase di produzione.
+
+### L3, annullamento e marcatore dal registro del motore - 24 settembre 2026
+
+Chiusi i sei rilievi di L3 che stanno sul telefono (commit `7d7de5f`, test `0ae20f4`). La pila
+`actionStack` non c'e' piu': viveva accanto al registro del motore e ne divergeva, e ogni
+difetto di L3 era una forma di quella divergenza. Ora:
+
+- `undoLastGoal` toglie l'ultimo evento **efficace** del motore (salta le voci inerti dei
+  registri vecchi), decrementa il `playerId` scritto in quel punto e toglie la riga con il suo
+  `engineIndex`. Anche le righe di correzione portano l'indice, dal vivo e nel ripristino.
+  `canUndo` e' `engine.canUndo()`, aggiornato in `publishEngineState`, nella ricostruzione, in
+  `startNewMatch` e nel seme v1.
+- `MatchEngine.attribute` restituisce l'esito e non riscrive un punto gia' attribuito;
+  `attributeScorer` conta il gol solo con esito vero, e scrive sul motore in modo sincrono.
+- Il punto dall'orologio ha sempre la sua riga (con la guardia di `addScore` a partita finita);
+  il marcatore scelto al polso va all'ultimo punto del suo lato senza marcatore e aggiorna quella
+  riga. `addScorer` non esiste piu'. Il protocollo Wear non cambia.
+- `applyWatchBatch` ricostruisce righe e annullamento con `rebuildEventsAndUndo`, come il
+  ripristino. Un test confronta le righe del percorso dal vivo con quelle ricostruite.
+
+**Verifica:** 101 test core e 164 mobile verdi; `ktlintCheck`, `lintDebug`, `assembleDebug`,
+`assembleDebugAndroidTest` e i test di `:wear` e `:shared` verdi. Falsificazione: i sette test
+nuovi del ViewModel sono rossi contro il ViewModel di prima; togliendo un rimedio alla volta
+(indice della correzione nel ripristino, ricostruzione dopo il batch, ricerca del punto del
+lato, esito di attribute, riga sempre presente, riga cercata per indice, decremento dal punto,
+guardia a partita finita, punto gia' attribuito nel motore) diventa rosso il suo test.
+
+**Restano aperti:** il settimo rilievo di L3 (sull'orologio la scelta del marcatore senza
+telefono si perde); il controllo del tag in `mostraDialogo`; un punto nuovo dell'altra squadra
+allo stesso indice riceve ancora una scelta fatta dal registro, perche' `attributeScorer` non
+conosce il lato; il seme v1 (`seedEngineFromAbsolute`, L4) riscrive il registro senza
+ricostruire le righe, quindi dopo un punteggio v1 gli indici delle righe vecchie non valgono piu'.
+
+**Da provare su dispositivo:** nel calcio gol, gol, '-' e ANNULLA dal telefono; attribuzione dal
+registro e poi ANNULLA; con i due emulatori accoppiati, un padel segnato offline e consegnato,
+poi il '-' dell'orologio; il marcatore scelto al polso mentre sul telefono segna l'altra squadra.
