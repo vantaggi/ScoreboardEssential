@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
-    <application android:name=".ScoreboardEssentialApplication" android:allowBackup="false" android:dataExtractionRules="@xml/data_extraction_rules" android:enableOnBackInvokedCallback="true" android:fullBackupContent="@xml/backup_rules" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:label="@string/app_name" android:supportsRtl="true" android:theme="@style/Theme.ScoreboardEssential" tools:targetApi="31">
+    <application android:name=".ScoreboardEssentialApplication" android:allowBackup="false" android:dataExtractionRules="@xml/data_extraction_rules" android:enableOnBackInvokedCallback="true" android:fullBackupContent="@xml/backup_rules" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:label="@string/app_name" android:localeConfig="@xml/locales_config" android:supportsRtl="true" android:theme="@style/Theme.ScoreboardEssential" tools:targetApi="31">
 
         <!-- Wear capabilities defined in res/values/wear.xml -->
 
@@ -60,6 +60,20 @@
             <property
                 android:name="android.app.property.FOREGROUND_SERVICE_TYPE_SPECIAL_USE_DESCRIPTION"
                 android:resource="@string/fgs_special_use_description" />
+        </service>
+
+        <!--
+            Sotto API 33 il sistema non conserva la lingua scelta nell'app: con autoStoreLocales
+            la salva AppCompat e la riapplica a ogni avvio. Da API 33 la tiene il sistema, e
+            locales_config elenca le lingue che le impostazioni di sistema possono proporre.
+        -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
         </service>
 
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.provider" android:exported="false" android:grantUriPermissions="true">

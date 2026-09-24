@@ -18,13 +18,6 @@ class ScoreboardEssentialApplication : Application() {
     val userPreferencesRepository by lazy { UserPreferencesRepository(this) }
     val matchSettingsRepository by lazy { MatchSettingsRepository(this, colorRepository) }
 
-    override fun attachBaseContext(base: android.content.Context) {
-        super.attachBaseContext(
-            it.vantaggi.scoreboardessential.utils.LocaleHelper
-                .onAttach(base),
-        )
-    }
-
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()

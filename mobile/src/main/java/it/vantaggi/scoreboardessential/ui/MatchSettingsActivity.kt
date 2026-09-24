@@ -13,6 +13,7 @@ import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.databinding.ActivityMatchSettingsBinding
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.sportLabel
+import it.vantaggi.scoreboardessential.utils.LocaleHelper
 
 class MatchSettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMatchSettingsBinding
@@ -22,13 +23,6 @@ class MatchSettingsActivity : AppCompatActivity() {
             it.vantaggi.scoreboardessential.database.AppDatabase
                 .getDatabase(application)
                 .matchDao(),
-        )
-    }
-
-    override fun attachBaseContext(newBase: android.content.Context) {
-        super.attachBaseContext(
-            it.vantaggi.scoreboardessential.utils.LocaleHelper
-                .onAttach(newBase),
         )
     }
 
@@ -59,13 +53,17 @@ class MatchSettingsActivity : AppCompatActivity() {
             )
         (binding.languageAutoComplete as? android.widget.AutoCompleteTextView)?.setAdapter(adapter)
 
+        // Il selettore mostra la lingua che la schermata sta davvero usando, anche quando nessuno
+        // l'ha scelta e viene dal sistema: non c'e' una seconda copia salvata che possa smentirla.
+        val shown = LocaleHelper.currentLanguage(this)
+        binding.languageAutoComplete.setText(if (shown == "it") "Italiano" else "English", false)
+
         binding.languageAutoComplete.setOnItemClickListener { _, _, position, _ ->
             val selectedLang = if (position == 0) "en" else "it"
-            if (viewModel.appLanguage.value != selectedLang) {
-                viewModel.saveAppLanguage(selectedLang)
-                it.vantaggi.scoreboardessential.utils.LocaleHelper
-                    .setLocale(this, selectedLang)
-                recreate()
+            if (LocaleHelper.currentLanguage(this) != selectedLang) {
+                // Niente recreate(): le Activity aperte le ricrea chi applica la lingua, il
+                // sistema da API 33 e AppCompat sotto.
+                LocaleHelper.apply(selectedLang)
             }
         }
     }
@@ -137,13 +135,6 @@ class MatchSettingsActivity : AppCompatActivity() {
                 } else {
                     android.view.View.GONE
                 }
-        }
-
-        viewModel.appLanguage.observe(this) { lang ->
-            val text = if (lang == "it") "Italiano" else "English"
-            if (binding.languageAutoComplete.text.toString() != text) {
-                binding.languageAutoComplete.setText(text, false)
-            }
         }
     }
 

@@ -52,6 +52,14 @@ android {
             }
         }
     }
+    bundle {
+        language {
+            // La lingua si sceglie dentro l'app. Con gli split per lingua Play installa solo
+            // quella del telefono: su un telefono in inglese values-it non arriverebbe mai e
+            // la scelta "Italiano" lascerebbe tutto in inglese. Due lingue costano pochi KB.
+            enableSplit = false
+        }
+    }
     lint {
         // Il gate protegge dai problemi NUOVI: la baseline congela il backlog
         // esistente invece di pretendere che venga svuotato prima di attivare lint.

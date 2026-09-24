@@ -22,7 +22,9 @@ android {
     defaultConfig {
         applicationId "it.vantaggi.scoreboardessential"
         minSdk 30
-        targetSdk 34
+        // Play: dal 31 agosto 2026 gli aggiornamenti Wear OS devono puntare almeno ad API 35
+        // (l'esenzione Wear vale solo per il salto ad API 36 richiesto al telefono).
+        targetSdk 35
         // Wear version codes use a 2000+ offset so they never collide with the phone APK.
         versionCode 2001
         versionName "1.0"
