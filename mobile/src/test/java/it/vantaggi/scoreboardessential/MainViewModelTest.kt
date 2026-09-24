@@ -996,6 +996,34 @@ class MainViewModelTest {
         }
 
     /**
+     * Ora il punto dall'orologio ha sempre la sua riga, e quindi serve la guardia di addScore: a
+     * partita finita il motore ignora il tocco, e senza la guardia nasceva una riga che puntava
+     * all'ultimo punto vero, il cui annullamento avrebbe tolto quel punto e riaperto la partita.
+     */
+    @Test
+    fun `a partita finita il punto dall'orologio non crea una riga`() =
+        runTest {
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            advanceUntilIdle()
+            var tocchi = 0
+            while (viewModel.scoreDisplay.value?.matchOver != true && tocchi < 500) {
+                viewModel.addScore(1)
+                tocchi++
+            }
+            advanceUntilIdle()
+            assertEquals(true, viewModel.scoreDisplay.value?.matchOver)
+            val righe = righeDiPunto().size
+
+            ricevi(puntoDallOrologio(2))
+            advanceUntilIdle()
+
+            assertEquals(righe, righeDiPunto().size)
+            viewModel.matchEvents.removeObserver(eventiObserver)
+        }
+
+    /**
      * Rilievo L3: il dialogo del marcatore resta aperto quanto si vuole. Se nel frattempo il
      * punto e' stato annullato, o all'indice c'e' ormai un punto gia' attribuito, scegliere un
      * giocatore gli dava comunque un gol in piu'.
