@@ -2,13 +2,17 @@ package it.vantaggi.scoreboardessential.wear
 
 import android.app.Application
 import android.content.Context
+import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.NodeClient
+import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -17,6 +21,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -52,6 +57,9 @@ class WearViewModelTest {
         MockitoAnnotations.openMocks(this)
 
         Mockito.`when`(application.getSystemService(Context.VIBRATOR_SERVICE)).thenReturn(vibrator)
+        // Il ViewModel lo chiede per classe (ContextCompat), non per nome: senza questa riga il
+        // suo vibratore e' null e nessun test puo' sentire che cosa dice il polso.
+        Mockito.`when`(application.getSystemService(Vibrator::class.java)).thenReturn(vibrator)
         Mockito.`when`(application.packageManager).thenReturn(packageManager)
         Mockito.`when`(packageManager.hasSystemFeature(Mockito.anyString())).thenReturn(false)
         Mockito.`when`(application.applicationContext).thenReturn(application)
@@ -257,4 +265,104 @@ class WearViewModelTest {
             isRunningField.isAccessible = true
             assertEquals(false, isRunningField.get(viewModel))
         }
+
+    /** Uno stato v2 del calcio, come lo manda il telefono. */
+    private fun statoCalcio(finita: Boolean) =
+        WearScoreState(
+            side1Primary = "3",
+            side1Secondary = "",
+            side2Primary = "2",
+            side2Secondary = "",
+            periodLabel = "",
+            hasClock = true,
+            hasAuxTimer = true,
+            attributesScorer = true,
+            decrementIsUndo = false,
+            sportId = "soccer",
+            sportLabel = "Calcio",
+            sportIds = emptyList(),
+            sportLabels = emptyList(),
+            matchInProgress = !finita,
+            matchOver = finita,
+            eventLog = "",
+        )
+
+    private fun sequenza(): Long {
+        val campo = WearViewModel::class.java.getDeclaredField("intentSequence")
+        campo.isAccessible = true
+        return campo.getLong(viewModel)
+    }
+
+    @Test
+    fun `a partita finita il tocco non parte e non chiede il marcatore`() {
+        // Con la rosa piena e il marcatore attivo: se il tocco passasse, si vedrebbe subito.
+        viewModel.setAllPlayers(listOf(PlayerData(id = 1, name = "Rossi", roles = emptyList())))
+        viewModel.applyStateV2(statoCalcio(finita = true))
+        val prima = sequenza()
+
+        viewModel.incrementScore(1)
+
+        // La sequenza si consuma PRIMA dell'invio: se non si e' mossa, nessuna intenzione e'
+        // partita e nessuna e' finita in coda. Il telefono non vede niente, niente riga fantasma.
+        assertEquals(prima, sequenza())
+        assertNull(viewModel.showPlayerSelection.value)
+    }
+
+    @Test
+    fun `a partita in corso lo stesso tocco parte`() {
+        // Il controllo del test precedente: la guardia non deve spegnere il tocco normale.
+        viewModel.setAllPlayers(listOf(PlayerData(id = 1, name = "Rossi", roles = emptyList())))
+        viewModel.applyStateV2(statoCalcio(finita = false))
+        val prima = sequenza()
+
+        viewModel.incrementScore(1)
+
+        assertEquals(prima + 1, sequenza())
+        assertEquals(1, viewModel.showPlayerSelection.value)
+    }
+
+    @Test
+    fun `a partita finita il tocco rifiutato vibra da errore, a partita in corso no`() {
+        // Il padel e' dove la partita finisce davvero: il calcio non ha matchOver.
+        viewModel.applyStateV2(statoCalcio(finita = true).copy(sportId = "padel", hasClock = false))
+
+        viewModel.incrementScore(1)
+
+        // Scartato ma sentito: il doppio colpo di errore, subito, senza aspettare il telefono.
+        Mockito.verify(vibrator, Mockito.times(1)).vibrate(Mockito.any(VibrationEffect::class.java))
+
+        // Controllo: a partita in corso la guardia non vibra. La conferma del tocco normale arriva
+        // solo dopo l'invio, in una coroutine che qui non viene fatta girare.
+        Mockito.clearInvocations(vibrator)
+        viewModel.applyStateV2(statoCalcio(finita = false).copy(sportId = "padel", hasClock = false))
+        viewModel.incrementScore(1)
+        Mockito.verify(vibrator, Mockito.never()).vibrate(Mockito.any(VibrationEffect::class.java))
+    }
+
+    @Test
+    fun `dopo AZZERA dal polso il blocco cade con la partita nuova del telefono`() {
+        // Il contratto su cui si regge la guardia: AZZERA non tocca lo stato v2 (difetto noto,
+        // fuori da questa voce), quindi fino alla risposta del telefono il tocco resta rifiutato.
+        // Il telefono risponde: MATCH_STATE=false porta a endMatch e startNewMatch, che rimanda
+        // uno stato v2 a partita non finita. Da li' il tocco riparte.
+        viewModel.applyStateV2(statoCalcio(finita = true).copy(sportId = "padel", hasClock = false))
+        viewModel.resetMatch()
+        val prima = sequenza()
+
+        viewModel.incrementScore(1)
+        assertEquals(prima, sequenza())
+
+        viewModel.applyStateV2(statoCalcio(finita = false).copy(sportId = "padel", hasClock = false))
+        viewModel.incrementScore(1)
+        assertEquals(prima + 1, sequenza())
+    }
+
+    @Test
+    fun `chi serve arriva dallo stato v2, e senza chiave vale 0`() {
+        val conServizio = DataMap().apply { putInt(WearConstants.KEY_SERVING_SIDE, 2) }
+        assertEquals(2, WearScoreState.fromDataMap(conServizio).servingSide)
+
+        // Un telefono che non lo manda (calcio, o una versione precedente) non deve rompere niente.
+        assertEquals(0, WearScoreState.fromDataMap(DataMap()).servingSide)
+    }
 }

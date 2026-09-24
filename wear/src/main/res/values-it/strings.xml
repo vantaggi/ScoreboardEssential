@@ -5,8 +5,10 @@
          squadra, negli sport a set annulla l'ultima azione qualunque lato l'abbia segnata. -->
     <string name="wear_hint_minus">TIENI: -1</string>
     <string name="wear_hint_undo">TIENI: ANNULLA</string>
-    <string name="cd_score_side_minus">Squadra %1$d. Tocca per segnare, tieni premuto per togliere un punto.</string>
-    <string name="cd_score_side_undo">Squadra %1$d. Tocca per segnare, tieni premuto per annullare l ultima azione.</string>
+    <!-- Nome della squadra e punteggio a schermo: TalkBack legge questa frase al posto delle cifre. -->
+    <string name="cd_score_side_minus">%1$s, %2$s. Tocca per segnare, tieni premuto per togliere un punto.</string>
+    <string name="cd_score_side_undo">%1$s, %2$s. Tocca per segnare, tieni premuto per annullare l ultima azione.</string>
+    <string name="cd_team_fallback">Squadra %1$d</string>
 
     <string name="wear_reset">AZZERA</string>
     <string name="wear_reset_title">Finire la partita?</string>

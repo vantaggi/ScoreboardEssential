@@ -308,11 +308,32 @@ class MainActivity : ComponentActivity() {
      */
     private fun applyGestureLabels(decrementIsUndo: Boolean) {
         annullamentoGlobale = decrementIsUndo
-        val descrizione = if (decrementIsUndo) R.string.cd_score_side_undo else R.string.cd_score_side_minus
-        binding.team1Container.contentDescription = getString(descrizione, 1)
-        binding.team2Container.contentDescription = getString(descrizione, 2)
+        describeSides()
         refreshHint()
     }
+
+    /**
+     * Il lato e' un bersaglio unico, quindi TalkBack legge la SUA descrizione al posto delle cifre
+     * che contiene. Quando era fissa, sul 30-15 il focus diceva "Squadra 1. Tocca per segnare..."
+     * senza nessun numero: chi non guarda riceveva tutto tranne il punteggio.
+     *
+     * Le cifre si leggono dalla vista, non dallo stato: cosi' vale uguale per il v2 e per il v1, e
+     * la descrizione non puo' dire un numero diverso da quello a schermo. Va richiamata a ogni
+     * cambio di punteggio, di nome e di gesto.
+     */
+    private fun describeSides() {
+        val descrizione = if (annullamentoGlobale) R.string.cd_score_side_undo else R.string.cd_score_side_minus
+        binding.team1Container.contentDescription =
+            getString(descrizione, teamName(viewModel.team1Name.value, 1), binding.team1Score.text.toString())
+        binding.team2Container.contentDescription =
+            getString(descrizione, teamName(viewModel.team2Name.value, 2), binding.team2Score.text.toString())
+    }
+
+    /** Il nome scelto sul telefono, lo stesso che legge TalkBack la'; "Squadra 1" finche' non arriva. */
+    private fun teamName(
+        nome: String,
+        lato: Int,
+    ): String = nome.ifBlank { getString(R.string.cd_team_fallback, lato) }
 
     /**
      * Quando il telefono non risponde, il tocco non fa NIENTE.
@@ -361,12 +382,16 @@ class MainActivity : ComponentActivity() {
      * motore ignora un punto dopo la fine. Qui e' anche piu' facile che sul telefono continuare a
      * toccare senza guardare, quindi il tocco lungo -- che annulla -- resta acceso: e' l'unica
      * cosa sensata da fare a quel punto, e riportando indietro l'ultimo punto riaccende tutto.
+     * Il tocco breve lo ferma davvero la guardia in WearViewModel.incrementScore.
+     *
+     * Niente piu' opacita': ad alpha 0.4 il giallo scendeva a 3.02:1 sul fondo, e il risultato
+     * finale, cioe' la cosa che tutti chiedono a fine partita, era la meno leggibile dello
+     * schermo. Che i lati siano spenti lo dice la riga in basso.
      */
     private fun applyMatchOver(finita: Boolean) {
         partitaFinita = finita
         listOf(binding.team1Container, binding.team2Container).forEach { lato ->
             lato.isClickable = !finita
-            lato.alpha = if (finita) 0.4f else 1f
         }
         refreshHint()
     }
@@ -406,6 +431,9 @@ class MainActivity : ComponentActivity() {
      */
     private fun applyClockRole(state: WearScoreState) {
         if (state.hasClock) {
+            // Il tempo si scrive SUBITO, non al prossimo tick: passando da padel a calcio col
+            // cronometro fermo non arriva nessun tick, e restava scritto "Set 1".
+            binding.matchTimer.text = viewModel.matchTimer.value
             binding.matchTimer.setTextColor(ContextCompat.getColor(this, R.color.stencil_white))
             binding.matchTimer.setTypeface(binding.matchTimer.typeface, android.graphics.Typeface.BOLD)
             binding.matchTimer.isClickable = true
@@ -446,15 +474,25 @@ class MainActivity : ComponentActivity() {
                 // l'orologio esiste.
                 launch {
                     viewModel.team1Score.collect { score ->
-                        if (viewModel.scoreState.value == null) binding.team1Score.text = score.toString()
+                        if (viewModel.scoreState.value == null) {
+                            binding.team1Score.text = score.toString()
+                            describeSides()
+                        }
                     }
                 }
 
                 launch {
                     viewModel.team2Score.collect { score ->
-                        if (viewModel.scoreState.value == null) binding.team2Score.text = score.toString()
+                        if (viewModel.scoreState.value == null) {
+                            binding.team2Score.text = score.toString()
+                            describeSides()
+                        }
                     }
                 }
+
+                // I nomi arrivano quando vogliono, e sono la prima parola che TalkBack legge.
+                launch { viewModel.team1Name.collect { describeSides() } }
+                launch { viewModel.team2Name.collect { describeSides() } }
 
                 // Observe Team Colors
                 launch {
@@ -470,10 +508,15 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // Stessa ragione: senza cronometro il v2 non manda un tempo, e il valore iniziale
-                // "00:00" del flow v1 tornerebbe a schermo a ogni riaccensione.
+                // "00:00" del flow v1 tornerebbe a schermo al posto del periodo ("Set 2").
+                //
+                // Ma solo senza cronometro. Con la sola condizione "v2 mai arrivato", nel calcio
+                // il quadrante restava fermo sul primo valore per tutta la partita: il v2 non porta
+                // il tempo, e il tempo arriva proprio da qui. Col cronometro il flow E' il dato.
                 launch {
                     viewModel.matchTimer.collect { time ->
-                        if (viewModel.scoreState.value == null) binding.matchTimer.text = time
+                        val stato = viewModel.scoreState.value
+                        if (stato == null || stato.hasClock) binding.matchTimer.text = time
                     }
                 }
 
@@ -491,7 +534,14 @@ class MainActivity : ComponentActivity() {
                             }
 
                             is KeeperTimerState.Running -> {
-                                binding.keeperTimer.text = "K"
+                                // Il tempo in cifre: dall'anello si poteva solo stimarlo, e
+                                // l'anello ha un massimo fisso che con durate diverse mente (L8).
+                                binding.keeperTimer.text =
+                                    getString(
+                                        R.string.wear_keeper_running,
+                                        state.secondsRemaining / 60,
+                                        state.secondsRemaining % 60,
+                                    )
                                 binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.graffiti_pink))
                                 binding.keeperProgressBar.visibility =
                                     if (auxAvailable) View.VISIBLE else View.INVISIBLE

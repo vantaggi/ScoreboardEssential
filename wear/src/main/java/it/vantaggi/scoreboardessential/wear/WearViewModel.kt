@@ -57,6 +57,11 @@ data class WearScoreState(
     val matchOver: Boolean,
     /** Il registro degli eventi del telefono: il punto di partenza quando si resta soli. */
     val eventLog: String,
+    /**
+     * Chi serve: 1 o 2, 0 se nessuno (calcio, partita finita). Il telefono lo spediva gia' e qui
+     * andava perso. Col default i costruttori esistenti non cambiano; non e' ancora disegnato.
+     */
+    val servingSide: Int = 0,
 ) {
     companion object {
         private const val TAG = "WearScoreState"
@@ -95,6 +100,7 @@ data class WearScoreState(
                 matchInProgress = dataMap.getBoolean(WearConstants.KEY_MATCH_IN_PROGRESS, false),
                 matchOver = dataMap.getBoolean(WearConstants.KEY_MATCH_OVER, false),
                 eventLog = dataMap.getString(WearConstants.KEY_EVENT_LOG, ""),
+                servingSide = dataMap.getInt(WearConstants.KEY_SERVING_SIDE, 0),
             )
         }
     }
@@ -172,10 +178,11 @@ class WearViewModel(
      */
     private var intentSequence = System.currentTimeMillis()
 
-    // Team Names
-    private val _team1Name = MutableStateFlow("TEAM 1")
+    // Vuoti finche' il telefono non li manda: e' cosi' che la schermata sa di dover ripiegare su
+    // "Squadra 1" nella lingua dell'orologio, invece di leggere a TalkBack un "TEAM 1" inglese.
+    private val _team1Name = MutableStateFlow("")
     val team1Name = _team1Name.asStateFlow()
-    private val _team2Name = MutableStateFlow("TEAM 2")
+    private val _team2Name = MutableStateFlow("")
     val team2Name = _team2Name.asStateFlow()
 
     // Team Colors
@@ -338,6 +345,21 @@ class WearViewModel(
 
     fun incrementScore(team: Int) {
         if (team != 1 && team != 2) return
+        // A partita finita il motore ignora il punto, ma il telefono no: addRemotePoint scrive
+        // lo stesso una riga e un'azione che puntano all'evento precedente, e un ANNULLA dopo
+        // riapre la partita togliendo un punto vero. Offline il tocco finiva in coda come
+        // "1 IN ATTESA". isClickable=false sul lato non basta a fermarlo: la guardia sta qui,
+        // dove passano tutti i tocchi, TalkBack compreso.
+        //
+        // Scartato si', ma non in silenzio: senza telefono la riga in basso dice "NIENTE
+        // TELEFONO" e non "PARTITA FINITA", e dopo un AZZERA dal polso il quadrante v2 resta sul
+        // risultato finale finche' il telefono non risponde con la partita nuova. Il doppio colpo
+        // di errore dice al polso "questo tocco non e' stato preso", invece di lasciarlo a
+        // chiedersi se il punto sia partito.
+        if (_scoreState.value?.matchOver == true) {
+            triggerFailureVibration()
+            return
+        }
         sendScoreIntent(team, WearConstants.INTENT_POINT)
         if (protocolV2Seen) {
             // Nessuna vibrazione qui: la conferma la da' sendScoreIntent, e SOLO se il messaggio
@@ -439,6 +461,8 @@ class WearViewModel(
                 periodLabel = display.periodLabel.orEmpty(),
                 matchInProgress = engine.log.isNotEmpty(),
                 matchOver = display.matchOver,
+                // Il servizio cambia con i game segnati in coda: quello del telefono e' vecchio.
+                servingSide = display.servingSide ?: 0,
             )
         return true
     }

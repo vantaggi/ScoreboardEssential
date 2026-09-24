@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Nero puro, fondo di gioco: sugli schermi OLED sono pixel spenti e il bianco arriva a
+         21:1. Stesso nome del telefono (DESIGN.md, token condivisi), per non farli divergere. -->
+    <color name="ink_black">#000000</color>
     <color name="asphalt_dark">#121212</color>
     <color name="concrete_gray">#1E1E1E</color>
     <color name="stencil_white">#E0E0E0</color>
