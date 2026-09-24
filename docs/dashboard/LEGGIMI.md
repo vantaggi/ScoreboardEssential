@@ -14,3 +14,5 @@ del file cambia prima in `docs/SCOREBOARD_FORMAT.md` di quel repository, poi qui
 Le partite di prova stanno in `core/src/test/resources/scoreboard/`: `v1-tre-set.json` (189 punti,
 valori attesi nel brief, sezione 3) e `app-reale-interrotta.json`, identica al nostro
 `esempi/export_padel_partita_interrotta.json`.
+
+| `riferimento-match-log.js`, `riferimento-match-log-ui.js` | La Cronaca della dashboard: calcolo e schermata. Riferimento per le definizioni, da non copiare riga per riga. |
