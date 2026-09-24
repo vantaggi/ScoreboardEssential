@@ -112,18 +112,14 @@ class MatchLogAdapter(
                 }
             }
 
-            // Highlight goals. La chiave e' il tipo, non il testo: event.event di un punto vale "Goal"
-            // (la riga "GOAL! ..." e' costruita sopra), quindi cercarci "GOAL!" non era mai vero.
-            if (event.type == MatchEventType.SCORE) {
-                val goalColor = if (event.team == 1) team1Color else team2Color
-                eventTextView.setTextColor(goalColor)
-                eventTextView.textSize = 16f
-            } else {
-                eventTextView.setTextColor(
-                    MaterialColors.getColor(itemView.context, com.google.android.material.R.attr.colorOnSurface, "Error"),
-                )
-                eventTextView.textSize = 14f
-            }
+            // Il testo e' sempre colorOnSurface, anche per i punti: il colore della squadra resta
+            // solo sulla barretta qui sopra. Come testo su #1E1E1E un colore scelto dall'utente
+            // sta sotto 4,5:1 in quasi la meta' dei casi (il blu notte #1A237E fa 1,26) e la riga
+            // spariva. I punti si distinguono per dimensione; la chiave e' il tipo, non il testo.
+            eventTextView.setTextColor(
+                MaterialColors.getColor(itemView.context, com.google.android.material.R.attr.colorOnSurface, "Error"),
+            )
+            eventTextView.textSize = if (event.type == MatchEventType.SCORE) 16f else 14f
         }
     }
 

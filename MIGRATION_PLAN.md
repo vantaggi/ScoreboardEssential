@@ -1469,3 +1469,29 @@ Chiusi i quattro difetti del lotto L1 di `VALIDAZIONE.md` (branch `wf2/l1`, comm
 Ogni test e' stato falsificato togliendo il rimedio (rosso per la ragione giusta) e rimesso.
 `PlayerDao.updatePlayers` non ha piu' chiamanti in produzione; resta perche' lo usa
 `PerformanceTest`.
+### Design del telefono, passi 1-4 - 24 settembre 2026
+
+Fatti i passi 1-4 della pista Telefono di `DESIGN.md` (commit `34fcbdc`, branch
+`wf2/design-telefono`). Dal 5 in poi (schermata nuova, foglio PARTITA) aspettano L1-L3.
+
+- **Testi.** L'arretrato rifiutato dall'orologio non dice piu' «Chiudila»: seguirlo faceva
+  perdere i punti. Il tasto finale del tutorial dice Inizia (Start in inglese). Il difetto L5
+  sotto resta aperto: e' tolto solo il consiglio dannoso.
+- **`TeamInk` in `:core`,** l'unica regola del colore per i due moduli: `on()` per il testo
+  sopra un colore di squadra, `graphicOnBlack(argb, min = 3.0)` per la grafica di squadra su
+  nero, che servira' all'orologio. Soglia calcolata e non arrotondata; il test scorre l'RGB e
+  fissa #8454F6, che cade fra lo 0,179 dell'orologio e lo 0,1791 del telefono.
+- **Contrasti L11.** Testo nero su rosa e ciano del tema, pulsanti colore delle impostazioni,
+  registro, rose e formazioni con TeamInk. Anche le card del punteggio usano TeamInk al posto
+  della vecchia soglia sulla luma: sui predefiniti il numero passa da #1E1E1E a nero puro.
+- **Partita.** Schermo acceso con almeno un punto e partita non finita; niente toast di Wear
+  a ogni rotazione; vibrazione del punto breve (EFFECT_CLICK); minuto del registro nel formato
+  66' calcolato dai millisecondi, vuoto nel padel e nel tennis.
+
+Chiusi in `VALIDAZIONE.md` otto difetti di L11. Ogni rimedio ha un test che e' stato visto
+fallire togliendo il rimedio, salvo due parti che Robolectric non raggiunge, perche'
+MainActivity non si monta: i toast tolti e l'applicazione del flag alla finestra. Per lo
+schermo acceso e' provata la decisione (`schermoDaTenereAcceso`). **Da guardare su
+emulatore:** timeout dello schermo a 15s, primo +, schermo acceso per due minuti, spento dopo
+TERMINA; rotazione con l'orologio spento senza toast; tag di rose e formazioni e pulsanti colore
+con la squadra 2 in #1A237E. La vibrazione breve va provata su un telefono vero.

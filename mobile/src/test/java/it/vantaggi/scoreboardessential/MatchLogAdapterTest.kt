@@ -1,11 +1,13 @@
 package it.vantaggi.scoreboardessential
 
 import android.content.Context
+import android.graphics.drawable.ColorDrawable
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import org.junit.Assert.assertEquals
@@ -73,20 +75,24 @@ class MatchLogAdapterTest {
         return holder.itemView.findViewById(R.id.event_description)
     }
 
-    // Il testo salvato di un punto e' "Goal", non "GOAL!": l'evidenziazione cercava la stringa
-    // sbagliata e nessuna riga prendeva mai il colore della squadra.
+    // Prima il testo di un punto prendeva il colore della squadra: col blu notte #1A237E su
+    // #1E1E1E faceva 1,26:1 e la riga spariva. Il colore ora sta solo sulla barretta.
     @Test
-    fun `la riga di un punto prende il colore della squadra`() {
-        val coloreSquadra1 = 0xFF123456.toInt()
-        val adapter = MatchLogAdapter().apply { team1Color = coloreSquadra1 }
+    fun `la riga di un punto resta leggibile e il colore va sulla barretta`() {
+        val bluNotte = 0xFF1A237E.toInt()
+        val adapter = MatchLogAdapter().apply { team2Color = bluNotte }
+        adapter.submitList(
+            listOf(MatchEvent("1'", "Goal", team = 2, player = "Team 2", type = MatchEventType.SCORE, engineIndex = 0)),
+        )
+        val holder = adapter.onCreateViewHolder(FrameLayout(context), 0)
+        adapter.onBindViewHolder(holder, 0)
+        val testo = holder.itemView.findViewById<TextView>(R.id.event_description)
+        val barretta = holder.itemView.findViewById<View>(R.id.team_indicator)
 
-        val testo =
-            testoDellaRiga(
-                adapter,
-                MatchEvent("00:00", "Goal", team = 1, player = "Team 1", type = MatchEventType.SCORE, engineIndex = 0),
-            )
-
-        assertEquals(coloreSquadra1, testo.currentTextColor)
+        val fondo = context.getColor(R.color.concrete_gray)
+        assertEquals(context.getColor(R.color.stencil_white), testo.currentTextColor)
+        assertTrue(TeamInk.contrast(testo.currentTextColor, fondo) >= 4.5)
+        assertEquals(bluNotte, (barretta.background as ColorDrawable).color)
     }
 
     @Test

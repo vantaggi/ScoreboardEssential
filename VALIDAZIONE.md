@@ -469,6 +469,8 @@ Corretto: e5a88f1, come da rimedio: `GamePoints.TieBreak.openedAt` (obbligatorio
 
 **Rimedio.** Calcolare i minuti con ms/60000 e i secondi con (ms/1000)%60, senza passare da Date. Aggiungere un test indipendente dal fuso.
 
+Corretto: 34fcbdc, TimeUtils.matchMinute(ms) = ms/60000+1 col segno ' (65:10 diventa 66'), senza Date ne' fuso; vuoto negli sport senza cronometro. Test: MainViewModelTest con Asia/Kolkata e TimeUtilsTest.
+
 ### [media] Nelle impostazioni la scritta dei pulsanti colore è quasi bianca sul colore della squadra: illeggibile con i colori predefiniti
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/ui/MatchSettingsActivity.kt` - aree: ui-mobile
@@ -477,6 +479,8 @@ Corretto: e5a88f1, come da rimedio: `GamePoints.TieBreak.openedAt` (obbligatorio
 
 **Rimedio.** Portare applyReadableTextColor in un'utilità comune e applicarla a setTextColor e iconTint.
 
+Corretto: 34fcbdc, dipingiDiSquadra mette scritta e icona in TeamInk.on (nero sul giallo e sul verde predefiniti). TeamInk sta in :core ed e' l'unica regola del colore per telefono e orologio. Test: ContrastiDelTelefonoTest.
+
 ### [media] Etichette delle rose e righe dei punti nel registro nel colore grezzo della squadra: con un colore scuro spariscono sul fondo scuro
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt` - aree: ui-mobile
@@ -484,6 +488,8 @@ Corretto: e5a88f1, come da rimedio: `GamePoints.TieBreak.openedAt` (obbligatorio
 **Scenario.** MainActivity:298 e 311, MatchLogAdapter 117-119: setTextColor(colore della squadra) su #1E1E1E, senza correzioni. Con la squadra 2 in blu scuro le sue righe nel registro, visibile in tutti gli sport, sono illeggibili.
 
 **Rimedio.** Schiarire il testo quando il contrasto con #1E1E1E scende sotto la soglia, oppure usare colorOnSurface e tenere il colore solo sull'indicatore.
+
+Corretto: 34fcbdc, registro sempre in colorOnSurface con il colore solo sulla barretta; etichette delle rose come tag pieni del colore di squadra con testo TeamInk. Test: MatchLogAdapterTest, ContrastiDelTelefonoTest.
 
 ### [media] Il PDF mette 'TABELLINO MARCATORI' anche nel padel e ci elenca le squadre con il numero di punti
 
@@ -509,6 +515,8 @@ Corretto: e5a88f1, come da rimedio: `GamePoints.TieBreak.openedAt` (obbligatorio
 
 **Rimedio.** Eseguirlo solo con savedInstanceState == null.
 
+Corretto: 34fcbdc, i due toast sono tolti (lo stato lo mostra l'icona tramite isWearConnected), con le due stringhe rimaste senza uso. Nessun test: MainActivity sotto Robolectric non si monta; da vedere ruotando su emulatore con l'orologio spento.
+
 ### [bassa] Ora del registro in una colonna fissa da 50dp: con caratteri molto grandi può andare a capo
 
 `mobile/src/main/res/layout/match_event_item.xml` - aree: ui-mobile
@@ -516,6 +524,8 @@ Corretto: e5a88f1, come da rimedio: `GamePoints.TieBreak.openedAt` (obbligatorio
 **Scenario.** Colonna da 50dp senza maxLines (24). Con il carattere al 200% '00:00' misura circa 66dp e si spezza. Il caso delle tre cifre non esiste, perché il formato è mm:ss. Va verificato.
 
 **Rimedio.** wrap_content con minWidth, oppure maxLines=1.
+
+Corretto: 34fcbdc, colonna wrap_content con minWidth 40dp e maxLines 1. Test: MinutoDelRegistroTest misura «120'» a scala 2,0 (prima andava a capo in 50dp).
 
 ### [bassa] 'Partita ripresa' scritta in italiano nel codice, mentre la stringa match_resumed non la usa nessuno
 
@@ -541,6 +551,8 @@ Corretto: e5a88f1, come da rimedio: `GamePoints.TieBreak.openedAt` (obbligatorio
 
 **Rimedio.** 'Fine' o 'Inizia'.
 
+Corretto: 34fcbdc, 'Inizia' in italiano e 'Start' in inglese. Test: TestiDelTelefonoTest.
+
 ### [bassa] Titoli e schermate secondarie non tradotti, a volte con l'italiano mostrato agli utenti inglesi
 
 `mobile/src/main/AndroidManifest.xml` - aree: ui-mobile
@@ -549,6 +561,8 @@ Corretto: e5a88f1, come da rimedio: `GamePoints.TieBreak.openedAt` (obbligatorio
 
 **Rimedio.** Portare tutto in strings.xml e values-it.
 
+Ancora aperto. In parte, 34fcbdc: il titolo del dialogo del marcatore viene da select_scorer_title; restano le label del manifest, 'Manage Players', le statistiche e gli altri dialoghi.
+
 ### [bassa] Etichette delle formazioni ancora nei colori del tema e 'No formation' cablato
 
 `mobile/src/main/res/layout/content_scoreboard_details.xml` - aree: ui-mobile
@@ -556,6 +570,8 @@ Corretto: e5a88f1, come da rimedio: `GamePoints.TieBreak.openedAt` (obbligatorio
 **Scenario.** 65 e 72 usano colorPrimary e colorSecondary, e nessuno le ricolora: accanto a rose gialla e verde compaiono rosa e ciano. updateFormation costruisce testo inglese cablato.
 
 **Rimedio.** Colorarle nello stesso observer delle rose e mettere il testo in una risorsa con segnaposto.
+
+Corretto: 34fcbdc, colorate nello stesso observer delle rose come tag TeamInk; testo da formation_label e formation_none. Test: TestiDelTelefonoTest, ContrastiDelTelefonoTest.
 
 ### [bassa] Sulla card TalkBack non legge il nome della squadra
 
@@ -572,6 +588,8 @@ Corretto: e5a88f1, come da rimedio: `GamePoints.TieBreak.openedAt` (obbligatorio
 **Scenario.** #E0E0E0 su ciano #00E5FF (activity_main.xml:36) e su rosa #F50057 (themes 19-22), con testo a 14sp sotto la soglia AA.
 
 **Rimedio.** colorOnSecondary e colorOnPrimary scuri, oppure colori primari più scuri.
+
+Corretto: 34fcbdc, colorOnPrimary e colorOnSecondary neri (5,02 sul rosa, 13,65 sul ciano). Test: ContrastiDelTelefonoTest.
 
 ### [bassa] Bersagli sotto i 48dp e comandi senza etichetta nella gestione giocatori
 

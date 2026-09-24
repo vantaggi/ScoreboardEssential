@@ -750,4 +750,48 @@ class MainViewModelTest {
             viewModel.matchEvents.removeObserver(eventiObserver)
             viewModel.team1Score.removeObserver(scoreObserver)
         }
+
+    /**
+     * Il registro trattava il tempo trascorso come una data: SimpleDateFormat("mm:ss") su
+     * Date(ms). Un gol al 65:10 diventava "05:10", e in India (+5:30) "35:10". Il fuso qui e'
+     * quello che rompeva di piu': senza il rimedio questa riga non dice mai 66'.
+     */
+    @Test
+    fun `il minuto del registro viene dai millisecondi, oltre l'ora e in ogni fuso`() =
+        runTest {
+            val prima = java.util.TimeZone.getDefault()
+            try {
+                java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Kolkata"))
+                val eventiObserver = Observer<List<MatchEvent>> {}
+                viewModel.matchEvents.observeForever(eventiObserver)
+                // Prima si lascia arrivare lo 0 del servizio finto, poi si porta il tempo al 65:10.
+                shadowOf(Looper.getMainLooper()).idle()
+                advanceUntilIdle()
+                @Suppress("UNCHECKED_CAST")
+                (campo("_matchTimerValue") as androidx.lifecycle.MutableLiveData<Long>).value = 3_910_000L
+
+                viewModel.addScore(1)
+                advanceUntilIdle()
+
+                assertEquals("66'", righeDiPunto().first().timestamp)
+                viewModel.matchEvents.removeObserver(eventiObserver)
+            } finally {
+                java.util.TimeZone.setDefault(prima)
+            }
+        }
+
+    /** Senza cronometro un minuto sarebbe sempre 1': la colonna resta vuota. */
+    @Test
+    fun `nel padel il registro non scrive un minuto`() =
+        runTest {
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+
+            viewModel.addScore(1)
+            advanceUntilIdle()
+
+            assertEquals("", righeDiPunto().first().timestamp)
+            viewModel.matchEvents.removeObserver(eventiObserver)
+        }
 }

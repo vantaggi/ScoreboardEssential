@@ -17,9 +17,15 @@
     <style name="Theme.ScoreboardEssential" parent="Theme.Material3.Dark.NoActionBar">
         <!-- Street Vibe Color Palette -->
         <item name="colorPrimary">@color/graffiti_pink</item>
-        <item name="colorOnPrimary">@color/stencil_white</item>
+        <!--
+            Sopra rosa e ciano il testo e' NERO puro. Col bianco sporco dello street il rosa
+            faceva 3,17:1 e il ciano 1,17:1 (icona del FAB giocatori): sotto AA a 14sp. Anche
+            #121212 non basta sul rosa (4,48): l'unico inchiostro che passa e' il nero, 5,02 sul
+            rosa e 13,65 sul ciano.
+        -->
+        <item name="colorOnPrimary">@color/asphalt_black</item>
         <item name="colorSecondary">@color/neon_cyan</item>
-        <item name="colorOnSecondary">@color/stencil_white</item>
+        <item name="colorOnSecondary">@color/asphalt_black</item>
         <item name="colorError">@color/error_red</item>
         <item name="colorOnError">@color/stencil_white</item>
         <item name="android:colorBackground">@color/asphalt_dark</item>

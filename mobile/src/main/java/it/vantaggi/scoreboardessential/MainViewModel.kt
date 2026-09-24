@@ -57,14 +57,12 @@ import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
+import it.vantaggi.scoreboardessential.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /**
  * The primary ViewModel for the application's main scoring screen.
@@ -1380,8 +1378,14 @@ class MainViewModel(
         engineIndex: Int? = null,
         playerId: Int? = null,
     ) {
-        val timeFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
-        val timestamp = timeFormat.format(Date(matchTimerValue.value ?: 0L))
+        // Il minuto viene dai millisecondi, non da una Date: vedi TimeUtils.matchMinute. Senza
+        // cronometro (padel, tennis) un minuto sarebbe sempre 1' e non direbbe niente.
+        val timestamp =
+            if (sportRules.capabilities.clock != ClockMode.NONE) {
+                TimeUtils.matchMinute(matchTimerValue.value ?: 0L)
+            } else {
+                ""
+            }
 
         synchronized(matchEventLog) {
             // in testa: ordine cronologico inverso
