@@ -1631,7 +1631,11 @@ di Claude Code lo permettono. Regola: si legge l'uso del piano e si avvia il lot
 solo con il limite di 5 ore al massimo al 50% e quello settimanale al massimo all'85%; oltre, ci
 si ferma e si dice quando si azzera. Ordine, dal piano gia' approvato:
 
-1. **L3** annullamento e attribuzione dal registro del motore (in corso).
+1. ~~**L3**~~ fatto il 24 settembre 2026.
+0. **Cronaca e formato v2**, chiesto dal proprietario tramite la dashboard, prima di tutto il
+   resto: via il numero Padel Elite, export dallo storico (migrazione 13 -> 14), formato v2,
+   fixture condiviso, `MatchStats` in `:core` e la schermata Cronaca. Riferimenti in
+   `docs/dashboard/`.
 2. **L8** cronometro e portiere.
 3. **L2** riga viva e ciclo di vita del MainViewModel.
 4. **L11** il resto: registro, testi, PDF, accessibilita' del telefono.
