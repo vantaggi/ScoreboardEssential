@@ -431,6 +431,8 @@ Il dominio in :core è solido: regole, codec e motore reggono. L'unico difetto v
 
 **Rimedio.** Portare :wear a targetSdk 35 e provare su un emulatore Wear i cambi di comportamento di Android 15. Correggere il piano. Se serve tempo, chiedere la proroga.
 
+Corretto: e373e37, :wear a targetSdk 35 (compileSdk era già 36, :mobile già a 36). Cambi di Android 15 verificati nel codice: nessun servizio in primo piano, nessun PendingIntent di sistema, nessun avvio di Activity dallo sfondo, broadcast solo con LocalBroadcastManager, niente statusBarColor o setDecorFitsSystemWindows, nessuna collisione List.removeFirst/removeLast, String.format senza indici 0$. Wear OS 5 è API 34, quindi questi cambi valgono solo da Wear OS 6. TargetSdkTest legge il targetSdk dal manifest unito, rosso a 34. Il passaggio su emulatore Wear resta da fare.
+
 ### [media] Cambio lingua in-app inefficace con installazione da AAB: gli split di lingua non sono disattivati
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/utils/LocaleHelper.kt` - aree: build
@@ -439,6 +441,8 @@ Il dominio in :core è solido: regole, codec e motore reggono. L'unico difetto v
 
 **Rimedio.** bundle { language { enableSplit = false } }, oppure AppCompatDelegate.setApplicationLocales con localeConfig.
 
+Corretto: e373e37, tutti e due: `bundle { language { enableSplit = false } }` in mobile/build.gradle e la lingua passa da setApplicationLocales (voce sotto). Un test in LinguaUnicaTest legge il blocco dal file di build, rosso con enableSplit = true. La voce AppBundleLocaleChanges della baseline di lint non trova più il problema.
+
 ### [media] Solo MainActivity e MatchSettingsActivity applicano la lingua scelta; le altre cinque Activity seguono il sistema
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt` - aree: build
@@ -446,6 +450,8 @@ Il dominio in :core è solido: regole, codec e motore reggono. L'unico difetto v
 **Scenario.** attachBaseContext con LocaleHelper.onAttach esiste solo in MainActivity:132, MatchSettingsActivity:28 e nell'Application. LocaleHelper:11 forza 'en' quando non c'è niente di salvato. Su un telefono italiano, alla prima installazione, l'onboarding compare in italiano e la schermata principale in inglese; Statistiche, Storico e Giocatori seguono il sistema. È ragionamento sul framework, non osservato.
 
 **Rimedio.** Una sola via: AppCompatDelegate.setApplicationLocales (risolve anche gli split), oppure una BaseActivity con l'override.
+
+Corretto: e373e37, una sola via, AppCompatDelegate.setApplicationLocales. Nel manifest ci sono AppLocalesMetadataHolderService con autoStoreLocales, per API < 33, e localeConfig. Tolti gli attachBaseContext di Application, MainActivity e MatchSettingsActivity, e la copia della lingua in MatchSettingsRepository e nel ViewModel. Senza scelta l'app segue il sistema e non forza più "en". Il selettore mostra la lingua che la schermata usa davvero. La scelta salvata dalla versione precedente viene portata una volta sola da MainActivity. Nei test di LinguaUnicaTest, girati sul codice di prima, restano rossi la scelta dalle impostazioni, Statistiche ancora in inglese (a sdk 32) e il recupero della scelta vecchia.
 
 ## L11 Registro a schermo, testi, colori e accessibilità del telefono
 

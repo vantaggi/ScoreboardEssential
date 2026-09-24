@@ -115,8 +115,10 @@ scarica.
 ## Fase T — toolchain ✅ COMPLETATA
 
 Requisito Play: dal 31 agosto 2026 gli aggiornamenti richiedono `targetSdk 36`.
-**Risolto**: `:mobile` è a 36, il bundle release si costruisce. Le app Wear OS
-sono esentate, `:wear` resta a `targetSdk 34`.
+**Risolto**: `:mobile` è a 36, il bundle release si costruisce. ~~Le app Wear OS
+sono esentate, `:wear` resta a `targetSdk 34`.~~ **Corretto il 24 settembre 2026:**
+Wear è esente solo dal salto ad API 36, deve comunque puntare almeno ad API 35.
+`:wear` è ora a `targetSdk 35` (L10 di `VALIDAZIONE.md`).
 
 Restano due verifiche che richiedono un dispositivo, elencate in fondo.
 
@@ -1434,3 +1436,30 @@ Il piano di ciascuna pista mette per primi i passi piccoli e sicuri (testi che o
 contrasti, schermo acceso). La schermata di gioco nuova aspetta L1-L3 della validazione. Le
 decisioni di gusto, identita' e priorita' sono elencate in fondo a ogni pista di `DESIGN.md`:
 nessun passo di design e' stato avviato.
+
+### L10 Rilascio e lingua - 24 settembre 2026
+
+I tre difetti di L10 in `VALIDAZIONE.md` sono chiusi (`e373e37`).
+
+- **`:wear` a targetSdk 35.** Play non accettava piu' il bundle dell'orologio. I cambi di
+  Android 15 sono stati controllati nel codice e nessuno tocca l'orologio: niente servizi in
+  primo piano, PendingIntent di sistema o avvii dallo sfondo. I broadcast passano da
+  LocalBroadcastManager e non ci sono barre di sistema da gestire. Wear OS 5 e' API 34, quindi
+  i cambi si vedrebbero solo da Wear OS 6.
+- **Lingua, una sola via: `AppCompatDelegate.setApplicationLocales`.** Via gli
+  `attachBaseContext` per Activity e la copia in `MatchSettingsRepository`. Per API < 33 c'e'
+  `autoStoreLocales` nel manifest, per il sistema `locales_config`. Gli split per lingua del
+  bundle sono spenti. Senza scelta si segue il sistema, non piu' l'inglese forzato. Chi aveva
+  gia' scelto una lingua la ritrova: MainActivity la porta una volta nel meccanismo nuovo.
+
+**Da sapere:** sotto API 33 AppCompat applica la lingua solo alle Activity. Le notifiche del
+cronometro e i nomi dei canali seguono la lingua di sistema. Sui telefoni con Android 13 o
+successivo la lingua vale per tutto il processo. Lint segnala un avviso nuovo, voluto:
+`localeConfig` si usa solo da API 33 (UnusedAttribute).
+
+**Da provare su emulatore:** su Wear_OS_Small_Round (e su un Wear OS 6, se disponibile), il
+quadrante, la scelta dello sport e del marcatore e la coda offline. Sul telefono: un Android 12
+e un Android 14 in inglese; scegliere Italiano nelle impostazioni; controllare che Statistiche,
+Storico, Giocatori e onboarding cambino lingua, e che resti italiano dopo aver chiuso e
+riaperto l'app. Da Android 13 in poi, controllare anche Impostazioni di sistema > App > Lingua
+dell'app.
