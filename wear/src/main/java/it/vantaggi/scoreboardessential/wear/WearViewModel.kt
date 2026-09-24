@@ -350,7 +350,16 @@ class WearViewModel(
         // riapre la partita togliendo un punto vero. Offline il tocco finiva in coda come
         // "1 IN ATTESA". isClickable=false sul lato non basta a fermarlo: la guardia sta qui,
         // dove passano tutti i tocchi, TalkBack compreso.
-        if (_scoreState.value?.matchOver == true) return
+        //
+        // Scartato si', ma non in silenzio: senza telefono la riga in basso dice "NIENTE
+        // TELEFONO" e non "PARTITA FINITA", e dopo un AZZERA dal polso il quadrante v2 resta sul
+        // risultato finale finche' il telefono non risponde con la partita nuova. Il doppio colpo
+        // di errore dice al polso "questo tocco non e' stato preso", invece di lasciarlo a
+        // chiedersi se il punto sia partito.
+        if (_scoreState.value?.matchOver == true) {
+            triggerFailureVibration()
+            return
+        }
         sendScoreIntent(team, WearConstants.INTENT_POINT)
         if (protocolV2Seen) {
             // Nessuna vibrazione qui: la conferma la da' sendScoreIntent, e SOLO se il messaggio
