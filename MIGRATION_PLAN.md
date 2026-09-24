@@ -1450,3 +1450,22 @@ I due difetti di L9 in `VALIDAZIONE.md` sono chiusi, solo in `:core` e con test 
 
 Nessun cambio al protocollo Wear ne' al database: lo stato del motore non si persiste, si
 ricava rifacendo il fold del registro, quindi anche le partite salvate prima si rileggono giuste.
+### L1, chiusura della partita sul telefono - 24 settembre 2026
+
+Chiusi i quattro difetti del lotto L1 di `VALIDAZIONE.md` (branch `wf2/l1`, commit `6759480`).
+
+- **I gol non tornano piu' indietro.** `endMatch` non riscrive piu' le copie dei giocatori
+  tenute nelle rose: passa solo gli id, e le presenze salgono con una query mirata
+  (`MatchDao.incrementAppearances`). Il test usa un database vero in memoria dentro
+  `MainViewModelTest`, con esecutori diretti perche' le scritture lanciate dal ViewModel
+  finiscano dentro `advanceUntilIdle`.
+- **Padel e tennis si salvano anche prima di chiudere un set.** La guardia di partita non
+  iniziata e' quella di `selectSport` e `discardMatch`: registro del motore vuoto e cronometro
+  a zero. Vale anche per END MATCH dall'orologio, che passa da `endMatch`.
+- **Una sola transazione** (`MatchDao.closeMatch`) per chiusura o inserimento della riga,
+  presenze e formazioni. Il test fa fallire la seconda scrittura con un trigger SQLite.
+- **`insertPlayerWithRoles` e' davvero transazionale**, spostata in `PlayerDao`.
+
+Ogni test e' stato falsificato togliendo il rimedio (rosso per la ragione giusta) e rimesso.
+`PlayerDao.updatePlayers` non ha piu' chiamanti in produzione; resta perche' lo usa
+`PerformanceTest`.

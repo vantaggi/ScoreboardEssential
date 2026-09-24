@@ -94,6 +94,25 @@ class PlayerRepositoryTest {
             assertThat(playerWithRoles.roles.map { it.roleId }).containsExactlyElementsIn(updatedRoleIds)
         }
 
+    /**
+     * Il ruolo 99 non esiste: la seconda scrittura fallisce sulla chiave esterna, come farebbe
+     * un'interruzione fra le due. Senza transazione il giocatore restava, senza ruoli.
+     */
+    @Test
+    fun insertPlayerWithRoles_seIRuoliFallisconoNonLasciaIlGiocatore() =
+        runTest {
+            val esito =
+                runCatching {
+                    playerRepository.insertPlayerWithRoles(
+                        Player(playerName = "Senza ruoli", appearances = 0, goals = 0),
+                        listOf(1, 99),
+                    )
+                }
+
+            assertThat(esito.isFailure).isTrue()
+            assertThat(playerRepository.allPlayers.first()).isEmpty()
+        }
+
     @Test
     fun deletePlayer_removesPlayerAndAssociations() =
         runTest {
