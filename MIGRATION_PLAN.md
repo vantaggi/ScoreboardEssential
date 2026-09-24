@@ -1822,3 +1822,25 @@ da questo lotto).
 **Da guardare su dispositivo:** la Cronaca di una partita di padel a quattro giocatori chiusa
 dopo questa versione (andamento, celle che vanno a capo, nomi di squadra lunghi, colore scuro),
 e di una chiusa prima della versione 14, che deve mostrare le due frasi vuote.
+
+### Cronaca e formato v2 uniti e visti su emulatore - 25 settembre 2026
+
+Chiesti dal proprietario tramite la dashboard (`docs/dashboard/`). Tre agenti con revisione
+avversaria, tutti approvati al primo giro: formato v2 (via il numero Padel Elite dall'app, export
+dallo storico, migrazione 13 -> 14, fixture `core/src/test/resources/export-v2-sample.json`),
+`MatchStats` in `:core` (i valori attesi della partita a tre set della dashboard tornano tutti al
+primo tentativo) e la schermata Cronaca dallo storico.
+
+**Verifica:** 395 test JVM distinti, strumentati **11 su 11** compresa
+`migrazione13a14_aggiunge_ordine_inizio_e_id_lasciando_intatta_la_partita` e la catena 11 -> 14.
+Su emulatore: la scheda del giocatore non ha piu' il campo Padel Elite; un set di padel giocato
+dall'interfaccia fino al 6-4 e chiuso compare nello storico con CRONACA ed ESPORTA; la Cronaca
+torna col copione giocato (punti 27-16, tre break nei game giusti, Marco 12/12 al servizio,
+palle break 2/2 e 1/1, il game piu' lungo e' quello col punto secco, strisce di 9 e 6).
+
+**Aperto, dalla revisione del formato (bassa):** due `persistLiveMatch` ravvicinati con
+`currentMatchId` ancora nullo, come le due chiamate di `applyWatchBatch`, possono inserire due
+righe vive per la stessa partita. E' della famiglia di L2, che e' in coda.
+**Aperto, dalla schermata (voluto):** nel tennis singolare l'ordine di servizio non arriva a
+quattro giocatori, quindi Servizio e palle break restano vuoti; supportare due servitori in
+`MatchStats` e' una decisione da prendere.
