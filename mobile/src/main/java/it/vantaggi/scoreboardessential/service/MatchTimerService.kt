@@ -82,6 +82,14 @@ class MatchTimerService : Service() {
         var SYNC_INTERVAL = 60000L
     }
 
+    // Sotto API 33 la lingua scelta non arriva da sola ai Service (vedi LocaleHelper).
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(
+            it.vantaggi.scoreboardessential.utils.LocaleHelper
+                .wrapForService(newBase),
+        )
+    }
+
     override fun onCreate() {
         super.onCreate()
         connectionManager = OptimizedWearDataSync(applicationContext)

@@ -132,15 +132,12 @@ class MainActivity :
             }
         }
 
-    override fun attachBaseContext(newBase: android.content.Context) {
-        super.attachBaseContext(
-            it.vantaggi.scoreboardessential.utils.LocaleHelper
-                .onAttach(newBase),
-        )
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // La lingua non si applica piu' qui ma per tutta l'app (vedi LocaleHelper): resta solo
+        // da recuperare, una volta, la scelta fatta con la versione precedente.
+        it.vantaggi.scoreboardessential.utils.LocaleHelper
+            .migrateLegacyChoice(this)
         enableEdgeToEdge()
 
         setContentView(R.layout.activity_main)

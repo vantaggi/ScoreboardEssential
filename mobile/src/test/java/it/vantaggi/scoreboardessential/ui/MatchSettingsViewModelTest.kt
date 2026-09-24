@@ -58,7 +58,6 @@ class MatchSettingsViewModelTest {
             whenever(repository.getTeam1Color()).thenReturn(1)
             whenever(repository.getTeam2Color()).thenReturn(2)
             whenever(repository.getKeeperTimerDuration()).thenReturn(300L)
-            whenever(repository.getAppLanguage()).thenReturn("it")
             whenever(repository.getActiveSport()).thenReturn(SportRegistry.FOOTBALL)
             val matchDao = mock(MatchDao::class.java)
             whenever(matchDao.getActiveMatchOnce()).thenReturn(

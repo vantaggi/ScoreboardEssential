@@ -32,9 +32,6 @@ class MatchSettingsViewModel(
     private val _keeperTimerDuration = MutableLiveData<Long>()
     val keeperTimerDuration: LiveData<Long> = _keeperTimerDuration
 
-    private val _appLanguage = MutableLiveData<String>()
-    val appLanguage: LiveData<String> = _appLanguage
-
     private val _activeSport = MutableLiveData<String>()
 
     /** Lo sport scelto. E' la sola sorgente della voce mostrata nel selettore. */
@@ -51,7 +48,6 @@ class MatchSettingsViewModel(
             _team1Color.value = repository.getTeam1Color()
             _team2Color.value = repository.getTeam2Color()
             _keeperTimerDuration.value = repository.getKeeperTimerDuration()
-            _appLanguage.value = repository.getAppLanguage()
             _activeSport.value = repository.getActiveSport()
         }
     }
@@ -116,13 +112,6 @@ class MatchSettingsViewModel(
             }
             repository.setActiveSport(sportId)
             _activeSport.value = sportId
-        }
-    }
-
-    fun saveAppLanguage(language: String) {
-        viewModelScope.launch {
-            repository.setAppLanguage(language)
-            _appLanguage.value = language
         }
     }
 }
