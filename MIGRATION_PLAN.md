@@ -1462,3 +1462,18 @@ e il suo test e' diventato rosso.
 **Da guardare su emulatore:** "K 4:12" a 16sp nel quadrato da 48dp (se va a capo o si taglia), il
 nero sotto l'anello del portiere, e cosa legge davvero TalkBack sul lato (la live region sulle
 cifre dentro un bersaglio con la sua descrizione potrebbe annunciare il numero due volte).
+
+### Orologio, revisione dei passi 1 e 3 - 24 settembre 2026
+
+La revisione ha notato che la guardia di `incrementScore` legge `_scoreState`, e `resetMatch` non lo
+tocca (difetto alto, ancora aperto, "AZZERA dal polso non separa la coda"). Dopo un AZZERA dal polso
+su un padel finito, quindi, il tocco resta rifiutato finche' il telefono non rimanda uno stato v2 a
+partita non finita. Due parti del rilievo non reggono. Il calcio non arriva mai a `matchOver`:
+lo alza solo `RacketRules`. E il telefono ascolta `MATCH_STATE`: `endMatch` e `startNewMatch`
+rimandano il v2, quindi da collegati il blocco cade subito. Da soli, invece, i tocchi dopo AZZERA si
+perdono fino al ritorno del telefono. Lasciarli passare vorrebbe dire rimetterli in coda con la
+partita finita, cioe' di nuovo le righe fantasma. La cura vera e' il marcatore di fine partita in
+coda, previsto dal difetto alto.
+
+Fatto (`b505532`): il tocco rifiutato non e' piu' silenzioso, e vibra col doppio colpo di errore.
+Un test fissa il contratto: dopo AZZERA il blocco cade col v2 nuovo del telefono.
