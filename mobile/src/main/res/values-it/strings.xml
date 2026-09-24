@@ -13,7 +13,7 @@
     <!-- Onboarding -->
     <string name="onboarding_skip">Salta</string>
     <string name="onboarding_next">Avanti</string>
-    <string name="onboarding_finish">Fines</string>
+    <string name="onboarding_finish">Inizia</string>
 
     <!-- Onboarding Step 1: Score Management -->
     <string name="onboarding_score_title">GESTIONE PUNTEGGIO FACILE</string>
@@ -52,8 +52,6 @@
 
     <!-- MainActivity Strings -->
     <string name="notification_permission_required">È necessaria l\'autorizzazione per le notifiche del timer</string>
-    <string name="wear_connected">✓ Wear OS Connesso</string>
-    <string name="wear_not_connected">✗ Wear OS Non Connesso</string>
     <string name="start">AVVIA</string>
     <string name="pause_caps">PAUSA</string>
     <string name="wear_connected_tooltip">Wear OS Connesso</string>
@@ -102,7 +100,7 @@
         <item quantity="many">Partita dal polso: %1$d azioni importate.</item>
         <item quantity="other">Partita dal polso: %1$d azioni importate.</item>
     </plurals>
-    <string name="watch_batch_rejected">Qui una partita è già aperta. Chiudila: poi arriverà quella registrata al polso.</string>
+    <string name="watch_batch_rejected">L\'orologio ha mandato punti che non sono entrati in questa partita.</string>
     <string name="label_reset_timer">AZZERA</string>
     <string name="label_undo_last_goal">ANNULLA ULTIMO GOL</string>
     <string name="label_undo_last_point">ANNULLA ULTIMO PUNTO</string>
@@ -112,6 +110,9 @@
     <string name="label_team_rosters">ROSE</string>
     <string name="label_match_log">REGISTRO</string>
     <string name="label_formations">FORMAZIONI</string>
+    <string name="formation_label">%1$s (%2$s)</string>
+    <string name="formation_none">%1$s (nessun modulo)</string>
+    <string name="select_scorer_title">Chi ha segnato?</string>
     <string name="label_add_player">Aggiungi giocatore</string>
     <string name="label_team_1">Squadra 1</string>
     <string name="label_team_2">Squadra 2</string>

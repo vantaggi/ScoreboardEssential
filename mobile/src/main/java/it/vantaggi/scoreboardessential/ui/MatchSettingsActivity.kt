@@ -13,6 +13,7 @@ import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.databinding.ActivityMatchSettingsBinding
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.sportLabel
+import it.vantaggi.scoreboardessential.utils.dipingiDiSquadra
 
 class MatchSettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMatchSettingsBinding
@@ -101,12 +102,14 @@ class MatchSettingsActivity : AppCompatActivity() {
             }
         }
 
+        // Sfondo, scritta e icona insieme: lo sfondo da solo lasciava il testo quasi bianco sul
+        // giallo e sul verde predefiniti.
         viewModel.team1Color.observe(this) { color ->
-            binding.team1ColorButton.setBackgroundColor(color)
+            binding.team1ColorButton.dipingiDiSquadra(color)
         }
 
         viewModel.team2Color.observe(this) { color ->
-            binding.team2ColorButton.setBackgroundColor(color)
+            binding.team2ColorButton.dipingiDiSquadra(color)
         }
 
         viewModel.keeperTimerDuration.observe(this) { duration ->

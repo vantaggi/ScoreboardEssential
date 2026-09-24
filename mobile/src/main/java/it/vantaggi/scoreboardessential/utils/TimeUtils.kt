@@ -22,4 +22,14 @@ object TimeUtils {
             append(seconds)
         }
     }
+
+    /**
+     * Il minuto di gioco come lo dice il calcio: 0:30 e' il 1', 65:10 e' il 66'.
+     *
+     * Solo aritmetica sui millisecondi. Il registro passava il tempo trascorso a
+     * SimpleDateFormat("mm:ss") dentro una Date, cioe' lo trattava come un istante: "mm" ripartiva
+     * da zero ogni ora (un gol al 65' diventava 05:00) e il fuso del telefono entrava nel conto
+     * (in India, +5:30, ogni riga era spostata di mezz'ora).
+     */
+    fun matchMinute(millis: Long): String = "${millis.coerceAtLeast(0L) / 60_000L + 1}'"
 }

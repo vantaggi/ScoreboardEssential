@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -12,12 +11,12 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
 import android.view.View
+import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -40,8 +39,11 @@ import it.vantaggi.scoreboardessential.core.ReportLabels
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.SportCapabilities
 import it.vantaggi.scoreboardessential.core.SportRegistry
+import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.Formation
+import it.vantaggi.scoreboardessential.domain.models.MatchEvent
+import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
@@ -51,6 +53,7 @@ import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import it.vantaggi.scoreboardessential.utils.MatchReportUtils
 import it.vantaggi.scoreboardessential.utils.TimeUtils
 import it.vantaggi.scoreboardessential.utils.animateScoreButton
+import it.vantaggi.scoreboardessential.utils.etichettaDiSquadra
 import it.vantaggi.scoreboardessential.utils.playNativeGoalAnimation
 import it.vantaggi.scoreboardessential.views.FormationView
 import kotlinx.coroutines.Dispatchers
@@ -169,15 +172,15 @@ class MainActivity :
         lifecycleScope.launch {
             delay(2000) // Aspetta che il servizio si registri
 
-            // Prima si riallinea lo stato, cosi' toast e icona in barra dicono la stessa cosa.
+            // Prima si riallinea lo stato, cosi' l'icona in barra dice il vero. Niente toast: a ogni
+            // rotazione ricompariva "Wear OS Not Connected", e lo stato lo mostra gia' l'icona
+            // tramite isWearConnected.
             viewModel.connectionManager.refreshConnection()
             val testResult = viewModel.connectionManager.testConnection()
             if (testResult) {
                 Log.d("ConnectionTest", "✅ CONNECTION TEST PASSED")
-                Toast.makeText(this@MainActivity, getString(R.string.wear_connected), Toast.LENGTH_SHORT).show()
             } else {
                 Log.e("ConnectionTest", "❌ CONNECTION TEST FAILED")
-                Toast.makeText(this@MainActivity, getString(R.string.wear_not_connected), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -274,6 +277,7 @@ class MainActivity :
             bindScoreDetail(team2ScoreDetailTextView, display.side2Secondary)
             bindPeriod(display)
             applyMatchOver(display.matchOver)
+            aggiornaSchermoAcceso()
         }
 
         viewModel.team1Name.observe(this) { name ->
@@ -294,8 +298,10 @@ class MainActivity :
             )
             // Nel riquadro delle rose la squadra aveva il colore del TEMA (rosa o ciano)
             // mentre la sua card sopra aveva quello scelto dall'utente: le stesse due
-            // squadre con due coppie di colori diverse sulla stessa schermata.
-            findViewById<TextView>(R.id.team1_roster_label).setTextColor(color)
+            // squadre con due coppie di colori diverse sulla stessa schermata. Rose e
+            // formazioni portano il colore come riempimento del tag, mai come testo.
+            findViewById<TextView>(R.id.team1_roster_label).etichettaDiSquadra(color)
+            team1FormationLabel.etichettaDiSquadra(color)
             matchLogAdapter.team1Color = color
             matchLogAdapter.notifyDataSetChanged()
         }
@@ -308,7 +314,8 @@ class MainActivity :
                 team2ScoreTextView,
                 team2ScoreDetailTextView,
             )
-            findViewById<TextView>(R.id.team2_roster_label).setTextColor(color)
+            findViewById<TextView>(R.id.team2_roster_label).etichettaDiSquadra(color)
+            team2FormationLabel.etichettaDiSquadra(color)
             matchLogAdapter.team2Color = color
             matchLogAdapter.notifyDataSetChanged()
         }
@@ -357,6 +364,7 @@ class MainActivity :
 
         viewModel.matchEvents.observe(this) { events ->
             matchLogAdapter.submitList(events)
+            aggiornaSchermoAcceso()
         }
 
         viewModel.isMatchTimerRunning.observe(this) { isRunning ->
@@ -809,21 +817,16 @@ class MainActivity :
      *
      * Nome, punteggio e dettaglio erano cablati su concrete_gray (#1E1E1E) mentre lo sfondo lo
      * decide il selettore di colore: su una tinta scura il punteggio diventava quasi invisibile.
-     * La soglia sta sulla luminanza percepita e non sulla media dei canali, perche' l'occhio pesa
-     * il verde molto piu' del blu: un blu acceso che alla media "sembra chiaro" e' scuro davvero.
+     * L'inchiostro lo decide [TeamInk], la sola regola del colore per telefono e orologio. Quella
+     * che c'era qui (media NON linearizzata, soglia 0,5, #E0E0E0 o #1E1E1E) scendeva a 2,07:1 su
+     * #FF4BFF.
      */
     private fun applyReadableTextColor(
         cardColor: Int,
         vararg views: TextView,
     ) {
-        val luminanza =
-            (
-                0.2126 * Color.red(cardColor) +
-                    0.7152 * Color.green(cardColor) +
-                    0.0722 * Color.blue(cardColor)
-            ) / 255.0
-        val colore = if (luminanza < 0.5) R.color.stencil_white else R.color.concrete_gray
-        views.forEach { it.setTextColor(ContextCompat.getColor(this, colore)) }
+        val inchiostro = TeamInk.on(cardColor)
+        views.forEach { it.setTextColor(inchiostro) }
     }
 
     private fun bindScoreDetail(
@@ -863,11 +866,29 @@ class MainActivity :
             }.start()
     }
 
+    /**
+     * Un colpo breve di sistema, non piu' la sequenza da 500ms che partiva a ogni + in tutti gli
+     * sport: nel padel, con un punto ogni pochi secondi, durava quasi quanto lo scambio di tocchi.
+     */
     private fun playGoalVibrationPattern() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val timings = longArrayOf(0, 100, 50, 100, 50, 200)
-            val amplitudes = intArrayOf(0, 128, 0, 255, 0, 128)
-            vibrator?.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
+        vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+    }
+
+    /**
+     * Lo schermo resta acceso finche' c'e' una partita viva, e torna a seguire il timeout di
+     * sistema appena finisce o ne comincia una nuova. Senza, fra un punto e l'altro lo schermo si
+     * spegneva e a bordo campo andava sbloccato a ogni punto.
+     */
+    private fun aggiornaSchermoAcceso() {
+        val acceso =
+            schermoDaTenereAcceso(
+                viewModel.matchEvents.value,
+                viewModel.scoreDisplay.value?.matchOver == true,
+            )
+        if (acceso) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
 
@@ -1046,6 +1067,17 @@ class MainActivity :
             .show()
     }
 
+    // Da risorsa: "No formation" era cablato in inglese anche con l'app in italiano.
+    private fun testoFormazione(
+        nomeSquadra: String,
+        formazione: Formation,
+    ): String =
+        if (formazione.isValid()) {
+            getString(R.string.formation_label, nomeSquadra, formazione.getFormationString())
+        } else {
+            getString(R.string.formation_none, nomeSquadra)
+        }
+
     private fun updateFormation(
         teamNumber: Int,
         players: List<PlayerWithRoles>,
@@ -1056,22 +1088,27 @@ class MainActivity :
             1 -> {
                 team1FormationView.setFormation(formation)
                 val teamName = viewModel.team1Name.value ?: "Team 1"
-                if (formation.isValid()) {
-                    team1FormationLabel.text = "$teamName (${formation.getFormationString()})"
-                } else {
-                    team1FormationLabel.text = "$teamName (No formation)"
-                }
+                team1FormationLabel.text = testoFormazione(teamName, formation)
             }
 
             2 -> {
                 team2FormationView.setFormation(formation)
                 val teamName = viewModel.team2Name.value ?: "Team 2"
-                if (formation.isValid()) {
-                    team2FormationLabel.text = "$teamName (${formation.getFormationString()})"
-                } else {
-                    team2FormationLabel.text = "$teamName (No formation)"
-                }
+                team2FormationLabel.text = testoFormazione(teamName, formation)
             }
         }
     }
 }
+
+/**
+ * Se lo schermo va tenuto acceso: almeno un punto segnato e partita non finita.
+ *
+ * Un punto e non un avvio: una partita aperta e mai giocata non deve tenere acceso il telefono in
+ * tasca. Finita la partita, o cominciata la nuova che svuota il registro, lo schermo torna al
+ * timeout di sistema. Sta fuori dall'Activity perche' sotto Robolectric MainActivity non si
+ * monta: cosi' la decisione si prova da sola.
+ */
+internal fun schermoDaTenereAcceso(
+    eventi: List<MatchEvent>?,
+    partitaFinita: Boolean,
+): Boolean = !partitaFinita && eventi.orEmpty().any { it.type == MatchEventType.SCORE }

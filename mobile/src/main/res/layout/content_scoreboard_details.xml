@@ -21,7 +21,7 @@
                     <!-- Team 1 Roster -->
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginEnd="8dp">
 
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/team1_roster_label" android:text="@string/label_team_1" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:layout_marginBottom="8dp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/team1_roster_label" android:text="@string/label_team_1" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:paddingHorizontal="8dp" android:paddingVertical="2dp" android:layout_marginBottom="8dp"/>
 
                         <androidx.recyclerview.widget.RecyclerView android:id="@+id/team1_roster_recyclerview" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
 
@@ -31,7 +31,7 @@
                     <!-- Team 2 Roster -->
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="8dp">
 
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/team2_roster_label" android:text="@string/label_team_2" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:layout_marginBottom="8dp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/team2_roster_label" android:text="@string/label_team_2" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:paddingHorizontal="8dp" android:paddingVertical="2dp" android:layout_marginBottom="8dp"/>
 
                         <androidx.recyclerview.widget.RecyclerView android:id="@+id/team2_roster_recyclerview" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
 
@@ -62,14 +62,14 @@
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginEnd="8dp">
 
-                        <TextView android:id="@+id/team1_formation_label" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="Team 1 (4-4-2)" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="?attr/colorPrimary" android:layout_marginBottom="8dp"/>
+                        <TextView android:id="@+id/team1_formation_label" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="Team 1 (4-4-2)" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:paddingHorizontal="8dp" android:paddingVertical="2dp" android:layout_marginBottom="8dp"/>
 
                         <it.vantaggi.scoreboardessential.views.FormationView android:id="@+id/team1_formation_view" android:layout_width="match_parent" android:layout_height="200dp"/>
                     </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="8dp">
 
-                        <TextView android:id="@+id/team2_formation_label" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="Team 2 (4-3-3)" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="?attr/colorSecondary" android:layout_marginBottom="8dp"/>
+                        <TextView android:id="@+id/team2_formation_label" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="Team 2 (4-3-3)" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:paddingHorizontal="8dp" android:paddingVertical="2dp" android:layout_marginBottom="8dp"/>
 
                         <it.vantaggi.scoreboardessential.views.FormationView android:id="@+id/team2_formation_view" android:layout_width="match_parent" android:layout_height="200dp"/>
                     </LinearLayout>

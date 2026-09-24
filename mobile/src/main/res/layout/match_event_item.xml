@@ -19,12 +19,17 @@
         app:layout_constraintBottom_toBottomOf="@id/event_description"
         app:layout_constraintStart_toStartOf="parent"/>
 
+    <!--
+        Il minuto si adatta al testo: una colonna fissa da 50dp, coi caratteri al 200%,
+        spezzava il tempo su due righe. minWidth tiene allineate le righe nel caso normale.
+    -->
     <TextView
         android:id="@+id/event_timestamp"
-        android:layout_width="50dp"
+        android:layout_width="wrap_content"
+        android:minWidth="40dp"
+        android:maxLines="1"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:text="00:00"
         android:textAppearance="?attr/textAppearanceLabelSmall"
         android:fontFamily="monospace"
         android:gravity="start"

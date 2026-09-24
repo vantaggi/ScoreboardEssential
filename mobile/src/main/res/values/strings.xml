@@ -14,7 +14,7 @@
     <!-- Onboarding -->
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_next">Next</string>
-    <string name="onboarding_finish">Finish</string>
+    <string name="onboarding_finish">Start</string>
 
     <!-- Onboarding Step 1: Score Management -->
     <string name="onboarding_score_title">EASY SCORE MANAGEMENT</string>
@@ -53,8 +53,6 @@
 
     <!-- MainActivity Strings -->
     <string name="notification_permission_required">Notifications permission is required for timer alerts</string>
-    <string name="wear_connected">✓ Wear OS Connected</string>
-    <string name="wear_not_connected">✗ Wear OS Not Connected</string>
     <string name="start">START</string>
     <string name="pause_caps">PAUSE</string>
     <string name="wear_connected_tooltip">Wear OS Connected</string>
@@ -102,7 +100,7 @@
         <item quantity="one">Match from the watch: %1$d action imported.</item>
         <item quantity="other">Match from the watch: %1$d actions imported.</item>
     </plurals>
-    <string name="watch_batch_rejected">A match is already open here. End it, and the one from the watch will arrive.</string>
+    <string name="watch_batch_rejected">The watch sent points that did not go into this match.</string>
     <string name="label_reset_timer">RESET</string>
     <string name="label_undo_last_goal">UNDO LAST GOAL</string>
     <string name="label_undo_last_point">UNDO LAST POINT</string>
@@ -112,6 +110,9 @@
     <string name="label_team_rosters">TEAM ROSTERS</string>
     <string name="label_match_log">MATCH LOG</string>
     <string name="label_formations">FORMATIONS</string>
+    <string name="formation_label">%1$s (%2$s)</string>
+    <string name="formation_none">%1$s (no formation)</string>
+    <string name="select_scorer_title">Who scored?</string>
     <string name="label_add_player">Add Player</string>
     <string name="label_team_1">Team 1</string>
     <string name="label_team_2">Team 2</string>
