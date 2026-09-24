@@ -193,6 +193,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 
 **Rimedio.** Senza telefono non aprire la scelta, oppure accodare l'attribuzione insieme all'intenzione. Se nessun nodo riceve, vibrare l'errore.
 
+Corretto: 2e54ddd, la scelta si apre solo dopo che l'intenzione del punto e' arrivata al telefono (esito di OptimizedWearDataSync.sendMessage, anche nel percorso v1); senza telefono il punto va in coda e il marcatore resta al registro del telefono. PlayerSelectionActivity usa sendMessage e chiude dopo l'esito: nessun nodo vibra l'errore e mostra "MARCATORE NON INVIATO". Test in WearViewModelTest e PlayerSelectionActivityTest, rossi senza il rimedio. Resta il caso in cui il telefono cade tra il punto e la scelta: l'errore si sente, ma il nome non si accoda.
+
 ## L4 Fine partita e comandi dall'orologio come intenzioni v2
 
 ### [alta] AZZERA/Finisci sull'orologio nel calcio: lo 0-0 v1 urgente svuota il motore del telefono prima di endMatch, e la partita va persa o viene salvata 0-0

@@ -1623,3 +1623,20 @@ strumentata nuova, rossa senza il rimedio; suite verde, strumentati 10 su 10.
 repository: formato v1, regole di validita', i casi da trattare (partita interrotta, tiebreak) e
 una sezione dove la dashboard scrive cosa le serve. I4 e I5 restano fermi: servono le due
 autorizzazioni del proprietario sul Supabase di produzione.
+
+### L3, la voce dell'orologio: il marcatore senza telefono - 24 settembre 2026
+
+Chiusa la sola voce di L3 che sta sul polso ("Senza telefono l'attribuzione del marcatore scelta
+al polso si perde in silenzio"), in parallelo al lavoro sul telefono. La scelta del marcatore si
+apre solo dopo che il punto e' arrivato al telefono, cioe' sull'esito di `sendMessage` e non sul
+tocco: senza telefono il punto va in coda come prima e il nome si dara' dal registro del telefono.
+`PlayerSelectionActivity` non chiede piu' i nodi a mano: aspetta l'esito, e se nessuno riceve vibra
+l'errore e lo scrive ("MARCATORE NON INVIATO"). Protocollo e coda offline non toccati.
+
+**Trappola nuova per i test.** `sendMessage` gira su `Dispatchers.IO`, un thread vero che il
+dispatcher di test non governa: i test che aspettano l'esito fanno girare il Main finto (o il
+looper di Robolectric) in un ciclo con un limite di tempo, invece di un solo `advanceUntilIdle`.
+
+**Resta aperto:** se il telefono cade tra il punto consegnato e la scelta, il nome non si accoda;
+ora pero' il polso lo dice. La scelta si apre qualche decimo di secondo dopo il tocco, il tempo
+dell'invio: da guardare su dispositivo.
