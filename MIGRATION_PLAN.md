@@ -1732,3 +1732,35 @@ chiamate ravvicinate (come le due di `applyWatchBatch`) vedono entrambe `current
 mentre la prima INSERT e' sospesa, e inseriscono due righe vive. Non toccato; id e inizio pero'
 restano gli stessi nelle due righe. **Da provare su dispositivo:** padel con quattro giocatori, qualche punto, fine partita,
 poi "Esporta partita" dallo storico, confrontato con l'export dal vivo.
+
+### La Cronaca in `:core`: `MatchStats` - 24 settembre 2026
+
+Fatta la parte di calcolo della Cronaca (sezioni 1-3 di `docs/dashboard/SCOREBOARD_CRONACA_APP.md`),
+solo in `:core`, accanto a `MatchExporter`. `MatchStats.of(engine, serveOrder)` prende il motore
+per la stessa ragione di `MatchExporter.build` e un ordine di servizio facoltativo (di default
+quello delle regole: una partita dello storico lo conserva a parte), rigioca il registro in una
+passata saltando gli eventi senza effetto e restituisce solo dati: punti con cio' che era in palio
+prima (punto decisivo, palla break, set e match point per lato, andamento cumulato), game, set,
+set in corso, servizio per coppia e per giocatore, break, annullati, strisce, rimonte, tempi e
+momenti chiave nell'ordine della dashboard. **Le frasi non sono in `:core`**: `KeyMoment` e' una
+gerarchia di dati, le parole le mette la schermata.
+
+Il lato al servizio e' `serveIndex % 2 + 1`, come in `RacketRules.display`: vale perche'
+`refreshServeOrder` mette sempre per primo un giocatore del lato 1. Senza un ordine di quattro il
+servitore resta ignoto, e con lui palle break e game tenuti, come nella dashboard.
+
+**Verifica:** `v1-tre-set.json` da' esattamente la tabella della sezione 3 al primo colpo (7-6 con
+tie-break 7-5, 3-6, 7-5; game 17-17; serviti/tenuti 16/10 e 17/11; break 6 e 6; decisivi 5, vinti
+3 e 2; match point annullati 2 e 0, sul 2-5 del terzo set; set point annullati 0 e 0; rimonta nel
+terzo set da 2-5 a 7-5; non ribaltata), e il servitore ricavato coincide con quello del file in
+tutti i 189 punti. `app-reale-interrotta.json` da' 2-1, 15-0 e servitori 1, 4, 2 e poi 3. I file si
+leggono con un lettore JSON minimo scritto nei test. 30 test nuovi, 131 in `:core`;
+`ktlintCheck`, `lintDebug`, `assembleDebug`, `assembleDebugAndroidTest` verdi. Falsificazione:
+venti mutazioni del calcolo, una alla volta. Diciotto rosse subito; "palla break anche nel
+tie-break" e' sopravvissuta finche' non e' arrivato `nelTieBreakNonCiSonoPalleBreak`, ora rossa;
+"convertita solo se il game si chiude" era equivalente (vinta dal ricevitore, la palla break chiude
+il game per definizione) e la condizione ridondante e' stata tolta.
+
+**Resta da fare:** la schermata in `:mobile` (sezione 4 del brief) e la conservazione di
+`serveOrder` e ora di inizio sulla partita chiusa (richiesta 1 del formato): senza, dallo storico
+servizio e tempi restano vuoti.
