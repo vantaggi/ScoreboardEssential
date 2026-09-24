@@ -1434,3 +1434,31 @@ Il piano di ciascuna pista mette per primi i passi piccoli e sicuri (testi che o
 contrasti, schermo acceso). La schermata di gioco nuova aspetta L1-L3 della validazione. Le
 decisioni di gusto, identita' e priorita' sono elencate in fondo a ogni pista di `DESIGN.md`:
 nessun passo di design e' stato avviato.
+
+### Orologio, passi 1 e 3 del design - 24 settembre 2026
+
+Fatti i passi 1 e 3 della pista Orologio di `DESIGN.md`, sul layout di oggi (`616eab5`). Il passo 2
+(`ReadableColor`) non si fa: la regola del colore vive in `:core` come `TeamInk`, e la scrive
+un'altra pista. Nessuno dei passi dal 4 in poi e' cominciato.
+
+- **Cronometro nel calcio col v2 (L7 alta):** il collector di `matchTimer` scriveva solo finche'
+  il v2 non era mai arrivato, e il v2 non porta il tempo: al polso restava "00:00" per tutta la
+  partita. Ora scrive anche quando lo sport ha il cronometro, e `applyClockRole` scrive subito il
+  tempo, cosi' passando da padel a calcio "Set 1" sparisce anche a cronometro fermo.
+- **Tocco a partita finita (L7 media, lato orologio):** `incrementScore` esce se lo stato dice
+  `matchOver`: niente intenzione, niente coda, niente richiesta del marcatore. Resta aperta la
+  guardia sul telefono (`addRemotePoint`, `applyWatchBatch`).
+- **Quadrante:** fondo `ink_black` #000000 (nome condiviso col telefono), risultato finale senza
+  alpha 0.4, K che mostra "K m:ss" mentre corre, `servingSide` letto dallo stato v2 e ricalcolato
+  al polso (non ancora disegnato).
+- **TalkBack (L7 media):** la descrizione del lato dice nome e punteggio a schermo ("ROSSI, 40."),
+  con "Squadra 1" finche' il nome non arriva; le cifre hanno `accessibilityLiveRegion=polite`.
+
+Per la prima volta c'e' un test Robolectric sul quadrante vero (`MainActivityTest`): arriva fino a
+STARTED, con il ViewModel messo nello store prima di `onCreate` e i client GMS finti. `onResume`
+resta fuori, perche' rilegge i DataItem col client vero. Ogni rimedio e' stato tolto uno per volta
+e il suo test e' diventato rosso.
+
+**Da guardare su emulatore:** "K 4:12" a 16sp nel quadrato da 48dp (se va a capo o si taglia), il
+nero sotto l'anello del portiere, e cosa legge davvero TalkBack sul lato (la live region sulle
+cifre dentro un bersaglio con la sua descrizione potrebbe annunciare il numero due volte).

@@ -345,6 +345,8 @@ Il dominio in :core è solido: regole, codec e motore reggono. L'unico difetto v
 
 **Rimedio.** Alla riga 476 usare la condizione scoreState == null || scoreState.hasClock. Nel ramo hasClock di applyClockRole scrivere subito matchTimer.value.
 
+Corretto: 616eab5, col rimedio scritto qui: il collector scrive se `scoreState == null || scoreState.hasClock`, e il ramo hasClock di applyClockRole scrive subito `matchTimer.value`. Test in MainActivityTest: nel calcio v2 il tempo avanza, da padel a calcio "Set 1" sparisce, nel padel il tempo non copre il periodo.
+
 ### [media] A partita finita i lati dell'orologio restano toccabili, e il telefono registra una riga e un annullamento fantasma per il punto inerte
 
 `wear/src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt` - aree: ui-wear, protocollo
@@ -353,6 +355,8 @@ Il dominio in :core è solido: regole, codec e motore reggono. L'unico difetto v
 
 **Rimedio.** Sull'orologio: if (_scoreState.value?.matchOver == true) return in incrementScore. Sul telefono: in addRemotePoint la stessa guardia di addScore. applyWatchBatch non deve contare le voci inerti.
 
+Corretto in parte: 616eab5, solo il lato orologio. incrementScore esce a partita finita (niente intenzione, coda o marcatore; WearViewModelTest), e il risultato non e' piu' ad alpha 0.4. Restano aperte la guardia in addRemotePoint e le voci inerti in applyWatchBatch sul telefono.
+
 ### [media] Con TalkBack il punteggio dell'orologio non viene letto: la contentDescription fissa del lato prende il posto delle cifre
 
 `wear/src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt` - aree: ui-wear
@@ -360,6 +364,8 @@ Il dominio in :core è solido: regole, codec e motore reggono. L'unico difetto v
 **Scenario.** I contenitori cliccabili hanno una contentDescription fissa (311-313) e le cifre non hanno accessibilityLiveRegion. Nel padel sul 30-15 il focus legge 'Squadra 1. Tocca per segnare…' senza nessun numero. Il comportamento di TalkBack non è stato misurato.
 
 **Rimedio.** Mettere il punteggio nella contentDescription dentro renderScoreState e aggiungere accessibilityLiveRegion=polite alle cifre.
+
+Corretto: 616eab5, la descrizione del lato dice nome e punteggio a schermo ("ROSSI, 40.", "Squadra 1" finche' il nome non arriva) ed e' riscritta a ogni cambio, anche nel v1; le cifre hanno accessibilityLiveRegion=polite. Test in MainActivityTest. Cosa legge davvero TalkBack va ancora ascoltato su emulatore.
 
 ### [bassa] La riga di stato senza telefono in italiano probabilmente non entra nel quadrante da 192dp
 
