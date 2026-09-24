@@ -7,6 +7,7 @@ import androidx.core.os.LocaleListCompat
 import androidx.room.Room
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.database.AppDatabase
+import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
 import org.junit.After
@@ -111,6 +112,51 @@ class LinguaUnicaTest {
 
         assertEquals("it", AppCompatDelegate.getApplicationLocales().toLanguageTags())
         assertFalse("la vecchia chiave va letta una volta sola", prefs.contains("app_language"))
+    }
+
+    /**
+     * La vecchia versione salvava "en" a ogni avvio anche senza scelta: quasi ogni installazione
+     * ha quel valore. Migrarlo bloccherebbe in inglese chi ha il telefono in italiano.
+     */
+    @Test
+    @Config(qualifiers = "it")
+    fun `l'inglese scritto da solo dalla versione precedente non blocca l'app in inglese`() {
+        val prefs = RuntimeEnvironment.getApplication().getSharedPreferences("match_settings_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("app_language", "en").commit()
+        val host =
+            Robolectric
+                .buildActivity(MatchSettingsActivity::class.java)
+                .setup()
+                .get()
+
+        LocaleHelper.migrateLegacyChoice(host)
+
+        assertTrue(
+            "nessuna scelta vera: l'app deve seguire il sistema, non forzare l'inglese",
+            AppCompatDelegate.getApplicationLocales().isEmpty,
+        )
+        assertFalse("la vecchia chiave va letta una volta sola", prefs.contains("app_language"))
+    }
+
+    /**
+     * Sotto API 33 AppCompat applica la lingua solo alle Activity: il cronometro, che e' un
+     * Service, scriverebbe le notifiche nella lingua del sistema.
+     */
+    @Test
+    @Config(sdk = [32])
+    fun `le notifiche del cronometro parlano la lingua scelta anche sotto API 33`() {
+        LocaleHelper.apply("it")
+
+        val controller = Robolectric.buildService(MatchTimerService::class.java).create()
+        try {
+            assertEquals(
+                "il titolo della notifica deve seguire la lingua scelta, non quella del sistema",
+                "Timer Partita",
+                controller.get().getString(R.string.match_timer),
+            )
+        } finally {
+            controller.destroy()
+        }
     }
 
     @Test

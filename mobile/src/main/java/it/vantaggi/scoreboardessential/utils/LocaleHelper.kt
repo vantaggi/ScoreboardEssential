@@ -1,6 +1,9 @@
 package it.vantaggi.scoreboardessential.utils
 
 import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
+import android.os.LocaleList
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
@@ -22,6 +25,10 @@ object LocaleHelper {
     private const val LEGACY_PREFS = "match_settings_prefs"
     private const val LEGACY_KEY = "app_language"
 
+    // La vecchia versione scriveva "en" da sola a ogni avvio quando nessuno aveva scelto
+    // (onAttach leggeva col default "en" e lo salvava): quel valore non prova una scelta.
+    private const val LEGACY_DEFAULT = "en"
+
     /** Va chiamata dal thread principale: sotto API 33 ricrea subito le Activity aperte. */
     fun apply(language: String) {
         AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language))
@@ -38,13 +45,34 @@ object LocaleHelper {
      * Senza questo passaggio chi aveva scelto l'italiano su un telefono in inglese, al primo avvio
      * dopo l'aggiornamento, se lo ritroverebbe in inglese. Va chiamata da un'Activity gia' creata:
      * da API 33 AppCompat trova il servizio di sistema solo attraverso un'Activity viva.
+     *
+     * Solo una lingua diversa da "en" e' certamente una scelta: "en" c'e' in quasi ogni
+     * installazione anche senza scelta, e migrarlo bloccherebbe in inglese chi ha il telefono in
+     * italiano. Chi aveva scelto davvero l'inglese su un telefono italiano lo dovra' riscegliere:
+     * e' il caso raro, e non si distingue dall'altro.
      */
     fun migrateLegacyChoice(context: Context) {
         val prefs = context.getSharedPreferences(LEGACY_PREFS, Context.MODE_PRIVATE)
         val legacy = prefs.getString(LEGACY_KEY, null) ?: return
-        if (AppCompatDelegate.getApplicationLocales().isEmpty) {
+        if (legacy != LEGACY_DEFAULT && AppCompatDelegate.getApplicationLocales().isEmpty) {
             apply(legacy)
         }
         prefs.edit { remove(LEGACY_KEY) }
+    }
+
+    /**
+     * Il contesto di un Service con la lingua scelta nell'app.
+     *
+     * Da API 33 la lingua la applica il sistema a tutto il processo e non serve nulla. Sotto,
+     * AppCompat la applica solo alle Activity: senza questo le notifiche del cronometro
+     * parlerebbero la lingua del sistema mentre le schermate parlano quella scelta.
+     */
+    fun wrapForService(base: Context): Context {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) return base
+        val chosen = AppCompatDelegate.getApplicationLocales()
+        if (chosen.isEmpty) return base
+        val config = Configuration(base.resources.configuration)
+        config.setLocales(LocaleList.forLanguageTags(chosen.toLanguageTags()))
+        return base.createConfigurationContext(config)
     }
 }
