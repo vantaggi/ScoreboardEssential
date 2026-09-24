@@ -96,13 +96,16 @@ class RacketRules(
             is GamePoints.TieBreak -> {
                 val points = bump(game.points, team)
                 // Nel tie-break il servizio cambia dopo il primo punto e poi ogni due: cioe' a
-                // ogni totale dispari. Sommato al +1 del game concluso, chi ha aperto il
-                // tie-break si ritrova in risposta a inizio set successivo, come da regolamento.
+                // ogni totale dispari.
                 val serveIndex = if ((points[0] + points[1]) % 2 == 1) state.serveIndex + 1 else state.serveIndex
                 if (tieBreakDecided(points[0], points[1], game.target)) {
-                    winGame(state.copy(serveIndex = serveIndex), team, tieBreakPoints = points)
+                    // Il set dopo lo apre chi ha RICEVUTO il primo punto del tie-break. Il
+                    // contatore a fine tie-break non basta: col +1 di winGame il lato torna giusto
+                    // solo quando i cambi del tie-break sono pari (7-5 si', 7-2, 7-3 e 8-6 no).
+                    // Si riparte quindi dall'apertura, e winGame aggiunge il +1.
+                    winGame(state.copy(serveIndex = game.openedAt), team, tieBreakPoints = points)
                 } else {
-                    state.copy(game = GamePoints.TieBreak(points, game.target), serveIndex = serveIndex)
+                    state.copy(game = game.copy(points = points), serveIndex = serveIndex)
                 }
             }
         }
@@ -122,7 +125,12 @@ class RacketRules(
                     games[1] == config.gamesPerSet
             return state.copy(
                 gamesInSet = games,
-                game = if (opensTieBreak) GamePoints.TieBreak(target = config.tieBreakTo) else GamePoints.Normal(),
+                game =
+                    if (opensTieBreak) {
+                        GamePoints.TieBreak(target = config.tieBreakTo, openedAt = serveIndex)
+                    } else {
+                        GamePoints.Normal()
+                    },
                 serveIndex = serveIndex,
             )
         }

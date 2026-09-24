@@ -1434,3 +1434,19 @@ Il piano di ciascuna pista mette per primi i passi piccoli e sicuri (testi che o
 contrasti, schermo acceso). La schermata di gioco nuova aspetta L1-L3 della validazione. Le
 decisioni di gusto, identita' e priorita' sono elencate in fondo a ogni pista di `DESIGN.md`:
 nessun passo di design e' stato avviato.
+
+### L9 Dominio racchetta - 24 settembre 2026
+
+I due difetti di L9 in `VALIDAZIONE.md` sono chiusi, solo in `:core` e con test JVM puri.
+
+- **Servizio dopo il tie-break.** `GamePoints.TieBreak` ricorda il `serveIndex` del primo
+  punto (`openedAt`) e alla chiusura il contatore riparte da li' piu' uno: il set dopo lo apre
+  chi ha ricevuto il primo punto, qualunque sia il punteggio del tie-break. Conseguenza da
+  sapere: `serveIndex` non e' piu' monotono, alla chiusura del tie-break scende. Nessuno ne
+  dipendeva; il KDoc di `RacketScore` lo dice.
+- **Riassunto di una partita non finita.** `MatchSummary.currentSet` porta i game del set in
+  corso. Il testo condiviso li mette in testa finche' nessun set e' chiuso, poi nella riga dei
+  set. `score` resta `headline()`.
+
+Nessun cambio al protocollo Wear ne' al database: lo stato del motore non si persiste, si
+ricava rifacendo il fold del registro, quindi anche le partite salvate prima si rileggono giuste.

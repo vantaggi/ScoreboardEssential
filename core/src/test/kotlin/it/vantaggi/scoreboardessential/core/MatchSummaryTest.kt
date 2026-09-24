@@ -216,6 +216,64 @@ class MatchSummaryTest {
         assertNull(s.longestStreak)
     }
 
+    /** Il lato [side] vince [n] game di fila, quattro punti a zero ciascuno. */
+    private fun MatchEngine.game(
+        side: Int,
+        n: Int,
+    ) = repeat(n * 4) { apply(ScoringEvent.Point(side = side)) }
+
+    @Test
+    fun `un padel non finito sul 5-3 mostra il 5-3, non i set vinti`() {
+        val engine = padel()
+        engine.game(side = 1, n = 3)
+        engine.game(side = 2, n = 3)
+        engine.game(side = 1, n = 2)
+
+        val s = MatchSummarizer.summarize(engine, roster)
+        val righe = MatchSummarizer.format(s, labels).lines()
+
+        assertEquals("headline() non cambia: le vittorie si contano li'", listOf(0, 0), s.score)
+        assertEquals(listOf(5, 3), s.currentSet)
+        assertEquals("*Anna / Carla 5-3 Bruno / Dario*", righe[0])
+        assertTrue("il 5-3 non si ripete sotto l'intestazione", righe.none { it == "5-3" })
+    }
+
+    @Test
+    fun `un tennis non finito sul 6-4, 3-2 mostra anche il set in corso`() {
+        val engine =
+            MatchEngine(
+                RacketRules(
+                    id = SportRegistry.TENNIS,
+                    config = SportConfig(mode = ScoringMode.POINTS, deuce = DeuceRule.ADVANTAGE, sets = 3),
+                ),
+            )
+        repeat(4) {
+            engine.game(side = 1, n = 1)
+            engine.game(side = 2, n = 1)
+        }
+        engine.game(side = 1, n = 2)
+        repeat(2) {
+            engine.game(side = 1, n = 1)
+            engine.game(side = 2, n = 1)
+        }
+        engine.game(side = 1, n = 1)
+
+        val s = MatchSummarizer.summarize(engine, roster)
+        val righe = MatchSummarizer.format(s, labels).lines()
+
+        assertEquals(listOf(3, 2), s.currentSet)
+        assertEquals("i set vinti restano in testa", "*Anna / Carla 1-0 Bruno / Dario*", righe[0])
+        assertEquals("6-4 · 3-2", righe[1])
+    }
+
+    @Test
+    fun `a partita finita non c'e' un set in corso`() {
+        val engine = padel()
+        engine.punti(side = 1, n = 24)
+
+        assertNull(MatchSummarizer.summarize(engine, roster).currentSet)
+    }
+
     @Test
     fun `il report resta corto abbastanza per una chat`() {
         val engine = padel()

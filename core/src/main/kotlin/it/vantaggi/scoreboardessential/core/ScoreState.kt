@@ -45,6 +45,13 @@ sealed interface GamePoints {
     data class TieBreak(
         val points: List<Int> = listOf(0, 0),
         val target: Int,
+        /**
+         * Il `serveIndex` del primo punto del tie-break. Serve alla chiusura: il set dopo lo apre
+         * chi ha RICEVUTO quel punto, e dal solo contatore finale non si ricava, perche' dipende
+         * da quanti punti si sono giocati. Senza default: uno zero inventato sbaglierebbe il lato
+         * in silenzio.
+         */
+        val openedAt: Int,
     ) : GamePoints
 }
 
@@ -66,7 +73,10 @@ data class RacketScore(
      * Contatore monotono, **mai azzerato**: a inizio set la rotazione continua invece di essere
      * riscelta. Da qui il servitore e' `config.serveOrder[serveIndex % 4]` e il lato che serve e'
      * `serveIndex % 2` -- che riproduce esattamente l'alternanza per game, senza casi speciali al
-     * confine di set. Nel tie-break avanza ogni due punti dopo il primo, non a fine game.
+     * confine di set. Nel tie-break avanza ogni due punti dopo il primo, non a fine game; alla sua
+     * chiusura torna a [GamePoints.TieBreak.openedAt] + 1, come se il tie-break fosse stato un game
+     * solo. E' l'unico punto in cui il contatore scende: quello che conta e' il lato che apre il
+     * set dopo, non la monotonia.
      */
     val serveIndex: Int = 0,
     /** Valorizzato a fine partita: e' l'unita' che viene persistita. */

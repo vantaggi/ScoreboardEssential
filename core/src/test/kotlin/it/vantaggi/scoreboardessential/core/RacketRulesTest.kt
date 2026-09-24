@@ -118,7 +118,7 @@ class RacketRulesTest {
                 rules = rules(),
                 sides = sixAll,
                 games = listOf(6, 6),
-                game = GamePoints.TieBreak(listOf(0, 0), 7),
+                game = GamePoints.TieBreak(listOf(0, 0), 7, openedAt = 12),
                 primary = "0" to "0",
             ),
             Case(
@@ -135,7 +135,7 @@ class RacketRulesTest {
                 rules = rules(),
                 sides = sixAll + alternate(12) + taps(1, 1),
                 games = listOf(6, 6),
-                game = GamePoints.TieBreak(listOf(7, 6), 7),
+                game = GamePoints.TieBreak(listOf(7, 6), 7, openedAt = 12),
             ),
             Case(
                 name = "il tie-break si vince 8-6",
@@ -230,6 +230,36 @@ class RacketRulesTest {
             observed += state.serveIndex
         }
         assertEquals(listOf(13, 13, 14, 14, 15), observed)
+    }
+
+    @Test
+    fun `dopo il tie-break il set successivo lo apre chi ha ricevuto il primo punto`() {
+        // Il tennis vero del registro: al meglio di tre, quindi dopo il tie-break si gioca ancora.
+        val tennis = SportRegistry.byId(SportRegistry.TENNIS) as RacketRules
+        assertEquals("il tie-break lo apre il lato 1", 1, tennis.display(play(tennis, sixAll)).servingSide)
+        // Il lato 1 vince il tie-break a b punti: b scambi alternati, poi i punti che mancano.
+        // Prima del rimedio 7-5 passava e gli altri tre no: il lato dipendeva dai punti giocati.
+        listOf(7 to 2, 7 to 3, 7 to 5, 8 to 6).forEach { (a, b) ->
+            val state = play(tennis, sixAll + alternate(2 * b) + taps(1, a - b))
+            assertEquals("$a-$b: set chiuso", listOf(SetLine(listOf(7, 6), listOf(a, b))), state.closedSets)
+            assertEquals("$a-$b: primo game del set dopo", 2, tennis.display(state).servingSide)
+            val next = play(tennis, sixAll + alternate(2 * b) + taps(1, a - b) + taps(1, 4))
+            assertEquals("$a-$b: secondo game del set dopo", 1, tennis.display(next).servingSide)
+        }
+    }
+
+    @Test
+    fun `annullare attraverso la fine del tie-break rifa' il servizio giusto`() {
+        val tennis = SportRegistry.byId(SportRegistry.TENNIS) as RacketRules
+        val engine = MatchEngine(tennis)
+        // 7-2 nel tie-break e un punto nel set dopo: poi si torna indietro di due e si rigioca.
+        (sixAll + alternate(4) + taps(1, 5) + listOf(2)).forEach { engine.apply(ScoringEvent.Point(it)) }
+        engine.undo()
+        val inTieBreak = engine.undo() as RacketScore
+        assertEquals("di nuovo nel tie-break, sul 6-2", GamePoints.TieBreak(listOf(6, 2), 7, openedAt = 12), inTieBreak.game)
+        assertEquals("stesso stato del fold diretto", play(tennis, sixAll + alternate(4) + taps(1, 4)), inTieBreak)
+        engine.apply(ScoringEvent.Point(1))
+        assertEquals("richiuso il tie-break, il set dopo lo apre il lato 2", 2, tennis.display(engine.state).servingSide)
     }
 
     @Test

@@ -413,6 +413,8 @@ Il dominio in :core è solido: regole, codec e motore reggono. L'unico difetto v
 
 **Rimedio.** Quando wonBy è null, aggiungere a MatchSummary i game del set in corso e farli stampare a format(). headline() non va toccato.
 
+Corretto: e5a88f1, nuovo campo `MatchSummary.currentSet` (game del set in corso, null a partita finita). format() lo mette in testa finché nessun set è chiuso (padel sul 5-3: "Anna / Carla 5-3 Bruno / Dario") e lo aggiunge alla riga dei set dopo (tennis: "1-0", poi "6-4 · 3-2"). `score` e headline() invariati. Test in MatchSummaryTest, rossi senza il rimedio.
+
 ### [media] Tennis: dopo un tie-break chiuso con N punti, N mod 4 = 1 o 2, il set successivo lo apre al servizio il lato sbagliato fino a fine partita
 
 `core/src/main/kotlin/it/vantaggi/scoreboardessential/core/RacketRules.kt` - aree: dominio
@@ -420,6 +422,8 @@ Il dominio in :core è solido: regole, codec e motore reggono. L'unico difetto v
 **Scenario.** serveIndex sale a ogni totale dispari nel tie-break (101), poi c'è il +1 di winGame (116, 139). Dopo un 7-2 (N=9) partendo da 12 si arriva a 18: nel secondo set servingSide vale 1 invece di 2, e tutti i game dopo sono invertiti. Nel riassunto break e percentuali al servizio sono scambiati. 7-5 e 7-4 tornano giusti. Il commento 98-100 è falso. Il padel non è colpito, perché è a set unico. Il punteggio resta giusto.
 
 **Rimedio.** Salvare in GamePoints.TieBreak l'indice di apertura e alla chiusura mettere serveIndex = apertura + 1. Aggiungere test bo3 con 7-2, 7-3 e 8-6 che verifichino servingSide.
+
+Corretto: e5a88f1, come da rimedio: `GamePoints.TieBreak.openedAt` (obbligatorio, senza default) e alla chiusura serveIndex = openedAt + 1. Test sul tennis del registro con 7-2, 7-3, 7-5 e 8-6, e uno che annulla attraverso la fine del tie-break e la rigioca; rossi senza il rimedio.
 
 ## L10 Rilascio e lingua
 

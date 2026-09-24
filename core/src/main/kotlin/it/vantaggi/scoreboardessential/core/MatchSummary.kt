@@ -62,6 +62,14 @@ data class MatchSummary(
     /** 1, 2 o null se la partita non e' arrivata in fondo. */
     val winnerSide: Int?,
     val sets: List<SetSummary>,
+    /**
+     * I game del set in corso, solo a partita a racchetta NON finita; null altrimenti.
+     *
+     * Sta fuori da [sets] perche' quello e' l'elenco dei set chiusi, con le loro durate: un set a
+     * meta' non ne ha una. Senza questo campo il riassunto di una partita interrotta perdeva
+     * proprio il punteggio che si stava giocando.
+     */
+    val currentSet: List<Int>?,
     val durationMillis: Long?,
     val totalPoints: Int,
     val serveStats: List<ServeStat>,
@@ -223,6 +231,7 @@ object MatchSummarizer {
         }
 
         val headline = state.headline()
+        val unfinished = (state as? RacketScore)?.takeIf { it.wonBy == null }
         return MatchSummary(
             sportId = rules.id,
             profile = profile,
@@ -230,6 +239,7 @@ object MatchSummarizer {
             score = listOf(headline.first, headline.second),
             winnerSide = state.wonBy,
             sets = sets(setLines, setEnds),
+            currentSet = unfinished?.gamesInSet,
             durationMillis = lastMillis ?: elapsedMillis,
             totalPoints = totalPoints,
             serveStats = serveStats(order, players, serveTally),
@@ -253,11 +263,18 @@ object MatchSummarizer {
         val side1 = sideName(summary, 1, labels)
         val side2 = sideName(summary, 2, labels)
         val lines = mutableListOf<String>()
-        lines.add("*$side1 ${summary.score[0]}-${summary.score[1]} $side2*")
+        // Finche' nessun set e' chiuso i set vinti sono 0-0 per forza e non dicono niente: in
+        // testa vanno allora i game del set in corso, che a set unico sono proprio l'unita' del
+        // punteggio finale. `score` resta headline(), su cui si contano le vittorie.
+        val current = summary.currentSet
+        val header = if (summary.sets.isEmpty() && current != null) current else summary.score
+        lines.add("*$side1 ${header[0]}-${header[1]} $side2*")
 
-        // Un solo set chiuso ripeterebbe l'intestazione: a set unico il punteggio finale E' quel set.
-        if (summary.sets.size > 1) {
-            lines.add(summary.sets.joinToString(SEPARATOR) { setText(it) })
+        // Un solo set ripeterebbe l'intestazione: a set unico il punteggio finale E' quel set. Il
+        // set in corso conta come un set in piu', cosi' 6-4 e poi 3-2 non perdono il 3-2.
+        val setTexts = summary.sets.map { setText(it) } + listOfNotNull(current?.let { "${it[0]}-${it[1]}" })
+        if (setTexts.size > 1) {
+            lines.add(setTexts.joinToString(SEPARATOR))
         }
         summary.winnerSide?.let { lines.add(line(labels.vince, if (it == 1) side1 else side2)) }
         summary.durationMillis?.let { lines.add(line(labels.durata, durationText(it, summary, labels))) }
