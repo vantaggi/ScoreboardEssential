@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Una sezione della Cronaca: card street con la didascalia e un corpo che riempie il codice. -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="?attr/materialCardViewElevatedStyle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="4dp"
+    app:cardBackgroundColor="@color/concrete_gray"
+    app:cardElevation="0dp"
+    app:shapeAppearance="@style/ShapeAppearance.App.StreetCard">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/section_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:accessibilityHeading="true"
+            android:fontFamily="sans-serif-condensed"
+            android:letterSpacing="0.12"
+            android:textAllCaps="true"
+            android:textColor="@color/sidewalk_gray"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            tools:text="Andamento" />
+
+        <LinearLayout
+            android:id="@+id/section_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

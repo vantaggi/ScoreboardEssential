@@ -150,4 +150,67 @@
     <string name="sport_tennis">Tennis</string>
     <string name="sport_change_blocked">Finish the current match to change sport</string>
     <string name="match_resumed">Match resumed</string>
+
+    <!-- Cronaca: la partita chiusa rigiocata punto per punto, dallo storico -->
+    <string name="chronicle_title">CHRONICLE</string>
+    <string name="chronicle_open">Chronicle</string>
+    <string name="chronicle_unavailable">Chronicle not available: the log of this match cannot be read.</string>
+    <string name="chronicle_section_scoreboard">Scoreboard</string>
+    <string name="chronicle_section_momentum">Momentum</string>
+    <string name="chronicle_section_games">Game by game</string>
+    <string name="chronicle_section_serve">Serve</string>
+    <string name="chronicle_section_times">Times</string>
+    <string name="chronicle_section_moments">Key moments</string>
+    <string name="chronicle_interrupted">INTERRUPTED</string>
+    <string name="chronicle_totals">Points won %1$d – %2$d · Games %3$d – %4$d</string>
+    <string name="chronicle_no_points">No points played: the log of this match is empty.</string>
+    <string name="chronicle_momentum_caption">Above the line: %1$s ahead on points won. Below: %2$s. Dashed lines separate the sets.</string>
+    <string name="chronicle_momentum_description">Points won, point by point. Largest lead: %1$s +%2$d, %3$s +%4$d.</string>
+    <string name="chronicle_set">Set %1$d</string>
+    <string name="chronicle_set_open">Set %1$d (in progress)</string>
+    <string name="chronicle_no_games">No game completed.</string>
+    <string name="chronicle_tiebreak_cell">TB %1$d-%2$d</string>
+    <string name="chronicle_break_mark">B</string>
+    <string name="chronicle_game_cd">%1$s, game to %2$s</string>
+    <string name="chronicle_game_cd_break">%1$s, game to %2$s, break</string>
+    <string name="chronicle_games_legend">The colour tells who won the game, the number is the score after the game.</string>
+    <string name="chronicle_games_legend_breaks">The colour tells who won the game, the number is the score after the game. B = break: the game was won by the receiving side.</string>
+    <string name="chronicle_serve_unknown">The scoreboard did not know who was serving: with two players per team in the rosters before the first point, here you will see the points and games each player won on serve.</string>
+    <string name="chronicle_serve_header_player">On serve</string>
+    <string name="chronicle_serve_header_points">Points won</string>
+    <string name="chronicle_serve_header_games">Games held</string>
+    <string name="chronicle_percent">%1$d%%</string>
+    <string name="chronicle_breaks">%1$s: break points converted %2$d of %3$d</string>
+    <string name="chronicle_player_unknown">Player %1$d</string>
+    <string name="chronicle_times_unknown">The scoreboard did not record the times of this match.</string>
+    <string name="chronicle_times_total">Duration</string>
+    <string name="chronicle_times_set">Set %1$d (%2$d-%3$d)</string>
+    <string name="chronicle_times_point">Between points</string>
+    <string name="chronicle_times_game">Average game</string>
+    <plurals name="chronicle_times_longest">
+        <item quantity="one">The longest game: %1$s and %2$d point in set %3$d, won by %4$s (%5$d-%6$d).</item>
+        <item quantity="other">The longest game: %1$s and %2$d points in set %3$d, won by %4$s (%5$d-%6$d).</item>
+    </plurals>
+    <string name="chronicle_duration_seconds">%1$d s</string>
+    <string name="chronicle_duration_minutes">%1$d min</string>
+    <string name="chronicle_duration_hours">%1$d h %2$02d min</string>
+    <string name="chronicle_no_value">—</string>
+    <string name="chronicle_moments_none">A match without jolts: no comeback, no match point saved, no tie-break.</string>
+    <plurals name="chronicle_moment_match_points">
+        <item quantity="one">%1$s save a match point</item>
+        <item quantity="other">%1$s save %2$d match points</item>
+    </plurals>
+    <string name="chronicle_moment_match_turned">%1$s win after losing the first set</string>
+    <string name="chronicle_moment_set_comeback">Comeback in set %1$d: %2$s from %3$d-%4$d to %5$d-%6$d</string>
+    <string name="chronicle_moment_tiebreak">Set %1$d: tie-break to %2$s, %3$d-%4$d</string>
+    <plurals name="chronicle_moment_streak">
+        <item quantity="one">%1$d point in a row for %2$s in set %3$d</item>
+        <item quantity="other">%1$d points in a row for %2$s in set %3$d</item>
+    </plurals>
+    <plurals name="chronicle_moment_set_points">
+        <item quantity="one">%1$s save a set point</item>
+        <item quantity="other">%1$s save %2$d set points</item>
+    </plurals>
+    <string name="chronicle_moment_deciding_leader">Deciding points: %1$s win %2$d of %3$d</string>
+    <string name="chronicle_moment_deciding_even">Deciding points: %2$d, shared %1$d-%1$d</string>
 </resources>

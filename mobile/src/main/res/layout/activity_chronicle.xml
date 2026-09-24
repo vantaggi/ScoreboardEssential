@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- La Cronaca: schermata di contorno, quindi asfalto e card in cemento come lo storico. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/chronicle_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_asphalt_main"
+    android:orientation="vertical"
+    tools:context=".ui.chronicle.ChronicleActivity">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        app:subtitleTextColor="@color/sidewalk_gray"
+        app:title="@string/chronicle_title"
+        app:titleTextColor="@color/stencil_white" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="16dp">
+
+            <TextView
+                android:id="@+id/chronicle_unavailable"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="24dp"
+                android:fontFamily="sans-serif-condensed"
+                android:text="@string/chronicle_unavailable"
+                android:textColor="@color/sidewalk_gray"
+                android:textSize="16sp"
+                android:visibility="gone" />
+
+            <!-- Visibili solo dopo il caricamento: prima non c'e' niente di onesto da mostrare. -->
+            <LinearLayout
+                android:id="@+id/chronicle_sections"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <include
+                    android:id="@+id/section_scoreboard"
+                    layout="@layout/chronicle_section" />
+
+                <include
+                    android:id="@+id/section_momentum"
+                    layout="@layout/chronicle_section" />
+
+                <include
+                    android:id="@+id/section_games"
+                    layout="@layout/chronicle_section" />
+
+                <include
+                    android:id="@+id/section_serve"
+                    layout="@layout/chronicle_section" />
+
+                <include
+                    android:id="@+id/section_times"
+                    layout="@layout/chronicle_section" />
+
+                <include
+                    android:id="@+id/section_moments"
+                    layout="@layout/chronicle_section" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

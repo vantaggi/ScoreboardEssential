@@ -106,6 +106,17 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
+            <!-- La Cronaca si apre da qui, come l'export: e' un comando di questa partita. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/chronicle_match_button"
+                style="@style/Widget.App.Button.TextButton.Street"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chronicle_open"
+                android:visibility="gone"
+                app:icon="@drawable/ic_stats"
+                tools:visibility="visible" />
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/export_match_button"
                 style="@style/Widget.App.Button.TextButton.Street"

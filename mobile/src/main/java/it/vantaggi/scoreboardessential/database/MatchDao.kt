@@ -14,6 +14,11 @@ interface MatchDao {
     @Query("SELECT * FROM matches WHERE matchId = :matchId")
     suspend fun getMatchById(matchId: Int): Match?
 
+    /** Una partita con le sue squadre, per la Cronaca: nomi e colori con cui si e' giocato. */
+    @Transaction
+    @Query("SELECT * FROM matches WHERE matchId = :matchId")
+    suspend fun getMatchWithTeams(matchId: Int): MatchWithTeams?
+
     /**
      * I giocatori di una partita chiusa CON IL LORO LATO, nella forma che l'export si aspetta.
      *

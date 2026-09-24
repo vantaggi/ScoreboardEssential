@@ -1764,3 +1764,61 @@ il game per definizione) e la condizione ridondante e' stata tolta.
 **Resta da fare:** la schermata in `:mobile` (sezione 4 del brief) e la conservazione di
 `serveOrder` e ora di inizio sulla partita chiusa (richiesta 1 del formato): senza, dallo storico
 servizio e tempi restano vuoti.
+
+### La Cronaca sul telefono - 24 settembre 2026
+
+Sezione 4 di `docs/dashboard/SCOREBOARD_CRONACA_APP.md` (branch `wf4/cronaca`, da `wf4/formato`
+con dentro `wf4/stats`: nel merge `MIGRATION_PLAN.md` era in conflitto, tenute tutte e due le
+sezioni). Le due voci "resta da fare" qui sopra sono chiuse: il formato conserva ordine e inizio,
+e la schermata c'e'.
+
+- **Dove si apre:** "Cronaca" sulla card dello storico, accanto a "Esporta partita", per ogni
+  partita con racchetta chiusa e con un registro (`MatchHistoryUiState.canOpenChronicle`). Il
+  tennis viene gratis: `MatchStats` lavora su qualsiasi `RacketScore`. Nessuna schermata
+  sull'orologio.
+- **Da dove legge:** `MatchDao.getMatchWithTeams` (nomi e colori con cui si e' giocato) e
+  `getMatchLineup` (i nomi dei giocatori). Il motore si rifa' con `MatchExportUtils.savedEngine`,
+  estratto da `savedMatchExport`: export e Cronaca rigiocano la partita nello stesso modo.
+- **`ui/chronicle/`:** `ChronicleActivity` impagina le sei sezioni nell'ordine del brief, ognuna
+  con il suo stato vuoto ("Il tabellone non sapeva chi serviva", "Il tabellone non ha registrato
+  i tempi", "Nessun game concluso", "Partita senza sussulti"...). `ChronicleText` scrive le frasi
+  dei momenti chiave dai dati tipizzati, in values e values-it: in italiano sono quelle della
+  dashboard parola per parola; le durate si arrotondano come `formatDuration`. `MomentumView`
+  disegna l'andamento con Canvas, niente librerie.
+- **Stile di contorno:** asfalto, card in cemento a taglio (`chronicle_section.xml`), didascalie
+  12sp #9E9E9E. Etichette di squadra e celle dei game pieni del colore con `etichettaDiSquadra`
+  (testo `TeamInk.on`). Barrette e linea dell'andamento usano il colore come grafica sulla card
+  #1E1E1E: `ChronicleText.graphicOn` chiede a `TeamInk.graphicOnBlack` 3 volte il contrasto
+  card/nero, e cosi' ottiene 3:1 contro la card. Col 3 nudo il blu notte si fermava a 2,39:1.
+  Aggiunto in `:mobile` il token `outline_gray` #6E6E6E gia' previsto da DESIGN.md (linea dello zero).
+- **La frase sul servizio** apre come la dashboard ("Il tabellone non sapeva chi serviva") ma il
+  consiglio che segue e' dell'app: qui l'ordine non si imposta, nasce dalle rose, quindi servono
+  due giocatori per squadra prima del primo punto.
+- La freccia in alto chiude la schermata invece di ricreare lo storico.
+
+**Verifica:** 14 test nuovi in `mobile/src/test` (Robolectric): le frasi di ogni momento
+chiave in italiano e in inglese, le durate e il contrasto sulla card (`ChronicleTextTest`); la
+schermata su partite vere lette da un database in memoria, con le due frasi vuote per una
+partita senza ordine e senza tempi, e le stesse sezioni piene con ordine e tempi
+(`ChronicleActivityTest`); lo storico che apre la Cronaca e il perimetro del comando
+(`CronacaDalloStoricoTest`, con `MatchHistoryActivity` vera). `:core` 136 test, `:mobile` 186,
+tutti verdi; `ktlintCheck`, `lintDebug` (nessun avviso nuovo nei file toccati), `assembleDebug`,
+`assembleDebugAndroidTest` verdi. Falsificazione: dieci mutazioni, rimesse a posto dopo ogni
+giro, tutte rosse nel test previsto: set contato da 0 nella rimonta, conto dei decisivi dal lato
+sbagliato, durata troncata invece che arrotondata, stato vuoto del servizio tolto, stato vuoto
+dei tempi tolto, comando nascosto sulla card, perimetro ristretto al padel, tabella del
+servizio non ordinata per coppia, cella del tie-break col punteggio in game, contrasto chiesto
+contro il nero invece che contro la card.
+
+**Trappola nuova:** il `PluralsCandidate` di lint segnala un `%d` seguito da una parola nelle
+stringhe inglesi (solo nella lingua di default). Dove il numero conta una cosa si usa `plurals`
+(striscia, game piu' lungo), altrove si riformula.
+
+**Resta aperto:** nel tennis a uno contro uno l'ordine non arriva mai a quattro giocatori, quindi
+servizio e palle break restano sempre vuoti e la frase suggerisce le rose a due; va deciso se la
+Cronaca del singolare debba ricavare il servitore da due giocatori (tocca `MatchStats`, fuori
+da questo lotto).
+
+**Da guardare su dispositivo:** la Cronaca di una partita di padel a quattro giocatori chiusa
+dopo questa versione (andamento, celle che vanno a capo, nomi di squadra lunghi, colore scuro),
+e di una chiusa prima della versione 14, che deve mostrare le due frasi vuote.

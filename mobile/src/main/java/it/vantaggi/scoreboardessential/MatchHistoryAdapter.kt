@@ -16,6 +16,7 @@ import java.util.Locale
 class MatchHistoryAdapter(
     private val onDeleteClicked: (MatchWithTeams) -> Unit,
     private val onExportClicked: (MatchWithTeams) -> Unit,
+    private val onChronicleClicked: (MatchWithTeams) -> Unit,
 ) : ListAdapter<MatchHistoryUiState, MatchHistoryAdapter.MatchViewHolder>(MatchDiffCallback()) {
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -25,7 +26,7 @@ class MatchHistoryAdapter(
             LayoutInflater
                 .from(parent.context)
                 .inflate(R.layout.match_item, parent, false)
-        return MatchViewHolder(view, onDeleteClicked, onExportClicked)
+        return MatchViewHolder(view, onDeleteClicked, onExportClicked, onChronicleClicked)
     }
 
     override fun onBindViewHolder(
@@ -40,6 +41,7 @@ class MatchHistoryAdapter(
         itemView: View,
         private val onDeleteClicked: (MatchWithTeams) -> Unit,
         private val onExportClicked: (MatchWithTeams) -> Unit,
+        private val onChronicleClicked: (MatchWithTeams) -> Unit,
     ) : RecyclerView.ViewHolder(itemView) {
         private val team1NameTextView: TextView = itemView.findViewById(R.id.team1_name_textview)
         private val team2NameTextView: TextView = itemView.findViewById(R.id.team2_name_textview)
@@ -49,6 +51,7 @@ class MatchHistoryAdapter(
         private val playersTextView: TextView = itemView.findViewById(R.id.players_textview)
         private val deleteButton: View = itemView.findViewById(R.id.delete_match_button)
         private val exportButton: View = itemView.findViewById(R.id.export_match_button)
+        private val chronicleButton: View = itemView.findViewById(R.id.chronicle_match_button)
 
         private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
@@ -77,6 +80,11 @@ class MatchHistoryAdapter(
             exportButton.visibility = if (item.canExport) View.VISIBLE else View.GONE
             exportButton.setOnClickListener {
                 onExportClicked(matchWithTeams)
+            }
+
+            chronicleButton.visibility = if (item.canOpenChronicle) View.VISIBLE else View.GONE
+            chronicleButton.setOnClickListener {
+                onChronicleClicked(matchWithTeams)
             }
         }
     }

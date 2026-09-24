@@ -24,6 +24,7 @@
         <activity android:name=".MatchHistoryActivity" android:exported="false" android:label="Match History" android:parentActivityName=".MainActivity">
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".MainActivity" />
         </activity>
+        <activity android:name=".ui.chronicle.ChronicleActivity" android:exported="false" android:label="@string/chronicle_title" />
         <activity android:name=".AddEditPlayerActivity" android:exported="false" android:label="Add/Edit Player" android:parentActivityName=".PlayersManagementActivity">
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".PlayersManagementActivity" />
         </activity>

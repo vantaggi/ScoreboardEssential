@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
+import it.vantaggi.scoreboardessential.ui.chronicle.ChronicleActivity
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import kotlinx.coroutines.launch
 
@@ -60,6 +61,9 @@ class MatchHistoryActivity : AppCompatActivity() {
                         .show()
                 },
                 onExportClicked = { matchWithTeams -> exportSavedMatch(viewModel, matchWithTeams) },
+                onChronicleClicked = { matchWithTeams ->
+                    startActivity(ChronicleActivity.intent(this, matchWithTeams.match.matchId))
+                },
             )
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)

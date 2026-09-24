@@ -1,5 +1,6 @@
 package it.vantaggi.scoreboardessential.ui
 
+import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
 
@@ -16,5 +17,17 @@ data class MatchHistoryUiState(
         get() =
             matchWithTeams.match.let {
                 it.sportId == SportRegistry.PADEL && !it.isActive && it.eventLog.isNotEmpty()
+            }
+
+    /**
+     * Il comando "Cronaca": ogni sport con racchetta (la Cronaca e' fatta di game e set, e il
+     * tennis la ha gratis dallo stesso calcolo), solo a partita chiusa e solo con un registro,
+     * perche' la cronaca si rigioca dai punti. Uno sport sconosciuto ripiega sul calcio e resta
+     * fuori.
+     */
+    val canOpenChronicle: Boolean
+        get() =
+            matchWithTeams.match.let {
+                SportRegistry.byId(it.sportId) is RacketRules && !it.isActive && it.eventLog.isNotEmpty()
             }
 }

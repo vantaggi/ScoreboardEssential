@@ -11,4 +11,6 @@
     <color name="team_spray_yellow">#FFD600</color>
     <color name="team_electric_green">#76FF03</color>
     <color name="error_red">#FF1744</color>
+    <!-- Bordi e linee funzionali (DESIGN.md, Colori): 3,27 su concrete_gray, sopra 3:1 per la grafica. -->
+    <color name="outline_gray">#6E6E6E</color>
 </resources>

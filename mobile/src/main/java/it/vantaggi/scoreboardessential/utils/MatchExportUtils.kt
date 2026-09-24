@@ -52,12 +52,20 @@ object MatchExportUtils {
         appVersion: String,
         zone: ZoneId,
     ): ExportResult {
-        val registro =
-            MatchLogCodec.decode(match.eventLog)
-                ?: return ExportResult.Incomplete(listOf(ExportProblem.NoPoints))
+        val engine = savedEngine(match) ?: return ExportResult.Incomplete(listOf(ExportProblem.NoPoints))
+        return MatchExporter.build(engine, lineup, ExportOrigin(match.matchUuid, match.startedAt, zone, appVersion))
+    }
+
+    /**
+     * Il motore di una partita dello storico, rifatto dal registro con lo sport e l'ordine di
+     * servizio della riga. Lo usano l'export e la Cronaca: la stessa partita deve dare lo stesso
+     * file e la stessa cronaca. Null se il registro non si legge.
+     */
+    fun savedEngine(match: Match): MatchEngine? {
+        val registro = MatchLogCodec.decode(match.eventLog) ?: return null
         val engine = MatchEngine(SportRegistry.forMatch(match.sportId, Match.decodeServeOrder(match.serveOrder)))
         engine.restoreLog(registro)
-        return MatchExporter.build(engine, lineup, ExportOrigin(match.matchUuid, match.startedAt, zone, appVersion))
+        return engine
     }
 
     /**
