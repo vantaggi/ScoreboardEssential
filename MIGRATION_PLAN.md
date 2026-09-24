@@ -1580,3 +1580,32 @@ e un Android 14 in inglese; scegliere Italiano nelle impostazioni; controllare c
 Storico, Giocatori e onboarding cambino lingua, e che resti italiano dopo aver chiuso e
 riaperto l'app. Da Android 13 in poi, controllare anche Impostazioni di sistema > App > Lingua
 dell'app.
+
+### Lotto 1 unito e verificato - 24 settembre 2026
+
+Cinque voci implementate da un workflow di agenti, ognuna in un worktree con revisione avversaria:
+L1 (fine partita: gol non piu' riportati indietro, padel non finito salvabile, transazioni), L9
+(servizio dopo il tie-break, riassunto a partita in corso), L10 (`:wear` a targetSdk 35, lingua
+con un solo meccanismo), passi 1-4 del design del telefono (`TeamInk` in `:core`, contrasti,
+schermo acceso, minuto 66'), passi 1 e 3 del design dell'orologio (L7, fondo nero, TalkBack).
+Due voci corrette dopo la revisione: la migrazione della lingua bloccava in inglese chi non
+aveva mai scelto (alto), e la guardia dell'orologio a partita finita non reggeva dopo AZZERA.
+
+**Verifica sull'insieme unito:** suite completa verde, **324 test JVM distinti** (99 core, 156
+mobile, 29 shared, 40 wear; il vecchio totale contava debug e release due volte), test
+strumentati **9 su 9**. Visto su emulatore: pulsanti colore delle impostazioni con testo nero
+su giallo e verde, etichette delle rose su fondo di squadra, START e icona giocatori leggibili,
+minuto del registro "1'", quadrante dell'orologio su nero con pallino rosso e "NO PHONE" veri.
+
+**Coerenza:** `TeamInk` usa gia' la soglia esatta con il test sulla banda di arrotondamento.
+**Resta aperto:** sull'orologio la squadra sconfitta non diventa grigia a partita finita (serve
+sapere chi ha vinto: va col quadrante nuovo, passo 6); lint segnala `Overdraw` sul quadrante
+(fondo nero sopra quello del tema: si chiude col tema del quadrante, passo 9).
+
+**Emulatore di test.** Il `Pixel_9a` e' tornato sotto la soglia di spazio dopo i test
+strumentati (296 MB). Creato `Pixel_9a_Test`, stessa immagine Android 36, 12 GB di dati: usare
+quello per `connectedDebugAndroidTest` (`ANDROID_SERIAL=emulator-5554` se l'orologio e' acceso).
+Dopo una chiusura forzata il suo avvio si blocca "offline": ripartire con `-no-snapshot-load`.
+
+**Prossimo lotto:** L3 da solo (annullamento derivato dal registro del motore), poi le prove di
+sincronizzazione con i due emulatori accoppiati, che decidono L4-L6.
