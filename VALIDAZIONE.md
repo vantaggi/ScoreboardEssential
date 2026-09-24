@@ -145,6 +145,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 
 **Rimedio.** L'annullamento parte dall'ultimo evento del motore: se è un Point con playerId, decrementa quel giocatore e toglie la riga con quell'engineIndex; se è una Correction, toglie solo la riga della correzione. In alternativa mettere in pila anche le correzioni.
 
+Corretto: 7d7de5f, actionStack non esiste più. undoLastGoal toglie l'ultimo evento efficace del motore, decrementa il playerId scritto in quel punto e toglie la riga con il suo engineIndex; le righe di correzione portano anche loro l'indice, dal vivo e nel ripristino. canUndo segue engine.canUndo(). Test in MainViewModelTest (gol di Mario, gol, '-', ANNULLA: 2-0, due righe di gol, nessun decremento; e lo stesso dopo il ripristino), rossi senza il rimedio.
+
 ### [alta] Partita consegnata dall'orologio: nessuna riga nel registro, e l'annullamento (anche dal '−' dell'orologio) non fa niente
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt` - aree: viewmodel, test
@@ -152,6 +154,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 **Scenario.** applyWatchBatch (1078-1115) non chiama rebuildEventsAndUndo, quindi actionStack resta vuota e canUndo false. È lo stesso difetto chiuso per il ripristino (piano 1297-1300), rimasto aperto su questo percorso. Padel segnato dal solo orologio e consegnato: il punteggio è giusto, ma il registro è vuoto. Il '−' dell'orologio manda INTENT_UNDO, undoLastGoal trova la pila vuota ed esce, l'orologio vibra la conferma e il punto resta. Nessun test copre applyWatchBatch.
 
 **Rimedio.** Dopo il batch chiamare rebuildEventsAndUndo() in una coroutine, come fa restoreActiveMatchIfAny. Aggiungere test: batch su partita vuota (righe, canUndo, undo) e batch su partita non vuota (rifiuto).
+
+Corretto: 7d7de5f, applyWatchBatch lancia rebuildEventsAndUndo dopo aver applicato i tocchi. Test in MainViewModelTest: padel di tre punti consegnato, tre righe con i loro indici, canUndo vero, e l'INTENT_UNDO dall'orologio toglie l'ultimo punto e la sua riga; rosso senza il rimedio. Il test del rifiuto su partita non vuota non è stato aggiunto: quel percorso non è cambiato.
 
 ### [media] Un marcatore attribuito dal registro non viene tolto quando si annulla il gol
 
@@ -161,6 +165,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 
 **Rimedio.** Ricavare il marcatore dall'evento del motore che si toglie ((engine.log.last().event as? Point)?.playerId). È lo stesso rimedio del rilievo sull'annullamento dopo una correzione.
 
+Corretto: 7d7de5f, col rimedio scritto qui: il marcatore da decrementare è il playerId del Point che il motore toglie. Test in MainViewModelTest ('+', Mario dal registro, ANNULLA: decrementGoals(7)), rosso senza il rimedio.
+
 ### [media] Marcatore dall'orologio: telefono e orologio decidono con rose diverse se arriverà, e nascono righe e annullamenti doppi o mancanti
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt` - aree: protocollo, viewmodel, concorrenza, persistenza
@@ -168,6 +174,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 **Scenario.** Il telefono salta riga e GoalAction se la rosa della SQUADRA non è vuota (1143-1147). L'orologio apre la scelta se non è vuota la lista di TUTTI i giocatori (WearViewModel 345). (a) Squadre vuote, archivio pieno: scegliendo Mario, attributeRemoteScorer passa da addScorer e aggiunge una seconda riga e una seconda GoalAction, quindi due annullamenti tolgono due punti. Succede anche con un nome sconosciuto (1246-1249). (b) Rosa piena, si sceglie NESSUNO o si esce con lo swipe (PlayerSelectionActivity 85-88, con un commento falso): il punto non ha né riga né voce in pila, e l'undo successivo toglie la GoalAction sbagliata.
 
 **Rimedio.** Il telefono registra sempre riga e GoalAction per il punto remoto. MSG_SCORER_SELECTED aggiorna la riga e il Point esistenti come fa attributeScorer, invece di chiamare addScorer.
+
+Corretto: 7d7de5f, addRemotePoint crea sempre la riga (con la guardia di addScore a partita finita, test 0ae20f4), qualunque sia la rosa. attributeRemoteScorer passa da attributeScorer, che aggiorna la riga e il Point esistenti; addScorer non esiste più. Un nome che il telefono non conosce non crea più una riga: il punto resta attribuibile dal registro. Test in MainViewModelTest (rosa piena senza scelta: una riga e l'annullamento la toglie; squadre vuote e archivio pieno: una riga sola), rossi senza il rimedio.
 
 ### [media] attributeScorer incrementa i gol anche quando l'indice non punta più al punto scelto
 
@@ -177,6 +185,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 
 **Rimedio.** engine.attribute restituisce se ha attribuito un Point ancora senza marcatore, e si incrementa solo in quel caso. In mostraDialogo non aprire il dialogo se il tag è già presente.
 
+Corretto: 7d7de5f, MatchEngine.attribute restituisce l'esito e non riscrive un punto che ha già un marcatore; attributeScorer conta il gol solo con esito vero. Test in MatchEngineAttributeTest e in MainViewModelTest (punto annullato, punto già attribuito: nessun gol in più), rossi senza il rimedio. Non fatto: il controllo del tag in mostraDialogo (MainActivity), e un punto NUOVO e senza marcatore dell'altra squadra arrivato allo stesso indice riceverebbe ancora la scelta, perché attributeScorer non conosce il lato.
+
 ### [media] Il marcatore scelto sull'orologio va all'ultimo punto del motore nel momento in cui arriva, che può essere un altro
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt` - aree: concorrenza
@@ -184,6 +194,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 **Scenario.** attributeRemoteScorer usa engine.log.lastIndex all'arrivo della scelta (1245), ed engine.attribute non controlla il lato. Esempio: l'orologio segna per la squadra 1 (indice 4) e, mentre al polso si sceglie X, sul telefono si segna per la squadra 2 (indice 5). X riceve il gol della squadra 2, e il punto 4 resta senza riga e senza annullamento. Servono due operatori.
 
 **Rimedio.** Far viaggiare con la scelta la sequenza o l'indice del punto, oppure cercare all'indietro l'ultimo Point del lato team ancora senza playerId.
+
+Corretto: 7d7de5f, con la seconda strada: attributeRemoteScorer cerca all'indietro l'ultimo Point del lato indicato ancora senza marcatore. Il protocollo non cambia. Test in MainViewModelTest (punto dall'orologio per la squadra 1, poi gol della squadra 2 sul telefono, poi la scelta: il marcatore va al punto 0), rosso senza il rimedio.
 
 ### [media] Senza telefono l'attribuzione del marcatore scelta al polso si perde in silenzio
 
@@ -364,6 +376,8 @@ Corretto: 616eab5, col rimedio scritto qui: il collector scrive se `scoreState =
 **Rimedio.** Sull'orologio: if (_scoreState.value?.matchOver == true) return in incrementScore. Sul telefono: in addRemotePoint la stessa guardia di addScore. applyWatchBatch non deve contare le voci inerti.
 
 Corretto in parte: 616eab5, solo il lato orologio. incrementScore esce a partita finita (niente intenzione, coda o marcatore; WearViewModelTest), e il risultato non e' piu' ad alpha 0.4. Restano aperte la guardia in addRemotePoint e le voci inerti in applyWatchBatch sul telefono.
+
+Nota (7d7de5f, 0ae20f4): la guardia in addRemotePoint c'e' ora, entrata con L3 perche' il punto remoto ha sempre la sua riga; test in MainViewModelTest, rosso senza. Restano aperte le voci inerti in applyWatchBatch.
 
 Nota (b505532): la guardia legge `_scoreState`, che resetMatch non tocca (difetto alto "NUOVA PARTITA/AZZERA dal polso non separa la coda", ancora aperto). Dopo un AZZERA dal polso su un padel finito il tocco resta quindi rifiutato finche' il telefono non rimanda uno stato v2 a partita non finita. Collegato, questo succede subito: MATCH_STATE=false porta a endMatch e startNewMatch, che chiama sendStateV2. Offline succede al ritorno del telefono, e fino ad allora i tocchi della partita nuova non vengono registrati. Lasciarli passare li metterebbe in coda insieme alla partita finita, cioe' di nuovo le righe fantasma. Il rifiuto ora vibra da errore, invece di essere silenzioso. Il calcio non e' toccato: il suo matchOver e' sempre falso, lo alza solo RacketRules.
 

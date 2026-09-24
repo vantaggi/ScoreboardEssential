@@ -1,13 +1,19 @@
 package it.vantaggi.scoreboardessential
 
 import android.app.Application
+import android.content.BroadcastReceiver
 import android.content.ComponentName
+import android.content.Intent
 import android.graphics.Color
 import android.os.Looper
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import it.vantaggi.scoreboardessential.core.MatchEngine
+import it.vantaggi.scoreboardessential.core.MatchLogCodec
+import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.Match
@@ -24,6 +30,7 @@ import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,6 +50,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
 import org.mockito.Mockito.spy
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
@@ -793,5 +801,303 @@ class MainViewModelTest {
 
             assertEquals("", righeDiPunto().first().timestamp)
             viewModel.matchEvents.removeObserver(eventiObserver)
+        }
+
+    // --- L3: annullamento e attribuzione legati al registro del motore ---
+
+    private val mario = PlayerWithRoles(Player(7, "Mario", 3, 0), emptyList())
+
+    /** Un messaggio dall'orologio, consegnato al ricevitore di QUESTO ViewModel e di nessun altro. */
+    private fun ricevi(intent: Intent) {
+        (campo("broadcastReceiver") as BroadcastReceiver).onReceive(ApplicationProvider.getApplicationContext(), intent)
+    }
+
+    private fun puntoDallOrologio(side: Int) =
+        Intent(SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT)
+            .putExtra(WearConstants.KEY_SIDE, side)
+            .putExtra(WearConstants.KEY_INTENT_KIND, WearConstants.INTENT_POINT)
+
+    private fun motore() = campo("engine") as MatchEngine
+
+    /**
+     * Rilievo L3 (alta): nel calcio il '-' e' una correzione nel motore, ma la pila degli
+     * annullamenti non la conteneva. Gol di Mario, gol, '-': ANNULLA toglieva dal motore la
+     * correzione e dal registro e dalle statistiche un gol vero, con Mario a -1.
+     */
+    @Test
+    fun `nel calcio ANNULLA dopo una correzione toglie la correzione e non un gol`() =
+        runTest {
+            val playerDao = campo("playerDao") as PlayerDao
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            val scoreObserver = Observer<Int> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            viewModel.team1Score.observeForever(scoreObserver)
+
+            viewModel.addScore(1)
+            viewModel.attributeScorer(0, mario)
+            viewModel.addScore(1)
+            viewModel.subtractScore(1)
+            advanceUntilIdle()
+            assertEquals(1, viewModel.team1Score.value)
+
+            viewModel.undoLastGoal()
+            advanceUntilIdle()
+
+            assertEquals("si annulla la correzione: si torna a 2-0", 2, viewModel.team1Score.value)
+            assertEquals("i due gol restano nel registro", listOf(1, 0), righeDiPunto().map { it.engineIndex })
+            assertEquals(
+                "la riga della correzione se ne va",
+                null,
+                viewModel.matchEvents.value
+                    .orEmpty()
+                    .find { it.event.startsWith("Score correction") },
+            )
+            verify(playerDao, never()).decrementGoals(any())
+
+            viewModel.undoLastGoal()
+            viewModel.undoLastGoal()
+            advanceUntilIdle()
+
+            assertEquals(0, viewModel.team1Score.value)
+            assertEquals(emptyList<MatchEvent>(), righeDiPunto())
+            verify(playerDao, times(1)).decrementGoals(7)
+            assertEquals(false, viewModel.canUndo.value)
+
+            viewModel.matchEvents.removeObserver(eventiObserver)
+            viewModel.team1Score.removeObserver(scoreObserver)
+        }
+
+    /**
+     * Rilievo L3: la pila teneva il gol senza marcatore anche dopo l'attribuzione dal registro,
+     * quindi ANNULLA riportava il punteggio a 0-0 e lasciava a Mario il gol.
+     */
+    @Test
+    fun `attribuire dal registro e poi annullare toglie il gol al giocatore`() =
+        runTest {
+            val playerDao = campo("playerDao") as PlayerDao
+            val scoreObserver = Observer<Int> {}
+            viewModel.team1Score.observeForever(scoreObserver)
+
+            viewModel.addScore(1)
+            viewModel.attributeScorer(0, mario)
+            advanceUntilIdle()
+            viewModel.undoLastGoal()
+            advanceUntilIdle()
+
+            assertEquals(0, viewModel.team1Score.value)
+            verify(playerDao).decrementGoals(7)
+            viewModel.team1Score.removeObserver(scoreObserver)
+        }
+
+    /**
+     * Rilievo L3 (alta): padel segnato dal solo orologio e consegnato. Punteggio giusto, registro
+     * vuoto, e il '-' dell'orologio (un annullamento) non faceva niente.
+     */
+    @Test
+    fun `la partita consegnata dall'orologio ha le sue righe e si annulla dal polso`() =
+        runTest {
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            val undoObserver = Observer<Boolean> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            viewModel.canUndo.observeForever(undoObserver)
+            val connessione = campo("connectionManager") as OptimizedWearDataSync
+            kotlinx.coroutines.runBlocking { whenever(connessione.sendMessage(any(), any())).thenReturn(true) }
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            advanceUntilIdle()
+
+            ricevi(
+                Intent(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
+                    .putExtra(WearConstants.KEY_INTENT_BATCH, "point,1,1000;point,1,2000;point,2,3000")
+                    .putExtra(WearConstants.KEY_SEQ, 4L),
+            )
+            advanceUntilIdle()
+
+            assertEquals(3, motore().log.size)
+            assertEquals(listOf(2, 1, 0), righeDiPunto().map { it.engineIndex })
+            assertEquals(true, viewModel.canUndo.value)
+
+            ricevi(
+                Intent(SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT)
+                    .putExtra(WearConstants.KEY_SIDE, 2)
+                    .putExtra(WearConstants.KEY_INTENT_KIND, WearConstants.INTENT_UNDO),
+            )
+            advanceUntilIdle()
+
+            assertEquals(2, motore().log.size)
+            assertEquals(listOf(1, 0), righeDiPunto().map { it.engineIndex })
+
+            viewModel.matchEvents.removeObserver(eventiObserver)
+            viewModel.canUndo.removeObserver(undoObserver)
+        }
+
+    /**
+     * Rilievo L3: il marcatore scelto al polso andava all'ultimo punto del motore al suo arrivo.
+     * Se nel frattempo sul telefono aveva segnato l'altra squadra, finiva su quel punto; e con le
+     * squadre vuote nasceva anche una seconda riga per lo stesso gol.
+     */
+    @Test
+    fun `il marcatore dall'orologio va al suo punto anche se nel frattempo ha segnato l'altra squadra`() =
+        runTest {
+            val playerDao = campo("playerDao") as PlayerDao
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            advanceUntilIdle()
+
+            ricevi(puntoDallOrologio(1))
+            viewModel.addScore(2)
+            // Subito prima della scelta: l'archivio letto in init potrebbe riscriverlo a vuoto.
+            @Suppress("UNCHECKED_CAST")
+            (campo("_allPlayers") as MutableLiveData<List<PlayerWithRoles>>).value = listOf(mario)
+            ricevi(
+                Intent(SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED)
+                    .putExtra(WearConstants.KEY_PLAYER_NAME, "Mario")
+                    .putExtra(WearConstants.EXTRA_TEAM_NUMBER, 1)
+                    .putExtra(WearConstants.KEY_PLAYER_ID, 7),
+            )
+            advanceUntilIdle()
+
+            val punti = motore().events.filterIsInstance<ScoringEvent.Point>()
+            assertEquals("il punto della squadra 1 e' di Mario", 7, punti[0].playerId)
+            assertEquals("quello della squadra 2 resta senza marcatore", null, punti[1].playerId)
+            val righe = righeDiPunto()
+            assertEquals("una riga per punto", 2, righe.size)
+            assertEquals(7, righe.single { it.engineIndex == 0 }.playerId)
+            assertEquals(null, righe.single { it.engineIndex == 1 }.playerId)
+            verify(playerDao, times(1)).incrementGoals(7)
+
+            viewModel.matchEvents.removeObserver(eventiObserver)
+        }
+
+    /**
+     * Rilievo L3: con la rosa della squadra piena il telefono aspettava la scelta dal polso e non
+     * registrava il punto. Scegliendo NESSUNO il punto restava senza riga e senza annullamento.
+     */
+    @Test
+    fun `con la rosa piena il punto dall'orologio ha comunque la sua riga e si annulla`() =
+        runTest {
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            val scoreObserver = Observer<Int> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            viewModel.team1Score.observeForever(scoreObserver)
+            viewModel.addPlayerToTeam(mario, 1)
+
+            ricevi(puntoDallOrologio(1))
+            advanceUntilIdle()
+            assertEquals(listOf(0), righeDiPunto().map { it.engineIndex })
+
+            viewModel.undoLastGoal()
+            advanceUntilIdle()
+
+            assertEquals(0, viewModel.team1Score.value)
+            assertEquals(emptyList<MatchEvent>(), righeDiPunto())
+
+            viewModel.matchEvents.removeObserver(eventiObserver)
+            viewModel.team1Score.removeObserver(scoreObserver)
+        }
+
+    /**
+     * Ora il punto dall'orologio ha sempre la sua riga, e quindi serve la guardia di addScore: a
+     * partita finita il motore ignora il tocco, e senza la guardia nasceva una riga che puntava
+     * all'ultimo punto vero, il cui annullamento avrebbe tolto quel punto e riaperto la partita.
+     */
+    @Test
+    fun `a partita finita il punto dall'orologio non crea una riga`() =
+        runTest {
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            advanceUntilIdle()
+            var tocchi = 0
+            while (viewModel.scoreDisplay.value?.matchOver != true && tocchi < 500) {
+                viewModel.addScore(1)
+                tocchi++
+            }
+            advanceUntilIdle()
+            assertEquals(true, viewModel.scoreDisplay.value?.matchOver)
+            val righe = righeDiPunto().size
+
+            ricevi(puntoDallOrologio(2))
+            advanceUntilIdle()
+
+            assertEquals(righe, righeDiPunto().size)
+            viewModel.matchEvents.removeObserver(eventiObserver)
+        }
+
+    /**
+     * Rilievo L3: il dialogo del marcatore resta aperto quanto si vuole. Se nel frattempo il
+     * punto e' stato annullato, o all'indice c'e' ormai un punto gia' attribuito, scegliere un
+     * giocatore gli dava comunque un gol in piu'.
+     */
+    @Test
+    fun `attribuire un punto che non c'e' piu' non da' un gol in piu'`() =
+        runTest {
+            val playerDao = campo("playerDao") as PlayerDao
+            val luigi = PlayerWithRoles(Player(8, "Luigi", 1, 0), emptyList())
+
+            viewModel.addScore(1)
+            viewModel.undoLastGoal()
+            viewModel.attributeScorer(0, mario)
+            advanceUntilIdle()
+            verify(playerDao, never()).incrementGoals(any())
+
+            viewModel.addScore(1)
+            viewModel.attributeScorer(0, mario)
+            viewModel.attributeScorer(0, luigi)
+            advanceUntilIdle()
+            verify(playerDao, times(1)).incrementGoals(7)
+            verify(playerDao, never()).incrementGoals(8)
+        }
+
+    /**
+     * Il ripristino dopo la morte del processo deve lasciare le stesse righe e lo stesso
+     * annullamento del percorso dal vivo. In particolare la correzione ricostruita deve essere
+     * annullabile come quella dal vivo, togliendo la sua riga e non quella di un gol.
+     */
+    @Test
+    fun `il ripristino lascia le stesse righe e lo stesso annullamento del percorso dal vivo`() =
+        runTest {
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            val scoreObserver = Observer<Int> {}
+            val undoObserver = Observer<Boolean> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            viewModel.team1Score.observeForever(scoreObserver)
+            viewModel.canUndo.observeForever(undoObserver)
+
+            viewModel.addScore(1)
+            viewModel.attributeScorer(0, mario)
+            viewModel.addScore(2)
+            viewModel.addScore(1)
+            viewModel.subtractScore(1)
+            advanceUntilIdle()
+
+            fun legateAlMotore() =
+                viewModel.matchEvents.value
+                    .orEmpty()
+                    .filter { it.engineIndex != null }
+                    .map { it.copy(timestamp = "") }
+            val dalVivo = legateAlMotore()
+            val registro = MatchLogCodec.encode(motore().log)
+            assertEquals(4, dalVivo.size)
+
+            val nuova = MainViewModel::class.java.getDeclaredMethod("startNewMatch")
+            nuova.isAccessible = true
+            nuova.invoke(viewModel)
+            advanceUntilIdle()
+            val playerDao = partitaSalvata(registro, rosa = listOf(mario))
+            advanceUntilIdle()
+
+            assertEquals(dalVivo, legateAlMotore())
+            assertEquals(true, viewModel.canUndo.value)
+
+            viewModel.undoLastGoal()
+            advanceUntilIdle()
+
+            assertEquals("si annulla la correzione", 2, viewModel.team1Score.value)
+            assertEquals(listOf(2, 1, 0), righeDiPunto().map { it.engineIndex })
+            verify(playerDao, never()).decrementGoals(any())
+
+            viewModel.matchEvents.removeObserver(eventiObserver)
+            viewModel.team1Score.removeObserver(scoreObserver)
+            viewModel.canUndo.removeObserver(undoObserver)
         }
 }
