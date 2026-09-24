@@ -1452,10 +1452,25 @@ I tre difetti di L10 in `VALIDAZIONE.md` sono chiusi (`e373e37`).
   bundle sono spenti. Senza scelta si segue il sistema, non piu' l'inglese forzato. Chi aveva
   gia' scelto una lingua la ritrova: MainActivity la porta una volta nel meccanismo nuovo.
 
-**Da sapere:** sotto API 33 AppCompat applica la lingua solo alle Activity. Le notifiche del
-cronometro e i nomi dei canali seguono la lingua di sistema. Sui telefoni con Android 13 o
-successivo la lingua vale per tutto il processo. Lint segnala un avviso nuovo, voluto:
-`localeConfig` si usa solo da API 33 (UnusedAttribute).
+**Da sapere:** sotto API 33 AppCompat applica la lingua solo alle Activity; il cronometro la
+riceve da `LocaleHelper.wrapForService` (vedi la revisione sotto), i nomi dei canali di
+notifica seguono la lingua di sistema. Sui telefoni con Android 13 o successivo la lingua vale
+per tutto il processo. Lint segnala un avviso nuovo, voluto: `localeConfig` si usa solo da
+API 33 (UnusedAttribute).
+
+**Revisione (`afd71d7`).** Due buchi trovati dal revisore:
+- La migrazione portava nel meccanismo nuovo anche "en", che la versione precedente scriveva
+  da sola a ogni avvio (onAttach leggeva col default "en" e lo salvava). Quasi ogni
+  installazione ce l'ha, e chi ha il telefono in italiano restava bloccato in inglese. Ora si
+  migra solo una lingua diversa da "en". Chi aveva scelto davvero l'inglese su un telefono in
+  italiano dovra' sceglierlo di nuovo: non si distingue dal valore scritto in automatico.
+- Sotto API 33 le notifiche del cronometro restavano nella lingua del sistema. Ora
+  MatchTimerService avvolge il proprio contesto con la lingua scelta. Se il sistema riavvia il
+  servizio (START_STICKY) dopo aver chiuso il processo, prima che si apra un'Activity, AppCompat
+  non ha ancora letto la scelta e le notifiche escono nella lingua di sistema.
+
+Trappola: in PowerShell 5.1 `Set-Content -Encoding utf8` aggiunge il BOM, e i file Groovy di
+build non compilano piu'. Per modificarli si usano Edit o Write, non PowerShell.
 
 **Da provare su emulatore:** su Wear_OS_Small_Round (e su un Wear OS 6, se disponibile), il
 quadrante, la scelta dello sport e del marcatore e la coda offline. Sul telefono: un Android 12

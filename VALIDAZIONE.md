@@ -453,6 +453,8 @@ Corretto: e373e37, tutti e due: `bundle { language { enableSplit = false } }` in
 
 Corretto: e373e37, una sola via, AppCompatDelegate.setApplicationLocales. Nel manifest ci sono AppLocalesMetadataHolderService con autoStoreLocales, per API < 33, e localeConfig. Tolti gli attachBaseContext di Application, MainActivity e MatchSettingsActivity, e la copia della lingua in MatchSettingsRepository e nel ViewModel. Senza scelta l'app segue il sistema e non forza più "en". Il selettore mostra la lingua che la schermata usa davvero. La scelta salvata dalla versione precedente viene portata una volta sola da MainActivity. Nei test di LinguaUnicaTest, girati sul codice di prima, restano rossi la scelta dalle impostazioni, Statistiche ancora in inglese (a sdk 32) e il recupero della scelta vecchia.
 
+Corretto: afd71d7, due buchi del rimedio sopra. La versione precedente salvava "en" a ogni avvio anche senza scelta, e migrarlo bloccava in inglese chi ha il telefono in italiano: ora si migra solo una lingua diversa da "en". Sotto API 33 MatchTimerService avvolge il proprio contesto con la lingua scelta, perché AppCompat la applica solo alle Activity e le notifiche del cronometro restavano nella lingua del sistema. Due test in LinguaUnicaTest, rossi senza le due correzioni.
+
 ## L11 Registro a schermo, testi, colori e accessibilità del telefono
 
 ### [media] L'ora del registro è sbagliata oltre i 60 minuti e nei fusi con la mezz'ora (tempo trattato come data)
