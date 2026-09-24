@@ -1,20 +1,28 @@
 package it.vantaggi.scoreboardessential.wear
 
+import android.content.Context
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.annotation.VisibleForTesting
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.wear.widget.WearableLinearLayoutManager
 import androidx.wear.widget.WearableRecyclerView
-import com.google.android.gms.wearable.MessageClient
-import com.google.android.gms.wearable.Wearable
+import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
+import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
+import kotlinx.coroutines.launch
 
 data class WearPlayer(
     val id: Int,
@@ -31,18 +39,26 @@ class PlayerSelectionActivity : ComponentActivity() {
     companion object {
         /** Id della voce di uscita: nessun giocatore vero puo' averlo. */
         private const val NESSUNO = -1
+
+        /**
+         * Da dove prende il canale verso il telefono. Sostituibile sotto test per la stessa ragione
+         * del ViewModel: i client GMS veri muoiono sul looper di Robolectric.
+         */
+        @VisibleForTesting
+        internal var creaSync: (Context) -> OptimizedWearDataSync = { OptimizedWearDataSync(it) }
     }
 
     private lateinit var playerList: WearableRecyclerView
     private lateinit var adapter: PlayerAdapter
     private var teamNumber: Int = 1
-    private lateinit var messageClient: MessageClient
+    private lateinit var sync: OptimizedWearDataSync
+    private var inInvio = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player_selection)
 
-        messageClient = Wearable.getMessageClient(this)
+        sync = creaSync(applicationContext)
         val rawTeamNumber = intent.getIntExtra(WearConstants.EXTRA_TEAM_NUMBER, 1)
         teamNumber = if (WearDataValidator.isValidTeamNumber(rawTeamNumber)) rawTeamNumber else 1
 
@@ -93,24 +109,39 @@ class PlayerSelectionActivity : ComponentActivity() {
         // mista continua a funzionare in entrambe le direzioni.
         val message = "${player.name}|$rolesString|$teamNumber|${player.id}"
         sendMessageToMobile(WearConstants.MSG_SCORER_SELECTED, message)
-        finish()
     }
 
+    /**
+     * Spedisce la scelta e la chiude SOLO dopo l'esito, che al polso si sente.
+     *
+     * Prima si chiedevano i connectedNodes a mano e con zero nodi non succedeva niente: nessuna
+     * vibrazione, nessuna scritta, e la schermata si chiudeva come se il nome fosse partito.
+     * sendMessage usa lo stesso criterio del pallino e dice se almeno un nodo ha ricevuto.
+     */
     private fun sendMessageToMobile(
         path: String,
         message: String,
     ) {
-        val data = message.toByteArray()
-        Wearable
-            .getNodeClient(this)
-            .connectedNodes
-            .addOnSuccessListener { nodes ->
-                nodes.forEach { node ->
-                    messageClient.sendMessage(node.id, path, data)
-                }
-            }.addOnFailureListener { e ->
-                Log.e("PlayerSelection", "Failed to resolve nodes for scorer selection", e)
+        if (inInvio) return
+        // Un secondo tocco durante l'attesa manderebbe un secondo marcatore per lo stesso gol.
+        inInvio = true
+        lifecycleScope.launch {
+            val consegnato = sync.sendMessage(path, message.toByteArray())
+            val vibratore = ContextCompat.getSystemService(this@PlayerSelectionActivity, Vibrator::class.java)
+            if (consegnato) {
+                vibratore?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_CONFIRM, -1))
+            } else {
+                vibratore?.vibrate(VibrationEffect.createWaveform(WearViewModel.PATTERN_ERRORE, -1))
+                // Il toast sopravvive alla chiusura: chi guarda il polso legge perche' ha vibrato.
+                Toast.makeText(this@PlayerSelectionActivity, R.string.wear_scorer_not_sent, Toast.LENGTH_SHORT).show()
             }
+            finish()
+        }
+    }
+
+    override fun onDestroy() {
+        sync.cleanup()
+        super.onDestroy()
     }
 }
 

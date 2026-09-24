@@ -33,4 +33,5 @@
     <string name="wear_sport_locked">Match in progress</string>
     <string name="wear_hint_pending">NO PHONE - %1$d WAITING</string>
     <string name="wear_match_over">MATCH OVER</string>
+    <string name="wear_scorer_not_sent">SCORER NOT SENT</string>
 </resources>

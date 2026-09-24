@@ -5,10 +5,13 @@ import android.content.Context
 import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.CapabilityClient
+import com.google.android.gms.wearable.CapabilityInfo
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
 import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
@@ -311,14 +314,82 @@ class WearViewModelTest {
     @Test
     fun `a partita in corso lo stesso tocco parte`() {
         // Il controllo del test precedente: la guardia non deve spegnere il tocco normale.
+        viewModel = viewModelConTelefono(collegato = true)
         viewModel.setAllPlayers(listOf(PlayerData(id = 1, name = "Rossi", roles = emptyList())))
         viewModel.applyStateV2(statoCalcio(finita = false))
         val prima = sequenza()
 
         viewModel.incrementScore(1)
+        // La scelta si apre dopo l'esito dell'invio, non insieme al tocco.
+        aspettaChe { viewModel.showPlayerSelection.value != null }
 
         assertEquals(prima + 1, sequenza())
         assertEquals(1, viewModel.showPlayerSelection.value)
+    }
+
+    /**
+     * Un ViewModel con un telefono finto: collegato davvero, oppure nessun nodo.
+     *
+     * Il canale e' quello vero, con i soli client GMS finti: cosi' l'esito e' deciso dallo stesso
+     * criterio del pallino (capability E connectedNodes), non da un booleano inventato dal test.
+     */
+    private fun viewModelConTelefono(collegato: Boolean): WearViewModel {
+        val nodo = Mockito.mock(Node::class.java)
+        Mockito.`when`(nodo.id).thenReturn("telefono")
+        val info = Mockito.mock(CapabilityInfo::class.java)
+        Mockito.`when`(info.nodes).thenReturn(if (collegato) setOf(nodo) else emptySet())
+        val capability = Mockito.mock(CapabilityClient::class.java)
+        Mockito.`when`(capability.getCapability(Mockito.anyString(), Mockito.anyInt())).thenReturn(Tasks.forResult(info))
+        val nodi = Mockito.mock(NodeClient::class.java)
+        Mockito.`when`(nodi.connectedNodes).thenReturn(Tasks.forResult(if (collegato) listOf(nodo) else emptyList()))
+        val messaggi = Mockito.mock(MessageClient::class.java)
+        Mockito
+            .`when`(messaggi.sendMessage(Mockito.anyString(), Mockito.anyString(), Mockito.any()))
+            .thenReturn(Tasks.forResult(1))
+        return WearViewModel(
+            application,
+            OptimizedWearDataSync(application, Mockito.mock(DataClient::class.java), messaggi, capability, nodi),
+        )
+    }
+
+    /**
+     * L'invio passa da Dispatchers.IO, un thread vero che il dispatcher di test non governa: si
+     * fa girare il Main finto finche' l'esito non e' tornato, con un limite.
+     */
+    private fun aspettaChe(condizione: () -> Boolean) {
+        val limite = System.currentTimeMillis() + 5_000
+        while (!condizione() && System.currentTimeMillis() < limite) {
+            testDispatcher.scheduler.advanceUntilIdle()
+            Thread.sleep(10)
+        }
+        assertTrue("L'esito dell'invio non e' tornato in tempo", condizione())
+    }
+
+    @Test
+    fun `senza telefono il punto va in coda e la scelta del marcatore non si apre`() {
+        // Calcio col telefono in borsa: il nome scelto al polso non arriverebbe a nessuno. Il
+        // punto resta, in coda, e il marcatore si attribuira' dal registro del telefono.
+        viewModel = viewModelConTelefono(collegato = false)
+        viewModel.setAllPlayers(listOf(PlayerData(id = 1, name = "Rossi", roles = emptyList())))
+        viewModel.applyStateV2(statoCalcio(finita = false))
+
+        viewModel.incrementScore(1)
+        aspettaChe { viewModel.pendingCount.value == 1 }
+
+        assertNull(viewModel.showPlayerSelection.value)
+    }
+
+    @Test
+    fun `senza telefono niente scelta del marcatore neanche prima del primo stato v2`() {
+        // Un orologio riacceso senza telefono non ha ancora visto un v2, ma la rosa puo' esserci
+        // (i DataItem restano sul polso): il vecchio percorso apriva la scelta insieme al tocco.
+        viewModel = viewModelConTelefono(collegato = false)
+        viewModel.setAllPlayers(listOf(PlayerData(id = 1, name = "Rossi", roles = emptyList())))
+
+        viewModel.incrementScore(1)
+        aspettaChe { viewModel.pendingCount.value == 1 }
+
+        assertNull(viewModel.showPlayerSelection.value)
     }
 
     @Test
