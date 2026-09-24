@@ -1434,3 +1434,23 @@ Il piano di ciascuna pista mette per primi i passi piccoli e sicuri (testi che o
 contrasti, schermo acceso). La schermata di gioco nuova aspetta L1-L3 della validazione. Le
 decisioni di gusto, identita' e priorita' sono elencate in fondo a ogni pista di `DESIGN.md`:
 nessun passo di design e' stato avviato.
+
+### L1, chiusura della partita sul telefono - 24 settembre 2026
+
+Chiusi i quattro difetti del lotto L1 di `VALIDAZIONE.md` (branch `wf2/l1`, commit `6759480`).
+
+- **I gol non tornano piu' indietro.** `endMatch` non riscrive piu' le copie dei giocatori
+  tenute nelle rose: passa solo gli id, e le presenze salgono con una query mirata
+  (`MatchDao.incrementAppearances`). Il test usa un database vero in memoria dentro
+  `MainViewModelTest`, con esecutori diretti perche' le scritture lanciate dal ViewModel
+  finiscano dentro `advanceUntilIdle`.
+- **Padel e tennis si salvano anche prima di chiudere un set.** La guardia di partita non
+  iniziata e' quella di `selectSport` e `discardMatch`: registro del motore vuoto e cronometro
+  a zero. Vale anche per END MATCH dall'orologio, che passa da `endMatch`.
+- **Una sola transazione** (`MatchDao.closeMatch`) per chiusura o inserimento della riga,
+  presenze e formazioni. Il test fa fallire la seconda scrittura con un trigger SQLite.
+- **`insertPlayerWithRoles` e' davvero transazionale**, spostata in `PlayerDao`.
+
+Ogni test e' stato falsificato togliendo il rimedio (rosso per la ragione giusta) e rimesso.
+`PlayerDao.updatePlayers` non ha piu' chiamanti in produzione; resta perche' lo usa
+`PerformanceTest`.

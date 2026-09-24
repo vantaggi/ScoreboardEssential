@@ -37,6 +37,8 @@ Il dominio in :core è solido: regole, codec e motore reggono. L'unico difetto v
 
 **Rimedio.** Usare la query UPDATE players SET appearances = appearances + 1 WHERE playerId IN (:ids) invece di updatePlayers, senza modificare le istanze in memoria. Mettere questa query, finalizeMatch e le cross-ref nella stessa transazione (vedi il rilievo sulle tre scritture).
 
+Corretto: 6759480, endMatch passa a MatchDao.closeMatch solo gli id delle rose e le presenze si incrementano con MatchDao.incrementAppearances; test su database vero in memoria in MainViewModelTest (gol a 6 dopo la fine partita, era 5).
+
 ### [alta] Padel e tennis non si possono salvare finché nessuno ha vinto un set: nel padel a set unico, nessuna partita interrotta si salva
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt` - aree: persistenza, viewmodel, dominio, ui-wear
@@ -44,6 +46,8 @@ Il dominio in :core è solido: regole, codec e motore reggono. L'unico difetto v
 **Scenario.** Rialzo la gravità da media ad alta. Nel padel del registro (sets=1) setsWon resta 0-0 finché il punto finale non chiude la partita, quindi è impossibile salvare qualunque partita non finita (campo a tempo, pioggia). endMatch (1399) usa team1Score e team2Score, cioè headline() = set vinti, e matchTimerValue, che con ClockMode.NONE resta 0. Padel sul 5-3: TERMINA risponde match_not_started_error e resta solo SCARTA. La riga resta isActive e al riavvio viene ripristinata. Un END MATCH dall'orologio viene ignorato senza avviso.
 
 **Rimedio.** Usare engine.log.isEmpty() && matchTimerValue == 0L, lo stesso criterio di selectSport e discardMatch. Aggiungere a MainViewModelTest un caso padel (oggi il test 445 prova solo il calcio).
+
+Corretto: 6759480, la guardia di endMatch è ora engine.log.isEmpty() && matchTimerValue == 0L; test padel a 40-0 nel primo game in MainViewModelTest.
 
 ### [bassa] endMatch fa tre scritture senza transazione
 
@@ -53,6 +57,8 @@ Il dominio in :core è solido: regole, codec e motore reggono. L'unico difetto v
 
 **Rimedio.** Un metodo @Transaction nel DAO, o db.withTransaction, insieme alla correzione di updatePlayers.
 
+Corretto: 6759480, MatchDao.closeMatch (@Transaction) fa chiusura o inserimento, presenze e cross-ref; ChiusuraPartitaTest fa fallire la seconda scrittura con un trigger e verifica che la partita resti viva.
+
 ### [bassa] insertPlayerWithRoles è documentata come transazionale ma non lo è
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/repository/PlayerRepository.kt` - aree: persistenza
@@ -60,6 +66,8 @@ Il dominio in :core è solido: regole, codec e motore reggono. L'unico difetto v
 **Scenario.** insert e addRolesToPlayer sono due chiamate separate (32). Un'interruzione fra le due lascia un giocatore senza ruoli, escluso da getTopScorersByRoleCategories.
 
 **Rimedio.** Un metodo @Transaction in PlayerDao, come updatePlayerWithRoles.
+
+Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repository vi delega; PlayerRepositoryTest con un ruolo inesistente verifica che non resti il giocatore senza ruoli.
 
 ## L2 Riga viva e ciclo di vita del MainViewModel
 
