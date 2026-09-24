@@ -136,6 +136,12 @@ class WearViewModel(
 
     companion object {
         private const val TAG = "WearViewModel"
+
+        /**
+         * Il doppio colpo di errore. Condiviso con la scelta del marcatore, che vive in un'altra
+         * schermata: "non e' arrivato" deve suonare uguale ovunque lo dica il polso.
+         */
+        internal val PATTERN_ERRORE = longArrayOf(0, 60, 120, 60)
     }
 
     /**
@@ -360,13 +366,15 @@ class WearViewModel(
             triggerFailureVibration()
             return
         }
-        sendScoreIntent(team, WearConstants.INTENT_POINT)
+        // Il marcatore si chiede DOPO l'esito dell'invio, non insieme al tocco: senza telefono la
+        // scelta fatta al polso non arrivava a nessuno, e la schermata si chiudeva come se fosse
+        // andato tutto bene. Il punto invece finisce in coda come sempre, e il marcatore si
+        // attribuira' dal registro del telefono. Nel v1 lo sport non lo dice: vale la rosa.
+        val chiediMarcatore = !protocolV2Seen || _scoreState.value?.attributesScorer == true
+        sendScoreIntent(team, WearConstants.INTENT_POINT, chiediMarcatore)
         if (protocolV2Seen) {
             // Nessuna vibrazione qui: la conferma la da' sendScoreIntent, e SOLO se il messaggio
             // e' davvero arrivato al telefono.
-            if (_scoreState.value?.attributesScorer == true && _allPlayers.value.isNotEmpty()) {
-                _showPlayerSelection.value = team
-            }
             return
         }
         modifyScore(team, 1)
@@ -565,6 +573,7 @@ class WearViewModel(
     private fun sendScoreIntent(
         side: Int,
         kind: String,
+        chiediMarcatore: Boolean = false,
     ) {
         val seq = ++intentSequence
         // L'orario si prende ORA, non quando il messaggio partira': un tocco messo in coda e
@@ -581,6 +590,10 @@ class WearViewModel(
             val consegnato = connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
             if (consegnato) {
                 triggerShortVibration()
+                // Solo qui il telefono ha il punto a cui attaccare il nome.
+                if (chiediMarcatore && _allPlayers.value.isNotEmpty()) {
+                    _showPlayerSelection.value = side
+                }
                 return@launch
             }
             // Non arrivato: si REGISTRA invece di sparire. Il gesto e' cieco -- sullo schermo non
@@ -611,7 +624,7 @@ class WearViewModel(
      * confondono con la conferma anche senza guardare.
      */
     private fun triggerFailureVibration() {
-        vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 60, 120, 60), -1))
+        vibrator?.vibrate(VibrationEffect.createWaveform(PATTERN_ERRORE, -1))
     }
 
     private fun modifyScore(
@@ -627,11 +640,7 @@ class WearViewModel(
             val s2 = if (team == 1) _team2Score.value else newScore
             updateScore(s1, s2)
             triggerShortVibration()
-
-            // On a goal (increment), prompt to attribute a scorer if a roster is available.
-            if (delta > 0 && _allPlayers.value.isNotEmpty()) {
-                _showPlayerSelection.value = team
-            }
+            // La scelta del marcatore la apre sendScoreIntent, e solo se il telefono ha ricevuto.
         }
     }
 
