@@ -1623,3 +1623,22 @@ strumentata nuova, rossa senza il rimedio; suite verde, strumentati 10 su 10.
 repository: formato v1, regole di validita', i casi da trattare (partita interrotta, tiebreak) e
 una sezione dove la dashboard scrive cosa le serve. I4 e I5 restano fermi: servono le due
 autorizzazioni del proprietario sul Supabase di produzione.
+
+### Coda automatica dei lotti - 24 settembre 2026
+
+Il proprietario ha chiesto che, a lotto finito, il successivo parta senza chiedere, se i limiti
+di Claude Code lo permettono. Regola: si legge l'uso del piano e si avvia il lotto successivo
+solo con il limite di 5 ore al massimo al 50% e quello settimanale al massimo all'85%; oltre, ci
+si ferma e si dice quando si azzera. Ordine, dal piano gia' approvato:
+
+1. **L3** annullamento e attribuzione dal registro del motore (in corso).
+2. **L8** cronometro e portiere.
+3. **L2** riga viva e ciclo di vita del MainViewModel.
+4. **L11** il resto: registro, testi, PDF, accessibilita' del telefono.
+5. **Design telefono, passi 5-9**: la schermata di gioco nuova (dopo L1-L3).
+6. **Design orologio, passi 4-8**.
+7. **L12** rete di test.
+
+**Fuori dalla coda automatica:** L4, L5 e L6 (servono prima le prove con i due emulatori
+accoppiati, e l'accoppiamento lo fa il proprietario); I4 e I5 su Padel Elite (produzione, due
+autorizzazioni esplicite).
