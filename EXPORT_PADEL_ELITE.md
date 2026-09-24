@@ -69,8 +69,21 @@ tutti con `padelPlayerId`, almeno un punto.
   strumentata `nelPadel_le_rose_restano_per_assegnare_i_giocatori`, verificata per falsificazione.
 - Per esportare serve ancora che i quattro giocatori abbiano il `padelPlayerId`: si imposta nella
   scheda del giocatore (gestione giocatori). L'app lo chiede per nome quando manca.
-- **Non ancora provato:** un export completo di padel dall'interfaccia, fino al file condiviso.
-  E' il prossimo controllo su emulatore.
+- **Provato su emulatore il 24 settembre 2026**, dall'interfaccia fino al file condiviso: quattro
+  giocatori creati e collegati (id 101-104), padel, due per lato, 16 punti. Il file reale e' in
+  `esempi/export_padel_partita_interrotta.json`: rigiocando la timeline si ottengono game 2-1 e
+  15-0 nel game in corso, come sullo schermo; `scoreTeam` 0-0, `winnerTeam` null e `setScores`
+  vuoto, perche' il set unico non si e' chiuso. E' il caso 1 qui sopra, visto dal vero.
+
+## Esempi reali
+
+| File | Cosa mostra |
+|---|---|
+| `esempi/export_padel_partita_interrotta.json` | Padel interrotto sul 2-1 nei game: timeline con tempi e servitori, `deuce` = `GOLDEN_POINT` (punto secco sul 40-40), `serveOrder` impostato da solo alternando i lati. |
+
+Per rigiocare un game: 4 punti con 2 di scarto; con `GOLDEN_POINT`, sul 40-40 vince il punto
+successivo. Il tiebreak parte sul 6-6 se `tieBreak` e' vero e arriva a `tieBreakTo` con 2 di
+scarto. La logica di riferimento e' `RacketRules.kt`.
 
 ## Richieste della dashboard
 
