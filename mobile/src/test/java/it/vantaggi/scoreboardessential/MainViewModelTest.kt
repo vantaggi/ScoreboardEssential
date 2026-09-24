@@ -6,12 +6,15 @@ import android.graphics.Color
 import android.os.Looper
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
+import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import it.vantaggi.scoreboardessential.core.SportRegistry
+import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
+import it.vantaggi.scoreboardessential.database.PlayerWinCount
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
@@ -25,6 +28,7 @@ import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -516,6 +520,82 @@ class MainViewModelTest {
         }
 
     /**
+     * Nel padel il punteggio di testata sono i set vinti: 0-0 finche' non se ne chiude uno, e
+     * senza orologio il cronometro resta fermo. La guardia su quei due numeri rifiutava di
+     * salvare qualunque partita interrotta prima della fine del primo set.
+     */
+    @Test
+    fun `padel interrotto prima della fine del primo set si salva`() =
+        runTest {
+            val matchDao = campo("matchDao") as MatchDao
+            viewModel.selectSport(SportRegistry.PADEL)
+            advanceUntilIdle()
+            assertEquals("senza punti non c'e' niente da salvare", false, viewModel.endMatch())
+
+            repeat(3) { viewModel.addScore(1) }
+            advanceUntilIdle()
+            assertEquals("40-0 al primo game: nessun set vinto", 0, viewModel.team1Score.value)
+
+            assertEquals(true, viewModel.endMatch())
+            advanceUntilIdle()
+            verify(matchDao).closeMatch(any(), any(), any())
+        }
+
+    /**
+     * Rilievo della validazione (L1): la rosa tiene la copia del giocatore letta quando e' stato aggiunto, e la
+     * fine partita la riscriveva per intero con un @Update per contare la presenza. Il gol
+     * segnato nella partita, gia' scritto nel database, tornava indietro.
+     *
+     * Database vero in memoria, perche' il difetto sta proprio nella riga che finisce su disco.
+     * Esecutori diretti, cosi' che le scritture lanciate dal ViewModel finiscano dentro
+     * advanceUntilIdle invece che su un thread che il test non aspetta.
+     */
+    @Test
+    fun `fine partita conta la presenza senza riportare indietro i gol scritti nel database`() =
+        runTest {
+            val db =
+                Room
+                    .inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java)
+                    .allowMainThreadQueries()
+                    .setQueryExecutor { it.run() }
+                    .setTransactionExecutor { it.run() }
+                    .build()
+            try {
+                val playerDao = db.playerDao()
+                val matchDao = db.matchDao()
+                imposta("playerDao", playerDao)
+                imposta("matchDao", matchDao)
+                val marioId = playerDao.insert(Player(playerName = "Mario", appearances = 2, goals = 5)).toInt()
+                viewModel.addPlayerToTeam(PlayerWithRoles(Player(marioId, "Mario", 2, 5), emptyList()), 1)
+
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                // Il gol attribuito a Mario: e' la scrittura che fa l'attribuzione dal registro.
+                playerDao.incrementGoals(marioId)
+
+                assertEquals(true, viewModel.endMatch())
+                advanceUntilIdle()
+
+                val mario =
+                    playerDao
+                        .getAllPlayers()
+                        .first()
+                        .single()
+                        .player
+                assertEquals("il gol della partita resta", 6, mario.goals)
+                assertEquals("e la presenza si conta una volta", 3, mario.appearances)
+                assertEquals("la riga viva e' chiusa", null, matchDao.getActiveMatchOnce())
+                assertEquals(
+                    "e Mario risulta nella squadra che ha vinto",
+                    listOf(PlayerWinCount(marioId, 1)),
+                    matchDao.getPlayerWinCounts().first(),
+                )
+            } finally {
+                db.close()
+            }
+        }
+
+    /**
      * Con uno sport diverso dal calcio gia' salvato, il ViewModel si costruisce senza crash.
      *
      * Visto su emulatore: con `active_sport = padel` l'app crashava a OGNI apertura. Il
@@ -596,6 +676,15 @@ class MainViewModelTest {
         val field = MainViewModel::class.java.getDeclaredField(nome)
         field.isAccessible = true
         return field.get(viewModel)
+    }
+
+    private fun imposta(
+        nome: String,
+        valore: Any,
+    ) {
+        val field = MainViewModel::class.java.getDeclaredField(nome)
+        field.isAccessible = true
+        field.set(viewModel, valore)
     }
 
     private fun righeDiPunto(): List<MatchEvent> =

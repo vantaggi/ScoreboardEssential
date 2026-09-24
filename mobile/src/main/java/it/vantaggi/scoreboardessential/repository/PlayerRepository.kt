@@ -2,7 +2,6 @@ package it.vantaggi.scoreboardessential.repository
 
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
-import it.vantaggi.scoreboardessential.database.PlayerRoleCrossRef
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.database.Role
 import kotlinx.coroutines.flow.Flow
@@ -33,12 +32,7 @@ class PlayerRepository(
         player: Player,
         roleIds: List<Int>,
     ) {
-        val playerId = playerDao.insert(player)
-        val crossRefs =
-            roleIds.map { roleId ->
-                PlayerRoleCrossRef(playerId.toInt(), roleId)
-            }
-        playerDao.addRolesToPlayer(crossRefs)
+        playerDao.insertPlayerWithRoles(player, roleIds)
     }
 
     /**

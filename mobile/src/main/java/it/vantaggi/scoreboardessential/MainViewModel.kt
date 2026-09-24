@@ -38,7 +38,6 @@ import it.vantaggi.scoreboardessential.core.SportRules
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchDao
-import it.vantaggi.scoreboardessential.database.MatchPlayerCrossRef
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
@@ -1396,7 +1395,12 @@ class MainViewModel(
 
     // --- End Match ---
     fun endMatch(): Boolean {
-        if (team1Score.value == 0 && team2Score.value == 0 && matchTimerValue.value == 0L) {
+        // Partita non iniziata: registro del motore vuoto e cronometro a zero, lo stesso criterio
+        // di selectSport e discardMatch. NON i punteggi di testata: nel padel e nel tennis sono i
+        // set vinti, 0-0 fino alla fine del primo set (nel padel a set unico, fino alla fine
+        // della partita), e senza orologio il cronometro resta a zero. Con quella guardia una
+        // partita interrotta sul 5-3 non si poteva salvare, e l'END MATCH dall'orologio spariva.
+        if (engine.log.isEmpty() && matchTimerValue.value == 0L) {
             return false // Match not started, do not save
         }
 
@@ -1411,40 +1415,28 @@ class MainViewModel(
             val adesso = System.currentTimeMillis()
 
             // Se una riga viva esiste gia' la si CHIUDE, invece di inserirne una seconda: la
-            // partita e' la stessa, e duplicarla falserebbe presenze e statistiche.
-            val vivaId = currentMatchId
-            val matchId =
-                if (vivaId != null) {
-                    matchDao.finalizeMatch(vivaId.toInt(), uno, due, log, adesso)
-                    vivaId
-                } else {
-                    matchDao.insert(
-                        Match(
-                            team1Id = 1, // Default team 1 ID
-                            team2Id = 2, // Default team 2 ID
-                            team1Score = uno,
-                            team2Score = due,
-                            timestamp = adesso,
-                            sportId = sportRules.id,
-                            eventLog = log,
-                        ),
-                    )
-                }
-
+            // partita e' la stessa, e duplicarla falserebbe presenze e statistiche. Chiusura,
+            // presenze e formazioni vanno in una sola transazione: se il processo muore a meta',
+            // non resta una partita nello storico senza giocatori.
             val team1Roster = team1Players.value ?: emptyList()
             val team2Roster = team2Players.value ?: emptyList()
-            val allMatchPlayers = team1Roster + team2Roster
-
-            val playersToUpdate =
-                allMatchPlayers.map {
-                    it.player.apply { appearances++ }
-                }
-            playerDao.updatePlayers(playersToUpdate)
-
-            val matchPlayerCrossRefs =
-                team1Roster.map { MatchPlayerCrossRef(matchId.toInt(), it.player.playerId, teamNumber = 1) } +
-                    team2Roster.map { MatchPlayerCrossRef(matchId.toInt(), it.player.playerId, teamNumber = 2) }
-            matchDao.insertMatchPlayerCrossRefs(matchPlayerCrossRefs)
+            matchDao.closeMatch(
+                Match(
+                    matchId = currentMatchId?.toInt() ?: 0,
+                    team1Id = 1, // Default team 1 ID
+                    team2Id = 2, // Default team 2 ID
+                    team1Score = uno,
+                    team2Score = due,
+                    timestamp = adesso,
+                    sportId = sportRules.id,
+                    eventLog = log,
+                ),
+                // Solo gli id: le presenze si incrementano nel database. Le copie dei giocatori
+                // tenute nelle rose sono ferme a quando sono state aggiunte, e riscriverle con
+                // un @Update di riga intera riportava indietro i gol segnati in questa partita.
+                team1PlayerIds = team1Roster.map { it.player.playerId },
+                team2PlayerIds = team2Roster.map { it.player.playerId },
+            )
 
             addMatchEvent("Match ended - Final Score: ${team1Score.value} - ${team2Score.value}")
 

@@ -84,6 +84,44 @@ interface MatchDao {
         timestamp: Long,
     )
 
+    /**
+     * Una presenza in piu' a ciascun giocatore, incrementata nel database.
+     *
+     * Sta qui e non in [PlayerDao] perche' deve girare nella stessa transazione di [closeMatch].
+     * Stessa ragione di [PlayerDao.incrementGoals]: un @Update di riga intera fatto dalla copia
+     * tenuta nella rosa riscriveva anche i gol, riportandoli a prima della partita.
+     */
+    @Query("UPDATE players SET appearances = appearances + 1 WHERE playerId IN (:playerIds)")
+    suspend fun incrementAppearances(playerIds: List<Int>)
+
+    /**
+     * Salva una partita finita: la riga, le presenze e le formazioni, tutto o niente.
+     *
+     * Erano tre scritture separate: se il processo moriva dopo la prima, la partita restava
+     * nello storico senza giocatori e [getPlayerWinCounts] non la contava.
+     *
+     * Con [Match.matchId] diverso da zero chiude quella riga viva invece di inserirne una nuova.
+     */
+    @Transaction
+    suspend fun closeMatch(
+        match: Match,
+        team1PlayerIds: List<Int>,
+        team2PlayerIds: List<Int>,
+    ) {
+        val matchId =
+            if (match.matchId != 0) {
+                finalizeMatch(match.matchId, match.team1Score, match.team2Score, match.eventLog, match.timestamp)
+                match.matchId
+            } else {
+                insert(match).toInt()
+            }
+        incrementAppearances(team1PlayerIds + team2PlayerIds)
+        insertMatchPlayerCrossRefs(
+            team1PlayerIds.map { MatchPlayerCrossRef(matchId, it, teamNumber = 1) } +
+                team2PlayerIds.map { MatchPlayerCrossRef(matchId, it, teamNumber = 2) },
+        )
+    }
+
     @Query(
         """
         SELECT COUNT(*) FROM matches

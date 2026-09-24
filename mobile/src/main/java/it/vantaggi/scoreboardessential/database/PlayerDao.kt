@@ -58,6 +58,20 @@ interface PlayerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlayerRoles(crossRefs: List<PlayerRoleCrossRef>)
 
+    /**
+     * Inserisce il giocatore e i suoi ruoli, tutto o niente: con due chiamate separate
+     * un'interruzione fra le due lasciava un giocatore senza ruoli, escluso dai marcatori per
+     * reparto.
+     */
+    @Transaction
+    suspend fun insertPlayerWithRoles(
+        player: Player,
+        roleIds: List<Int>,
+    ) {
+        val playerId = insert(player).toInt()
+        addRolesToPlayer(roleIds.map { roleId -> PlayerRoleCrossRef(playerId, roleId) })
+    }
+
     @Transaction
     suspend fun updatePlayerWithRoles(
         player: Player,
