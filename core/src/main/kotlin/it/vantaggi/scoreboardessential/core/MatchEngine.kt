@@ -93,16 +93,24 @@ class MatchEngine(
      * nessuna implementazione di [SportRules.apply] lo legge, quindi lo stato non puo' cambiare.
      * E' l'unica cosa che si puo' modificare in un registro altrimenti in sola aggiunta.
      *
-     * Un indice fuori intervallo o un evento che non e' un punto non fanno niente: chi chiama
-     * lavora su una lista che l'utente puo' aver accorciato con un annullamento nel frattempo.
+     * Un indice fuori intervallo, un evento che non e' un punto o un punto che ha gia' un marcatore
+     * non fanno niente: chi chiama lavora su una lista che l'utente puo' aver accorciato con un
+     * annullamento nel frattempo, e all'indice scelto puo' esserci ormai un altro punto.
+     *
+     * **Restituisce se l'attribuzione e' avvenuta**, perche' chi chiama conta anche il gol nel
+     * database: senza l'esito, un'attribuzione caduta nel vuoto dava comunque +1 al giocatore, per
+     * un punto che non c'era piu'. Un punto gia' attribuito non si riscrive per la stessa ragione:
+     * il gol del marcatore precedente resterebbe contato.
      */
     fun attribute(
         index: Int,
         playerId: Int,
-    ) {
-        val entry = mutableLog.getOrNull(index) ?: return
-        val point = entry.event as? ScoringEvent.Point ?: return
+    ): Boolean {
+        val entry = mutableLog.getOrNull(index) ?: return false
+        val point = entry.event as? ScoringEvent.Point ?: return false
+        if (point.playerId != null) return false
         mutableLog[index] = entry.copy(event = point.copy(playerId = playerId))
+        return true
     }
 
     fun canUndo(): Boolean = mutableLog.isNotEmpty()

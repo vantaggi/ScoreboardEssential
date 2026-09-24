@@ -92,24 +92,16 @@ class MainViewModel(
     private val _serviceBindingStatus = MutableLiveData(false)
     val serviceBindingStatus: LiveData<Boolean> = _serviceBindingStatus
 
-    // Undo Stacks
-
-    /**
-     * Represents a single goal action that can be undone.
-     * @property teamId The ID of the team that scored.
-     * @property playerId The optional ID of the player who scored.
-     * @property timestamp When the goal occurred.
-     */
-    private data class GoalAction(
-        val teamId: Int,
-        val playerId: Int?,
-        val timestamp: Long,
-    )
-
-    private val actionStack = ArrayDeque<GoalAction>()
+    // Annullamento
+    //
+    // Non c'e' piu' una pila di azioni tenuta accanto al motore. Viveva in parallelo al suo
+    // registro e ne divergeva: non conteneva le correzioni del calcio, non vedeva i marcatori
+    // attribuiti dopo, restava vuota dopo una partita consegnata dall'orologio. Ogni volta
+    // l'annullamento toglieva dal motore una cosa e dal registro a schermo un'altra. Ora si
+    // annulla l'ultimo evento del motore, e tutto il resto (marcatore, riga) si ricava da quello.
     private val _canUndo = MutableLiveData(false)
 
-    /** LiveData indicating if there are actions available to undo. */
+    /** Vero quando il motore ha qualcosa da annullare. */
     val canUndo: LiveData<Boolean> = _canUndo
 
     /** Component handling efficient data synchronization with Wear OS nodes. */
@@ -718,8 +710,7 @@ class MainViewModel(
             matchTimerService?.resetKeeperTimer()
         }
 
-        actionStack.clear()
-        _canUndo.postValue(false)
+        aggiornaAnnullamento()
 
         addMatchEvent("New match ready - press START to begin")
         sendMatchStateUpdate(true)
@@ -892,6 +883,12 @@ class MainViewModel(
         _scoreDisplay.value = sportRules.display(engine.state)
         updateScore(uno, due)
         persistLiveMatch()
+        aggiornaAnnullamento()
+    }
+
+    /** Il pulsante di annullamento segue il motore: c'e' se il suo registro ha qualcosa da togliere. */
+    private fun aggiornaAnnullamento() {
+        _canUndo.postValue(engine.canUndo())
     }
 
     /**
@@ -965,9 +962,10 @@ class MainViewModel(
     }
 
     /**
-     * Ricostruisce dal registro del motore le righe del registro a schermo e la pila degli
-     * annullamenti, come le avrebbero lasciate [addScorer] e [subtractScore] se la partita non
-     * fosse mai stata interrotta.
+     * Ricostruisce dal registro del motore le righe del registro a schermo e lo stato
+     * dell'annullamento, come li avrebbero lasciati [addPointRow], [attributeScorer] e
+     * [subtractScore] se la partita non fosse mai stata interrotta. Serve al ripristino e alla
+     * partita consegnata dall'orologio, che arrivano entrambi con un registro gia' scritto.
      *
      * Senza, dopo "Partita ripresa" il tabellone diceva 15-0 ma il registro non aveva nessuna
      * riga di punto e il pulsante di annullamento non c'era: i punti recuperati erano definitivi.
@@ -1008,15 +1006,14 @@ class MainViewModel(
                         engineIndex = indice,
                         playerId = evento.playerId,
                     )
-                    actionStack.addLast(GoalAction(squadra, evento.playerId, System.currentTimeMillis()))
                 }
 
                 is ScoringEvent.Correction -> {
-                    addMatchEvent("Score correction for $nomeSquadra", team = squadra)
+                    addMatchEvent("Score correction for $nomeSquadra", team = squadra, engineIndex = indice)
                 }
             }
         }
-        _canUndo.postValue(actionStack.isNotEmpty())
+        aggiornaAnnullamento()
     }
 
     /**
@@ -1036,6 +1033,7 @@ class MainViewModel(
                 List(team2.coerceAtLeast(0)) { ScoringEvent.Point(side = 2) }
         engine.restore(eventi)
         _scoreDisplay.postValue(sportRules.display(engine.state))
+        aggiornaAnnullamento()
     }
 
     fun addScore(teamId: Int) {
@@ -1057,7 +1055,7 @@ class MainViewModel(
         // momento di massima attenzione: hai appena visto segnare e stai guardando il campo, e
         // l'app ti chiede di scegliere un nome da un elenco. Chi non sceglieva in fretta perdeva
         // l'azione successiva. Ora si attribuisce quando si vuole, toccando la riga nel registro.
-        addScorer(teamId, null, engine.log.lastIndex)
+        addPointRow(teamId, engine.log.lastIndex)
     }
 
     /**
@@ -1100,6 +1098,10 @@ class MainViewModel(
 
         publishEngineState()
         persistLiveMatch()
+        // Righe e annullamento come dopo un ripristino: e' lo stesso caso, un registro arrivato
+        // gia' scritto. Senza, il punteggio era giusto ma il registro vuoto, e il '-' dell'orologio
+        // (che qui arriva come annullamento) non trovava niente da togliere.
+        viewModelScope.launch { rebuildEventsAndUndo() }
         watchBatchApplied.value = applicati
 
         // La conferma parte SOLO ora: e' il ViewModel ad averlo applicato, e solo lui puo' dirlo.
@@ -1119,8 +1121,8 @@ class MainViewModel(
      * l'orologio, spesso con il telefono in tasca o su una panchina. Quel dialogo resterebbe
      * aperto a bloccare la schermata e finirebbe per attribuire il punto a una scelta fatta minuti
      * dopo, o alla persona sbagliata. Il punto viene quindi registrato senza marcatore, come fa
-     * gia' [addScore] quando la rosa e' vuota: l'attribuzione ha il suo canale, MSG_SCORER_SELECTED,
-     * che l'orologio manda quando l'utente sceglie li'.
+     * [addScore]: l'attribuzione ha il suo canale, MSG_SCORER_SELECTED, che l'orologio manda
+     * quando l'utente sceglie li', e che AGGIORNA questa riga invece di crearne un'altra.
      *
      * Nemmeno la vibrazione viene riprodotta: e' la conferma tattile di un tocco locale, e chi ha
      * toccato sta guardando l'orologio.
@@ -1129,19 +1131,19 @@ class MainViewModel(
         side: Int,
         atMillis: Long? = null,
     ) {
+        val prima = engine.state
         engine.apply(ScoringEvent.Point(side = side), tempoDiPartita(atMillis))
         publishEngineState()
 
-        // L'orologio manda l'intenzione E POI, se lo sport attribuisce il marcatore e c'e' un
-        // roster, la scelta del giocatore. Registrare il gol qui e di nuovo all'arrivo
-        // dell'attribuzione produrrebbe DUE voci nel registro e DUE annullamenti in coda per un
-        // solo punto. Lo si registra qui solo quando l'attribuzione non arrivera' mai -- che e' la
-        // stessa condizione del percorso locale in addScore.
-        val roster = if (side == 1) team1Players.value else team2Players.value
-        val attribuiraDopo = sportRules.capabilities.attributesScorer && !roster.isNullOrEmpty()
-        if (!attribuiraDopo) {
-            addScorer(side, null, engine.log.lastIndex)
-        }
+        // La riga nasce SEMPRE, qualunque sia la rosa. Prima la si saltava quando si aspettava
+        // la scelta del marcatore, ma telefono e orologio decidevano con rose diverse se la
+        // scelta sarebbe arrivata: con le squadre vuote e l'archivio pieno nascevano due righe
+        // per un punto, e con NESSUNO scelto al polso il punto restava senza riga. Una riga
+        // sola, legata al punto dal suo indice, non dipende da cosa decide l'orologio.
+        // A partita finita il tocco non entra nel motore: senza la guardia la riga puntava
+        // all'evento precedente.
+        if (engine.state == prima) return
+        addPointRow(side, engine.log.lastIndex)
     }
 
     /** L'epoch di chi ha generato l'evento; in sua assenza, adesso. */
@@ -1161,68 +1163,45 @@ class MainViewModel(
             publishEngineState()
             triggerHapticFeedback()
             val teamName = if (teamId == 1) _team1Name.value else _team2Name.value
-            addMatchEvent("Score correction for $teamName", team = teamId)
-        }
-    }
-
-    fun addScorer(
-        team: Int,
-        playerWithRoles: PlayerWithRoles?,
-        engineIndex: Int? = null,
-    ) {
-        viewModelScope.launch {
-            val teamName = if (team == 1) _team1Name.value else _team2Name.value
-            if (playerWithRoles != null) {
-                // Incremento atomico lato database invece di mutare l'istanza in memoria e
-                // riscrivere l'intera riga: _allPlayers e i roster tengono grafi di oggetti
-                // DIVERSI per lo stesso giocatore, quindi un @Update di riga intera partendo da
-                // una copia stantia riportava indietro i gol segnati nel frattempo.
-                playerDao.incrementGoals(playerWithRoles.player.playerId)
-
-                // Il marcatore entra anche nel registro del MOTORE, che e' l'unico che viene
-                // salvato. Prima finiva solo qui, in una lista di presentazione tenuta in memoria:
-                // spariva alla morte del processo mentre il punteggio sopravviveva, e non
-                // arrivava mai al riassunto, che legge ScoringEvent.Point.playerId.
-                engineIndex?.let {
-                    engine.attribute(it, playerWithRoles.player.playerId)
-                    persistLiveMatch()
-                }
-
-                val rolesString = playerWithRoles.roles.joinToString(", ") { it.name }
-                addMatchEvent(
-                    "Goal",
-                    team = team,
-                    player = playerWithRoles.player.playerName,
-                    playerRole = rolesString,
-                    type = MatchEventType.SCORE,
-                    engineIndex = engineIndex,
-                    playerId = playerWithRoles.player.playerId,
-                )
-
-                // Track for Undo
-                actionStack.addLast(GoalAction(team, playerWithRoles.player.playerId, System.currentTimeMillis()))
-            } else {
-                // No specific player, just log a goal for the team
-                addMatchEvent(
-                    "Goal",
-                    team = team,
-                    player = teamName,
-                    type = MatchEventType.SCORE,
-                    engineIndex = engineIndex,
-                )
-
-                // Track for Undo (null playerId)
-                actionStack.addLast(GoalAction(team, null, System.currentTimeMillis()))
-            }
-            _canUndo.postValue(true)
+            // Anche la correzione porta il suo indice: e' un evento del motore come un punto, e
+            // annullarla deve togliere questa riga e non quella di un gol.
+            addMatchEvent("Score correction for $teamName", team = teamId, engineIndex = engine.log.lastIndex)
         }
     }
 
     /**
-     * Attributes a goal to a player chosen on the Wear device.
-     * The score itself is synchronized separately via [ACTION_SCORE_UPDATE]; this only
-     * records the scorer (player goal count + match event). Matches the player by name
-     * against the known roster; falls back to a name-only event if not found.
+     * La riga del registro a schermo per un punto appena entrato nel motore, senza marcatore.
+     *
+     * Sincrona, e senza pila accanto: l'annullamento la ritrova dal suo [engineIndex], e il
+     * marcatore la aggiorna con [attributeScorer]. Prima la creava addScorer dentro una coroutine,
+     * che per un marcatore scelto al polso creava una SECONDA riga invece di aggiornare questa.
+     */
+    private fun addPointRow(
+        team: Int,
+        engineIndex: Int,
+    ) {
+        val teamName = if (team == 1) _team1Name.value else _team2Name.value
+        addMatchEvent(
+            "Goal",
+            team = team,
+            player = teamName,
+            type = MatchEventType.SCORE,
+            engineIndex = engineIndex,
+        )
+    }
+
+    /**
+     * Attribuisce il marcatore scelto sull'orologio.
+     *
+     * Il punto a cui va e' l'ULTIMO del lato indicato ancora senza marcatore, cercato all'indietro
+     * nel registro del motore. Prima era l'ultimo evento del motore al momento dell'arrivo: se nel
+     * frattempo sul telefono si era segnato per l'altra squadra, il marcatore finiva su quel
+     * punto, e il suo restava senza. La riga non si crea: esiste gia', l'ha creata
+     * [addRemotePoint], e la si aggiorna come fa l'attribuzione dal registro.
+     *
+     * Un giocatore che il telefono non conosce non si puo' attribuire: il punto resta com'e',
+     * attribuibile dal registro. Prima nasceva una seconda riga col solo nome, e con lei un
+     * secondo annullamento per lo stesso punto.
      */
     fun attributeRemoteScorer(
         team: Int,
@@ -1236,15 +1215,17 @@ class MainViewModel(
         val match =
             playerId?.let { id -> roster?.find { it.player.playerId == id } }
                 ?: roster?.find { it.player.playerName == playerName }
-        if (match != null) {
-            // Il tocco e la scelta sono due messaggi consecutivi, processati in ordine sul thread
-            // principale: l'ultimo punto applicato e' il suo.
-            addScorer(team, match, engine.log.lastIndex)
-        } else {
-            addMatchEvent("Goal", team = team, player = playerName, type = MatchEventType.SCORE)
-            actionStack.addLast(GoalAction(team, null, System.currentTimeMillis()))
-            _canUndo.postValue(true)
+        if (match == null) {
+            Log.w("MainViewModel", "Marcatore dall'orologio sconosciuto al telefono: $playerName")
+            return
         }
+        val indice =
+            engine.log.indexOfLast { voce ->
+                val punto = voce.event as? ScoringEvent.Point
+                punto != null && punto.side == team && punto.playerId == null
+            }
+        if (indice < 0) return
+        attributeScorer(indice, match)
     }
 
     /**
@@ -1253,68 +1234,83 @@ class MainViewModel(
      * E' il sostituto del dialogo che si apriva da solo dopo ogni gol. La differenza non e' dove
      * si tocca: e' QUANDO. Prima l'app interrompeva nel momento in cui si stava guardando il
      * campo; ora la domanda aspetta, e a farla e' l'utente quando gli va.
+     *
+     * Il gol si conta solo se il motore ha davvero attribuito: il dialogo resta aperto quanto si
+     * vuole, e nel frattempo un annullamento dall'orologio puo' aver tolto quel punto. Prima il
+     * giocatore prendeva +1 anche per un punto che non c'era piu'.
      */
     fun attributeScorer(
         engineIndex: Int,
         playerWithRoles: PlayerWithRoles,
     ) {
-        viewModelScope.launch {
-            engine.attribute(engineIndex, playerWithRoles.player.playerId)
-            persistLiveMatch()
-            playerDao.incrementGoals(playerWithRoles.player.playerId)
+        if (!engine.attribute(engineIndex, playerWithRoles.player.playerId)) return
+        persistLiveMatch()
+        viewModelScope.launch { playerDao.incrementGoals(playerWithRoles.player.playerId) }
 
-            val ruoli = playerWithRoles.roles.joinToString(", ") { it.name }
-            synchronized(matchEventLog) {
-                val i = matchEventLog.indexOfFirst { it.engineIndex == engineIndex }
-                if (i >= 0) {
-                    matchEventLog[i] =
-                        matchEventLog[i].copy(
-                            player = playerWithRoles.player.playerName,
-                            playerRole = ruoli,
-                            playerId = playerWithRoles.player.playerId,
-                        )
-                    _matchEvents.postValue(matchEventLog.toList())
-                }
+        val ruoli = playerWithRoles.roles.joinToString(", ") { it.name }
+        synchronized(matchEventLog) {
+            val i = matchEventLog.indexOfFirst { it.engineIndex == engineIndex }
+            if (i >= 0) {
+                matchEventLog[i] =
+                    matchEventLog[i].copy(
+                        player = playerWithRoles.player.playerName,
+                        playerRole = ruoli,
+                        playerId = playerWithRoles.player.playerId,
+                    )
+                _matchEvents.postValue(matchEventLog.toList())
             }
         }
     }
 
+    /**
+     * Annulla l'ultimo evento EFFICACE del motore, e ricava tutto il resto da quello.
+     *
+     * Il marcatore da decrementare e' quello scritto nel punto che si toglie, e la riga da
+     * togliere e' quella con il suo indice. Nel calcio l'ultimo evento puo' essere una correzione
+     * '-': allora si toglie la sua riga, e nessun giocatore perde un gol. Prima la pila parallela
+     * non conteneva le correzioni, e l'annullamento toglieva dal motore la correzione ma dal
+     * registro e dalle statistiche un gol vero.
+     *
+     * Gli eventi senza effetto in coda si saltano: i registri scritti dalle versioni precedenti li
+     * contengono ancora, non hanno una riga, e toglierli non si vede.
+     */
     fun undoLastGoal() {
-        val lastAction = actionStack.removeLastOrNull()
-        if (lastAction != null) {
-            _canUndo.postValue(actionStack.isNotEmpty())
+        if (!engine.canUndo()) return
+        var tolto: Pair<Int, ScoringEvent>? = null
+        while (tolto == null && engine.canUndo()) {
+            val indice = engine.log.lastIndex
+            val evento = engine.log[indice].event
+            val prima = engine.state
+            // Rifacendo il fold, non sottraendo a mano. Per il calcio il risultato e' identico;
+            // per uno sport a set e' l'unico modo corretto di riattraversare all'indietro un
+            // confine di game.
+            engine.undo()
+            if (engine.state != prima) tolto = indice to evento
+        }
+        publishEngineState()
+        val (indice, evento) = tolto ?: return
 
-            viewModelScope.launch {
-                // 1. Revert Score -- rifacendo il fold, non sottraendo a mano. Per il calcio
-                // il risultato e' identico; per uno sport a set sara' l'unico modo corretto di
-                // riattraversare all'indietro un confine di game.
-                if (engine.canUndo()) {
-                    engine.undo()
-                    publishEngineState()
-                }
+        // Decremento atomico: non dipende dal fatto che _allPlayers contenga gia' il giocatore
+        // ne' che la sua copia sia aggiornata.
+        (evento as? ScoringEvent.Point)?.playerId?.let { id ->
+            viewModelScope.launch { playerDao.decrementGoals(id) }
+        }
 
-                // 2. Revert Player Stats if needed
-                // Decremento atomico: non dipende piu' dal fatto che _allPlayers contenga gia' il
-                // giocatore ne' che la sua copia sia aggiornata. Prima, annullare subito dopo aver
-                // segnato saltava il decremento perche' il Flow non aveva ancora riemesso.
-                lastAction.playerId?.let { playerId -> playerDao.decrementGoals(playerId) }
-
-                // 3. Remove from Match Events
-                synchronized(matchEventLog) {
-                    val index =
-                        matchEventLog.indexOfFirst {
-                            it.type == MatchEventType.SCORE && it.team == lastAction.teamId
-                        }
-                    if (index != -1) {
-                        matchEventLog.removeAt(index)
-                        _matchEvents.postValue(matchEventLog.toList())
-                    }
-                }
-
-                val cosa = if (sportRules.capabilities.attributesScorer) "Goal" else "Point"
-                addMatchEvent("Undo: $cosa removed", team = lastAction.teamId)
+        synchronized(matchEventLog) {
+            val riga = matchEventLog.indexOfFirst { it.engineIndex == indice }
+            if (riga != -1) {
+                matchEventLog.removeAt(riga)
+                _matchEvents.postValue(matchEventLog.toList())
             }
         }
+
+        val cosa =
+            when {
+                evento is ScoringEvent.Correction -> "Correction"
+                sportRules.capabilities.attributesScorer -> "Goal"
+                else -> "Point"
+            }
+        addMatchEvent("Undo: $cosa removed", team = evento.side)
     }
 
     // --- Match Timer Management ---
