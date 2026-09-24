@@ -1609,3 +1609,17 @@ Dopo una chiusura forzata il suo avvio si blocca "offline": ripartire con `-no-s
 
 **Prossimo lotto:** L3 da solo (annullamento derivato dal registro del motore), poi le prove di
 sincronizzazione con i due emulatori accoppiati, che decidono L4-L6.
+
+### Il padel non poteva esportare - 24 settembre 2026
+
+Trovato coordinando con la sessione cloud che prepara la dashboard di Padel Elite. Nel padel
+`rosters_card` si spegneva insieme alle formazioni (`hasRoles = false`), e i pulsanti "aggiungi
+giocatore" stanno li' dentro: nessuna schermata permetteva di assegnare i quattro giocatori ai
+lati, quindi `MatchExporter` rispondeva sempre `WrongPlayerCount`. Nessun file reale di padel
+poteva esistere. Ora le rose restano in ogni sport, le formazioni solo nel calcio. Prova
+strumentata nuova, rossa senza il rimedio; suite verde, strumentati 10 su 10.
+
+**Il contratto con la dashboard sta in `EXPORT_PADEL_ELITE.md`**, che la sessione cloud legge dal
+repository: formato v1, regole di validita', i casi da trattare (partita interrotta, tiebreak) e
+una sezione dove la dashboard scrive cosa le serve. I4 e I5 restano fermi: servono le due
+autorizzazioni del proprietario sul Supabase di produzione.

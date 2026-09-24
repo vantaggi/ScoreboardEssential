@@ -447,7 +447,11 @@ class MainActivity :
         findViewById<View>(R.id.match_time_label).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
         findViewById<View>(R.id.timer_textview).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
         findViewById<View>(R.id.timer_controls_row).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
-        rostersCard.visibility = if (sportCapabilities.hasRoles) View.VISIBLE else View.GONE
+        // Le rose restano in ogni sport: nel padel e nel tennis sono l'unico posto dove si
+        // assegnano i giocatori ai lati, e senza di loro l'export verso Padel Elite (4 giocatori,
+        // 2 per lato) e l'ordine di servizio per nome erano impossibili. Legarle a hasRoles le
+        // spegneva insieme alle formazioni, che invece sono davvero solo del calcio.
+        rostersCard.visibility = View.VISIBLE
         formationsCard.visibility = if (sportCapabilities.hasRoles) View.VISIBLE else View.GONE
         refreshUndoButtonVisibility()
         // Negli sport senza marcatore non esistono gol: pulsante, dialogo e registro parlano di

@@ -198,4 +198,40 @@ class MainActivityLayoutTest {
             }
         }
     }
+
+    @Test
+    fun nelPadel_le_rose_restano_per_assegnare_i_giocatori() {
+        // Nel padel la card delle rose era spenta insieme alle formazioni: il pulsante "aggiungi
+        // giocatore" sta li' dentro, quindi nessuno poteva assegnare i quattro giocatori ai lati e
+        // l'export verso Padel Elite era sempre incompleto.
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val applica =
+                    MainActivity::class.java.getDeclaredMethod(
+                        "applyCapabilities",
+                        it.vantaggi.scoreboardessential.core.SportCapabilities::class.java,
+                    )
+                applica.isAccessible = true
+                applica.invoke(
+                    activity,
+                    it.vantaggi.scoreboardessential.core.SportRegistry
+                        .byId(it.vantaggi.scoreboardessential.core.SportRegistry.PADEL)
+                        .capabilities,
+                )
+
+                assertTrue(
+                    "nel padel la card delle rose deve restare visibile",
+                    activity.findViewById<View>(R.id.rosters_card).visibility == View.VISIBLE,
+                )
+                assertTrue(
+                    "e il pulsante per aggiungere un giocatore deve esserci",
+                    activity.findViewById<View>(R.id.add_team1_player_button).isShown,
+                )
+                assertTrue(
+                    "le formazioni invece restano solo del calcio",
+                    activity.findViewById<View>(R.id.formations_card).visibility == View.GONE,
+                )
+            }
+        }
+    }
 }
