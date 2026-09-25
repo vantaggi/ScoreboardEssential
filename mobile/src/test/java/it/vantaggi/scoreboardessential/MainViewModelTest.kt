@@ -78,6 +78,10 @@ class MainViewModelTest {
     private lateinit var mockMatchSettingsRepository: MatchSettingsRepository
     private lateinit var mockMatchTimerService: MatchTimerService
 
+    // Gli stati del portiere del service finto: i test di L8 li muovono.
+    private val portiereInCorso = kotlinx.coroutines.flow.MutableStateFlow(false)
+    private val portiereScaduto = kotlinx.coroutines.flow.MutableSharedFlow<Unit>()
+
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
@@ -94,7 +98,8 @@ class MainViewModelTest {
         whenever(mockMatchTimerService.matchTimerValue).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(0L))
         whenever(mockMatchTimerService.isMatchTimerRunning).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(false))
         whenever(mockMatchTimerService.keeperTimerValue).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(0L))
-        whenever(mockMatchTimerService.isKeeperTimerRunning).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(false))
+        whenever(mockMatchTimerService.isKeeperTimerRunning).thenReturn(portiereInCorso)
+        whenever(mockMatchTimerService.keeperTimerExpired).thenReturn(portiereScaduto)
 
         // Register the mock binder with Robolectric so bindService returns it
         val componentName = ComponentName(app, MatchTimerService::class.java)
@@ -1222,5 +1227,103 @@ class MainViewModelTest {
             viewModel.matchEvents.removeObserver(eventiObserver)
             viewModel.team1Score.removeObserver(scoreObserver)
             viewModel.canUndo.removeObserver(undoObserver)
+        }
+
+    private fun righeScadenza() =
+        viewModel.matchEvents.value
+            .orEmpty()
+            .filter { it.event == "Keeper timer expired!" }
+
+    /**
+     * L8: il collector trattava ogni passaggio da "in corso" a "fermo" come una scadenza, e una
+     * pausa dalla notifica o dall'orologio, o END MATCH, scriveva una riga falsa. Ora la riga
+     * nasce solo dall'evento di scadenza del service.
+     */
+    @Test
+    fun `pausa e azzeramento del portiere non scrivono la scadenza, la scadenza si`() =
+        runTest {
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            // Si lascia arrivare onServiceConnected, che fa partire i collector.
+            shadowOf(Looper.getMainLooper()).idle()
+            advanceUntilIdle()
+
+            portiereInCorso.value = true
+            advanceUntilIdle()
+            portiereInCorso.value = false
+            advanceUntilIdle()
+            assertEquals("la pausa non e' una scadenza", 0, righeScadenza().size)
+
+            portiereScaduto.emit(Unit)
+            advanceUntilIdle()
+            assertEquals(1, righeScadenza().size)
+            viewModel.matchEvents.removeObserver(eventiObserver)
+        }
+
+    /**
+     * L8: il telefono manda il residuo alla ripresa, e l'orologio lo rimanda indietro quando
+     * riparte da una pausa. Salvato come durata, dopo una pausa a 2:00 ogni conto successivo
+     * durava 2 minuti. Con la chiave nuova la durata configurata arriva a parte.
+     */
+    @Test
+    fun `dall'orologio il residuo di una ripresa non diventa la durata del portiere`() =
+        runTest {
+            shadowOf(Looper.getMainLooper()).idle()
+            advanceUntilIdle()
+
+            val ripresa =
+                Intent(SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE).apply {
+                    putExtra(WearConstants.KEY_KEEPER_MILLIS, 120_000L)
+                    putExtra(WearConstants.KEY_KEEPER_RUNNING, true)
+                    putExtra(WearConstants.KEY_KEEPER_DURATION, 300_000L)
+                }
+            androidx.localbroadcastmanager.content.LocalBroadcastManager
+                .getInstance(ApplicationProvider.getApplicationContext())
+                .sendBroadcast(ripresa)
+            shadowOf(Looper.getMainLooper()).idle()
+
+            verify(mockMatchTimerService).startKeeperTimer(300_000L, true)
+            assertEquals(300_000L, campo("keeperTimerDuration"))
+        }
+
+    /** Un orologio vecchio non manda la durata: alla partenza manda la piena, e vale come prima. */
+    @Test
+    fun `senza la chiave nuova la partenza dall'orologio vecchio porta la durata come oggi`() =
+        runTest {
+            shadowOf(Looper.getMainLooper()).idle()
+            advanceUntilIdle()
+
+            val partenza =
+                Intent(SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE).apply {
+                    putExtra(WearConstants.KEY_KEEPER_MILLIS, 600_000L)
+                    putExtra(WearConstants.KEY_KEEPER_RUNNING, true)
+                }
+            androidx.localbroadcastmanager.content.LocalBroadcastManager
+                .getInstance(ApplicationProvider.getApplicationContext())
+                .sendBroadcast(partenza)
+            shadowOf(Looper.getMainLooper()).idle()
+
+            verify(mockMatchTimerService).startKeeperTimer(600_000L, true)
+        }
+
+    /**
+     * L8, B3: bindService prima di startNewMatch non rende il service disponibile in init.
+     * onServiceConnected arriva in un messaggio successivo, quindi durante la costruzione il
+     * service e' null in qualunque ordine. E alla connessione non si azzera niente: cronometro e
+     * portiere salvati dal service appartengono alla partita che il ViewModel sta ripristinando.
+     */
+    @Test
+    fun `alla costruzione il service non c'e' ancora, e alla connessione non si azzera niente`() =
+        runTest {
+            val nuovo = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
+            val servizio = MainViewModel::class.java.getDeclaredField("matchTimerService").apply { isAccessible = true }
+            assertEquals("in init il service non e' ancora legato", null, servizio.get(nuovo))
+
+            shadowOf(Looper.getMainLooper()).idle()
+            advanceUntilIdle()
+
+            assertEquals(mockMatchTimerService, servizio.get(nuovo))
+            verify(mockMatchTimerService, never()).resetTimer(any())
+            verify(mockMatchTimerService, never()).resetKeeperTimer(any())
         }
 }

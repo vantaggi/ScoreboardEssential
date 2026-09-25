@@ -966,17 +966,6 @@ class MainActivity :
             .show()
     }
 
-    private fun showKeeperTimerExpiredAlert() {
-        triggerStrongVibration()
-        MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.keeper_change_title))
-            .setMessage(getString(R.string.keeper_change_message))
-            .setPositiveButton(getString(R.string.ok)) { _, _ ->
-                viewModel.resetKeeperTimer()
-            }.setCancelable(false)
-            .show()
-    }
-
     private fun updateTimerTextView(timeInMillis: Long) {
         timerTextView.text = TimeUtils.formatTime(timeInMillis)
     }
@@ -990,11 +979,6 @@ class MainActivity :
         keeperTimerTextView.visibility = if (visibile) View.VISIBLE else View.GONE
         // L'etichetta segue il suo cronometro: da sola non significherebbe niente.
         findViewById<View>(R.id.keeper_timer_label).visibility = if (visibile) View.VISIBLE else View.GONE
-    }
-
-    private fun triggerStrongVibration() {
-        val pattern = longArrayOf(0, 500, 200, 500, 200, 500)
-        vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
     }
 
     private fun requestNotificationPermission() {

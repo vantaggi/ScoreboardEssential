@@ -91,15 +91,8 @@ class MainActivity : ComponentActivity() {
                     WearDataLayerService.ACTION_KEEPER_TIMER_UPDATE -> {
                         val millis = intent.getLongExtra(WearDataLayerService.EXTRA_KEEPER_MILLIS, 0L)
                         val isRunning = intent.getBooleanExtra(WearDataLayerService.EXTRA_KEEPER_RUNNING, false)
-                        if (isRunning) {
-                            viewModel.setKeeperTimerState(KeeperTimerState.Running((millis / 1000).toInt()))
-                            if (millis > 0) viewModel.updateKeeperTimerDuration(millis)
-                        } else {
-                            if (millis > 0) {
-                                viewModel.updateKeeperTimerDuration(millis)
-                            }
-                            viewModel.resetKeeperTimer(fromRemote = true)
-                        }
+                        val durata = intent.getLongExtra(WearDataLayerService.EXTRA_KEEPER_DURATION, 0L)
+                        viewModel.applyKeeperFromPhone(millis, isRunning, durata)
                     }
 
                     WearDataLayerService.ACTION_MATCH_STATE_UPDATE -> {
@@ -547,6 +540,19 @@ class MainActivity : ComponentActivity() {
                                     if (auxAvailable) View.VISIBLE else View.INVISIBLE
                             }
 
+                            is KeeperTimerState.Paused -> {
+                                // Il residuo resta leggibile, in grigio: fermo, non scaduto.
+                                binding.keeperTimer.text =
+                                    getString(
+                                        R.string.wear_keeper_running,
+                                        state.secondsRemaining / 60,
+                                        state.secondsRemaining % 60,
+                                    )
+                                binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.sidewalk_gray))
+                                binding.keeperProgressBar.visibility =
+                                    if (auxAvailable) View.VISIBLE else View.INVISIBLE
+                            }
+
                             is KeeperTimerState.Finished -> {
                                 binding.keeperTimer.text = "K"
                                 binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.error_red))
@@ -561,6 +567,15 @@ class MainActivity : ComponentActivity() {
                 launch {
                     viewModel.keeperProgress.collect { progress ->
                         binding.keeperProgressBar.progress = progress
+                    }
+                }
+
+                // Il massimo dell'anello e' la durata. Il progresso si riapplica dopo, perche'
+                // ProgressBar lo taglia al massimo vecchio se arriva prima del nuovo.
+                launch {
+                    viewModel.keeperDurationSeconds.collect { secondi ->
+                        binding.keeperProgressBar.max = secondi
+                        binding.keeperProgressBar.progress = viewModel.keeperProgress.value
                     }
                 }
 

@@ -185,6 +185,21 @@ class MainActivityTest {
         assertEquals("K 4:12", binding.keeperTimer.text.toString())
     }
 
+    /** L8: l'anello aveva il massimo fisso a 300, e con 600 s restava pieno per cinque minuti. */
+    @Test
+    fun `il massimo dell'anello e' la durata del portiere`() {
+        viewModel.applyKeeperFromPhone(600_000L, running = true, durationMillis = 600_000L)
+        idle()
+
+        assertEquals(600, binding.keeperProgressBar.max)
+        assertEquals(600, binding.keeperProgressBar.progress)
+
+        viewModel.applyKeeperFromPhone(60_000L, running = true, durationMillis = 60_000L)
+        idle()
+        assertEquals(60, binding.keeperProgressBar.max)
+        assertEquals(60, binding.keeperProgressBar.progress)
+    }
+
     @Test
     fun `il fondo del quadrante e' nero puro`() {
         val radice = binding.root.background as ColorDrawable

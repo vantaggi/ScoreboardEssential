@@ -113,6 +113,14 @@ sealed class KeeperTimerState {
         val secondsRemaining: Int,
     ) : KeeperTimerState()
 
+    /**
+     * Messo in pausa dal telefono (notifica o pulsante). Uno stato a se': prima la pausa arrivava
+     * come un azzeramento con il residuo, e il residuo diventava la durata dei conti successivi.
+     */
+    data class Paused(
+        val secondsRemaining: Int,
+    ) : KeeperTimerState()
+
     object Finished : KeeperTimerState()
 }
 
@@ -226,11 +234,17 @@ class WearViewModel(
     private val _keeperProgress = MutableStateFlow(300)
     val keeperProgress = _keeperProgress.asStateFlow()
 
+    // Il massimo dell'anello: la durata in secondi. Nel layout era fisso a 300, quindi con 600 s
+    // l'anello restava pieno per cinque minuti e con 60 s partiva dal 20%.
+    private val _keeperDurationSeconds = MutableStateFlow(300)
+    val keeperDurationSeconds = _keeperDurationSeconds.asStateFlow()
+
     private var keeperCountDownTimer: CountDownTimer? = null
     private var keeperTimerDuration = 300000L // 5 minutes default
 
     fun updateKeeperTimerDuration(millis: Long) {
         keeperTimerDuration = millis
+        _keeperDurationSeconds.value = (millis / 1000).toInt()
         // Update progress if not running to reflect new duration immediately
         if (_keeperTimer.value is KeeperTimerState.Hidden || _keeperTimer.value is KeeperTimerState.Finished) {
             _keeperProgress.value = (millis / 1000).toInt()
@@ -677,6 +691,40 @@ class WearViewModel(
     }
 
     // --- Keeper Timer Management ---
+
+    /**
+     * Il messaggio del portiere arrivato dal telefono.
+     *
+     * [durationMillis] e' la durata configurata (chiave nuova), [millis] il valore di sempre: la
+     * durata alla partenza, il residuo in pausa e alla ripresa. Con la durata nota il residuo non
+     * la sostituisce mai, e la pausa diventa [KeeperTimerState.Paused] invece di un azzeramento.
+     * Senza (telefono non aggiornato) vale la regola di prima, perche' li' non si possono distinguere.
+     */
+    fun applyKeeperFromPhone(
+        millis: Long,
+        running: Boolean,
+        durationMillis: Long,
+    ) {
+        val durataNota = durationMillis > 0
+        if (durataNota) updateKeeperTimerDuration(durationMillis)
+        when {
+            running -> {
+                setKeeperTimerState(KeeperTimerState.Running((millis / 1000).toInt()))
+                if (!durataNota && millis > 0) updateKeeperTimerDuration(millis)
+            }
+
+            // Fermo a meta' conto: e' una pausa. Fermo alla durata piena equivale a non partito.
+            durataNota && millis in 1 until durationMillis -> {
+                setKeeperTimerState(KeeperTimerState.Paused((millis / 1000).toInt()))
+            }
+
+            else -> {
+                if (!durataNota && millis > 0) updateKeeperTimerDuration(millis)
+                resetKeeperTimer(fromRemote = true)
+            }
+        }
+    }
+
     fun setKeeperTimerState(newState: KeeperTimerState) {
         // Prevent restarting the timer if the state is basically the same
         val currentState = _keeperTimer.value
@@ -709,14 +757,19 @@ class WearViewModel(
                         triggerStrongContinuousVibration()
                     }
                 }.start()
+        } else if (newState is KeeperTimerState.Paused) {
+            _keeperProgress.value = newState.secondsRemaining
         }
     }
 
     fun toggleKeeperTimer() {
-        if (keeperTimer.value is KeeperTimerState.Running) {
-            resetKeeperTimer()
-        } else {
-            startKeeperTimer()
+        when (val stato = keeperTimer.value) {
+            is KeeperTimerState.Running -> resetKeeperTimer()
+
+            // Dalla pausa si riprende dal residuo, come fa il service del telefono.
+            is KeeperTimerState.Paused -> startKeeperTimer(stato.secondsRemaining * 1000L)
+
+            else -> startKeeperTimer()
         }
     }
 
@@ -826,14 +879,14 @@ class WearViewModel(
         }
     }
 
-    private fun startKeeperTimer() {
+    private fun startKeeperTimer(fromMillis: Long = keeperTimerDuration) {
         keeperCountDownTimer?.cancel()
-        val totalSeconds = (keeperTimerDuration / 1000).toInt()
+        val totalSeconds = (fromMillis / 1000).toInt()
         _keeperTimer.value = KeeperTimerState.Running(totalSeconds)
         _keeperProgress.value = totalSeconds
 
         keeperCountDownTimer =
-            object : CountDownTimer(keeperTimerDuration, 1000) {
+            object : CountDownTimer(fromMillis, 1000) {
                 override fun onTick(millisUntilFinished: Long) {
                     val seconds = (millisUntilFinished / 1000).toInt()
                     _keeperTimer.value = KeeperTimerState.Running(seconds)
@@ -853,8 +906,10 @@ class WearViewModel(
         viewModelScope.launch {
             val data =
                 mapOf(
-                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to keeperTimerDuration,
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_MILLIS to fromMillis,
                     it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_RUNNING to true,
+                    // Il telefono prende la durata da qui: da una ripresa [fromMillis] e' il residuo.
+                    it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_KEEPER_DURATION to keeperTimerDuration,
                 )
             connectionManager.sendData(
                 path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,

@@ -117,10 +117,18 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                     return
                 }
 
+                // Zero se il mittente e' un orologio che non la conosce: il ViewModel ripiega allora
+                // sul comportamento di prima.
+                val durata =
+                    dataMap
+                        .getLong(WearConstants.KEY_KEEPER_DURATION, 0L)
+                        .takeIf { WearDataValidator.isValidTimer(it) } ?: 0L
+
                 val intent =
                     Intent(ACTION_KEEPER_TIMER_UPDATE).apply {
                         putExtra(WearConstants.KEY_KEEPER_MILLIS, millis)
                         putExtra(WearConstants.KEY_KEEPER_RUNNING, isRunning)
+                        putExtra(WearConstants.KEY_KEEPER_DURATION, durata)
                     }
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
             }

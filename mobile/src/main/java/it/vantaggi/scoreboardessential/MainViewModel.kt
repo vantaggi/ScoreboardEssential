@@ -177,14 +177,19 @@ class MainViewModel(
                     }
                 }
                 viewModelScope.launch {
-                    var previousKeeperRunningState = _isKeeperTimerRunning.value ?: false
                     binder.getService().isKeeperTimerRunning.collect { isRunning ->
-                        if (!isRunning && previousKeeperRunningState) {
-                            showKeeperTimerExpired.postValue(Unit)
-                            addMatchEvent("Keeper timer expired!")
-                        }
                         _isKeeperTimerRunning.postValue(isRunning)
-                        previousKeeperRunningState = isRunning
+                    }
+                }
+                // La riga del registro solo sulla scadenza vera, detta dal service. Dedurla dal
+                // passaggio da "in corso" a "fermo" la scriveva anche su pausa e azzeramento.
+                // Nessun dialogo: quello che c'era non aveva osservatori ed e' stato tolto, perche'
+                // un dialogo bloccante a partita in corso e' dannoso (DESIGN.md, pista Telefono).
+                // Avvisano la notifica e la vibrazione del service; lo stato SCADUTO nello slot del
+                // portiere e' il passo 13 e partira' da questo evento.
+                viewModelScope.launch {
+                    binder.getService().keeperTimerExpired.collect {
+                        addMatchEvent("Keeper timer expired!")
                     }
                 }
             }
@@ -275,12 +280,16 @@ class MainViewModel(
                     SimplifiedDataLayerListenerService.ACTION_KEEPER_TIMER_UPDATE -> {
                         val millis = intent.getLongExtra(WearConstants.KEY_KEEPER_MILLIS, 0L)
                         val running = intent.getBooleanExtra(WearConstants.KEY_KEEPER_RUNNING, false)
+                        val durata = intent.getLongExtra(WearConstants.KEY_KEEPER_DURATION, 0L)
                         if (!running && millis == 0L) {
                             resetKeeperTimer(fromRemote = true)
                         } else if (running != (_isKeeperTimerRunning.value ?: false)) {
                             if (running) {
                                 if (millis > 0) {
-                                    keeperTimerDuration = millis
+                                    // La durata configurata, mai il residuo di una ripresa. Senza la
+                                    // chiave nuova il mittente e' un orologio vecchio, che alla
+                                    // partenza manda sempre la durata piena: li' vale come prima.
+                                    keeperTimerDuration = if (durata > 0) durata else millis
                                     _keeperTimerValue.postValue(millis)
                                 }
                                 startKeeperTimer(fromRemote = true)
@@ -529,7 +538,6 @@ class MainViewModel(
 
     val showOnboarding = SingleLiveEvent<Unit>()
     val showPlayerSelectionDialog = SingleLiveEvent<Int>()
-    val showKeeperTimerExpired = SingleLiveEvent<Unit>()
     val shareMatchReportData = SingleLiveEvent<MatchReportData>()
     val showOnboardingTutorial = SingleLiveEvent<Unit>()
 
@@ -586,10 +594,14 @@ class MainViewModel(
         }
 
         loadAllPlayers()
-        // bindService PRIMA di startNewMatch: startNewMatch azzera i timer attraverso il service,
-        // e con l'ordine invertito quelle chiamate cadevano nel vuoto perche' matchTimerService
-        // era ancora null. Effetto osservabile: alla ricostruzione del ViewModel il punteggio
-        // tornava a 0-0 mentre il cronometro, che il service persiste per conto suo, proseguiva.
+        // L'ordine fra bindService e startNewMatch non conta: onServiceConnected arriva sempre in
+        // un messaggio successivo del looper, quindi qui matchTimerService e' null in entrambi i
+        // casi e gli azzeramenti di startNewMatch non raggiungono il service (B3 era chiuso su
+        // questa premessa, falsa: VALIDAZIONE L8). Ed e' giusto cosi': il service riporta da solo
+        // cronometro e portiere salvati, che appartengono alla partita che restoreActiveMatchIfAny
+        // sta per ripristinare. Ogni partita chiusa o scartata li ha gia' azzerati passando da
+        // endMatch o da startNewMatch col service legato; azzerarli anche alla connessione
+        // cancellerebbe il tempo di una partita viva, per esempio uno 0-0 al 20' senza riga viva.
         bindService()
         startNewMatch()
         restoreActiveMatchIfAny()
@@ -1511,6 +1523,9 @@ class MainViewModel(
                     WearConstants.KEY_KEEPER_MILLIS to
                         (millis ?: (_keeperTimerValue.value ?: 0L)),
                     WearConstants.KEY_KEEPER_RUNNING to isRunning,
+                    // A parte dal valore, che in pausa e' il residuo: l'orologio non lo scambia
+                    // piu' per la durata.
+                    WearConstants.KEY_KEEPER_DURATION to keeperTimerDuration,
                 )
             connectionManager.sendData(
                 path = WearConstants.PATH_KEEPER_TIMER,

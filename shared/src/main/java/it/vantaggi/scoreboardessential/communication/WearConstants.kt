@@ -178,6 +178,17 @@ object WearConstants {
     const val KEY_TIMER_RUNNING = "timer_running"
     const val KEY_KEEPER_MILLIS = "keeper_millis"
     const val KEY_KEEPER_RUNNING = "keeper_running"
+
+    /**
+     * La durata CONFIGURATA del portiere, in millisecondi, accanto a [KEY_KEEPER_MILLIS].
+     *
+     * [KEY_KEEPER_MILLIS] porta la durata alla partenza ma il RESIDUO in pausa e alla ripresa, e
+     * chi lo riceveva lo salvava come durata: dopo una pausa a 2:00 ogni conto successivo durava
+     * 2 minuti invece di 5 (L8). Quella chiave resta scritta con gli stessi valori di prima,
+     * perche' un lato non aggiornato legge solo lei. Chi conosce questa prende la durata da qui e
+     * da [KEY_KEEPER_MILLIS] solo il conto; se manca, il mittente e' vecchio e vale la regola di prima.
+     */
+    const val KEY_KEEPER_DURATION = "keeper_duration"
     const val KEY_TIMESTAMP = "timestamp"
     const val KEY_PLAYERS = "players"
     const val KEY_TEAM1_PLAYERS = "team1_players"

@@ -30,7 +30,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -61,6 +64,17 @@ class MatchTimerService : Service() {
     private var keeperTimerEndTime = 0L
     private var keeperRemainingOnPause = 0L
 
+    // La durata con cui il conto e' partito da capo. Il residuo vive in keeperRemainingOnPause e
+    // non la sostituisce mai: i messaggi all'orologio la portano a parte (KEY_KEEPER_DURATION).
+    // Zero vuol dire sconosciuta (stato salvato da una versione precedente): allora non si manda.
+    private var keeperDuration = 0L
+
+    // La scadenza e' un evento a se'. Prima il ViewModel la deduceva dal passaggio da "in corso" a
+    // "fermo", che e' lo stesso di una pausa o di un azzeramento: il registro scriveva "Keeper timer
+    // expired!" anche li'. Senza replay: senza nessuno in ascolto non c'e' registro da scrivere.
+    private val _keeperTimerExpired = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val keeperTimerExpired: SharedFlow<Unit> = _keeperTimerExpired.asSharedFlow()
+
     companion object {
         private const val TAG = "MatchTimerService"
         private const val NOTIFICATION_ID = 1
@@ -76,6 +90,7 @@ class MatchTimerService : Service() {
         private const val KEY_KEEPER_END_TIME = "keeper_end_time"
         private const val KEY_KEEPER_REMAINING_PAUSE = "keeper_remaining_pause"
         private const val KEY_KEEPER_RUNNING = "keeper_running"
+        private const val KEY_KEEPER_DURATION = "keeper_duration"
 
         // Mutable test seam: overridden in MatchTimerServiceTest to shorten the sync interval.
         @Suppress("ktlint:standard:property-naming")
@@ -274,6 +289,8 @@ class MatchTimerService : Service() {
         if (wakeLock?.isHeld == false) {
             wakeLock?.acquire()
         }
+        // Una ripresa non cambia la durata configurata: il residuo e' solo il punto da cui ripartire.
+        if (keeperRemainingOnPause <= 0) keeperDuration = durationMillis
         val duration = if (keeperRemainingOnPause > 0) keeperRemainingOnPause else durationMillis
         _isKeeperTimerRunning.value = true
         keeperTimerEndTime = System.currentTimeMillis() + duration
@@ -288,18 +305,19 @@ class MatchTimerService : Service() {
                         _isKeeperTimerRunning.value = false
                         keeperRemainingOnPause = 0L
                         scope.launch {
-                            val data =
-                                mapOf(
-                                    WearConstants.KEY_KEEPER_MILLIS to 0L,
-                                    WearConstants.KEY_KEEPER_RUNNING to false,
-                                )
                             connectionManager.sendData(
                                 path = WearConstants.PATH_KEEPER_TIMER,
-                                data = data,
+                                data = keeperMessage(0L, running = false),
                             )
                         }
                         showKeeperTimerExpiredNotification()
                         triggerKeeperTimerExpiredVibration()
+                        _keeperTimerExpired.tryEmit(Unit)
+                        // Come pausa e azzeramento: senza, a cronometro fermo il PARTIAL_WAKE_LOCK
+                        // (senza timeout) e la notifica restavano accesi finche' qualcuno non
+                        // premeva pausa o stop, e un riavvio del processo ripartiva da "in corso".
+                        checkStopForegroundAndWakeLock()
+                        saveState()
                         this.cancel()
                     }
                     delay(1000)
@@ -308,11 +326,7 @@ class MatchTimerService : Service() {
 
         if (!fromRemote) {
             scope.launch {
-                val data =
-                    mapOf(
-                        WearConstants.KEY_KEEPER_MILLIS to duration,
-                        WearConstants.KEY_KEEPER_RUNNING to true,
-                    )
+                val data = keeperMessage(duration, running = true)
                 connectionManager.sendData(
                     path = WearConstants.PATH_KEEPER_TIMER,
                     data = data,
@@ -331,11 +345,7 @@ class MatchTimerService : Service() {
 
         if (!fromRemote) {
             scope.launch {
-                val data =
-                    mapOf(
-                        WearConstants.KEY_KEEPER_MILLIS to _keeperTimerValue.value,
-                        WearConstants.KEY_KEEPER_RUNNING to false,
-                    )
+                val data = keeperMessage(_keeperTimerValue.value, running = false)
                 connectionManager.sendData(
                     path = WearConstants.PATH_KEEPER_TIMER,
                     data = data,
@@ -355,11 +365,7 @@ class MatchTimerService : Service() {
 
         if (!fromRemote) {
             scope.launch {
-                val data =
-                    mapOf(
-                        WearConstants.KEY_KEEPER_MILLIS to 0L,
-                        WearConstants.KEY_KEEPER_RUNNING to false,
-                    )
+                val data = keeperMessage(0L, running = false)
                 connectionManager.sendData(
                     path = WearConstants.PATH_KEEPER_TIMER,
                     data = data,
@@ -369,6 +375,20 @@ class MatchTimerService : Service() {
         checkStopForegroundAndWakeLock()
         saveState()
     }
+
+    /**
+     * Il messaggio del portiere: [KEY_KEEPER_MILLIS] con gli stessi valori di sempre, per chi non
+     * e' aggiornato, piu' la durata configurata a parte quando e' nota.
+     */
+    private fun keeperMessage(
+        millis: Long,
+        running: Boolean,
+    ): Map<String, Any> =
+        buildMap {
+            put(WearConstants.KEY_KEEPER_MILLIS, millis)
+            put(WearConstants.KEY_KEEPER_RUNNING, running)
+            if (keeperDuration > 0) put(WearConstants.KEY_KEEPER_DURATION, keeperDuration)
+        }
 
     private fun triggerKeeperTimerExpiredVibration() {
         val effect = VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_ALERT, -1)
@@ -488,6 +508,7 @@ class MatchTimerService : Service() {
             }
 
             putBoolean(KEY_KEEPER_RUNNING, _isKeeperTimerRunning.value)
+            putLong(KEY_KEEPER_DURATION, keeperDuration)
             if (_isKeeperTimerRunning.value) {
                 putLong(KEY_KEEPER_END_TIME, keeperTimerEndTime)
             } else {
@@ -511,6 +532,8 @@ class MatchTimerService : Service() {
             _matchTimerValue.value = elapsedTimeOnPause
         }
 
+        // Prima del conto: la ripresa qui sotto non la tocca, e i messaggi all'orologio la portano.
+        keeperDuration = prefs.getLong(KEY_KEEPER_DURATION, 0L)
         val isKeeperRunning = prefs.getBoolean(KEY_KEEPER_RUNNING, false)
         if (isKeeperRunning) {
             keeperTimerEndTime = prefs.getLong(KEY_KEEPER_END_TIME, 0L)

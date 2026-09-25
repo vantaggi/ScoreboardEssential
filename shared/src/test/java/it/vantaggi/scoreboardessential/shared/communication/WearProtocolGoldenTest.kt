@@ -112,6 +112,18 @@ class WearProtocolGoldenTest {
     }
 
     /**
+     * La durata del portiere e' una chiave NUOVA sullo stesso path: `keeper_millis` non cambia
+     * ne' valore ne' significato, cosi' un orologio o un telefono non aggiornato continua a
+     * leggere quello che legge oggi (L8).
+     */
+    @Test
+    fun `la durata del portiere e' una chiave additiva accanto a keeper_millis`() {
+        assertEquals("keeper_duration", WearConstants.KEY_KEEPER_DURATION)
+        assertEquals("keeper_millis", WearConstants.KEY_KEEPER_MILLIS)
+        assertEquals("/scoreboard/keeper_timer", WearConstants.PATH_KEEPER_TIMER)
+    }
+
+    /**
      * Nessun path v2 deve essere prefisso di un path v1 o viceversa: il filtro nel manifest usa
      * `pathPrefix="/scoreboard"` e il dispatch e' su uguaglianza, ma una sovrapposizione renderebbe
      * ambiguo qualunque futuro passaggio a un dispatch per prefisso.

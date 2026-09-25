@@ -81,12 +81,9 @@
     <string name="continue_action">Continue</string>
     <string name="match_saved">Match saved!</string>
     <string name="match_not_started_error">Start the match or score before ending it.</string>
-    <string name="keeper_change_title">⏰ KEEPER CHANGE!</string>
-    <string name="keeper_change_message">Time to change the goalkeeper!</string>
     <string name="reset_timer_title">Reset Timer?</string>
     <string name="reset_timer_message">This will reset the match timer to 00:00</string>
     <string name="reset">Reset</string>
-    <string name="ok">OK</string>
 
     <string name="label_match_time">MATCH TIME</string>
     <string name="label_keeper_timer">GOALKEEPER</string>

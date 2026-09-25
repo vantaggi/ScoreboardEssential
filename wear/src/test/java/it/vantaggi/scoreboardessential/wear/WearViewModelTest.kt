@@ -436,4 +436,46 @@ class WearViewModelTest {
         // Un telefono che non lo manda (calcio, o una versione precedente) non deve rompere niente.
         assertEquals(0, WearScoreState.fromDataMap(DataMap()).servingSide)
     }
+
+    /**
+     * L8: il telefono manda il residuo in pausa, e l'orologio lo salvava come durata: dopo una
+     * pausa a 2:00 ogni conto successivo durava 2 minuti invece di 5. Con la durata a parte, la
+     * pausa e' uno stato suo e la durata resta quella configurata.
+     */
+    @Test
+    fun `la pausa dal telefono e' uno stato a se' e non cambia la durata`() {
+        viewModel.applyKeeperFromPhone(300_000L, running = true, durationMillis = 300_000L)
+        viewModel.applyKeeperFromPhone(120_000L, running = false, durationMillis = 300_000L)
+
+        assertEquals(KeeperTimerState.Paused(120), viewModel.keeperTimer.value)
+        assertEquals(120, viewModel.keeperProgress.value)
+        assertEquals(300, viewModel.keeperDurationSeconds.value)
+
+        // Azzerato dal telefono, il conto dopo riparte dalla durata piena, non da 2:00.
+        viewModel.applyKeeperFromPhone(0L, running = false, durationMillis = 300_000L)
+        assertEquals(KeeperTimerState.Hidden, viewModel.keeperTimer.value)
+        viewModel.toggleKeeperTimer()
+        assertEquals(KeeperTimerState.Running(300), viewModel.keeperTimer.value)
+        viewModel.resetKeeperTimer(fromRemote = true)
+    }
+
+    /** Dalla pausa il tocco riprende dal residuo, come il service del telefono. */
+    @Test
+    fun `dalla pausa il tocco riprende dal residuo`() {
+        viewModel.applyKeeperFromPhone(120_000L, running = false, durationMillis = 300_000L)
+        viewModel.toggleKeeperTimer()
+
+        assertEquals(KeeperTimerState.Running(120), viewModel.keeperTimer.value)
+        assertEquals(300, viewModel.keeperDurationSeconds.value)
+        viewModel.resetKeeperTimer(fromRemote = true)
+    }
+
+    /** Un telefono non aggiornato non manda la durata: resta il comportamento di prima. */
+    @Test
+    fun `senza la durata dal telefono vecchio vale la regola di prima`() {
+        viewModel.applyKeeperFromPhone(120_000L, running = false, durationMillis = 0L)
+
+        assertEquals(KeeperTimerState.Hidden, viewModel.keeperTimer.value)
+        assertEquals(120, viewModel.keeperDurationSeconds.value)
+    }
 }

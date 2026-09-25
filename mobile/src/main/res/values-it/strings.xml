@@ -80,12 +80,9 @@
     <string name="continue_action">Continua</string>
     <string name="match_saved">Partita salvata!</string>
     <string name="match_not_started_error">Avvia la partita o segna prima di terminarla.</string>
-    <string name="keeper_change_title">⏰ CAMBIO PORTIERE!</string>
-    <string name="keeper_change_message">È ora di cambiare il portiere!</string>
     <string name="reset_timer_title">Resetta Timer?</string>
     <string name="reset_timer_message">Questo resetterà il timer della partita a 00:00</string>
     <string name="reset">Resetta</string>
-    <string name="ok">OK</string>
 
     <string name="label_match_time">TEMPO PARTITA</string>
     <string name="label_keeper_timer">PORTIERE</string>

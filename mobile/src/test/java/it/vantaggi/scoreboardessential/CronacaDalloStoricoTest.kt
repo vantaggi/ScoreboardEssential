@@ -16,6 +16,7 @@ import it.vantaggi.scoreboardessential.database.Team
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
 import it.vantaggi.scoreboardessential.ui.chronicle.ChronicleActivity
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -71,6 +72,7 @@ class CronacaDalloStoricoTest {
         whenever(service.isMatchTimerRunning).thenReturn(MutableStateFlow(false))
         whenever(service.keeperTimerValue).thenReturn(MutableStateFlow(0L))
         whenever(service.isKeeperTimerRunning).thenReturn(MutableStateFlow(false))
+        whenever(service.keeperTimerExpired).thenReturn(MutableSharedFlow())
         shadowOf(app).setComponentNameAndServiceForBindService(ComponentName(app, MatchTimerService::class.java), binder)
     }
 

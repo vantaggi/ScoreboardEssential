@@ -40,6 +40,7 @@ class WearDataLayerService : WearableListenerService() {
         const val EXTRA_TIMER_RUNNING = "timer_running"
         const val EXTRA_KEEPER_MILLIS = "keeper_millis"
         const val EXTRA_KEEPER_RUNNING = "keeper_running"
+        const val EXTRA_KEEPER_DURATION = "keeper_duration"
         const val EXTRA_MATCH_ACTIVE = "match_active"
         const val EXTRA_PLAYERS = "players"
 
@@ -149,10 +150,17 @@ class WearDataLayerService : WearableListenerService() {
                         return
                     }
 
+                    // Zero se il telefono non e' aggiornato: allora vale la regola di prima.
+                    val durata =
+                        dataMap
+                            .getLong(WearConstants.KEY_KEEPER_DURATION, 0L)
+                            .takeIf { WearDataValidator.isValidTimer(it) } ?: 0L
+
                     val intent =
                         Intent(ACTION_KEEPER_TIMER_UPDATE).apply {
                             putExtra(EXTRA_KEEPER_MILLIS, millis)
                             putExtra(EXTRA_KEEPER_RUNNING, running)
+                            putExtra(EXTRA_KEEPER_DURATION, durata)
                         }
                     LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
                 }
