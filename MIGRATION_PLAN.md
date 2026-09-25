@@ -223,7 +223,7 @@ quelli che diventano irreparabili se il codice nuovo ci si costruisce sopra.
 |---|---|---|---|
 | B1 | `ACTION_REQUEST_SYNC` registrato nel filtro, nessun ramo nel `when` | `MainViewModel.kt` | ✅ fatto |
 | B2 | Lista eventi read-modify-`postValue`, si sovrascrive | `MainViewModel.kt` | ✅ fatto |
-| B3 | `startNewMatch()` gira prima di `bindService()` | `MainViewModel.kt` | ✅ fatto |
+| B3 | `startNewMatch()` gira prima di `bindService()` | `MainViewModel.kt` | ✅ chiuso su premessa falsa, corretto in L8: l'ordine non conta (il service arriva sempre dopo init) e l'azzeramento alla connessione non serve |
 | B4 | Eco del cronometro: `startTimer()`/`pauseTimer()` senza `fromRemote` | `MainViewModel.kt` | ✅ fatto |
 | B5 | Gol come `@Update` di riga intera → ora `UPDATE ... goals = goals + 1` | `PlayerDao.kt` | ✅ fatto |
 | B6 | Telefono e orologio dichiarano la stessa capability `scoreboard_app` | `*/res/values/wear.xml` | ✅ fatto in S3, additivo |
@@ -239,7 +239,8 @@ Nota anche che `FILTER_REACHABLE` esclude il nodo stesso, quindi il difetto oggi
 è di ambiguità potenziale, non un guasto osservabile.
 
 Ortogonali, **non** prerequisiti: `teams` mai scritta, FK mancanti su
-`MatchPlayerCrossRef`, wake lock non rilasciato, stringhe hardcoded nei layout.
+`MatchPlayerCrossRef`, ~~wake lock non rilasciato~~ (chiuso in L8: era la scadenza del
+portiere), stringhe hardcoded nei layout.
 Obbligatorio **prima del basket** (non del padel): `MatchTimerService` è solo
 *bound*, quindi muore con l'Activity.
 
@@ -1636,7 +1637,7 @@ si ferma e si dice quando si azzera. Ordine, dal piano gia' approvato:
    resto: via il numero Padel Elite, export dallo storico (migrazione 13 -> 14), formato v2,
    fixture condiviso, `MatchStats` in `:core` e la schermata Cronaca. Riferimenti in
    `docs/dashboard/`.
-2. **L8** cronometro e portiere.
+2. ~~**L8**~~ fatto il 25 settembre 2026.
 3. **L2** riga viva e ciclo di vita del MainViewModel.
 4. **L11** il resto: registro, testi, PDF, accessibilita' del telefono.
 5. **Design telefono, passi 5-9**: la schermata di gioco nuova (dopo L1-L3).
@@ -1844,3 +1845,38 @@ righe vive per la stessa partita. E' della famiglia di L2, che e' in coda.
 **Aperto, dalla schermata (voluto):** nel tennis singolare l'ordine di servizio non arriva a
 quattro giocatori, quindi Servizio e palle break restano vuoti; supportare due servitori in
 `MatchStats` e' una decisione da prendere.
+
+### L8, cronometro e portiere - 25 settembre 2026
+
+Chiusi i quattro difetti di L8 su telefono e orologio insieme (commit `d066dd4`).
+
+- **Durata e residuo.** Chiave nuova e additiva `keeper_duration` sul path del portiere, con la
+  durata configurata; `keeper_millis` resta scritta con gli stessi valori di prima (durata alla
+  partenza, residuo in pausa e alla ripresa), quindi un lato non aggiornato legge quello che
+  legge oggi. Chi conosce la chiave nuova non salva mai il residuo come durata; senza, vale la
+  regola di prima. Golden test affiancato, non riscritto. Sull'orologio la pausa dal telefono e'
+  lo stato `Paused` (residuo in grigio, il tocco riprende dal residuo) e il massimo dell'anello e'
+  la durata in secondi. Il service persiste la durata, e una ripresa non la cambia.
+- **Scadenza.** Il ramo di scadenza rilascia wake lock e primo piano e salva lo stato. Emette
+  `keeperTimerExpired`, e la riga "Keeper timer expired!" nasce solo da li', non piu' da pausa o
+  azzeramento. Il dialogo morto `showKeeperTimerExpiredAlert` e' stato tolto e non ricollegato:
+  bloccante a partita in corso, e DESIGN.md lo toglieva gia'; lo stato SCADUTO del passo 13 ora
+  ha l'evento da cui partire.
+- **B3.** Commento corretto: l'ordine fra `bindService` e `startNewMatch` non conta, il service
+  arriva sempre dopo init. L'azzeramento alla connessione non e' stato aggiunto: quello che il
+  service riporta e' della partita da ripristinare, e ogni partita chiusa o scartata lo ha gia'
+  azzerato.
+
+**Verifica:** `:shared` 30 test, `:wear` 48, `:mobile` 193, `:core` 136, tutti verdi (11 nuovi:
+3 sul service, 4 sul MainViewModel, 3 sul WearViewModel, 1 sul quadrante, piu' uno nel golden). `ktlintCheck`, `lintDebug` (l'unico
+avviso nuovo, `R.string.ok` rimasta senza uso, tolto con la stringa), `assembleDebug`,
+`assembleDebugAndroidTest` verdi. Falsificazione: tolte una alla volta o a gruppi le chiamate di
+rilascio e di salvataggio, l'emissione dell'evento, la chiave nella mappa del service, la scelta
+della durata nel ViewModel, lo stato `Paused` e il `setMax` dell'orologio, e rimesso il vecchio
+collector: rosso ogni volta il test previsto. B3 e' falsificato nel verso opposto (azzeramento in
+`onServiceConnected`: rosso), perche' il suo rimedio e' un commento.
+
+**Da guardare su dispositivo:** con i due emulatori accoppiati, pausa del portiere dalla
+notifica a 2:00 e ripresa dall'orologio (deve finire a 0:00 e il conto dopo durare 5:00);
+l'anello con 60 e 600 secondi; la scadenza a cronometro fermo, con la notifica persistente che
+sparisce. E le coppie miste: orologio vecchio con telefono nuovo e viceversa.

@@ -411,6 +411,8 @@ Corretto: 616eab5, la descrizione del lato dice nome e punteggio a schermo ("ROS
 
 **Rimedio.** Impostare max alla durata in secondi. Nel messaggio distinguere la durata configurata dal residuo. Trattare la pausa come uno stato a sé.
 
+Corretto: d066dd4, chiave nuova e additiva `keeper_duration` (durata configurata) accanto a `keeper_millis`, che resta scritta con gli stessi valori di prima per il lato non aggiornato. La mandano il service del telefono (durata persistita, invariata da una ripresa), il MainViewModel e l'orologio; chi la riceve prende la durata da lì e non dal residuo, e senza la chiave torna alla regola di prima. Sull'orologio la pausa è `KeeperTimerState.Paused` (residuo in grigio, il tocco riprende dal residuo) e il massimo dell'anello segue `keeperDurationSeconds`. Test rossi senza il rimedio: MatchTimerServiceTest (durata a parte in avvio, pausa e ripresa), MainViewModelTest (ripresa dall'orologio con residuo 2:00 e durata 5:00), WearViewModelTest (pausa come stato, durata a 300), MainActivityTest dell'orologio (max 600 e 60).
+
 ### [media] Quando il timer del portiere scade, il servizio non rilascia wake lock e primo piano e non salva lo stato; la finestra di scadenza è codice morto
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/service/MatchTimerService.kt` - aree: build, concorrenza
@@ -418,6 +420,8 @@ Corretto: 616eab5, la descrizione del lato dice nome e punteggio a schermo ("ROS
 **Scenario.** Il ramo di scadenza (278-296) mette _isKeeperTimerRunning=false e fa cancel(), ma non chiama checkStopForegroundAndWakeLock() né saveState(). showKeeperTimerExpired (MainViewModel 190) non ha osservatori, quindi showKeeperTimerExpiredAlert (MainActivity 984-993), il cui OK faceva il reset, non parte mai (l'osservatore è stato tolto in 0f14e831). Calcio a cronometro fermo, portiere scaduto: PARTIAL_WAKE_LOCK senza timeout e notifica ferma finché non si preme pausa o stop. È la localizzazione precisa del 'wake lock non rilasciato' che il piano tiene fra i difetti aperti.
 
 **Rimedio.** Nel ramo di scadenza chiamare checkStopForegroundAndWakeLock() e saveState(). Ricollegare l'observer o togliere il codice morto. Test Robolectric con ShadowPowerManager.
+
+Corretto: d066dd4, il ramo di scadenza chiama checkStopForegroundAndWakeLock() e saveState(). Il dialogo è stato tolto, non ricollegato: un dialogo bloccante a partita in corso è giudicato dannoso in DESIGN.md (pista Telefono, che già prevedeva di togliere showKeeperTimerExpiredAlert), l'avviso restano notifica e vibrazione del service, e lo stato SCADUTO nello slot del portiere è il passo 13, che ora ha un evento su cui appoggiarsi. Via anche showKeeperTimerExpired e le stringhe `keeper_change_*` e `ok` rimaste senza uso. Test in MatchTimerServiceTest con ShadowPowerManager: wake lock rilasciato, primo piano tolto e stato salvato a "fermo" dopo la scadenza; rosso togliendo l'una o l'altra chiamata.
 
 ### [bassa] 'Keeper timer expired!' scritto nel registro anche su pausa o azzeramento
 
@@ -427,6 +431,8 @@ Corretto: 616eab5, la descrizione del lato dice nome e punteggio a schermo ("ROS
 
 **Rimedio.** Un evento di scadenza dedicato dal service.
 
+Corretto: d066dd4, MatchTimerService emette `keeperTimerExpired` (SharedFlow senza replay) solo nel ramo di scadenza, e il MainViewModel scrive la riga solo su quello; il collector di isKeeperTimerRunning aggiorna e basta. Test rossi senza il rimedio: MatchTimerServiceTest (pausa e azzeramento non emettono, la scadenza sì) e MainViewModelTest (passaggio da in corso a fermo senza riga, la riga arriva con l'evento).
+
 ### [bassa] B3 chiuso su una premessa falsa: bindService prima di startNewMatch non rende disponibile il service
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt` - aree: viewmodel
@@ -434,6 +440,8 @@ Corretto: 616eab5, la descrizione del lato dice nome e punteggio a schermo ("ROS
 **Scenario.** onServiceConnected arriva sempre in un messaggio successivo: in init matchTimerService è null alla 719 in entrambi gli ordini. Il commento 588-591 e la voce B3 promettono un azzeramento che non avviene.
 
 **Rimedio.** Correggere il commento e il piano. Se l'azzeramento serve, farlo in onServiceConnected dopo il ripristino.
+
+Corretto: d066dd4, corretti il commento in init e la voce B3 del piano. L'azzeramento non è stato aggiunto perché non serve: ogni partita chiusa o scartata azzera cronometro e portiere passando da endMatch o da startNewMatch a service legato, quindi quello che il service riporta alla ricostruzione del ViewModel appartiene alla partita che restoreActiveMatchIfAny ripristina. Azzerarlo alla connessione cancellerebbe il tempo di una partita viva senza riga (uno 0-0 al 20', la riga nasce al primo punto). Il test in MainViewModelTest verifica la premessa vera (service null alla fine della costruzione, legato dopo il giro del looper) e che alla connessione non si azzera niente. Non può essere rosso senza il rimedio, che è un commento: è stato falsificato nel verso opposto, aggiungendo l'azzeramento in onServiceConnected (rosso).
 
 ## L9 Dominio racchetta
 
