@@ -35,6 +35,7 @@ import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSyn
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
@@ -779,6 +780,8 @@ class MainViewModelTest {
         rosa: List<PlayerWithRoles> = emptyList(),
         matchUuid: String? = null,
         startedAt: Long? = null,
+        sportId: String = SportRegistry.FOOTBALL,
+        serveOrder: String = "",
     ): PlayerDao {
         val playerDao = campo("playerDao") as PlayerDao
         val matchDao = campo("matchDao") as MatchDao
@@ -795,6 +798,8 @@ class MainViewModelTest {
                 eventLog = eventLog,
                 startedAt = startedAt,
                 matchUuid = matchUuid,
+                sportId = sportId,
+                serveOrder = serveOrder,
             )
         kotlinx.coroutines.runBlocking {
             whenever(matchDao.getActiveMatchOnce()).thenReturn(salvata)
@@ -1325,5 +1330,309 @@ class MainViewModelTest {
             assertEquals(mockMatchTimerService, servizio.get(nuovo))
             verify(mockMatchTimerService, never()).resetTimer(any())
             verify(mockMatchTimerService, never()).resetKeeperTimer(any())
+        }
+
+    // --- L2: riga viva (creazione, cambio sport, ripristino) ---
+
+    /**
+     * Un MatchDao vero che SOSPENDE davvero davanti a due cancelli: l'insert e la lettura della
+     * riga attiva. Con i DAO finti o con gli esecutori diretti l'insert ritorna subito, e la
+     * finestra in cui currentMatchId e' ancora null non si apre mai (VALIDAZIONE, nota di L12).
+     */
+    private class DaoCheSospende(
+        private val vero: MatchDao,
+        val cancelloInsert: CompletableDeferred<Unit> = CompletableDeferred(),
+        val cancelloLettura: CompletableDeferred<Unit> = CompletableDeferred(Unit),
+    ) : MatchDao by vero {
+        override suspend fun insert(match: Match): Long {
+            cancelloInsert.await()
+            return vero.insert(match)
+        }
+
+        override suspend fun getActiveMatchOnce(): Match? {
+            cancelloLettura.await()
+            return vero.getActiveMatchOnce()
+        }
+    }
+
+    private data class Riga(
+        val attiva: Boolean,
+        val sportId: String,
+        val team1Score: Int,
+        val team2Score: Int,
+        val eventi: Int,
+    )
+
+    /** Tutte le righe della tabella, lette in SQL: la query della cronologia puo' filtrarle. */
+    private fun righe(db: AppDatabase): List<Riga> =
+        db.openHelper.readableDatabase
+            .query("SELECT isActive, sportId, team1Score, team2Score, eventLog FROM matches ORDER BY matchId")
+            .use { c ->
+                buildList {
+                    while (c.moveToNext()) {
+                        val eventi = MatchLogCodec.decode(c.getString(4))?.size ?: -1
+                        add(Riga(c.getInt(0) == 1, c.getString(1), c.getInt(2), c.getInt(3), eventi))
+                    }
+                }
+            }
+
+    private fun rispondeAgliAck() {
+        val connessione = campo("connectionManager") as OptimizedWearDataSync
+        kotlinx.coroutines.runBlocking { whenever(connessione.sendMessage(any(), any())).thenReturn(true) }
+    }
+
+    /**
+     * Rilievo L2 (alta): applyWatchBatch chiamava persistLiveMatch due volte (una dentro
+     * publishEngineState). Entrambe leggevano currentMatchId null prima che l'insert tornasse, e
+     * a ogni consegna dall'orologio nascevano due righe attive.
+     */
+    @Test
+    fun `l'arretrato dall'orologio crea una riga viva sola`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val dao = DaoCheSospende(db.matchDao())
+                imposta("matchDao", dao)
+                rispondeAgliAck()
+
+                ricevi(
+                    Intent(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
+                        .putExtra(WearConstants.KEY_INTENT_BATCH, "point,1,1000;point,2,2000")
+                        .putExtra(WearConstants.KEY_SEQ, 1L),
+                )
+                advanceUntilIdle()
+                dao.cancelloInsert.complete(Unit)
+                advanceUntilIdle()
+
+                assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 1, 1, 2)), righe(db))
+            } finally {
+                db.close()
+            }
+        }
+
+    /** Stessa finestra con due punti ravvicinati: il secondo aggiorna la riga del primo. */
+    @Test
+    fun `due punti ravvicinati con l'insert sospeso fanno una riga sola, aggiornata`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val dao = DaoCheSospende(db.matchDao())
+                imposta("matchDao", dao)
+
+                viewModel.addScore(1)
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                dao.cancelloInsert.complete(Unit)
+                advanceUntilIdle()
+
+                assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 2, 0, 2)), righe(db))
+            } finally {
+                db.close()
+            }
+        }
+
+    /**
+     * END MATCH subito dopo il primo punto: endMatch legge currentMatchId dentro la sua coroutine,
+     * e con l'insert ancora sospeso closeMatch ne inseriva una seconda. Restavano una partita
+     * chiusa e una attiva, ripresa al riavvio.
+     */
+    @Test
+    fun `END MATCH subito dopo il primo punto chiude la riga viva invece di inserirne un'altra`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val dao = DaoCheSospende(db.matchDao())
+                imposta("matchDao", dao)
+
+                viewModel.addScore(1)
+                assertEquals(true, viewModel.endMatch())
+                advanceUntilIdle()
+                dao.cancelloInsert.complete(Unit)
+                advanceUntilIdle()
+
+                assertEquals(listOf(Riga(false, SportRegistry.FOOTBALL, 1, 0, 1)), righe(db))
+                assertEquals(null, campo("currentMatchId"))
+            } finally {
+                db.close()
+            }
+        }
+
+    /**
+     * SCARTA con l'insert sospeso: deleteById non partiva e la riga nata dopo restava orfana.
+     * Prima il caso semplice, con la riga gia' scritta: l'id ora si legge dentro la fila, e
+     * nessuno deve azzerarlo prima che la cancellazione lo legga.
+     */
+    @Test
+    fun `scartare cancella la riga viva, anche con l'insert sospeso`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                imposta("matchDao", db.matchDao())
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                assertEquals(1, righe(db).size)
+                assertEquals(true, viewModel.discardMatch())
+                advanceUntilIdle()
+                assertEquals(emptyList<Riga>(), righe(db))
+
+                val dao = DaoCheSospende(db.matchDao())
+                imposta("matchDao", dao)
+
+                viewModel.addScore(1)
+                assertEquals(true, viewModel.discardMatch())
+                advanceUntilIdle()
+                dao.cancelloInsert.complete(Unit)
+                advanceUntilIdle()
+
+                assertEquals(emptyList<Riga>(), righe(db))
+                assertEquals(null, campo("currentMatchId"))
+
+                // E la partita dopo ha la sua riga, non quella di prima.
+                viewModel.addScore(2)
+                advanceUntilIdle()
+                assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 0, 1, 1)), righe(db))
+            } finally {
+                db.close()
+            }
+        }
+
+    /**
+     * Rilievo L2 (media): gol e ANNULLA lasciano la riga viva con '1|'. Il cambio sport
+     * dall'orologio dimenticava la riga senza cancellarla: restava attiva e orfana, e la partita
+     * di padel ne apriva una seconda.
+     */
+    @Test
+    fun `il cambio sport a registro vuoto cancella la riga viva senza eventi`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                imposta("matchDao", db.matchDao())
+                viewModel.addScore(1)
+                viewModel.undoLastGoal()
+                advanceUntilIdle()
+                assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 0, 0, 0)), righe(db))
+
+                ricevi(
+                    Intent(SimplifiedDataLayerListenerService.ACTION_SPORT_INTENT)
+                        .putExtra(WearConstants.KEY_SPORT_ID, SportRegistry.PADEL),
+                )
+                advanceUntilIdle()
+                assertEquals(SportRegistry.PADEL, viewModel.activeSport.value)
+                assertEquals(emptyList<Riga>(), righe(db))
+
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                assertEquals(listOf(Riga(true, SportRegistry.PADEL, 0, 0, 1)), righe(db))
+            } finally {
+                db.close()
+            }
+        }
+
+    /**
+     * Rilievo L2 (media): il ripristino non guardava lo sport della riga. Un padel ripreso col
+     * calcio in vigore veniva ripiegato con le regole del calcio (due punti = 2-0 invece di
+     * 30-0), e l'ordine di servizio salvato non tornava.
+     */
+    @Test
+    fun `alla ripresa valgono lo sport e l'ordine di servizio della riga`() =
+        runTest {
+            partitaSalvata("1|1,1", sportId = SportRegistry.PADEL, serveOrder = "1,2,3,4")
+            advanceUntilIdle()
+
+            assertEquals(SportRegistry.PADEL, viewModel.activeSport.value)
+            assertEquals(SportRegistry.PADEL, motore().rules.id)
+            assertEquals(listOf(1, 2, 3, 4), motore().rules.config.serveOrder)
+            assertEquals("30", viewModel.scoreDisplay.value?.side1Primary)
+            verify(mockMatchSettingsRepository).setActiveSport(SportRegistry.PADEL)
+        }
+
+    /** Il ViewModel di [viewModel] rifatto da capo, con i suoi finti, e queste impostazioni. */
+    private fun nuovoViewModel(sportSalvato: String): MainViewModel {
+        whenever(mockMatchSettingsRepository.getSettingsFlow()).thenReturn(
+            flowOf(MatchSettings("Team 1", "Team 2", Color.RED, Color.BLUE, 300L, sportSalvato)),
+        )
+        val nuovo = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
+        // Prima che le coroutine di init partano: col dispatcher del setup sono solo accodate.
+        listOf("playerDao", "matchDao", "connectionManager").forEach { nome ->
+            val campo = MainViewModel::class.java.getDeclaredField(nome).apply { isAccessible = true }
+            campo.set(nuovo, campo.get(viewModel))
+        }
+        return nuovo
+    }
+
+    /**
+     * Il collettore delle impostazioni chiama applySport quando lo sport salvato non e' il calcio,
+     * e ora applySport cancella la riga viva. Se la sua prima emissione cade durante il
+     * ripristino, non deve cancellare la partita che sta tornando ne' rimetterle sopra lo sport
+     * vecchio: vince la riga, e le impostazioni si allineano.
+     */
+    @Test
+    fun `lo sport delle impostazioni non cancella ne' cambia la partita che si sta ripristinando`() =
+        runTest {
+            val matchDao = campo("matchDao") as MatchDao
+            val calcio =
+                Match(
+                    matchId = 5,
+                    team1Id = 1,
+                    team2Id = 2,
+                    team1Score = 2,
+                    team2Score = 0,
+                    timestamp = 0L,
+                    isActive = true,
+                    eventLog = "1|1,1",
+                )
+            whenever(matchDao.getActiveMatchOnce()).thenReturn(calcio)
+
+            val nuovo = nuovoViewModel(sportSalvato = SportRegistry.PADEL)
+            advanceUntilIdle()
+
+            assertEquals(SportRegistry.FOOTBALL, nuovo.activeSport.value)
+            assertEquals(2, nuovo.team1Score.value)
+            verify(matchDao, never()).deleteById(any())
+            verify(mockMatchSettingsRepository).setActiveSport(SportRegistry.FOOTBALL)
+        }
+
+    /** Senza una partita da ripristinare lo sport salvato si applica, come prima. */
+    @Test
+    fun `senza partita da ripristinare lo sport delle impostazioni si applica`() =
+        runTest {
+            val nuovo = nuovoViewModel(sportSalvato = SportRegistry.PADEL)
+            advanceUntilIdle()
+
+            assertEquals(SportRegistry.PADEL, nuovo.activeSport.value)
+        }
+
+    /**
+     * Rilievo L2 (bassa): un punto dall'orologio arrivato mentre il ripristino aspetta il
+     * database veniva applicato al motore vuoto. Creava una seconda riga attiva, e poi restoreLog
+     * lo cancellava dal tabellone. Ora aspetta la fine del ripristino e si somma alla partita.
+     */
+    @Test
+    fun `un punto dall'orologio arrivato durante il ripristino si applica dopo, sulla partita ripresa`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                db.matchDao().insert(
+                    Match(team1Id = 1, team2Id = 2, team1Score = 2, team2Score = 0, timestamp = 0L, isActive = true, eventLog = "1|1,1"),
+                )
+                val dao = DaoCheSospende(db.matchDao(), cancelloInsert = CompletableDeferred(Unit), cancelloLettura = CompletableDeferred())
+                imposta("matchDao", dao)
+                val ripristino = MainViewModel::class.java.getDeclaredMethod("restoreActiveMatchIfAny")
+                ripristino.isAccessible = true
+                ripristino.invoke(viewModel)
+                advanceUntilIdle()
+
+                ricevi(puntoDallOrologio(2))
+                advanceUntilIdle()
+                dao.cancelloLettura.complete(Unit)
+                advanceUntilIdle()
+
+                assertEquals(2, viewModel.team1Score.value)
+                assertEquals(1, viewModel.team2Score.value)
+                assertEquals(3, motore().log.size)
+                assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 2, 1, 3)), righe(db))
+            } finally {
+                db.close()
+            }
         }
 }
