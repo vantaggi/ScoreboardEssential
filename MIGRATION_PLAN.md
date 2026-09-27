@@ -1880,3 +1880,50 @@ collector: rosso ogni volta il test previsto. B3 e' falsificato nel verso oppost
 notifica a 2:00 e ripresa dall'orologio (deve finire a 0:00 e il conto dopo durare 5:00);
 l'anello con 60 e 600 secondi; la scadenza a cronometro fermo, con la notifica persistente che
 sparisce. E le coppie miste: orologio vecchio con telefono nuovo e viceversa.
+
+### Lavoro a passi corti - 28 settembre 2026
+
+Il proprietario non sempre ha il tempo di lasciare aperta la sessione, e un lotto intero in un solo
+workflow dura ore: L2 e' stato fermato due volte a meta'. **Da qui in poi l'unita' di lavoro e' il
+passo, non il lotto.**
+
+- **Un passo fa una sola cosa e dura al massimo 20-30 minuti:** implementare una voce (uno o due
+  difetti affini, nello stesso file), revisionarla, correggerla, unire e verificare, provare
+  sull'emulatore e scrivere i documenti.
+- **Un passo finisce sempre con qualcosa nel repository:** un commit sul branch della voce, oppure
+  l'esito (per esempio i rilievi del revisore) scritto nella tabella qui sotto. Niente resta solo
+  nella cache di un workflow: fermarsi fra due passi non costa niente.
+- **Un workflow per passo, con uno o due agenti.** Due passi indipendenti (file diversi) possono
+  girare insieme. Fra un passo e l'altro si leggono i limiti con la regola della coda automatica.
+- **Il proprietario puo' fermare in ogni momento:** si ferma il workflow, si salva come patch il
+  lavoro non committato, si segna nella tabella il passo interrotto, che poi riparte da capo.
+
+### L2 in corso - 28 settembre 2026
+
+Worktree dei due branch, da tenere finche' L2 non e' unito (i risultati in cache del workflow
+`wf_64595711-f2e` puntano a questi percorsi):
+`.claude/worktrees/wf_64595711-f2e-1` (`wf5/riga`) e `.claude/worktrees/wf_64595711-f2e-2`
+(`wf5/navigazione`). Entrambi partono da `a4ac2e8`.
+
+| Passo | Cosa | Stato |
+|---|---|---|
+| 1 | Voce riga: doppia riga viva (Mutex `rigaViva` su insert, aggiornamenti, endMatch e scarto), riga senza eventi cancellata al cambio sport, ripristino con sport e ordine di servizio della riga, intenti remoti rimandati a fine ripristino | fatto, `be20e97`, 9 test nuovi falsificati, suite verde (:mobile 202) |
+| 2 | Voce navigazione: `MatchHistoryViewModel`, onboarding senza MainViewModel, freccia su con `finish()`, riga viva fuori dallo storico, guardia del cambio sport con `decode` | fatto, `a03a3e0`, 8 test nuovi (7 falsificati, uno fissa un comportamento invariato), suite verde (:mobile 201) |
+| 3 | Revisione avversaria della voce riga | da fare |
+| 4 | Revisione avversaria della voce navigazione | da fare (interrotta a meta') |
+| 5 | Correzione dei rilievi alti e medi di 3 e 4 | da fare |
+| 6 | Voce rose (rose salvate con la riga viva, da `wf5/riga`) | da fare |
+| 7 | Revisione e correzione della voce rose | da fare |
+| 8 | Unione su `main`, verifica completa, strumentati, documenti, push | da fare |
+
+**Scelte da far vedere al proprietario, emerse dalle due voci:**
+- il ripristino scrive nelle impostazioni lo sport della partita ripresa, anche se diverso da
+  quello scelto;
+- un registro vuoto `''` non blocca il cambio sport nelle impostazioni (il codec lo legge come
+  registro vuoto, come fa il ripristino); un registro illeggibile invece lo blocca;
+- una riga viva `'1|'` lasciata dalle versioni precedenti viene ancora ripresa come 0-0 e sparisce
+  al primo cambio sport.
+
+**Aperti noti:** in MainViewModel il parametro `repository` non ha piu' usi; `MatchDao.getAllMatchesWithPlayers`
+non ha chiamanti; uno SCARTA dopo punto e annullamento con l'insert ancora sospeso risponde "niente
+da scartare" e la riga `'1|'` resta. Il passo 3 deve dire se sono accettabili.
