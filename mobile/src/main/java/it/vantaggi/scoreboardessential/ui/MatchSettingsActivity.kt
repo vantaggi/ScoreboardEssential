@@ -44,6 +44,16 @@ class MatchSettingsActivity : AppCompatActivity() {
         setupListeners()
     }
 
+    /**
+     * Si torna alla partita da cui si e' arrivati, senza ricrearla. La navigazione "su" di
+     * AppCompat seguiva parentActivityName e ricreava MainActivity, e con lei il ViewModel della
+     * partita.
+     */
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
+    }
+
     private fun setupLanguageDropdown() {
         val languages = listOf("English", "Italiano")
         val adapter =

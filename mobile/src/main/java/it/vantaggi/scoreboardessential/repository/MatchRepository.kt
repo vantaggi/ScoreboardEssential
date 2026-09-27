@@ -2,12 +2,16 @@ package it.vantaggi.scoreboardessential.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import it.vantaggi.scoreboardessential.BuildConfig
+import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
+import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.time.ZoneId
 
 class MatchRepository(
     private val matchDao: MatchDao,
@@ -70,9 +74,23 @@ class MatchRepository(
         sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceChangeListener)
     }
 
-    val allMatches: Flow<List<MatchWithTeams>> = matchDao.getAllMatchesWithTeams()
+    /** Lo storico: le partite chiuse. La partita in corso sta sulla schermata di gioco. */
+    val allMatches: Flow<List<MatchWithTeams>> = matchDao.getFinishedMatchesWithTeams()
 
     suspend fun deleteMatch(match: Match) {
         matchDao.delete(match)
+    }
+
+    /**
+     * L'export di una partita gia' chiusa, dallo storico: registro, ordine di servizio, id e
+     * inizio salvati sulla riga, giocatori e lati dalla tabella ponte. Null se la riga non
+     * esiste piu' (cancellata da un'altra schermata nel frattempo).
+     *
+     * Sta qui e non nel ViewModel della partita: lo storico non deve costruirne uno per esportare.
+     */
+    suspend fun buildSavedExport(matchId: Int): ExportResult? {
+        val partita = matchDao.getMatchById(matchId) ?: return null
+        val schieramento = matchDao.getMatchLineup(matchId)
+        return MatchExportUtils.savedMatchExport(partita, schieramento, BuildConfig.VERSION_NAME, ZoneId.systemDefault())
     }
 }

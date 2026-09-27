@@ -12,6 +12,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
+import it.vantaggi.scoreboardessential.ui.MatchHistoryViewModel
+import it.vantaggi.scoreboardessential.ui.MatchHistoryViewModelFactory
 import it.vantaggi.scoreboardessential.ui.chronicle.ChronicleActivity
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import kotlinx.coroutines.launch
@@ -35,15 +37,11 @@ class MatchHistoryActivity : AppCompatActivity() {
             windowInsets
         }
 
+        // Un ViewModel suo, sul solo repository: un MainViewModel qui ne faceva due vivi insieme,
+        // e ogni evento dell'orologio veniva applicato da entrambi.
         val application = application as ScoreboardEssentialApplication
-        val viewModelFactory =
-            MainViewModel.MainViewModelFactory(
-                application.matchRepository,
-                application.userPreferencesRepository,
-                application.matchSettingsRepository,
-                application,
-            )
-        val viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
+        val viewModelFactory = MatchHistoryViewModelFactory(application.matchRepository)
+        val viewModel = ViewModelProvider(this, viewModelFactory)[MatchHistoryViewModel::class.java]
 
         val summaryTextView = findViewById<TextView>(R.id.summary_textview)
         val recyclerView = findViewById<RecyclerView>(R.id.match_history_recyclerview)
@@ -84,11 +82,21 @@ class MatchHistoryActivity : AppCompatActivity() {
     }
 
     /**
+     * Si torna alla partita da cui si e' arrivati, senza ricrearla. La navigazione "su" di
+     * AppCompat seguiva parentActivityName e ricreava MainActivity, e con lei il ViewModel della
+     * partita: rose perse, service slegato, 0-0 mandato all'orologio.
+     */
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
+    }
+
+    /**
      * Esporta una partita gia' chiusa, con la stessa condivisione della schermata di gioco. Il
      * nome del file porta la data della partita, non quella di oggi.
      */
     private fun exportSavedMatch(
-        viewModel: MainViewModel,
+        viewModel: MatchHistoryViewModel,
         matchWithTeams: MatchWithTeams,
     ) {
         val match = matchWithTeams.match

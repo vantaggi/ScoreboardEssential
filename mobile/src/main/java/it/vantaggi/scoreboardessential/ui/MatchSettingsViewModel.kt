@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
@@ -97,12 +98,16 @@ class MatchSettingsViewModel(
      * il cambio scattava da solo alla partita SUCCESSIVA. Tre bugie in fila, e la terza e' la
      * peggiore: il sistema faceva una cosa diversa da quella che era sembrata.
      *
-     * Non e' una guardia duplicata: e' la STESSA condizione (`il registro eventi non e' vuoto`)
-     * letta dalla copia persistita, invece che dal motore che questa schermata non ha.
+     * Il registro si legge dalla copia persistita, perche' il motore questa schermata non ce l'ha,
+     * e si legge come lo rilegge il ripristino: decodificato. La stringa nuda non basta, perche'
+     * un gol annullato lascia '1|', il registro vuoto codificato, e selectSport quel cambio lo
+     * accetta. Un registro illeggibile vale come partita iniziata: il ripristino ne recupera il
+     * punteggio, e rifiutare e' l'errore che costa meno.
      */
     fun saveActiveSport(sportId: String) {
         viewModelScope.launch {
-            val partitaIniziata = matchDao.getActiveMatchOnce()?.eventLog?.isNotEmpty() == true
+            val partitaIniziata =
+                matchDao.getActiveMatchOnce()?.let { MatchLogCodec.decode(it.eventLog)?.isNotEmpty() ?: true } == true
             if (partitaIniziata) {
                 sportChangeBlocked.value = Unit
                 // Rimette nel selettore la voce vera. LiveData ridistribuisce anche un valore

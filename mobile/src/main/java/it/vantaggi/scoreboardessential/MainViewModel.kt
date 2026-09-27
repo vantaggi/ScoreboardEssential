@@ -16,7 +16,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataMap
@@ -39,7 +38,6 @@ import it.vantaggi.scoreboardessential.core.SportRules
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchDao
-import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
@@ -56,14 +54,9 @@ import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
-import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
-import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import it.vantaggi.scoreboardessential.utils.TimeUtils
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.util.UUID
@@ -203,25 +196,6 @@ class MainViewModel(
         }
     private val vibrator = ContextCompat.getSystemService(application, Vibrator::class.java)
 
-    /** LiveData of all saved matches from history. */
-    val allMatches: LiveData<List<MatchWithTeams>> = repository.allMatches.asLiveData()
-
-    /** LiveData of all saved matches formatted for UI. */
-    val matchHistory: LiveData<List<MatchHistoryUiState>> =
-        repository.allMatches
-            .map { matches ->
-                matches.map { match ->
-                    val formatted =
-                        if (match.players.isNotEmpty()) {
-                            "Players: ${match.players.joinToString(", ") { it.playerName }}"
-                        } else {
-                            ""
-                        }
-                    MatchHistoryUiState(match, formatted)
-                }
-            }.flowOn(Dispatchers.Default)
-            .asLiveData()
-
     /*
      * Receives local broadcasts from the Wear OS listener service.
      * This handles updates coming from the watch when the app is in the background or foreground.
@@ -352,14 +326,6 @@ class MainViewModel(
                     }
                 }
             }
-        }
-
-    /**
-     * Deletes a match from the history permanently.
-     */
-    fun deleteMatch(match: Match) =
-        viewModelScope.launch {
-            repository.deleteMatch(match)
         }
 
     class MainViewModelFactory(
@@ -651,10 +617,6 @@ class MainViewModel(
         if (!onboardingCompleted) {
             showOnboarding.postValue(Unit)
         }
-    }
-
-    fun onOnboardingFinished() {
-        sharedPreferences.edit().putBoolean("onboarding_completed", true).apply()
     }
 
     private fun bindService() {
@@ -1632,17 +1594,6 @@ class MainViewModel(
         // La versione la conosce solo :mobile; il fuso e' quello del telefono che ha giocato.
         val origine = ExportOrigin(matchUuid, matchStartedAt, ZoneId.systemDefault(), BuildConfig.VERSION_NAME)
         return MatchExporter.build(engine, roster, origine)
-    }
-
-    /**
-     * L'export di una partita gia' chiusa, dallo storico: registro, ordine di servizio, id e
-     * inizio salvati sulla riga, giocatori e lati dalla tabella ponte. Null se la riga non
-     * esiste piu' (cancellata da un'altra schermata nel frattempo).
-     */
-    suspend fun buildSavedExport(matchId: Int): ExportResult? {
-        val partita = matchDao.getMatchById(matchId) ?: return null
-        val schieramento = matchDao.getMatchLineup(matchId)
-        return MatchExportUtils.savedMatchExport(partita, schieramento, BuildConfig.VERSION_NAME, ZoneId.systemDefault())
     }
 
     /**

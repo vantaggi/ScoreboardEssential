@@ -26,6 +26,7 @@ import it.vantaggi.scoreboardessential.database.PlayerWinCount
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
+import it.vantaggi.scoreboardessential.repository.ColorRepository
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettings
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
@@ -665,7 +666,9 @@ class MainViewModelTest {
                 advanceUntilIdle()
                 assertTrue("endMatch azzera il motore: dal vivo non resta niente", viewModel.buildExport() is ExportResult.Incomplete)
 
-                val dalloStorico = viewModel.buildSavedExport(viva.matchId)
+                // Dallo storico l'export lo fa il repository: la cronologia non ha un MainViewModel.
+                val app = ApplicationProvider.getApplicationContext<Application>()
+                val dalloStorico = MatchRepository(matchDao, app, ColorRepository(app)).buildSavedExport(viva.matchId)
                 assertTrue("atteso Ready, ottenuto $dalloStorico", dalloStorico is ExportResult.Ready)
                 assertEquals(fileDalVivo, MatchExporter.toJson((dalloStorico as ExportResult.Ready).export))
                 // Nell'ordine dei roster, come dal vivo: prima il lato 1, poi il 2.

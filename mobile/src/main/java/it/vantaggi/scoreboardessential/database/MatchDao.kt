@@ -50,9 +50,16 @@ interface MatchDao {
     @Query("SELECT * FROM matches ORDER BY timestamp DESC")
     fun getAllMatchesWithPlayers(): Flow<List<MatchWithPlayers>>
 
+    /**
+     * Lo storico: solo le partite chiuse.
+     *
+     * Prima c'era anche la riga viva. Cancellarla da li' lasciava il ViewModel della partita con
+     * un id che non esisteva piu': ogni punto aggiornava zero righe senza errore, e END MATCH
+     * diceva "salvata" per una partita che non c'era.
+     */
     @Transaction
-    @Query("SELECT * FROM matches ORDER BY timestamp DESC")
-    fun getAllMatchesWithTeams(): Flow<List<MatchWithTeams>>
+    @Query("SELECT * FROM matches WHERE isActive = 0 ORDER BY timestamp DESC")
+    fun getFinishedMatchesWithTeams(): Flow<List<MatchWithTeams>>
 
     @Delete
     suspend fun delete(match: Match)
