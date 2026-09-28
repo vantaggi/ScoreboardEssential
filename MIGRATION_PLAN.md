@@ -1913,7 +1913,7 @@ Worktree dei due branch, da tenere finche' L2 non e' unito (i risultati in cache
 | 4 | Revisione avversaria della voce navigazione | fatto: nessun rilievo alto o medio; 1 bassa (parametro `repository` di MainViewModel senza usi, da togliere all'unione). Scelte (a)-(e) accettabili |
 | 5 | Correzione del rilievo medio di 3 (solo `wf5/riga`) | fatto, `a4dddd4`: anche addScore, subtractScore e undoLastGoal aspettano la fine del ripristino, nella stessa fila degli intenti dell'orologio (`azioniRimandate`); test con lettura e insert sospesi, falsificato; :mobile 203 verdi. Resta: un END MATCH locale nei millisecondi del ripristino, con il cronometro gia' diverso da zero, inserirebbe una riga 0-0 chiusa |
 | 6 | Voce rose (rose salvate con la riga viva, da `wf5/riga`) | fatto, `c7d7979` e `e138a1b` (worktree `wf_01165e15-877-1`): nessuna migrazione, rose come MatchPlayerCrossRef della riga viva (`replaceLineup` ordinato, `deleteLiveMatch`), ricaricate al ripristino; `getPlayerWinCounts` conta solo le partite chiuse; 4 test falsificati, :mobile 207 verdi |
-| 7 | Revisione e correzione della voce rose | revisione in corso |
+| 7 | Revisione e correzione della voce rose | revisione fatta: 2 medie (cambi di rosa non rimandati durante il ripristino; `replaceLineup` in `closeMatch` senza test), 3 basse (insert della riga e rose non atomici, da correggere insieme; `serveOrder` della riga non riscritto se l'ordine cambia dopo un annullamento a zero; giocatori cancellati dall'archivio scartati in silenzio al ripristino). Correzione in corso |
 | 8 | Unione su `main`, verifica completa, strumentati, documenti, push | da fare |
 
 **Scelte da far vedere al proprietario, emerse dalle due voci:**
