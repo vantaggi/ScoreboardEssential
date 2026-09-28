@@ -1909,9 +1909,9 @@ Worktree dei due branch, da tenere finche' L2 non e' unito (i risultati in cache
 |---|---|---|
 | 1 | Voce riga: doppia riga viva (Mutex `rigaViva` su insert, aggiornamenti, endMatch e scarto), riga senza eventi cancellata al cambio sport, ripristino con sport e ordine di servizio della riga, intenti remoti rimandati a fine ripristino | fatto, `be20e97`, 9 test nuovi falsificati, suite verde (:mobile 202) |
 | 2 | Voce navigazione: `MatchHistoryViewModel`, onboarding senza MainViewModel, freccia su con `finish()`, riga viva fuori dallo storico, guardia del cambio sport con `decode` | fatto, `a03a3e0`, 8 test nuovi (7 falsificati, uno fissa un comportamento invariato), suite verde (:mobile 201) |
-| 3 | Revisione avversaria della voce riga | da fare |
-| 4 | Revisione avversaria della voce navigazione | da fare (interrotta a meta') |
-| 5 | Correzione dei rilievi alti e medi di 3 e 4 | da fare |
+| 3 | Revisione avversaria della voce riga | fatto: 1 media (il ripristino scrive `currentMatchId` fuori dalla fila `rigaViva`: un tocco locale durante il ripristino, con l'insert sospeso, sovrascrive l'id e la riga ripresa resta viva ma non piu' seguita), 2 basse (SCARTA decide fuori dalla fila; un punto locale dopo END, prima che `closeMatch` finisca, viene azzerato: preesistente). Scelte (a), (b), (d), (e) giudicate accettabili |
+| 4 | Revisione avversaria della voce navigazione | fatto: nessun rilievo alto o medio; 1 bassa (parametro `repository` di MainViewModel senza usi, da togliere all'unione). Scelte (a)-(e) accettabili |
+| 5 | Correzione del rilievo medio di 3 (solo `wf5/riga`) | in corso |
 | 6 | Voce rose (rose salvate con la riga viva, da `wf5/riga`) | da fare |
 | 7 | Revisione e correzione della voce rose | da fare |
 | 8 | Unione su `main`, verifica completa, strumentati, documenti, push | da fare |
