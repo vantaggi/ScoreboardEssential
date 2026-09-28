@@ -17,6 +17,7 @@ import android.view.animation.OvershootInterpolator
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -387,10 +388,16 @@ class MainActivity :
         }
 
         viewModel.shareMatchReportData.observe(this) { data ->
+            // Letto qui, sul thread principale, prima di passare al thread di I/O.
+            val attributesScorer = viewModel.sportCapabilities.value?.attributesScorer == true
             lifecycleScope.launch(Dispatchers.IO) {
-                val shareIntent = MatchReportUtils.generateAndGetShareIntent(this@MainActivity, data)
+                val shareIntent = MatchReportUtils.generateAndGetShareIntent(this@MainActivity, data, attributesScorer)
                 withContext(Dispatchers.Main) {
-                    startActivity(Intent.createChooser(shareIntent, getString(R.string.share_match_results)))
+                    if (shareIntent == null) {
+                        Toast.makeText(this@MainActivity, R.string.report_pdf_failed, Toast.LENGTH_LONG).show()
+                    } else {
+                        startActivity(Intent.createChooser(shareIntent, getString(R.string.share_match_results)))
+                    }
                 }
             }
         }
