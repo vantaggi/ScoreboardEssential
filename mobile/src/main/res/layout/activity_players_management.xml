@@ -117,6 +117,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
+        android:contentDescription="@string/label_add_player"
         app:backgroundTint="@color/graffiti_pink"
         app:tint="@color/stencil_white"
         app:shapeAppearance="@style/ShapeAppearance.App.StreetButton"

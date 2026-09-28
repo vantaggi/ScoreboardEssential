@@ -35,6 +35,9 @@
     <string name="cd_increase_team_2">Increase Team 2 score</string>
     <string name="cd_edit_team_1_name">Edit Team 1 name</string>
     <string name="cd_edit_team_2_name">Edit Team 2 name</string>
+    <string name="cd_edit_team_name">Edit the name of %1$s</string>
+    <string name="cd_player_stats">Player statistics</string>
+    <string name="cd_edit_player">Edit player</string>
     <string name="cd_statistics">Statistics</string>
     <string name="cd_manage_players">Manage Players</string>
     <string name="cd_settings">Settings</string>
