@@ -841,6 +841,11 @@ class MainViewModelTest {
             .orEmpty()
             .filter { it.type == MatchEventType.SCORE }
 
+    private fun righeDelRegistro(): List<String> =
+        viewModel.matchEvents.value
+            .orEmpty()
+            .map { it.event }
+
     /**
      * Visto su emulatore: partita salvata a 15-0, app riaperta, punteggio giusto ma nel registro
      * solo "Partita ripresa" e nessun annullamento. I punti recuperati erano diventati definitivi.
@@ -941,6 +946,51 @@ class MainViewModelTest {
             advanceUntilIdle()
 
             assertEquals("", righeDiPunto().first().timestamp)
+            viewModel.matchEvents.removeObserver(eventiObserver)
+        }
+
+    /**
+     * L11: nel padel e nel tennis il tasto START e' nascosto, ma il registro diceva sempre
+     * "press START to begin". Due strade portano alla riga: il cambio di sport (la riga scritta
+     * all'avvio, col calcio di default, resta) e la partita nuova dopo una scartata.
+     */
+    @Test
+    fun `nel padel il registro non chiede di premere START`() =
+        runTest {
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            advanceUntilIdle()
+            val dopoIlCambio = righeDelRegistro()
+            assertTrue("dopo il cambio di sport: $dopoIlCambio", dopoIlCambio.none { it.contains("START") })
+
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            assertEquals(true, viewModel.discardMatch())
+            advanceUntilIdle()
+            val dopoLoScarto = righeDelRegistro()
+            assertTrue("dopo lo scarto: $dopoLoScarto", dopoLoScarto.none { it.contains("START") })
+            // La riga d'apertura c'e' ancora: cambia la frase, non sparisce.
+            assertTrue("dopo lo scarto: $dopoLoScarto", dopoLoScarto.any { it.contains("New match ready") })
+
+            viewModel.matchEvents.removeObserver(eventiObserver)
+        }
+
+    /** L11: la riga della ripresa era scritta in italiano nel codice, anche col telefono in inglese. */
+    @Test
+    fun `la riga della ripresa segue la lingua del telefono`() =
+        runTest {
+            partitaSalvata("1|1,2")
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            advanceUntilIdle()
+
+            // Robolectric gira in inglese.
+            val righe = righeDelRegistro()
+            assertTrue("righe: $righe", "Match resumed" in righe)
+            assertTrue("righe: $righe", "Partita ripresa" !in righe)
+
             viewModel.matchEvents.removeObserver(eventiObserver)
         }
 

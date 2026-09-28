@@ -764,7 +764,10 @@ class MainViewModel(
 
         aggiornaAnnullamento()
 
-        addMatchEvent("New match ready - press START to begin")
+        // Niente "premi START": nel padel e nel tennis START e' nascosto. Scegliere la frase
+        // dalle capacita' qui non basterebbe: all'avvio questa riga nasce col calcio di default
+        // e resta quando le impostazioni portano un altro sport (applySport non la riscrive).
+        addMatchEvent(getApplication<Application>().getString(R.string.match_ready))
         sendMatchStateUpdate(true)
     }
 
@@ -1093,7 +1096,7 @@ class MainViewModel(
             updateScore(attiva.team1Score, attiva.team2Score)
         }
         rebuildEventsAndUndo()
-        addMatchEvent("Partita ripresa")
+        addMatchEvent(getApplication<Application>().getString(R.string.match_resumed))
     }
 
     /**
