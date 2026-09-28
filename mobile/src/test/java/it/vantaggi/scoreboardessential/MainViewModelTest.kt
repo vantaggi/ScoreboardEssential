@@ -1897,4 +1897,37 @@ class MainViewModelTest {
                 db.close()
             }
         }
+
+    /**
+     * Rosa cambiata a partita viva, dopo la nascita della riga: END MATCH lascia in tabella
+     * esattamente la rosa finale, nel suo ordine, e le presenze salgono solo per chi c'e'.
+     */
+    @Test
+    fun `END MATCH dopo un cambio di rosa salva solo la rosa finale`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                imposta("playerDao", playerDao)
+                imposta("matchDao", db.matchDao())
+                val (marco, anna, luca, sara) = quattroDelPadel(playerDao)
+                val piero = playerDao.insert(Player(playerName = "Piero", appearances = 0, goals = 0)).toInt()
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                val id = db.matchDao().getActiveMatchOnce()!!.matchId
+
+                viewModel.removePlayerFromTeam(viewModel.team1Players.value!!.first(), 1)
+                viewModel.addPlayerToTeam(PlayerWithRoles(Player(piero, "Piero", 0, 0), emptyList()), 1)
+                assertEquals(true, viewModel.endMatch())
+                advanceUntilIdle()
+
+                assertEquals(listOf(luca to 1, piero to 1, anna to 2, sara to 2), formazioni(db, id))
+                assertEquals(
+                    mapOf(marco to 0, anna to 1, luca to 1, sara to 1, piero to 1),
+                    playerDao.getAllPlayers().first().associate { it.player.playerId to it.player.appearances },
+                )
+            } finally {
+                db.close()
+            }
+        }
 }
