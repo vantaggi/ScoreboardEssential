@@ -86,7 +86,7 @@
                 android:id="@+id/empty_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="No Players Yet"
+                android:text="@string/no_players_yet"
                 android:textAppearance="?attr/textAppearanceHeadlineMedium"
                 android:textColor="@color/sidewalk_gray"
                 android:fontFamily="sans-serif-condensed"
@@ -98,7 +98,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tap the + button to add your first player"
+                android:text="@string/no_players_hint"
                 android:textAppearance="?attr/textAppearanceBodyLarge"
                 android:textColor="@color/sidewalk_gray"
                 android:fontFamily="sans-serif-condensed"

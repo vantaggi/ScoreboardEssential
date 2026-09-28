@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="TEAM NAME"
+        android:text="@string/team_name_label"
         android:textColor="@color/sidewalk_gray"
         android:textSize="12sp"
         android:letterSpacing="0.1"
@@ -50,7 +50,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="PREVIEW"
+            android:text="@string/team_name_preview"
             android:textSize="28sp"
             android:textColor="@color/concrete_gray"
             android:fontFamily="sans-serif-black"
@@ -61,7 +61,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="QUICK PICKS"
+        android:text="@string/team_name_quick_picks"
         android:textColor="@color/sidewalk_gray"
         android:textSize="10sp"
         android:letterSpacing="0.1"

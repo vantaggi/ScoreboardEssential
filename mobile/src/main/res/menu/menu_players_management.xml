@@ -5,24 +5,24 @@
     <item
         android:id="@+id/action_search"
         android:icon="@android:drawable/ic_menu_search"
-        android:title="Search"
+        android:title="@string/menu_search"
         app:actionViewClass="android.widget.SearchView"
         app:showAsAction="always|collapseActionView" />
 
     <item
         android:icon="@android:drawable/ic_menu_sort_by_size"
-        android:title="Sort"
+        android:title="@string/menu_sort"
         app:showAsAction="ifRoom">
         <menu>
             <item
                 android:id="@+id/action_sort_name"
-                android:title="Sort by Name" />
+                android:title="@string/sort_by_name" />
             <item
                 android:id="@+id/action_sort_goals"
-                android:title="Sort by Goals" />
+                android:title="@string/sort_by_goals" />
             <item
                 android:id="@+id/action_sort_appearances"
-                android:title="Sort by Appearances" />
+                android:title="@string/sort_by_appearances" />
         </menu>
     </item>
 

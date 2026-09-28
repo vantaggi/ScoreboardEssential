@@ -52,9 +52,9 @@ class StatisticsActivity : AppCompatActivity() {
         binding.recyclerStats.layoutManager = LinearLayoutManager(this)
         binding.recyclerStats.adapter = adapter
 
-        binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Generale"))
-        binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Attacco"))
-        binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Difesa"))
+        binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.stats_tab_general))
+        binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.stats_tab_attack))
+        binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.stats_tab_defense))
 
         binding.tabLayout.addOnTabSelectedListener(
             object : TabLayout.OnTabSelectedListener {

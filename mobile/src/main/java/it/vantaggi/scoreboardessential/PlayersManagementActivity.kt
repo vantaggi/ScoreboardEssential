@@ -73,7 +73,7 @@ class PlayersManagementActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
-            title = "Manage Players"
+            title = getString(R.string.title_manage_players)
         }
 
         initViews()
@@ -144,7 +144,7 @@ class PlayersManagementActivity : AppCompatActivity() {
         // Add "All" chip
         val allChip =
             (inflater.inflate(R.layout.item_chip_filter, rolesFilterChipGroup, false) as Chip).apply {
-                text = "All"
+                text = getString(R.string.filter_all)
                 id = View.generateViewId()
                 isCheckable = true
                 isChecked = true
@@ -172,7 +172,7 @@ class PlayersManagementActivity : AppCompatActivity() {
 
             val chip = group.findViewById<Chip>(checkedId)
             if (chip != null) {
-                val roleId = if (chip.text == "All") null else chip.tag as? Int
+                val roleId = if (chip.text == getString(R.string.filter_all)) null else chip.tag as? Int
                 viewModel.setRoleFilter(roleId)
             } else {
                 viewModel.setRoleFilter(null)
@@ -196,8 +196,11 @@ class PlayersManagementActivity : AppCompatActivity() {
                     val playerWithRoles = adapter.currentList[viewHolder.adapterPosition]
                     viewModel.deletePlayer(playerWithRoles)
                     Snackbar
-                        .make(recyclerView, "${playerWithRoles.player.playerName} deleted", Snackbar.LENGTH_LONG)
-                        .setAction("UNDO") {
+                        .make(
+                            recyclerView,
+                            getString(R.string.player_deleted_named, playerWithRoles.player.playerName),
+                            Snackbar.LENGTH_LONG,
+                        ).setAction(R.string.undo) {
                             viewModel.restorePlayer(playerWithRoles.player, playerWithRoles.roles.map { it.roleId })
                         }.show()
                 }
@@ -207,44 +210,44 @@ class PlayersManagementActivity : AppCompatActivity() {
 
     private fun showPlayerStatsDialog(playerWithRoles: PlayerWithRoles) {
         val player = playerWithRoles.player
-        val rolesText = playerWithRoles.roles.joinToString(", ") { it.name }.ifEmpty { "Not specified" }
+        val rolesText = playerWithRoles.roles.joinToString(", ") { it.name }.ifEmpty { getString(R.string.roles_not_specified) }
         val statsMessage =
-            """
-            Appearances: ${player.appearances}
-            Goals Scored: ${player.goals}
-            Goals per Match: ${if (player.appearances > 0) String.format("%.2f", player.goals.toFloat() / player.appearances) else "0.00"}
-            
-            Roles: $rolesText
-            """.trimIndent()
+            getString(
+                R.string.player_stats_message,
+                player.appearances,
+                player.goals,
+                if (player.appearances > 0) String.format("%.2f", player.goals.toFloat() / player.appearances) else "0.00",
+                rolesText,
+            )
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("${player.playerName} - Statistics")
+            .setTitle(getString(R.string.player_stats_title, player.playerName))
             .setMessage(statsMessage)
-            .setPositiveButton("OK", null)
-            .setNeutralButton("Reset Stats") { _, _ -> showResetStatsConfirmation(playerWithRoles) }
+            .setPositiveButton(android.R.string.ok, null)
+            .setNeutralButton(R.string.reset_stats) { _, _ -> showResetStatsConfirmation(playerWithRoles) }
             .show()
     }
 
     private fun showDeleteConfirmation(playerWithRoles: PlayerWithRoles) {
         MaterialAlertDialogBuilder(this)
-            .setTitle("Delete Player?")
-            .setMessage("Are you sure you want to delete ${playerWithRoles.player.playerName}? This action cannot be undone.")
-            .setPositiveButton("Delete") { _, _ ->
+            .setTitle(R.string.delete_player_title)
+            .setMessage(getString(R.string.delete_player_message, playerWithRoles.player.playerName))
+            .setPositiveButton(R.string.delete) { _, _ ->
                 viewModel.deletePlayer(playerWithRoles)
-                Snackbar.make(fab, "Player deleted", Snackbar.LENGTH_SHORT).show()
-            }.setNegativeButton("Cancel", null)
+                Snackbar.make(fab, R.string.player_deleted, Snackbar.LENGTH_SHORT).show()
+            }.setNegativeButton(R.string.cancel, null)
             .show()
     }
 
     private fun showResetStatsConfirmation(playerWithRoles: PlayerWithRoles) {
         MaterialAlertDialogBuilder(this)
-            .setTitle("Reset Statistics?")
-            .setMessage("Reset all statistics for ${playerWithRoles.player.playerName}?")
-            .setPositiveButton("Reset") { _, _ ->
+            .setTitle(R.string.reset_stats_title)
+            .setMessage(getString(R.string.reset_stats_message, playerWithRoles.player.playerName))
+            .setPositiveButton(R.string.reset) { _, _ ->
                 val resetPlayer = playerWithRoles.player.copy(appearances = 0, goals = 0)
                 viewModel.updatePlayer(resetPlayer, playerWithRoles.roles.map { it.roleId })
-                Snackbar.make(fab, "Stats reset", Snackbar.LENGTH_SHORT).show()
-            }.setNegativeButton("Cancel", null)
+                Snackbar.make(fab, R.string.stats_reset, Snackbar.LENGTH_SHORT).show()
+            }.setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -265,7 +268,7 @@ class PlayersManagementActivity : AppCompatActivity() {
         val searchView = searchItem?.actionView as? SearchView
 
         searchView?.apply {
-            queryHint = "Search players..."
+            queryHint = getString(R.string.search_players_hint)
             setOnQueryTextListener(
                 object : SearchView.OnQueryTextListener {
                     override fun onQueryTextSubmit(query: String?): Boolean = false

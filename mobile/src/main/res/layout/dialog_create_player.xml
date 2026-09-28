@@ -9,7 +9,7 @@
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Player Name">
+        android:hint="@string/player_name_hint">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/player_name_input"
@@ -25,7 +25,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="CHOOSE ROLES"
+        android:text="@string/choose_roles"
         app:icon="@drawable/ic_edit" />
 
     <TextView
@@ -33,7 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="No roles selected"
+        android:text="@string/no_roles_selected"
         android:textAppearance="?attr/textAppearanceBodyMedium"
         android:textColor="@color/sidewalk_gray"
         android:fontFamily="sans-serif-condensed" />

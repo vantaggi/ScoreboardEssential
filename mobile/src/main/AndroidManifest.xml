@@ -21,21 +21,21 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.onboarding.OnboardingActivity" android:exported="false" android:theme="@style/Theme.ScoreboardEssential" />
-        <activity android:name=".MatchHistoryActivity" android:exported="false" android:label="Match History" android:parentActivityName=".MainActivity">
+        <activity android:name=".MatchHistoryActivity" android:exported="false" android:label="@string/title_match_history" android:parentActivityName=".MainActivity">
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".MainActivity" />
         </activity>
         <activity android:name=".ui.chronicle.ChronicleActivity" android:exported="false" android:label="@string/chronicle_title" />
-        <activity android:name=".AddEditPlayerActivity" android:exported="false" android:label="Add/Edit Player" android:parentActivityName=".PlayersManagementActivity">
+        <activity android:name=".AddEditPlayerActivity" android:exported="false" android:label="@string/title_player" android:parentActivityName=".PlayersManagementActivity">
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".PlayersManagementActivity" />
         </activity>
 
-        <activity android:name=".ui.MatchSettingsActivity" android:exported="false" android:label="Match Settings" android:parentActivityName=".MainActivity">
+        <activity android:name=".ui.MatchSettingsActivity" android:exported="false" android:label="@string/title_match_settings" android:parentActivityName=".MainActivity">
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".MainActivity" />
         </activity>
-        <activity android:name=".PlayersManagementActivity" android:exported="false" android:label="Players" android:parentActivityName=".MainActivity">
+        <activity android:name=".PlayersManagementActivity" android:exported="false" android:label="@string/title_manage_players" android:parentActivityName=".MainActivity">
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".MainActivity" />
         </activity>
-        <activity android:name=".ui.statistics.StatisticsActivity" android:exported="false" android:label="Statistics" android:parentActivityName=".MainActivity">
+        <activity android:name=".ui.statistics.StatisticsActivity" android:exported="false" android:label="@string/title_statistics" android:parentActivityName=".MainActivity">
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".MainActivity" />
         </activity>
         <!--

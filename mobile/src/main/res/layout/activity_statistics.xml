@@ -55,7 +55,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:fontFamily="sans-serif-condensed-medium"
-            android:text="Nessuna partita giocata"
+            android:text="@string/stats_empty_title"
             android:textColor="@color/sidewalk_gray"
             android:textSize="20sp" />
 
@@ -64,7 +64,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:fontFamily="sans-serif-condensed"
-            android:text="Gioca un match per vedere chi è il King!"
+            android:text="@string/stats_empty_hint"
             android:textColor="@color/sidewalk_gray"
             android:textSize="16sp" />
 

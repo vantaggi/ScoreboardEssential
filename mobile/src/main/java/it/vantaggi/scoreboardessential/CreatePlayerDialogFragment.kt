@@ -37,23 +37,23 @@ class CreatePlayerDialogFragment : DialogFragment() {
         }
 
         return MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Create New Player")
+            .setTitle(R.string.create_player_title)
             .setView(view)
-            .setPositiveButton("Save") { _, _ ->
+            .setPositiveButton(R.string.save) { _, _ ->
                 val playerName = playerNameInput.text.toString().trim()
                 if (playerName.isNotEmpty()) {
                     viewModel.createPlayer(playerName, selectedRoleIds)
-                    Toast.makeText(context, "$playerName created", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, getString(R.string.player_created, playerName), Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(context, "Player name cannot be empty", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.player_name_empty, Toast.LENGTH_SHORT).show()
                 }
-            }.setNegativeButton("Cancel", null)
+            }.setNegativeButton(R.string.cancel, null)
             .create()
     }
 
     private fun updateSelectedRolesText() {
         if (selectedRoleIds.isEmpty()) {
-            selectedRolesTextView.text = "No roles selected"
+            selectedRolesTextView.setText(R.string.no_roles_selected)
         } else {
             lifecycleScope.launch {
                 val allRoles = viewModel.allRoles.first()

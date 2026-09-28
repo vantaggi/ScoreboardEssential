@@ -51,11 +51,11 @@ class MatchHistoryActivity : AppCompatActivity() {
                 onDeleteClicked = { matchWithTeams ->
                     androidx.appcompat.app.AlertDialog
                         .Builder(this)
-                        .setTitle("Delete Match")
-                        .setMessage("Are you sure you want to delete this match log?")
-                        .setPositiveButton("Delete") { _, _ ->
+                        .setTitle(R.string.delete_match)
+                        .setMessage(R.string.delete_match_message)
+                        .setPositiveButton(R.string.delete) { _, _ ->
                             viewModel.deleteMatch(matchWithTeams.match)
-                        }.setNegativeButton("Cancel", null)
+                        }.setNegativeButton(R.string.cancel, null)
                         .show()
                 },
                 onExportClicked = { matchWithTeams -> exportSavedMatch(viewModel, matchWithTeams) },
@@ -69,7 +69,7 @@ class MatchHistoryActivity : AppCompatActivity() {
         viewModel.matchHistory.observe(this) { matches ->
             matches?.let {
                 adapter.submitList(it)
-                summaryTextView.text = "TOTAL MATCHES: ${it.size}"
+                summaryTextView.text = getString(R.string.total_matches, it.size)
                 if (it.isEmpty()) {
                     recyclerView.visibility = android.view.View.GONE
                     emptyStateTextView.visibility = android.view.View.VISIBLE
