@@ -1957,3 +1957,8 @@ Delle 16 voci di L11, 7 erano gia' chiuse dai passi 1-4 del design del telefono.
 | 3 | Titoli e schermate secondarie non tradotti | da fare |
 | 4 | Risorse dichiarate e mai usate (dopo il 3: stessi file di risorse) | da fare |
 | 5 | Unione, verifica completa, strumentati, documenti, push | da fare |
+
+Fermo qui il 28 settembre alle 21:20 per il limite delle 5 ore (62%), che si azzera alle 00:59 del 29.
+I tre branch `wf6/pdf`, `wf6/testi` e `wf6/a11y` sono committati, nei worktree
+`.claude/worktrees/wf_1b7c4356-3b4-1`, `-2` e `-3`, e si uniscono fra loro senza conflitti.
+Alla ripresa: passo 3 (traduzioni), poi 4 e 5.
