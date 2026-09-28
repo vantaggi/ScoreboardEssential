@@ -1729,7 +1729,9 @@ class MainViewModelTest {
 
                 assertEquals(listOf(marco, luca), nuovo.team1Players.value?.map { it.player.playerId })
                 assertEquals(listOf(anna, sara), nuovo.team2Players.value?.map { it.player.playerId })
-                val regole = (MainViewModel::class.java.getDeclaredField("engine").apply { isAccessible = true }.get(nuovo) as MatchEngine).rules
+                val campoMotore = MainViewModel::class.java.getDeclaredField("engine")
+                campoMotore.isAccessible = true
+                val regole = (campoMotore.get(nuovo) as MatchEngine).rules
                 assertEquals(listOf(marco, anna, luca, sara), regole.config.serveOrder)
                 val esito = nuovo.buildExport()
                 assertTrue("atteso Ready, ottenuto $esito", esito is ExportResult.Ready)
@@ -1827,14 +1829,28 @@ class MainViewModelTest {
 
                 assertEquals(emptyList<PlayerWinCount>(), matchDao.getPlayerWinCounts().first())
                 assertEquals(0, matchDao.getFinishedMatchesCountForPlayer(mario).first())
-                assertEquals(0, playerDao.getAllPlayers().first().single().player.appearances)
+                assertEquals(
+                    0,
+                    playerDao
+                        .getAllPlayers()
+                        .first()
+                        .single()
+                        .player.appearances,
+                )
 
                 assertEquals(true, viewModel.endMatch())
                 advanceUntilIdle()
 
                 assertEquals(listOf(PlayerWinCount(mario, 1)), matchDao.getPlayerWinCounts().first())
                 assertEquals(1, matchDao.getFinishedMatchesCountForPlayer(mario).first())
-                assertEquals(1, playerDao.getAllPlayers().first().single().player.appearances)
+                assertEquals(
+                    1,
+                    playerDao
+                        .getAllPlayers()
+                        .first()
+                        .single()
+                        .player.appearances,
+                )
             } finally {
                 db.close()
             }

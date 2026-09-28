@@ -1033,7 +1033,7 @@ class MainViewModel(
                 // la riga, per tornare col ripristino.
                 val uuid = matchUuid ?: UUID.randomUUID().toString().also { matchUuid = it }
                 val inizio = matchStartedAt ?: (matchClock.startEpoch ?: System.currentTimeMillis()).also { matchStartedAt = it }
-                currentMatchId =
+                val nuova =
                     matchDao.insert(
                         Match(
                             team1Id = 1,
@@ -1048,7 +1048,9 @@ class MainViewModel(
                             startedAt = inizio,
                             matchUuid = uuid,
                         ),
-                    ).also { scriviRose(it) }
+                    )
+                scriviRose(nuova)
+                currentMatchId = nuova
             } else {
                 matchDao.updateLiveMatch(id.toInt(), uno, due, log)
             }
