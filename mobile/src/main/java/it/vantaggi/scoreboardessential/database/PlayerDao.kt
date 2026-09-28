@@ -90,6 +90,11 @@ interface PlayerDao {
     @Query("SELECT * FROM players WHERE playerId = :playerId")
     fun getPlayerWithRoles(playerId: Int): Flow<PlayerWithRoles?>
 
+    /** Letti una volta, in ordine qualsiasi: l'ordine delle rose lo tiene chi chiama. */
+    @Transaction
+    @Query("SELECT * FROM players WHERE playerId IN (:playerIds)")
+    suspend fun getPlayersWithRoles(playerIds: List<Int>): List<PlayerWithRoles>
+
     @Transaction
     @Query(
         """

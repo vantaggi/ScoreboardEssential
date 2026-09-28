@@ -65,6 +65,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.ZoneId
 import java.util.UUID
 
@@ -232,6 +234,13 @@ class MainViewModel(
                 context: Context,
                 intent: Intent,
             ) {
+                // Durante il ripristino il motore e' ancora vuoto: un punto applicato adesso
+                // creerebbe una riga nuova, e restoreLog lo cancellerebbe subito dopo. Si tiene da
+                // parte e si applica alla fine, nell'ordine di arrivo.
+                if (ripristinoInCorso && intent.action in azioniSullaPartita) {
+                    azioniRimandate.add { onReceive(context, intent) }
+                    return
+                }
                 when (intent.action) {
                     SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE -> {
                         // Il v1 spedisce due interi ASSOLUTI: sono un punteggio solo per il
@@ -499,7 +508,10 @@ class MainViewModel(
         matchClock.reset()
         _activeSport.value = sportRules.id
         _sportCapabilities.value = sportRules.capabilities
-        currentMatchId = null
+        // Si cambia sport solo a registro vuoto, quindi una riga viva qui non ha eventi (un gol e
+        // poi ANNULLA: '1|'). Dimenticarla e basta la lasciava orfana e attiva: al riavvio tornava
+        // come 'Partita ripresa', e poteva ricevere la partita del nuovo sport con lo sport vecchio.
+        scartaRigaViva()
         matchUuid = null
         matchStartedAt = null
         _team1Score.value = 0
@@ -546,8 +558,37 @@ class MainViewModel(
 
     private val sharedPreferences: SharedPreferences = application.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
-    // Current Match ID
+    // Current Match ID. Si scrive solo dentro la fila di [rigaViva], tranne nel ripristino.
     private var currentMatchId: Long? = null
+
+    // Le scritture della riga viva, una alla volta e nell'ordine in cui sono chieste. L'insert
+    // della riga sospende: senza la fila, un secondo punto, END MATCH o SCARTA arrivati in quel
+    // momento leggevano currentMatchId ancora null, e nascevano due righe attive o ne restava una
+    // orfana. Il Mutex e' equo, quindi la fila rispetta l'ordine delle richieste.
+    private val rigaViva = Mutex()
+
+    // Il ripristino e' stato chiesto e non e' finito: lo sport arrivato dalle impostazioni aspetta
+    // la sua fine, perche' il registro e' vuoto solo in quanto la partita non e' ancora tornata.
+    // Sopra init, che li usa.
+    private var ripristinoInAttesa = false
+
+    // Il ripristino e' partito e non e' finito: gli intenti dell'orologio e i tocchi sul telefono
+    // che toccano la partita aspettano, in una fila sola che ne tiene l'ordine di arrivo. Si
+    // accende dentro la coroutine, non alla richiesta: il finally che lo spegne e applica le
+    // azioni rimandate gira solo se la coroutine e' partita. In produzione (Main.immediate)
+    // parte subito, e i due momenti coincidono.
+    private var ripristinoInCorso = false
+    private val azioniRimandate = mutableListOf<() -> Unit>()
+    private var sportRimandato: String? = null
+    private val azioniSullaPartita =
+        setOf(
+            SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE,
+            SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE,
+            SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT,
+            SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH,
+            SimplifiedDataLayerListenerService.ACTION_SPORT_INTENT,
+            SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED,
+        )
 
     // L'id del file esportato e l'inizio della partita in corso: nascono con la riga viva, al
     // primo punto, e tornano col ripristino. Sopra init perche' il ripristino, lanciato da init,
@@ -587,8 +628,14 @@ class MainViewModel(
 
                 // Lo sport si applica solo a partita ferma: un cambio arrivato dalle impostazioni
                 // mentre si sta giocando verrebbe ignorato qui e ripreso alla partita successiva.
+                // Durante il ripristino il registro e' vuoto solo perche' la partita non e' ancora
+                // tornata: lo sport salvato si decide alla fine, e se torna una riga vince la riga.
                 if (settings.activeSport != _activeSport.value && engine.log.isEmpty()) {
-                    applySport(settings.activeSport)
+                    if (ripristinoInAttesa) {
+                        sportRimandato = settings.activeSport
+                    } else {
+                        applySport(settings.activeSport)
+                    }
                 }
             }
         }
@@ -710,20 +757,37 @@ class MainViewModel(
      * far finta di aver fatto qualcosa.
      */
     fun discardMatch(): Boolean {
-        val id = currentMatchId
-        if (id == null && engine.log.isEmpty()) return false
-        if (id != null) {
-            viewModelScope.launch { matchDao.deleteById(id.toInt()) }
-        }
+        if (currentMatchId == null && engine.log.isEmpty()) return false
+        scartaRigaViva()
         startNewMatch()
         sendResetUpdate()
         return true
     }
 
+    /**
+     * Cancella la riga viva e la dimentica, in fila con le altre scritture della riga.
+     *
+     * L'id si legge DENTRO la fila e non adesso: se l'insert del primo punto e' ancora sospeso,
+     * adesso e' null, e la riga nata un attimo dopo restava attiva e orfana.
+     */
+    private fun scartaRigaViva() {
+        inFilaSullaRigaViva {
+            // Con le sue formazioni: non ci sono FK in cascata.
+            currentMatchId?.let { matchDao.deleteLiveMatch(it.toInt()) }
+            currentMatchId = null
+        }
+    }
+
+    private fun inFilaSullaRigaViva(scrittura: suspend () -> Unit) {
+        viewModelScope.launch { rigaViva.withLock { scrittura() } }
+    }
+
     private fun startNewMatch() {
         engine.reset()
         matchClock.reset()
-        currentMatchId = null
+        // currentMatchId non si tocca qui: lo azzerano, dentro la fila, chi chiude la riga
+        // (endMatch) e chi la cancella (scartaRigaViva). Azzerato da fuori, un insert ancora
+        // sospeso lo riscriveva dopo, oppure SCARTA non trovava piu' la riga da cancellare.
         matchUuid = null
         matchStartedAt = null
         updateScore(0, 0)
@@ -770,6 +834,9 @@ class MainViewModel(
         playerWithRoles: PlayerWithRoles,
         teamId: Int,
     ) {
+        // Durante il ripristino aspetta, come i punti: il ripristino riscrive le rose con quelle
+        // della riga, e il giocatore aggiunto adesso spariva.
+        if (rimandataDalRipristino { addPlayerToTeam(playerWithRoles, teamId) }) return
         if (teamId == 1) {
             _team1Players.value = _team1Players.value?.plus(playerWithRoles)
         } else {
@@ -778,18 +845,43 @@ class MainViewModel(
         val teamName = if (teamId == 1) _team1Name.value else _team2Name.value
         addMatchEvent("${playerWithRoles.player.playerName} added to $teamName", team = teamId)
         refreshServeOrder()
+        salvaRoseDellaRigaViva()
     }
 
     fun removePlayerFromTeam(
         playerWithRoles: PlayerWithRoles,
         teamId: Int,
     ) {
+        if (rimandataDalRipristino { removePlayerFromTeam(playerWithRoles, teamId) }) return
         if (teamId == 1) {
             _team1Players.value = _team1Players.value?.minus(playerWithRoles)
         } else {
             _team2Players.value = _team2Players.value?.minus(playerWithRoles)
         }
         refreshServeOrder()
+        salvaRoseDellaRigaViva()
+    }
+
+    /**
+     * Riscrive le rose sulla riga viva, se c'e', in fila con le altre sue scritture.
+     *
+     * Le rose vivevano solo in memoria: dopo la morte del processo la partita tornava senza
+     * giocatori, END MATCH non salvava presenze ne' formazioni e l'export del padel diceva che
+     * ne mancavano quattro. Senza riga viva non si scrive niente: le scrive chi la crea.
+     */
+    private fun salvaRoseDellaRigaViva() {
+        inFilaSullaRigaViva {
+            currentMatchId?.let { scriviRose(it) }
+        }
+    }
+
+    /** Le rose di adesso sulla riga [id], nel loro ordine. Solo dentro la fila di [rigaViva]. */
+    private suspend fun scriviRose(id: Long) {
+        matchDao.replaceLineup(
+            id.toInt(),
+            _team1Players.value.orEmpty().map { it.player.playerId },
+            _team2Players.value.orEmpty().map { it.player.playerId },
+        )
     }
 
     fun createNewPlayer(
@@ -931,19 +1023,22 @@ class MainViewModel(
     private fun persistLiveMatch() {
         val (uno, due) = engine.state.headline()
         val log = MatchLogCodec.encode(engine.log)
-        viewModelScope.launch {
+        // In fila: il secondo punto aspetta che l'insert del primo ritorni, e aggiorna la riga
+        // invece di crearne un'altra.
+        inFilaSullaRigaViva {
             val id = currentMatchId
             if (id == null) {
-                if (uno == 0 && due == 0 && engine.log.isEmpty()) return@launch
+                if (uno == 0 && due == 0 && engine.log.isEmpty()) return@inFilaSullaRigaViva
                 // L'id del file nasce qui, col primo punto, e non all'export: due export della
                 // stessa partita devono portare lo stesso id. L'inizio e' quello dell'orologio
                 // della partita, cioe' del primo punto, anche per una partita consegnata
                 // dall'orologio ore dopo. L'ordine di servizio qui e' gia' definitivo:
-                // refreshServeOrder non lo cambia piu' dopo il primo punto.
+                // refreshServeOrder non lo cambia piu' dopo il primo punto. Le rose nascono con
+                // la riga, nella stessa transazione, per tornare col ripristino.
                 val uuid = matchUuid ?: UUID.randomUUID().toString().also { matchUuid = it }
                 val inizio = matchStartedAt ?: (matchClock.startEpoch ?: System.currentTimeMillis()).also { matchStartedAt = it }
                 currentMatchId =
-                    matchDao.insert(
+                    matchDao.insertLiveMatch(
                         Match(
                             team1Id = 1,
                             team2Id = 2,
@@ -957,6 +1052,8 @@ class MainViewModel(
                             startedAt = inizio,
                             matchUuid = uuid,
                         ),
+                        _team1Players.value.orEmpty().map { it.player.playerId },
+                        _team2Players.value.orEmpty().map { it.player.playerId },
                     )
             } else {
                 matchDao.updateLiveMatch(id.toInt(), uno, due, log)
@@ -973,32 +1070,96 @@ class MainViewModel(
      * esistente cambia di significato.
      */
     private fun restoreActiveMatchIfAny() {
+        ripristinoInAttesa = true
         viewModelScope.launch {
-            val attiva = matchDao.getActiveMatchOnce() ?: return@launch
-            currentMatchId = attiva.matchId.toLong()
-            // Dalla riga e non dall'orologio: dopo il ripristino l'inizio dell'orologio e'
-            // spostato apposta, per non contare il tempo in cui l'app e' rimasta chiusa.
-            matchUuid = attiva.matchUuid
-            matchStartedAt = attiva.startedAt
-            val eventi = MatchLogCodec.decode(attiva.eventLog)
-            if (eventi != null) {
-                engine.restoreLog(eventi)
-                // Il tempo in cui l'app e' rimasta chiusa non e' tempo di gioco.
-                eventi.lastOrNull()?.atMillis?.let { matchClock.resume(it, System.currentTimeMillis()) }
-                val (uno, due) = engine.state.headline()
-                _scoreDisplay.postValue(sportRules.display(engine.state))
-                updateScore(uno, due)
-            } else {
-                // Cronologia illeggibile (formato piu' recente, riga corrotta): si recupera
-                // comunque il punteggio di testata invece di perdere la partita. Degradare una
-                // riga di cronologia e' accettabile; perdere il punteggio no.
-                Log.w("MainViewModel", "eventLog illeggibile per la partita ${attiva.matchId}: recupero il solo punteggio")
-                seedEngineFromAbsolute(attiva.team1Score, attiva.team2Score)
-                updateScore(attiva.team1Score, attiva.team2Score)
+            ripristinoInCorso = true
+            try {
+                ripristina()
+            } finally {
+                fineRipristino()
             }
-            rebuildEventsAndUndo()
-            addMatchEvent("Partita ripresa")
         }
+    }
+
+    private suspend fun ripristina() {
+        val attiva = matchDao.getActiveMatchOnce() ?: return
+        // Le rose della riga, lette prima di toccare lo stato: dopo, il ripristino non sospende
+        // piu'. Nell'ordine salvato, che e' quello dell'export e dell'ordine di servizio.
+        val schieramento = matchDao.getMatchLineup(attiva.matchId)
+        val giocatori =
+            if (schieramento.isEmpty()) {
+                emptyMap()
+            } else {
+                playerDao.getPlayersWithRoles(schieramento.map { it.localId }).associateBy { it.player.playerId }
+            }
+        // Le regole della riga, e prima di restoreLog: lo sport e l'ordine di servizio con cui
+        // la partita e' cominciata. Il registro ripiegato con le regole in vigore adesso (un
+        // cambio sport dall'orologio, o le impostazioni) dava un altro punteggio, e la
+        // partita finiva scritta su una riga con lo sport sbagliato.
+        val regole = SportRegistry.forMatch(attiva.sportId, Match.decodeServeOrder(attiva.serveOrder))
+        sportRules = regole
+        engine = MatchEngine(regole)
+        _activeSport.value = regole.id
+        _sportCapabilities.value = regole.capabilities
+        // La riga vince sullo sport arrivato dalle impostazioni durante il ripristino, e le
+        // impostazioni si allineano alla riga: altrimenti dicono padel mentre si gioca a calcio.
+        sportRimandato = null
+        viewModelScope.launch { matchSettingsRepository.setActiveSport(regole.id) }
+        currentMatchId = attiva.matchId.toLong()
+        // Dalla riga e non dall'orologio: dopo il ripristino l'inizio dell'orologio e'
+        // spostato apposta, per non contare il tempo in cui l'app e' rimasta chiusa.
+        matchUuid = attiva.matchUuid
+        matchStartedAt = attiva.startedAt
+        // Direttamente nelle LiveData, senza refreshServeOrder: l'ordine di servizio e' quello
+        // della riga, gia' nelle regole qui sopra.
+        _team1Players.value = schieramento.filter { it.side == 1 }.mapNotNull { giocatori[it.localId] }
+        _team2Players.value = schieramento.filter { it.side == 2 }.mapNotNull { giocatori[it.localId] }
+        val eventi = MatchLogCodec.decode(attiva.eventLog)
+        if (eventi != null) {
+            engine.restoreLog(eventi)
+            // Il tempo in cui l'app e' rimasta chiusa non e' tempo di gioco.
+            eventi.lastOrNull()?.atMillis?.let { matchClock.resume(it, System.currentTimeMillis()) }
+            val (uno, due) = engine.state.headline()
+            _scoreDisplay.postValue(sportRules.display(engine.state))
+            updateScore(uno, due)
+        } else {
+            // Cronologia illeggibile (formato piu' recente, riga corrotta): si recupera
+            // comunque il punteggio di testata invece di perdere la partita. Degradare una
+            // riga di cronologia e' accettabile; perdere il punteggio no.
+            Log.w("MainViewModel", "eventLog illeggibile per la partita ${attiva.matchId}: recupero il solo punteggio")
+            seedEngineFromAbsolute(attiva.team1Score, attiva.team2Score)
+            updateScore(attiva.team1Score, attiva.team2Score)
+        }
+        rebuildEventsAndUndo()
+        addMatchEvent("Partita ripresa")
+    }
+
+    /**
+     * Chiude la finestra del ripristino: lo sport arrivato dalle impostazioni vale solo se non e'
+     * tornata una partita, e gli intenti dell'orologio e i tocchi tenuti da parte si applicano
+     * adesso, nel loro ordine, come se arrivassero ora.
+     */
+    private fun fineRipristino() {
+        ripristinoInAttesa = false
+        ripristinoInCorso = false
+        sportRimandato?.let { if (it != _activeSport.value && engine.log.isEmpty()) applySport(it) }
+        sportRimandato = null
+        val rimandate = azioniRimandate.toList()
+        azioniRimandate.clear()
+        rimandate.forEach { it() }
+    }
+
+    /**
+     * Tiene da parte un tocco sul telefono arrivato durante il ripristino; true se l'ha tenuto.
+     *
+     * Come per gli intenti dell'orologio: sul motore ancora vuoto il tocco apriva una seconda riga
+     * attiva, il cui insert tornava dopo il ripristino e gli rubava currentMatchId. La partita
+     * ripresa restava attiva ma non piu' seguita, e END MATCH chiudeva quella sbagliata.
+     */
+    private fun rimandataDalRipristino(azione: () -> Unit): Boolean {
+        if (!ripristinoInCorso) return false
+        azioniRimandate.add(azione)
+        return true
     }
 
     /**
@@ -1077,6 +1238,7 @@ class MainViewModel(
     }
 
     fun addScore(teamId: Int) {
+        if (rimandataDalRipristino { addScore(teamId) }) return
         val prima = engine.state
         engine.apply(ScoringEvent.Point(side = teamId), matchClock.relative(System.currentTimeMillis()))
 
@@ -1136,8 +1298,9 @@ class MainViewModel(
         }
         if (applicati == 0) return
 
+        // publishEngineState scrive gia' la riga viva: una seconda persistLiveMatch qui creava a
+        // ogni consegna una seconda riga attiva.
         publishEngineState()
-        persistLiveMatch()
         // Righe e annullamento come dopo un ripristino: e' lo stesso caso, un registro arrivato
         // gia' scritto. Senza, il punteggio era giusto ma il registro vuoto, e il '-' dell'orologio
         // (che qui arriva come annullamento) non trovava niente da togliere.
@@ -1193,6 +1356,7 @@ class MainViewModel(
         teamId: Int,
         atMillis: Long? = null,
     ) {
+        if (rimandataDalRipristino { subtractScore(teamId, atMillis) }) return
         val prima = engine.state.headline()
         engine.apply(ScoringEvent.Correction(side = teamId), tempoDiPartita(atMillis))
         val dopo = engine.state.headline()
@@ -1315,6 +1479,7 @@ class MainViewModel(
      * contengono ancora, non hanno una riga, e toglierli non si vede.
      */
     fun undoLastGoal() {
+        if (rimandataDalRipristino { undoLastGoal() }) return
         if (!engine.canUndo()) return
         var tolto: Pair<Int, ScoringEvent>? = null
         while (tolto == null && engine.canUndo()) {
@@ -1444,7 +1609,9 @@ class MainViewModel(
             return false // Match not started, do not save
         }
 
-        viewModelScope.launch {
+        // In fila con le scritture della riga viva: END MATCH subito dopo il primo punto trovava
+        // l'insert ancora sospeso e currentMatchId null, e closeMatch inseriva una seconda riga.
+        inFilaSullaRigaViva {
             if (isServiceBound) {
                 matchTimerService?.stopTimer()
             }
@@ -1482,6 +1649,7 @@ class MainViewModel(
                 team1PlayerIds = team1Roster.map { it.player.playerId },
                 team2PlayerIds = team2Roster.map { it.player.playerId },
             )
+            currentMatchId = null
 
             addMatchEvent("Match ended - Final Score: ${team1Score.value} - ${team2Score.value}")
 
