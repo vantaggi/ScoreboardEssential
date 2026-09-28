@@ -146,6 +146,7 @@
     <string name="sport_padel">Padel</string>
     <string name="sport_tennis">Tennis</string>
     <string name="sport_change_blocked">Finish the current match to change sport</string>
+    <string name="match_ready">New match ready</string>
     <string name="match_resumed">Match resumed</string>
 
     <!-- Cronaca: la partita chiusa rigiocata punto per punto, dallo storico -->
