@@ -1635,4 +1635,49 @@ class MainViewModelTest {
                 db.close()
             }
         }
+
+    /**
+     * Rilievo L2 (media, revisione di be20e97): il ripristino scrive currentMatchId fuori dalla
+     * fila, e i tocchi del telefono non erano rimandati come quelli dell'orologio. Un +1 dato
+     * mentre la lettura della riga attiva e' sospesa apriva una seconda riga; il suo insert,
+     * tornato dopo il ripristino, gli rubava currentMatchId, e la partita ripresa restava attiva
+     * ma non piu' seguita. Ora il tocco aspetta la fine del ripristino e si somma alla partita.
+     */
+    @Test
+    fun `un tocco sul telefono durante il ripristino si applica dopo, sulla riga ripresa`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val calcio =
+                    Match(
+                        team1Id = 1,
+                        team2Id = 2,
+                        team1Score = 2,
+                        team2Score = 0,
+                        timestamp = 0L,
+                        isActive = true,
+                        eventLog = "1|1,1",
+                    )
+                val ripresa = db.matchDao().insert(calcio)
+                val dao = DaoCheSospende(db.matchDao(), cancelloLettura = CompletableDeferred())
+                imposta("matchDao", dao)
+                val ripristino = MainViewModel::class.java.getDeclaredMethod("restoreActiveMatchIfAny")
+                ripristino.isAccessible = true
+                ripristino.invoke(viewModel)
+                advanceUntilIdle()
+
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                dao.cancelloLettura.complete(Unit)
+                advanceUntilIdle()
+                dao.cancelloInsert.complete(Unit)
+                advanceUntilIdle()
+
+                assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 3, 0, 3)), righe(db))
+                assertEquals(ripresa, campo("currentMatchId"))
+                assertEquals(3, viewModel.team1Score.value)
+            } finally {
+                db.close()
+            }
+        }
 }

@@ -238,7 +238,7 @@ class MainViewModel(
                 // creerebbe una riga nuova, e restoreLog lo cancellerebbe subito dopo. Si tiene da
                 // parte e si applica alla fine, nell'ordine di arrivo.
                 if (ripristinoInCorso && intent.action in azioniSullaPartita) {
-                    intentiRimandati.add(intent)
+                    azioniRimandate.add { onReceive(context, intent) }
                     return
                 }
                 when (intent.action) {
@@ -572,12 +572,13 @@ class MainViewModel(
     // Sopra init, che li usa.
     private var ripristinoInAttesa = false
 
-    // Il ripristino e' partito e non e' finito: gli intenti dell'orologio che toccano la partita
-    // aspettano. Si accende dentro la coroutine, non alla richiesta: il finally che lo spegne e
-    // applica gli intenti gira solo se la coroutine e' partita. In produzione (Main.immediate)
+    // Il ripristino e' partito e non e' finito: gli intenti dell'orologio e i tocchi sul telefono
+    // che toccano la partita aspettano, in una fila sola che ne tiene l'ordine di arrivo. Si
+    // accende dentro la coroutine, non alla richiesta: il finally che lo spegne e applica le
+    // azioni rimandate gira solo se la coroutine e' partita. In produzione (Main.immediate)
     // parte subito, e i due momenti coincidono.
     private var ripristinoInCorso = false
-    private val intentiRimandati = mutableListOf<Intent>()
+    private val azioniRimandate = mutableListOf<() -> Unit>()
     private var sportRimandato: String? = null
     private val azioniSullaPartita =
         setOf(
@@ -1090,17 +1091,30 @@ class MainViewModel(
 
     /**
      * Chiude la finestra del ripristino: lo sport arrivato dalle impostazioni vale solo se non e'
-     * tornata una partita, e gli intenti dell'orologio tenuti da parte si applicano adesso, nel
-     * loro ordine, come se arrivassero ora.
+     * tornata una partita, e gli intenti dell'orologio e i tocchi tenuti da parte si applicano
+     * adesso, nel loro ordine, come se arrivassero ora.
      */
     private fun fineRipristino() {
         ripristinoInAttesa = false
         ripristinoInCorso = false
         sportRimandato?.let { if (it != _activeSport.value && engine.log.isEmpty()) applySport(it) }
         sportRimandato = null
-        val rimandati = intentiRimandati.toList()
-        intentiRimandati.clear()
-        rimandati.forEach { broadcastReceiver.onReceive(getApplication(), it) }
+        val rimandate = azioniRimandate.toList()
+        azioniRimandate.clear()
+        rimandate.forEach { it() }
+    }
+
+    /**
+     * Tiene da parte un tocco sul telefono arrivato durante il ripristino; true se l'ha tenuto.
+     *
+     * Come per gli intenti dell'orologio: sul motore ancora vuoto il tocco apriva una seconda riga
+     * attiva, il cui insert tornava dopo il ripristino e gli rubava currentMatchId. La partita
+     * ripresa restava attiva ma non piu' seguita, e END MATCH chiudeva quella sbagliata.
+     */
+    private fun rimandataDalRipristino(azione: () -> Unit): Boolean {
+        if (!ripristinoInCorso) return false
+        azioniRimandate.add(azione)
+        return true
     }
 
     /**
@@ -1179,6 +1193,7 @@ class MainViewModel(
     }
 
     fun addScore(teamId: Int) {
+        if (rimandataDalRipristino { addScore(teamId) }) return
         val prima = engine.state
         engine.apply(ScoringEvent.Point(side = teamId), matchClock.relative(System.currentTimeMillis()))
 
@@ -1296,6 +1311,7 @@ class MainViewModel(
         teamId: Int,
         atMillis: Long? = null,
     ) {
+        if (rimandataDalRipristino { subtractScore(teamId, atMillis) }) return
         val prima = engine.state.headline()
         engine.apply(ScoringEvent.Correction(side = teamId), tempoDiPartita(atMillis))
         val dopo = engine.state.headline()
@@ -1418,6 +1434,7 @@ class MainViewModel(
      * contengono ancora, non hanno una riga, e toglierli non si vede.
      */
     fun undoLastGoal() {
+        if (rimandataDalRipristino { undoLastGoal() }) return
         if (!engine.canUndo()) return
         var tolto: Pair<Int, ScoringEvent>? = null
         while (tolto == null && engine.canUndo()) {
