@@ -138,6 +138,10 @@
     <string name="report_sets">Sets</string>
     <string name="report_scorers">Scorers</string>
     <string name="report_draw">Draw</string>
+    <string name="report_pdf_title">MATCH REPORT</string>
+    <string name="report_pdf_scorers_title">SCORERS</string>
+    <string name="report_pdf_no_scorers">No scorers</string>
+    <string name="report_pdf_failed">Could not create the PDF report</string>
 
     <!-- Multi-sport -->
     <string name="settings_sport_title">Sport</string>

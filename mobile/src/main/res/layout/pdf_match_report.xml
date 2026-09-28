@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="MATCH REPORT"
+        android:text="@string/report_pdf_title"
         android:textAppearance="?attr/textAppearanceDisplayLarge"
         android:textColor="@color/stencil_white"
         android:layout_marginBottom="16dp"/>
@@ -76,15 +76,17 @@
 
     <!-- Formations Section -->
     <TextView
+        android:id="@+id/pdf_formations_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="FORMAZIONI"
+        android:text="@string/label_formations"
         android:textAppearance="?attr/textAppearanceHeadlineSmall"
         android:textColor="@color/sidewalk_gray"
         android:gravity="center"
         android:layout_marginBottom="8dp"/>
 
     <LinearLayout
+        android:id="@+id/pdf_formations"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -110,9 +112,10 @@
 
     <!-- Scorers Section -->
     <TextView
+        android:id="@+id/pdf_scorers_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="TABELLINO MARCATORI"
+        android:text="@string/report_pdf_scorers_title"
         android:textAppearance="?attr/textAppearanceHeadlineSmall"
         android:textColor="@color/sidewalk_gray"
         android:gravity="center"
