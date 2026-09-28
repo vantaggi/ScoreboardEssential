@@ -1974,3 +1974,16 @@ del portiere, "Dismiss", canali di notifica); `lint-baseline.xml` ha voci che no
 a niente, da rigenerare in un passo a parte. TalkBack vero non e' stato provato.
 
 **Prossimo nella coda:** design del telefono, passo 5 (contenitore e foglio PARTITA).
+
+### Design del telefono, passi 5-9, a passi corti - 28 settembre 2026
+
+I cinque passi toccano tutti `MainActivity.kt` e i layout di gioco: vanno in fila, uno alla volta.
+
+| Passo | Cosa | Stato |
+|---|---|---|
+| 5a | Contenitore e foglio PARTITA: implementazione (`wf7/foglio`) | in corso |
+| 5b | Revisione, correzione, prova su emulatore, unione | da fare |
+| 6 | Colonna di gioco a slot fissi | da fare |
+| 7 | Striscia dell'ultima azione | da fare |
+| 8 | Barra e servizio per la racchetta, partita finita | da fare |
+| 9 | Stato dell'orologio persistente (WatchNotice) | da fare |
