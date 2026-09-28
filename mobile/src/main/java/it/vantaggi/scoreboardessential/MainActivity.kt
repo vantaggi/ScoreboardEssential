@@ -275,11 +275,11 @@ class MainActivity :
         }
 
         viewModel.team1Name.observe(this) { name ->
-            team1NameTextView.text = name.uppercase(Locale.getDefault())
+            mostraNomeSquadra(findViewById(R.id.team1_name_container), team1NameTextView, name)
         }
 
         viewModel.team2Name.observe(this) { name ->
-            team2NameTextView.text = name.uppercase(Locale.getDefault())
+            mostraNomeSquadra(findViewById(R.id.team2_name_container), team2NameTextView, name)
         }
 
         viewModel.team1Color.observe(this) { color ->
@@ -1060,3 +1060,19 @@ internal fun schermoDaTenereAcceso(
     eventi: List<MatchEvent>?,
     partitaFinita: Boolean,
 ): Boolean = !partitaFinita && eventi.orEmpty().any { it.type == MatchEventType.SCORE }
+
+/**
+ * Scrive il nome sulla card e lo mette anche nella descrizione del contenitore cliccabile.
+ *
+ * Il contenitore aveva la descrizione fissa "Modifica nome Squadra 1": TalkBack legge quella e non
+ * il testo dentro, cosi' il nome della squadra non si sentiva mai. Sta fuori dall'Activity perche'
+ * sotto Robolectric MainActivity non si monta.
+ */
+internal fun mostraNomeSquadra(
+    contenitore: View,
+    testo: TextView,
+    nome: String,
+) {
+    testo.text = nome.uppercase(Locale.getDefault())
+    contenitore.contentDescription = contenitore.context.getString(R.string.cd_edit_team_name, nome)
+}
