@@ -1911,8 +1911,8 @@ Worktree dei due branch, da tenere finche' L2 non e' unito (i risultati in cache
 | 2 | Voce navigazione: `MatchHistoryViewModel`, onboarding senza MainViewModel, freccia su con `finish()`, riga viva fuori dallo storico, guardia del cambio sport con `decode` | fatto, `a03a3e0`, 8 test nuovi (7 falsificati, uno fissa un comportamento invariato), suite verde (:mobile 201) |
 | 3 | Revisione avversaria della voce riga | fatto: 1 media (il ripristino scrive `currentMatchId` fuori dalla fila `rigaViva`: un tocco locale durante il ripristino, con l'insert sospeso, sovrascrive l'id e la riga ripresa resta viva ma non piu' seguita), 2 basse (SCARTA decide fuori dalla fila; un punto locale dopo END, prima che `closeMatch` finisca, viene azzerato: preesistente). Scelte (a), (b), (d), (e) giudicate accettabili |
 | 4 | Revisione avversaria della voce navigazione | fatto: nessun rilievo alto o medio; 1 bassa (parametro `repository` di MainViewModel senza usi, da togliere all'unione). Scelte (a)-(e) accettabili |
-| 5 | Correzione del rilievo medio di 3 (solo `wf5/riga`) | in corso |
-| 6 | Voce rose (rose salvate con la riga viva, da `wf5/riga`) | da fare |
+| 5 | Correzione del rilievo medio di 3 (solo `wf5/riga`) | fatto, `a4dddd4`: anche addScore, subtractScore e undoLastGoal aspettano la fine del ripristino, nella stessa fila degli intenti dell'orologio (`azioniRimandate`); test con lettura e insert sospesi, falsificato; :mobile 203 verdi. Resta: un END MATCH locale nei millisecondi del ripristino, con il cronometro gia' diverso da zero, inserirebbe una riga 0-0 chiusa |
+| 6 | Voce rose (rose salvate con la riga viva, da `wf5/riga`) | in corso |
 | 7 | Revisione e correzione della voce rose | da fare |
 | 8 | Unione su `main`, verifica completa, strumentati, documenti, push | da fare |
 
