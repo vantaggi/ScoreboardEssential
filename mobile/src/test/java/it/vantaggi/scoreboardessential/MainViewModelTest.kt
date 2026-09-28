@@ -1880,12 +1880,17 @@ class MainViewModelTest {
                 imposta("playerDao", playerDao)
                 val marco = playerDao.insert(Player(playerName = "Marco", appearances = 0, goals = 0)).toInt()
                 val anna = playerDao.insert(Player(playerName = "Anna", appearances = 0, goals = 0)).toInt()
-                val ripresa =
-                    db
-                        .matchDao()
-                        .insert(
-                            Match(team1Id = 1, team2Id = 2, team1Score = 1, team2Score = 0, timestamp = 0L, isActive = true, eventLog = "1|1"),
-                        ).toInt()
+                val viva =
+                    Match(
+                        team1Id = 1,
+                        team2Id = 2,
+                        team1Score = 1,
+                        team2Score = 0,
+                        timestamp = 0L,
+                        isActive = true,
+                        eventLog = "1|1",
+                    )
+                val ripresa = db.matchDao().insert(viva).toInt()
                 db.matchDao().replaceLineup(ripresa, listOf(marco), emptyList())
                 val dao = DaoCheSospende(db.matchDao(), cancelloLettura = CompletableDeferred())
                 imposta("matchDao", dao)
