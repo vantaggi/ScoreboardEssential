@@ -1981,7 +1981,7 @@ I cinque passi toccano tutti `MainActivity.kt` e i layout di gioco: vanno in fil
 
 | Passo | Cosa | Stato |
 |---|---|---|
-| 5a | Contenitore e foglio PARTITA: implementazione (`wf7/foglio`) | in corso |
+| 5a | Contenitore e foglio PARTITA: implementazione (`wf7/foglio`) | fatto: `8c8674f`, `aa2bbce`, `5744257` (worktree `wf_105e059b-15c-1`). Foglio con BottomSheetBehavior, indietro lo richiude, azioni su tre righe (statistiche, giocatori e impostazioni nel foglio), via FAB e FabOverlap, MainActivity bloccata in verticale. Strumentati 13 su 13, falsificato il test di indietro. Aperti: AZZERA e ingranaggio doppi finche' non arriva il passo 6; niente velo sotto il foglio |
 | 5b | Revisione, correzione, prova su emulatore, unione | da fare |
 | 6 | Colonna di gioco a slot fissi | da fare |
 | 7 | Striscia dell'ultima azione | da fare |
