@@ -3,26 +3,16 @@ package it.vantaggi.scoreboardessential.ui.onboarding
 import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.viewpager2.widget.ViewPager2
-import it.vantaggi.scoreboardessential.MainViewModel
-import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.databinding.ActivityOnboardingBinding
 
 class OnboardingActivity : AppCompatActivity() {
     private lateinit var binding: ActivityOnboardingBinding
     private lateinit var pagerAdapter: OnboardingPagerAdapter
-    private val mainViewModel: MainViewModel by viewModels {
-        MainViewModel.MainViewModelFactory(
-            (application as ScoreboardEssentialApplication).matchRepository,
-            (application as ScoreboardEssentialApplication).userPreferencesRepository,
-            (application as ScoreboardEssentialApplication).matchSettingsRepository,
-            application,
-        )
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,8 +67,13 @@ class OnboardingActivity : AppCompatActivity() {
         )
     }
 
+    /**
+     * Scrive la preferenza da qui, nelle stesse preferenze e con la stessa chiave che
+     * MainViewModel legge all'avvio. Prima passava da un MainViewModel costruito apposta, che
+     * nel suo init mandava 0-0 all'orologio mentre quello della partita era vivo sotto.
+     */
     private fun finishOnboarding() {
-        mainViewModel.onOnboardingFinished()
+        getSharedPreferences("app_prefs", MODE_PRIVATE).edit { putBoolean("onboarding_completed", true) }
         finish()
     }
 }
