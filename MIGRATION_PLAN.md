@@ -1945,3 +1945,15 @@ annullamento a zero; al ripristino i giocatori cancellati dall'archivio sparisco
 dalla rosa. **Da provare su dispositivo:** la finestra di avvio a freddo (prova 6).
 
 **Prossimo nella coda:** L11, a passi corti.
+
+### L11 il resto, a passi corti - 28 settembre 2026
+
+Delle 16 voci di L11, 7 erano gia' chiuse dai passi 1-4 del design del telefono. Le 9 aperte:
+
+| Passo | Cosa | Stato |
+|---|---|---|
+| 1 | Tre voci in parallelo, ognuna con revisione: `wf6/pdf` (tabellino nel padel, FileOutputStream), `wf6/testi` ("Partita ripresa" e "press START" nel registro), `wf6/a11y` (nome squadra letto da TalkBack sulla card, bersagli da 48dp nella gestione giocatori) | in corso |
+| 2 | Correzione dei rilievi alti e medi del passo 1 | da fare |
+| 3 | Titoli e schermate secondarie non tradotti | da fare |
+| 4 | Risorse dichiarate e mai usate (dopo il 3: stessi file di risorse) | da fare |
+| 5 | Unione, verifica completa, strumentati, documenti, push | da fare |
