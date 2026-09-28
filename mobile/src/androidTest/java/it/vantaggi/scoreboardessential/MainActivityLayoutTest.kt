@@ -1,14 +1,21 @@
 package it.vantaggi.scoreboardessential
 
+import android.Manifest
 import android.content.Context
-import android.graphics.Rect
+import android.os.Build
 import android.view.View
-import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.pressBack
+import androidx.test.espresso.Espresso.pressBackUnconditionally
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import org.junit.Assert.assertFalse
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -54,6 +61,23 @@ class MainActivityLayoutTest {
             .edit()
             .putBoolean("onboarding_completed", true)
             .commit()
+    }
+
+    /**
+     * Concede il permesso delle notifiche prima di montare la schermata.
+     *
+     * Senza, da Android 13 MainActivity chiede il permesso con un dialogo di sistema che la mette
+     * in pausa: le prove con tocchi e indietro veri (Espresso) non trovavano nessuna activity attiva.
+     */
+    @Before
+    fun concediLeNotifiche() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val strumentazione = InstrumentationRegistry.getInstrumentation()
+            strumentazione.uiAutomation.grantRuntimePermission(
+                strumentazione.targetContext.packageName,
+                Manifest.permission.POST_NOTIFICATIONS,
+            )
+        }
     }
 
     @Test
@@ -143,59 +167,76 @@ class MainActivityLayoutTest {
         }
     }
 
-    @Test
-    fun inNessunaPosizioneDiScorrimento_unFabCopreIComandiDiFinePartita() {
-        // In posizione di riposo la riga HISTORY / END MATCH / SHARE cadeva sotto i FAB. La prova
-        // scorre dall'inizio alla fine e a ogni passo pretende due cose: se un comando e' nella
-        // fascia di un FAB, quel FAB non e' visibile; se nessun comando lo e', i FAB ci sono.
-        // La geometria e' calcolata qui con Rect, non con la funzione che decide nell'activity.
-        val azioni = listOf(R.id.match_history_button, R.id.reset_scores_button, R.id.share_match_button)
-        val fab = listOf(R.id.stats_fab, R.id.players_fab)
+    private fun statoDelFoglio(scenario: ActivityScenario<MainActivity>): Int {
+        var stato = -1
+        scenario.onActivity { activity ->
+            stato = BottomSheetBehavior.from(activity.findViewById<View>(R.id.match_sheet)).state
+        }
+        return stato
+    }
+
+    /**
+     * Aspetta che il foglio si fermi nello stato atteso. L'animazione del behavior non e' una
+     * risorsa che Espresso conosce, quindi si interroga lo stato fino a 5 secondi.
+     */
+    private fun aspettaStato(
+        scenario: ActivityScenario<MainActivity>,
+        atteso: Int,
+    ): Int {
         val strumentazione = InstrumentationRegistry.getInstrumentation()
-
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        var stato = statoDelFoglio(scenario)
+        var tentativi = 50
+        while (stato != atteso && tentativi-- > 0) {
+            Thread.sleep(100)
             strumentazione.waitForIdleSync()
-            var scorrimento: NestedScrollView? = null
-            var massimo = 0
-            scenario.onActivity { activity ->
-                // Il contenitore che scorre e' diverso in verticale e in orizzontale: si risale
-                // dal pulsante invece di dipendere da un id.
-                var genitore = activity.findViewById<View>(R.id.share_match_button).parent
-                while (genitore !is NestedScrollView) genitore = (genitore as View).parent
-                scorrimento = genitore
-                massimo = maxOf(0, genitore.getChildAt(0).height - genitore.height)
-            }
+            stato = statoDelFoglio(scenario)
+        }
+        return stato
+    }
 
-            val passi = 12
-            for (passo in 0..passi) {
-                val y = massimo * passo / passi
-                scenario.onActivity { scorrimento!!.scrollTo(0, y) }
-                strumentazione.waitForIdleSync()
-                // Il tempo delle animazioni di hide()/show().
-                Thread.sleep(600)
-                strumentazione.waitForIdleSync()
+    @Test
+    fun ilFoglioPartita_e_nascosto_all_avvio() {
+        // Mentre si gioca la schermata e' solo la colonna di gioco: rose, registro e azioni
+        // stanno nel foglio, che non deve coprire le zone da toccare finche' nessuno lo chiede.
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            assertEquals(BottomSheetBehavior.STATE_HIDDEN, statoDelFoglio(scenario))
+        }
+    }
 
-                scenario.onActivity { activity ->
-                    // Posizione nella finestra anche per i pulsanti, non l'area visibile: un pulsante
-                    // fuori schermo darebbe un rettangolo visibile senza significato.
-                    fun rettangolo(id: Int): Rect {
-                        val vista = activity.findViewById<View>(id)
-                        val xy = IntArray(2)
-                        vista.getLocationInWindow(xy)
-                        return Rect(xy[0], xy[1], xy[0] + vista.width, xy[1] + vista.height)
-                    }
-                    val rettangoliAzioni = azioni.map { rettangolo(it) }
-                    val coperto = fab.any { f -> rettangoliAzioni.any { Rect.intersects(it, rettangolo(f)) } }
-                    for (id in fab) {
-                        val visibile = activity.findViewById<View>(id).visibility == View.VISIBLE
-                        if (coperto) {
-                            assertFalse("a scorrimento $y un FAB copre un comando di fine partita", visibile)
-                        } else {
-                            assertTrue("a scorrimento $y la riga e' lontana ma il FAB non c'e'", visibile)
-                        }
-                    }
-                }
-            }
+    @Test
+    fun ilPulsantePartita_apre_il_foglio() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            onView(withId(R.id.match_sheet_button)).perform(click())
+            assertEquals(
+                "il pulsante della barra deve aprire il foglio del tutto",
+                BottomSheetBehavior.STATE_EXPANDED,
+                aspettaStato(scenario, BottomSheetBehavior.STATE_EXPANDED),
+            )
+        }
+    }
+
+    @Test
+    fun indietro_chiude_prima_il_foglio_e_poi_esce() {
+        // Senza il callback, indietro a foglio aperto chiudeva l'app: si perdeva la schermata
+        // di gioco proprio mentre si guardava il registro.
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            onView(withId(R.id.match_sheet_button)).perform(click())
+            assertEquals(BottomSheetBehavior.STATE_EXPANDED, aspettaStato(scenario, BottomSheetBehavior.STATE_EXPANDED))
+
+            pressBack()
+            assertEquals(
+                "il primo indietro deve richiudere il foglio",
+                BottomSheetBehavior.STATE_HIDDEN,
+                aspettaStato(scenario, BottomSheetBehavior.STATE_HIDDEN),
+            )
+            assertEquals("e l'app deve restare aperta", Lifecycle.State.RESUMED, scenario.state)
+
+            // Il secondo esce: pressBackUnconditionally perche' pressBack fallisce se l'app si chiude.
+            pressBackUnconditionally()
+            var tentativi = 50
+            while (scenario.state != Lifecycle.State.DESTROYED && tentativi-- > 0) Thread.sleep(100)
+            assertEquals("a foglio chiuso indietro deve uscire", Lifecycle.State.DESTROYED, scenario.state)
         }
     }
 
@@ -218,7 +259,11 @@ class MainActivityLayoutTest {
                         .byId(it.vantaggi.scoreboardessential.core.SportRegistry.PADEL)
                         .capabilities,
                 )
-
+            }
+            // Le rose vivono nel foglio PARTITA: a foglio nascosto il pulsante non si vede comunque.
+            onView(withId(R.id.match_sheet_button)).perform(click())
+            aspettaStato(scenario, BottomSheetBehavior.STATE_EXPANDED)
+            scenario.onActivity { activity ->
                 assertTrue(
                     "nel padel la card delle rose deve restare visibile",
                     activity.findViewById<View>(R.id.rosters_card).visibility == View.VISIBLE,
