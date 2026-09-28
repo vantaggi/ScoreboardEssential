@@ -185,6 +185,11 @@ T5→T6 · T6→T9 · T7→T11 · **T10→T14** · T12,T13→T14
   incidentale in italiano fa fallire `mergeDebugResources` con «La stringa "--" non
   e' consentita nei commenti» — e il messaggio arriva solo a merge delle risorse,
   non alla scrittura. Stessa famiglia dell'apostrofo: si riformula.
+- **Daemon di Gradle morto a meta' build (28 settembre 2026):** succede con l'emulatore acceso e
+  una build completa, e lascia un worker orfano (`org.gradle.internal.worker`) che tiene aperto
+  `core/build/libs/core.jar`: `clean` fallisce anche dopo `./gradlew --stop`. Si cerca il processo
+  java col worker (PowerShell, `Get-CimInstance Win32_Process -Filter "Name='java.exe'"`) e lo si
+  chiude; poi la build riparte.
 - **Esiste solo `11.json`**: l'export è stato acceso a schema già alla v11, le
   migrazioni storiche non sono validabili a posteriori. Da v12 in poi sì.
 
@@ -1948,17 +1953,24 @@ dalla rosa. **Da provare su dispositivo:** la finestra di avvio a freddo (prova 
 
 ### L11 il resto, a passi corti - 28 settembre 2026
 
-Delle 16 voci di L11, 7 erano gia' chiuse dai passi 1-4 del design del telefono. Le 9 aperte:
+Delle 16 voci di L11, 8 erano gia' chiuse dai passi 1-4 del design del telefono. Le 8 aperte:
 
 | Passo | Cosa | Stato |
 |---|---|---|
 | 1 | Tre voci in parallelo, ognuna con revisione: `wf6/pdf` (tabellino nel padel, FileOutputStream), `wf6/testi` ("Partita ripresa" e "press START" nel registro), `wf6/a11y` (nome squadra letto da TalkBack sulla card, bersagli da 48dp nella gestione giocatori) | fatto: `07b9ec1` (pdf, 7 test falsificati, uno saltato su Windows perche' FileProvider sotto Robolectric vuole '/'), `1250263` e `b567d8d` (testi, 2 test), `de561aa` (a11y, 3 test). Revisioni senza rilievi alti o medi; una bassa sul pdf: un gol attribuito a un giocatore poi tolto dalla rosa torna, dopo un ripristino, col nome della squadra e finisce nel tabellino |
 | 2 | Correzione dei rilievi alti e medi del passo 1 | non serve |
-| 3 | Titoli e schermate secondarie non tradotti | da fare |
-| 4 | Risorse dichiarate e mai usate (dopo il 3: stessi file di risorse) | da fare |
-| 5 | Unione, verifica completa, strumentati, documenti, push | da fare |
+| 3 | Titoli e schermate secondarie non tradotti | fatto, `2ca0b99` (insieme al passo 4, in un solo workflow), revisione senza rilievi |
+| 4 | Risorse dichiarate e mai usate (dopo il 3: stessi file di risorse) | fatto, `419026e`, revisione senza rilievi |
+| 5 | Unione, verifica completa, strumentati, documenti, push | fatto: uniti senza conflitti (`20ecb00`, `6669d3f`, `5a53fe0`, `b92a472`), suite verde, strumentati 11 su 11 |
 
-Fermo qui il 28 settembre alle 21:20 per il limite delle 5 ore (62%), che si azzera alle 00:59 del 29.
-I tre branch `wf6/pdf`, `wf6/testi` e `wf6/a11y` sono committati, nei worktree
-`.claude/worktrees/wf_1b7c4356-3b4-1`, `-2` e `-3`, e si uniscono fra loro senza conflitti.
-Alla ripresa: passo 3 (traduzioni), poi 4 e 5.
+Fermo alle 21:20 per il limite delle 5 ore (62%); ripreso alle 21:45, quando il proprietario ha
+chiesto di continuare fino a esaurimento del limite, oltre la soglia della coda automatica.
+
+**L11 chiuso.** Le otto voci hanno la loro riga "Corretto" in `VALIDAZIONE.md`. Verifica
+sull'insieme unito: suite completa verde, **451 test JVM distinti** (core 136, mobile 237, shared 30,
+wear 48), strumentati **11 su 11**. Il primo giro della verifica e' morto col daemon di Gradle (vedi
+le trappole). Restano cablati alcuni testi del registro e delle notifiche (scadenza e azzeramento
+del portiere, "Dismiss", canali di notifica); `lint-baseline.xml` ha voci che non corrispondono piu'
+a niente, da rigenerare in un passo a parte. TalkBack vero non e' stato provato.
+
+**Prossimo nella coda:** design del telefono, passo 5 (contenitore e foglio PARTITA).

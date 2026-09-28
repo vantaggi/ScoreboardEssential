@@ -555,6 +555,8 @@ Corretto: 34fcbdc, registro sempre in colorOnSurface con il colore solo sulla ba
 
 **Rimedio.** Contare solo gli eventi con playerId != null, nascondere FORMAZIONI e TABELLINO negli sport senza marcatore, portare i titoli in strings.xml.
 
+Corretto: 07b9ec1. Il tabellino conta solo le marcature con playerId; negli sport che non registrano il marcatore (padel, tennis) formazioni e tabellino non compaiono; i titoli del report vengono dalle risorse. Test in MatchReportUtilsTest, rossi senza il rimedio. Resta: un gol attribuito a un giocatore poi tolto dalla rosa torna, dopo un ripristino, col nome della squadra e playerId, e finisce nel tabellino.
+
 ### [bassa] Il report PDF lascia aperto il FileOutputStream e condivide il file anche se la scrittura fallisce
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/utils/MatchReportUtils.kt` - aree: concorrenza
@@ -562,6 +564,8 @@ Corretto: 34fcbdc, registro sempre in colorOnSurface con il colore solo sulla ba
 **Scenario.** 126-134: ogni SHARE lascia un descrittore aperto. Con il disco pieno si condivide senza avviso un PDF troncato o vecchio.
 
 **Rimedio.** FileOutputStream(pdfFile).use{…}, e in caso di errore non restituire l'Intent.
+
+Corretto: 07b9ec1. Scrittura con FileOutputStream(...).use, nessuna condivisione se la scrittura fallisce (Toast report_pdf_failed), PdfDocument chiuso nel finally. Test in MatchReportUtilsTest; quello del percorso riuscito si salta su Windows, dove FileProvider sotto Robolectric non trova la cartella.
 
 ### [bassa] A ogni ricreazione dell'Activity ricompare il toast sullo stato di Wear OS
 
@@ -591,6 +595,8 @@ Corretto: 34fcbdc, colonna wrap_content con minWidth 40dp e maxLines 1. Test: Mi
 
 **Rimedio.** Salvare un tipo di evento e tradurlo nell'adapter, oppure usare la risorsa.
 
+Corretto: 1250263, la riga del ripristino usa R.string.match_resumed. Test in inglese in MainViewModelTest. Il registro salva testo gia' risolto: le righe scritte prima di un cambio di lingua restano nella lingua di allora.
+
 ### [bassa] Nel padel e nel tennis il registro dice 'press START to begin', ma START è nascosto
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt` - aree: ui-mobile
@@ -598,6 +604,8 @@ Corretto: 34fcbdc, colonna wrap_content con minWidth 40dp e maxLines 1. Test: Mi
 **Scenario.** startNewMatch (727) scrive sempre la frase, mentre applyCapabilities nasconde i comandi con ClockMode.NONE.
 
 **Rimedio.** Scegliere la frase in base a capabilities.clock, presa da una risorsa.
+
+Corretto: 1250263, la riga di partita pronta e' una sola, neutra, da risorsa (match_ready), senza START. Test nel padel in MainViewModelTest.
 
 ### [bassa] Tasto 'Fine' del tutorial tradotto 'Fines' in italiano
 
@@ -619,6 +627,8 @@ Corretto: 34fcbdc, 'Inizia' in italiano e 'Start' in inglese. Test: TestiDelTele
 
 Ancora aperto. In parte, 34fcbdc: il titolo del dialogo del marcatore viene da select_scorer_title; restano le label del manifest, 'Manage Players', le statistiche e gli altri dialoghi.
 
+Corretto: 2ca0b99. Label del manifest, titoli, statistiche (gol e presenze come plurals), dialoghi, Toast e Snackbar di gestione giocatori, storico, nuovo giocatore e ruoli da risorse in values e values-it; il chip 'All' si riconosce dalla risorsa e non dal testo. TitoliDelleSchermateTest in italiano e in inglese, rosso senza il rimedio. Restano cablati alcuni testi del registro e delle notifiche, fuori dalle schermate secondarie.
+
 ### [bassa] Etichette delle formazioni ancora nei colori del tema e 'No formation' cablato
 
 `mobile/src/main/res/layout/content_scoreboard_details.xml` - aree: ui-mobile
@@ -636,6 +646,8 @@ Corretto: 34fcbdc, colorate nello stesso observer delle rose come tag TeamInk; t
 **Scenario.** I contenitori cliccabili (95, 139) hanno la contentDescription fissa cd_edit_team_N_name: il nome 'ROSSI' non si sente mai. Da verificare con TalkBack.
 
 **Rimedio.** contentDescription dinamica con il nome della squadra.
+
+Corretto: de561aa, la descrizione del contenitore del nome dice il nome della squadra ed e' aggiornata a ogni cambio. AccessibilitaDelTelefonoTest, rosso senza il rimedio. TalkBack vero non e' stato provato.
 
 ### [bassa] Contrasti insufficienti: icona del FAB giocatori (circa 1,17:1) e testo dei pulsanti pieni (circa 3,17:1)
 
@@ -655,6 +667,8 @@ Corretto: 34fcbdc, colorOnPrimary e colorOnSecondary neri (5,02 sul rosa, 13,65 
 
 **Rimedio.** Portarli a 48dp, usare contentDescription da @string e aggiungere l'etichetta al FAB.
 
+Corretto: de561aa. Statistiche e modifica del giocatore a 48dp con etichetta da risorsa, FAB dei giocatori con etichetta. AccessibilitaDelTelefonoTest, rosso senza il rimedio.
+
 ### [bassa] Risorse dichiarate e mai usate
 
 `mobile/src/main/res/values/dimens.xml` - aree: ui-mobile
@@ -662,6 +676,8 @@ Corretto: 34fcbdc, colorOnPrimary e colorOnSecondary neri (5,02 sul rosa, 13,65 
 **Scenario.** Undici dimen, report_sets, report_draw e match_resumed senza riferimenti.
 
 **Rimedio.** Rimuoverle, oppure collegare le stringhe ai testi oggi cablati.
+
+Corretto: 419026e. Tolte 12 dimen e report_sets e report_draw, dopo grep su tutti i moduli; UnusedResources passa da 15 segnalazioni a 1 (android_wear_capabilities, falso positivo: la legge Play Services). match_resumed e' ora usata.
 
 ## L12 Rete di test
 
