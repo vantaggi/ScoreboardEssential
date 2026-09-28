@@ -1952,8 +1952,8 @@ Delle 16 voci di L11, 7 erano gia' chiuse dai passi 1-4 del design del telefono.
 
 | Passo | Cosa | Stato |
 |---|---|---|
-| 1 | Tre voci in parallelo, ognuna con revisione: `wf6/pdf` (tabellino nel padel, FileOutputStream), `wf6/testi` ("Partita ripresa" e "press START" nel registro), `wf6/a11y` (nome squadra letto da TalkBack sulla card, bersagli da 48dp nella gestione giocatori) | in corso |
-| 2 | Correzione dei rilievi alti e medi del passo 1 | da fare |
+| 1 | Tre voci in parallelo, ognuna con revisione: `wf6/pdf` (tabellino nel padel, FileOutputStream), `wf6/testi` ("Partita ripresa" e "press START" nel registro), `wf6/a11y` (nome squadra letto da TalkBack sulla card, bersagli da 48dp nella gestione giocatori) | fatto: `07b9ec1` (pdf, 7 test falsificati, uno saltato su Windows perche' FileProvider sotto Robolectric vuole '/'), `1250263` e `b567d8d` (testi, 2 test), `de561aa` (a11y, 3 test). Revisioni senza rilievi alti o medi; una bassa sul pdf: un gol attribuito a un giocatore poi tolto dalla rosa torna, dopo un ripristino, col nome della squadra e finisce nel tabellino |
+| 2 | Correzione dei rilievi alti e medi del passo 1 | non serve |
 | 3 | Titoli e schermate secondarie non tradotti | da fare |
 | 4 | Risorse dichiarate e mai usate (dopo il 3: stessi file di risorse) | da fare |
 | 5 | Unione, verifica completa, strumentati, documenti, push | da fare |
