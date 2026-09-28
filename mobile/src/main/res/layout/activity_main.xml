@@ -1,41 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/main_root" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_asphalt_main" tools:context=".MainActivity">
+    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/main_root" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/asphalt_black" tools:context=".MainActivity">
 
     <!--
-        In verticale il tabellone e' FISSO in cima e solo il resto scorre.
-        Segnare un punto e' l'atto per cui l'app esiste, e prima era una delle sette regioni
-        che scorrevano: bastava guardare il registro della partita per non poter piu' segnare
-        senza prima tornare su.
+        Due livelli in un solo file: la schermata di gioco resta in verticale (MainActivity e'
+        bloccata nel manifest), quindi non esiste piu' una variante orizzontale.
+        Sotto, la colonna di gioco: cio che si usa mentre si gioca, e niente scorre.
+        Sopra, il foglio PARTITA: rose, registro, formazioni e azioni, cioe' cio che si consulta.
+        Parte nascosto, si apre con il pulsante della barra e si chiude trascinando, con CHIUDI o
+        con indietro. Vive in questa Activity e non in una nuova, che creerebbe un secondo
+        MainViewModel. Al posto dei FAB, i pulsanti in fondo al foglio.
     -->
-    <LinearLayout
+    <include
+        layout="@layout/content_scoreboard_live"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent" />
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/match_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+        app:behavior_hideable="true"
+        app:behavior_skipCollapsed="true"
+        app:backgroundTint="@color/asphalt_dark"
+        app:shapeAppearance="@style/ShapeAppearance.App.MatchSheet">
 
         <include
-            layout="@layout/content_scoreboard_live"
+            layout="@layout/content_scoreboard_details"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-
-        <androidx.core.widget.NestedScrollView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:fillViewport="true">
-
-            <include
-                layout="@layout/content_scoreboard_details"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </androidx.core.widget.NestedScrollView>
-    </LinearLayout>
-
-    <!-- FAB for Player Management -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/players_fab" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="bottom|end" android:layout_margin="16dp" app:backgroundTint="?attr/colorSecondary" app:tint="?attr/colorOnSecondary" app:shapeAppearance="@style/ShapeAppearance.App.StreetButton" app:srcCompat="@drawable/ic_person_add" android:contentDescription="@string/cd_manage_players"/>
-
-    <!-- FAB for Statistics -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/stats_fab" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="bottom|start" android:layout_margin="16dp" app:backgroundTint="?attr/colorPrimary" app:tint="?attr/colorOnPrimary" app:shapeAppearance="@style/ShapeAppearance.App.StreetButton" app:srcCompat="@drawable/ic_stats" android:contentDescription="@string/cd_statistics"/>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

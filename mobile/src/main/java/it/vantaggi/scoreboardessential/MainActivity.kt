@@ -18,6 +18,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -28,6 +29,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -46,7 +48,6 @@ import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
 import it.vantaggi.scoreboardessential.utils.ExportBlocked
-import it.vantaggi.scoreboardessential.utils.FabOverlap
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import it.vantaggi.scoreboardessential.utils.MatchReportUtils
 import it.vantaggi.scoreboardessential.utils.TimeUtils
@@ -89,6 +90,10 @@ class MainActivity :
     // Sezioni che compaiono o spariscono a seconda dello sport
     private lateinit var rostersCard: View
     private lateinit var formationsCard: View
+
+    // Il foglio PARTITA: parte nascosto, si apre con il pulsante della barra.
+    private lateinit var matchSheet: BottomSheetBehavior<View>
+    private lateinit var chiudiConIndietro: OnBackPressedCallback
 
     // L'ultima configurazione osservata. Il countdown del portiere e l'annulla hanno un LiveData
     // proprio che potrebbe riaccenderli dopo il gating, quindi devono poterla riconsultare.
@@ -141,7 +146,7 @@ class MainActivity :
         setContentView(R.layout.activity_main)
 
         // Edge-to-edge: gli insets di sistema diventano padding del contenitore radice,
-        // cosi' coprono sia la NestedScrollView sia i FAB ancorati in basso.
+        // cosi' coprono sia la colonna di gioco sia il foglio PARTITA che sale dal basso.
         ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(R.id.main_root)) { view, windowInsets ->
             val bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
             view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
@@ -178,6 +183,13 @@ class MainActivity :
                 Log.e("ConnectionTest", "❌ CONNECTION TEST FAILED")
             }
         }
+    }
+
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        super.onPostCreate(savedInstanceState)
+        // Lo stato ripristinato del foglio non passa dai callback del behavior: senza questo,
+        // dopo una ricreazione a foglio aperto indietro uscirebbe dall'app invece di chiuderlo.
+        chiudiConIndietro.isEnabled = matchSheet.state != BottomSheetBehavior.STATE_HIDDEN
     }
 
     override fun onResume() {
@@ -419,9 +431,11 @@ class MainActivity :
             timerStartButton.isEnabled = isBound
             timerStartButton.alpha = if (isBound) 1.0f else 0.5f
 
-            val resetButton = findViewById<Button>(R.id.reset_timer_button)
-            resetButton?.isEnabled = isBound
-            resetButton?.alpha = if (isBound) 1.0f else 0.5f
+            listOf(R.id.reset_timer_button, R.id.sheet_reset_timer_button).forEach { id ->
+                val resetButton = findViewById<Button>(id)
+                resetButton?.isEnabled = isBound
+                resetButton?.alpha = if (isBound) 1.0f else 0.5f
+            }
         }
     }
 
@@ -451,6 +465,7 @@ class MainActivity :
         findViewById<View>(R.id.match_time_label).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
         findViewById<View>(R.id.timer_textview).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
         findViewById<View>(R.id.timer_controls_row).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.sheet_reset_timer_button).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
         // Le rose restano in ogni sport: nel padel e nel tennis sono l'unico posto dove si
         // assegnano i giocatori ai lati, e senza di loro l'export verso Padel Elite (4 giocatori,
         // 2 per lato) e l'ordine di servizio per nome erano impossibili. Legarle a hasRoles le
@@ -486,42 +501,52 @@ class MainActivity :
         setupMatchActions()
         setupPlayerManagementButtons()
         setupNavigationButtons()
-        keepFabsOffMatchActions()
+        setupMatchSheet()
     }
 
     /**
-     * I due FAB non devono mai stare sopra HISTORY, END MATCH o SHARE.
+     * Il foglio PARTITA: rose, registro, formazioni e azioni, sopra la colonna di gioco.
      *
-     * Si confrontano i rettangoli veri a schermo, non un margine: quanto spazio serva dipende
-     * dall'altezza dello schermo e da cosa c'e' nell'intestazione fissa (l'annulla che compare
-     * spinge giu' la riga). Si ricalcola a ogni scorrimento e a ogni cambio di layout, sull'intera
-     * finestra: cosi' vale uguale in verticale e in orizzontale, dove scorre un contenitore diverso.
-     * Quando la riga non e' nella fascia dei FAB, i FAB tornano: restano raggiungibili ovunque
-     * tranne proprio li', e a fine scorrimento il margine in fondo la porta sopra di loro.
+     * Parte nascosto e dal nascosto passa direttamente ad aperto (skipCollapsed): una via di mezzo
+     * lascerebbe una striscia di foglio sopra le zone da toccare. Indietro lo richiude prima di
+     * uscire: il callback e' acceso solo finche' il foglio non e' nascosto, cosi' a foglio chiuso
+     * indietro torna a fare cio' che ha sempre fatto.
      */
-    private fun keepFabsOffMatchActions() {
-        val fabs =
-            listOf(R.id.stats_fab, R.id.players_fab)
-                .map { findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(it) }
-        val azioni =
-            listOf(R.id.match_history_button, R.id.reset_scores_button, R.id.share_match_button)
-                .map { findViewById<View>(it) }
+    private fun setupMatchSheet() {
+        matchSheet = BottomSheetBehavior.from(findViewById(R.id.match_sheet))
+        // Dopo una ricreazione il behavior ripristina da solo lo stato salvato, piu' tardi
+        // (onRestoreInstanceState): qui si fissa solo il punto di partenza.
+        matchSheet.state = BottomSheetBehavior.STATE_HIDDEN
 
-        // La posizione di un FAB nascosto resta quella dell'ultimo layout, quindi il confronto
-        // continua a valere anche mentre e' nascosto. show()/hide() ripetuti non fanno nulla.
-        val aggiorna = {
-            val nascondi = FabOverlap.fabsMustHide(azioni.map { it.boxInWindow() }, fabs.map { it.boxInWindow() })
-            fabs.forEach { if (nascondi) it.hide() else it.show() }
+        chiudiConIndietro =
+            object : OnBackPressedCallback(false) {
+                override fun handleOnBackPressed() {
+                    matchSheet.state = BottomSheetBehavior.STATE_HIDDEN
+                }
+            }
+        onBackPressedDispatcher.addCallback(this, chiudiConIndietro)
+        matchSheet.addBottomSheetCallback(
+            object : BottomSheetBehavior.BottomSheetCallback() {
+                override fun onStateChanged(
+                    bottomSheet: View,
+                    newState: Int,
+                ) {
+                    chiudiConIndietro.isEnabled = newState != BottomSheetBehavior.STATE_HIDDEN
+                }
+
+                override fun onSlide(
+                    bottomSheet: View,
+                    slideOffset: Float,
+                ) = Unit
+            },
+        )
+
+        findViewById<View>(R.id.match_sheet_button).setOnClickListener {
+            matchSheet.state = BottomSheetBehavior.STATE_EXPANDED
         }
-        val osservatore = window.decorView.viewTreeObserver
-        osservatore.addOnScrollChangedListener { aggiorna() }
-        osservatore.addOnGlobalLayoutListener { aggiorna() }
-    }
-
-    private fun View.boxInWindow(): FabOverlap.Box {
-        val xy = IntArray(2)
-        getLocationInWindow(xy)
-        return FabOverlap.Box(xy[0], xy[1], xy[0] + width, xy[1] + height)
+        findViewById<View>(R.id.match_sheet_close_button).setOnClickListener {
+            matchSheet.state = BottomSheetBehavior.STATE_HIDDEN
+        }
     }
 
     /**
@@ -654,7 +679,7 @@ class MainActivity :
             showAddPlayerToTeamDialog(2)
         }
 
-        findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.players_fab).setOnClickListener {
+        findViewById<Button>(R.id.players_button).setOnClickListener {
             startActivity(Intent(this, PlayersManagementActivity::class.java))
         }
     }
@@ -664,13 +689,20 @@ class MainActivity :
             startActivity(Intent(this, MatchHistoryActivity::class.java))
         }
 
+        // L'ingranaggio della barra resta finche' la barra non viene riscritta; nel foglio c'e'
+        // lo stesso comando, accanto agli altri che prima erano FAB.
         findViewById<View>(R.id.settings_button).setOnClickListener {
             startActivity(Intent(this, MatchSettingsActivity::class.java))
         }
+        findViewById<Button>(R.id.sheet_settings_button).setOnClickListener {
+            startActivity(Intent(this, MatchSettingsActivity::class.java))
+        }
 
-        findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.stats_fab).setOnClickListener {
+        findViewById<Button>(R.id.statistics_button).setOnClickListener {
             startActivity(Intent(this, StatisticsActivity::class.java))
         }
+
+        findViewById<Button>(R.id.sheet_reset_timer_button).setOnClickListener { resetTimer(it) }
     }
 
     private fun animateTextChange(

@@ -108,6 +108,15 @@
     <string name="label_team_rosters">TEAM ROSTERS</string>
     <string name="label_match_log">MATCH LOG</string>
     <string name="label_formations">FORMATIONS</string>
+    <!-- Foglio PARTITA: cio che si consulta, a un tocco dalla schermata di gioco. -->
+    <string name="label_match_sheet">MATCH</string>
+    <string name="label_open_match_sheet">≡ MATCH</string>
+    <string name="cd_open_match_sheet">Open the match sheet</string>
+    <string name="label_close_sheet">CLOSE</string>
+    <string name="label_statistics">STATISTICS</string>
+    <string name="label_players">PLAYERS</string>
+    <string name="label_settings">SETTINGS</string>
+    <string name="label_reset_match_time">RESET TIME</string>
     <string name="formation_label">%1$s (%2$s)</string>
     <string name="formation_none">%1$s (no formation)</string>
     <string name="select_scorer_title">Who scored?</string>

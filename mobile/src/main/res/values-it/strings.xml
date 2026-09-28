@@ -108,6 +108,15 @@
     <string name="label_team_rosters">ROSE</string>
     <string name="label_match_log">REGISTRO</string>
     <string name="label_formations">FORMAZIONI</string>
+    <!-- Foglio PARTITA: cio che si consulta, a un tocco dalla schermata di gioco. -->
+    <string name="label_match_sheet">PARTITA</string>
+    <string name="label_open_match_sheet">≡ PARTITA</string>
+    <string name="cd_open_match_sheet">Apri il foglio della partita</string>
+    <string name="label_close_sheet">CHIUDI</string>
+    <string name="label_statistics">STATISTICHE</string>
+    <string name="label_players">GIOCATORI</string>
+    <string name="label_settings">IMPOSTAZIONI</string>
+    <string name="label_reset_match_time">AZZERA TEMPO</string>
     <string name="formation_label">%1$s (%2$s)</string>
     <string name="formation_none">%1$s (nessun modulo)</string>
     <string name="select_scorer_title">Chi ha segnato?</string>
