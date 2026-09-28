@@ -38,8 +38,6 @@
     <string name="cd_edit_team_name">Edit the name of %1$s</string>
     <string name="cd_player_stats">Player statistics</string>
     <string name="cd_edit_player">Edit player</string>
-    <string name="cd_statistics">Statistics</string>
-    <string name="cd_manage_players">Manage Players</string>
     <string name="cd_settings">Settings</string>
     <string name="cd_wear_status">Wear OS Connection Status</string>
 

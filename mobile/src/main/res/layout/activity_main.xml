@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/main_root" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/asphalt_black" tools:context=".MainActivity">
+    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/main_root" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/asphalt_black" tools:context=".MainActivity" tools:ignore="Overdraw">
 
     <!--
         Due livelli in un solo file: la schermata di gioco resta in verticale (MainActivity e'
@@ -11,6 +11,8 @@
         Parte nascosto, si apre con il pulsante della barra e si chiude trascinando, con CHIUDI o
         con indietro. Vive in questa Activity e non in una nuova, che creerebbe un secondo
         MainViewModel. Al posto dei FAB, i pulsanti in fondo al foglio.
+        Il nero pieno copre di proposito il fondo della finestra: e' il fondo della sola
+        schermata di gioco, da qui tools:ignore Overdraw.
     -->
     <include
         layout="@layout/content_scoreboard_live"
