@@ -166,6 +166,8 @@ class MainViewModelTest {
             // Stub other suspend functions just in case
             whenever(mockMatchDao.insertMatchPlayerCrossRef(any())).thenReturn(Unit)
             whenever(mockMatchDao.insertMatchPlayerCrossRefs(any())).thenReturn(Unit)
+            // Il ripristino legge le rose della riga: il finto, di suo, restituirebbe null.
+            whenever(mockMatchDao.getMatchLineup(any())).thenReturn(emptyList())
             whenever(mockPlayerDao.update(any())).thenReturn(Unit)
             whenever(mockPlayerDao.updatePlayers(any())).thenReturn(Unit)
             // Stub sendData
@@ -1589,6 +1591,7 @@ class MainViewModelTest {
             assertEquals(SportRegistry.FOOTBALL, nuovo.activeSport.value)
             assertEquals(2, nuovo.team1Score.value)
             verify(matchDao, never()).deleteById(any())
+            verify(matchDao, never()).deleteLiveMatch(any())
             verify(mockMatchSettingsRepository).setActiveSport(SportRegistry.FOOTBALL)
         }
 
@@ -1676,6 +1679,162 @@ class MainViewModelTest {
                 assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 3, 0, 3)), righe(db))
                 assertEquals(ripresa, campo("currentMatchId"))
                 assertEquals(3, viewModel.team1Score.value)
+            } finally {
+                db.close()
+            }
+        }
+
+    /** Le formazioni in tabella per [matchId], in SQL e nell'ordine di scrittura: (id, lato). */
+    private fun formazioni(
+        db: AppDatabase,
+        matchId: Int,
+    ): List<Pair<Int, Int>> =
+        db.openHelper.readableDatabase
+            .query("SELECT playerId, teamNumber FROM MatchPlayerCrossRef WHERE matchId = $matchId ORDER BY rowid")
+            .use { c -> buildList { while (c.moveToNext()) add(c.getInt(0) to c.getInt(1)) } }
+
+    /** Marco e Luca nel roster 1, Anna e Sara nel 2: servono Marco, Anna, Luca, Sara. */
+    private suspend fun quattroDelPadel(playerDao: PlayerDao): List<Int> {
+        val nomi = listOf("Marco", "Anna", "Luca", "Sara")
+        val ids = nomi.map { playerDao.insert(Player(playerName = it, appearances = 0, goals = 0)).toInt() }
+        nomi.forEachIndexed { i, nome ->
+            viewModel.addPlayerToTeam(PlayerWithRoles(Player(ids[i], nome, 0, 0), emptyList()), if (i % 2 == 0) 1 else 2)
+        }
+        return ids
+    }
+
+    /**
+     * Rilievo L2 (media): le rose vivevano solo in memoria. Dopo la morte del processo la partita
+     * tornava senza giocatori: END MATCH salvava senza presenze ne' formazioni, e l'export del
+     * padel diceva che ne mancavano quattro. Ora tornano dalla riga, nel loro ordine, e l'ordine
+     * di servizio resta quello della riga.
+     */
+    @Test
+    fun `le rose tornano con un ViewModel nuovo, e END MATCH salva presenze e formazioni una volta`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                imposta("playerDao", playerDao)
+                imposta("matchDao", db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (marco, anna, luca, sara) = quattroDelPadel(playerDao)
+                repeat(3) { viewModel.addScore(1) }
+                advanceUntilIdle()
+                val viva = db.matchDao().getActiveMatchOnce()!!
+
+                val nuovo = nuovoViewModel(sportSalvato = SportRegistry.PADEL)
+                advanceUntilIdle()
+
+                assertEquals(listOf(marco, luca), nuovo.team1Players.value?.map { it.player.playerId })
+                assertEquals(listOf(anna, sara), nuovo.team2Players.value?.map { it.player.playerId })
+                val regole = (MainViewModel::class.java.getDeclaredField("engine").apply { isAccessible = true }.get(nuovo) as MatchEngine).rules
+                assertEquals(listOf(marco, anna, luca, sara), regole.config.serveOrder)
+                val esito = nuovo.buildExport()
+                assertTrue("atteso Ready, ottenuto $esito", esito is ExportResult.Ready)
+                assertEquals(listOf("Marco", "Luca", "Anna", "Sara"), (esito as ExportResult.Ready).export.players.map { it.name })
+
+                assertEquals(true, nuovo.endMatch())
+                advanceUntilIdle()
+
+                assertEquals(
+                    "una presenza a testa, non di piu'",
+                    listOf(1, 1, 1, 1),
+                    playerDao.getAllPlayers().first().map { it.player.appearances },
+                )
+                assertEquals(
+                    listOf(marco to 1, luca to 1, anna to 2, sara to 2),
+                    formazioni(db, viva.matchId),
+                )
+            } finally {
+                db.close()
+            }
+        }
+
+    /** Cambiare la rosa a partita viva riscrive le formazioni della riga, nel nuovo ordine. */
+    @Test
+    fun `a partita viva aggiungere e togliere un giocatore riscrive le rose della riga`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                imposta("playerDao", playerDao)
+                imposta("matchDao", db.matchDao())
+                val (marco, anna, luca, sara) = quattroDelPadel(playerDao)
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                val id = db.matchDao().getActiveMatchOnce()!!.matchId
+                assertEquals(
+                    "le rose nascono con la riga",
+                    listOf(marco to 1, luca to 1, anna to 2, sara to 2),
+                    formazioni(db, id),
+                )
+
+                viewModel.removePlayerFromTeam(viewModel.team1Players.value!!.first(), 1)
+                viewModel.addPlayerToTeam(PlayerWithRoles(Player(marco, "Marco", 0, 0), emptyList()), 1)
+                advanceUntilIdle()
+
+                assertEquals(listOf(luca to 1, marco to 1, anna to 2, sara to 2), formazioni(db, id))
+            } finally {
+                db.close()
+            }
+        }
+
+    /** Non ci sono FK in cascata: scartare la riga viva lasciava orfane le sue formazioni. */
+    @Test
+    fun `scartare la riga viva cancella anche le sue formazioni`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                imposta("playerDao", playerDao)
+                imposta("matchDao", db.matchDao())
+                quattroDelPadel(playerDao)
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                val id = db.matchDao().getActiveMatchOnce()!!.matchId
+                assertEquals(4, formazioni(db, id).size)
+
+                assertEquals(true, viewModel.discardMatch())
+                advanceUntilIdle()
+
+                assertEquals(emptyList<Riga>(), righe(db))
+                assertEquals(emptyList<Pair<Int, Int>>(), formazioni(db, id))
+            } finally {
+                db.close()
+            }
+        }
+
+    /**
+     * La riga viva ha le formazioni dal primo punto: le statistiche non devono contarla finche'
+     * non e' chiusa. getPlayerWinCounts non guardava isActive, e un 1-0 in corso era una vittoria.
+     */
+    @Test
+    fun `le statistiche non contano la riga viva`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                val matchDao = db.matchDao()
+                imposta("playerDao", playerDao)
+                imposta("matchDao", matchDao)
+                val mario = playerDao.insert(Player(playerName = "Mario", appearances = 0, goals = 0)).toInt()
+                viewModel.addPlayerToTeam(PlayerWithRoles(Player(mario, "Mario", 0, 0), emptyList()), 1)
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                assertEquals(1, formazioni(db, matchDao.getActiveMatchOnce()!!.matchId).size)
+
+                assertEquals(emptyList<PlayerWinCount>(), matchDao.getPlayerWinCounts().first())
+                assertEquals(0, matchDao.getFinishedMatchesCountForPlayer(mario).first())
+                assertEquals(0, playerDao.getAllPlayers().first().single().player.appearances)
+
+                assertEquals(true, viewModel.endMatch())
+                advanceUntilIdle()
+
+                assertEquals(listOf(PlayerWinCount(mario, 1)), matchDao.getPlayerWinCounts().first())
+                assertEquals(1, matchDao.getFinishedMatchesCountForPlayer(mario).first())
+                assertEquals(1, playerDao.getAllPlayers().first().single().player.appearances)
             } finally {
                 db.close()
             }

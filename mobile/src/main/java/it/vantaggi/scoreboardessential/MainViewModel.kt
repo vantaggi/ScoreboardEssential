@@ -772,7 +772,8 @@ class MainViewModel(
      */
     private fun scartaRigaViva() {
         inFilaSullaRigaViva {
-            currentMatchId?.let { matchDao.deleteById(it.toInt()) }
+            // Con le sue formazioni: non ci sono FK in cascata.
+            currentMatchId?.let { matchDao.deleteLiveMatch(it.toInt()) }
             currentMatchId = null
         }
     }
@@ -841,6 +842,7 @@ class MainViewModel(
         val teamName = if (teamId == 1) _team1Name.value else _team2Name.value
         addMatchEvent("${playerWithRoles.player.playerName} added to $teamName", team = teamId)
         refreshServeOrder()
+        salvaRoseDellaRigaViva()
     }
 
     fun removePlayerFromTeam(
@@ -853,6 +855,29 @@ class MainViewModel(
             _team2Players.value = _team2Players.value?.minus(playerWithRoles)
         }
         refreshServeOrder()
+        salvaRoseDellaRigaViva()
+    }
+
+    /**
+     * Riscrive le rose sulla riga viva, se c'e', in fila con le altre sue scritture.
+     *
+     * Le rose vivevano solo in memoria: dopo la morte del processo la partita tornava senza
+     * giocatori, END MATCH non salvava presenze ne' formazioni e l'export del padel diceva che
+     * ne mancavano quattro. Senza riga viva non si scrive niente: le scrive chi la crea.
+     */
+    private fun salvaRoseDellaRigaViva() {
+        inFilaSullaRigaViva {
+            currentMatchId?.let { scriviRose(it) }
+        }
+    }
+
+    /** Le rose di adesso sulla riga [id], nel loro ordine. Solo dentro la fila di [rigaViva]. */
+    private suspend fun scriviRose(id: Long) {
+        matchDao.replaceLineup(
+            id.toInt(),
+            _team1Players.value.orEmpty().map { it.player.playerId },
+            _team2Players.value.orEmpty().map { it.player.playerId },
+        )
     }
 
     fun createNewPlayer(
@@ -1004,7 +1029,8 @@ class MainViewModel(
                 // stessa partita devono portare lo stesso id. L'inizio e' quello dell'orologio
                 // della partita, cioe' del primo punto, anche per una partita consegnata
                 // dall'orologio ore dopo. L'ordine di servizio qui e' gia' definitivo:
-                // refreshServeOrder non lo cambia piu' dopo il primo punto.
+                // refreshServeOrder non lo cambia piu' dopo il primo punto. Le rose nascono con
+                // la riga, per tornare col ripristino.
                 val uuid = matchUuid ?: UUID.randomUUID().toString().also { matchUuid = it }
                 val inizio = matchStartedAt ?: (matchClock.startEpoch ?: System.currentTimeMillis()).also { matchStartedAt = it }
                 currentMatchId =
@@ -1022,7 +1048,7 @@ class MainViewModel(
                             startedAt = inizio,
                             matchUuid = uuid,
                         ),
-                    )
+                    ).also { scriviRose(it) }
             } else {
                 matchDao.updateLiveMatch(id.toInt(), uno, due, log)
             }
@@ -1051,6 +1077,15 @@ class MainViewModel(
 
     private suspend fun ripristina() {
         val attiva = matchDao.getActiveMatchOnce() ?: return
+        // Le rose della riga, lette prima di toccare lo stato: dopo, il ripristino non sospende
+        // piu'. Nell'ordine salvato, che e' quello dell'export e dell'ordine di servizio.
+        val schieramento = matchDao.getMatchLineup(attiva.matchId)
+        val giocatori =
+            if (schieramento.isEmpty()) {
+                emptyMap()
+            } else {
+                playerDao.getPlayersWithRoles(schieramento.map { it.localId }).associateBy { it.player.playerId }
+            }
         // Le regole della riga, e prima di restoreLog: lo sport e l'ordine di servizio con cui
         // la partita e' cominciata. Il registro ripiegato con le regole in vigore adesso (un
         // cambio sport dall'orologio, o le impostazioni) dava un altro punteggio, e la
@@ -1069,6 +1104,10 @@ class MainViewModel(
         // spostato apposta, per non contare il tempo in cui l'app e' rimasta chiusa.
         matchUuid = attiva.matchUuid
         matchStartedAt = attiva.startedAt
+        // Direttamente nelle LiveData, senza refreshServeOrder: l'ordine di servizio e' quello
+        // della riga, gia' nelle regole qui sopra.
+        _team1Players.value = schieramento.filter { it.side == 1 }.mapNotNull { giocatori[it.localId] }
+        _team2Players.value = schieramento.filter { it.side == 2 }.mapNotNull { giocatori[it.localId] }
         val eventi = MatchLogCodec.decode(attiva.eventLog)
         if (eventi != null) {
             engine.restoreLog(eventi)
