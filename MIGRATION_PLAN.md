@@ -1982,8 +1982,13 @@ I cinque passi toccano tutti `MainActivity.kt` e i layout di gioco: vanno in fil
 | Passo | Cosa | Stato |
 |---|---|---|
 | 5a | Contenitore e foglio PARTITA: implementazione (`wf7/foglio`) | fatto: `8c8674f`, `aa2bbce`, `5744257` (worktree `wf_105e059b-15c-1`). Foglio con BottomSheetBehavior, indietro lo richiude, azioni su tre righe (statistiche, giocatori e impostazioni nel foglio), via FAB e FabOverlap, MainActivity bloccata in verticale. Strumentati 13 su 13, falsificato il test di indietro. Aperti: AZZERA e ingranaggio doppi finche' non arriva il passo 6; niente velo sotto il foglio |
-| 5b | Revisione, correzione, prova su emulatore, unione | da fare |
+| 5b | Revisione, correzione, prova su emulatore, unione | prova su emulatore fatta: il foglio e' nascosto all'avvio, ≡ MATCH lo apre con rose, registro e formazioni, indietro lo richiude e resta sul gioco; fondo del gioco nero. Da guardare in revisione: gli angoli del foglio a tutto schermo non si vedono tagliati, e sopra il foglio resta visibile una striscia della card del tempo. Revisione e unione da fare |
 | 6 | Colonna di gioco a slot fissi | da fare |
 | 7 | Striscia dell'ultima azione | da fare |
 | 8 | Barra e servizio per la racchetta, partita finita | da fare |
 | 9 | Stato dell'orologio persistente (WatchNotice) | da fare |
+
+Fermo il 28 settembre alle 22:35 col limite delle 5 ore al 93% (si azzera alle 00:59 del 29).
+`wf7/foglio` e' committato nel worktree `.claude/worktrees/wf_105e059b-15c-1`, non ancora revisionato
+ne' unito. Alla ripresa: passo 5b (revisione avversaria, correzione se serve, unione, verifica,
+push), poi il passo 6.
