@@ -102,6 +102,23 @@ interface MatchDao {
         )
     }
 
+    /**
+     * Fa nascere la riga viva con le sue formazioni, tutto o niente; restituisce l'id della riga.
+     *
+     * Erano due scritture separate: se il processo moriva tra le due, la partita tornava col
+     * ripristino ma senza rose.
+     */
+    @Transaction
+    suspend fun insertLiveMatch(
+        match: Match,
+        team1PlayerIds: List<Int>,
+        team2PlayerIds: List<Int>,
+    ): Long {
+        val id = insert(match)
+        replaceLineup(id.toInt(), team1PlayerIds, team2PlayerIds)
+        return id
+    }
+
     @Query("SELECT * FROM matches WHERE isActive = 1 LIMIT 1")
     fun getActiveMatch(): Flow<Match?>
 

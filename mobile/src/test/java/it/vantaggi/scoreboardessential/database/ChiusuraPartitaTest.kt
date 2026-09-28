@@ -100,4 +100,33 @@ class ChiusuraPartitaTest {
             assertThat(playerDao.getAllPlayers().first().associate { it.player.playerId to it.player.appearances })
                 .containsExactly(marco, 0, anna, 1, luca, 1, sara, 1, piero, 1)
         }
+
+    /**
+     * La scrittura delle formazioni fallisce, come se il processo morisse dopo l'insert della
+     * riga. Senza la transazione restava una riga viva senza rose, e il ripristino la riportava
+     * senza giocatori.
+     */
+    @Test
+    fun `se le formazioni non si scrivono non nasce nemmeno la riga viva`() =
+        runTest {
+            val marioId = playerDao.insert(Player(playerName = "Mario", appearances = 0, goals = 0)).toInt()
+            db.openHelper.writableDatabase.execSQL(
+                """
+                CREATE TRIGGER blocca_formazioni BEFORE INSERT ON MatchPlayerCrossRef
+                BEGIN SELECT RAISE(ABORT, 'interrotta'); END
+                """,
+            )
+
+            val esito =
+                runCatching {
+                    matchDao.insertLiveMatch(
+                        Match(team1Id = 1, team2Id = 2, team1Score = 1, team2Score = 0, timestamp = 0L, isActive = true),
+                        team1PlayerIds = listOf(marioId),
+                        team2PlayerIds = emptyList(),
+                    )
+                }
+
+            assertThat(esito.isFailure).isTrue()
+            assertThat(matchDao.getActiveMatchOnce()).isNull()
+        }
 }

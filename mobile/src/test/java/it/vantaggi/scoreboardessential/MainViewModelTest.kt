@@ -163,6 +163,9 @@ class MainViewModelTest {
         // Mock insert to return a valid ID using whenever and runBlocking
         kotlinx.coroutines.runBlocking {
             whenever(mockMatchDao.insert(any())).thenReturn(1L)
+            // La riga viva nasce con le rose in una transazione: sul finto il metodo di default
+            // non gira, e senza stub restituirebbe null.
+            whenever(mockMatchDao.insertLiveMatch(any(), any(), any())).thenReturn(1L)
             // Stub other suspend functions just in case
             whenever(mockMatchDao.insertMatchPlayerCrossRef(any())).thenReturn(Unit)
             whenever(mockMatchDao.insertMatchPlayerCrossRefs(any())).thenReturn(Unit)
@@ -518,7 +521,7 @@ class MainViewModelTest {
             val matchDaoField = MainViewModel::class.java.getDeclaredField("matchDao")
             matchDaoField.isAccessible = true
             val injectedMatchDao = matchDaoField.get(viewModel) as MatchDao
-            verify(injectedMatchDao).insert(any())
+            verify(injectedMatchDao).insertLiveMatch(any(), any(), any())
 
             // Verify startNewMatch was called
             verify(mockMatchTimerService).resetTimer()
@@ -1346,9 +1349,15 @@ class MainViewModelTest {
         val cancelloInsert: CompletableDeferred<Unit> = CompletableDeferred(),
         val cancelloLettura: CompletableDeferred<Unit> = CompletableDeferred(Unit),
     ) : MatchDao by vero {
-        override suspend fun insert(match: Match): Long {
+        // La riga viva nasce da insertLiveMatch: delegato a [vero], chiamerebbe l'insert di
+        // [vero] e non passerebbe dal cancello.
+        override suspend fun insertLiveMatch(
+            match: Match,
+            team1PlayerIds: List<Int>,
+            team2PlayerIds: List<Int>,
+        ): Long {
             cancelloInsert.await()
-            return vero.insert(match)
+            return vero.insertLiveMatch(match, team1PlayerIds, team2PlayerIds)
         }
 
         override suspend fun getActiveMatchOnce(): Match? {

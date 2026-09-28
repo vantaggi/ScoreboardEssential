@@ -1034,11 +1034,11 @@ class MainViewModel(
                 // della partita, cioe' del primo punto, anche per una partita consegnata
                 // dall'orologio ore dopo. L'ordine di servizio qui e' gia' definitivo:
                 // refreshServeOrder non lo cambia piu' dopo il primo punto. Le rose nascono con
-                // la riga, per tornare col ripristino.
+                // la riga, nella stessa transazione, per tornare col ripristino.
                 val uuid = matchUuid ?: UUID.randomUUID().toString().also { matchUuid = it }
                 val inizio = matchStartedAt ?: (matchClock.startEpoch ?: System.currentTimeMillis()).also { matchStartedAt = it }
-                val nuova =
-                    matchDao.insert(
+                currentMatchId =
+                    matchDao.insertLiveMatch(
                         Match(
                             team1Id = 1,
                             team2Id = 2,
@@ -1052,9 +1052,9 @@ class MainViewModel(
                             startedAt = inizio,
                             matchUuid = uuid,
                         ),
+                        _team1Players.value.orEmpty().map { it.player.playerId },
+                        _team2Players.value.orEmpty().map { it.player.playerId },
                     )
-                scriviRose(nuova)
-                currentMatchId = nuova
             } else {
                 matchDao.updateLiveMatch(id.toInt(), uno, due, log)
             }
