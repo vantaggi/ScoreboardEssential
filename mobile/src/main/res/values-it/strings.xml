@@ -138,9 +138,7 @@
     <string name="report_breaks">Break</string>
     <string name="report_best_run">Serie migliore</string>
     <string name="report_wins">Vince</string>
-    <string name="report_sets">Set</string>
     <string name="report_scorers">Marcatori</string>
-    <string name="report_draw">Pareggio</string>
     <string name="report_pdf_title">REPORT PARTITA</string>
     <string name="report_pdf_scorers_title">TABELLINO MARCATORI</string>
     <string name="report_pdf_no_scorers">Nessun marcatore</string>
