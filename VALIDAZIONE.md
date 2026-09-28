@@ -79,6 +79,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 
 **Rimedio.** Togliere la persistLiveMatch della riga 1105 e serializzare la creazione della riga (Mutex o Deferred condiviso), perché la stessa finestra si apre con due punti ravvicinati o con END subito dopo il primo punto.
 
+Corretto: be20e97 e a4dddd4. Tolta la persistLiveMatch doppia in applyWatchBatch; creazione, aggiornamento, chiusura (tutto endMatch) e scarto della riga viva passano da una fila sola (Mutex rigaViva), e currentMatchId si scrive solo li' e nel ripristino. Test in MainViewModelTest con un DAO che sospende davvero l'insert: arretrato, due punti ravvicinati, END subito dopo il primo punto, SCARTA con l'insert sospeso; rossi senza il rimedio.
+
 ### [alta] La cronologia (e l'onboarding) crea un secondo MainViewModel completo, e gli eventi dell'orologio vengono applicati due volte
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MatchHistoryActivity.kt` - aree: viewmodel, persistenza
@@ -86,6 +88,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 **Scenario.** MatchHistoryActivity:41 usa ViewModelProvider(this, factory)[MainViewModel]. Il suo init manda 0-0 e un v2 vuoto all'orologio, esegue il ripristino e registra un secondo receiver, mentre il ViewModel di MainActivity è vivo nel back stack. Con la cronologia aperta, un marcatore scelto sull'orologio viene applicato da entrambi e Mario prende 2 gol per 1. Un arretrato viene applicato due volte, con due doppi insert. END MATCH dall'orologio viene eseguito due volte. Un punto remoto a riga viva assente crea due righe. Nell'onboarding il ViewModel vive pochissimo: lì l'effetto è solo lo 0-0 mandato all'orologio.
 
 **Rimedio.** Dare alla cronologia un ViewModel leggero su MatchRepository (allMatches, deleteMatch). L'onboarding scrive la preferenza direttamente. Un solo MainViewModel per processo.
+
+Corretto: a03a3e0. La cronologia ha MatchHistoryViewModel su MatchRepository (buildSavedExport spostato nel repository); l'onboarding scrive onboarding_completed da solo. NavigazioneTest verifica che storico e onboarding non leghino piu' MatchTimerService, cioe' non costruiscano un MainViewModel; rosso contro le Activity di prima.
 
 ### [media] La cronologia mostra la partita in corso, e cancellarla da lì fa smettere di salvarla mentre END MATCH risponde 'salvata'
 
@@ -95,6 +99,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 
 **Rimedio.** Escludere isActive=1 dalla cronologia, o mostrarla come 'in corso' senza possibilità di cancellarla. In updateLiveMatch/finalizeMatch controllare le righe toccate e reinserire la riga se sono zero.
 
+Corretto: a03a3e0, lo storico legge MatchDao.getFinishedMatchesWithTeams (isActive = 0); test in NavigazioneTest. La seconda meta' del rimedio (controllare le righe toccate) non serve piu': la riga viva non si puo' cancellare dallo storico.
+
 ### [media] Una riga attiva senza eventi resta orfana dopo un cambio sport dall'orologio, e poi riceve una partita di un altro sport
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt` - aree: persistenza
@@ -102,6 +108,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 **Scenario.** Calcio: un gol e poi ANNULLA, la riga resta attiva con '1|'. Dall'orologio si passa al padel: applySport (500) mette currentMatchId=null senza deleteById. Al riavvio restoreActiveMatchIfAny non confronta sportId: compare 'Partita ripresa', e la partita di padel può finire scritta sulla riga 'football' (updateLiveMatch e finalizeMatch non aggiornano sportId). Altrimenti la riga resta orfana e appare in cronologia come 0-0.
 
 **Rimedio.** In applySport cancellare la riga viva quando il registro è vuoto. Al ripristino, se sportId è diverso, applicare prima lo sport della riga.
+
+Corretto: be20e97. applySport cancella la riga viva a registro vuoto (scartaRigaViva, poi deleteLiveMatch con le formazioni in 8f0f7be); il ripristino applica sport e ordine di servizio della riga (SportRegistry.forMatch) prima di restoreLog, scrive lo sport nelle impostazioni e rimanda lo sport arrivato dal collettore. Test in MainViewModelTest, rossi senza il rimedio.
 
 ### [media] La guardia sul cambio sport nelle impostazioni tratta il registro vuoto '1|' come una partita iniziata
 
@@ -111,6 +119,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 
 **Rimedio.** MatchLogCodec.decode(eventLog)?.isNotEmpty() ?: true. Test con '1|' (cambio accettato) e con '' (partita legacy).
 
+Corretto: a03a3e0, MatchLogCodec.decode(eventLog)?.isNotEmpty() ?: true e commento riscritto. Test in MatchSettingsViewModelTest: '1|' accettato, registro illeggibile rifiutato; '' resta accettato (il codec lo legge come registro vuoto, come il ripristino).
+
 ### [media] La freccia 'su' di Cronologia e Impostazioni ricrea MainActivity e distrugge il ViewModel della partita
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/ui/MatchSettingsActivity.kt` - aree: viewmodel
@@ -118,6 +128,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 **Scenario.** Rilievo dei revisori, verificato leggendo. MatchHistoryActivity:24 e MatchSettingsActivity:44 attivano setDisplayHomeAsUpEnabled senza gestire android.R.id.home né onSupportNavigateUp, mentre Statistics (49) e PlayersManagement (296) fanno finish(). Resta la navigazione 'su' predefinita verso parentActivityName=.MainActivity, che ha launchMode standard (manifest 16). Il framework chiude e ricrea il genitore: questo va confermato su dispositivo. Effetti: onCleared con unbind del service, rose perse, righe INFO del registro perse, 0-0 mandato all'orologio prima del ripristino. Esempio: padel con 4 giocatori, HISTORY e poi la freccia: rose vuote ed export NEEDS_FOUR.
 
 **Rimedio.** finish() su android.R.id.home in entrambe le Activity, come nelle altre due. In alternativa launchMode singleTop su MainActivity.
+
+Corretto: a03a3e0, onSupportNavigateUp con finish() in MatchHistoryActivity e MatchSettingsActivity. Test Robolectric in NavigazioneTest: la freccia chiude la schermata. La ricreazione di MainActivity senza il rimedio resta da vedere su dispositivo (prova 7).
 
 ### [media] Le rose non sopravvivono alla ricreazione del ViewModel: si perdono presenze, export Padel Elite e ordine di servizio
 
@@ -127,6 +139,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 
 **Rimedio.** Salvare gli id delle rose con la riga viva, ricaricarli al ripristino e ricostruire sportRules con SportRegistry.forMatch prima di restoreLog.
 
+Corretto: c7d7979, 5ecdaaf, be3387b e 8f0f7be, senza migrazione. Le rose sono le MatchPlayerCrossRef della riga viva: nascono con la riga nella stessa transazione (insertLiveMatch), si riscrivono in ordine a ogni cambio di rosa (replaceLineup), si cancellano con la riga (deleteLiveMatch) e tornano col ripristino; getPlayerWinCounts conta solo le partite chiuse. I cambi di rosa durante il ripristino aspettano la sua fine. Test in MainViewModelTest e ChiusuraPartitaTest, rossi senza il rimedio.
+
 ### [bassa] Il ripristino asincrono può sovrascrivere un punto o un arretrato arrivati prima che finisca
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt` - aree: persistenza, concorrenza
@@ -134,6 +148,8 @@ Corretto: 6759480, PlayerDao.insertPlayerWithRoles (@Transaction) e il repositor
 **Scenario.** Il receiver si registra (631-633) mentre restoreActiveMatchIfAny è sospeso su getActiveMatchOnce. Un evento arrivato in quella finestra viene applicato al motore vuoto: crea una riga e, per l'arretrato, manda l'ack. Poi restoreLog lo cancella e lascia una riga attiva orfana. La finestra è di pochi millisecondi e va verificata su dispositivo.
 
 **Rimedio.** Rimandare gli intenti remoti fino alla fine del ripristino (un CompletableDeferred atteso da applyWatchBatch e addRemotePoint).
+
+Corretto: be20e97 e a4dddd4. Durante il ripristino gli intenti dell'orologio che toccano la partita e i tocchi sul telefono (punto, correzione, annullamento, cambi di rosa) aspettano in una fila sola e si applicano alla fine, nell'ordine di arrivo. Test con lettura e insert sospesi in MainViewModelTest. La finestra di avvio a freddo resta da misurare su dispositivo (prova 6).
 
 ## L3 Annullamento e attribuzione legati al registro del motore
 

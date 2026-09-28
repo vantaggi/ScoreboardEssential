@@ -1898,7 +1898,7 @@ passo, non il lotto.**
 - **Il proprietario puo' fermare in ogni momento:** si ferma il workflow, si salva come patch il
   lavoro non committato, si segna nella tabella il passo interrotto, che poi riparte da capo.
 
-### L2 in corso - 28 settembre 2026
+### L2 riga viva e ciclo di vita del MainViewModel - 28 settembre 2026
 
 Worktree dei due branch, da tenere finche' L2 non e' unito (i risultati in cache del workflow
 `wf_64595711-f2e` puntano a questi percorsi):
@@ -1913,8 +1913,8 @@ Worktree dei due branch, da tenere finche' L2 non e' unito (i risultati in cache
 | 4 | Revisione avversaria della voce navigazione | fatto: nessun rilievo alto o medio; 1 bassa (parametro `repository` di MainViewModel senza usi, da togliere all'unione). Scelte (a)-(e) accettabili |
 | 5 | Correzione del rilievo medio di 3 (solo `wf5/riga`) | fatto, `a4dddd4`: anche addScore, subtractScore e undoLastGoal aspettano la fine del ripristino, nella stessa fila degli intenti dell'orologio (`azioniRimandate`); test con lettura e insert sospesi, falsificato; :mobile 203 verdi. Resta: un END MATCH locale nei millisecondi del ripristino, con il cronometro gia' diverso da zero, inserirebbe una riga 0-0 chiusa |
 | 6 | Voce rose (rose salvate con la riga viva, da `wf5/riga`) | fatto, `c7d7979` e `e138a1b` (worktree `wf_01165e15-877-1`): nessuna migrazione, rose come MatchPlayerCrossRef della riga viva (`replaceLineup` ordinato, `deleteLiveMatch`), ricaricate al ripristino; `getPlayerWinCounts` conta solo le partite chiuse; 4 test falsificati, :mobile 207 verdi |
-| 7 | Revisione e correzione della voce rose | revisione fatta: 2 medie (cambi di rosa non rimandati durante il ripristino; `replaceLineup` in `closeMatch` senza test), 3 basse (insert della riga e rose non atomici, da correggere insieme; `serveOrder` della riga non riscritto se l'ordine cambia dopo un annullamento a zero; giocatori cancellati dall'archivio scartati in silenzio al ripristino). Correzione in corso |
-| 8 | Unione su `main`, verifica completa, strumentati, documenti, push | da fare |
+| 7 | Revisione e correzione della voce rose | fatto. Revisione: 2 medie (cambi di rosa non rimandati durante il ripristino; `replaceLineup` in `closeMatch` senza test), 3 basse (insert della riga e rose non atomici, da correggere insieme; `serveOrder` della riga non riscritto se l'ordine cambia dopo un annullamento a zero; giocatori cancellati dall'archivio scartati in silenzio al ripristino). Correzione `5ecdaaf`, `be3387b`, `8f0f7be`, `3e1c7fc`: cambi di rosa rimandati durante il ripristino, test di DAO su `closeMatch` con formazioni vecchie, riga viva e rose in una transazione (`insertLiveMatch`); :mobile 211 verdi |
+| 8 | Unione su `main`, verifica completa, strumentati, documenti, push | fatto: uniti senza conflitti (`83bf704`, `b30e6f7`), suite verde, strumentati 11 su 11, visto su emulatore |
 
 **Scelte da far vedere al proprietario, emerse dalle due voci:**
 - il ripristino scrive nelle impostazioni lo sport della partita ripresa, anche se diverso da
@@ -1927,3 +1927,21 @@ Worktree dei due branch, da tenere finche' L2 non e' unito (i risultati in cache
 **Aperti noti:** in MainViewModel il parametro `repository` non ha piu' usi; `MatchDao.getAllMatchesWithPlayers`
 non ha chiamanti; uno SCARTA dopo punto e annullamento con l'insert ancora sospeso risponde "niente
 da scartare" e la riga `'1|'` resta. Il passo 3 deve dire se sono accettabili.
+
+**L2 chiuso.** Gli otto difetti hanno la loro riga "Corretto" in `VALIDAZIONE.md`.
+**Verifica sull'insieme unito:** `./gradlew clean test ktlintCheck lintDebug assembleDebug
+assembleDebugAndroidTest` verde, **433 test JVM distinti** (core 136, mobile 219, shared 30, wear 48;
+erano 407), strumentati **11 su 11** su `Pixel_9a_Test` (il primo giro si e' fermato dopo 21 secondi,
+a emulatore appena avviato, senza eseguire test; il secondo e' passato senza cambiare niente).
+**Visto su emulatore:** onboarding chiuso con SKIP porta al tabellone e non ricompare; una partita
+sul 2-1 non compare nello storico ("Total matches: 0"); la freccia su dello storico torna alla
+stessa MainActivity col 2-1, senza ripristino (prova 7 di VALIDAZIONE, vista col rimedio).
+
+**Restano aperti, bassi:** il parametro `repository` di MainViewModel non ha piu' usi; SCARTA decide
+fuori dalla fila; un punto locale dopo END, prima che `closeMatch` finisca, viene azzerato
+(preesistente); un END MATCH locale nei millisecondi del ripristino, a cronometro gia' avviato,
+inserirebbe una riga 0-0 chiusa; `serveOrder` della riga non si riscrive se l'ordine cambia dopo un
+annullamento a zero; al ripristino i giocatori cancellati dall'archivio spariscono in silenzio
+dalla rosa. **Da provare su dispositivo:** la finestra di avvio a freddo (prova 6).
+
+**Prossimo nella coda:** L11, a passi corti.
