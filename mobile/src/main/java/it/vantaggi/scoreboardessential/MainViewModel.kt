@@ -834,6 +834,9 @@ class MainViewModel(
         playerWithRoles: PlayerWithRoles,
         teamId: Int,
     ) {
+        // Durante il ripristino aspetta, come i punti: il ripristino riscrive le rose con quelle
+        // della riga, e il giocatore aggiunto adesso spariva.
+        if (rimandataDalRipristino { addPlayerToTeam(playerWithRoles, teamId) }) return
         if (teamId == 1) {
             _team1Players.value = _team1Players.value?.plus(playerWithRoles)
         } else {
@@ -849,6 +852,7 @@ class MainViewModel(
         playerWithRoles: PlayerWithRoles,
         teamId: Int,
     ) {
+        if (rimandataDalRipristino { removePlayerFromTeam(playerWithRoles, teamId) }) return
         if (teamId == 1) {
             _team1Players.value = _team1Players.value?.minus(playerWithRoles)
         } else {

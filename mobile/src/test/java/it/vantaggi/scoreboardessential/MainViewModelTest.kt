@@ -1855,4 +1855,46 @@ class MainViewModelTest {
                 db.close()
             }
         }
+
+    /**
+     * Rilievo L2 (media, revisione di c7d7979): un giocatore aggiunto mentre il ripristino aspetta
+     * il database spariva in silenzio. Il ripristino riscriveva poi le rose con quelle della riga,
+     * e la riscrittura in fila non trovava ancora currentMatchId. Ora il cambio di rosa aspetta la
+     * fine del ripristino, come i punti, e si applica alla rosa ripresa.
+     */
+    @Test
+    fun `un giocatore aggiunto durante il ripristino resta nella rosa ripresa e sulla riga`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                imposta("playerDao", playerDao)
+                val marco = playerDao.insert(Player(playerName = "Marco", appearances = 0, goals = 0)).toInt()
+                val anna = playerDao.insert(Player(playerName = "Anna", appearances = 0, goals = 0)).toInt()
+                val ripresa =
+                    db
+                        .matchDao()
+                        .insert(
+                            Match(team1Id = 1, team2Id = 2, team1Score = 1, team2Score = 0, timestamp = 0L, isActive = true, eventLog = "1|1"),
+                        ).toInt()
+                db.matchDao().replaceLineup(ripresa, listOf(marco), emptyList())
+                val dao = DaoCheSospende(db.matchDao(), cancelloLettura = CompletableDeferred())
+                imposta("matchDao", dao)
+                val ripristino = MainViewModel::class.java.getDeclaredMethod("restoreActiveMatchIfAny")
+                ripristino.isAccessible = true
+                ripristino.invoke(viewModel)
+                advanceUntilIdle()
+
+                viewModel.addPlayerToTeam(PlayerWithRoles(Player(anna, "Anna", 0, 0), emptyList()), 2)
+                advanceUntilIdle()
+                dao.cancelloLettura.complete(Unit)
+                advanceUntilIdle()
+
+                assertEquals(listOf(marco), viewModel.team1Players.value?.map { it.player.playerId })
+                assertEquals(listOf(anna), viewModel.team2Players.value?.map { it.player.playerId })
+                assertEquals(listOf(marco to 1, anna to 2), formazioni(db, ripresa))
+            } finally {
+                db.close()
+            }
+        }
 }
