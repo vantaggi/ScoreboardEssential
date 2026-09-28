@@ -841,6 +841,11 @@ class MainViewModelTest {
             .orEmpty()
             .filter { it.type == MatchEventType.SCORE }
 
+    private fun righeDelRegistro(): List<String> =
+        viewModel.matchEvents.value
+            .orEmpty()
+            .map { it.event }
+
     /**
      * Visto su emulatore: partita salvata a 15-0, app riaperta, punteggio giusto ma nel registro
      * solo "Partita ripresa" e nessun annullamento. I punti recuperati erano diventati definitivi.
@@ -957,14 +962,14 @@ class MainViewModelTest {
 
             assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
             advanceUntilIdle()
-            val dopoIlCambio = viewModel.matchEvents.value.orEmpty().map { it.event }
+            val dopoIlCambio = righeDelRegistro()
             assertTrue("dopo il cambio di sport: $dopoIlCambio", dopoIlCambio.none { it.contains("START") })
 
             viewModel.addScore(1)
             advanceUntilIdle()
             assertEquals(true, viewModel.discardMatch())
             advanceUntilIdle()
-            val dopoLoScarto = viewModel.matchEvents.value.orEmpty().map { it.event }
+            val dopoLoScarto = righeDelRegistro()
             assertTrue("dopo lo scarto: $dopoLoScarto", dopoLoScarto.none { it.contains("START") })
             // La riga d'apertura c'e' ancora: cambia la frase, non sparisce.
             assertTrue("dopo lo scarto: $dopoLoScarto", dopoLoScarto.any { it.contains("New match ready") })
@@ -982,7 +987,7 @@ class MainViewModelTest {
             advanceUntilIdle()
 
             // Robolectric gira in inglese.
-            val righe = viewModel.matchEvents.value.orEmpty().map { it.event }
+            val righe = righeDelRegistro()
             assertTrue("righe: $righe", "Match resumed" in righe)
             assertTrue("righe: $righe", "Partita ripresa" !in righe)
 
