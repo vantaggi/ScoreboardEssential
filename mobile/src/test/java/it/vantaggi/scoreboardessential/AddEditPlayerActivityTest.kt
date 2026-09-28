@@ -88,6 +88,6 @@ class AddEditPlayerActivityTest {
 
         // Assert Toast
         val latestToast = ShadowToast.getTextOfLatestToast()
-        assertEquals("Player name is too long (max 30 chars)", latestToast)
+        assertEquals("Player name is too long (max length 30)", latestToast)
     }
 }

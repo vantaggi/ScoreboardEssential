@@ -54,10 +54,10 @@ class AddEditPlayerActivity : AppCompatActivity() {
         observeRoles()
 
         if (editingPlayerId != -1) {
-            supportActionBar?.title = "Edit Player"
+            supportActionBar?.title = getString(R.string.title_edit_player)
             loadPlayer(editingPlayerId)
         } else {
-            supportActionBar?.title = "Add Player"
+            supportActionBar?.title = getString(R.string.label_add_player)
         }
     }
 
@@ -116,7 +116,7 @@ class AddEditPlayerActivity : AppCompatActivity() {
                 .trim()
                 .replace("\\s+".toRegex(), " ")
         if (playerName.isEmpty()) {
-            Toast.makeText(this, "Player name cannot be empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.player_name_empty, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -124,7 +124,7 @@ class AddEditPlayerActivity : AppCompatActivity() {
             Toast
                 .makeText(
                     this,
-                    "Player name is too long (max $MAX_PLAYER_NAME_LENGTH chars)",
+                    getString(R.string.player_name_too_long, MAX_PLAYER_NAME_LENGTH),
                     Toast.LENGTH_SHORT,
                 ).show()
             return

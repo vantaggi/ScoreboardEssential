@@ -21,7 +21,7 @@
             app:navigationIcon="@drawable/ic_arrow_back"
             app:titleTextColor="@color/stencil_white"
             app:navigationIconTint="@color/stencil_white"
-            app:title="Add Player" />
+            app:title="@string/label_add_player" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
@@ -38,7 +38,7 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Player Name">
+                android:hint="@string/player_name_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/player_name_input"
@@ -52,7 +52,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Roles"
+                android:text="@string/label_roles"
                 android:textAppearance="?attr/textAppearanceHeadlineSmall"
                 android:textColor="@color/sidewalk_gray"
                 android:fontFamily="sans-serif-condensed" />

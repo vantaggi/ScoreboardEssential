@@ -138,9 +138,7 @@
     <string name="report_breaks">Break</string>
     <string name="report_best_run">Serie migliore</string>
     <string name="report_wins">Vince</string>
-    <string name="report_sets">Set</string>
     <string name="report_scorers">Marcatori</string>
-    <string name="report_draw">Pareggio</string>
     <string name="report_pdf_title">REPORT PARTITA</string>
     <string name="report_pdf_scorers_title">TABELLINO MARCATORI</string>
     <string name="report_pdf_no_scorers">Nessun marcatore</string>
@@ -222,4 +220,63 @@
     </plurals>
     <string name="chronicle_moment_deciding_leader">Punti decisivi: %1$s ne vincono %2$d su %3$d</string>
     <string name="chronicle_moment_deciding_even">Punti decisivi: %1$d a testa su %2$d</string>
+
+    <!-- Schermate secondarie: titoli, dialoghi e testi prima cablati nel codice -->
+    <string name="title_match_history">Storico Partite</string>
+    <string name="title_player">Giocatore</string>
+    <string name="title_edit_player">Modifica giocatore</string>
+    <string name="title_match_settings">Impostazioni Partita</string>
+    <string name="title_manage_players">Gestisci Giocatori</string>
+    <string name="title_statistics">Statistiche</string>
+    <string name="player_name_hint">Nome Giocatore</string>
+    <string name="player_name_empty">Il nome del giocatore non può essere vuoto</string>
+    <string name="player_name_too_long">Nome del giocatore troppo lungo (lunghezza massima %1$d)</string>
+    <string name="player_created">%1$s creato</string>
+    <string name="create_player_title">Nuovo Giocatore</string>
+    <string name="label_roles">Ruoli</string>
+    <string name="choose_roles">SCEGLI I RUOLI</string>
+    <string name="select_roles_title">Scegli i Ruoli</string>
+    <string name="no_roles_selected">Nessun ruolo scelto</string>
+    <string name="roles_not_specified">Non indicati</string>
+    <string name="delete">Elimina</string>
+    <string name="delete_match_message">Vuoi davvero eliminare questa partita dallo storico?</string>
+    <string name="total_matches">PARTITE TOTALI: %1$d</string>
+    <string name="no_matches_found">Nessuna partita trovata</string>
+    <string name="filter_all">Tutti</string>
+    <string name="no_players_yet">Ancora nessun giocatore</string>
+    <string name="no_players_hint">Tocca il pulsante + per aggiungere il primo giocatore</string>
+    <string name="player_stats_title">%1$s - Statistiche</string>
+    <string name="player_stats_message">Presenze: %1$d\nGol segnati: %2$d\nGol a partita: %3$s\n\nRuoli: %4$s</string>
+    <string name="reset_stats">Azzera Statistiche</string>
+    <string name="reset_stats_title">Azzerare le statistiche?</string>
+    <string name="reset_stats_message">Azzerare tutte le statistiche di %1$s?</string>
+    <string name="stats_reset">Statistiche azzerate</string>
+    <string name="delete_player_title">Eliminare il giocatore?</string>
+    <string name="delete_player_message">Vuoi davvero eliminare %1$s? Non si potrà tornare indietro.</string>
+    <string name="player_deleted">Giocatore eliminato</string>
+    <string name="player_deleted_named">%1$s eliminato</string>
+    <string name="menu_search">Cerca</string>
+    <string name="search_players_hint">Cerca giocatori…</string>
+    <string name="menu_sort">Ordina</string>
+    <string name="sort_by_name">Ordina per nome</string>
+    <string name="sort_by_goals">Ordina per gol</string>
+    <string name="sort_by_appearances">Ordina per presenze</string>
+    <string name="stats_tab_general">Generale</string>
+    <string name="stats_tab_attack">Attacco</string>
+    <string name="stats_tab_defense">Difesa</string>
+    <string name="stats_empty_title">Nessuna partita giocata</string>
+    <string name="stats_empty_hint">Gioca un match per vedere chi è il King!</string>
+    <plurals name="stats_goals">
+        <item quantity="one">%d gol</item>
+        <item quantity="many">%d gol</item>
+        <item quantity="other">%d gol</item>
+    </plurals>
+    <plurals name="stats_appearances">
+        <item quantity="one">%d presenza</item>
+        <item quantity="many">%d presenze</item>
+        <item quantity="other">%d presenze</item>
+    </plurals>
+    <string name="team_name_label">NOME SQUADRA</string>
+    <string name="team_name_preview">ANTEPRIMA</string>
+    <string name="team_name_quick_picks">SCELTE RAPIDE</string>
 </resources>

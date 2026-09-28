@@ -27,11 +27,11 @@ class RoleSelectionDialogFragment : DialogFragment() {
         observeRoles()
 
         return MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Select Roles")
+            .setTitle(R.string.select_roles_title)
             .setView(view)
-            .setPositiveButton("OK") { _, _ ->
+            .setPositiveButton(android.R.string.ok) { _, _ ->
                 listener?.invoke(roleAdapter.getSelectedRoleIds())
-            }.setNegativeButton("Cancel", null)
+            }.setNegativeButton(R.string.cancel, null)
             .create()
     }
 

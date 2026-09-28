@@ -47,10 +47,9 @@ class StatisticsAdapter : ListAdapter<PlayerStatsDTO, StatisticsAdapter.ViewHold
             val rank = position + 1
             rankTextView.text = "#$rank"
             nameTextView.text = item.playerName
-            goalsTextView.text = "${item.goals} Gol"
-            appearancesTextView.text = "${item.appearances} Presenze"
-
             val context = itemView.context
+            goalsTextView.text = context.resources.getQuantityString(R.plurals.stats_goals, item.goals, item.goals)
+            appearancesTextView.text = context.resources.getQuantityString(R.plurals.stats_appearances, item.appearances, item.appearances)
 
             if (rank == 1) {
                 // Highlight 1st place
