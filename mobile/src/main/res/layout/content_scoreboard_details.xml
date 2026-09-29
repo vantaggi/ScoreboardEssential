@@ -7,10 +7,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingHorizontal="16dp"
-    android:paddingTop="16dp">
+    android:paddingTop="8dp">
+
+        <!-- Testa del foglio: titolo e CHIUDI. Chiude anche il trascinamento verso il basso o indietro. -->
+        <TextView android:id="@+id/match_sheet_title" android:layout_width="0dp" android:layout_height="wrap_content" android:text="@string/label_match_sheet" android:textColor="@color/stencil_white" android:textSize="20sp" android:fontFamily="sans-serif-condensed" android:textStyle="bold" android:letterSpacing="0.06" android:maxLines="1" android:ellipsize="end" android:accessibilityHeading="true" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toStartOf="@id/match_sheet_close_button" app:layout_constraintTop_toTopOf="@id/match_sheet_close_button" app:layout_constraintBottom_toBottomOf="@id/match_sheet_close_button"/>
+
+        <com.google.android.material.button.MaterialButton android:id="@+id/match_sheet_close_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_close_sheet" android:textColor="@color/stencil_white" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"/>
 
         <!-- Team Rosters Section (Scrollable) -->
-        <com.google.android.material.card.MaterialCardView android:id="@+id/rosters_card" style="?attr/materialCardViewElevatedStyle" android:layout_width="0dp" android:layout_height="wrap_content" app:cardBackgroundColor="@android:color/transparent" app:cardElevation="4dp" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard" app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
+        <com.google.android.material.card.MaterialCardView android:id="@+id/rosters_card" style="?attr/materialCardViewElevatedStyle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="8dp" app:cardBackgroundColor="@android:color/transparent" app:cardElevation="4dp" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard" app:layout_constraintTop_toBottomOf="@id/match_sheet_close_button" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_concrete_card" android:orientation="vertical" android:padding="16dp">
 
@@ -77,13 +82,32 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Action Buttons -->
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="24dp" android:layout_marginBottom="80dp" app:layout_constraintVertical_bias="0" app:layout_constraintTop_toBottomOf="@id/formations_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toBottomOf="parent">
+        <!--
+            Azioni su righe da tre, tutte alte almeno 48dp. Un solo pulsante pieno, fine partita:
+            e' l'unico che chiude qualcosa, e non va confuso con gli altri. La seconda riga prende
+            il posto dei due FAB, che coprivano questa stessa riga. La terza c'e' solo con il
+            cronometro: applyCapabilities la spegne negli sport senza tempo.
+        -->
+        <LinearLayout android:id="@+id/match_actions" android:layout_width="0dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="24dp" android:layout_marginBottom="16dp" app:layout_constraintVertical_bias="0" app:layout_constraintTop_toBottomOf="@id/formations_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toBottomOf="parent">
 
-            <com.google.android.material.button.MaterialButton android:id="@+id/match_history_button" style="@style/Widget.App.Button.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/label_match_history" android:layout_marginEnd="8dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton android:id="@+id/reset_scores_button" style="@style/Widget.App.Button.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/label_end_match"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/match_history_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_match_history"/>
 
-            <com.google.android.material.button.MaterialButton android:id="@+id/share_match_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="@string/share_match_report" app:icon="@drawable/ic_share" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/reset_scores_button" style="@style/Widget.App.Button.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginHorizontal="8dp" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_end_match"/>
+
+                <com.google.android.material.button.MaterialButton android:id="@+id/share_match_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/share_match_report"/>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton android:id="@+id/statistics_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_statistics"/>
+
+                <com.google.android.material.button.MaterialButton android:id="@+id/players_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginHorizontal="8dp" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_players"/>
+
+                <com.google.android.material.button.MaterialButton android:id="@+id/sheet_settings_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_settings"/>
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton android:id="@+id/sheet_reset_timer_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/label_reset_match_time"/>
         </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

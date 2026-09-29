@@ -72,6 +72,15 @@
         <item name="cornerSize">4dp</item>
     </style>
 
+    <!-- Foglio PARTITA: taglio 12dp solo agli angoli in alto, sotto resta attaccato al bordo. -->
+    <style name="ShapeAppearance.App.MatchSheet" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerFamily">cut</item>
+        <item name="cornerSizeTopLeft">12dp</item>
+        <item name="cornerSizeTopRight">12dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+
     <!-- Street Vibe Button Text -->
     <style name="TextAppearance.App.Button" parent="TextAppearance.Material3.LabelLarge">
         <item name="android:fontFamily">sans-serif-condensed</item>
@@ -88,6 +97,14 @@
     <style name="Widget.App.Button.TextButton.Street" parent="Widget.Material3.Button.TextButton">
         <item name="android:textAppearance">@style/TextAppearance.App.Button</item>
         <item name="shapeAppearance">@style/ShapeAppearance.App.StreetButton</item>
+    </style>
+
+    <!-- Pulsanti contornati del foglio: tutti tranne TERMINA, che resta l'unico pieno. -->
+    <style name="Widget.App.Button.OutlinedButton.Street" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textAppearance">@style/TextAppearance.App.Button</item>
+        <item name="android:textColor">@color/stencil_white</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.StreetButton</item>
+        <item name="strokeColor">@color/outline_gray</item>
     </style>
 
     <!-- Style for the team name editor dialog -->
