@@ -35,12 +35,18 @@
         android:visibility="gone" />
 
     <!--
-        Il foglio gestisce da se' gli inset di sistema (in alto, in basso e ai lati) invece di
-        riceverli come padding del contenitore: il behavior lo posiziona su parent.getHeight() e
-        lo misura togliendo il padding del genitore, quindi con il padding sul contenitore il fondo
-        del foglio finiva sotto la barra di navigazione e in alto restava una striscia.
-        behavior_shouldRemoveExpandedCorners vale true di default: senza il false qui il taglio
-        da 12dp spariva proprio a foglio aperto.
+        Il foglio gestisce da se' gli inset di sistema invece di riceverli come padding del
+        contenitore: il behavior lo posiziona su parent.getHeight() e lo misura togliendo il
+        padding del genitore, quindi con il padding sul contenitore il fondo del foglio finiva
+        sotto la barra di navigazione e in alto restava una striscia.
+        In basso e ai lati il behavior aggiunge l'inset come padding del foglio. In alto il
+        foglio puo' salire sotto la barra di stato (paddingTopSystemWindowInsets, true di
+        default) ma il behavior non sposta il contenuto: e' MainActivity a spostare il contenuto
+        del foglio sotto le icone di stato, con l'inset in alto come padding di scoreboard_details.
+        Con false il foglio si fermerebbe sotto la barra di stato ma resterebbe alto quanto lo
+        schermo, quindi il suo fondo uscirebbe dallo schermo di quell'altezza.
+        shouldRemoveExpandedCorners vale true di default: senza il false qui il taglio da 12dp
+        spariva proprio a foglio aperto.
     -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/match_sheet"
@@ -49,11 +55,11 @@
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
         app:behavior_hideable="true"
         app:behavior_skipCollapsed="true"
-        app:behavior_paddingTopSystemWindowInsets="true"
-        app:behavior_paddingBottomSystemWindowInsets="true"
-        app:behavior_paddingLeftSystemWindowInsets="true"
-        app:behavior_paddingRightSystemWindowInsets="true"
-        app:behavior_shouldRemoveExpandedCorners="false"
+        app:paddingTopSystemWindowInsets="true"
+        app:paddingBottomSystemWindowInsets="true"
+        app:paddingLeftSystemWindowInsets="true"
+        app:paddingRightSystemWindowInsets="true"
+        app:shouldRemoveExpandedCorners="false"
         app:backgroundTint="@color/asphalt_dark"
         app:shapeAppearance="@style/ShapeAppearance.App.MatchSheet">
 

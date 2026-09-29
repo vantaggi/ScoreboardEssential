@@ -151,7 +151,7 @@ class MainActivity :
         // Edge-to-edge: gli insets di sistema diventano padding della sola colonna di gioco. Sul
         // contenitore radice NO: BottomSheetBehavior posiziona il foglio su parent.getHeight() e lo
         // misura togliendo il padding del genitore, quindi il fondo del foglio finiva sotto la barra
-        // di navigazione. Il foglio gestisce i suoi con behavior_padding*SystemWindowInsets.
+        // di navigazione. Il foglio gestisce i suoi con padding*SystemWindowInsets.
         val colonna = findViewById<View>(R.id.scoreboard_live)
         val paddingIniziale = intArrayOf(colonna.paddingLeft, colonna.paddingTop, colonna.paddingRight, colonna.paddingBottom)
         ViewCompat.setOnApplyWindowInsetsListener(colonna) { view, windowInsets ->
@@ -163,6 +163,16 @@ class MainActivity :
                 paddingIniziale[3] + bars.bottom,
             )
             // Non consumati: il foglio, fratello della colonna, deve riceverli a sua volta.
+            windowInsets
+        }
+
+        // Il foglio sale fin sotto la barra di stato, ma il behavior non ne sposta il contenuto:
+        // l'inset in alto diventa padding del dettaglio, cosi' titolo e CHIUDI restano leggibili.
+        val dettagli = findViewById<View>(R.id.scoreboard_details)
+        val paddingTopDettagli = dettagli.paddingTop
+        ViewCompat.setOnApplyWindowInsetsListener(dettagli) { view, windowInsets ->
+            val bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            view.setPadding(view.paddingLeft, paddingTopDettagli + bars.top, view.paddingRight, view.paddingBottom)
             windowInsets
         }
 
