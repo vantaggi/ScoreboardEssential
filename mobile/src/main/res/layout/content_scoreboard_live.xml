@@ -143,6 +143,7 @@
     -->
     <LinearLayout
         android:id="@+id/names_row"
+        android:baselineAligned="false"
         android:layout_width="match_parent"
         android:layout_height="@dimen/game_names_height"
         android:orientation="horizontal">
@@ -171,6 +172,7 @@
 
             <LinearLayout
                 android:id="@+id/team1_name_container"
+                tools:ignore="NestedWeights"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -223,6 +225,7 @@
 
             <LinearLayout
                 android:id="@+id/team2_name_container"
+                tools:ignore="NestedWeights"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -287,6 +290,7 @@
     -->
     <LinearLayout
         android:id="@+id/score_row"
+        android:baselineAligned="false"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -295,7 +299,8 @@
         <FrameLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            tools:ignore="NestedWeights">
 
             <TextView
                 android:id="@+id/team1_score_textview"

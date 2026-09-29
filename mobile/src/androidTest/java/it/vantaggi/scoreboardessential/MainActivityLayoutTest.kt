@@ -139,12 +139,10 @@ class MainActivityLayoutTest {
                 val barra = activity.findViewById<View>(R.id.game_bar)
                 for (id in listOf(R.id.timer_start_button, R.id.keeper_slot, R.id.wear_status_icon, R.id.match_sheet_button)) {
                     val vista = activity.findViewById<View>(id)
-                    assertEquals("${activity.resources.getResourceEntryName(id)} deve essere visibile nel calcio", View.VISIBLE, vista.visibility)
-                    assertTrue(
-                        "${activity.resources.getResourceEntryName(id)} finisce a ${vista.right}px, oltre la barra di ${barra.width}px",
-                        vista.right <= barra.width,
-                    )
-                    assertTrue("${activity.resources.getResourceEntryName(id)} comincia fuori dalla barra", vista.left >= 0)
+                    val nome = activity.resources.getResourceEntryName(id)
+                    assertEquals("$nome deve essere visibile nel calcio", View.VISIBLE, vista.visibility)
+                    assertTrue("$nome finisce a ${vista.right}px, oltre la barra di ${barra.width}px", vista.right <= barra.width)
+                    assertTrue("$nome comincia fuori dalla barra", vista.left >= 0)
                 }
                 val tempo = activity.findViewById<View>(R.id.timer_start_button)
                 assertTrue("il tempo e' alto ${tempo.height}px, sotto i 48dp", tempo.height >= dp(activity, 48))

@@ -88,7 +88,8 @@ class ColonnaDiGiocoTest {
                 val vista = radice.findViewById<View>(id)
                 val nome = radice.resources.getResourceEntryName(id)
                 assertTrue("$nome a scala $scala comincia fuori dalla barra: ${vista.left}px", vista.left >= 0)
-                assertTrue("$nome a scala $scala finisce a ${vista.right}px, oltre la barra di ${barra.width}px", vista.right <= barra.width)
+                val fine = vista.right
+                assertTrue("$nome a scala $scala finisce a ${fine}px, oltre la barra di ${barra.width}px", fine <= barra.width)
             }
             val minimo = 48 * radice.resources.displayMetrics.density
             assertTrue("il tempo a scala $scala e' alto ${tempo.height}px, sotto i 48dp", tempo.height >= minimo)
@@ -132,6 +133,7 @@ class ColonnaDiGiocoTest {
         val (zona, glifo, barretta) = applica(0xFFFFD600.toInt())
         assertEquals("un giallo sul nero non ha bisogno dello stroke", 0, zona.strokeWidth)
         assertEquals("il glifo e' nero sul giallo", TeamInk.NERO, glifo.imageTintList?.defaultColor)
-        assertEquals("la barretta di un colore che regge resta com'e'", 0xFFFFD600.toInt(), (barretta.background as ColorDrawable).color)
+        val coloreBarretta = (barretta.background as ColorDrawable).color
+        assertEquals("la barretta di un colore che regge resta com'e'", 0xFFFFD600.toInt(), coloreBarretta)
     }
 }

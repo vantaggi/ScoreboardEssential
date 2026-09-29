@@ -492,7 +492,6 @@ class MainActivity :
         }
     }
 
-
     /**
      * Accende e spegne le sezioni in base a cosa lo sport prevede. Nessun `when` sullo sport:
      * l'unica cosa che questa schermata sa e' quali capacita' le servono.
