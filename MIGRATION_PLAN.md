@@ -1983,7 +1983,7 @@ I cinque passi toccano tutti `MainActivity.kt` e i layout di gioco: vanno in fil
 |---|---|---|
 | 5a | Contenitore e foglio PARTITA: implementazione (`wf7/foglio`) | fatto: `8c8674f`, `aa2bbce`, `5744257` (worktree `wf_105e059b-15c-1`). Foglio con BottomSheetBehavior, indietro lo richiude, azioni su tre righe (statistiche, giocatori e impostazioni nel foglio), via FAB e FabOverlap, MainActivity bloccata in verticale. Strumentati 13 su 13, falsificato il test di indietro. Aperti: AZZERA e ingranaggio doppi finche' non arriva il passo 6; niente velo sotto il foglio |
 | 5b | Revisione, correzione, prova su emulatore, unione | prova su emulatore fatta: il foglio e' nascosto all'avvio, ≡ MATCH lo apre con rose, registro e formazioni, indietro lo richiude e resta sul gioco; fondo del gioco nero. Da guardare in revisione: gli angoli del foglio a tutto schermo non si vedono tagliati, e sopra il foglio resta visibile una striscia della card del tempo. Revisione (Opus, effort medio): 1 alta (inset come padding della radice: il foglio finisce sotto la barra di navigazione e taglia l'ultima riga, in alto resta la striscia), 2 medie (angoli raddrizzati da behavior_shouldRemoveExpandedCorners; nessuno scrim ne' blocco di TalkBack sotto il foglio), 3 basse (foglio a mezza altezza dopo un ripristino durante l'animazione; test che passano comunque; voci orfane nella baseline). Correzione (Sonnet) `67b50f6`, `0ce9e6e`, `2477ee6`: inset alla sola colonna e al contenuto del foglio, scrim con clic che chiude e colonna nascosta a TalkBack, angoli, stato COLLAPSED portato a HIDDEN, test di ricreazione e del padel rifatti; 6 test falsificati. Unito (`02260f9`): suite verde (444 JVM: tolti i 7 di FabOverlap), strumentati 18 su 18 |
-| 6 | Colonna di gioco a slot fissi | implementazione in corso (`wf7/colonna`, Sonnet) |
+| 6 | Colonna di gioco a slot fissi | implementazione fatta (Sonnet): `c8e9f93`, `699d6a6` nel worktree `wf_4ffb7522-0be-1`, da `02260f9`. Barra da 56dp col tempo come pulsante e il portiere fisso, nomi con -1 e pallino, numeri bianchi a dimensione fissa per sport, striscia con ANNULLA spento e non GONE, zone + da 112dp con TeamInk e stroke; AZZERA e ingranaggio solo nel foglio; via VS, animazioni di colore e values-land/dimens. Strumentati 21 su 21, laZonaPiuNonSiSposta falsificato. Da fare: revisione (Opus), correzione, prova a occhio, unione |
 | 7 | Striscia dell'ultima azione | da fare |
 | 8 | Barra e servizio per la racchetta, partita finita | da fare |
 | 9 | Stato dell'orologio persistente (WatchNotice) | da fare |
@@ -1996,3 +1996,7 @@ push), poi il passo 6.
 **Passo 5 chiuso** (ripreso il 29 settembre). Aperto: col foglio che arriva in cima allo schermo il
 behavior toglie comunque gli angoli (`isAtTopOfScreen`); il taglio si vedrebbe solo con un margine in
 alto, che e' una scelta di gusto. Il lint-baseline ha ancora voci orfane.
+
+Fermo il 29 settembre alle 23:20 su richiesta del proprietario, a passo 6 implementato e non
+ancora revisionato. Alla ripresa: revisione avversaria del passo 6 con Opus, poi correzione con Sonnet,
+prova a occhio sull'emulatore, unione e push; poi il passo 7.
