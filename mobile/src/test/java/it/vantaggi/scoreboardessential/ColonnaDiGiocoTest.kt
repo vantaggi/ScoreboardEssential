@@ -2,6 +2,7 @@ package it.vantaggi.scoreboardessential
 
 import android.content.Context
 import android.content.res.Configuration
+import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
@@ -10,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import it.vantaggi.scoreboardessential.core.TeamInk
 import org.junit.Assert.assertEquals
@@ -41,31 +43,60 @@ class ColonnaDiGiocoTest {
         val app = ApplicationProvider.getApplicationContext<Context>()
         val configurazione = Configuration(app.resources.configuration).apply { fontScale = scalaCaratteri }
         val contesto = ContextThemeWrapper(app.createConfigurationContext(configurazione), R.style.Theme_ScoreboardEssential)
-        return LayoutInflater.from(contesto).inflate(R.layout.content_scoreboard_live, null)
+        val radice = LayoutInflater.from(contesto).inflate(R.layout.content_scoreboard_live, null)
+        // Senza finestra la direzione non e' risolta e le icone dei pulsanti (compound drawable
+        // relativi) non contano ne' nella larghezza ne' nel padding: il tempo con la sua icona
+        // sembrava piu' stretto di 26dp e ANNULLA piu' largo di quanto e' davvero.
+        radice.layoutDirection = View.LAYOUT_DIRECTION_LTR
+        return radice
     }
 
-    private fun misura(radice: View) {
+    private fun misura(
+        radice: View,
+        larghezzaDp: Int = 411,
+    ) {
         val densita = radice.resources.displayMetrics.density
         radice.measure(
-            View.MeasureSpec.makeMeasureSpec((411 * densita).toInt(), View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec((larghezzaDp * densita).toInt(), View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec((923 * densita).toInt(), View.MeasureSpec.EXACTLY),
         )
         radice.layout(0, 0, radice.measuredWidth, radice.measuredHeight)
     }
 
-    /** Il testo e' tutto su una riga, senza puntini, e la riga sta dentro la vista. */
+    /**
+     * La larghezza che resta al testo: la vista meno i padding e, in un MaterialButton con l'icona,
+     * meno l'icona e la sua distanza dal testo. Si conta a mano perche' non si deve dipendere da
+     * come il pulsante distribuisce l'icona: e' il conto che decide se "ANNULLA" entra.
+     */
+    private fun spazioPerIlTesto(vista: TextView): Int {
+        val dopoIPadding = vista.width - vista.totalPaddingLeft - vista.totalPaddingRight
+        if (vista !is MaterialButton || vista.icon == null) return dopoIPadding
+        val conIcona = vista.width - vista.paddingLeft - vista.paddingRight - vista.iconSize - vista.iconPadding
+        return minOf(dopoIPadding, conIcona)
+    }
+
+    /** Il testo e' tutto su una riga, senza puntini, e la riga (larga e alta) sta dentro la vista. */
     private fun assertIntero(
         cosa: String,
         vista: TextView,
     ) {
         val layout = vista.layout
-        val spazio = vista.width - vista.totalPaddingLeft - vista.totalPaddingRight
+        val spazio = spazioPerIlTesto(vista)
         assertEquals("$cosa va a capo: '${vista.text}' in ${vista.width}px", 1, vista.lineCount)
         assertEquals("$cosa perde caratteri: '${vista.text}'", vista.text.length, layout.getLineEnd(0))
         assertEquals("$cosa ha i puntini: '${vista.text}'", 0, layout.getEllipsisCount(0))
         assertTrue(
             "$cosa e' largo ${layout.getLineWidth(0)}px ma ha solo ${spazio}px",
             layout.getLineWidth(0) <= spazio + 1f,
+        )
+        // L'altezza si misura sull'inchiostro dei glifi e non sulla riga: la riga di un 32sp
+        // ha un'aria sopra e sotto che il pulsante da 48dp puo' tagliare senza toccare le cifre.
+        val testo = layout.text.toString()
+        val inchiostro = Rect().also { vista.paint.getTextBounds(testo, 0, testo.length, it) }
+        val altezzaUtile = vista.height - vista.totalPaddingTop - vista.totalPaddingBottom
+        assertTrue(
+            "$cosa e' alto ${inchiostro.height()}px ma ha solo ${altezzaUtile}px",
+            inchiostro.height() <= altezzaUtile,
         )
     }
 
@@ -93,6 +124,68 @@ class ColonnaDiGiocoTest {
             }
             val minimo = 48 * radice.resources.displayMetrics.density
             assertTrue("il tempo a scala $scala e' alto ${tempo.height}px, sotto i 48dp", tempo.height >= minimo)
+        }
+    }
+
+    /**
+     * La barra del calcio a 360dp, il telefono stretto piu' diffuso: 328dp utili. Il tempo e il
+     * portiere sono fissi, la molla e' il testo del periodo, ed e' l'unico che puo' restringersi:
+     * il pulsante ≡ e' l'unico modo di aprire il foglio e non deve mai uscire dal bordo. Il tempo
+     * e' quello piu' largo, 100:00, perche' oltre i 99 minuti il pulsante prende una cifra in piu'.
+     */
+    @Test
+    fun nelCalcio_a_360dp_il_pulsante_del_foglio_resta_intero_e_dentro_lo_schermo() {
+        for (scala in listOf(1f, 1.3f)) {
+            val radice = gonfia(scala)
+            radice.findViewById<TextView>(R.id.timer_start_button).text = "100:00"
+            radice.findViewById<TextView>(R.id.keeper_timer_textview).text = "05:00"
+            // Il caso peggiore per la molla: il periodo ha un testo lungo da contendere.
+            radice.findViewById<TextView>(R.id.match_period_textview).text = "SECONDO TEMPO"
+            misura(radice, larghezzaDp = 360)
+
+            val densita = radice.resources.displayMetrics.density
+            val barra = radice.findViewById<ViewGroup>(R.id.game_bar)
+            val foglio = radice.findViewById<TextView>(R.id.match_sheet_button)
+            assertIntero("il pulsante del foglio a 360dp e scala $scala", foglio)
+            assertIntero("il tempo a 360dp e scala $scala", radice.findViewById(R.id.timer_start_button))
+            assertIntero("il valore del portiere a 360dp e scala $scala", radice.findViewById(R.id.keeper_timer_textview))
+            assertTrue("il pulsante del foglio a scala $scala e' largo ${foglio.width}px, sotto i 48dp", foglio.width >= 48 * densita)
+            assertTrue("il pulsante del foglio a scala $scala e' alto ${foglio.height}px, sotto i 48dp", foglio.height >= 48 * densita)
+            val comandi = listOf(R.id.timer_start_button, R.id.keeper_slot, R.id.wear_status_icon, R.id.match_sheet_button)
+            for (id in comandi) {
+                val vista = radice.findViewById<View>(id)
+                val nome = radice.resources.getResourceEntryName(id)
+                assertTrue(
+                    "$nome a 360dp e scala $scala finisce a ${vista.right}px, oltre la barra di ${barra.width}px",
+                    vista.right <= barra.width,
+                )
+            }
+            // In fila e senza sovrapporsi: se manca lo spazio a cedere e' il testo del periodo.
+            comandi.zipWithNext().forEach { (prima, dopo) ->
+                val a = radice.findViewById<View>(prima)
+                val b = radice.findViewById<View>(dopo)
+                assertTrue(
+                    "${radice.resources.getResourceEntryName(prima)} (fino a ${a.right}px) tocca ${radice.resources.getResourceEntryName(dopo)} (da ${b.left}px) a scala $scala",
+                    a.right <= b.left,
+                )
+            }
+            assertTrue("la barra a scala $scala esce dallo schermo: ${barra.right}px", barra.right <= radice.width)
+        }
+    }
+
+    @Test
+    fun nelCalcio_ANNULLA_entra_intero_nel_suo_pulsante_in_italiano() {
+        for (scala in listOf(1f, 1.3f)) {
+            val radice = gonfia(scala)
+            misura(radice)
+            val densita = radice.resources.displayMetrics.density
+            val annulla = radice.findViewById<TextView>(R.id.undo_goal_button)
+            assertEquals("il testo del pulsante non e' quello atteso", "Annulla", annulla.text.toString())
+            assertIntero("ANNULLA a scala $scala", annulla)
+            assertEquals("la striscia resta alta 56dp", 56 * densita, radice.findViewById<View>(R.id.last_action_strip).height.toFloat(), 1f)
+            assertTrue("ANNULLA a scala $scala e' largo ${annulla.width}px, sotto i 96dp", annulla.width >= 96 * densita - 1f)
+            val striscia = radice.findViewById<ViewGroup>(R.id.last_action_strip)
+            assertTrue("ANNULLA a scala $scala esce dalla striscia", annulla.right <= striscia.width)
         }
     }
 
