@@ -5,20 +5,25 @@ import android.content.Context
 import android.graphics.Rect
 import android.os.Build
 import android.view.View
+import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.Espresso.pressBackUnconditionally
 import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import it.vantaggi.scoreboardessential.core.SportRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -86,74 +91,223 @@ class MainActivityLayoutTest {
         }
     }
 
+    private fun dp(
+        activity: MainActivity,
+        valore: Int,
+    ): Float = valore * activity.resources.displayMetrics.density
+
     @Test
-    fun ilComandoPrimario_esiste_ed_e_un_bersaglio_vero() {
+    fun laZonaPiu_e_un_bersaglio_grande_e_l_altezza_e_quella_del_design() {
+        // Il bersaglio primario: almeno 48dp in ogni verso (in realta' 112 di altezza, DESIGN.md).
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                val sezione = activity.findViewById<View>(R.id.score_section)
-                assertTrue("la sezione del punteggio deve essere visibile", sezione.visibility == View.VISIBLE)
-
-                val piu = activity.findViewById<View>(R.id.team1_add_button_card)
-                assertTrue("il + deve essere cliccabile", piu.isClickable)
-                val minimo = (48 * activity.resources.displayMetrics.density).toInt()
-                assertTrue("il + e' largo ${piu.width}px, sotto i $minimo minimi", piu.width >= minimo)
-                assertTrue("il + e' alto ${piu.height}px, sotto i $minimo minimi", piu.height >= minimo)
+                for (id in listOf(R.id.team1_add_button_card, R.id.team2_add_button_card)) {
+                    val zona = activity.findViewById<View>(id)
+                    assertTrue("la zona + deve essere cliccabile", zona.isClickable)
+                    assertTrue("la zona e' larga ${zona.width}px, sotto i 48dp", zona.width >= dp(activity, 48))
+                    assertTrue("la zona e' alta ${zona.height}px, sotto i 48dp", zona.height >= dp(activity, 48))
+                    assertEquals("la zona e' alta 112dp", dp(activity, 112), zona.height.toFloat(), 1f)
+                }
             }
         }
     }
 
-    /**
-     * Spegne i blocchi dell'intestazione come farebbero le capacita' di uno sport, aspetta il
-     * layout e ritorna l'altezza della card in dp.
-     *
-     * Le visibilita' si impostano a mano invece di passare da `selectSport`: cambiare sport
-     * scriverebbe la scelta nelle impostazioni del dispositivo (e verrebbe rifiutato a partita
-     * iniziata), quindi la misura dipenderebbe da cosa e' rimasto dalla volta prima. Qui si prova
-     * il layout, che e' cio' che deve restare compatto; chi spegne cosa lo decide applyCapabilities.
-     */
-    private fun altezzaIntestazioneDp(conCronometro: Boolean): Pair<Float, Float> {
-        var altezza = 0f
-        var start = 0f
+    @Test
+    fun gliSlotDellaColonna_hanno_le_altezze_fisse_del_design() {
+        // Barra 56, nomi 48, striscia 56, zone 112: sono misure fisse, non wrap_content. Se una
+        // torna a dipendere dal contenuto, durante la partita qualcosa si sposta.
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                val cronometro = if (conCronometro) View.VISIBLE else View.GONE
-                activity.findViewById<View>(R.id.match_time_label).visibility = cronometro
-                activity.findViewById<View>(R.id.timer_textview).visibility = cronometro
-                activity.findViewById<View>(R.id.timer_controls_row).visibility = cronometro
-                activity.findViewById<View>(R.id.keeper_timer_label).visibility = View.GONE
-                activity.findViewById<View>(R.id.keeper_timer_textview).visibility = View.GONE
-                activity.findViewById<View>(R.id.match_period_textview).visibility = View.GONE
-                activity.findViewById<View>(R.id.undo_goal_button).visibility = View.GONE
+                val attese = mapOf(R.id.game_bar to 56, R.id.names_row to 48, R.id.last_action_strip to 56, R.id.zones_row to 112)
+                for ((id, altezzaDp) in attese) {
+                    assertEquals(
+                        "l'altezza di ${activity.resources.getResourceEntryName(id)}",
+                        dp(activity, altezzaDp),
+                        activity.findViewById<View>(id).height.toFloat(),
+                        1f,
+                    )
+                }
             }
+        }
+    }
+
+    @Test
+    fun nelCalcio_tempo_portiere_e_comandi_stanno_tutti_in_barra() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             InstrumentationRegistry.getInstrumentation().waitForIdleSync()
             scenario.onActivity { activity ->
-                val densita = activity.resources.displayMetrics.density
-                altezza = activity.findViewById<View>(R.id.timer_card).height / densita
-                start = activity.findViewById<View>(R.id.timer_start_button).height / densita
+                val barra = activity.findViewById<View>(R.id.game_bar)
+                for (id in listOf(R.id.timer_start_button, R.id.keeper_slot, R.id.wear_status_icon, R.id.match_sheet_button)) {
+                    val vista = activity.findViewById<View>(id)
+                    assertEquals("${activity.resources.getResourceEntryName(id)} deve essere visibile nel calcio", View.VISIBLE, vista.visibility)
+                    assertTrue(
+                        "${activity.resources.getResourceEntryName(id)} finisce a ${vista.right}px, oltre la barra di ${barra.width}px",
+                        vista.right <= barra.width,
+                    )
+                    assertTrue("${activity.resources.getResourceEntryName(id)} comincia fuori dalla barra", vista.left >= 0)
+                }
+                val tempo = activity.findViewById<View>(R.id.timer_start_button)
+                assertTrue("il tempo e' alto ${tempo.height}px, sotto i 48dp", tempo.height >= dp(activity, 48))
             }
         }
-        return altezza to start
     }
 
     @Test
-    fun senzaCronometro_l_intestazione_e_una_riga_sola() {
-        // Padel e tennis: dentro restano ingranaggio e icona dell'orologio. Prima la card era alta
-        // circa 100dp di cui due terzi vuoti, e sta FISSA in cima: ogni dp e' tolto al registro.
-        // 80 e non 72: agli angoli tagliati MaterialCardView aggiunge 6dp sopra e sotto (misurato
-        // in IntestazioneCronometroTest: 76dp), che una stima fatta sommando l'XML non vede.
-        val (altezza, _) = altezzaIntestazioneDp(conCronometro = false)
-        assertTrue("l'intestazione senza cronometro e' alta ${altezza}dp, oltre gli 80 ammessi", altezza <= 80f)
+    fun ilNumero_ha_la_stessa_dimensione_con_0_e_con_15_e_il_token_piu_largo_ci_sta() {
+        // Niente autoSize: la dimensione si calcola una volta e non segue il testo. Se tornasse
+        // un ridimensionamento automatico, fra "0" e "15" il numero cambierebbe grandezza.
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            Thread.sleep(500)
+            scenario.onActivity { activity ->
+                val uno = activity.findViewById<TextView>(R.id.team1_score_textview)
+                val due = activity.findViewById<TextView>(R.id.team2_score_textview)
+                uno.text = "0"
+                val con0 = uno.textSize
+                uno.text = "15"
+                assertEquals("il numero cambia dimensione fra 0 e 15", con0, uno.textSize, 0f)
+                assertEquals("le due squadre hanno la stessa dimensione", uno.textSize, due.textSize, 0f)
+                assertTrue("il numero e' sotto il minimo di 72dp", uno.textSize >= dp(activity, 72) - 1f)
+                assertTrue("il numero e' sopra il tetto di 150dp", uno.textSize <= dp(activity, 150) + 1f)
+                val meta = activity.findViewById<View>(R.id.score_row).width / 2f
+                assertTrue("\"88\" non entra nella meta' di colonna", uno.paint.measureText("88") <= meta)
+            }
+        }
+    }
+
+    /** Dove sta una vista sullo schermo e quanto e' grande: e' tutto cio' che non deve muoversi. */
+    private data class Posto(
+        val x: Int,
+        val y: Int,
+        val larghezza: Int,
+        val altezza: Int,
+    )
+
+    private fun postiFissi(scenario: ActivityScenario<MainActivity>): List<Posto> {
+        // Aspetta che finisca il riscontro del tocco (scala 0,96 in 100ms): getLocationOnScreen
+        // tiene conto della trasformazione, e a meta' animazione darebbe una posizione diversa.
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+        Thread.sleep(500)
+        val posti = mutableListOf<Posto>()
+        scenario.onActivity { activity ->
+            for (id in listOf(R.id.team1_add_button_card, R.id.team2_add_button_card, R.id.last_action_strip)) {
+                val vista = activity.findViewById<View>(id)
+                val posizione = IntArray(2).also { vista.getLocationOnScreen(it) }
+                posti += Posto(posizione[0], posizione[1], vista.width, vista.height)
+            }
+        }
+        return posti
+    }
+
+    private fun assertNonSiSposta(
+        dopo: String,
+        prima: List<Posto>,
+        adesso: List<Posto>,
+    ) {
+        val nomi = listOf("la zona + della squadra 1", "la zona + della squadra 2", "la striscia")
+        prima.indices.forEach { i ->
+            assertEquals("${nomi[i]} si e' spostata o ridimensionata $dopo", prima[i], adesso[i])
+        }
+    }
+
+    private fun aspettaCheAttivi(
+        scenario: ActivityScenario<MainActivity>,
+        condizione: (MainActivity) -> Boolean,
+    ): Boolean {
+        var tentativi = 50
+        var vera = false
+        while (!vera && tentativi-- > 0) {
+            scenario.onActivity { vera = condizione(it) }
+            if (!vera) Thread.sleep(100)
+        }
+        return vera
     }
 
     @Test
-    fun conCronometro_tempo_e_comandi_stanno_compatti_ma_restano_bersagli() {
-        // Calcio: prima etichetta, tempo e pulsanti erano impilati e la card superava i 230dp.
-        // Il limite lascia la riga di testa (48), una riga di tempo (etichetta 18 + tempo 52),
-        // i margini interni, i 12dp degli angoli della card e un po' di tolleranza per le
-        // metriche del carattere: in JVM con i caratteri veri misura 159dp.
-        val (altezza, start) = altezzaIntestazioneDp(conCronometro = true)
-        assertTrue("l'intestazione col cronometro e' alta ${altezza}dp, oltre i 175 ammessi", altezza <= 175f)
-        assertTrue("START e' alto ${start}dp, sotto i 48 minimi", start >= 48f)
+    fun laZonaPiuNonSiSposta() {
+        // Il difetto che la colonna a slot fissi toglie: ANNULLA che compare, il tempo che cambia
+        // parola, la riga del portiere che sparisce spostavano il + sotto il dito. Qui si misura la
+        // posizione sullo schermo delle due zone e della striscia e si pretende che dopo ogni
+        // cosa che nel gioco cambia stato la differenza sia zero pixel.
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            val iniziale = postiFissi(scenario)
+
+            // 1. Un tocco su + accende ANNULLA: prima era un pulsante che compariva.
+            onView(withId(R.id.team1_add_button_card)).perform(click())
+            assertTrue(
+                "il + non ha acceso ANNULLA: la prova non misurerebbe niente",
+                aspettaCheAttivi(scenario) { it.findViewById<View>(R.id.undo_goal_button).isEnabled },
+            )
+            assertNonSiSposta("dopo un + con ANNULLA che si accende", iniziale, postiFissi(scenario))
+
+            // 2. Il tempo: START diventa PAUSA (icona e colore, non una parola piu' lunga).
+            assertTrue(
+                "il servizio del cronometro non si e' collegato",
+                aspettaCheAttivi(scenario) { it.findViewById<View>(R.id.timer_start_button).isEnabled },
+            )
+            var prima: CharSequence? = null
+            scenario.onActivity { prima = ViewCompat.getStateDescription(it.findViewById(R.id.timer_start_button)) }
+            onView(withId(R.id.timer_start_button)).perform(click())
+            assertTrue(
+                "il tocco sul tempo non ha cambiato lo stato: la prova non misurerebbe niente",
+                aspettaCheAttivi(scenario) { ViewCompat.getStateDescription(it.findViewById(R.id.timer_start_button)) != prima },
+            )
+            assertNonSiSposta("dopo START che diventa PAUSA", iniziale, postiFissi(scenario))
+            // Lo si rimette fermo: il servizio del cronometro sopravvive al test.
+            onView(withId(R.id.timer_start_button)).perform(click())
+
+            // 3. Conferma di ANNULLA: si spegne e non sparisce.
+            onView(withId(R.id.undo_goal_button)).perform(click())
+            onView(withText(R.string.undo)).inRoot(isDialog()).perform(click())
+            assertTrue(
+                "ANNULLA non si e' spento dopo la conferma",
+                aspettaCheAttivi(scenario) { !it.findViewById<View>(R.id.undo_goal_button).isEnabled },
+            )
+            scenario.onActivity {
+                assertEquals("ANNULLA spento resta al suo posto", View.VISIBLE, it.findViewById<View>(R.id.undo_goal_button).visibility)
+            }
+            assertNonSiSposta("dopo la conferma di ANNULLA", iniziale, postiFissi(scenario))
+        }
+    }
+
+    @Test
+    fun nelPadel_la_zonaPiu_non_si_sposta_nemmeno_per_24_tocchi_fino_al_6a0() {
+        // Ventiquattro punti di fila alla stessa squadra sono sei game da zero: la partita finisce.
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            var modello: MainViewModel? = null
+            scenario.onActivity { activity ->
+                modello = ViewModelProvider(activity)[MainViewModel::class.java]
+                assertTrue("il cambio sport e' stato rifiutato: la partita non e' vuota", modello!!.selectSport(SportRegistry.PADEL))
+            }
+            try {
+                assertTrue(
+                    "la colonna non si e' messa in modalita' padel",
+                    aspettaCheAttivi(scenario) { it.findViewById<View>(R.id.score_detail_container).visibility == View.VISIBLE },
+                )
+                val iniziale = postiFissi(scenario)
+                repeat(24) {
+                    scenario.onActivity { it.findViewById<View>(R.id.team1_add_button_card).performClick() }
+                }
+                assertTrue(
+                    "dopo 24 punti la partita non e' finita",
+                    aspettaCheAttivi(scenario) { modello!!.scoreDisplay.value?.matchOver == true },
+                )
+                assertNonSiSposta("dopo 24 tocchi fino al 6-0", iniziale, postiFissi(scenario))
+                scenario.onActivity {
+                    assertEquals(
+                        "ANNULLA resta acceso a partita finita: e' il modo di riaprirla",
+                        true,
+                        it.findViewById<View>(R.id.undo_goal_button).isEnabled,
+                    )
+                }
+            } finally {
+                // Lo sport attivo e' una scelta del dispositivo: si rimette il calcio, che le altre prove danno per scontato.
+                scenario.onActivity {
+                    modello!!.discardMatch()
+                    modello!!.selectSport(SportRegistry.FOOTBALL)
+                }
+            }
+        }
     }
 
     @Test

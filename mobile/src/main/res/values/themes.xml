@@ -81,6 +81,58 @@
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
 
+    <!--
+        La tipografia della schermata di gioco (DESIGN.md, Tipografia). Il numero non ha una
+        dimensione qui: la calcola MainActivity una volta per sport, in pixel. Il colore delle
+        cifre e' il bianco puro; le altre righe lo impostano nel layout.
+    -->
+    <style name="TextAppearance.App.Game.Score" parent="TextAppearance.Material3.DisplayLarge">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">@dimen/score_text_max</item>
+        <item name="android:textColor">@color/ink_white</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+    <!-- Cifre tabulari: il tempo non si allarga a ogni secondo. -->
+    <style name="TextAppearance.App.Game.Clock" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">32sp</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+    <style name="TextAppearance.App.Game.Value" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+    <style name="TextAppearance.App.Game.Name" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/stencil_white</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.06</item>
+    </style>
+    <style name="TextAppearance.App.Game.Command" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.06</item>
+    </style>
+    <style name="TextAppearance.App.Game.Caption" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/sidewalk_gray</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.12</item>
+    </style>
+
     <!-- Street Vibe Button Text -->
     <style name="TextAppearance.App.Button" parent="TextAppearance.Material3.LabelLarge">
         <item name="android:fontFamily">sans-serif-condensed</item>
