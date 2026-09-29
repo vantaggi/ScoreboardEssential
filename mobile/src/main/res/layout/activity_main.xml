@@ -19,6 +19,29 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!--
+        Scrim: fra la colonna di gioco e il foglio. A foglio aperto scurisce la colonna e
+        intercetta i tocchi, cosi' un doppio tocco sulla zona + non segna un punto sotto il foglio.
+        Nero al 60% (DESIGN.md dice solo che la colonna "resta sotto scurita"); alpha e visibilita'
+        li governa MainActivity. Toccarlo chiude il foglio. Fuori da TalkBack: CHIUDI c'e' gia'.
+    -->
+    <View
+        android:id="@+id/match_sheet_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0"
+        android:background="@android:color/black"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
+
+    <!--
+        Il foglio gestisce da se' gli inset di sistema (in alto, in basso e ai lati) invece di
+        riceverli come padding del contenitore: il behavior lo posiziona su parent.getHeight() e
+        lo misura togliendo il padding del genitore, quindi con il padding sul contenitore il fondo
+        del foglio finiva sotto la barra di navigazione e in alto restava una striscia.
+        behavior_shouldRemoveExpandedCorners vale true di default: senza il false qui il taglio
+        da 12dp spariva proprio a foglio aperto.
+    -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/match_sheet"
         android:layout_width="match_parent"
@@ -26,6 +49,11 @@
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
         app:behavior_hideable="true"
         app:behavior_skipCollapsed="true"
+        app:behavior_paddingTopSystemWindowInsets="true"
+        app:behavior_paddingBottomSystemWindowInsets="true"
+        app:behavior_paddingLeftSystemWindowInsets="true"
+        app:behavior_paddingRightSystemWindowInsets="true"
+        app:behavior_shouldRemoveExpandedCorners="false"
         app:backgroundTint="@color/asphalt_dark"
         app:shapeAppearance="@style/ShapeAppearance.App.MatchSheet">
 

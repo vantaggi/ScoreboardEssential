@@ -61,6 +61,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
+// Quanto scurisce la colonna di gioco a foglio PARTITA aperto: nero al 60%.
+private const val SCRIM_ALPHA = 0.6f
+
 class MainActivity :
     AppCompatActivity(),
     SelectScorerDialogFragment.ScorerDialogListener {
@@ -145,11 +148,21 @@ class MainActivity :
 
         setContentView(R.layout.activity_main)
 
-        // Edge-to-edge: gli insets di sistema diventano padding del contenitore radice,
-        // cosi' coprono sia la colonna di gioco sia il foglio PARTITA che sale dal basso.
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(R.id.main_root)) { view, windowInsets ->
+        // Edge-to-edge: gli insets di sistema diventano padding della sola colonna di gioco. Sul
+        // contenitore radice NO: BottomSheetBehavior posiziona il foglio su parent.getHeight() e lo
+        // misura togliendo il padding del genitore, quindi il fondo del foglio finiva sotto la barra
+        // di navigazione. Il foglio gestisce i suoi con behavior_padding*SystemWindowInsets.
+        val colonna = findViewById<View>(R.id.scoreboard_live)
+        val paddingIniziale = intArrayOf(colonna.paddingLeft, colonna.paddingTop, colonna.paddingRight, colonna.paddingBottom)
+        ViewCompat.setOnApplyWindowInsetsListener(colonna) { view, windowInsets ->
             val bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            view.setPadding(
+                paddingIniziale[0] + bars.left,
+                paddingIniziale[1] + bars.top,
+                paddingIniziale[2] + bars.right,
+                paddingIniziale[3] + bars.bottom,
+            )
+            // Non consumati: il foglio, fratello della colonna, deve riceverli a sua volta.
             windowInsets
         }
 
@@ -187,9 +200,16 @@ class MainActivity :
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
+        // Ricreata durante l'animazione, BottomSheetBehavior ripristina STATE_COLLAPSED anche con
+        // skipCollapsed: resterebbe una striscia di foglio sopra le zone da toccare. Il foglio non
+        // ha una posizione intermedia, quindi si riporta a nascosto.
+        if (matchSheet.state == BottomSheetBehavior.STATE_COLLAPSED) {
+            matchSheet.state = BottomSheetBehavior.STATE_HIDDEN
+        }
         // Lo stato ripristinato del foglio non passa dai callback del behavior: senza questo,
-        // dopo una ricreazione a foglio aperto indietro uscirebbe dall'app invece di chiuderlo.
-        chiudiConIndietro.isEnabled = matchSheet.state != BottomSheetBehavior.STATE_HIDDEN
+        // dopo una ricreazione a foglio aperto indietro uscirebbe dall'app invece di chiuderlo, e
+        // la colonna resterebbe raggiungibile (o nascosta) da TalkBack come prima della ricreazione.
+        allineaAlFoglio(matchSheet.state)
     }
 
     override fun onResume() {
@@ -531,15 +551,24 @@ class MainActivity :
                     bottomSheet: View,
                     newState: Int,
                 ) {
-                    chiudiConIndietro.isEnabled = newState != BottomSheetBehavior.STATE_HIDDEN
+                    allineaAlFoglio(newState)
                 }
 
                 override fun onSlide(
                     bottomSheet: View,
                     slideOffset: Float,
-                ) = Unit
+                ) {
+                    // Il behavior non da' un offset unico da nascosto ad aperto (va da -1 a 0 fino
+                    // al punto di riposo, poi da 0 a 1): si legge la parte di foglio in vista.
+                    val inVista = (findViewById<View>(R.id.main_root).height - bottomSheet.top).coerceAtLeast(0)
+                    val frazione = if (bottomSheet.height > 0) (inVista.toFloat() / bottomSheet.height).coerceIn(0f, 1f) else 0f
+                    findViewById<View>(R.id.match_sheet_scrim).alpha = SCRIM_ALPHA * frazione
+                }
             },
         )
+        findViewById<View>(R.id.match_sheet_scrim).setOnClickListener {
+            matchSheet.state = BottomSheetBehavior.STATE_HIDDEN
+        }
 
         findViewById<View>(R.id.match_sheet_button).setOnClickListener {
             matchSheet.state = BottomSheetBehavior.STATE_EXPANDED
@@ -547,6 +576,27 @@ class MainActivity :
         findViewById<View>(R.id.match_sheet_close_button).setOnClickListener {
             matchSheet.state = BottomSheetBehavior.STATE_HIDDEN
         }
+    }
+
+    /**
+     * Allinea indietro, scrim e accessibilita' allo stato del foglio.
+     *
+     * A foglio non nascosto la colonna di gioco sta sotto lo scrim: nessun tocco la raggiunge, e
+     * TalkBack non deve piu' arrivarci (un doppio tocco segnava un punto sotto il foglio).
+     */
+    private fun allineaAlFoglio(stato: Int) {
+        val nascosto = stato == BottomSheetBehavior.STATE_HIDDEN
+        chiudiConIndietro.isEnabled = !nascosto
+        val scrim = findViewById<View>(R.id.match_sheet_scrim)
+        scrim.visibility = if (nascosto) View.GONE else View.VISIBLE
+        if (stato == BottomSheetBehavior.STATE_EXPANDED) scrim.alpha = SCRIM_ALPHA
+        if (nascosto) scrim.alpha = 0f
+        findViewById<View>(R.id.scoreboard_live).importantForAccessibility =
+            if (nascosto) {
+                View.IMPORTANT_FOR_ACCESSIBILITY_AUTO
+            } else {
+                View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+            }
     }
 
     /**

@@ -1640,17 +1640,6 @@
 
     <issue
         id="HardcodedText"
-        message="Hardcoded string &quot;Statistics&quot;, should use `@string` resource"
-        errorLine1="    &lt;com.google.android.material.floatingactionbutton.FloatingActionButton android:id=&quot;@+id/stats_fab&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; android:layout_gravity=&quot;bottom|start&quot; android:layout_margin=&quot;16dp&quot; app:backgroundTint=&quot;?attr/colorPrimary&quot; app:tint=&quot;?attr/colorOnPrimary&quot; app:shapeAppearance=&quot;@style/ShapeAppearance.App.StreetButton&quot; app:srcCompat=&quot;@drawable/ic_stats&quot; android:contentDescription=&quot;Statistics&quot;/>"
-        errorLine2="                                                                                                                                                                                                                                                                                                                                                                                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_main.xml"
-            line="210"
-            column="413"/>
-    </issue>
-
-    <issue
-        id="HardcodedText"
         message="Hardcoded string &quot;No matches found&quot;, should use `@string` resource"
         errorLine1="        android:text=&quot;No matches found&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
