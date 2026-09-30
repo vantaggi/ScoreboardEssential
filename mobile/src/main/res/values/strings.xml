@@ -43,6 +43,7 @@
     <string name="cd_correct_team">Remove a goal from %1$s</string>
     <string name="cd_score_of_team" translatable="false">%1$s, %2$s</string>
     <string name="caption_game">GAME</string>
+    <string name="caption_set">SET</string>
     <string name="caption_set_game">SET · GAME</string>
     <string name="timer_state_running">Running</string>
     <string name="timer_state_stopped">Stopped</string>

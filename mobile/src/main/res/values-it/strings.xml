@@ -41,6 +41,7 @@
     <string name="cd_add_point">Punto a %1$s. %2$s a %3$s</string>
     <string name="cd_correct_team">Togli un gol a %1$s</string>
     <string name="caption_game">GAME</string>
+    <string name="caption_set">SET</string>
     <string name="caption_set_game">SET · GAME</string>
     <string name="timer_state_running">In corso</string>
     <string name="timer_state_stopped">Fermo</string>

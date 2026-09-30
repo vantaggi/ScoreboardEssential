@@ -28,7 +28,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.doOnLayout
+import androidx.core.view.doOnNextLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -348,7 +348,7 @@ class MainActivity :
         viewModel.scoreDisplay.observe(this) { display ->
             team1ScoreTextView.text = display.side1Primary
             team2ScoreTextView.text = display.side2Primary
-            bindScoreDetail(display.side1Secondary)
+            bindScoreDetail(display.side1Secondary, display.matchOver)
             bindPeriod(display)
             applyMatchOver(display.matchOver)
             aggiornaDescrizioni()
@@ -578,7 +578,12 @@ class MainActivity :
      * raddoppierebbe e il numero uscirebbe dal suo spazio.
      */
     private fun dimensionaINumeri(token: String) {
-        findViewById<View>(R.id.score_row).doOnLayout { riga ->
+        // Il chiamante ha appena cambiato la visibilita' di qualcosa sopra o sotto la riga (il
+        // dettaglio dei set): doOnLayout, con la vista gia' misurata, girerebbe subito sulla misura
+        // vecchia. requestLayout obbliga un passaggio nuovo e doOnNextLayout aspetta quello.
+        val riga = findViewById<View>(R.id.score_row)
+        riga.requestLayout()
+        riga.doOnNextLayout {
             val pixel = dimensioneDelNumero(team1ScoreTextView.paint, token, riga.width / 2f, riga.height.toFloat())
             team1ScoreTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, pixel)
             team2ScoreTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, pixel)
@@ -974,13 +979,18 @@ class MainActivity :
      * Il dettaglio sotto i numeri, negli sport a set: game o set e game, letto dalla parte della
      * squadra di sinistra come tutta la schermata. Un solo valore al posto dei due, uno per card,
      * ognuno dal proprio punto di vista (3-2 a sinistra, 2-3 a destra): chi guarda da lontano non
-     * deve capire da che lato e' scritto. La didascalia dice cosa sono i numeri.
+     * deve capire da che lato e' scritto. La didascalia dice cosa sono i numeri: a partita finita
+     * non ci sono game correnti e il dettaglio contiene solo i set chiusi, quindi e' SET.
      */
-    private fun bindScoreDetail(testo: String?) {
+    private fun bindScoreDetail(
+        testo: String?,
+        partitaFinita: Boolean,
+    ) {
         scoreDetailValue.text = testo.orEmpty()
         scoreDetailCaption.text =
             when {
                 testo.isNullOrEmpty() -> ""
+                partitaFinita -> getString(R.string.caption_set)
                 testo.contains(SEPARATORE_SET_GAME) -> getString(R.string.caption_set_game)
                 else -> getString(R.string.caption_game)
             }
