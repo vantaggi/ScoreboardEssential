@@ -1259,14 +1259,11 @@ class MainViewModel(
             when (campi[0]) {
                 WearConstants.INTENT_UNDO -> engine.undo()
                 WearConstants.INTENT_CORRECTION -> engine.apply(ScoringEvent.Correction(side = side), matchClock.relative(quando))
-                WearConstants.INTENT_POINT -> {
-                    engine.apply(ScoringEvent.Point(side = side), matchClock.relative(quando))
-                    punti++
-                }
-
+                WearConstants.INTENT_POINT -> engine.apply(ScoringEvent.Point(side = side), matchClock.relative(quando))
                 else -> return@forEach
             }
             applicati++
+            if (campi[0] == WearConstants.INTENT_POINT) punti++
         }
         if (applicati == 0) return
 
