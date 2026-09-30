@@ -1368,6 +1368,112 @@ class MainViewModelTest {
             assertEquals("ma la notizia resta", WatchNotice.Applied(1), viewModel.watchNotice.value)
         }
 
+    /** Un arretrato con la sola voce data, consegnato con il numero d'ordine dato. */
+    private fun consegna(
+        voce: String,
+        seq: Long,
+    ) {
+        val connessione = campo("connectionManager") as OptimizedWearDataSync
+        kotlinx.coroutines.runBlocking { whenever(connessione.sendMessage(any(), any())).thenReturn(true) }
+        ricevi(
+            Intent(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
+                .putExtra(WearConstants.KEY_INTENT_BATCH, voce)
+                .putExtra(WearConstants.KEY_SEQ, seq),
+        )
+    }
+
+    /** Un punto, poi il rifiuto, poi ANNULLA fino al registro vuoto: Rejected resta, e lo sport si puo' cambiare. */
+    private fun rifiutaESvuotaIlRegistro() {
+        viewModel.addScore(1)
+        consegnaUnArretratoConUnPunto()
+        assertEquals(WatchNotice.Rejected, viewModel.watchNotice.value)
+        assertEquals("ANNULLA toglie il punto", true, viewModel.undoLastGoal())
+    }
+
+    /**
+     * Rilievo 2 della revisione: applySport crea un motore nuovo senza passare da startNewMatch, e un
+     * Rejected, possibile dopo ANNULLA fino a registro vuoto, sopravviveva al cambio di sport.
+     */
+    @Test
+    fun `il cambio di sport azzera watchNotice`() =
+        runTest {
+            rifiutaESvuotaIlRegistro()
+            advanceUntilIdle()
+
+            assertEquals("a registro vuoto il cambio si puo' fare", true, viewModel.selectSport(SportRegistry.PADEL))
+            advanceUntilIdle()
+
+            assertEquals(null, viewModel.watchNotice.value)
+        }
+
+    /**
+     * Rilievo 3: dopo un Rejected, un arretrato accettato ma senza punti (qui una correzione) viene
+     * applicato e confermato, e lasciava Rejected: la card diceva che i punti non erano entrati
+     * quando l'arretrato era entrato.
+     */
+    @Test
+    fun `un arretrato senza punti dopo un rifiuto esce dallo stato Rejected`() =
+        runTest {
+            rifiutaESvuotaIlRegistro()
+            advanceUntilIdle()
+
+            consegna(voceDiArretrato(WearConstants.INTENT_CORRECTION, 1, 2000), 5L)
+            advanceUntilIdle()
+
+            assertEquals("l'arretrato e' entrato: non e' piu' rifiutato", null, viewModel.watchNotice.value)
+        }
+
+    /** Fine partita e scarto sono due strade alla partita nuova: entrambe spengono la notizia. */
+    @Test
+    fun `endMatch e discardMatch spengono watchNotice`() =
+        runTest {
+            viewModel.selectSport(SportRegistry.PADEL)
+            advanceUntilIdle()
+            repeat(3) { viewModel.addScore(1) }
+            consegna(voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000), 4L)
+            assertEquals(WatchNotice.Rejected, viewModel.watchNotice.value)
+
+            assertEquals(true, viewModel.endMatch())
+            advanceUntilIdle()
+            assertEquals("endMatch", null, viewModel.watchNotice.value)
+
+            repeat(3) { viewModel.addScore(1) }
+            consegna(voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000), 5L)
+            assertEquals(WatchNotice.Rejected, viewModel.watchNotice.value)
+
+            assertEquals(true, viewModel.discardMatch())
+            advanceUntilIdle()
+            assertEquals("discardMatch", null, viewModel.watchNotice.value)
+        }
+
+    /** Applied poi Rejected: il secondo arretrato trova la partita che il primo ha riempito. */
+    @Test
+    fun `da Applied a Rejected e da Rejected ad Applied`() =
+        runTest {
+            val notizie = mutableListOf<WatchNotice?>()
+            val osservatore = Observer<WatchNotice?> { notizie.add(it) }
+            viewModel.watchNotice.observeForever(osservatore)
+
+            consegna(voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000), 4L)
+            advanceUntilIdle()
+            consegna(voceDiArretrato(WearConstants.INTENT_POINT, 2, 2000), 5L)
+            advanceUntilIdle()
+            assertEquals(
+                "il primo entra, il secondo trova la partita gia' cominciata",
+                listOf(null, WatchNotice.Applied(1), WatchNotice.Rejected),
+                notizie,
+            )
+            assertEquals("Rejected non e' un riepilogo di punti", null, viewModel.takeWatchSummary())
+
+            // ANNULLA fino a registro vuoto: un arretrato nuovo ora entra, e Rejected lascia il posto.
+            while (viewModel.undoLastGoal()) advanceUntilIdle()
+            consegna(voceDiArretrato(WearConstants.INTENT_POINT, 1, 3000), 6L)
+            advanceUntilIdle()
+            assertEquals(WatchNotice.Applied(1), viewModel.watchNotice.value)
+            assertEquals("e il riepilogo torna a dirsi", 1, viewModel.takeWatchSummary())
+            viewModel.watchNotice.removeObserver(osservatore)
+        }
+
     private fun voceDiArretrato(
         intento: String,
         lato: Int,

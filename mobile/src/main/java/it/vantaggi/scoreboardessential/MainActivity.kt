@@ -31,6 +31,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnNextLayout
+import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -779,8 +780,12 @@ class MainActivity :
         findViewById<View>(R.id.match_sheet_button).setOnClickListener {
             matchSheet.state = BottomSheetBehavior.STATE_EXPANDED
         }
-        // L'icona dell'orologio apre lo stesso foglio: li' sta la card che spiega il badge.
+        // L'icona dell'orologio apre lo stesso foglio: li' sta la card che spiega il badge. Il foglio
+        // e' una NestedScrollView e tiene lo scrollY anche da nascosto: si riporta in cima SEMPRE,
+        // non solo con una notizia, perche' chi tocca l'icona cerca lo stato dell'orologio e questo
+        // sta in testa al foglio; senza, la card poteva restare fuori vista.
         findViewById<View>(R.id.wear_status_icon).setOnClickListener {
+            findViewById<NestedScrollView>(R.id.match_sheet).scrollTo(0, 0)
             matchSheet.state = BottomSheetBehavior.STATE_EXPANDED
         }
         findViewById<View>(R.id.match_sheet_close_button).setOnClickListener {

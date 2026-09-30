@@ -478,6 +478,9 @@ class MainViewModel(
         // poi ANNULLA: '1|'). Dimenticarla e basta la lasciava orfana e attiva: al riavvio tornava
         // come 'Partita ripresa', e poteva ricevere la partita del nuovo sport con lo sport vecchio.
         scartaRigaViva()
+        // Anche qui comincia una partita nuova (il motore e' nuovo): un Rejected, possibile dopo
+        // ANNULLA fino a registro vuoto, riguardava quella di prima e non deve seguirla.
+        setWatchNotice(null)
         matchUuid = null
         matchStartedAt = null
         _team1Score.value = 0
@@ -1299,7 +1302,13 @@ class MainViewModel(
         // gia' scritto. Senza, il punteggio era giusto ma il registro vuoto, e il '-' dell'orologio
         // (che qui arriva come annullamento) non trovava niente da togliere.
         viewModelScope.launch { rebuildEventsAndUndo() }
-        if (punti > 0) setWatchNotice(WatchNotice.Applied(punti))
+        // Senza punti (solo annullamenti o correzioni) non c'e' niente da riassumere, ma l'arretrato
+        // e' entrato: un Rejected di prima non descrive piu' la partita, quindi si esce dallo stato.
+        if (punti > 0) {
+            setWatchNotice(WatchNotice.Applied(punti))
+        } else if (_watchNotice.value is WatchNotice.Rejected) {
+            setWatchNotice(null)
+        }
 
         // La conferma parte SOLO ora: e' il ViewModel ad averlo applicato, e solo lui puo' dirlo.
         viewModelScope.launch {
