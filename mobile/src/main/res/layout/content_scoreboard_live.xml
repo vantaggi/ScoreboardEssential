@@ -116,7 +116,7 @@
             android:paddingHorizontal="4dp"
             android:textAppearance="@style/TextAppearance.App.Game.Command"
             android:textColor="@color/stencil_white"
-            tools:text="SET 2 - SERVE ROSSI" />
+            tools:text="PADEL · SERVE ROSSI" />
 
         <ImageView
             android:id="@+id/wear_status_icon"
@@ -457,6 +457,15 @@
                 android:layout_gravity="center"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_plus" />
+
+            <!-- A partita finita la zona si spegne e questa barra porta il colore della squadra. -->
+            <View
+                android:id="@+id/team1_zone_bar"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:layout_gravity="bottom"
+                android:alpha="0"
+                android:importantForAccessibility="no" />
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
@@ -481,6 +490,14 @@
                 android:layout_gravity="center"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_plus" />
+
+            <View
+                android:id="@+id/team2_zone_bar"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:layout_gravity="bottom"
+                android:alpha="0"
+                android:importantForAccessibility="no" />
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </LinearLayout>

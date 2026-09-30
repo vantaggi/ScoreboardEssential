@@ -284,6 +284,30 @@ class ColonnaDiGiocoTest {
     }
 
     @Test
+    fun aPartitaFinita_la_zona_si_spegne_ma_resta_toccabile_e_la_barra_porta_il_colore() {
+        val radice = gonfia(1f)
+        val zona = radice.findViewById<MaterialCardView>(R.id.team1_add_button_card)
+        val glifo = radice.findViewById<ImageView>(R.id.team1_plus_icon)
+        val barretta = radice.findViewById<View>(R.id.team1_color_bar)
+        val barra = radice.findViewById<View>(R.id.team1_zone_bar)
+        val blu = 0xFF1A237E.toInt()
+        assertEquals("in gioco la barra non si vede", 0f, barra.alpha, 0f)
+
+        applicaStatoDellaZona(zona, glifo, barretta, barra, blu, finita = true)
+        assertEquals("la zona spenta e' #2C2C2C", 0xFF2C2C2C.toInt(), zona.cardBackgroundColor.defaultColor)
+        assertEquals("niente stroke sulla zona spenta", 0, zona.strokeWidth)
+        assertEquals("il glifo sparisce", 0f, glifo.alpha, 0f)
+        assertEquals("la barra si accende", 1f, barra.alpha, 0f)
+        assertEquals("la barra porta il colore della squadra", TeamInk.graphicOnBlack(blu), (barra.background as ColorDrawable).color)
+        assertTrue("la zona spenta risponde ancora al tocco", zona.isClickable)
+
+        applicaStatoDellaZona(zona, glifo, barretta, barra, blu, finita = false)
+        assertEquals("riaperta, la zona riprende il colore vero", blu, zona.cardBackgroundColor.defaultColor)
+        assertEquals("il glifo torna", 1f, glifo.alpha, 0f)
+        assertEquals("la barra si spegne", 0f, barra.alpha, 0f)
+    }
+
+    @Test
     fun unColoreChiaro_non_ha_stroke_e_il_glifo_nero() {
         val (zona, glifo, barretta) = applica(0xFFFFD600.toInt())
         assertEquals("un giallo sul nero non ha bisogno dello stroke", 0, zona.strokeWidth)

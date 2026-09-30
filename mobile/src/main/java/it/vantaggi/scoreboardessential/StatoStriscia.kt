@@ -116,6 +116,6 @@ private fun ultimoGameChiuso(display: ScoreDisplay): String? {
 }
 
 // Il separatore dei set nei secondari di :core (RacketRules.SEPARATOR, privato): middot fra spazi.
-private const val SEPARATORE_DEI_SET = " · "
+internal const val SEPARATORE_DEI_SET = " · "
 
 private fun String.maiuscolo(): String = uppercase(Locale.getDefault())
