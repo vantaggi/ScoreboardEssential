@@ -57,6 +57,7 @@ class ProtocolloV2DelTelefonoTest {
 
     @Before
     fun setup() {
+        assorbiLavoroResiduoDelLooper()
         nodoA = "orologio-A-${UUID.randomUUID()}"
         nodoB = "orologio-B-${UUID.randomUUID()}"
         service = Robolectric.buildService(SimplifiedDataLayerListenerService::class.java).get()
@@ -68,6 +69,7 @@ class ProtocolloV2DelTelefonoTest {
     @After
     fun tearDown() {
         manager.unregisterReceiver(receiver)
+        assorbiLavoroResiduoDelLooper()
     }
 
     private fun messaggio(

@@ -43,6 +43,7 @@ class SimplifiedDataLayerListenerServiceTest {
 
     @Before
     fun setup() {
+        assorbiLavoroResiduoDelLooper()
         MockitoAnnotations.openMocks(this)
         service = SimplifiedDataLayerListenerService()
 
@@ -59,6 +60,7 @@ class SimplifiedDataLayerListenerServiceTest {
     @After
     fun tearDown() {
         dataMapItemStatic.close()
+        assorbiLavoroResiduoDelLooper()
     }
 
     /**
