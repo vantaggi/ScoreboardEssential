@@ -92,7 +92,7 @@
     <string name="reset_timer_message">This will reset the match timer to 00:00</string>
     <string name="reset">Reset</string>
 
-    <string name="label_keeper_timer">GOALKEEPER</string>
+    <string name="label_keeper_timer">KEEPER</string>
 
 
     <string name="share_match_report">Share</string>

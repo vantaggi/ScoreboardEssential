@@ -31,7 +31,10 @@
 
         A 360dp la barra ha 328dp utili. Il tempo (fino a 100:00) e il portiere non hanno una
         larghezza da spartire: se lo spazio non basta cede solo il testo del periodo, che fa da
-        molla, e il pulsante del foglio, l'unico modo di aprirlo, resta intero e da 48dp.
+        molla, e il pulsante del foglio, l'unico modo di aprirlo, resta intero e da 48dp. Per questo
+        il portiere (didascalia e valore) e' in dp e non in sp: con i caratteri ingranditi al 130%
+        passava da 81 a 99dp (134 in inglese) e spingeva il pulsante fuori dal bordo. Il tempo e'
+        gia' a dimensione fissa. A dimensioni cosi' la lettura a due metri non ne soffre.
     -->
     <LinearLayout
         android:id="@+id/game_bar"
@@ -48,7 +51,7 @@
             android:insetTop="0dp"
             android:insetBottom="0dp"
             android:minWidth="0dp"
-            android:paddingHorizontal="8dp"
+            android:paddingHorizontal="6dp"
             android:maxLines="1"
             android:text="00:00"
             android:textAppearance="@style/TextAppearance.App.Game.Clock"
@@ -58,7 +61,7 @@
             app:icon="@drawable/ic_play"
             app:iconTint="@color/stencil_white"
             app:iconGravity="textStart"
-            app:iconPadding="8dp"
+            app:iconPadding="6dp"
             tools:ignore="HardcodedText" />
 
         <!-- Il portiere: sempre presente nel calcio, mai toccabile in questa fase. -->
@@ -78,14 +81,16 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:paddingHorizontal="8dp">
+                android:paddingHorizontal="6dp">
 
                 <TextView
                     android:id="@+id/keeper_timer_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_keeper_timer"
-                    android:textAppearance="@style/TextAppearance.App.Game.Caption" />
+                    android:textAppearance="@style/TextAppearance.App.Game.Caption"
+                    android:textSize="12dp"
+                    tools:ignore="SpUsage" />
 
                 <TextView
                     android:id="@+id/keeper_timer_textview"
@@ -95,7 +100,8 @@
                     android:text="05:00"
                     android:textAppearance="@style/TextAppearance.App.Game.Value"
                     android:textColor="@color/sidewalk_gray"
-                    tools:ignore="HardcodedText" />
+                    android:textSize="24dp"
+                    tools:ignore="HardcodedText,SpUsage" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

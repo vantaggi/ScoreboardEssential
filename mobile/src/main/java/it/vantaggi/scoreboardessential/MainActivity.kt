@@ -23,6 +23,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
@@ -95,6 +96,23 @@ internal fun larghezzaMinimaDelTempo(pulsante: MaterialButton): Int {
     val testo = Math.ceil(pulsante.paint.measureText(TEMPO_PIU_LUNGO).toDouble()).toInt()
     return testo + pulsante.paddingLeft + pulsante.paddingRight + pulsante.iconSize + pulsante.iconPadding
 }
+
+/**
+ * La didascalia del dettaglio sotto i numeri, o null se non c'e' niente da dire. A partita finita
+ * non ci sono game correnti e il dettaglio contiene solo i set chiusi: e' SET, anche se senza il
+ * separatore fra set e game.
+ */
+@StringRes
+internal fun didascaliaDelDettaglio(
+    testo: String?,
+    partitaFinita: Boolean,
+): Int? =
+    when {
+        testo.isNullOrEmpty() -> null
+        partitaFinita -> R.string.caption_set
+        testo.contains(SEPARATORE_SET_GAME) -> R.string.caption_set_game
+        else -> R.string.caption_game
+    }
 
 // L'increspatura sulla zona premuta: l'inchiostro della squadra al 24% (61 su 255).
 private const val RIPPLE_ALPHA = 61
@@ -987,13 +1005,7 @@ class MainActivity :
         partitaFinita: Boolean,
     ) {
         scoreDetailValue.text = testo.orEmpty()
-        scoreDetailCaption.text =
-            when {
-                testo.isNullOrEmpty() -> ""
-                partitaFinita -> getString(R.string.caption_set)
-                testo.contains(SEPARATORE_SET_GAME) -> getString(R.string.caption_set_game)
-                else -> getString(R.string.caption_game)
-            }
+        scoreDetailCaption.text = didascaliaDelDettaglio(testo, partitaFinita)?.let { getString(it) }.orEmpty()
     }
 
     private fun playGoalAnimation(team: Int) {
