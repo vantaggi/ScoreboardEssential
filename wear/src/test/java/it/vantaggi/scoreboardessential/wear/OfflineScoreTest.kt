@@ -179,10 +179,13 @@ class OfflineScoreTest {
 
         coda.add(PendingIntent(WearConstants.INTENT_POINT, 1, 1_000L))
         coda.add(PendingIntent(WearConstants.INTENT_UNDO, 1, 2_000L))
-        viewModel.applyStateV2(statoDalTelefono(MatchLogCodec.encode(telefono.log), primo = "30"))
+        // Il primario del telefono e' una sentinella che non e' un punteggio di padel: base e
+        // atteso valevano entrambi "30", e il test passava anche senza alcun calcolo locale.
+        viewModel.applyStateV2(statoDalTelefono(MatchLogCodec.encode(telefono.log), primo = "X"))
 
         // Punto piu' annullamento: si torna dov'era il telefono.
         val atteso = SportRegistry.byId(SportRegistry.PADEL).display(telefono.state)
+        assertEquals("30", atteso.side1Primary)
         assertEquals(atteso.side1Primary, viewModel.scoreState.value?.side1Primary)
     }
 
