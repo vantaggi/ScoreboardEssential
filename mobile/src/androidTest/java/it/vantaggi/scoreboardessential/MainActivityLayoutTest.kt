@@ -167,8 +167,23 @@ class MainActivityLayoutTest {
                 assertEquals("le due squadre hanno la stessa dimensione", uno.textSize, due.textSize, 0f)
                 assertTrue("il numero e' sotto il minimo di 72dp", uno.textSize >= dp(activity, 72) - 1f)
                 assertTrue("il numero e' sopra il tetto di 150dp", uno.textSize <= dp(activity, 150) + 1f)
-                val meta = activity.findViewById<View>(R.id.score_row).width / 2f
-                assertTrue("\"88\" non entra nella meta' di colonna", uno.paint.measureText("88") <= meta)
+                // Il controllo e' stretto: "88" entra nella meta' di colonna meno i 16dp di aria, e il
+                // numero e' il piu' grande possibile, cioe' o sta al tetto o al pavimento oppure un
+                // pixel in piu' farebbe uscire "88" dalla larghezza o dall'altezza della riga.
+                val riga = activity.findViewById<View>(R.id.score_row)
+                val disponibile = riga.width / 2f - dp(activity, 16)
+                val larghezza88 = uno.paint.measureText("88")
+                assertTrue("\"88\" e' largo $larghezza88px ma ne ha $disponibile", larghezza88 <= disponibile + 1f)
+                val metriche = uno.paint.fontMetrics
+                val scalaConUnPixelInPiu = (uno.textSize + 1f) / uno.textSize
+                val alTetto = uno.textSize >= dp(activity, 150) - 1f
+                val alPavimento = uno.textSize <= dp(activity, 72) + 1f
+                val sforaLaLarghezza = larghezza88 * scalaConUnPixelInPiu > disponibile
+                val sforaLAltezza = (metriche.descent - metriche.ascent) * scalaConUnPixelInPiu > riga.height
+                assertTrue(
+                    "il numero (${uno.textSize}px) non e' il piu' grande possibile: 88 largo $larghezza88 su $disponibile, riga alta ${riga.height}",
+                    alTetto || alPavimento || sforaLaLarghezza || sforaLAltezza,
+                )
             }
         }
     }
