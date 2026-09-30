@@ -2027,7 +2027,7 @@ Il 30 settembre il proprietario ha aggiunto alla coda i passi 10 e 11 del design
 
 | Passo | Cosa | Stato |
 |---|---|---|
-| 4 | StatoFiducia e riga di stato | implementazione fatta (Sonnet): `a2bab6b`..`9d1a5a4` (worktree `wf_922f258f-105-1`). Funzione pura a 8 livelli, riga di stato nel gestureHint al posto del pallino, verifica del collegamento di 2s all'avvio, NON CONSEGNATI dopo 10s da collegati, ora dell'ultimo stato vivo salvata, refresh ogni 15s a partita in corso, frasi entro 18 caratteri in it ed en. Revisione in corso (Opus) |
+| 4 | StatoFiducia e riga di stato | implementazione fatta (Sonnet): `a2bab6b`..`9d1a5a4` (worktree `wf_922f258f-105-1`). Funzione pura a 8 livelli, riga di stato nel gestureHint al posto del pallino, verifica del collegamento di 2s all'avvio, NON CONSEGNATI dopo 10s da collegati, ora dell'ultimo stato vivo salvata, refresh ogni 15s a partita in corso, frasi entro 18 caratteri in it ed en. Revisione (Opus): 1 media (ogni refreshConnection riarma la verifica di 2s, quindi da scollegati ogni 15s e a ogni risveglio SCOLLEGATO o IN CODA lasciano il posto per un attimo al suggerimento, e TalkBack lo legge), 4 basse (ora dell'ultimo stato vivo non aggiornata ad app chiusa, perche' la scrive il ViewModel e non il servizio; refresh sovrapposti senza timeout; ciclo dei 15s legato a STARTED e non a RESUMED; larghezza delle frasi sul tondo controllata solo contando i caratteri). Correzione da fare |
 | 5 | Menu partita al posto di SPORT e AZZERA | da fare |
 | 6 | Quadrante a fasce | da fare |
 | 7 | Aptica per lato e ricevuta del tocco | da fare |
