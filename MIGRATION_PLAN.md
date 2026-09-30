@@ -2045,3 +2045,27 @@ in piu':** in MainViewModelTest i ViewModel lasciano coroutine in coda sul loope
 database gia' chiuso, e l'errore ricade sul runTest successivo (ChiusuraPartitaTest, PlayerRepositoryTest):
 va chiuso alla radice nel tearDown. **Da decidere:** i tre parametri di ritentativo ora sono congelati
 nel golden test anche se non viaggiano sul filo.
+
+### Design del telefono, passi 10 e 11 - 30 settembre 2026
+
+| Passo | Cosa | Stato |
+|---|---|---|
+| 10 | Contorno di sistema: ruoli M3 completi (nessun viola), materialAlertDialogTheme globale, squadre gialla e verde da ColorRepository | implementazione fatta (Sonnet): `82e0e1e`, `d3964c7` su `wf10/contorno` (worktree `wf_9697552a-921-1`); 7 test su 8 falsificati. Scelta dell'agente da confermare: il terziario e i ruoli Fixed seguono il grigio chiaro del testo. Revisione da fare |
+| 11 | Schermate di contorno: anteprima del colore e riga delle regole nelle impostazioni; cronologia con Team.color, vincitore e sconfitto, sport, durata e set; podio rosa; TeamInk su avatar e chip; bande di squadra nel PDF | implementazione fatta (Sonnet): `8c059a2`, `d2792f6`, `dd98239` su `wf10/schermate`, che parte da `wf10/contorno` (worktree `wf_9697552a-921-2`). Revisione da fare |
+
+## RIPRESA - fermo il 30 settembre 2026 alle 22:10 (richiesta del proprietario)
+
+Tutto e' committato e ha una copia su origin. Su `main` c'e' tutto fino al passo 9 del telefono
+(`b2a1909`). Da fare alla ripresa, in quest'ordine, con il metodo dei passi corti (revisione Opus,
+correzione Sonnet in worktree isolato, unione, verifica completa, strumentati, push):
+1. Orologio passo 4 (`wf8/fiducia`): la revisione e' fatta, manca la correzione (1 media, 4 basse).
+2. L12 (`wf9/test-mobile`, `wf9/test-wear-shared`): revisione, correzione, unione.
+3. Telefono passi 10-11 (`wf10/contorno`, poi `wf10/schermate`): revisione, correzione, unione.
+4. Orologio passi 5-8, uno alla volta.
+Poi: OptimizedWearDataSyncTest (resto di L12), le coroutine lasciate in coda nei test del ViewModel,
+lint-baseline da rigenerare, e le decisioni aperte (tennis singolare nella Cronaca, parametri di
+ritentativo nel golden test, terziario del tema).
+Worktree ancora registrati o rimasti su disco: `wf_922f258f-105-1`, `wf_29c3773f-131-1`, `-2`,
+`wf_9697552a-921-1`, `-2`; cartelle residue di worktree gia' tolti (`wf_f456cabb-0af-1` e
+successive) da cancellare a Gradle fermo. Per correggere un branch: togliere il suo worktree,
+poi lanciare l'agente con `isolation: 'worktree'` e `git switch <branch>`.
