@@ -1248,6 +1248,9 @@ class MainViewModel(
         }
 
         var applicati = 0
+        // Il riepilogo dice quanti PUNTI sono entrati: annullamenti e correzioni nell'arretrato
+        // cambiano il motore, ma non sono punti.
+        var punti = 0
         batch.split(WearConstants.BATCH_SEPARATOR).forEach { voce ->
             val campi = voce.split(WearConstants.BATCH_FIELD_SEPARATOR)
             val side = campi.getOrNull(1)?.toIntOrNull() ?: return@forEach
@@ -1256,7 +1259,11 @@ class MainViewModel(
             when (campi[0]) {
                 WearConstants.INTENT_UNDO -> engine.undo()
                 WearConstants.INTENT_CORRECTION -> engine.apply(ScoringEvent.Correction(side = side), matchClock.relative(quando))
-                WearConstants.INTENT_POINT -> engine.apply(ScoringEvent.Point(side = side), matchClock.relative(quando))
+                WearConstants.INTENT_POINT -> {
+                    engine.apply(ScoringEvent.Point(side = side), matchClock.relative(quando))
+                    punti++
+                }
+
                 else -> return@forEach
             }
             applicati++
@@ -1270,7 +1277,7 @@ class MainViewModel(
         // gia' scritto. Senza, il punteggio era giusto ma il registro vuoto, e il '-' dell'orologio
         // (che qui arriva come annullamento) non trovava niente da togliere.
         viewModelScope.launch { rebuildEventsAndUndo() }
-        watchBatchApplied.value = applicati
+        if (punti > 0) watchBatchApplied.value = punti
 
         // La conferma parte SOLO ora: e' il ViewModel ad averlo applicato, e solo lui puo' dirlo.
         viewModelScope.launch {
@@ -1407,12 +1414,14 @@ class MainViewModel(
      * Il gol si conta solo se il motore ha davvero attribuito: il dialogo resta aperto quanto si
      * vuole, e nel frattempo un annullamento dall'orologio puo' aver tolto quel punto. Prima il
      * giocatore prendeva +1 anche per un punto che non c'era piu'.
+     *
+     * Restituisce se l'attribuzione e' avvenuta: chi la annuncia a schermo lo fa solo con true.
      */
     fun attributeScorer(
         engineIndex: Int,
         playerWithRoles: PlayerWithRoles,
-    ) {
-        if (!engine.attribute(engineIndex, playerWithRoles.player.playerId)) return
+    ): Boolean {
+        if (!engine.attribute(engineIndex, playerWithRoles.player.playerId)) return false
         persistLiveMatch()
         viewModelScope.launch { playerDao.incrementGoals(playerWithRoles.player.playerId) }
 
@@ -1429,6 +1438,7 @@ class MainViewModel(
                 _matchEvents.postValue(matchEventLog.toList())
             }
         }
+        return true
     }
 
     /**
@@ -1442,10 +1452,14 @@ class MainViewModel(
      *
      * Gli eventi senza effetto in coda si saltano: i registri scritti dalle versioni precedenti li
      * contengono ancora, non hanno una riga, e toglierli non si vede.
+     *
+     * Vero solo se ha tolto davvero un evento: false se non c'era niente da annullare, se ha
+     * trovato solo eventi inerti o se il tocco e' stato rimandato dal ripristino.
      */
-    fun undoLastGoal() {
-        if (rimandataDalRipristino { undoLastGoal() }) return
-        if (!engine.canUndo()) return
+    fun undoLastGoal(): Boolean {
+        // Rimandato non vuol dire tolto: il tocco verra' rifatto a fine ripristino.
+        if (rimandataDalRipristino { undoLastGoal() }) return false
+        if (!engine.canUndo()) return false
         var tolto: Pair<Int, ScoringEvent>? = null
         while (tolto == null && engine.canUndo()) {
             val indice = engine.log.lastIndex
@@ -1458,7 +1472,7 @@ class MainViewModel(
             if (engine.state != prima) tolto = indice to evento
         }
         publishEngineState()
-        val (indice, evento) = tolto ?: return
+        val (indice, evento) = tolto ?: return false
 
         // Decremento atomico: non dipende dal fatto che _allPlayers contenga gia' il giocatore
         // ne' che la sua copia sia aggiornata.
@@ -1481,6 +1495,7 @@ class MainViewModel(
                 else -> "Point"
             }
         addMatchEvent("Undo: $cosa removed", team = evento.side)
+        return true
     }
 
     // --- Match Timer Management ---

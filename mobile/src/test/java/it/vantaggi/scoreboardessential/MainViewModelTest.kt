@@ -1240,6 +1240,102 @@ class MainViewModelTest {
         }
 
     /**
+     * Il riepilogo dell'arretrato dice «N punti». Contava ogni voce applicata, quindi un arretrato
+     * con due punti e un annullamento diceva «3 punti»: annullamenti e correzioni non sono punti.
+     */
+    @Test
+    fun `il riepilogo dell'arretrato conta i punti e non gli annullamenti`() =
+        runTest {
+            val riepiloghi = mutableListOf<Int>()
+            val osservatore = Observer<Int> { riepiloghi.add(it) }
+            viewModel.watchBatchApplied.observeForever(osservatore)
+            val connessione = campo("connectionManager") as OptimizedWearDataSync
+            kotlinx.coroutines.runBlocking { whenever(connessione.sendMessage(any(), any())).thenReturn(true) }
+
+            ricevi(
+                Intent(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
+                    .putExtra(
+                        WearConstants.KEY_INTENT_BATCH,
+                        listOf(
+                            voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000),
+                            voceDiArretrato(WearConstants.INTENT_POINT, 1, 2000),
+                            voceDiArretrato(WearConstants.INTENT_POINT, 2, 3000),
+                            voceDiArretrato(WearConstants.INTENT_UNDO, 2, 4000),
+                            voceDiArretrato(WearConstants.INTENT_CORRECTION, 1, 5000),
+                        ).joinToString(WearConstants.BATCH_SEPARATOR),
+                    ).putExtra(WearConstants.KEY_SEQ, 4L),
+            )
+            advanceUntilIdle()
+
+            assertEquals("tre punti, non cinque voci", listOf(3), riepiloghi)
+            viewModel.watchBatchApplied.removeObserver(osservatore)
+        }
+
+    @Test
+    fun `un arretrato senza punti non scrive nessun riepilogo`() =
+        runTest {
+            val riepiloghi = mutableListOf<Int>()
+            val osservatore = Observer<Int> { riepiloghi.add(it) }
+            viewModel.watchBatchApplied.observeForever(osservatore)
+            val connessione = campo("connectionManager") as OptimizedWearDataSync
+            kotlinx.coroutines.runBlocking { whenever(connessione.sendMessage(any(), any())).thenReturn(true) }
+
+            ricevi(
+                Intent(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
+                    .putExtra(WearConstants.KEY_INTENT_BATCH, voceDiArretrato(WearConstants.INTENT_UNDO, 1, 1000))
+                    .putExtra(WearConstants.KEY_SEQ, 4L),
+            )
+            advanceUntilIdle()
+
+            assertEquals("«0 PUNTI» non e' un riepilogo", emptyList<Int>(), riepiloghi)
+            viewModel.watchBatchApplied.removeObserver(osservatore)
+        }
+
+    private fun voceDiArretrato(
+        intento: String,
+        lato: Int,
+        quando: Long,
+    ) = listOf(intento, lato, quando).joinToString(WearConstants.BATCH_FIELD_SEPARATOR)
+
+    /** Il messaggio «ANNULLATO» dipende da questo esito: vero solo se e' stato tolto qualcosa. */
+    @Test
+    fun `undoLastGoal dice se ha tolto qualcosa`() =
+        runTest {
+            assertEquals("niente da annullare", false, viewModel.undoLastGoal())
+
+            viewModel.addScore(1)
+            assertEquals(true, viewModel.undoLastGoal())
+            assertEquals("e adesso non c'e' piu' niente", false, viewModel.undoLastGoal())
+            advanceUntilIdle()
+        }
+
+    @Test
+    fun `undoLastGoal durante il ripristino non dice di aver tolto niente`() =
+        runTest {
+            val scoreObserver = Observer<Int> {}
+            viewModel.team1Score.observeForever(scoreObserver)
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            imposta("ripristinoInCorso", true)
+
+            assertEquals("il tocco e' solo rimandato", false, viewModel.undoLastGoal())
+            assertEquals("e il punto e' ancora li'", 1, viewModel.team1Score.value)
+            imposta("ripristinoInCorso", false)
+            viewModel.team1Score.removeObserver(scoreObserver)
+        }
+
+    @Test
+    fun `attributeScorer dice se ha attribuito`() =
+        runTest {
+            assertEquals("nessun punto a quell'indice", false, viewModel.attributeScorer(0, mario))
+
+            viewModel.addScore(1)
+            assertEquals(true, viewModel.attributeScorer(0, mario))
+            assertEquals("il punto e' gia' attribuito", false, viewModel.attributeScorer(0, mario))
+            advanceUntilIdle()
+        }
+
+    /**
      * Il ripristino dopo la morte del processo deve lasciare le stesse righe e lo stesso
      * annullamento del percorso dal vivo. In particolare la correzione ricostruita deve essere
      * annullabile come quella dal vivo, togliendo la sua riga e non quella di un gol.

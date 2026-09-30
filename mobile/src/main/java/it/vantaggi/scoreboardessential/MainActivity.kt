@@ -294,6 +294,13 @@ class MainActivity :
         lifecycleScope.launch { viewModel.connectionManager.refreshConnection() }
     }
 
+    override fun onDestroy() {
+        // Il ritorno al testo base dopo 3 secondi e' accodato sulla vista: non deve sopravvivere
+        // all'Activity e tenerla in vita fino alla sua scadenza.
+        if (::lastActionText.isInitialized) lastActionText.removeCallbacks(fineMessaggioInStriscia)
+        super.onDestroy()
+    }
+
     private fun initializeViews() {
         // Core views
         team1ScoreTextView = findViewById(R.id.team1_score_textview)
@@ -650,14 +657,22 @@ class MainActivity :
     /**
      * Ogni Snackbar dell'Activity passa di qui: ancorata sopra la striscia, cosi' non copre le zone +
      * che stanno in fondo alla colonna.
+     *
+     * A foglio PARTITA aperto la striscia sta sotto lo scrim: una Snackbar ancorata a lei
+     * galleggerebbe sulle righe del foglio, quindi senza ancora sta in fondo allo schermo.
      */
     private fun snackbarSopraLaStriscia(
         testo: CharSequence,
         durata: Int,
-    ): Snackbar =
-        Snackbar
+    ): Snackbar {
+        val strisciaInVista =
+            !::matchSheet.isInitialized ||
+                matchSheet.state == BottomSheetBehavior.STATE_HIDDEN ||
+                matchSheet.state == BottomSheetBehavior.STATE_COLLAPSED
+        return Snackbar
             .make(findViewById(R.id.main_root), testo, durata)
-            .setAnchorView(R.id.last_action_strip)
+            .setAnchorView(if (strisciaInVista) lastActionStrip else null)
+    }
 
     /**
      * La dimensione del numero, una volta per sport, uguale per tutta la partita.
@@ -904,8 +919,9 @@ class MainActivity :
                 .setTitle(getString(if (gol) R.string.undo_goal_title else R.string.undo_point_title))
                 .setMessage(getString(if (gol) R.string.undo_goal_message else R.string.undo_point_message))
                 .setPositiveButton(getString(R.string.undo)) { _, _ ->
-                    viewModel.undoLastGoal()
-                    mostraMessaggioInStriscia(getString(R.string.strip_msg_undone))
+                    // «ANNULLATO» solo se ha tolto qualcosa: il tocco puo' essere rimandato dal
+                    // ripristino, o non trovare che eventi inerti.
+                    if (viewModel.undoLastGoal()) mostraMessaggioInStriscia(getString(R.string.strip_msg_undone))
                 }.setNegativeButton(getString(R.string.cancel), null)
                 .show()
         }
@@ -1176,10 +1192,12 @@ class MainActivity :
         teamId: Int,
         engineIndex: Int,
     ) {
-        viewModel.attributeScorer(engineIndex, playerWithRoles)
-        mostraMessaggioInStriscia(
-            getString(R.string.strip_msg_goal_by, playerWithRoles.player.playerName.uppercase(Locale.getDefault())),
-        )
+        // Il messaggio solo se l'attribuzione e' avvenuta: il punto puo' essere sparito nel frattempo.
+        if (viewModel.attributeScorer(engineIndex, playerWithRoles)) {
+            mostraMessaggioInStriscia(
+                getString(R.string.strip_msg_goal_by, playerWithRoles.player.playerName.uppercase(Locale.getDefault())),
+            )
+        }
     }
 
     private fun showEndMatchConfirmation() {
