@@ -302,6 +302,7 @@ class RigaStatoViewModelTest {
         verificheRichieste(1)
     }
 
-    private fun verificheRichieste(quante: Int) =
+    private fun verificheRichieste(quante: Int) {
         runBlocking { Mockito.verify(telefono, Mockito.times(quante)).refreshConnection() }
+    }
 }

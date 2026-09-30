@@ -604,12 +604,7 @@ internal fun Frase.testo(context: Context): String =
         is Frase.NonConsegnati -> context.getString(R.string.wear_status_not_delivered, n)
         is Frase.Invio -> context.getString(R.string.wear_status_sending, n)
         is Frase.InCoda -> context.getString(R.string.wear_status_queued, n)
-        is Frase.Scollegato ->
-            if (alle == null) {
-                context.getString(R.string.wear_status_offline)
-            } else {
-                context.getString(R.string.wear_status_offline_at, SimpleDateFormat("HH:mm", Locale.ROOT).format(Date(alle)))
-            }
+        is Frase.Scollegato -> testoScollegato(context, alle)
         Frase.PartitaFinita -> context.getString(R.string.wear_match_over)
         Frase.TieniMeno -> context.getString(R.string.wear_hint_minus)
         Frase.TieniAnnulla -> context.getString(R.string.wear_hint_undo)
@@ -618,6 +613,16 @@ internal fun Frase.testo(context: Context): String =
         Transitorio.Chiusura -> context.getString(R.string.wear_status_closing)
         Transitorio.NonChiusa -> context.getString(R.string.wear_status_not_closed)
     }
+
+/** L'ora e' fissa a 24 ore, "18:42": la stessa larghezza in ogni lingua, dentro i 18 caratteri. */
+private fun testoScollegato(
+    context: Context,
+    alle: Long?,
+): String {
+    if (alle == null) return context.getString(R.string.wear_status_offline)
+    val ora = SimpleDateFormat("HH:mm", Locale.ROOT).format(Date(alle))
+    return context.getString(R.string.wear_status_offline_at, ora)
+}
 
 /** Il colore del ruolo: ambra e rosso distano 2.14:1, li distingue la parola. */
 internal fun Tono.colore(): Int =
