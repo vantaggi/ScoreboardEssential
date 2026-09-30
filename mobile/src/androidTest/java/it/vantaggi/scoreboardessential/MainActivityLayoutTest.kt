@@ -1176,6 +1176,53 @@ class MainActivityLayoutTest {
         }
     }
 
+    /**
+     * Il foglio e' una NestedScrollView e tiene lo scrollY anche da nascosto: chiuso in fondo e riaperto
+     * dall'icona, la card in cima restava fuori vista. Il tocco sull'icona lo riporta in cima.
+     */
+    @Test
+    fun toccareL_icona_con_il_foglio_scorso_in_fondo_porta_la_card_in_vista() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            onView(withId(R.id.match_sheet_button)).perform(click())
+            assertEquals(BottomSheetBehavior.STATE_EXPANDED, aspettaStato(scenario, BottomSheetBehavior.STATE_EXPANDED))
+            scorriInFondo(scenario)
+            scenario.onActivity { activity ->
+                assertTrue(
+                    "la prova vale solo se il foglio e' davvero scorso",
+                    activity.findViewById<NestedScrollView>(R.id.match_sheet).scrollY > 0,
+                )
+            }
+            // Scorso in fondo il pulsante CHIUDI e' fuori vista: si chiude con indietro.
+            pressBack()
+            assertEquals(BottomSheetBehavior.STATE_HIDDEN, aspettaStato(scenario, BottomSheetBehavior.STATE_HIDDEN))
+
+            try {
+                scenario.onActivity { activity ->
+                    val modello = ViewModelProvider(activity)[MainViewModel::class.java]
+                    modello.addScore(1)
+                    val applica = MainViewModel::class.java.getDeclaredMethod("applyWatchBatch", String::class.java, Long::class.java)
+                    applica.isAccessible = true
+                    val voce = listOf(WearConstants.INTENT_POINT, 1, 1000L).joinToString(WearConstants.BATCH_FIELD_SEPARATOR)
+                    applica.invoke(modello, voce, 7L)
+                }
+                assertTrue("la card non si e' accesa", aspettaCheAttivi(scenario) { cardDellOrologio(it) == View.VISIBLE })
+
+                onView(withId(R.id.wear_status_icon)).perform(click())
+                assertEquals(BottomSheetBehavior.STATE_EXPANDED, aspettaStato(scenario, BottomSheetBehavior.STATE_EXPANDED))
+                InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+                Thread.sleep(500)
+                scenario.onActivity { activity ->
+                    val card = activity.findViewById<View>(R.id.watch_notice_card)
+                    val visibile = Rect()
+                    assertTrue("la card e' fuori dalla finestra", card.getGlobalVisibleRect(visibile))
+                    assertEquals("la card deve essere visibile per intero", card.height, visibile.height())
+                }
+            } finally {
+                scenario.onActivity { ViewModelProvider(it)[MainViewModel::class.java].discardMatch() }
+            }
+        }
+    }
+
     /** L'icona e' #E0E0E0 se l'orologio e' collegato, #9E9E9E (col glifo barrato) se no. */
     @Test
     fun l_icona_dell_orologio_e_chiara_se_collegato_e_grigia_se_no() {
