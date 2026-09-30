@@ -48,6 +48,12 @@ class WearDataLayerService : WearableListenerService() {
         const val EXTRA_V2_PAYLOAD = "v2_payload"
 
         /**
+         * Falso per un v2 riletto al risveglio: e' una copia vecchia, non un'ora in cui il telefono
+         * ha parlato. La riga di stato non deve scrivere "SCOLLEGATO" con l'ora di adesso.
+         */
+        const val EXTRA_V2_DAL_VIVO = "v2_dal_vivo"
+
+        /**
          * Il dispatch sta nel companion perche' lo riusa [MainActivity] per rileggere al risveglio i
          * DataItem gia' presenti: un path deve diventare un broadcast in un punto solo, altrimenti
          * la rilettura e la consegna viva possono divergere in silenzio.
@@ -55,6 +61,7 @@ class WearDataLayerService : WearableListenerService() {
         fun dispatchDataItem(
             context: Context,
             dataItem: DataItem,
+            dalVivo: Boolean = true,
         ) {
             val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
 
@@ -63,6 +70,7 @@ class WearDataLayerService : WearableListenerService() {
                     val intent =
                         Intent(ACTION_STATE_V2_UPDATE).apply {
                             putExtra(EXTRA_V2_PAYLOAD, dataMap.toByteArray())
+                            putExtra(EXTRA_V2_DAL_VIVO, dalVivo)
                         }
                     LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
                     if (BuildConfig.DEBUG) {

@@ -21,6 +21,7 @@ class LastKnownMatch(
         const val PREFS = "wear_last_known_match"
         const val CHIAVE_SPORT = "sport_id"
         const val CHIAVE_LOG = "event_log"
+        const val CHIAVE_RICEVUTO_ALLE = "received_at"
     }
 
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -29,9 +30,23 @@ class LastKnownMatch(
 
     val eventLog: String get() = prefs.getString(CHIAVE_LOG, "").orEmpty()
 
+    /**
+     * Quando il telefono ha parlato l'ultima volta, in millisecondi; zero se non si sa.
+     *
+     * Serve alla riga di stato ("SCOLLEGATO · 18:42") dopo un riavvio dell'orologio: senza questo
+     * l'ora ripartirebbe da niente proprio quando il telefono e' lontano.
+     */
+    val ricevutoAlle: Long get() = prefs.getLong(CHIAVE_RICEVUTO_ALLE, 0L)
+
+    /**
+     * [ricevutoAlle] e' l'istante in cui lo stato e' arrivato DAL VIVO; null per uno stato
+     * riletto dai DataItem al risveglio, che e' una copia vecchia e non dice quando il telefono
+     * ha parlato davvero: in quel caso l'ora di prima resta quella che era.
+     */
     fun save(
         sportId: String,
         eventLog: String,
+        ricevutoAlle: Long? = null,
     ) {
         // Uno sport vuoto arriva da un telefono che parla una bozza precedente del v2: non si
         // sovrascrive quello che si sa gia' con un vuoto, perche' quel vuoto non e' informazione.
@@ -39,6 +54,7 @@ class LastKnownMatch(
         prefs.edit {
             putString(CHIAVE_SPORT, sportId)
             putString(CHIAVE_LOG, eventLog)
+            if (ricevutoAlle != null) putLong(CHIAVE_RICEVUTO_ALLE, ricevutoAlle)
         }
     }
 }

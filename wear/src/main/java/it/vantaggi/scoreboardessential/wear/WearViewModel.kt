@@ -16,6 +16,7 @@ import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
+import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.Job
@@ -130,6 +131,10 @@ class WearViewModel(
     // il costruttore di default avvia i client GMS reali, il cui GoogleApiHandler
     // muore sul looper di Robolectric.
     private val connectionManager: OptimizedWearDataSync = OptimizedWearDataSync(application),
+    // Iniettabile per la riga di stato: "da 10 secondi" si prova spostando l'orologio, non
+    // aspettando. Il tempo dei test e' quello del loro scheduler, cosi' delay e orologio vanno
+    // d'accordo.
+    private val orologio: () -> Long = System::currentTimeMillis,
 ) : AndroidViewModel(application) {
     /**
      * Costruttore richiesto da [androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory],
@@ -207,9 +212,121 @@ class WearViewModel(
 
     val connectionState = connectionManager.connectionState
 
-    /** Il listener della capability non vede il Bluetooth che cade: lo stato va chiesto di nuovo. */
+    // --- Riga di stato: gli input di StatoFiducia ---
+    //
+    // Il ViewModel non decide cosa dire, decide COSA SA: e' StatoFiducia a scegliere la frase. Il
+    // tempo entra qui e solo qui, come istanti; la funzione pura riceve durate.
+
+    /** Fine della verifica del collegamento: zero se nessuna e' in corso. */
+    private var verificaFinoA = 0L
+
+    /** Da quando la coda e' non vuota con il telefono raggiungibile; null se non lo e'. */
+    private var codaDaCollegatiDal: Long? = null
+
+    private var transitorio: Transitorio? = null
+    private var transitorioFinoA = 0L
+
+    /**
+     * L'ora dell'ultimo stato v2 arrivato dal vivo. Dopo un riavvio si rilegge dal disco (in
+     * [refreshPendingCount]), non in costruzione: costruire il ViewModel non deve toccare il disco.
+     */
+    private var ultimoStatoVivoAlle: Long? = null
+
+    private var fiduciaJob: Job? = null
+
+    private val _statoFiducia = MutableStateFlow<Frase>(Frase.TieniMeno)
+
+    /** La frase della riga in basso, gia' scelta: la schermata la traduce e la colora. */
+    val statoFiducia = _statoFiducia.asStateFlow()
+
+    /**
+     * Il listener della capability non vede il Bluetooth che cade: lo stato va chiesto di nuovo.
+     *
+     * Per al massimo 2s la riga non dice "scollegato": all'avvio ConnectionState vale Disconnected
+     * finche' non arriva la risposta, e senza questo la riga lampeggerebbe a ogni accensione. La
+     * verifica finisce alla risposta, o allo scadere dei 2s se la risposta non arriva.
+     */
     fun refreshConnection() {
-        viewModelScope.launch { connectionManager.refreshConnection() }
+        verificaFinoA = orologio() + StatoFiducia.DURATA_VERIFICA_MS
+        ricalcolaFiducia()
+        viewModelScope.launch {
+            connectionManager.refreshConnection()
+            verificaFinoA = 0L
+            ricalcolaFiducia()
+        }
+    }
+
+    /**
+     * Partita in corso: il v2 dice che e' cominciata e non finita; senza v2, un tocco in coda
+     * vuol dire che qualcuno sta giocando.
+     */
+    val partitaInCorso: Boolean
+        get() = _scoreState.value?.let { it.matchInProgress && !it.matchOver } ?: (_pendingCount.value > 0)
+
+    /** Il controllo periodico della schermata accesa: a partita finita il collegamento non interessa. */
+    fun refreshConnectionSePartitaInCorso() {
+        if (partitaInCorso) refreshConnection()
+    }
+
+    /** Un messaggio che dura 2-3s sopra la riga di stato, poi la riga torna da sola. */
+    fun mostraTransitorio(messaggio: Transitorio) {
+        transitorio = messaggio
+        transitorioFinoA = orologio() + StatoFiducia.DURATA_TRANSITORIO_MS
+        ricalcolaFiducia()
+    }
+
+    /**
+     * Rifa' la frase e si rimette in attesa del prossimo istante in cui potrebbe cambiare da sola:
+     * la fine della verifica, la fine del transitorio, i 10s della coda da collegati. Fra due
+     * eventi niente gira: senza una scadenza la riga resterebbe ferma a "INVIO" per sempre.
+     */
+    private fun ricalcolaFiducia() {
+        fiduciaJob?.cancel()
+        fiduciaJob = null
+        var prossima = pubblicaFiducia() ?: return
+        fiduciaJob =
+            viewModelScope.launch {
+                while (true) {
+                    delay((prossima - orologio()).coerceAtLeast(1L))
+                    prossima = pubblicaFiducia() ?: break
+                }
+            }
+    }
+
+    /** Pubblica la frase di adesso; ritorna l'istante della prossima scadenza, o null se non ce n'e'. */
+    private fun pubblicaFiducia(): Long? {
+        val ora = orologio()
+        val collegato = connectionState.value is ConnectionState.Connected
+        val inCoda = _pendingCount.value
+        // Il conto parte quando la coda e' non vuota E il telefono e' raggiungibile, e si azzera
+        // appena una delle due smette: "da 10 secondi" vale solo per chi aspetta da collegato.
+        if (collegato && inCoda > 0) {
+            if (codaDaCollegatiDal == null) codaDaCollegatiDal = ora
+        } else {
+            codaDaCollegatiDal = null
+        }
+        val daCollegati = codaDaCollegatiDal?.let { ora - it } ?: 0L
+        val verificaInCorso = ora < verificaFinoA
+        val transitorioAttivo = transitorio.takeIf { ora < transitorioFinoA }
+        val stato = _scoreState.value
+        _statoFiducia.value =
+            StatoFiducia.calcola(
+                InputFiducia(
+                    collegato = collegato,
+                    verificaInCorso = verificaInCorso,
+                    inCoda = inCoda,
+                    collegatoConCodaDaMs = daCollegati,
+                    matchOver = stato?.matchOver == true,
+                    decrementIsUndo = stato?.decrementIsUndo == true,
+                    ultimoStatoVivoAlle = ultimoStatoVivoAlle,
+                    transitorio = transitorioAttivo,
+                ),
+            )
+        return listOfNotNull(
+            verificaFinoA.takeIf { verificaInCorso },
+            transitorioFinoA.takeIf { transitorioAttivo != null },
+            codaDaCollegatiDal?.plus(StatoFiducia.SOGLIA_NON_CONSEGNATI_MS)?.takeIf { daCollegati < StatoFiducia.SOGLIA_NON_CONSEGNATI_MS },
+        ).minOrNull()
     }
 
     // Team Scores
@@ -272,6 +389,15 @@ class WearViewModel(
         viewModelScope.launch {
             connectionManager.sendMessage(it.vantaggi.scoreboardessential.shared.communication.WearConstants.MSG_REQUEST_SYNC)
         }
+        // La frase dipende da tre cose che cambiano per conto loro: lo stato, la coda, il
+        // collegamento. Ognuna, cambiando, la rifa'.
+        viewModelScope.launch { _scoreState.collect { ricalcolaFiducia() } }
+        viewModelScope.launch { _pendingCount.collect { ricalcolaFiducia() } }
+        viewModelScope.launch { connectionState.collect { ricalcolaFiducia() } }
+        // Il ViewModel nasce insieme all'app: fino alla prima risposta sul collegamento non si
+        // sa, e non si dice "scollegato". Anche qui per al massimo 2s.
+        verificaFinoA = orologio() + StatoFiducia.DURATA_VERIFICA_MS
+        ricalcolaFiducia()
     }
 
     fun clearPlayerSelectionEvent() {
@@ -303,16 +429,26 @@ class WearViewModel(
      * Mentre un arretrato e' in viaggio non si ridisegna affatto: lo stato applicato e l'ack
      * partono dal telefono quasi insieme, e ricalcolare in quella finestra significherebbe
      * sommare l'arretrato a un registro che lo contiene gia'.
+     *
+     * [dalVivo] e' falso per uno stato riletto dai DataItem al risveglio: e' una copia, non un
+     * momento in cui il telefono ha parlato, e l'ora di "SCOLLEGATO · 18:42" non deve diventare
+     * quella del risveglio.
      */
-    fun applyStateV2(state: WearScoreState) {
+    fun applyStateV2(
+        state: WearScoreState,
+        dalVivo: Boolean = true,
+    ) {
         protocolV2Seen = true
         statoDalTelefono = state
-        ultimaNota.save(state.sportId, state.eventLog)
+        if (dalVivo) ultimoStatoVivoAlle = orologio()
+        ultimaNota.save(state.sportId, state.eventLog, ultimoStatoVivoAlle.takeIf { dalVivo })
         when {
             batchInVolo != null -> Unit
             pending.size > 0 && rebuildLocalState() -> Unit
             else -> _scoreState.value = state
         }
+        // Lo stato puo' restare identico mentre l'ora cambia: il collector non se ne accorgerebbe.
+        ricalcolaFiducia()
     }
 
     // --- Score Management ---
@@ -498,6 +634,11 @@ class WearViewModel(
      * orologio riacceso con una partita in coda deve dirlo subito.
      */
     fun refreshPendingCount() {
+        // L'ora dell'ultimo dato vivo sopravvive al riavvio: e' il momento in cui serve di piu'.
+        if (ultimoStatoVivoAlle == null) {
+            ultimoStatoVivoAlle = ultimaNota.ricevutoAlle.takeIf { it > 0L }
+            ricalcolaFiducia()
+        }
         _pendingCount.value = pending.size
         // Un orologio riacceso a meta' partita, col telefono in borsa, deve ritrovare il
         // punteggio che aveva: non basta sapere quanti tocchi sono in coda.
@@ -551,6 +692,8 @@ class WearViewModel(
         if (pending.size == 0 || !rebuildLocalState()) {
             statoDalTelefono?.let { _scoreState.value = it }
         }
+        // Il polso dice per qualche secondo che le voci sono arrivate, poi la riga torna sola.
+        mostraTransitorio(Transitorio.Consegnati(inVolo.second))
     }
 
     /**

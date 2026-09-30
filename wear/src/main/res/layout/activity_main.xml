@@ -37,18 +37,6 @@
             android:orientation="horizontal"
             app:layout_constraintGuide_percent="0.20" />
 
-        <!-- Connection Status Indicator -->
-        <View
-            android:id="@+id/connectionStatusIndicator"
-            android:layout_width="12dp"
-            android:layout_height="12dp"
-            android:background="@drawable/shape_circle"
-            android:backgroundTint="@color/error_red"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="4dp" />
-
         <!-- Match Timer - Top Center -->
         <TextView
             android:id="@+id/matchTimer"
@@ -177,17 +165,29 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Che cosa fa tenere premuto. Cambia con lo sport, e senza di essa non lo dice nessuno. -->
+        <!--
+            La riga di stato: una frase sola, che parla quando qualcosa non va (StatoFiducia). Il
+            nome e' quello di quando diceva solo che cosa fa tenere premuto. Larghezza e altezza
+            fisse perche' l'autoSize non funziona su wrap_content: la frase piu' lunga si stringe
+            da sola fino a 10sp invece di tagliarsi.
+        -->
         <TextView
             android:id="@+id/gestureHint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/wear_hint_height"
+            android:gravity="center"
             android:text="@string/wear_hint_minus"
-            android:textSize="@dimen/wear_hint_text_size"
             android:fontFamily="sans-serif-condensed"
+            android:textStyle="bold"
             android:textColor="@color/sidewalk_gray"
-            android:letterSpacing="0.06"
+            android:letterSpacing="0.04"
             android:maxLines="1"
+            android:includeFontPadding="false"
+            android:accessibilityLiveRegion="polite"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="10sp"
+            android:autoSizeMaxTextSize="@dimen/wear_hint_text_size"
+            android:autoSizeStepGranularity="1sp"
             app:layout_constraintBottom_toTopOf="@id/btn_start_new_match"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />

@@ -1,7 +1,7 @@
 package it.vantaggi.scoreboardessential.wear
 
+import android.content.Context
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -16,11 +16,18 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     companion object {
         private const val TAG = "MainActivity"
+
+        /** Ogni quanto si richiede il collegamento a partita in corso e schermo acceso. */
+        internal const val INTERVALLO_VERIFICA_MS = 15_000L
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -37,11 +44,9 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    // Cosa dice la riga in basso dipende da DUE cose: lo sport e il collegamento.
+    // Serve solo alla descrizione dei lati per TalkBack: cosa dice la riga in basso lo decide
+    // StatoFiducia nel ViewModel, non questa schermata.
     private var annullamentoGlobale = false
-    private var telefonoRaggiungibile = true
-    private var daConsegnare = 0
-    private var partitaFinita = false
     private val viewModel: WearViewModel by viewModels()
 
     private var stateRestored = false
@@ -55,7 +60,10 @@ class MainActivity : ComponentActivity() {
                 when (intent.action) {
                     WearDataLayerService.ACTION_STATE_V2_UPDATE -> {
                         val payload = intent.getByteArrayExtra(WearDataLayerService.EXTRA_V2_PAYLOAD) ?: return
-                        viewModel.applyStateV2(WearScoreState.fromDataMap(DataMap.fromByteArray(payload)))
+                        viewModel.applyStateV2(
+                            WearScoreState.fromDataMap(DataMap.fromByteArray(payload)),
+                            dalVivo = intent.getBooleanExtra(WearDataLayerService.EXTRA_V2_DAL_VIVO, true),
+                        )
                     }
 
                     WearDataLayerService.ACTION_BATCH_ACK -> {
@@ -119,7 +127,7 @@ class MainActivity : ComponentActivity() {
         setContentView(binding.root)
 
         setupClickListeners()
-        applyGestureLabels(decrementIsUndo = false)
+        describeSides()
         viewModel.refreshPendingCount()
         observeViewModel()
 
@@ -143,7 +151,8 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         restoreStateFromDataItems()
-        // Al risveglio il pallino deve dire com'e' il collegamento ADESSO, non com'era all'avvio.
+        // Al risveglio la riga di stato deve dire com'e' il collegamento ADESSO, non com'era
+        // all'avvio.
         viewModel.refreshConnection()
     }
 
@@ -175,7 +184,9 @@ class MainActivity : ComponentActivity() {
                         // rigiocarlo farebbe ripartire da capo un conto alla rovescia gia' finito,
                         // vibrazione compresa.
                         .filter { it.uri.path != WearConstants.PATH_KEEPER_TIMER }
-                        .forEach { WearDataLayerService.dispatchDataItem(this, it) }
+                        // Rilettura, non un momento in cui il telefono ha parlato: l'ora dell'ultimo
+                        // dato vivo non si tocca.
+                        .forEach { WearDataLayerService.dispatchDataItem(this, it, dalVivo = false) }
                 } finally {
                     buffer.release()
                 }
@@ -297,12 +308,12 @@ class MainActivity : ComponentActivity() {
      *
      * decrementIsUndo viveva solo dentro il ViewModel: sullo schermo dell'orologio non c'era una
      * riga, un'icona o una descrizione che distinguesse "togli un punto a questa squadra" da
-     * "annulla l'ultima azione". Sono due cose diverse e ora si leggono.
+     * "annulla l'ultima azione". Sono due cose diverse e ora si leggono: la descrizione dei lati
+     * qui, e il suggerimento in riga di stato quando non c'e' altro da dire.
      */
     private fun applyGestureLabels(decrementIsUndo: Boolean) {
         annullamentoGlobale = decrementIsUndo
         describeSides()
-        refreshHint()
     }
 
     /**
@@ -327,26 +338,6 @@ class MainActivity : ComponentActivity() {
         nome: String,
         lato: Int,
     ): String = nome.ifBlank { getString(R.string.cd_team_fallback, lato) }
-
-    /**
-     * Quando il telefono non risponde, il tocco non fa NIENTE.
-     *
-     * Prima l'unica differenza fra collegato e non collegato era il colore di un punto da 8dp:
-     * chi non distingue il rosso dal verde, o semplicemente non guarda in cima, continuava a
-     * segnare su un tabellone fermo. Ora il punto e' piu' grande, ha una descrizione parlata, e
-     * soprattutto la riga in basso smette di spiegare un gesto che in quel momento non funziona.
-     */
-    private fun applyConnectionState(connesso: Boolean) {
-        telefonoRaggiungibile = connesso
-        // Il telefono e' tornato: cio' che si e' segnato senza di lui parte adesso, da solo.
-        if (connesso) viewModel.flushPending()
-        val colore = if (connesso) R.color.team_electric_green else R.color.error_red
-        binding.connectionStatusIndicator.backgroundTintList =
-            ColorStateList.valueOf(ContextCompat.getColor(this, colore))
-        binding.connectionStatusIndicator.contentDescription =
-            getString(if (connesso) R.string.cd_connection_ok else R.string.cd_connection_lost)
-        refreshHint()
-    }
 
     /**
      * Il comando del portiere c'e' o non c'e', e deve poter TORNARE.
@@ -382,36 +373,22 @@ class MainActivity : ComponentActivity() {
      * schermo. Che i lati siano spenti lo dice la riga in basso.
      */
     private fun applyMatchOver(finita: Boolean) {
-        partitaFinita = finita
         listOf(binding.team1Container, binding.team2Container).forEach { lato ->
             lato.isClickable = !finita
         }
-        refreshHint()
     }
 
-    /** La riga in basso ha una cosa sola da dire, e quale sia lo decide qui. */
-    private fun refreshHint() {
-        if (!telefonoRaggiungibile) {
-            // Quanti punti sono stati segnati e stanno aspettando il telefono. Senza questo
-            // numero, "NIENTE TELEFONO" si legge come "non sto registrando niente", che e'
-            // esattamente il contrario di quello che sta succedendo.
-            binding.gestureHint.text =
-                if (daConsegnare > 0) {
-                    getString(R.string.wear_hint_pending, daConsegnare)
-                } else {
-                    getString(R.string.wear_hint_disconnected)
-                }
-            binding.gestureHint.setTextColor(ContextCompat.getColor(this, R.color.error_red))
-            return
-        }
-        if (partitaFinita) {
-            // Spegnere i due lati senza dire perche' li farebbe sembrare rotti.
-            binding.gestureHint.setText(R.string.wear_match_over)
-            binding.gestureHint.setTextColor(ContextCompat.getColor(this, R.color.stencil_white))
-            return
-        }
-        binding.gestureHint.setText(if (annullamentoGlobale) R.string.wear_hint_undo else R.string.wear_hint_minus)
-        binding.gestureHint.setTextColor(ContextCompat.getColor(this, R.color.sidewalk_gray))
+    /**
+     * La riga in basso ha una cosa sola da dire, e quale sia l'ha gia' deciso StatoFiducia.
+     *
+     * Sul polso la norma e' che vada tutto bene, quindi niente pallino che dica "ok": la riga
+     * parla quando qualcosa non va, a parole, cosi' vale anche per chi non distingue l'ambra dal
+     * rosso e al sole. Col telefono scollegato, a differenza di prima, dice anche QUANTI punti
+     * aspettano; col telefono raggiungibile dice se la coda non parte.
+     */
+    private fun renderStatus(frase: Frase) {
+        binding.gestureHint.text = frase.testo(this)
+        binding.gestureHint.setTextColor(ContextCompat.getColor(this, frase.tono.colore()))
     }
 
     /**
@@ -450,10 +427,15 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                launch { viewModel.statoFiducia.collect { renderStatus(it) } }
+
+                // Il listener della capability non vede il Bluetooth che cade: con la partita in
+                // corso e lo schermo acceso il collegamento si richiede da soli ogni 15 secondi.
+                // Fuori da STARTED il ciclo si ferma, e riparte dal primo onResume.
                 launch {
-                    viewModel.pendingCount.collect { quanti ->
-                        daConsegnare = quanti
-                        refreshHint()
+                    while (true) {
+                        delay(INTERVALLO_VERIFICA_MS)
+                        viewModel.refreshConnectionSePartitaInCorso()
                     }
                 }
 
@@ -595,15 +577,53 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-                // Observe Connection State
+                // Il telefono e' tornato: cio' che si e' segnato senza di lui parte adesso, da solo.
+                // Cosa dire del collegamento non e' affare di questo collector: lo dice la riga.
                 launch {
                     viewModel.connectionState.collect { state ->
-                        applyConnectionState(
-                            state is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Connected,
-                        )
+                        if (state is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Connected) {
+                            viewModel.flushPending()
+                        }
                     }
                 }
             }
         }
     }
 }
+
+/**
+ * La frase di stato nella lingua dell'orologio.
+ *
+ * Fuori dalla schermata perche' il test delle lunghezze la chiama sulle risorse vere, in italiano e
+ * in inglese: e' il solo modo di sapere che una frase entra nei 18 caratteri prima che la tagli il
+ * quadrante tondo.
+ */
+internal fun Frase.testo(context: Context): String =
+    when (this) {
+        is Frase.Rifiutati -> context.getString(R.string.wear_status_rejected, n)
+        is Frase.NonConsegnati -> context.getString(R.string.wear_status_not_delivered, n)
+        is Frase.Invio -> context.getString(R.string.wear_status_sending, n)
+        is Frase.InCoda -> context.getString(R.string.wear_status_queued, n)
+        is Frase.Scollegato ->
+            if (alle == null) {
+                context.getString(R.string.wear_status_offline)
+            } else {
+                context.getString(R.string.wear_status_offline_at, SimpleDateFormat("HH:mm", Locale.ROOT).format(Date(alle)))
+            }
+        Frase.PartitaFinita -> context.getString(R.string.wear_match_over)
+        Frase.TieniMeno -> context.getString(R.string.wear_hint_minus)
+        Frase.TieniAnnulla -> context.getString(R.string.wear_hint_undo)
+        Transitorio.NonConfermato -> context.getString(R.string.wear_status_not_confirmed)
+        is Transitorio.Consegnati -> context.getString(R.string.wear_status_delivered, n)
+        Transitorio.Chiusura -> context.getString(R.string.wear_status_closing)
+        Transitorio.NonChiusa -> context.getString(R.string.wear_status_not_closed)
+    }
+
+/** Il colore del ruolo: ambra e rosso distano 2.14:1, li distingue la parola. */
+internal fun Tono.colore(): Int =
+    when (this) {
+        Tono.ROSSO -> R.color.error_red
+        Tono.AMBRA -> R.color.signal_amber
+        Tono.CHIARO -> R.color.stencil_white
+        Tono.GRIGIO -> R.color.sidewalk_gray
+    }
