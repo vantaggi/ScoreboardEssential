@@ -1,6 +1,13 @@
 package it.vantaggi.scoreboardessential
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
+import android.os.Looper
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.test.core.app.ApplicationProvider
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataItem
@@ -8,7 +15,8 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import org.junit.After
-import org.junit.Assert.fail
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,6 +26,7 @@ import org.mockito.Mockito.mockStatic
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
@@ -36,15 +45,6 @@ class SimplifiedDataLayerListenerServiceTest {
     fun setup() {
         MockitoAnnotations.openMocks(this)
         service = SimplifiedDataLayerListenerService()
-        // Mock context/application/resources if needed, but Service should be fine for simple methods
-        // However, LocalBroadcastManager needs a context. We might need to attach base context if we were running as a real service
-        // Since we call onDataChanged directly, we need to ensure LocalBroadcastManager.getInstance(this) works.
-        // SimplifiedDataLayerListenerService is a Service, so 'this' is a Context.
-        // In Robolectric, we can use a spy or shadow, or just instantiate it.
-        // But since we are calling a method on an instance created with 'new', it doesn't have a Context attached.
-        // We need to attach it. A common way is using Robolectric.buildService
-
-        // But let's try just setting up the mocks first.
 
         mockDataEventBuffer = mock(DataEventBuffer::class.java)
         mockDataEvent = mock(DataEvent::class.java)
@@ -61,19 +61,35 @@ class SimplifiedDataLayerListenerServiceTest {
         dataMapItemStatic.close()
     }
 
+    /**
+     * Un aggiornamento di punteggio dall'orologio arriva all'interfaccia come broadcast locale, coi
+     * due valori giusti negli extra, e i valori NON finiscono nel log.
+     *
+     * Prima c'era solo l'asserzione negativa sul log, con la verifica del broadcast scritta come
+     * commento: il test passava anche se il servizio non inviava niente.
+     */
     @Test
-    fun `onDataChanged logs score update with sensitive data`() {
-        // Arrange
-        // We need a context for LocalBroadcastManager
-        val serviceController = org.robolectric.Robolectric.buildService(SimplifiedDataLayerListenerService::class.java)
-        service = serviceController.get()
+    fun `onDataChanged inoltra il punteggio 10 a 5 in broadcast e non lo scrive nel log`() {
+        // LocalBroadcastManager vuole un contesto: il servizio va costruito da Robolectric.
+        service = org.robolectric.Robolectric.buildService(SimplifiedDataLayerListenerService::class.java).get()
 
-        // Setup mocks
+        val ricevuti = mutableListOf<Intent>()
+        val receiver =
+            object : BroadcastReceiver() {
+                override fun onReceive(
+                    context: Context,
+                    intent: Intent,
+                ) {
+                    ricevuti.add(intent)
+                }
+            }
+        val manager = LocalBroadcastManager.getInstance(ApplicationProvider.getApplicationContext())
+        manager.registerReceiver(receiver, IntentFilter(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE))
+
         `when`(mockDataEventBuffer.count).thenReturn(1)
         `when`(mockDataEventBuffer.get(0)).thenReturn(mockDataEvent)
-        // Iterator for forEachIndexed
-        val iterator = mutableListOf(mockDataEvent).iterator()
-        `when`(mockDataEventBuffer.iterator()).thenReturn(iterator)
+        // Iteratore per il forEach del servizio
+        `when`(mockDataEventBuffer.iterator()).thenReturn(mutableListOf(mockDataEvent).iterator())
 
         `when`(mockDataEvent.type).thenReturn(DataEvent.TYPE_CHANGED)
         `when`(mockDataEvent.dataItem).thenReturn(mockDataItem)
@@ -82,32 +98,24 @@ class SimplifiedDataLayerListenerServiceTest {
 
         dataMapItemStatic.`when`<DataMapItem> { DataMapItem.fromDataItem(mockDataItem) }.thenReturn(mockDataMapItem)
         `when`(mockDataMapItem.dataMap).thenReturn(mockDataMap)
+        `when`(mockDataMap.getInt(WearConstants.KEY_TEAM1_SCORE, 0)).thenReturn(10)
+        `when`(mockDataMap.getInt(WearConstants.KEY_TEAM2_SCORE, 0)).thenReturn(5)
 
-        // Sensitive data
-        val team1Score = 10
-        val team2Score = 5
-        `when`(mockDataMap.getInt(WearConstants.KEY_TEAM1_SCORE, 0)).thenReturn(team1Score)
-        `when`(mockDataMap.getInt(WearConstants.KEY_TEAM2_SCORE, 0)).thenReturn(team2Score)
-
-        // Act
-        service.onDataChanged(mockDataEventBuffer)
-
-        // Assert
-        val logs = ShadowLog.getLogsForTag("SimplifiedDataService")
-        val sensitiveLog = logs.find { it.msg.contains("Broadcasted score update: T1=10, T2=5") }
-
-        if (sensitiveLog != null) {
-            // This confirms the vulnerability exists (for reproduction)
-            // or fails if we fixed it.
-            // Since I want to verify the fix later, I should assert that it DOES NOT contain this.
-            // But for reproduction, I want to show it exists.
-            // I'll leave a comment.
+        try {
+            service.onDataChanged(mockDataEventBuffer)
+            shadowOf(Looper.getMainLooper()).idle()
+        } finally {
+            manager.unregisterReceiver(receiver)
         }
 
-        // To verify the fix, we assert that no log contains the sensitive values
-        val leaks = logs.any { it.msg.contains("T1=10") || it.msg.contains("T2=5") }
-        if (leaks) {
-            fail("Sensitive score data logged!")
-        }
+        assertEquals("un solo broadcast di punteggio", 1, ricevuti.size)
+        assertEquals(10, ricevuti[0].getIntExtra(WearConstants.KEY_TEAM1_SCORE, -1))
+        assertEquals(5, ricevuti[0].getIntExtra(WearConstants.KEY_TEAM2_SCORE, -1))
+
+        val fughe =
+            ShadowLog
+                .getLogsForTag("SimplifiedDataService")
+                .filter { it.msg.contains("T1=10") || it.msg.contains("T2=5") }
+        assertTrue("Dati di punteggio nel log: ${fughe.map { it.msg }}", fughe.isEmpty())
     }
 }
