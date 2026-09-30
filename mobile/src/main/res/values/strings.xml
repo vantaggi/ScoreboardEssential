@@ -78,7 +78,20 @@
     <string name="remove_player_message">Remove %1$s from %2$s?</string>
     <string name="remove">Remove</string>
     <string name="player_removed_message">%1$s removed from %2$s</string>
-    <string name="goal_by_message">⚽ Goal by %s!</string>
+    <!-- Striscia dell'ultima azione: testo base dal primo SCORE del registro, sempre su una riga. -->
+    <string name="strip_none_goal">NO GOALS YET</string>
+    <string name="strip_none_point">NO POINTS YET</string>
+    <string name="strip_goal_unattributed">GOAL %1$s · WHO SCORED? ›</string>
+    <string name="strip_goal_by">GOAL %1$s · %2$s</string>
+    <string name="strip_point">POINT %1$s · %2$s</string>
+    <!-- Messaggi di 3 secondi nella striscia, al posto delle Snackbar che coprivano le zone. -->
+    <string name="strip_msg_goal_by">GOAL BY %1$s</string>
+    <string name="strip_msg_correction">CORRECTION −1 %1$s</string>
+    <string name="strip_msg_undone">UNDONE</string>
+    <plurals name="strip_msg_from_watch">
+        <item quantity="one">WATCH: %1$d POINT</item>
+        <item quantity="other">WATCH: %1$d POINTS</item>
+    </plurals>
     <string name="end_match_title">End Match?</string>
     <string name="end_match_message">What do you want to do with it?
 
@@ -97,10 +110,6 @@
 
     <string name="share_match_report">Share</string>
     <string name="score_period_serving">%1$s - serve %2$s</string>
-    <plurals name="watch_batch_applied">
-        <item quantity="one">Match from the watch: %1$d action imported.</item>
-        <item quantity="other">Match from the watch: %1$d actions imported.</item>
-    </plurals>
     <string name="watch_batch_rejected">The watch sent points that did not go into this match.</string>
     <string name="label_match_history">HISTORY</string>
     <string name="label_end_match">END MATCH</string>

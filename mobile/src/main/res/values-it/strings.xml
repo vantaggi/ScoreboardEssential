@@ -75,7 +75,21 @@
     <string name="remove_player_message">Rimuovere %1$s da %2$s?</string>
     <string name="remove">Rimuovi</string>
     <string name="player_removed_message">%1$s rimosso da %2$s</string>
-    <string name="goal_by_message">⚽ Gol di %s!</string>
+    <!-- Striscia dell'ultima azione: testo base dal primo SCORE del registro, sempre su una riga. -->
+    <string name="strip_none_goal">NESSUN GOL</string>
+    <string name="strip_none_point">NESSUN PUNTO</string>
+    <string name="strip_goal_unattributed">GOL %1$s · CHI HA SEGNATO? ›</string>
+    <string name="strip_goal_by">GOL %1$s · %2$s</string>
+    <string name="strip_point">PUNTO %1$s · %2$s</string>
+    <!-- Messaggi di 3 secondi nella striscia, al posto delle Snackbar che coprivano le zone. -->
+    <string name="strip_msg_goal_by">GOL DI %1$s</string>
+    <string name="strip_msg_correction">CORREZIONE −1 %1$s</string>
+    <string name="strip_msg_undone">ANNULLATO</string>
+    <plurals name="strip_msg_from_watch">
+        <item quantity="one">OROLOGIO: %1$d PUNTO</item>
+        <item quantity="many">OROLOGIO: %1$d PUNTI</item>
+        <item quantity="other">OROLOGIO: %1$d PUNTI</item>
+    </plurals>
     <string name="end_match_title">Termina Partita?</string>
     <string name="end_match_message">Che cosa vuoi farne?
 
@@ -94,11 +108,6 @@
 
     <string name="share_match_report">Condividi</string>
     <string name="score_period_serving">%1$s - serve %2$s</string>
-    <plurals name="watch_batch_applied">
-        <item quantity="one">Partita dal polso: %1$d azione importata.</item>
-        <item quantity="many">Partita dal polso: %1$d azioni importate.</item>
-        <item quantity="other">Partita dal polso: %1$d azioni importate.</item>
-    </plurals>
     <string name="watch_batch_rejected">L\'orologio ha mandato punti che non sono entrati in questa partita.</string>
     <string name="label_match_history">STORICO</string>
     <string name="label_end_match">FINE PARTITA</string>
