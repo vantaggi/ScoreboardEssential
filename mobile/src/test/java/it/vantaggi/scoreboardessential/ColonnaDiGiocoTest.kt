@@ -298,7 +298,11 @@ class ColonnaDiGiocoTest {
         assertEquals("niente stroke sulla zona spenta", 0, zona.strokeWidth)
         assertEquals("il glifo sparisce", 0f, glifo.alpha, 0f)
         assertEquals("la barra si accende", 1f, barra.alpha, 0f)
-        assertEquals("la barra porta il colore della squadra", TeamInk.graphicOnBlack(blu), (barra.background as ColorDrawable).color)
+        // La barra sta sul grigio #2C2C2C della zona spenta: il 3:1 si misura li', non contro il nero.
+        val colorBarra = (barra.background as ColorDrawable).color
+        val grigio = 0xFF2C2C2C.toInt()
+        assertTrue("la barra di #1A237E su #2C2C2C fa %.2f".format(TeamInk.contrast(colorBarra, grigio)), TeamInk.contrast(colorBarra, grigio) >= 3.0)
+        assertEquals("la barra porta il colore della squadra, schiarito per il grigio", TeamInk.graphicOn(blu, grigio), colorBarra)
         assertTrue("la zona spenta risponde ancora al tocco", zona.isClickable)
 
         applicaStatoDellaZona(zona, glifo, barretta, barra, blu, finita = false)

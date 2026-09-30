@@ -4,11 +4,16 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
+import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.ScoreState
 import it.vantaggi.scoreboardessential.core.ScoringEvent
+import it.vantaggi.scoreboardessential.core.ScoringMode
+import it.vantaggi.scoreboardessential.core.SportConfig
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.core.SportRules
 import it.vantaggi.scoreboardessential.core.TeamInk
+import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -110,9 +115,54 @@ class PartitaARacchettaTest {
     }
 
     @Test
-    fun `al 6-3 la barra dice VINCE con il punteggio del vincitore per primo`() {
+    fun `al 6-3 la barra dice VINCE con il punteggio dal lato della squadra di sinistra`() {
         assertEquals("VINCE ROSSI · 6-3", barra(padel, padelFinito(1)))
-        assertEquals("VINCE BIANCHI · 6-3", barra(padel, padelFinito(2)))
+        // Come lo schermo: a sinistra Rossi ha perso 3-6, e la barra non lo rigira in 6-3.
+        assertEquals("VINCE BIANCHI · 3-6", barra(padel, padelFinito(2)))
+    }
+
+    /** Tennis a tre set vinto dalla squadra di destra: 6-4 3-6 7-5 per Bianchi, cioe' 4-6 6-3 5-7 per Rossi. */
+    private fun tennisVintoDaBianchi(): ScoreState {
+        var s = tennis.initial()
+        repeat(4) {
+            s = tennis.game(s, 1)
+            s = tennis.game(s, 2)
+        }
+        repeat(2) { s = tennis.game(s, 2) }
+        repeat(3) {
+            s = tennis.game(s, 1)
+            s = tennis.game(s, 2)
+        }
+        repeat(3) { s = tennis.game(s, 1) }
+        repeat(5) {
+            s = tennis.game(s, 1)
+            s = tennis.game(s, 2)
+        }
+        repeat(2) { s = tennis.game(s, 2) }
+        return s
+    }
+
+    @Test
+    fun `nel tennis a piu' set la barra dice i set dalla parte della squadra di sinistra`() {
+        val display = tennis.display(tennisVintoDaBianchi())
+        assertTrue("la partita doveva finire: $display", display.matchOver)
+        assertEquals("4-6 · 6-3 · 5-7", display.side1Secondary)
+        assertEquals("VINCE BIANCHI · 4-6 6-3 5-7", barra(tennis, tennisVintoDaBianchi()))
+    }
+
+    @Test
+    fun `con un nome lungo la barra accorcia il nome e lascia intero il punteggio`() {
+        val display = padel.display(padelFinito(1))
+        val lungo = "Maria Antonietta Della"
+        assertEquals(22, lungo.length)
+        // Una barra da 24 caratteri: «VINCE MARIA ANTONIETTA DELLA · 6-3» (34) non entra.
+        val testo = testoDellaBarra(context, padel.id, display, lungo, "Bianchi") { it.length <= 24 }
+        assertTrue("il punteggio deve restare: $testo", testo.endsWith(" · 6-3"))
+        assertTrue("il nome e' accorciato con l'ellissi: $testo", testo.contains("\u2026"))
+        assertTrue("il testo deve entrare: $testo", testo.length <= 24)
+        assertTrue("accorciato il meno possibile: $testo", testo.length >= 23)
+        // Se entra intero non si tocca.
+        assertEquals("VINCE MARIA ANTONIETTA DELLA · 6-3", testoDellaBarra(context, padel.id, display, lungo, "Bianchi") { true })
     }
 
     @Test
@@ -133,11 +183,38 @@ class PartitaARacchettaTest {
     }
 
     @Test
+    fun `nel tie-break 6-6 con i punti 6-6 il dialogo dice anche il punto`() {
+        var s = padel.initial()
+        repeat(6) {
+            s = padel.game(s, 1)
+            s = padel.game(s, 2)
+        }
+        repeat(6) {
+            s = padel.punti(s, 1, 1)
+            s = padel.punti(s, 2, 1)
+        }
+        val display = padel.display(s)
+        assertEquals("6", display.side1Primary)
+        assertEquals("6-6", display.side1Secondary)
+        val testo = testoDelDialogoDiFine(context, padel.id, display, "Rossi", "Bianchi")
+        assertEquals("ROSSI – BIANCHI · game 6-6 · punto 6-6", testo.messaggio)
+    }
+
+    @Test
+    fun `in modalita' a game il dialogo non ha la riga del punto`() {
+        val display = ScoreDisplay(side1Primary = "5", side1Secondary = "5-3", side2Primary = "3", side2Secondary = "3-5")
+        val testo = testoDelDialogoDiFine(context, padel.id, display, "Rossi", "Bianchi", modalitaAGame = true)
+        assertEquals("ROSSI – BIANCHI · game 5-3", testo.messaggio)
+        assertTrue(modalitaAGame("padel").not())
+        assertTrue(modalitaAGame(SportRegistry.FOOTBALL).not())
+    }
+
+    @Test
     fun `nel tennis il dialogo mette i set chiusi davanti al game`() {
         var s = tennis.initial()
         repeat(6) { s = tennis.game(s, 1) }
         val testo = testoDelDialogoDiFine(context, tennis.id, tennis.display(s), "Rossi", "Bianchi")
-        assertEquals("ROSSI – BIANCHI · set 6-0 · game 0-0", testo.messaggio)
+        assertEquals("ROSSI – BIANCHI · set 6-0 · game 0-0 · punto 0-0", testo.messaggio)
     }
 
     @Test
@@ -204,6 +281,25 @@ class PartitaARacchettaTest {
     }
 
     @Test
+    fun `in modalita' a game un tocco non da' il doppio colpo, lo da' il set chiuso`() {
+        val giochi = RacketRules(id = "tennis", config = SportConfig(mode = ScoringMode.GAMES, sets = 3))
+        var s = giochi.initial()
+        val display0 = giochi.display(s)
+        s = giochi.apply(s, ScoringEvent.Point(side = 1))
+        val display1 = giochi.display(s)
+        assertTrue("in modalita' a game il secondario cambia a ogni tocco", display0.side1Secondary != display1.side1Secondary)
+        assertEquals(RiscontroDelPunto.NESSUNO, riscontroDelPunto(display0, display1, true, modalitaAGame = true))
+        // Con la regola dei punti quello stesso cambio sarebbe un game chiuso.
+        assertEquals(RiscontroDelPunto.GAME_CHIUSO, riscontroDelPunto(display0, display1, true, modalitaAGame = false))
+        repeat(4) { s = giochi.apply(s, ScoringEvent.Point(side = 1)) }
+        val prima = giochi.display(s)
+        assertEquals("5-0", prima.side1Secondary)
+        val dopo = giochi.display(giochi.apply(s, ScoringEvent.Point(side = 1)))
+        assertEquals("6-0 · 0-0", dopo.side1Secondary)
+        assertEquals(RiscontroDelPunto.GAME_CHIUSO, riscontroDelPunto(prima, dopo, true, modalitaAGame = true))
+    }
+
+    @Test
     fun `un punto che non chiude niente, il calcio e la partita finita non danno riscontro`() {
         val zero = padel.display(padel.initial())
         val quindici = padel.display(padel.punti(padel.initial(), 1, 1))
@@ -215,11 +311,10 @@ class PartitaARacchettaTest {
     }
 
     @Test
-    fun `il tocco inerte e' una sequenza di tre tick brevi`() {
-        // Forma [pausa, tick, pausa, tick, ...]: i tick stanno agli indici dispari.
-        val tick = TRE_TICK.filterIndexed { i, _ -> i % 2 == 1 }
-        assertEquals(3, tick.size)
-        assertTrue("ogni tick e' breve", tick.all { it <= 30 })
-        assertTrue("tutta la sequenza sta sotto il quarto di secondo", TRE_TICK.sum() < 250)
+    fun `il tocco inerte e' il colpo unico lungo, non i tre tick dell'annullamento`() {
+        // Forma [pausa, colpo]: un solo impulso, da almeno mezzo decimo di secondo oltre un tick.
+        assertArrayEquals(longArrayOf(0, 400), HapticFeedbackManager.PATTERN_INERT_TAP)
+        assertEquals("un solo impulso", 1, HapticFeedbackManager.PATTERN_INERT_TAP.filterIndexed { i, _ -> i % 2 == 1 }.size)
+        assertTrue("e lungo", HapticFeedbackManager.PATTERN_INERT_TAP[1] >= 300)
     }
 }

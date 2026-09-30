@@ -88,6 +88,7 @@
     <string name="strip_msg_correction">CORREZIONE −1 %1$s</string>
     <string name="strip_msg_undone">ANNULLATO</string>
     <string name="strip_msg_match_over">PARTITA FINITA</string>
+    <string name="strip_match_over_end">PARTITA FINITA · TERMINA ›</string>
     <plurals name="strip_msg_from_watch">
         <item quantity="one">OROLOGIO: %1$d PUNTO</item>
         <item quantity="many">OROLOGIO: %1$d PUNTI</item>

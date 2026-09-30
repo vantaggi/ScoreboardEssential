@@ -2,6 +2,7 @@ package it.vantaggi.scoreboardessential
 
 import android.content.Context
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
+import it.vantaggi.scoreboardessential.core.ScoringMode
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import java.util.Locale
 
@@ -31,16 +32,17 @@ internal fun vincitoreDellaPartita(display: ScoreDisplay?): Int? {
     }
 }
 
-/** I primari col vincitore per primo: «6-3» sia che vinca la squadra di sinistra sia quella di destra. */
-private fun punteggioDelVincitore(
-    display: ScoreDisplay,
-    vincitore: Int,
-): String =
-    if (vincitore == 1) {
-        "${display.side1Primary}-${display.side2Primary}"
-    } else {
-        "${display.side2Primary}-${display.side1Primary}"
-    }
+/**
+ * Il punteggio di una partita chiusa, come lo schermo: dal punto di vista della squadra di SINISTRA.
+ *
+ * Viene da side1Secondary, che a partita chiusa sono i set giocati («6-3» a set unico, «4-6 6-3
+ * 5-7» a piu' set), e non dai primari: questi nel tennis sono i set vinti («2-1») e non dicono
+ * com'e' finita. Il vincitore non va messo per primo: il tennis vinto dalla squadra di destra si
+ * legge «4-6 6-3 5-7», come sul tabellone. Senza secondari (un display che non ne da') restano i primari.
+ */
+private fun punteggioDellaPartita(display: ScoreDisplay): String =
+    display.side1Secondary?.split(SEPARATORE_DEI_SET)?.joinToString(" ")
+        ?: "${display.side1Primary}-${display.side2Primary}"
 
 /**
  * Il testo della barra in alto a sinistra.
@@ -49,6 +51,10 @@ private fun punteggioDelVincitore(
  * unico), il nome dello sport, piu' «· SERVE <NOME>» finche' si sa chi serve: «PADEL · SERVE ROSSI»,
  * «SET 2 · SERVE ANNA», «TIE-BREAK · SERVE BRUNO». A partita dichiarata finita diventa «VINCE ROSSI
  * · 6-3». Nel calcio non c'e' niente da dire e la barra resta vuota. Il testo cambia, la vista no.
+ *
+ * [entra] dice se un testo candidato sta nella barra. La barra ha una riga e taglia con l'ellissi
+ * in coda: con un nome lungo il taglio mangiava il punteggio, che e' la parte che conta. Se il testo
+ * della vittoria non entra si accorcia il NOME («VINCE MARIA ANTO… · 6-3»), mai il punteggio.
  */
 internal fun testoDellaBarra(
     context: Context,
@@ -56,11 +62,14 @@ internal fun testoDellaBarra(
     display: ScoreDisplay,
     nomeSquadra1: String,
     nomeSquadra2: String,
+    entra: (String) -> Boolean = { true },
 ): String {
     val vincitore = vincitoreDellaPartita(display)
     if (vincitore != null) {
         val nome = if (vincitore == 1) nomeSquadra1 else nomeSquadra2
-        return context.getString(R.string.bar_winner, nome, punteggioDelVincitore(display, vincitore)).maiuscolo()
+        val punteggio = punteggioDellaPartita(display)
+        fun testo(nome: String) = context.getString(R.string.bar_winner, nome, punteggio).maiuscolo()
+        return testo(nome).takeIf(entra) ?: testo(nomeAccorciato(nome) { entra(testo(it)) })
     }
     val base = display.periodLabel ?: if (sportId == SportRegistry.FOOTBALL) null else sportLabel(context, sportId)
     val servente =
@@ -78,6 +87,20 @@ internal fun testoDellaBarra(
     return testo.maiuscolo()
 }
 
+/** Il nome accorciato con l'ellissi, il piu' lungo che fa entrare il testo; almeno una lettera. */
+private fun nomeAccorciato(
+    nome: String,
+    entra: (String) -> Boolean,
+): String {
+    for (lunghezza in nome.length - 1 downTo 1) {
+        val candidato = nome.take(lunghezza).trimEnd() + ELLISSI
+        if (entra(candidato)) return candidato
+    }
+    return nome.take(1) + ELLISSI
+}
+
+private const val ELLISSI = "…"
+
 /**
  * Il dialogo di TERMINA: titolo, messaggio e se il bottone positivo e' SALVA.
  *
@@ -85,7 +108,8 @@ internal fun testoDellaBarra(
  * primari sono i punti del game, e il dialogo che scriveva «0 / 0» sul 5-3 faceva sembrare l'app
  * rotta. Calcio: «ROSSI 2-1 LUPI». Racchetta in corso: «ROSSI – BIANCHI · game 5-3 · punto 30-15»,
  * con i set chiusi davanti se ce ne sono. A partita chiusa il titolo e' «PARTITA FINITA», il
- * messaggio «VINCE ROSSI · 6-3» e il positivo SALVA.
+ * messaggio «VINCE ROSSI · 6-3» e il positivo SALVA. In [modalitaAGame] i primari sono i game e
+ * la riga «punto» non c'e'.
  */
 internal data class TestoDelDialogoDiFine(
     val titolo: String,
@@ -99,6 +123,7 @@ internal fun testoDelDialogoDiFine(
     display: ScoreDisplay,
     nomeSquadra1: String,
     nomeSquadra2: String,
+    modalitaAGame: Boolean = false,
 ): TestoDelDialogoDiFine {
     val nome1 = nomeSquadra1.maiuscolo()
     val nome2 = nomeSquadra2.maiuscolo()
@@ -124,8 +149,10 @@ internal fun testoDelDialogoDiFine(
         buildList {
             if (chiusi.isNotEmpty()) add(context.getString(R.string.end_part_set, chiusi.joinToString(", ")))
             if (game != null) add(context.getString(R.string.end_part_game, game))
-            // Dove i primari SONO i game (modalita' a game) il punto ripeterebbe il game.
-            if (game != punto) add(context.getString(R.string.end_part_point, punto))
+            // Dove i primari SONO i game (modalita' a game) il punto ripeterebbe il game. Lo si decide
+            // dalla modalita' e non dall'uguaglianza dei testi: un tie-break 6-6 con punti 6-6 ha il
+            // game uguale al punto e il punto va detto.
+            if (!modalitaAGame) add(context.getString(R.string.end_part_point, punto))
         }
     return TestoDelDialogoDiFine(titolo, (listOf(intestazione) + dettagli).joinToString(SEPARATORE_DEI_SET), salva = false)
 }
@@ -152,24 +179,29 @@ internal enum class RiscontroDelPunto { NESSUNO, GAME_CHIUSO, PARTITA_FINITA }
  * Il riscontro di un tocco LOCALE su +, dal display di prima e di dopo. Va chiamata dal listener
  * della zona, con i due display letti attorno alla chiamata al ViewModel: i punti arrivati
  * dall'orologio non passano di qui e non fanno vibrare il telefono. Solo negli sport a racchetta:
- * un game chiuso cambia i secondari (side1Secondary), la fine partita vince su tutto.
+ * un game chiuso cambia i secondari (side1Secondary), la fine partita vince su tutto. Il colpo del
+ * tocco inerte a partita finita e' HapticFeedbackManager.PATTERN_INERT_TAP, in :shared.
  */
 internal fun riscontroDelPunto(
     prima: ScoreDisplay?,
     dopo: ScoreDisplay?,
     sportAGame: Boolean,
+    modalitaAGame: Boolean = false,
 ): RiscontroDelPunto =
     when {
         !sportAGame || prima == null || dopo == null || prima.matchOver -> RiscontroDelPunto.NESSUNO
         dopo.matchOver -> RiscontroDelPunto.PARTITA_FINITA
+        // In modalita' a game ogni tocco chiude un game e cambia side1Secondary: il doppio colpo
+        // sarebbe a ogni tocco e non direbbe piu' niente. Lo si da' solo se si chiude un set.
+        modalitaAGame -> if (setInCorso(dopo) != setInCorso(prima)) RiscontroDelPunto.GAME_CHIUSO else RiscontroDelPunto.NESSUNO
         dopo.side1Secondary != prima.side1Secondary -> RiscontroDelPunto.GAME_CHIUSO
         else -> RiscontroDelPunto.NESSUNO
     }
 
-/**
- * Il tocco inerte a partita finita: tre tick brevi (off 0, on 30, off 60, on 30, off 60, on 30),
- * per dichiarare «ti ho sentito, ma e' finita» invece del silenzio di un'app che sembra bloccata.
- */
-internal val TRE_TICK = longArrayOf(0, 30, 60, 30, 60, 30)
+/** Quanti set ha il display, compreso quello in corso: cresce di uno quando un set si chiude. */
+private fun setInCorso(display: ScoreDisplay): Int = display.side1Secondary?.split(SEPARATORE_DEI_SET)?.size ?: 0
+
+/** Lo sport gioca a game (un tocco = un game) invece che a punti? Dalle regole, non dal testo. */
+internal fun modalitaAGame(sportId: String): Boolean = SportRegistry.byId(sportId).config.mode == ScoringMode.GAMES
 
 private fun String.maiuscolo(): String = uppercase(Locale.getDefault())

@@ -13,10 +13,13 @@ import java.util.Locale
  * @property testo il testo base, su una riga. Cambia il testo, mai l'altezza della striscia.
  * @property daAttribuire il gol senza marcatore che il tocco apre nel dialogo, o null se la
  *   striscia non offre niente da toccare.
+ * @property terminaPartita a partita finita il tocco apre il dialogo di fine partita: la striscia
+ *   e' il comando che conclude, e sta lontana dalle zone + dove il pollice ha appena segnato.
  */
 internal data class StatoStriscia(
     val testo: String,
     val daAttribuire: MatchEvent? = null,
+    val terminaPartita: Boolean = false,
 )
 
 /**
@@ -34,6 +37,9 @@ internal data class StatoStriscia(
  * Sta fuori dall'Activity perche' sotto Robolectric MainActivity non si monta: cosi' il testo si
  * prova da solo.
  *
+ * A partita dichiarata finita (display.matchOver) il testo base e' sempre «PARTITA FINITA ·
+ * TERMINA ›», qualunque sia l'ultima azione, e la striscia apre il dialogo di fine partita.
+ *
  * Le capacita' non ancora arrivate valgono il calcio, come per ANNULLA.
  */
 internal fun statoDellaStriscia(
@@ -44,6 +50,9 @@ internal fun statoDellaStriscia(
     nomeSquadra1: String,
     nomeSquadra2: String,
 ): StatoStriscia {
+    if (display?.matchOver == true) {
+        return StatoStriscia(context.getString(R.string.strip_match_over_end), terminaPartita = true)
+    }
     val conMarcatore = capacita?.attributesScorer != false
     val registro = eventi.orEmpty()
     // Una correzione dopo l'ultimo gol e' l'ultima azione: il gol tolto dal -1 non e' piu' quello

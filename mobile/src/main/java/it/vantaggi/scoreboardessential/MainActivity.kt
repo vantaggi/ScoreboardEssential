@@ -50,6 +50,7 @@ import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
+import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
@@ -312,6 +313,11 @@ class MainActivity :
         scoreDetailValue = findViewById(R.id.score_detail_value)
         scoreDetailCaption = findViewById(R.id.score_detail_caption)
         matchPeriodTextView = findViewById(R.id.match_period_textview)
+        // Il testo della vittoria accorcia il nome in base alla larghezza: quando la barra prende la
+        // sua misura (la prima volta arriva dopo il primo bind) il testo si riscrive.
+        matchPeriodTextView.addOnLayoutChangeListener { _, sinistra, _, destra, _, vecchiaSinistra, _, vecchiaDestra, _ ->
+            if (destra - sinistra != vecchiaDestra - vecchiaSinistra) viewModel.scoreDisplay.value?.let(::bindPeriod)
+        }
         team1Zone = findViewById(R.id.team1_add_button_card)
         team2Zone = findViewById(R.id.team2_add_button_card)
         keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
@@ -608,17 +614,27 @@ class MainActivity :
             )
         ViewCompat.setAccessibilityLiveRegion(lastActionText, ViewCompat.ACCESSIBILITY_LIVE_REGION_NONE)
         lastActionText.text = stato.testo
-        impostaAzioneDellaStriscia(stato.daAttribuire)
+        impostaAzioneDellaStriscia(stato.daAttribuire, stato.terminaPartita)
     }
 
     /**
      * Il tocco sulla striscia e' la scorciatoia del marcatore: apre lo stesso dialogo della riga del
-     * registro. Senza gol da attribuire la striscia non e' un bersaglio. In quest'ordine:
+     * registro. A partita finita e' invece la scorciatoia di TERMINA e apre il dialogo di fine
+     * partita. Senza nessuna delle due la striscia non e' un bersaglio. In quest'ordine:
      * setOnClickListener rende la vista cliccabile anche quando riceve null (vedi MatchLogAdapter).
      */
-    private fun impostaAzioneDellaStriscia(daAttribuire: MatchEvent?) {
-        lastActionStrip.setOnClickListener(daAttribuire?.let { evento -> View.OnClickListener { apriAttribuzione(evento) } })
-        lastActionStrip.isClickable = daAttribuire != null
+    private fun impostaAzioneDellaStriscia(
+        daAttribuire: MatchEvent?,
+        terminaPartita: Boolean = false,
+    ) {
+        val azione =
+            when {
+                terminaPartita -> View.OnClickListener { showEndMatchConfirmation() }
+                daAttribuire != null -> View.OnClickListener { apriAttribuzione(daAttribuire) }
+                else -> null
+            }
+        lastActionStrip.setOnClickListener(azione)
+        lastActionStrip.isClickable = azione != null
     }
 
     /**
@@ -860,8 +876,8 @@ class MainActivity :
     }
 
     /**
-     * Il tocco su una zona +. A partita finita la zona e' spenta ma risponde: niente punto, tre tick
-     * e «PARTITA FINITA» per 3 secondi nella striscia. Altrimenti e' un punto, e il riscontro
+     * Il tocco su una zona +. A partita finita la zona e' spenta ma risponde: niente punto, un colpo
+     * lungo e «PARTITA FINITA» per 3 secondi nella striscia. Altrimenti e' un punto, e il riscontro
      * (game chiuso, partita finita) si decide dai due display attorno alla chiamata: il ViewModel
      * aggiorna lo stato in modo sincrono, e un punto dell'orologio non passa da qui.
      */
@@ -870,7 +886,7 @@ class MainActivity :
         zona: View,
     ) {
         if (viewModel.scoreDisplay.value?.matchOver == true) {
-            vibrator?.vibrate(VibrationEffect.createWaveform(TRE_TICK, NON_RIPETERE))
+            vibrator?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_INERT_TAP, NON_RIPETERE))
             mostraMessaggioInStriscia(getString(R.string.strip_msg_match_over))
             return
         }
@@ -878,7 +894,13 @@ class MainActivity :
         chiudiMessaggioInStriscia()
         val prima = viewModel.scoreDisplay.value
         viewModel.addScore(team)
-        val riscontro = riscontroDelPunto(prima, viewModel.scoreDisplay.value, capabilities?.decrementIsUndo == true)
+        val riscontro =
+            riscontroDelPunto(
+                prima,
+                viewModel.scoreDisplay.value,
+                capabilities?.decrementIsUndo == true,
+                modalitaAGame(viewModel.activeSport.value ?: SportRegistry.FOOTBALL),
+            )
         playGoalAnimation(team, riscontro)
     }
 
@@ -1040,7 +1062,7 @@ class MainActivity :
      * quindi il numero non cambiava e il tocco spariva nel vuoto. Poi si erano resi non cliccabili,
      * e il tocco restava muto lo stesso. Un comando che non risponde non si distingue da un'app
      * bloccata: la zona spenta (grigia, con la barra del colore in fondo) resta toccabile solo per
-     * dichiararsi, con tre tick e «PARTITA FINITA» nella striscia (vedi [toccaLaZona]).
+     * dichiararsi, con un colpo lungo e «PARTITA FINITA» nella striscia (vedi [toccaLaZona]).
      *
      * L'annullamento NON si spegne: e' esattamente cio' che serve se l'ultimo punto era sbagliato,
      * e riportarlo indietro riaccende tutto perche' lo stato torna "non finita".
@@ -1116,6 +1138,7 @@ class MainActivity :
      * accanto al nome e' INVISIBLE e non GONE, cosi' niente cambia misura a partita in corso.
      */
     private fun bindPeriod(display: ScoreDisplay) {
+        val disponibile = matchPeriodTextView.width - matchPeriodTextView.compoundPaddingLeft - matchPeriodTextView.compoundPaddingRight
         matchPeriodTextView.text =
             testoDellaBarra(
                 this,
@@ -1123,7 +1146,8 @@ class MainActivity :
                 display,
                 viewModel.team1Name.value.orEmpty(),
                 viewModel.team2Name.value.orEmpty(),
-            )
+                // Non ancora misurata: niente da accorciare, ci pensa il listener del layout.
+            ) { candidato -> disponibile <= 0 || matchPeriodTextView.paint.measureText(candidato) <= disponibile }
         findViewById<View>(R.id.team1_serve_dot).visibility = if (display.servingSide == 1) View.VISIBLE else View.INVISIBLE
         findViewById<View>(R.id.team2_serve_dot).visibility = if (display.servingSide == 2) View.VISIBLE else View.INVISIBLE
     }
@@ -1257,7 +1281,8 @@ class MainActivity :
         val team1Name = viewModel.team1Name.value ?: "Team 1"
         val team2Name = viewModel.team2Name.value ?: "Team 2"
         val display = viewModel.scoreDisplay.value ?: return
-        val testo = testoDelDialogoDiFine(this, viewModel.activeSport.value ?: SportRegistry.FOOTBALL, display, team1Name, team2Name)
+        val sport = viewModel.activeSport.value ?: SportRegistry.FOOTBALL
+        val testo = testoDelDialogoDiFine(this, sport, display, team1Name, team2Name, modalitaAGame(sport))
 
         val dialogo =
             MaterialAlertDialogBuilder(this)
@@ -1432,7 +1457,8 @@ internal fun applicaStatoDellaZona(
     zona.setCardBackgroundColor(ContextCompat.getColor(zona.context, R.color.graffiti_dark_gray))
     zona.strokeWidth = 0
     zona.rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(TeamInk.BIANCO, RIPPLE_ALPHA))
-    barraDellaZona.setBackgroundColor(TeamInk.graphicOnBlack(colore))
+    // La barra sta sulla zona grigia, non sul nero: il 3:1 si misura contro #2C2C2C.
+    barraDellaZona.setBackgroundColor(TeamInk.graphicOn(colore, ContextCompat.getColor(zona.context, R.color.graffiti_dark_gray)))
 }
 
 /**

@@ -91,6 +91,7 @@
     <string name="strip_msg_correction">CORRECTION −1 %1$s</string>
     <string name="strip_msg_undone">UNDONE</string>
     <string name="strip_msg_match_over">MATCH OVER</string>
+    <string name="strip_match_over_end">MATCH OVER · END ›</string>
     <plurals name="strip_msg_from_watch">
         <item quantity="one">WATCH: %1$d POINT</item>
         <item quantity="other">WATCH: %1$d POINTS</item>
