@@ -52,12 +52,13 @@ class StatisticsAdapter : ListAdapter<PlayerStatsDTO, StatisticsAdapter.ViewHold
             appearancesTextView.text = context.resources.getQuantityString(R.plurals.stats_appearances, item.appearances, item.appearances)
 
             if (rank == 1) {
-                // Highlight 1st place
+                // Il podio e' la card rosa piena con testo nero (5,02:1). Prima era gialla, il
+                // colore della squadra 1, con il rank in ciano a 1,09:1.
                 cardView.setCardBackgroundColor(
-                    ContextCompat.getColor(context, R.color.team_spray_yellow),
+                    ContextCompat.getColor(context, R.color.graffiti_pink),
                 )
                 nameTextView.setTextColor(ContextCompat.getColor(context, R.color.asphalt_black))
-                rankTextView.setTextColor(ContextCompat.getColor(context, R.color.neon_cyan))
+                rankTextView.setTextColor(ContextCompat.getColor(context, R.color.asphalt_black))
                 goalsTextView.setTextColor(ContextCompat.getColor(context, R.color.asphalt_black))
                 appearancesTextView.setTextColor(ContextCompat.getColor(context, R.color.asphalt_black))
             } else {
@@ -67,7 +68,8 @@ class StatisticsAdapter : ListAdapter<PlayerStatsDTO, StatisticsAdapter.ViewHold
                 )
                 nameTextView.setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
                 rankTextView.setTextColor(ContextCompat.getColor(context, R.color.graffiti_pink))
-                goalsTextView.setTextColor(ContextCompat.getColor(context, R.color.team_electric_green))
+                // I gol in #E0E0E0: il verde della squadra 2 non e' un evidenziatore.
+                goalsTextView.setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
                 appearancesTextView.setTextColor(ContextCompat.getColor(context, R.color.sidewalk_gray))
             }
         }

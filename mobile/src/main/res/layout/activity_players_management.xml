@@ -119,7 +119,7 @@
         android:layout_margin="16dp"
         android:contentDescription="@string/label_add_player"
         app:backgroundTint="@color/graffiti_pink"
-        app:tint="@color/stencil_white"
+        app:tint="@color/asphalt_black"
         app:shapeAppearance="@style/ShapeAppearance.App.StreetButton"
         app:srcCompat="@drawable/ic_person_add" />
 

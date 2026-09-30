@@ -1,6 +1,7 @@
 package it.vantaggi.scoreboardessential.utils
 
 import android.content.res.ColorStateList
+import android.view.View
 import android.widget.TextView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.shape.MaterialShapeDrawable
@@ -37,6 +38,18 @@ fun TextView.etichettaDiSquadra(
     colore: Int,
     sfondo: Int = context.getColor(R.color.concrete_gray),
 ) {
+    riempiDiSquadra(colore, sfondo)
+    setTextColor(TeamInk.on(colore))
+}
+
+/**
+ * Il riempimento StreetBadge nel colore della squadra, col contorno se non si stacca da [sfondo].
+ * Lo usano le etichette e le bande del PDF: chi ci scrive sopra sceglie l'inchiostro con [TeamInk].
+ */
+fun View.riempiDiSquadra(
+    colore: Int,
+    sfondo: Int,
+) {
     val forma = ShapeAppearanceModel.builder(context, R.style.ShapeAppearance_App_StreetBadge, 0).build()
     background =
         MaterialShapeDrawable(forma).apply {
@@ -45,7 +58,6 @@ fun TextView.etichettaDiSquadra(
                 setStroke(resources.displayMetrics.density, context.getColor(R.color.sidewalk_gray))
             }
         }
-    setTextColor(TeamInk.on(colore))
 }
 
 /**

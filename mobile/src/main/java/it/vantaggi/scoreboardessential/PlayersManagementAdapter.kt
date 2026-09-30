@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.ChipGroup
+import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.utils.setRoles
 
@@ -74,6 +75,8 @@ class PlayersManagementAdapter(
             if (colors.isNotEmpty()) {
                 val colorIndex = Math.abs(player.playerName.hashCode()) % colors.size
                 avatarCardView.setCardBackgroundColor(colors[colorIndex])
+                // Le iniziali in #E0E0E0 fisso arrivavano a 1,04:1 sui colori chiari.
+                avatarTextView.setTextColor(TeamInk.on(colors[colorIndex]))
             }
 
             // Click Listeners
