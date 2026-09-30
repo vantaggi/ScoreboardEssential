@@ -534,6 +534,68 @@ class MainActivityLayoutTest {
         }
     }
 
+    @Test
+    fun nelPadel_al_6a3_la_striscia_dice_TERMINA_e_toccandola_si_apre_il_dialogo_di_fine_partita() {
+        conPadel { scenario, modello ->
+            repeat(3) {
+                tocca(scenario, 1, 4)
+                tocca(scenario, 2, 4)
+            }
+            tocca(scenario, 1, 12)
+            assertTrue("al 6-3 la partita non e' finita", aspettaCheAttivi(scenario) { modello.scoreDisplay.value?.matchOver == true })
+            lateinit var atteso: String
+            scenario.onActivity { atteso = it.getString(R.string.strip_match_over_end) }
+            assertTrue(
+                "la striscia non dice \"$atteso\": \"${testoDi(scenario, R.id.last_action_text)}\"",
+                aspettaCheAttivi(scenario) { it.findViewById<TextView>(R.id.last_action_text).text.toString() == atteso },
+            )
+            onView(withId(R.id.last_action_strip)).perform(click())
+            // Il dialogo e' quello di fine partita: titolo PARTITA FINITA e chi ha vinto, non il rifiuto.
+            onView(withText(R.string.end_match_over_title)).inRoot(isDialog()).check(matches(isDisplayed()))
+            onView(withText(R.string.btn_save_match)).inRoot(isDialog()).check(matches(isDisplayed()))
+            onView(withText(R.string.continue_action)).inRoot(isDialog()).perform(click())
+        }
+    }
+
+    @Test
+    fun nelPadel_al_6a3_con_un_nome_lungo_la_barra_accorcia_il_nome_e_il_punteggio_resta_visibile() {
+        conPadel { scenario, modello ->
+            var nomeOriginale = ""
+            scenario.onActivity {
+                nomeOriginale = modello.team1Name.value.orEmpty()
+                modello.setTeam1Name("Maria Antonietta Della")
+            }
+            try {
+                // La barra stretta come su uno schermo da 360dp con i caratteri ingranditi.
+                scenario.onActivity {
+                    val barra = it.findViewById<TextView>(R.id.match_period_textview)
+                    barra.layoutParams =
+                        (barra.layoutParams as android.widget.LinearLayout.LayoutParams).apply {
+                            weight = 0f
+                            width = dp(it, 150).toInt()
+                        }
+                }
+                repeat(3) {
+                    tocca(scenario, 1, 4)
+                    tocca(scenario, 2, 4)
+                }
+                tocca(scenario, 1, 12)
+                assertTrue("al 6-3 la partita non e' finita", aspettaCheAttivi(scenario) { modello.scoreDisplay.value?.matchOver == true })
+                assertTrue(
+                    "il punteggio deve restare, senza ellissi in coda: \"${testoDi(scenario, R.id.match_period_textview)}\"",
+                    aspettaCheAttivi(scenario) {
+                        val barra = it.findViewById<TextView>(R.id.match_period_textview)
+                        val riga = barra.layout
+                        barra.text.endsWith("6-3") && riga != null && riga.getEllipsisCount(0) == 0
+                    },
+                )
+                assertTrue("il nome e' accorciato", testoDi(scenario, R.id.match_period_textview).contains("…"))
+            } finally {
+                scenario.onActivity { modello.setTeam1Name(nomeOriginale) }
+            }
+        }
+    }
+
     /** Il colore del testo di una voce del dialogo aperto, letto con un'azione Espresso. */
     private fun coloreDelBottoneDelDialogo(testo: Int): Int {
         var colore = 0
