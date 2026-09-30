@@ -301,7 +301,10 @@ class ColonnaDiGiocoTest {
         // La barra sta sul grigio #2C2C2C della zona spenta: il 3:1 si misura li', non contro il nero.
         val colorBarra = (barra.background as ColorDrawable).color
         val grigio = 0xFF2C2C2C.toInt()
-        assertTrue("la barra di #1A237E su #2C2C2C fa %.2f".format(TeamInk.contrast(colorBarra, grigio)), TeamInk.contrast(colorBarra, grigio) >= 3.0)
+        assertTrue(
+            "la barra di #1A237E su #2C2C2C fa %.2f".format(TeamInk.contrast(colorBarra, grigio)),
+            TeamInk.contrast(colorBarra, grigio) >= 3.0,
+        )
         assertEquals("la barra porta il colore della squadra, schiarito per il grigio", TeamInk.graphicOn(blu, grigio), colorBarra)
         assertTrue("la zona spenta risponde ancora al tocco", zona.isClickable)
 

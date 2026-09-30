@@ -68,6 +68,7 @@ internal fun testoDellaBarra(
     if (vincitore != null) {
         val nome = if (vincitore == 1) nomeSquadra1 else nomeSquadra2
         val punteggio = punteggioDellaPartita(display)
+
         fun testo(nome: String) = context.getString(R.string.bar_winner, nome, punteggio).maiuscolo()
         return testo(nome).takeIf(entra) ?: testo(nomeAccorciato(nome) { entra(testo(it)) })
     }
@@ -190,11 +191,15 @@ internal fun riscontroDelPunto(
 ): RiscontroDelPunto =
     when {
         !sportAGame || prima == null || dopo == null || prima.matchOver -> RiscontroDelPunto.NESSUNO
+
         dopo.matchOver -> RiscontroDelPunto.PARTITA_FINITA
+
         // In modalita' a game ogni tocco chiude un game e cambia side1Secondary: il doppio colpo
         // sarebbe a ogni tocco e non direbbe piu' niente. Lo si da' solo se si chiude un set.
         modalitaAGame -> if (setInCorso(dopo) != setInCorso(prima)) RiscontroDelPunto.GAME_CHIUSO else RiscontroDelPunto.NESSUNO
+
         dopo.side1Secondary != prima.side1Secondary -> RiscontroDelPunto.GAME_CHIUSO
+
         else -> RiscontroDelPunto.NESSUNO
     }
 

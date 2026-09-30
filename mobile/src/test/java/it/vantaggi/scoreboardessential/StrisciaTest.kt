@@ -196,7 +196,8 @@ class StrisciaTest {
     @Test
     fun `a partita finita la striscia dice TERMINA e apre il dialogo di fine partita`() {
         val display = ScoreDisplay(side1Primary = "6", side1Secondary = "6-3", side2Primary = "3", matchOver = true)
-        val stato = striscia(listOf(MatchEvent("20'", "Point", team = 1, type = MatchEventType.SCORE, engineIndex = 9), avvio), padel, display)
+        val stato =
+            striscia(listOf(MatchEvent("20'", "Point", team = 1, type = MatchEventType.SCORE, engineIndex = 9), avvio), padel, display)
 
         assertEquals("PARTITA FINITA · TERMINA ›", stato.testo)
         assertTrue("toccarla apre TERMINA", stato.terminaPartita)
