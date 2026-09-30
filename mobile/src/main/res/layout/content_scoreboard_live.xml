@@ -374,7 +374,9 @@
 
     <!--
         La striscia dell'ultima azione. Cambia il testo, mai l'altezza: ANNULLA si spegne quando non
-        c'e' niente da annullare, non sparisce. Il testo a sinistra lo scrive il passo successivo.
+        c'e' niente da annullare, non sparisce. Il testo a sinistra lo scrive MainActivity dal primo
+        SCORE del registro; nel calcio, con un gol senza marcatore, la striscia intera e' toccabile
+        e apre la scelta del marcatore; il ripple compare solo quando e' toccabile.
         ANNULLA e' largo quanto gli serve, da 96dp in su: in italiano con l'icona non entra in 96.
     -->
     <LinearLayout
@@ -382,6 +384,7 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/game_strip_height"
         android:background="@color/concrete_gray"
+        android:foreground="?attr/selectableItemBackground"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingStart="16dp"
