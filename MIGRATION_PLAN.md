@@ -2020,3 +2020,5 @@ Da guardare su un telefono vero: vibrazioni (punto, game, fine partita, tocco in
 
 **In parallelo:** passo 4 dell'orologio (`wf8/fiducia`) e L12 in due meta' (`wf9/test-mobile`,
 `wf9/test-wear-shared`).
+Il 30 settembre il proprietario ha aggiunto alla coda i passi 10 e 11 del design del telefono
+(contorno di sistema e schermate di contorno), in parallelo: `wf10/contorno` e poi `wf10/schermate`.
