@@ -39,10 +39,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Locale
 
-// Il giocatore di prova: il dialogo del marcatore rilegge la rosa dal database, quindi va scritto davvero.
-// Il test lo toglie alla fine; l'id alto evita di toccare i giocatori veri dell'emulatore.
-private const val ID_DI_PROVA = 987654
-
 /**
  * La schermata di gioco, montata davvero.
  *
@@ -341,23 +337,27 @@ class MainActivityLayoutTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             var modello: MainViewModel? = null
             lateinit var nome: String
-            val giocatore = Player(playerId = ID_DI_PROVA, playerName = "Marco B.", appearances = 0, goals = 0)
             val giocatori =
                 AppDatabase
                     .getDatabase(InstrumentationRegistry.getInstrumentation().targetContext)
                     .playerDao()
-            runBlocking { giocatori.insert(giocatore) }
-            scenario.onActivity { activity ->
-                modello = ViewModelProvider(activity)[MainViewModel::class.java]
-                // Senza una rosa la scorciatoia mostrerebbe la Snackbar "nessun giocatore".
-                modello!!.addPlayerToTeam(PlayerWithRoles(giocatore, emptyList()), 1)
-                nome =
-                    modello!!
-                        .team1Name.value
-                        .orEmpty()
-                        .uppercase(Locale.getDefault())
-            }
+            var giocatore: Player? = null
             try {
+                // Il giocatore di prova: il dialogo del marcatore rilegge la rosa dal database, quindi
+                // va scritto davvero. Sta dentro il try e ha l'id che gli da' il database: se la prova
+                // fallisce prima di finire, il finally lo toglie, e non forza il contatore degli id.
+                val nuovo = Player(playerName = "Marco B.", appearances = 0, goals = 0)
+                giocatore = nuovo.copy(playerId = runBlocking { giocatori.insert(nuovo) }.toInt())
+                scenario.onActivity { activity ->
+                    modello = ViewModelProvider(activity)[MainViewModel::class.java]
+                    // Senza una rosa la scorciatoia mostrerebbe la Snackbar "nessun giocatore".
+                    modello!!.addPlayerToTeam(PlayerWithRoles(giocatore!!, emptyList()), 1)
+                    nome =
+                        modello!!
+                            .team1Name.value
+                            .orEmpty()
+                            .uppercase(Locale.getDefault())
+                }
                 val iniziale = postiFissi(scenario)
                 onView(withId(R.id.team1_add_button_card)).perform(click())
 
@@ -401,8 +401,8 @@ class MainActivityLayoutTest {
                     )
                 }
             } finally {
-                scenario.onActivity { modello!!.discardMatch() }
-                runBlocking { giocatori.delete(giocatore) }
+                scenario.onActivity { modello?.discardMatch() }
+                giocatore?.let { runBlocking { giocatori.delete(it) } }
             }
         }
     }
@@ -436,6 +436,40 @@ class MainActivityLayoutTest {
                 assertTrue(
                     "la Snackbar arriva a y=$fondoSnackbar e copre la striscia, che comincia a y=$cimaStriscia",
                     fondoSnackbar <= cimaStriscia,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun unaSnackbarMostrata_a_foglio_aperto_non_e_ancorata_alla_striscia() {
+        // A foglio PARTITA aperto la striscia sta sotto lo scrim: una Snackbar ancorata a lei
+        // galleggerebbe sulle righe della rosa. Senza ancora sta in fondo, sotto il bordo della striscia.
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            onView(withId(R.id.match_sheet_button)).perform(click())
+            assertEquals(BottomSheetBehavior.STATE_EXPANDED, aspettaStato(scenario, BottomSheetBehavior.STATE_EXPANDED))
+            scenario.onActivity { activity ->
+                ViewModelProvider(activity)[MainViewModel::class.java].sportChangeRejected.value = Unit
+            }
+            var snackbar: View? = null
+            assertTrue(
+                "la Snackbar non e' comparsa",
+                aspettaCheAttivi(scenario) { attivita ->
+                    var vista = attivita.findViewById<View>(com.google.android.material.R.id.snackbar_text)
+                    while (vista != null && vista !is Snackbar.SnackbarLayout) vista = vista.parent as? View
+                    snackbar = vista
+                    snackbar != null
+                },
+            )
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            Thread.sleep(800)
+            scenario.onActivity { activity ->
+                val fondoSnackbar = IntArray(2).also { snackbar!!.getLocationOnScreen(it) }[1] + snackbar!!.height
+                val striscia = activity.findViewById<View>(R.id.last_action_strip)
+                val cimaStriscia = IntArray(2).also { striscia.getLocationOnScreen(it) }[1]
+                assertTrue(
+                    "la Snackbar arriva a y=$fondoSnackbar: e' ancorata alla striscia, che comincia a y=$cimaStriscia",
+                    fondoSnackbar > cimaStriscia,
                 )
             }
         }
