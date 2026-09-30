@@ -259,6 +259,14 @@ Corretto: 2e54ddd, la scelta si apre solo dopo che l'intenzione del punto e' arr
 
 ## L5 Arretrato dell'orologio: base, ack e idempotenza
 
+**Nota del 30 settembre 2026 (design del telefono, passo 9).** Il rifiuto di un arretrato non e' piu'
+una Snackbar che passa: diventa uno stato (`WatchNotice.Rejected`) con un badge sull'icona
+dell'orologio e una card in cima al foglio PARTITA, fino alla partita nuova. Due conseguenze da
+sapere quando si fara' questo lotto: un falso rifiuto (ack perso, seq non idempotente oltre il
+processo) resta visibile a lungo e dice che i punti non sono entrati quando sono gia' nel
+punteggio; e lo stato vive solo in memoria, quindi alla morte del processo il badge sparisce
+finche' l'orologio non rimanda l'arretrato.
+
 ### [alta] Il telefono rifiuta sempre l'arretrato di una partita cominciata col telefono, cioè il caso per cui il calcolo offline è stato costruito
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt` - aree: offline, protocollo
