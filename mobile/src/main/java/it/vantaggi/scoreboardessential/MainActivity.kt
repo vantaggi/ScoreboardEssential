@@ -72,6 +72,9 @@ private const val SCRIM_ALPHA = 0.6f
 // Un comando spento (ANNULLA senza niente da annullare) resta al suo posto, ma a 0,38.
 private const val ALPHA_SPENTO = 0.38f
 
+// Quanto resta un messaggio temporaneo nella striscia prima che torni il testo base.
+private const val DURATA_MESSAGGIO_STRISCIA_MS = 3000L
+
 // Il token piu' largo che il punteggio di uno sport puo' mostrare: "88" nel calcio, "AV" (vantaggio)
 // nella racchetta. Con questo si misura il numero una volta sola, invece di ridimensionarlo a ogni punto.
 private const val TOKEN_PIU_LARGO_CALCIO = "88"
@@ -147,6 +150,16 @@ class MainActivity :
     private lateinit var keeperTimerTextView: TextView
     private lateinit var timerStartButton: MaterialButton
     private lateinit var undoGoalButton: Button
+    private lateinit var lastActionStrip: View
+    private lateinit var lastActionText: TextView
+
+    // Vero mentre la striscia mostra un messaggio di 3 secondi: il testo base aspetta la fine.
+    private var messaggioInStriscia = false
+    private val fineMessaggioInStriscia =
+        Runnable {
+            messaggioInStriscia = false
+            aggiornaStriscia()
+        }
 
     // Sezioni che compaiono o spariscono a seconda dello sport
     private lateinit var rostersCard: View
@@ -186,12 +199,7 @@ class MainActivity :
             ActivityResultContracts.RequestPermission(),
         ) { isGranted: Boolean ->
             if (!isGranted) {
-                Snackbar
-                    .make(
-                        findViewById(android.R.id.content),
-                        getString(R.string.notification_permission_required),
-                        Snackbar.LENGTH_LONG,
-                    ).show()
+                snackbarSopraLaStriscia(getString(R.string.notification_permission_required), Snackbar.LENGTH_LONG).show()
             }
         }
 
@@ -286,6 +294,13 @@ class MainActivity :
         lifecycleScope.launch { viewModel.connectionManager.refreshConnection() }
     }
 
+    override fun onDestroy() {
+        // Il ritorno al testo base dopo 3 secondi e' accodato sulla vista: non deve sopravvivere
+        // all'Activity e tenerla in vita fino alla sua scadenza.
+        if (::lastActionText.isInitialized) lastActionText.removeCallbacks(fineMessaggioInStriscia)
+        super.onDestroy()
+    }
+
     private fun initializeViews() {
         // Core views
         team1ScoreTextView = findViewById(R.id.team1_score_textview)
@@ -299,6 +314,8 @@ class MainActivity :
         timerStartButton = findViewById(R.id.timer_start_button)
         timerStartButton.minWidth = larghezzaMinimaDelTempo(timerStartButton)
         undoGoalButton = findViewById(R.id.undo_goal_button)
+        lastActionStrip = findViewById(R.id.last_action_strip)
+        lastActionText = findViewById(R.id.last_action_text)
         rostersCard = findViewById(R.id.rosters_card)
         formationsCard = findViewById(R.id.formations_card)
 
@@ -336,23 +353,7 @@ class MainActivity :
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
 
-        matchLogAdapter =
-            MatchLogAdapter { evento ->
-                // La rosa del lato che ha segnato: attribuire a un giocatore dell'altra squadra
-                // non e' un caso da gestire, e' un caso da non offrire.
-                val rosa = if (evento.team == 1) viewModel.team1Players.value else viewModel.team2Players.value
-                val indice = evento.engineIndex
-                if (rosa.isNullOrEmpty() || indice == null) {
-                    Snackbar
-                        .make(findViewById(R.id.main_root), R.string.no_players_to_attribute, Snackbar.LENGTH_LONG)
-                        .show()
-                } else {
-                    mostraDialogo(
-                        SelectScorerDialogFragment.newInstance(rosa, evento.team ?: 1, indice),
-                        SelectScorerDialogFragment.TAG,
-                    )
-                }
-            }
+        matchLogAdapter = MatchLogAdapter { evento -> apriAttribuzione(evento) }
         matchLogRecyclerView.apply {
             adapter = matchLogAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
@@ -371,16 +372,19 @@ class MainActivity :
             applyMatchOver(display.matchOver)
             aggiornaDescrizioni()
             aggiornaSchermoAcceso()
+            aggiornaStriscia()
         }
 
         viewModel.team1Name.observe(this) { name ->
             mostraNomeSquadra(findViewById(R.id.team1_name_container), team1NameTextView, name)
             aggiornaDescrizioni()
+            aggiornaStriscia()
         }
 
         viewModel.team2Name.observe(this) { name ->
             mostraNomeSquadra(findViewById(R.id.team2_name_container), team2NameTextView, name)
             aggiornaDescrizioni()
+            aggiornaStriscia()
         }
 
         viewModel.team1Color.observe(this) { color ->
@@ -426,33 +430,26 @@ class MainActivity :
             updateFormation(2, players)
         }
 
+        // Il riepilogo dell'arretrato sta nella striscia: una Snackbar copriva le zone +.
         viewModel.watchBatchApplied.observe(this) { quanti ->
-            Snackbar
-                .make(
-                    findViewById(R.id.main_root),
-                    resources.getQuantityString(R.plurals.watch_batch_applied, quanti, quanti),
-                    Snackbar.LENGTH_LONG,
-                ).show()
+            mostraMessaggioInStriscia(resources.getQuantityString(R.plurals.strip_msg_from_watch, quanti, quanti))
         }
 
         viewModel.watchBatchRejected.observe(this) {
-            Snackbar
-                .make(findViewById(R.id.main_root), R.string.watch_batch_rejected, Snackbar.LENGTH_LONG)
-                .show()
+            snackbarSopraLaStriscia(getString(R.string.watch_batch_rejected), Snackbar.LENGTH_LONG).show()
         }
 
         viewModel.sportChangeRejected.observe(this) {
             // @string/sport_change_blocked era dichiarata e mai usata: era un debito registrato
             // nel piano. Ora ha il suo caso -- l'unico punto dell'app in cui un cambio sport puo'
             // essere chiesto da qualcuno che non vede la guardia.
-            Snackbar
-                .make(findViewById(R.id.main_root), R.string.sport_change_blocked, Snackbar.LENGTH_LONG)
-                .show()
+            snackbarSopraLaStriscia(getString(R.string.sport_change_blocked), Snackbar.LENGTH_LONG).show()
         }
 
         viewModel.matchEvents.observe(this) { events ->
             matchLogAdapter.submitList(events)
             aggiornaSchermoAcceso()
+            aggiornaStriscia()
         }
 
         // Lo stato si legge dal glifo e dal colore del tempo, non da una parola che cambia larghezza.
@@ -565,6 +562,7 @@ class MainActivity :
         matchLogAdapter.attribuisceMarcatore = sportCapabilities.attributesScorer
         matchLogAdapter.notifyDataSetChanged()
         aggiornaDescrizioni()
+        aggiornaStriscia()
         dimensionaINumeri(if (sportASet) TOKEN_PIU_LARGO_RACCHETTA else TOKEN_PIU_LARGO_CALCIO)
     }
 
@@ -584,6 +582,96 @@ class MainActivity :
         val acceso = allowed && viewModel.canUndo.value == true
         undoGoalButton.isEnabled = acceso
         undoGoalButton.alpha = if (acceso) 1f else ALPHA_SPENTO
+    }
+
+    /**
+     * Il testo base della striscia e cosa fa toccandola. Non cambia mai l'altezza della striscia.
+     * Mentre un messaggio di 3 secondi e' in mostra non si tocca: alla sua fine si rilegge tutto.
+     */
+    private fun aggiornaStriscia() {
+        if (messaggioInStriscia) return
+        val stato =
+            statoDellaStriscia(
+                this,
+                viewModel.matchEvents.value,
+                capabilities,
+                viewModel.scoreDisplay.value,
+                viewModel.team1Name.value ?: "Team 1",
+                viewModel.team2Name.value ?: "Team 2",
+            )
+        ViewCompat.setAccessibilityLiveRegion(lastActionText, ViewCompat.ACCESSIBILITY_LIVE_REGION_NONE)
+        lastActionText.text = stato.testo
+        impostaAzioneDellaStriscia(stato.daAttribuire)
+    }
+
+    /**
+     * Il tocco sulla striscia e' la scorciatoia del marcatore: apre lo stesso dialogo della riga del
+     * registro. Senza gol da attribuire la striscia non e' un bersaglio. In quest'ordine:
+     * setOnClickListener rende la vista cliccabile anche quando riceve null (vedi MatchLogAdapter).
+     */
+    private fun impostaAzioneDellaStriscia(daAttribuire: MatchEvent?) {
+        lastActionStrip.setOnClickListener(daAttribuire?.let { evento -> View.OnClickListener { apriAttribuzione(evento) } })
+        lastActionStrip.isClickable = daAttribuire != null
+    }
+
+    /**
+     * Un messaggio di 3 secondi al posto del testo base, poi si torna al testo base. Sostituisce le
+     * Snackbar che coprivano le zone +. La regione live fa leggere il messaggio da TalkBack.
+     */
+    private fun mostraMessaggioInStriscia(testo: String) {
+        lastActionText.removeCallbacks(fineMessaggioInStriscia)
+        messaggioInStriscia = true
+        ViewCompat.setAccessibilityLiveRegion(lastActionText, ViewCompat.ACCESSIBILITY_LIVE_REGION_POLITE)
+        lastActionText.text = testo
+        impostaAzioneDellaStriscia(null)
+        lastActionText.postDelayed(fineMessaggioInStriscia, DURATA_MESSAGGIO_STRISCIA_MS)
+    }
+
+    /** Un nuovo punto toglie subito il messaggio: il testo base deve dire l'ultima azione vera. */
+    private fun chiudiMessaggioInStriscia() {
+        lastActionText.removeCallbacks(fineMessaggioInStriscia)
+        messaggioInStriscia = false
+        aggiornaStriscia()
+    }
+
+    /**
+     * Apre la scelta del marcatore per il gol di questo evento. La usano la riga del registro e la
+     * striscia, cosi' fanno la stessa cosa.
+     *
+     * La rosa e' quella del lato che ha segnato: attribuire a un giocatore dell'altra squadra non e'
+     * un caso da gestire, e' un caso da non offrire.
+     */
+    private fun apriAttribuzione(evento: MatchEvent) {
+        val rosa = if (evento.team == 1) viewModel.team1Players.value else viewModel.team2Players.value
+        val indice = evento.engineIndex
+        if (rosa.isNullOrEmpty() || indice == null) {
+            snackbarSopraLaStriscia(getString(R.string.no_players_to_attribute), Snackbar.LENGTH_LONG).show()
+        } else {
+            mostraDialogo(
+                SelectScorerDialogFragment.newInstance(rosa, evento.team ?: 1, indice),
+                SelectScorerDialogFragment.TAG,
+            )
+        }
+    }
+
+    /**
+     * Ogni Snackbar dell'Activity passa di qui: ancorata sopra la striscia, cosi' non copre le zone +
+     * che stanno in fondo alla colonna.
+     *
+     * A foglio PARTITA aperto la striscia sta sotto lo scrim: una Snackbar ancorata a lei
+     * galleggerebbe sulle righe del foglio, quindi senza ancora sta in fondo allo schermo.
+     */
+    private fun snackbarSopraLaStriscia(
+        testo: CharSequence,
+        durata: Int,
+    ): Snackbar {
+        val strisciaInVista =
+            !::matchSheet.isInitialized ||
+                matchSheet.state == BottomSheetBehavior.STATE_HIDDEN ||
+                matchSheet.state == BottomSheetBehavior.STATE_COLLAPSED
+        return Snackbar
+            .make(findViewById(R.id.main_root), testo, durata)
+            .setAnchorView(if (strisciaInVista) lastActionStrip else null)
     }
 
     /**
@@ -752,6 +840,7 @@ class MainActivity :
 
         team1Zone.setOnClickListener {
             it.animateZoneTap()
+            chiudiMessaggioInStriscia()
             viewModel.addScore(1)
             playGoalAnimation(1)
         }
@@ -763,6 +852,7 @@ class MainActivity :
 
         team2Zone.setOnClickListener {
             it.animateZoneTap()
+            chiudiMessaggioInStriscia()
             viewModel.addScore(2)
             playGoalAnimation(2)
         }
@@ -781,7 +871,13 @@ class MainActivity :
         if (capabilities?.decrementIsUndo == true) {
             viewModel.undoLastGoal()
         } else {
+            val prima = viewModel.scoreDisplay.value
             viewModel.subtractScore(team)
+            // A zero la correzione non fa niente, e la striscia non deve dire che e' successo.
+            if (viewModel.scoreDisplay.value != prima) {
+                val nome = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
+                mostraMessaggioInStriscia(getString(R.string.strip_msg_correction, (nome ?: "").uppercase(Locale.getDefault())))
+            }
         }
     }
 
@@ -823,7 +919,9 @@ class MainActivity :
                 .setTitle(getString(if (gol) R.string.undo_goal_title else R.string.undo_point_title))
                 .setMessage(getString(if (gol) R.string.undo_goal_message else R.string.undo_point_message))
                 .setPositiveButton(getString(R.string.undo)) { _, _ ->
-                    viewModel.undoLastGoal()
+                    // «ANNULLATO» solo se ha tolto qualcosa: il tocco puo' essere rimandato dal
+                    // ripristino, o non trovare che eventi inerti.
+                    if (viewModel.undoLastGoal()) mostraMessaggioInStriscia(getString(R.string.strip_msg_undone))
                 }.setNegativeButton(getString(R.string.cancel), null)
                 .show()
         }
@@ -1049,12 +1147,8 @@ class MainActivity :
             }
 
         if (availablePlayers.isEmpty()) {
-            Snackbar
-                .make(
-                    findViewById(android.R.id.content),
-                    getString(R.string.no_available_players),
-                    Snackbar.LENGTH_LONG,
-                ).setAction(getString(R.string.manage)) {
+            snackbarSopraLaStriscia(getString(R.string.no_available_players), Snackbar.LENGTH_LONG)
+                .setAction(getString(R.string.manage)) {
                     startActivity(Intent(this, PlayersManagementActivity::class.java))
                 }.show()
             return
@@ -1067,12 +1161,10 @@ class MainActivity :
                 val selectedPlayer = availablePlayers[which]
                 viewModel.addPlayerToTeam(selectedPlayer, team)
                 val teamName = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
-                Snackbar
-                    .make(
-                        findViewById(android.R.id.content),
-                        getString(R.string.player_added_message, selectedPlayer.player.playerName, teamName),
-                        Snackbar.LENGTH_SHORT,
-                    ).show()
+                snackbarSopraLaStriscia(
+                    getString(R.string.player_added_message, selectedPlayer.player.playerName, teamName),
+                    Snackbar.LENGTH_SHORT,
+                ).show()
             }.setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
@@ -1087,12 +1179,10 @@ class MainActivity :
             .setMessage(getString(R.string.remove_player_message, playerWithRoles.player.playerName, teamName))
             .setPositiveButton(getString(R.string.remove)) { _, _ ->
                 viewModel.removePlayerFromTeam(playerWithRoles, team)
-                Snackbar
-                    .make(
-                        findViewById(android.R.id.content),
-                        getString(R.string.player_removed_message, playerWithRoles.player.playerName, teamName),
-                        Snackbar.LENGTH_SHORT,
-                    ).show()
+                snackbarSopraLaStriscia(
+                    getString(R.string.player_removed_message, playerWithRoles.player.playerName, teamName),
+                    Snackbar.LENGTH_SHORT,
+                ).show()
             }.setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
@@ -1102,13 +1192,12 @@ class MainActivity :
         teamId: Int,
         engineIndex: Int,
     ) {
-        viewModel.attributeScorer(engineIndex, playerWithRoles)
-        Snackbar
-            .make(
-                findViewById(android.R.id.content),
-                getString(R.string.goal_by_message, playerWithRoles.player.playerName),
-                Snackbar.LENGTH_SHORT,
-            ).show()
+        // Il messaggio solo se l'attribuzione e' avvenuta: il punto puo' essere sparito nel frattempo.
+        if (viewModel.attributeScorer(engineIndex, playerWithRoles)) {
+            mostraMessaggioInStriscia(
+                getString(R.string.strip_msg_goal_by, playerWithRoles.player.playerName.uppercase(Locale.getDefault())),
+            )
+        }
     }
 
     private fun showEndMatchConfirmation() {
@@ -1122,19 +1211,9 @@ class MainActivity :
             .setMessage(getString(R.string.end_match_message, team1Name, team1Score, team2Name, team2Score))
             .setPositiveButton(getString(R.string.btn_end_match)) { _, _ ->
                 if (viewModel.endMatch()) {
-                    Snackbar
-                        .make(
-                            findViewById(android.R.id.content),
-                            getString(R.string.match_saved),
-                            Snackbar.LENGTH_LONG,
-                        ).show()
+                    snackbarSopraLaStriscia(getString(R.string.match_saved), Snackbar.LENGTH_LONG).show()
                 } else {
-                    Snackbar
-                        .make(
-                            findViewById(android.R.id.content),
-                            getString(R.string.match_not_started_error),
-                            Snackbar.LENGTH_LONG,
-                        ).show()
+                    snackbarSopraLaStriscia(getString(R.string.match_not_started_error), Snackbar.LENGTH_LONG).show()
                 }
             }.setNeutralButton(getString(R.string.btn_discard_match)) { _, _ ->
                 // "Termina" salva, "scarta" butta via: due intenzioni diverse, due comandi
@@ -1142,9 +1221,7 @@ class MainActivity :
                 // sbaglio poteva solo finire nello storico.
                 val messaggio =
                     if (viewModel.discardMatch()) R.string.match_discarded else R.string.match_not_started_error
-                Snackbar
-                    .make(findViewById(android.R.id.content), getString(messaggio), Snackbar.LENGTH_LONG)
-                    .show()
+                snackbarSopraLaStriscia(getString(messaggio), Snackbar.LENGTH_LONG).show()
             }.setNegativeButton(getString(R.string.continue_action), null)
             .show()
     }
