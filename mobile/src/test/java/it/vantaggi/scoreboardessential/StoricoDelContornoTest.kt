@@ -166,7 +166,7 @@ class StoricoDelContornoTest {
     fun `il padel senza set dice la regola e il calcio niente`() {
         val (_, padel) = scheda(partita(SportRegistry.PADEL, 6 to 4))
         assertEquals(View.VISIBLE, testo(padel, R.id.sets_textview).visibility)
-        assertEquals("Set unico · punto secco sul 40-40 · tie-break a 7", testo(padel, R.id.sets_textview).text.toString())
+        assertEquals("Set unico · punto secco sul 40–40 · tie-break a 7", testo(padel, R.id.sets_textview).text.toString())
 
         val (_, calcio) = scheda(partita(SportRegistry.FOOTBALL, 2 to 1))
         assertEquals(View.GONE, testo(calcio, R.id.sets_textview).visibility)

@@ -28,11 +28,11 @@ class ImpostazioniDelContornoTest {
     private val bluNotte = 0xFF1A237E.toInt()
     private val giallo = 0xFFFFD600.toInt()
 
-    // Il selettore dello sport non diceva quali regole arbitra il motore: il primo 40-40 era una sorpresa.
+    // Il selettore dello sport non diceva quali regole arbitra il motore: il primo 40–40 era una sorpresa.
     @Test
     @Config(qualifiers = "it")
     fun `in italiano la riga delle regole dice cosa arbitra il motore`() {
-        assertEquals("Set unico · punto secco sul 40-40 · tie-break a 7", sportRulesLine(base, SportRegistry.PADEL))
+        assertEquals("Set unico · punto secco sul 40–40 · tie-break a 7", sportRulesLine(base, SportRegistry.PADEL))
         assertEquals("Al meglio di 3 set · vantaggi · tie-break a 7", sportRulesLine(base, SportRegistry.TENNIS))
         assertEquals("Cronometro · cambio portiere", sportRulesLine(base, SportRegistry.FOOTBALL))
     }
@@ -40,7 +40,7 @@ class ImpostazioniDelContornoTest {
     @Test
     @Config(qualifiers = "en")
     fun `in inglese la riga delle regole e' inglese`() {
-        assertEquals("Single set · golden point at 40-40 · tie-break to 7", sportRulesLine(base, SportRegistry.PADEL))
+        assertEquals("Single set · golden point at 40–40 · tie-break to 7", sportRulesLine(base, SportRegistry.PADEL))
         assertEquals("Best of 3 sets · advantage · tie-break to 7", sportRulesLine(base, SportRegistry.TENNIS))
         assertEquals("Stopwatch · keeper change", sportRulesLine(base, SportRegistry.FOOTBALL))
     }

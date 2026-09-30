@@ -178,8 +178,12 @@
     <string name="sport_change_blocked">Termina la partita in corso per cambiare sport</string>
     <!-- Riga delle regole sotto il selettore dello sport: si compone dalla configurazione del motore -->
     <string name="rules_single_set">Set unico</string>
-    <string name="rules_best_of">Al meglio di %1$d set</string>
-    <string name="rules_golden_point">punto secco sul 40-40</string>
+    <plurals name="rules_best_of">
+        <item quantity="one">Al meglio di %1$d set</item>
+        <item quantity="many">Al meglio di %1$d set</item>
+        <item quantity="other">Al meglio di %1$d set</item>
+    </plurals>
+    <string name="rules_golden_point">punto secco sul 40–40</string>
     <string name="rules_advantage">vantaggi</string>
     <string name="rules_killer_point">un vantaggio, poi punto secco</string>
     <string name="rules_tiebreak_to">tie-break a %1$d</string>

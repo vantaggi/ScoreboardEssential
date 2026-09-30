@@ -47,7 +47,7 @@ fun sportRulesLine(
             if (config.sets <= 1) {
                 context.getString(R.string.rules_single_set)
             } else {
-                context.getString(R.string.rules_best_of, config.sets)
+                context.resources.getQuantityString(R.plurals.rules_best_of, config.sets, config.sets)
             },
         )
         pezzi.add(
