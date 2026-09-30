@@ -2032,3 +2032,16 @@ Il 30 settembre il proprietario ha aggiunto alla coda i passi 10 e 11 del design
 | 6 | Quadrante a fasce | da fare |
 | 7 | Aptica per lato e ricevuta del tocco | da fare |
 | 8 | Marcatore non automatico (finestra CHI?) | da fare |
+
+### L12 rete di test - 30 settembre 2026
+
+| Voce | Cosa | Stato |
+|---|---|---|
+| `wf9/test-mobile` | tolti tre benchmark e un esempio che non asserivano niente; PerformanceTest confronta lo stato lasciato nel database; SimplifiedDataLayerListenerServiceTest verifica il broadcast 10/5; nuovo ProtocolloV2DelTelefonoTest (seq crescente, ripetuta, vecchia, due nodi, memoria alla ricreazione, riconsegne valgono una volta); MatchTimerService con scope e orologio iniettabili e test a tempo virtuale; LavoroResiduoDelLooper contro le coroutine lasciate in coda da altri test | implementazione fatta (Sonnet), `44f5c39`..`a62bc21`, worktree `wf_29c3773f-131-1`; 11 falsificazioni. Revisione da fare |
+| `wf9/test-wear-shared` | OfflineScoreTest con primario sentinella «X»; test della messa in coda sul disco; golden test che raccoglie per riflessione tutte le 76 costanti di WearConstants (congelati anche MSG_SPORT_INTENT, MSG_INTENT_BATCH, MSG_BATCH_ACK e i tre parametri di ritentativo) | implementazione fatta (Sonnet), `2cf47ea`..`bf31288`, worktree `wf_29c3773f-131-2`; falsificato. Revisione da fare |
+
+**Resta di L12:** OptimizedWearDataSyncTest, che sta in :shared (dispatcher da iniettare). **Trovato
+in piu':** in MainViewModelTest i ViewModel lasciano coroutine in coda sul looper che scrivono su un
+database gia' chiuso, e l'errore ricade sul runTest successivo (ChiusuraPartitaTest, PlayerRepositoryTest):
+va chiuso alla radice nel tearDown. **Da decidere:** i tre parametri di ritentativo ora sono congelati
+nel golden test anche se non viaggiano sul filo.
