@@ -37,6 +37,7 @@
     <string name="cd_player_stats">Player statistics</string>
     <string name="cd_edit_player">Edit player</string>
     <string name="cd_wear_status">Wear OS Connection Status</string>
+    <string name="cd_wear_status_with_notice">%1$s. %2$s</string>
     <!-- La colonna di gioco: dicono quello che il tocco fa e lo stato di adesso, con il nome della squadra. -->
     <string name="cd_add_goal">Goal for %1$s. %2$s to %3$s</string>
     <string name="cd_add_point">Point for %1$s. %2$s to %3$s</string>
@@ -93,8 +94,8 @@
     <string name="strip_msg_match_over">MATCH OVER</string>
     <string name="strip_match_over_end">MATCH OVER · END ›</string>
     <plurals name="strip_msg_from_watch">
-        <item quantity="one">WATCH: %1$d POINT</item>
-        <item quantity="other">WATCH: %1$d POINTS</item>
+        <item quantity="one">%1$d POINT FROM THE WATCH</item>
+        <item quantity="other">%1$d POINTS FROM THE WATCH</item>
     </plurals>
     <string name="end_match_title">End Match?</string>
     <string name="end_match_over_title">MATCH OVER</string>

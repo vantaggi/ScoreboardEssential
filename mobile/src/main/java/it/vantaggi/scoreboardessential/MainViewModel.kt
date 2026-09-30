@@ -508,11 +508,34 @@ class MainViewModel(
     /** L'orologio ha chiesto un cambio sport a partita gia' cominciata. */
     val sportChangeRejected = SingleLiveEvent<Unit>()
 
-    /** L'orologio ha consegnato una partita registrata da solo, e questi sono i tocchi applicati. */
-    val watchBatchApplied = SingleLiveEvent<Int>()
+    private val _watchNotice = MutableLiveData<WatchNotice?>(null)
 
-    /** Consegna rifiutata: c'e' gia' una partita in corso sul telefono. L'arretrato resta al polso. */
-    val watchBatchRejected = SingleLiveEvent<Unit>()
+    /**
+     * Cosa e' successo all'ultimo arretrato dell'orologio: entrato (Applied) o rifiutato perche' c'era
+     * gia' una partita sul telefono (Rejected, l'arretrato resta al polso). E' uno stato, non un
+     * evento: resta dopo una ricreazione dell'Activity e si azzera solo con una partita nuova.
+     */
+    val watchNotice: LiveData<WatchNotice?> = _watchNotice
+
+    // Il riepilogo di 3 secondi nella striscia va detto una volta sola: lo stato resta, e una
+    // nuova Activity lo rileggerebbe.
+    private var riepilogoAnnunciato = false
+
+    /**
+     * I punti arrivati dall'orologio, una sola volta per notizia: servono al messaggio di 3 secondi
+     * nella striscia. Dopo la prima chiamata, o se la notizia non e' un arretrato entrato, dice null.
+     */
+    fun takeWatchSummary(): Int? {
+        val notizia = _watchNotice.value as? WatchNotice.Applied ?: return null
+        if (riepilogoAnnunciato) return null
+        riepilogoAnnunciato = true
+        return notizia.count
+    }
+
+    private fun setWatchNotice(notizia: WatchNotice?) {
+        riepilogoAnnunciato = false
+        _watchNotice.value = notizia
+    }
 
     val showOnboarding = SingleLiveEvent<Unit>()
     val showPlayerSelectionDialog = SingleLiveEvent<Int>()
@@ -746,6 +769,8 @@ class MainViewModel(
 
     private fun startNewMatch() {
         engine.reset()
+        // L'arretrato dell'orologio riguardava la partita di prima: badge e avviso durano fino a qui.
+        setWatchNotice(null)
         matchClock.reset()
         // currentMatchId non si tocca qui: lo azzerano, dentro la fila, chi chiude la riga
         // (endMatch) e chi la cancella (scartaRigaViva). Azzerato da fuori, un insert ancora
@@ -1243,7 +1268,7 @@ class MainViewModel(
     ) {
         if (batch.isBlank() || seq <= 0L) return
         if (engine.log.isNotEmpty()) {
-            watchBatchRejected.value = Unit
+            setWatchNotice(WatchNotice.Rejected)
             return
         }
 
@@ -1274,7 +1299,7 @@ class MainViewModel(
         // gia' scritto. Senza, il punteggio era giusto ma il registro vuoto, e il '-' dell'orologio
         // (che qui arriva come annullamento) non trovava niente da togliere.
         viewModelScope.launch { rebuildEventsAndUndo() }
-        if (punti > 0) watchBatchApplied.value = punti
+        if (punti > 0) setWatchNotice(WatchNotice.Applied(punti))
 
         // La conferma parte SOLO ora: e' il ViewModel ad averlo applicato, e solo lui puo' dirlo.
         viewModelScope.launch {

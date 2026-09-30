@@ -443,13 +443,16 @@ class MainActivity :
             updateFormation(2, players)
         }
 
-        // Il riepilogo dell'arretrato sta nella striscia: una Snackbar copriva le zone +.
-        viewModel.watchBatchApplied.observe(this) { quanti ->
-            mostraMessaggioInStriscia(resources.getQuantityString(R.plurals.strip_msg_from_watch, quanti, quanti))
-        }
-
-        viewModel.watchBatchRejected.observe(this) {
-            snackbarSopraLaStriscia(getString(R.string.watch_batch_rejected), Snackbar.LENGTH_LONG).show()
+        // La notizia dell'orologio e' uno stato: il badge e la card restano finche' non c'e' una
+        // partita nuova, anche dopo una ricreazione. Il riepilogo dei punti entrati sta nella
+        // striscia per 3 secondi, una volta sola (takeWatchSummary): una Snackbar copriva le zone +.
+        viewModel.watchNotice.observe(this) { notizia ->
+            aggiornaIconaOrologio()
+            findViewById<View>(R.id.watch_notice_card).visibility =
+                if (notizia is WatchNotice.Rejected) View.VISIBLE else View.GONE
+            viewModel.takeWatchSummary()?.let { punti ->
+                mostraMessaggioInStriscia(resources.getQuantityString(R.plurals.strip_msg_from_watch, punti, punti))
+            }
         }
 
         viewModel.sportChangeRejected.observe(this) {
@@ -475,26 +478,7 @@ class MainActivity :
             )
         }
 
-        viewModel.isWearConnected.observe(this) { isConnected ->
-            val statusIcon = findViewById<ImageView>(R.id.wear_status_icon)
-            if (isConnected) {
-                statusIcon.setImageResource(R.drawable.ic_watch_connected)
-                // Il tooltip si vede solo tenendo premuto, e chi usa TalkBack non lo incontra:
-                // la contentDescription restava quella cablata nel layout, uguale nei due stati.
-                statusIcon.contentDescription = getString(R.string.wear_connected_tooltip)
-                statusIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.team_electric_green))
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    statusIcon.tooltipText = getString(R.string.wear_connected_tooltip)
-                }
-            } else {
-                statusIcon.setImageResource(R.drawable.ic_watch_disconnected)
-                statusIcon.contentDescription = getString(R.string.wear_disconnected_tooltip)
-                statusIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.sidewalk_gray))
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    statusIcon.tooltipText = getString(R.string.wear_disconnected_tooltip)
-                }
-            }
-        }
+        viewModel.isWearConnected.observe(this) { aggiornaIconaOrologio() }
 
         viewModel.shareMatchReportData.observe(this) { data ->
             // Letto qui, sul thread principale, prima di passare al thread di I/O.
@@ -795,6 +779,10 @@ class MainActivity :
         findViewById<View>(R.id.match_sheet_button).setOnClickListener {
             matchSheet.state = BottomSheetBehavior.STATE_EXPANDED
         }
+        // L'icona dell'orologio apre lo stesso foglio: li' sta la card che spiega il badge.
+        findViewById<View>(R.id.wear_status_icon).setOnClickListener {
+            matchSheet.state = BottomSheetBehavior.STATE_EXPANDED
+        }
         findViewById<View>(R.id.match_sheet_close_button).setOnClickListener {
             matchSheet.state = BottomSheetBehavior.STATE_HIDDEN
         }
@@ -1078,6 +1066,29 @@ class MainActivity :
     private fun aggiornaZone() {
         viewModel.team1Color.value?.let { aggiornaZona(1, it) }
         viewModel.team2Color.value?.let { aggiornaZona(2, it) }
+    }
+
+    /**
+     * L'icona dell'orologio: #E0E0E0 se collegato, #9E9E9E con il glifo barrato se no. Il badge rosso
+     * resta finche' la notizia e' Rejected, cioe' fino alla partita nuova. Il badge e' il foreground
+     * dell'icona, cosi' non prende il colore del tint e non occupa spazio nella barra. Toccarla apre
+     * il foglio, dove sta la card con la spiegazione.
+     */
+    private fun aggiornaIconaOrologio() {
+        val statusIcon = findViewById<ImageView>(R.id.wear_status_icon)
+        val collegato = viewModel.isWearConnected.value == true
+        val rifiutato = viewModel.watchNotice.value is WatchNotice.Rejected
+        statusIcon.setImageResource(if (collegato) R.drawable.ic_watch_connected else R.drawable.ic_watch_disconnected)
+        statusIcon.imageTintList =
+            ColorStateList.valueOf(ContextCompat.getColor(this, if (collegato) R.color.stencil_white else R.color.sidewalk_gray))
+        statusIcon.foreground = if (rifiutato) ContextCompat.getDrawable(this, R.drawable.bg_watch_notice_badge) else null
+        // Il tooltip si vede solo tenendo premuto, e chi usa TalkBack non lo incontra:
+        // la contentDescription restava quella cablata nel layout, uguale nei due stati. Con un
+        // arretrato rifiutato la descrizione dice anche quello, perche' il badge e' solo grafica.
+        val stato = getString(if (collegato) R.string.wear_connected_tooltip else R.string.wear_disconnected_tooltip)
+        statusIcon.contentDescription =
+            if (rifiutato) getString(R.string.cd_wear_status_with_notice, stato, getString(R.string.watch_batch_rejected)) else stato
+        statusIcon.tooltipText = stato
     }
 
     /** Una zona con il colore di squadra, accesa o spenta secondo che la partita sia finita. */
