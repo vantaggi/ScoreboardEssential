@@ -2069,3 +2069,8 @@ Worktree ancora registrati o rimasti su disco: `wf_922f258f-105-1`, `wf_29c3773f
 `wf_9697552a-921-1`, `-2`; cartelle residue di worktree gia' tolti (`wf_f456cabb-0af-1` e
 successive) da cancellare a Gradle fermo. Per correggere un branch: togliere il suo worktree,
 poi lanciare l'agente con `isolation: 'worktree'` e `git switch <branch>`.
+
+Ripresa del 1 ottobre alle 01:05, fermata dal proprietario alle 01:09: le tre revisioni (L12 mobile,
+L12 wear e shared, telefono 10-11) erano appena partite e sono da rifare. La correzione del passo 4
+dell'orologio aveva cominciato: il suo lavoro, non verificato, e' committato come WIP in cima a
+`wf8/fiducia` (e copiato su origin); il prossimo agente di correzione riparte da li'.
