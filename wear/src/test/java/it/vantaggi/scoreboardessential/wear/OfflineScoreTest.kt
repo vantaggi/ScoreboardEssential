@@ -251,4 +251,37 @@ class OfflineScoreTest {
         // Senza il ricalcolo resterebbe l'1 del telefono: il pallino, quando ci sara', mentirebbe.
         assertEquals(atteso, viewModel.scoreState.value?.servingSide)
     }
+
+    /**
+     * L'invio passa da Dispatchers.IO, un thread vero che il dispatcher di test non governa: si
+     * fa girare il Main finto finche' l'esito non e' tornato, con un limite.
+     */
+    private fun aspettaChe(condizione: () -> Boolean) {
+        val limite = System.currentTimeMillis() + 5_000
+        while (!condizione() && System.currentTimeMillis() < limite) {
+            testDispatcher.scheduler.advanceUntilIdle()
+            Thread.sleep(10)
+        }
+        assertTrue("L'esito dell'invio non e' tornato in tempo", condizione())
+    }
+
+    @Test
+    fun `il tocco non consegnato finisce in coda con lato, tipo e orario`() {
+        // I client GMS sono finti e senza nodi: l'invio fallisce, come col telefono in borsa.
+        val prima = System.currentTimeMillis()
+        viewModel.applyStateV2(statoDalTelefono(registro = ""))
+
+        viewModel.incrementScore(2)
+        aspettaChe { viewModel.pendingCount.value == 1 }
+        viewModel.decrementScore(1)
+        aspettaChe { viewModel.pendingCount.value == 2 }
+
+        // Sul disco, non solo nel contatore: e' da li' che riparte un orologio riavviato.
+        val voci = coda.all()
+        assertEquals(listOf(WearConstants.INTENT_POINT, WearConstants.INTENT_UNDO), voci.map { it.kind })
+        assertEquals(listOf(2, 1), voci.map { it.side })
+        // L'orario e' quello del tocco, non della consegna: mai prima dell'inizio del test.
+        assertTrue(voci.all { it.atMillis >= prima })
+        assertTrue("l'ordine del tocco si conserva", voci[0].atMillis <= voci[1].atMillis)
+    }
 }
