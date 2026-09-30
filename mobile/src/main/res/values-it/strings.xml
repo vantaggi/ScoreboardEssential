@@ -36,6 +36,7 @@
     <string name="cd_player_stats">Statistiche del giocatore</string>
     <string name="cd_edit_player">Modifica giocatore</string>
     <string name="cd_wear_status">Stato Connessione Wear OS</string>
+    <string name="cd_wear_status_with_notice">%1$s. %2$s</string>
     <!-- La colonna di gioco: dicono quello che il tocco fa e lo stato di adesso, con il nome della squadra. -->
     <string name="cd_add_goal">Gol a %1$s. %2$s a %3$s</string>
     <string name="cd_add_point">Punto a %1$s. %2$s a %3$s</string>
@@ -90,9 +91,9 @@
     <string name="strip_msg_match_over">PARTITA FINITA</string>
     <string name="strip_match_over_end">PARTITA FINITA · TERMINA ›</string>
     <plurals name="strip_msg_from_watch">
-        <item quantity="one">OROLOGIO: %1$d PUNTO</item>
-        <item quantity="many">OROLOGIO: %1$d PUNTI</item>
-        <item quantity="other">OROLOGIO: %1$d PUNTI</item>
+        <item quantity="one">%1$d PUNTO DALL\'OROLOGIO</item>
+        <item quantity="many">%1$d PUNTI DALL\'OROLOGIO</item>
+        <item quantity="other">%1$d PUNTI DALL\'OROLOGIO</item>
     </plurals>
     <string name="end_match_title">Termina Partita?</string>
     <string name="end_match_over_title">PARTITA FINITA</string>
