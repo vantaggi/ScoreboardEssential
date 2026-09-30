@@ -40,7 +40,12 @@ import kotlinx.coroutines.launch
 
 class MatchTimerService : Service() {
     private val binder = MatchTimerBinder()
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    // Scope di lavoro e sorgente del tempo sostituibili dai test: con un dispatcher di test e un
+    // orologio che legge il tempo virtuale i timer si governano con advanceTimeBy invece che con
+    // Thread.sleep. In produzione restano Dispatchers.Default e l'orologio di sistema.
+    internal var scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    internal var clock: () -> Long = { System.currentTimeMillis() }
     private lateinit var connectionManager: OptimizedWearDataSync
     private lateinit var vibrator: Vibrator
     private var wakeLock: PowerManager.WakeLock? = null
@@ -151,7 +156,7 @@ class MatchTimerService : Service() {
         if (wakeLock?.isHeld == false) {
             wakeLock?.acquire()
         }
-        matchStartTime = System.currentTimeMillis() - elapsedTimeOnPause
+        matchStartTime = clock() - elapsedTimeOnPause
         lastSyncElapsedTime = elapsedTimeOnPause
         matchTimerJob =
             scope.launch {
@@ -170,7 +175,7 @@ class MatchTimerService : Service() {
                 }
 
                 while (isActive) {
-                    val now = System.currentTimeMillis()
+                    val now = clock()
                     val elapsed = now - matchStartTime
                     _matchTimerValue.value = elapsed
                     updateNotification(elapsed)
@@ -258,7 +263,7 @@ class MatchTimerService : Service() {
     ) {
         _matchTimerValue.value = timeMillis
         if (_isMatchTimerRunning.value) {
-            matchStartTime = System.currentTimeMillis() - timeMillis
+            matchStartTime = clock() - timeMillis
         } else {
             elapsedTimeOnPause = timeMillis
         }
@@ -293,11 +298,11 @@ class MatchTimerService : Service() {
         if (keeperRemainingOnPause <= 0) keeperDuration = durationMillis
         val duration = if (keeperRemainingOnPause > 0) keeperRemainingOnPause else durationMillis
         _isKeeperTimerRunning.value = true
-        keeperTimerEndTime = System.currentTimeMillis() + duration
+        keeperTimerEndTime = clock() + duration
         keeperTimerJob =
             scope.launch {
                 while (isActive) {
-                    val remaining = keeperTimerEndTime - System.currentTimeMillis()
+                    val remaining = keeperTimerEndTime - clock()
                     if (remaining > 0) {
                         _keeperTimerValue.value = remaining
                     } else {
@@ -522,8 +527,8 @@ class MatchTimerService : Service() {
         val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val isMatchRunning = prefs.getBoolean(KEY_MATCH_RUNNING, false)
         if (isMatchRunning) {
-            matchStartTime = prefs.getLong(KEY_MATCH_START_TIME, System.currentTimeMillis())
-            val elapsed = System.currentTimeMillis() - matchStartTime
+            matchStartTime = prefs.getLong(KEY_MATCH_START_TIME, clock())
+            val elapsed = clock() - matchStartTime
             _matchTimerValue.value = elapsed
             elapsedTimeOnPause = elapsed
             startTimer()
@@ -537,7 +542,7 @@ class MatchTimerService : Service() {
         val isKeeperRunning = prefs.getBoolean(KEY_KEEPER_RUNNING, false)
         if (isKeeperRunning) {
             keeperTimerEndTime = prefs.getLong(KEY_KEEPER_END_TIME, 0L)
-            val remaining = keeperTimerEndTime - System.currentTimeMillis()
+            val remaining = keeperTimerEndTime - clock()
             if (remaining > 0) {
                 keeperRemainingOnPause = remaining
                 startKeeperTimer(remaining)
