@@ -33,6 +33,53 @@
         <item name="colorOnSurface">@color/stencil_white</item>
         <item name="colorOnSurfaceVariant">@color/sidewalk_gray</item>
 
+        <!--
+            Mappatura COMPLETA dei ruoli di Material 3 (DESIGN.md, Contorno: tema e dialoghi).
+            Un ruolo lasciato fuori prende il valore base di M3, che e' viola: avatar delle rose,
+            sfondo dei dialoghi, bordi dei campi. Qui ogni ruolo ha un token del progetto e il
+            test TemaDelTelefonoTest controlla che nessuno sia viola. Il tema resta solo scuro.
+        -->
+        <item name="colorOnBackground">@color/stencil_white</item>
+        <item name="colorPrimaryContainer">@color/graffiti_dark_gray</item>
+        <item name="colorOnPrimaryContainer">@color/stencil_white</item>
+        <item name="colorSecondaryContainer">@color/graffiti_dark_gray</item>
+        <item name="colorOnSecondaryContainer">@color/stencil_white</item>
+        <!-- Terzo accento: non esiste nello street, il ruolo segue il grigio chiaro del testo. -->
+        <item name="colorTertiary">@color/stencil_white</item>
+        <item name="colorOnTertiary">@color/asphalt_black</item>
+        <item name="colorTertiaryContainer">@color/graffiti_dark_gray</item>
+        <item name="colorOnTertiaryContainer">@color/stencil_white</item>
+        <item name="colorSurfaceVariant">@color/graffiti_dark_gray</item>
+        <item name="colorSurfaceDim">@color/asphalt_dark</item>
+        <item name="colorSurfaceBright">@color/graffiti_dark_gray</item>
+        <item name="colorSurfaceContainerLowest">@color/asphalt_dark</item>
+        <item name="colorSurfaceContainerLow">@color/concrete_gray</item>
+        <item name="colorSurfaceContainer">@color/concrete_gray</item>
+        <item name="colorSurfaceContainerHigh">@color/graffiti_dark_gray</item>
+        <item name="colorSurfaceContainerHighest">@color/graffiti_dark_gray</item>
+        <item name="colorOutline">@color/outline_gray</item>
+        <item name="colorOutlineVariant">@color/graffiti_dark_gray</item>
+        <!-- Superficie e inchiostro invertiti (snackbar): chiaro su scuro, con l'azione in nero. -->
+        <item name="colorSurfaceInverse">@color/stencil_white</item>
+        <item name="colorOnSurfaceInverse">@color/asphalt_black</item>
+        <item name="colorPrimaryInverse">@color/asphalt_black</item>
+        <!-- Ruoli fissi: nessun layout li usa, ma il primo componente nuovo li userebbe viola. -->
+        <item name="colorPrimaryFixed">@color/graffiti_pink</item>
+        <item name="colorPrimaryFixedDim">@color/graffiti_pink</item>
+        <item name="colorOnPrimaryFixed">@color/asphalt_black</item>
+        <item name="colorOnPrimaryFixedVariant">@color/asphalt_black</item>
+        <item name="colorSecondaryFixed">@color/neon_cyan</item>
+        <item name="colorSecondaryFixedDim">@color/neon_cyan</item>
+        <item name="colorOnSecondaryFixed">@color/asphalt_black</item>
+        <item name="colorOnSecondaryFixedVariant">@color/asphalt_black</item>
+        <item name="colorTertiaryFixed">@color/stencil_white</item>
+        <item name="colorTertiaryFixedDim">@color/sidewalk_gray</item>
+        <item name="colorOnTertiaryFixed">@color/asphalt_black</item>
+        <item name="colorOnTertiaryFixedVariant">@color/asphalt_black</item>
+
+        <!-- Tutti i dialoghi, anche quelli costruiti senza overlay esplicito. -->
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.App.MaterialAlertDialog</item>
+
         <!-- Street Vibe Typeface References -->
         <item name="textAppearanceDisplayLarge">@style/TextAppearance.App.DisplayLarge.Street</item>
         <item name="textAppearanceHeadlineMedium">@style/TextAppearance.App.HeadlineMedium.Street</item>
@@ -159,7 +206,7 @@
         <item name="strokeColor">@color/outline_gray</item>
     </style>
 
-    <!-- Style for the team name editor dialog -->
+    <!-- Overlay di tutti i dialoghi (materialAlertDialogTheme del tema): accento ciano, fondo dai ruoli di superficie. -->
     <style name="ThemeOverlay.App.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="colorPrimary">@color/neon_cyan</item>
         <item name="colorSurface">@color/concrete_gray</item>
