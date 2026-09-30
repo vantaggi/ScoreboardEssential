@@ -24,6 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Il punteggio gia' impaginato dal telefono, piu' le capacita' dello sport.
@@ -155,6 +156,9 @@ class WearViewModel(
          * schermata: "non e' arrivato" deve suonare uguale ovunque lo dica il polso.
          */
         internal val PATTERN_ERRORE = longArrayOf(0, 60, 120, 60)
+
+        /** Poco sopra la verifica di 2s: oltre, la richiesta al Data Layer si da' per persa. */
+        internal const val TIMEOUT_RICHIESTA_MS = StatoFiducia.DURATA_VERIFICA_MS + 500L
     }
 
     /**
@@ -240,20 +244,40 @@ class WearViewModel(
     val statoFiducia = _statoFiducia.asStateFlow()
 
     /**
+     * Il collegamento e' stato determinato almeno una volta, cioe' ha risposto almeno una
+     * richiesta. Si accende una volta sola e non si spegne piu': e' quello che distingue "non so
+     * ancora com'e'" (l'avvio) da "lo so, e lo rinfresco".
+     */
+    private var collegamentoNoto = false
+
+    /** La richiesta di collegamento in volo: finche' e' attiva non se ne lancia un'altra. */
+    private var refreshJob: Job? = null
+
+    /**
      * Il listener della capability non vede il Bluetooth che cade: lo stato va chiesto di nuovo.
      *
-     * Per al massimo 2s la riga non dice "scollegato": all'avvio ConnectionState vale Disconnected
-     * finche' non arriva la risposta, e senza questo la riga lampeggerebbe a ogni accensione. La
-     * verifica finisce alla risposta, o allo scadere dei 2s se la risposta non arriva.
+     * Per al massimo 2s la riga non dice "scollegato", ma SOLO finche' il collegamento non e' mai
+     * stato determinato: all'avvio ConnectionState vale Disconnected finche' non arriva la
+     * risposta, e senza questo la riga lampeggerebbe a ogni accensione. A stato gia' noto la
+     * richiesta e' un rinfresco silenzioso: nasconderlo ogni 15s e a ogni onResume farebbe
+     * sparire SCOLLEGATO e IN CODA per un attimo, e TalkBack li rileggerebbe ogni volta.
+     *
+     * Una richiesta alla volta, e mai oltre poco piu' dei 2s: se il Data Layer non risponde, la
+     * prossima deve poter partire.
      */
     fun refreshConnection() {
-        verificaFinoA = orologio() + StatoFiducia.DURATA_VERIFICA_MS
-        ricalcolaFiducia()
-        viewModelScope.launch {
-            connectionManager.refreshConnection()
-            verificaFinoA = 0L
+        if (refreshJob?.isActive == true) return
+        if (!collegamentoNoto) {
+            verificaFinoA = orologio() + StatoFiducia.DURATA_VERIFICA_MS
             ricalcolaFiducia()
         }
+        refreshJob =
+            viewModelScope.launch {
+                val risposta = withTimeoutOrNull(TIMEOUT_RICHIESTA_MS) { connectionManager.refreshConnection() }
+                if (risposta != null) collegamentoNoto = true
+                verificaFinoA = 0L
+                ricalcolaFiducia()
+            }
     }
 
     /**
@@ -441,7 +465,8 @@ class WearViewModel(
         protocolV2Seen = true
         statoDalTelefono = state
         if (dalVivo) ultimoStatoVivoAlle = orologio()
-        ultimaNota.save(state.sportId, state.eventLog, ultimoStatoVivoAlle.takeIf { dalVivo })
+        // L'ora sul disco la scrive WearDataLayerService, che c'e' anche ad app chiusa.
+        ultimaNota.save(state.sportId, state.eventLog)
         when {
             batchInVolo != null -> Unit
             pending.size > 0 && rebuildLocalState() -> Unit

@@ -67,6 +67,9 @@ class WearDataLayerService : WearableListenerService() {
 
             when (dataItem.uri.path) {
                 WearConstants.PATH_STATE_V2 -> {
+                    // L'ora del dato vivo si scrive qui e non nel ViewModel: il servizio riceve i v2
+                    // anche ad app chiusa, e "SCOLLEGATO · 18:42" deve poterli contare.
+                    if (dalVivo) LastKnownMatch(context).segnaStatoVivo(System.currentTimeMillis())
                     val intent =
                         Intent(ACTION_STATE_V2_UPDATE).apply {
                             putExtra(EXTRA_V2_PAYLOAD, dataMap.toByteArray())

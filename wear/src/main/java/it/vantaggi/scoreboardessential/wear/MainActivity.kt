@@ -429,16 +429,6 @@ class MainActivity : ComponentActivity() {
 
                 launch { viewModel.statoFiducia.collect { renderStatus(it) } }
 
-                // Il listener della capability non vede il Bluetooth che cade: con la partita in
-                // corso e lo schermo acceso il collegamento si richiede da soli ogni 15 secondi.
-                // Fuori da STARTED il ciclo si ferma, e riparte dal primo onResume.
-                launch {
-                    while (true) {
-                        delay(INTERVALLO_VERIFICA_MS)
-                        viewModel.refreshConnectionSePartitaInCorso()
-                    }
-                }
-
                 // I collector v1 scrivono solo finche' il v2 non e' mai arrivato.
                 //
                 // Sono StateFlow: riemettono l'ultimo valore ogni volta che si ricomincia a

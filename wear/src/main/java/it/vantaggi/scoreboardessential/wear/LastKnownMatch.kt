@@ -38,15 +38,9 @@ class LastKnownMatch(
      */
     val ricevutoAlle: Long get() = prefs.getLong(CHIAVE_RICEVUTO_ALLE, 0L)
 
-    /**
-     * [ricevutoAlle] e' l'istante in cui lo stato e' arrivato DAL VIVO; null per uno stato
-     * riletto dai DataItem al risveglio, che e' una copia vecchia e non dice quando il telefono
-     * ha parlato davvero: in quel caso l'ora di prima resta quella che era.
-     */
     fun save(
         sportId: String,
         eventLog: String,
-        ricevutoAlle: Long? = null,
     ) {
         // Uno sport vuoto arriva da un telefono che parla una bozza precedente del v2: non si
         // sovrascrive quello che si sa gia' con un vuoto, perche' quel vuoto non e' informazione.
@@ -54,7 +48,16 @@ class LastKnownMatch(
         prefs.edit {
             putString(CHIAVE_SPORT, sportId)
             putString(CHIAVE_LOG, eventLog)
-            if (ricevutoAlle != null) putLong(CHIAVE_RICEVUTO_ALLE, ricevutoAlle)
         }
+    }
+
+    /**
+     * Segna l'istante in cui il telefono ha parlato DAL VIVO. Lo chiama [WearDataLayerService],
+     * non il ViewModel: il servizio riceve i v2 anche ad app chiusa, e l'ora dell'ultimo stato
+     * vivo deve seguirli. Uno stato riletto dai DataItem al risveglio e' una copia vecchia e non
+     * passa di qui: l'ora di prima resta quella che era.
+     */
+    fun segnaStatoVivo(ricevutoAlle: Long) {
+        prefs.edit { putLong(CHIAVE_RICEVUTO_ALLE, ricevutoAlle) }
     }
 }
