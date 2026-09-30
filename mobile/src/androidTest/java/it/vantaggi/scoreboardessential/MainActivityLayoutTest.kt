@@ -5,12 +5,14 @@ import android.content.Context
 import android.graphics.Rect
 import android.os.Build
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
@@ -1105,6 +1107,96 @@ class MainActivityLayoutTest {
                 aspettaStato(scenario, BottomSheetBehavior.STATE_HIDDEN),
             )
             assertEquals("e l'app deve restare aperta", Lifecycle.State.RESUMED, scenario.state)
+        }
+    }
+
+    /** Il badge e' il foreground dell'icona: c'e' solo con un arretrato rifiutato. */
+    private fun badgeDellOrologio(activity: MainActivity): Boolean =
+        activity.findViewById<ImageView>(R.id.wear_status_icon).foreground != null
+
+    private fun cardDellOrologio(activity: MainActivity): Int = activity.findViewById<View>(R.id.watch_notice_card).visibility
+
+    /**
+     * Passo 9. Un arretrato rifiutato accende il badge sull'icona e la card in cima al foglio, e li
+     * tiene: dopo una ricreazione dell'Activity il ViewModel e' lo stesso e la notizia e' ancora
+     * li' (era un SingleLiveEvent, una Snackbar che passava). Toccare l'icona apre il foglio. Solo una
+     * partita nuova li spegne.
+     */
+    @Test
+    fun unArretratoRifiutato_tiene_badge_e_card_dopo_la_ricreazione_e_la_partita_nuova_li_spegne() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            var modello: MainViewModel? = null
+            scenario.onActivity { activity ->
+                modello = ViewModelProvider(activity)[MainViewModel::class.java]
+                assertFalse("senza notizie l'icona non ha il badge", badgeDellOrologio(activity))
+                assertEquals("senza notizie la card non c'e'", View.GONE, cardDellOrologio(activity))
+                // Una partita gia' cominciata sul telefono: l'arretrato dell'orologio non puo' entrare.
+                modello!!.addScore(1)
+                val applica = MainViewModel::class.java.getDeclaredMethod("applyWatchBatch", String::class.java, Long::class.java)
+                applica.isAccessible = true
+                val voce = listOf(WearConstants.INTENT_POINT, 1, 1000L).joinToString(WearConstants.BATCH_FIELD_SEPARATOR)
+                applica.invoke(modello, voce, 7L)
+            }
+            try {
+                assertTrue(
+                    "il badge non si e' acceso",
+                    aspettaCheAttivi(scenario) { badgeDellOrologio(it) && cardDellOrologio(it) == View.VISIBLE },
+                )
+
+                scenario.recreate()
+                InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+                assertTrue(
+                    "dopo la ricreazione badge e card devono esserci ancora",
+                    aspettaCheAttivi(scenario) { badgeDellOrologio(it) && cardDellOrologio(it) == View.VISIBLE },
+                )
+
+                // Toccare l'icona apre il foglio, e la card vi e' in cima, a vista.
+                onView(withId(R.id.wear_status_icon)).perform(click())
+                assertEquals(BottomSheetBehavior.STATE_EXPANDED, aspettaStato(scenario, BottomSheetBehavior.STATE_EXPANDED))
+                onView(withId(R.id.watch_notice_card)).check(matches(isDisplayed()))
+                pressBack()
+                assertEquals(BottomSheetBehavior.STATE_HIDDEN, aspettaStato(scenario, BottomSheetBehavior.STATE_HIDDEN))
+
+                // Partita nuova: il badge e la card vanno via. discardMatch scarta anche la riga viva.
+                scenario.onActivity { activity ->
+                    assertTrue(
+                        "niente da scartare: la partita era vuota",
+                        ViewModelProvider(activity)[MainViewModel::class.java].discardMatch(),
+                    )
+                }
+                assertTrue(
+                    "la partita nuova non ha spento badge e card",
+                    aspettaCheAttivi(scenario) { !badgeDellOrologio(it) && cardDellOrologio(it) == View.GONE },
+                )
+            } finally {
+                // Se la prova e' caduta a meta' la partita resterebbe viva sull'emulatore.
+                scenario.onActivity { ViewModelProvider(it)[MainViewModel::class.java].discardMatch() }
+            }
+        }
+    }
+
+    /** L'icona e' #E0E0E0 se l'orologio e' collegato, #9E9E9E (col glifo barrato) se no. */
+    @Test
+    fun l_icona_dell_orologio_e_chiara_se_collegato_e_grigia_se_no() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            val stencil = 0xFFE0E0E0.toInt()
+            val grigio = 0xFF9E9E9E.toInt()
+
+            fun tinta(activity: MainActivity) = activity.findViewById<ImageView>(R.id.wear_status_icon).imageTintList?.defaultColor
+
+            fun imposta(collegato: Boolean) =
+                scenario.onActivity { activity ->
+                    val campo = MainViewModel::class.java.getDeclaredField("_isWearConnected")
+                    campo.isAccessible = true
+
+                    @Suppress("UNCHECKED_CAST")
+                    val stato = campo.get(ViewModelProvider(activity)[MainViewModel::class.java]) as MutableLiveData<Boolean>
+                    stato.value = collegato
+                }
+            imposta(true)
+            assertTrue("collegato l'icona deve essere #E0E0E0", aspettaCheAttivi(scenario) { tinta(it) == stencil })
+            imposta(false)
+            assertTrue("scollegato l'icona deve essere #9E9E9E", aspettaCheAttivi(scenario) { tinta(it) == grigio })
         }
     }
 }
