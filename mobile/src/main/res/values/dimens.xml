@@ -1,7 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Il tabellone in verticale: due card alte, il numero grande da leggere a bordo campo. -->
-    <dimen name="score_section_min_height">300dp</dimen>
-    <dimen name="score_card_min_height">280dp</dimen>
-    <dimen name="score_text_size">86sp</dimen>
+    <!--
+        La colonna di gioco a slot fissi (DESIGN.md, Forme e spaziature). Tutte le altezze sono
+        fisse: durante la partita nessuna vista cambia misura, cosi' il + sta sempre dove il dito se
+        lo aspetta. Non esiste values-land: la schermata e' bloccata in verticale nel manifest.
+    -->
+    <dimen name="game_bar_height">56dp</dimen>
+    <dimen name="game_names_height">48dp</dimen>
+    <dimen name="game_detail_height">48dp</dimen>
+    <dimen name="game_strip_height">56dp</dimen>
+    <dimen name="game_zone_height">112dp</dimen>
+    <!--
+        Limiti del numero, in dp e non in sp: la dimensione si calcola una volta in MainActivity
+        (Paint.measureText nella meta' di colonna) e va applicata in pixel. In sp, con il carattere
+        di sistema al 200% il tetto raddoppierebbe e il numero uscirebbe dal suo spazio.
+    -->
+    <dimen name="score_text_max">150dp</dimen>
+    <dimen name="score_text_min">72dp</dimen>
 </resources>

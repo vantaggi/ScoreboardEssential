@@ -17,28 +17,34 @@
 
     <!-- Onboarding Step 1: Score Management -->
     <string name="onboarding_score_title">GESTIONE PUNTEGGIO FACILE</string>
-    <string name="onboarding_score_description">Usa i pulsanti + e - di ogni squadra. Colori, sport e cronometri stanno nelle impostazioni.</string>
+    <string name="onboarding_score_description">Tocca la zona grande di una squadra per segnare. ANNULLA toglie l\'ultima azione. Rose, registro, colori e sport stanno sotto il pulsante ≡ in alto a destra.</string>
 
     <!-- Onboarding Step 2: Timers and Players -->
     <string name="onboarding_timers_title">TIMER PARTITA E PORTIERE</string>
-    <string name="onboarding_timers_description">Controlla il gioco con il timer principale. Usa il timer dedicato al portiere. Aggiungi giocatori per costruire le tue squadre.</string>
+    <string name="onboarding_timers_description">Tocca il tempo in alto per avviarlo o fermarlo. Nel calcio lo slot PORTIERE accanto conta il portiere. Aggiungi giocatori alle squadre dal pulsante ≡ in alto a destra.</string>
 
     <!-- Onboarding Step 3: Wear OS Sync -->
     <string name="onboarding_wear_title">SINCRONIZZAZIONE WEAR OS</string>
     <string name="onboarding_wear_description">Resta connesso. Il punteggio e i timer sono sempre sincronizzati con il tuo smartwatch Wear OS.</string>
 
     <!-- Accessibility -->
-    <string name="cd_decrease_team_1">Diminuisci punteggio Squadra 1</string>
     <string name="cd_increase_team_1">Aumenta punteggio Squadra 1</string>
-    <string name="cd_decrease_team_2">Diminuisci punteggio Squadra 2</string>
     <string name="cd_increase_team_2">Aumenta punteggio Squadra 2</string>
     <string name="cd_edit_team_1_name">Modifica nome Squadra 1</string>
     <string name="cd_edit_team_2_name">Modifica nome Squadra 2</string>
     <string name="cd_edit_team_name">Modifica il nome di %1$s</string>
     <string name="cd_player_stats">Statistiche del giocatore</string>
     <string name="cd_edit_player">Modifica giocatore</string>
-    <string name="cd_settings">Impostazioni</string>
     <string name="cd_wear_status">Stato Connessione Wear OS</string>
+    <!-- La colonna di gioco: dicono quello che il tocco fa e lo stato di adesso, con il nome della squadra. -->
+    <string name="cd_add_goal">Gol a %1$s. %2$s a %3$s</string>
+    <string name="cd_add_point">Punto a %1$s. %2$s a %3$s</string>
+    <string name="cd_correct_team">Togli un gol a %1$s</string>
+    <string name="caption_game">GAME</string>
+    <string name="caption_set">SET</string>
+    <string name="caption_set_game">SET · GAME</string>
+    <string name="timer_state_running">In corso</string>
+    <string name="timer_state_stopped">Fermo</string>
 
     <!-- Settings -->
     <string name="choose_team_color">Scegli Colore Squadra %d</string>
@@ -53,8 +59,6 @@
 
     <!-- MainActivity Strings -->
     <string name="notification_permission_required">È necessaria l\'autorizzazione per le notifiche del timer</string>
-    <string name="start">AVVIA</string>
-    <string name="pause_caps">PAUSA</string>
     <string name="wear_connected_tooltip">Wear OS Connesso</string>
     <string name="wear_disconnected_tooltip">Wear OS Disconnesso</string>
     <string name="share_match_results">Condividi Risultati Partita</string>
@@ -85,7 +89,6 @@
     <string name="reset_timer_message">Questo resetterà il timer della partita a 00:00</string>
     <string name="reset">Resetta</string>
 
-    <string name="label_match_time">TEMPO PARTITA</string>
     <string name="label_keeper_timer">PORTIERE</string>
 
 
@@ -97,10 +100,6 @@
         <item quantity="other">Partita dal polso: %1$d azioni importate.</item>
     </plurals>
     <string name="watch_batch_rejected">L\'orologio ha mandato punti che non sono entrati in questa partita.</string>
-    <string name="label_reset_timer">AZZERA</string>
-    <string name="label_undo_last_goal">ANNULLA ULTIMO GOL</string>
-    <string name="label_undo_last_point">ANNULLA ULTIMO PUNTO</string>
-    <string name="label_vs">VS</string>
     <string name="label_match_history">STORICO</string>
     <string name="label_end_match">FINE PARTITA</string>
     <string name="label_team_rosters">ROSE</string>
@@ -108,7 +107,7 @@
     <string name="label_formations">FORMAZIONI</string>
     <!-- Foglio PARTITA: cio che si consulta, a un tocco dalla schermata di gioco. -->
     <string name="label_match_sheet">PARTITA</string>
-    <string name="label_open_match_sheet">≡ PARTITA</string>
+    <string name="label_open_match_sheet">≡</string>
     <string name="cd_open_match_sheet">Apri il foglio della partita</string>
     <string name="label_close_sheet">CHIUDI</string>
     <string name="label_statistics">STATISTICHE</string>

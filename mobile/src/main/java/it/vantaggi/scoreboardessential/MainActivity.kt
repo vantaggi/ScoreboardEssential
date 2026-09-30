@@ -4,15 +4,16 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.Paint
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
+import android.util.TypedValue
 import android.view.View
 import android.view.WindowManager
-import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.Button
 import android.widget.ImageView
@@ -22,14 +23,18 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.doOnNextLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -51,9 +56,9 @@ import it.vantaggi.scoreboardessential.utils.ExportBlocked
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import it.vantaggi.scoreboardessential.utils.MatchReportUtils
 import it.vantaggi.scoreboardessential.utils.TimeUtils
-import it.vantaggi.scoreboardessential.utils.animateScoreButton
+import it.vantaggi.scoreboardessential.utils.animateScoreNumber
+import it.vantaggi.scoreboardessential.utils.animateZoneTap
 import it.vantaggi.scoreboardessential.utils.etichettaDiSquadra
-import it.vantaggi.scoreboardessential.utils.playNativeGoalAnimation
 import it.vantaggi.scoreboardessential.views.FormationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -63,6 +68,60 @@ import java.util.Locale
 
 // Quanto scurisce la colonna di gioco a foglio PARTITA aperto: nero al 60%.
 private const val SCRIM_ALPHA = 0.6f
+
+// Un comando spento (ANNULLA senza niente da annullare) resta al suo posto, ma a 0,38.
+private const val ALPHA_SPENTO = 0.38f
+
+// Il token piu' largo che il punteggio di uno sport puo' mostrare: "88" nel calcio, "AV" (vantaggio)
+// nella racchetta. Con questo si misura il numero una volta sola, invece di ridimensionarlo a ogni punto.
+private const val TOKEN_PIU_LARGO_CALCIO = "88"
+private const val TOKEN_PIU_LARGO_RACCHETTA = "AV"
+
+// La dimensione a cui si misura il token; il risultato si scala linearmente.
+private const val PROVA_DI_MISURA = 100f
+
+// Nel dettaglio dei set il separatore fra set chiusi e game correnti ("6-4 · 3-2"): con lui la didascalia e' SET · GAME.
+private const val SEPARATORE_SET_GAME = " · "
+
+// Il tempo piu' lungo che il pulsante del cronometro mostra: oltre i 99 minuti le cifre diventano sei.
+private const val TEMPO_PIU_LUNGO = "100:00"
+
+/**
+ * La larghezza minima del pulsante del tempo: quella che ha con il tempo piu' lungo, padding e
+ * icona compresi. Cosi' passando i 99 minuti il pulsante non si allarga e non sposta il portiere
+ * e il resto della barra. Si misura con il pennello del pulsante, che ha gia' la dimensione e i
+ * caratteri di sistema di adesso.
+ */
+internal fun larghezzaMinimaDelTempo(pulsante: MaterialButton): Int {
+    val testo = Math.ceil(pulsante.paint.measureText(TEMPO_PIU_LUNGO).toDouble()).toInt()
+    return testo + pulsante.paddingLeft + pulsante.paddingRight + pulsante.iconSize + pulsante.iconPadding
+}
+
+/**
+ * La didascalia del dettaglio sotto i numeri, o null se non c'e' niente da dire. A partita finita
+ * non ci sono game correnti e il dettaglio contiene solo i set chiusi: e' SET, anche se senza il
+ * separatore fra set e game.
+ */
+@StringRes
+internal fun didascaliaDelDettaglio(
+    testo: String?,
+    partitaFinita: Boolean,
+): Int? =
+    when {
+        testo.isNullOrEmpty() -> null
+        partitaFinita -> R.string.caption_set
+        testo.contains(SEPARATORE_SET_GAME) -> R.string.caption_set_game
+        else -> R.string.caption_game
+    }
+
+// L'increspatura sulla zona premuta: l'inchiostro della squadra al 24% (61 su 255).
+private const val RIPPLE_ALPHA = 61
+
+// Lo stroke della zona + scura sul nero, in dp.
+private const val STROKE_ZONA_DP = 2
+
+// Sotto questo contrasto contro il nero il colore di squadra e' grafica troppo debole: la zona + prende lo stroke.
+private const val CONTRASTO_MINIMO_GRAFICA = 3.0
 
 class MainActivity :
     AppCompatActivity(),
@@ -79,15 +138,14 @@ class MainActivity :
 
     // Core view references
     private lateinit var team1ScoreTextView: TextView
-    private lateinit var team1ScoreDetailTextView: TextView
-    private lateinit var matchPeriodTextView: TextView
-    private lateinit var team2ScoreDetailTextView: TextView
     private lateinit var team2ScoreTextView: TextView
-    private lateinit var timerTextView: TextView
-    private lateinit var team1Card: MaterialCardView
-    private lateinit var team2Card: MaterialCardView
+    private lateinit var scoreDetailValue: TextView
+    private lateinit var scoreDetailCaption: TextView
+    private lateinit var matchPeriodTextView: TextView
+    private lateinit var team1Zone: MaterialCardView
+    private lateinit var team2Zone: MaterialCardView
     private lateinit var keeperTimerTextView: TextView
-    private lateinit var timerStartButton: Button
+    private lateinit var timerStartButton: MaterialButton
     private lateinit var undoGoalButton: Button
 
     // Sezioni che compaiono o spariscono a seconda dello sport
@@ -105,7 +163,6 @@ class MainActivity :
     // New view references for refactored layout
     private lateinit var team1NameTextView: TextView
     private lateinit var team2NameTextView: TextView
-    private lateinit var vsIndicator: View
 
     // Team roster recycler views
     private lateinit var team1RosterRecyclerView: RecyclerView
@@ -232,15 +289,15 @@ class MainActivity :
     private fun initializeViews() {
         // Core views
         team1ScoreTextView = findViewById(R.id.team1_score_textview)
-        team1ScoreDetailTextView = findViewById(R.id.team1_score_detail_textview)
-        matchPeriodTextView = findViewById(R.id.match_period_textview)
-        team2ScoreDetailTextView = findViewById(R.id.team2_score_detail_textview)
         team2ScoreTextView = findViewById(R.id.team2_score_textview)
-        timerTextView = findViewById(R.id.timer_textview)
-        team1Card = findViewById(R.id.team1_card)
-        team2Card = findViewById(R.id.team2_card)
+        scoreDetailValue = findViewById(R.id.score_detail_value)
+        scoreDetailCaption = findViewById(R.id.score_detail_caption)
+        matchPeriodTextView = findViewById(R.id.match_period_textview)
+        team1Zone = findViewById(R.id.team1_add_button_card)
+        team2Zone = findViewById(R.id.team2_add_button_card)
         keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
         timerStartButton = findViewById(R.id.timer_start_button)
+        timerStartButton.minWidth = larghezzaMinimaDelTempo(timerStartButton)
         undoGoalButton = findViewById(R.id.undo_goal_button)
         rostersCard = findViewById(R.id.rosters_card)
         formationsCard = findViewById(R.id.formations_card)
@@ -248,7 +305,6 @@ class MainActivity :
         // New Views
         team1NameTextView = findViewById(R.id.team1_name_textview)
         team2NameTextView = findViewById(R.id.team2_name_textview)
-        vsIndicator = findViewById(R.id.vs_indicator)
 
         // Roster RecyclerViews
         team1RosterRecyclerView = findViewById(R.id.team1_roster_recyclerview)
@@ -310,29 +366,25 @@ class MainActivity :
         viewModel.scoreDisplay.observe(this) { display ->
             team1ScoreTextView.text = display.side1Primary
             team2ScoreTextView.text = display.side2Primary
-            bindScoreDetail(team1ScoreDetailTextView, display.side1Secondary)
-            bindScoreDetail(team2ScoreDetailTextView, display.side2Secondary)
+            bindScoreDetail(display.side1Secondary, display.matchOver)
             bindPeriod(display)
             applyMatchOver(display.matchOver)
+            aggiornaDescrizioni()
             aggiornaSchermoAcceso()
         }
 
         viewModel.team1Name.observe(this) { name ->
             mostraNomeSquadra(findViewById(R.id.team1_name_container), team1NameTextView, name)
+            aggiornaDescrizioni()
         }
 
         viewModel.team2Name.observe(this) { name ->
             mostraNomeSquadra(findViewById(R.id.team2_name_container), team2NameTextView, name)
+            aggiornaDescrizioni()
         }
 
         viewModel.team1Color.observe(this) { color ->
-            team1Card.setCardBackgroundColor(color)
-            applyReadableTextColor(
-                color,
-                team1NameTextView,
-                team1ScoreTextView,
-                team1ScoreDetailTextView,
-            )
+            applicaColoreDiSquadra(team1Zone, findViewById(R.id.team1_plus_icon), findViewById(R.id.team1_color_bar), color)
             // Nel riquadro delle rose la squadra aveva il colore del TEMA (rosa o ciano)
             // mentre la sua card sopra aveva quello scelto dall'utente: le stesse due
             // squadre con due coppie di colori diverse sulla stessa schermata. Rose e
@@ -344,13 +396,7 @@ class MainActivity :
         }
 
         viewModel.team2Color.observe(this) { color ->
-            team2Card.setCardBackgroundColor(color)
-            applyReadableTextColor(
-                color,
-                team2NameTextView,
-                team2ScoreTextView,
-                team2ScoreDetailTextView,
-            )
+            applicaColoreDiSquadra(team2Zone, findViewById(R.id.team2_plus_icon), findViewById(R.id.team2_color_bar), color)
             findViewById<TextView>(R.id.team2_roster_label).etichettaDiSquadra(color)
             team2FormationLabel.etichettaDiSquadra(color)
             matchLogAdapter.team2Color = color
@@ -363,6 +409,11 @@ class MainActivity :
 
         viewModel.keeperTimerValue.observe(this) { timeInMillis ->
             updateKeeperTimerTextView(timeInMillis)
+        }
+
+        // Il colore del conto dipende anche dal fatto che corra: si riscrive al cambio di stato.
+        viewModel.isKeeperTimerRunning.observe(this) {
+            updateKeeperTimerTextView(viewModel.keeperTimerValue.value ?: 0L)
         }
 
         viewModel.team1Players.observe(this) { players ->
@@ -404,8 +455,14 @@ class MainActivity :
             aggiornaSchermoAcceso()
         }
 
+        // Lo stato si legge dal glifo e dal colore del tempo, non da una parola che cambia larghezza.
         viewModel.isMatchTimerRunning.observe(this) { isRunning ->
-            timerStartButton.text = if (isRunning) getString(R.string.pause_caps) else getString(R.string.start)
+            timerStartButton.setIconResource(if (isRunning) R.drawable.ic_pause else R.drawable.ic_play)
+            timerStartButton.setTextColor(ContextCompat.getColor(this, if (isRunning) R.color.ink_white else R.color.sidewalk_gray))
+            ViewCompat.setStateDescription(
+                timerStartButton,
+                getString(if (isRunning) R.string.timer_state_running else R.string.timer_state_stopped),
+            )
         }
 
         viewModel.isWearConnected.observe(this) { isConnected ->
@@ -450,7 +507,7 @@ class MainActivity :
         }
 
         viewModel.canUndo.observe(this) {
-            refreshUndoButtonVisibility()
+            refreshUndoButtonState()
         }
 
         viewModel.sportCapabilities.observe(this) { sportCapabilities ->
@@ -461,10 +518,9 @@ class MainActivity :
             timerStartButton.isEnabled = isBound
             timerStartButton.alpha = if (isBound) 1.0f else 0.5f
 
-            listOf(R.id.reset_timer_button, R.id.sheet_reset_timer_button).forEach { id ->
-                val resetButton = findViewById<Button>(id)
-                resetButton?.isEnabled = isBound
-                resetButton?.alpha = if (isBound) 1.0f else 0.5f
+            findViewById<Button>(R.id.sheet_reset_timer_button).apply {
+                isEnabled = isBound
+                alpha = if (isBound) 1.0f else 0.5f
             }
         }
     }
@@ -472,29 +528,30 @@ class MainActivity :
     /**
      * Accende e spegne le sezioni in base a cosa lo sport prevede. Nessun `when` sullo sport:
      * l'unica cosa che questa schermata sa e' quali capacita' le servono.
+     *
+     * E' l'UNICO punto in cui una vista della colonna di gioco cambia visibilita': succede al
+     * cambio sport, che a partita iniziata la guardia blocca. Durante la partita niente cambia
+     * misura (vedi content_scoreboard_live).
      */
     private fun applyCapabilities(sportCapabilities: SportCapabilities) {
         capabilities = sportCapabilities
-        // Il cronometro si spegne, la CARD no. settings_button e wear_status_icon vivono dentro
-        // timer_card: nasconderla intera toglierebbe all'utente l'ingranaggio delle impostazioni,
-        // cioe' l'unico modo per tornare a cambiare sport. Si spegne il blocco cronometro, non il
-        // contenitore che ospita anche la barra di intestazione.
         // Negli sport a set sottrarre un punto non e' un'operazione definita: il comando annulla
-        // l'ultima azione, qualunque lato l'abbia segnata.
-        //
-        // Quindi i DUE "-" dentro le due card spariscono, invece di limitarsi a cambiare icona.
-        // Lasciarli sarebbe peggio: stanno dentro la card di una squadra, e l'unica lettura
-        // possibile di un comando li' dentro e' "togli un punto A QUESTA squadra" -- mentre
-        // annullano l'ultima azione e basta. Due comandi identici che sembrano di squadre diverse.
-        // Al loro posto resta l'unico annullamento che c'e' gia', quello dichiarato.
-        val annullaGlobale = sportCapabilities.decrementIsUndo
-        findViewById<View>(R.id.team1_subtract_button_card).visibility = if (annullaGlobale) View.GONE else View.VISIBLE
-        findViewById<View>(R.id.team2_subtract_button_card).visibility = if (annullaGlobale) View.GONE else View.VISIBLE
+        // l'ultima azione, qualunque lato l'abbia segnata. Quindi i due -1 ai bordi della riga dei
+        // nomi spariscono: lasciarli sarebbe peggio, perche' un comando accanto al nome di una
+        // squadra si legge "togli un punto A QUESTA squadra" mentre annullerebbe e basta. Al loro
+        // posto resta l'unico annullamento che c'e' gia', quello della striscia. Per lo stesso
+        // motivo negli sport a set compare il dettaglio (game, set) sotto i numeri.
+        val sportASet = sportCapabilities.decrementIsUndo
+        findViewById<View>(R.id.team1_subtract_button_card).visibility = if (sportASet) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.team2_subtract_button_card).visibility = if (sportASet) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.score_detail_container).visibility = if (sportASet) View.VISIBLE else View.GONE
 
+        // Il tempo e il portiere sono slot della barra: senza cronometro spariscono e il testo del
+        // periodo (che fa da molla) prende il loro posto. L'ingranaggio e il reset non sono piu' in
+        // barra: stanno nel foglio, dove il reset segue lo stesso cronometro.
         val orologioVisibile = sportCapabilities.clock != ClockMode.NONE
-        findViewById<View>(R.id.match_time_label).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.timer_textview).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.timer_controls_row).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
+        timerStartButton.visibility = if (orologioVisibile) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.keeper_slot).visibility = if (sportCapabilities.hasAuxCountdown) View.VISIBLE else View.GONE
         findViewById<View>(R.id.sheet_reset_timer_button).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
         // Le rose restano in ogni sport: nel padel e nel tennis sono l'unico posto dove si
         // assegnano i giocatori ai lati, e senza di loro l'export verso Padel Elite (4 giocatori,
@@ -502,28 +559,72 @@ class MainActivity :
         // spegneva insieme alle formazioni, che invece sono davvero solo del calcio.
         rostersCard.visibility = View.VISIBLE
         formationsCard.visibility = if (sportCapabilities.hasRoles) View.VISIBLE else View.GONE
-        refreshUndoButtonVisibility()
-        // Negli sport senza marcatore non esistono gol: pulsante, dialogo e registro parlano di
-        // punti, e le righe del registro smettono di offrire un marcatore da scegliere.
-        undoGoalButton.setText(
-            if (sportCapabilities.attributesScorer) R.string.label_undo_last_goal else R.string.label_undo_last_point,
-        )
+        refreshUndoButtonState()
+        // Negli sport senza marcatore non esistono gol: il dialogo e il registro parlano di punti, e
+        // le righe del registro smettono di offrire un marcatore da scegliere.
         matchLogAdapter.attribuisceMarcatore = sportCapabilities.attributesScorer
         matchLogAdapter.notifyDataSetChanged()
-        updateKeeperTimerTextView(viewModel.keeperTimerValue.value ?: 0L)
+        aggiornaDescrizioni()
+        dimensionaINumeri(if (sportASet) TOKEN_PIU_LARGO_RACCHETTA else TOKEN_PIU_LARGO_CALCIO)
     }
 
-    private fun refreshUndoButtonVisibility() {
+    /**
+     * ANNULLA non sparisce mai: senza niente da annullare si spegne (isEnabled false, alpha 0,38).
+     * Una partita arrivata dall'orologio mostra 5-3 con ANNULLA spento, invece di un pulsante che
+     * compare e sposta tutto quello che sta intorno.
+     */
+    private fun refreshUndoButtonState() {
         // Finche' le capacita' non sono arrivate vale il comportamento storico (il calcio).
         //
         // Serve in due casi diversi: dove si attribuisce il marcatore (il calcio, per disfare un
         // gol) e dove il "meno" E' l'annullamento (padel e tennis) -- li' e' l'UNICO modo di
-        // correggere, perche' i due "-" per squadra spariscono: annullavano l'ultima azione
-        // qualunque lato l'avesse segnata, ma stando dentro la card di una squadra dicevano il
-        // contrario.
+        // correggere, perche' i due -1 per squadra spariscono.
         val caps = capabilities
         val allowed = caps == null || caps.attributesScorer || caps.decrementIsUndo
-        undoGoalButton.visibility = if (allowed && viewModel.canUndo.value == true) View.VISIBLE else View.GONE
+        val acceso = allowed && viewModel.canUndo.value == true
+        undoGoalButton.isEnabled = acceso
+        undoGoalButton.alpha = if (acceso) 1f else ALPHA_SPENTO
+    }
+
+    /**
+     * La dimensione del numero, una volta per sport, uguale per tutta la partita.
+     *
+     * Si misura il token piu' largo dello sport nella meta' di colonna e si prende il minimo fra il
+     * tetto (150) e cio' che entra, per larghezza e per altezza, con un pavimento di 72. Niente
+     * autoSize di sistema: cambierebbe dimensione fra "1" e "15", e il numero e' la cosa che si
+     * legge a due metri. Tutto in pixel: con il carattere di sistema al 200% un limite in sp
+     * raddoppierebbe e il numero uscirebbe dal suo spazio.
+     */
+    private fun dimensionaINumeri(token: String) {
+        // Il chiamante ha appena cambiato la visibilita' di qualcosa sopra o sotto la riga (il
+        // dettaglio dei set): doOnLayout, con la vista gia' misurata, girerebbe subito sulla misura
+        // vecchia. requestLayout obbliga un passaggio nuovo e doOnNextLayout aspetta quello.
+        val riga = findViewById<View>(R.id.score_row)
+        riga.requestLayout()
+        riga.doOnNextLayout {
+            val pixel = dimensioneDelNumero(team1ScoreTextView.paint, token, riga.width / 2f, riga.height.toFloat())
+            team1ScoreTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, pixel)
+            team2ScoreTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, pixel)
+        }
+    }
+
+    private fun dimensioneDelNumero(
+        pennello: Paint,
+        token: String,
+        larghezzaMezzaColonna: Float,
+        altezzaRiga: Float,
+    ): Float {
+        val massimo = resources.getDimension(R.dimen.score_text_max)
+        val minimo = resources.getDimension(R.dimen.score_text_min)
+        val prova = Paint(pennello).apply { textSize = PROVA_DI_MISURA }
+        val larghezza = prova.measureText(token)
+        val metriche = prova.fontMetrics
+        val altezza = metriche.descent - metriche.ascent
+        // 16dp di aria fra il numero e il bordo della meta' di colonna.
+        val disponibile = larghezzaMezzaColonna - 16 * resources.displayMetrics.density
+        val perLarghezza = PROVA_DI_MISURA * disponibile / larghezza
+        val perAltezza = PROVA_DI_MISURA * altezzaRiga / altezza
+        return minOf(massimo, perLarghezza, perAltezza).coerceAtLeast(minimo)
     }
 
     private fun setupImprovedViews() {
@@ -649,26 +750,24 @@ class MainActivity :
             )
         }
 
-        // New buttons with improved feedback
-        findViewById<View>(R.id.team1_add_button_card).setOnClickListener {
-            it.animateScoreButton()
+        team1Zone.setOnClickListener {
+            it.animateZoneTap()
             viewModel.addScore(1)
             playGoalAnimation(1)
         }
 
+        // Il -1 non ha animazione: e' una correzione rara e voluta, il ripple basta.
         findViewById<View>(R.id.team1_subtract_button_card).setOnClickListener {
-            it.animateScoreButton(isSubtract = true)
             decrementScore(1)
         }
 
-        findViewById<View>(R.id.team2_add_button_card).setOnClickListener {
-            it.animateScoreButton()
+        team2Zone.setOnClickListener {
+            it.animateZoneTap()
             viewModel.addScore(2)
             playGoalAnimation(2)
         }
 
         findViewById<View>(R.id.team2_subtract_button_card).setOnClickListener {
-            it.animateScoreButton(isSubtract = true)
             decrementScore(2)
         }
     }
@@ -749,11 +848,7 @@ class MainActivity :
             startActivity(Intent(this, MatchHistoryActivity::class.java))
         }
 
-        // L'ingranaggio della barra resta finche' la barra non viene riscritta; nel foglio c'e'
-        // lo stesso comando, accanto agli altri che prima erano FAB.
-        findViewById<View>(R.id.settings_button).setOnClickListener {
-            startActivity(Intent(this, MatchSettingsActivity::class.java))
-        }
+        // Le impostazioni stanno solo nel foglio, accanto agli altri comandi che prima erano FAB.
         findViewById<Button>(R.id.sheet_settings_button).setOnClickListener {
             startActivity(Intent(this, MatchSettingsActivity::class.java))
         }
@@ -832,23 +927,43 @@ class MainActivity :
      * e riportarlo indietro riaccende tutto perche' lo stato torna "non finita".
      */
     private fun applyMatchOver(finita: Boolean) {
-        listOf(R.id.team1_add_button_card, R.id.team2_add_button_card).forEach { id ->
-            findViewById<View>(id).apply {
-                isClickable = !finita
-                isFocusable = !finita
-                alpha = if (finita) 0.4f else 1f
-                contentDescription =
-                    if (finita) getString(R.string.cd_match_over) else getString(cdIncrease(id))
-            }
+        listOf(team1Zone, team2Zone).forEach { zona ->
+            zona.isClickable = !finita
+            zona.isFocusable = !finita
+            zona.alpha = if (finita) 0.4f else 1f
         }
     }
 
-    private fun cdIncrease(id: Int): Int =
-        if (id == R.id.team1_add_button_card) {
-            R.string.cd_increase_team_1
-        } else {
-            R.string.cd_increase_team_2
+    /**
+     * Le descrizioni per TalkBack, con il nome della squadra e il punteggio di adesso.
+     *
+     * La zona dice cosa fa il tocco e a che punto siamo ("Punto a ROSSI. 30 a 15"), il numero dice
+     * di chi e' ("ROSSI, 30"), il -1 dice a chi toglie. Prima erano stringhe fisse: "aumenta
+     * squadra 1" non dice niente a chi non vede il tabellone. A partita finita la zona lo dichiara.
+     * Il contenitore del nome ha la sua descrizione, scritta da [mostraNomeSquadra].
+     */
+    private fun aggiornaDescrizioni() {
+        val display = viewModel.scoreDisplay.value ?: return
+        val gol = capabilities?.attributesScorer != false
+        val lati =
+            listOf(
+                Triple(viewModel.team1Name.value.orEmpty(), display.side1Primary, display.side2Primary),
+                Triple(viewModel.team2Name.value.orEmpty(), display.side2Primary, display.side1Primary),
+            )
+        val zone = listOf(team1Zone, team2Zone)
+        val numeri = listOf(team1ScoreTextView, team2ScoreTextView)
+        val meno = listOf(R.id.team1_subtract_button_card, R.id.team2_subtract_button_card)
+        lati.forEachIndexed { i, (nome, proprio, altrui) ->
+            zone[i].contentDescription =
+                if (display.matchOver) {
+                    getString(R.string.cd_match_over)
+                } else {
+                    getString(if (gol) R.string.cd_add_goal else R.string.cd_add_point, nome, proprio, altrui)
+                }
+            numeri[i].contentDescription = getString(R.string.cd_score_of_team, nome, proprio)
+            findViewById<View>(meno[i]).contentDescription = getString(R.string.cd_correct_team, nome)
         }
+    }
 
     /**
      * Che periodo si gioca e chi serve.
@@ -856,7 +971,9 @@ class MainActivity :
      * L'orologio lo mostrava e il telefono no, pur avendo gli stessi dati: [ScoreDisplay] porta
      * periodLabel e servingSide, e il telefono li spediva al polso per poi buttarne via meta'.
      * In un padel al meglio di tre, "che set stiamo giocando" serve a chi guarda il tabellone
-     * almeno quanto il punteggio. Va nello spazio lasciato libero dal cronometro spento.
+     * almeno quanto il punteggio. Va nello spazio lasciato libero dal cronometro spento. Il testo
+     * cambia, la vista no: resta sempre in barra (vuota, nel calcio) e il pallino del servizio
+     * accanto al nome e' INVISIBLE e non GONE, cosi' niente cambia misura a partita in corso.
      */
     private fun bindPeriod(display: ScoreDisplay) {
         val servente =
@@ -872,61 +989,28 @@ class MainActivity :
                 else -> getString(R.string.score_period_serving, display.periodLabel, servente)
             }
         matchPeriodTextView.text = testo.orEmpty().uppercase(Locale.getDefault())
-        matchPeriodTextView.visibility = if (testo == null) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.team1_serve_dot).visibility = if (display.servingSide == 1) View.VISIBLE else View.INVISIBLE
+        findViewById<View>(R.id.team2_serve_dot).visibility = if (display.servingSide == 2) View.VISIBLE else View.INVISIBLE
     }
 
     /**
-     * Il testo di una card si adatta al colore che l'utente ha scelto per quella card.
-     *
-     * Nome, punteggio e dettaglio erano cablati su concrete_gray (#1E1E1E) mentre lo sfondo lo
-     * decide il selettore di colore: su una tinta scura il punteggio diventava quasi invisibile.
-     * L'inchiostro lo decide [TeamInk], la sola regola del colore per telefono e orologio. Quella
-     * che c'era qui (media NON linearizzata, soglia 0,5, #E0E0E0 o #1E1E1E) scendeva a 2,07:1 su
-     * #FF4BFF.
+     * Il dettaglio sotto i numeri, negli sport a set: game o set e game, letto dalla parte della
+     * squadra di sinistra come tutta la schermata. Un solo valore al posto dei due, uno per card,
+     * ognuno dal proprio punto di vista (3-2 a sinistra, 2-3 a destra): chi guarda da lontano non
+     * deve capire da che lato e' scritto. La didascalia dice cosa sono i numeri: a partita finita
+     * non ci sono game correnti e il dettaglio contiene solo i set chiusi, quindi e' SET.
      */
-    private fun applyReadableTextColor(
-        cardColor: Int,
-        vararg views: TextView,
-    ) {
-        val inchiostro = TeamInk.on(cardColor)
-        views.forEach { it.setTextColor(inchiostro) }
-    }
-
     private fun bindScoreDetail(
-        view: TextView,
-        text: String?,
+        testo: String?,
+        partitaFinita: Boolean,
     ) {
-        view.text = text.orEmpty()
-        view.visibility = if (text.isNullOrEmpty()) View.GONE else View.VISIBLE
+        scoreDetailValue.text = testo.orEmpty()
+        scoreDetailCaption.text = didascaliaDelDettaglio(testo, partitaFinita)?.let { getString(it) }.orEmpty()
     }
 
     private fun playGoalAnimation(team: Int) {
-        val scoreTextView = if (team == 1) team1ScoreTextView else team2ScoreTextView
-
-        // Chiama la nostra nuova animazione nativa!
-        scoreTextView.playNativeGoalAnimation()
-
-        // Mantiene le altre animazioni e la vibrazione
-        animateVsIndicator()
+        (if (team == 1) team1ScoreTextView else team2ScoreTextView).animateScoreNumber()
         playGoalVibrationPattern()
-    }
-
-    private fun animateVsIndicator() {
-        vsIndicator
-            .animate()
-            .rotationBy(360f)
-            .scaleX(1.3f)
-            .scaleY(1.3f)
-            .setDuration(300)
-            .setInterpolator(AccelerateDecelerateInterpolator())
-            .withEndAction {
-                vsIndicator
-                    .animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(200)
-                    .start()
-            }.start()
     }
 
     /**
@@ -1065,19 +1149,21 @@ class MainActivity :
             .show()
     }
 
+    // Il tempo sta nel testo del pulsante della barra: e' il pulsante a dire se corre, col glifo.
     private fun updateTimerTextView(timeInMillis: Long) {
-        timerTextView.text = TimeUtils.formatTime(timeInMillis)
+        timerStartButton.text = TimeUtils.formatTime(timeInMillis)
     }
 
+    /**
+     * Il valore dello slot del portiere. Lo slot e' sempre in barra nel calcio (lo decide
+     * applyCapabilities): prima la riga spariva a 0 e sotto tutto saltava proprio alla scadenza.
+     * Fermo o a 00:00 e' grigio, in corso e' rosa: l'unico rosa della schermata di gioco
+     * (DESIGN.md, Coerenza fra telefono e orologio), lo stesso segno del polso.
+     */
     private fun updateKeeperTimerTextView(timeInMillis: Long) {
-        // Finche' le capacita' non sono arrivate vale il comportamento storico (il calcio).
-        val visibile = timeInMillis > 0 && capabilities?.hasAuxCountdown != false
-        if (visibile) {
-            keeperTimerTextView.text = TimeUtils.formatTime(timeInMillis)
-        }
-        keeperTimerTextView.visibility = if (visibile) View.VISIBLE else View.GONE
-        // L'etichetta segue il suo cronometro: da sola non significherebbe niente.
-        findViewById<View>(R.id.keeper_timer_label).visibility = if (visibile) View.VISIBLE else View.GONE
+        keeperTimerTextView.text = TimeUtils.formatTime(timeInMillis)
+        val inCorso = timeInMillis > 0 && viewModel.isKeeperTimerRunning.value == true
+        keeperTimerTextView.setTextColor(ContextCompat.getColor(this, if (inCorso) R.color.graffiti_pink else R.color.sidewalk_gray))
     }
 
     private fun requestNotificationPermission() {
@@ -1159,6 +1245,35 @@ internal fun schermoDaTenereAcceso(
     eventi: List<MatchEvent>?,
     partitaFinita: Boolean,
 ): Boolean = !partitaFinita && eventi.orEmpty().any { it.type == MatchEventType.SCORE }
+
+/**
+ * Il colore della squadra sulla zona + e sulla barretta sotto il nome, e MAI dietro un testo.
+ *
+ * La zona prende il colore vero e il glifo l'inchiostro [TeamInk] (nero o bianco puro, almeno
+ * 4,58:1 con qualsiasi colore). Se il colore sul nero sta sotto 3:1 (un blu notte come #1A237E fa
+ * 1,59) la zona si distinguerebbe male dallo sfondo e prende lo stroke da 2dp; la barretta
+ * sottile invece non ha spazio per un contorno e usa [TeamInk.graphicOnBlack]. Sta fuori
+ * dall'Activity perche' sotto Robolectric MainActivity non si monta.
+ */
+internal fun applicaColoreDiSquadra(
+    zona: MaterialCardView,
+    glifo: ImageView,
+    barretta: View,
+    colore: Int,
+) {
+    val inchiostro = TeamInk.on(colore)
+    zona.setCardBackgroundColor(colore)
+    zona.rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(inchiostro, RIPPLE_ALPHA))
+    zona.strokeColor = ContextCompat.getColor(zona.context, R.color.stencil_white)
+    zona.strokeWidth =
+        if (TeamInk.contrast(colore, TeamInk.NERO) < CONTRASTO_MINIMO_GRAFICA) {
+            (STROKE_ZONA_DP * zona.resources.displayMetrics.density).toInt()
+        } else {
+            0
+        }
+    glifo.imageTintList = ColorStateList.valueOf(inchiostro)
+    barretta.setBackgroundColor(TeamInk.graphicOnBlack(colore))
+}
 
 /**
  * Scrive il nome sulla card e lo mette anche nella descrizione del contenitore cliccabile.

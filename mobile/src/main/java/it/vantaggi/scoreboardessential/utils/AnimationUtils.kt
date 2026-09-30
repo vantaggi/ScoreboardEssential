@@ -1,17 +1,12 @@
 package it.vantaggi.scoreboardessential.utils
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.animation.ValueAnimator
-import android.content.res.ColorStateList
-import android.graphics.Color
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.BounceInterpolator
-import android.view.animation.OvershootInterpolator
 import android.widget.TextView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.MaterialColors
@@ -66,42 +61,6 @@ fun TextView.playEnhancedScoreAnimation() {
     animatorSet.start()
 }
 
-fun TextView.playNativeGoalAnimation() {
-    val context = this.context
-
-    // 1. Animazione "Pump" (ingrandisce e rimpicciolisce con effetto overshoot)
-    val scaleX = ObjectAnimator.ofFloat(this, "scaleX", 1f, 1.5f, 1f)
-    val scaleY = ObjectAnimator.ofFloat(this, "scaleY", 1f, 1.5f, 1f)
-    scaleX.duration = 400
-    scaleY.duration = 400
-    scaleX.interpolator = OvershootInterpolator()
-    scaleY.interpolator = OvershootInterpolator()
-
-    // 2. Animazione "Flash" del colore - più vivace
-    val originalColor = this.currentTextColor
-    val primaryColor = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary)
-    val secondaryColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSecondary)
-
-    val colorAnimator =
-        ValueAnimator.ofArgb(originalColor, primaryColor, secondaryColor, originalColor).apply {
-            duration = 400
-            addUpdateListener { animator ->
-                this@playNativeGoalAnimation.setTextColor(animator.animatedValue as Int)
-            }
-        }
-
-    // 3. Leggera rotazione per dinamismo
-    val rotation = ObjectAnimator.ofFloat(this, "rotation", 0f, -8f, 8f, 0f)
-    rotation.duration = 300
-
-    // 4. Combinare le animazioni con AnimatorSet
-    AnimatorSet().apply {
-        playTogether(scaleX, scaleY, colorAnimator)
-        play(rotation).after(100) // Rotazione leggermente ritardata
-        start()
-    }
-}
-
 fun MaterialCardView.pulseAnimation() {
     val animator =
         ObjectAnimator.ofPropertyValuesHolder(
@@ -121,40 +80,34 @@ fun MaterialCardView.pulseAnimation() {
     animator.start()
 }
 
-fun View.animateScoreButton(isSubtract: Boolean = false) {
-    val scaleX = ObjectAnimator.ofFloat(this, "scaleX", 1f, 0.9f, 1.1f, 1f)
-    val scaleY = ObjectAnimator.ofFloat(this, "scaleY", 1f, 0.9f, 1.1f, 1f)
-
-    AnimatorSet().apply {
-        playTogether(scaleX, scaleY)
-        duration = 200
-        interpolator = OvershootInterpolator()
-        start()
-    }
-
-    if (this is MaterialCardView) {
-        val card = this
-        val originalColor = card.cardBackgroundColor
-        val targetColor =
-            if (isSubtract) {
-                ColorStateList.valueOf(Color.parseColor("#FF1744"))
-            } else {
-                ColorStateList.valueOf(Color.parseColor("#76FF03"))
-            }
-
-        ValueAnimator.ofArgb(originalColor.defaultColor, targetColor.defaultColor).apply {
-            duration = 300
-            addUpdateListener { animator ->
-                card.setCardBackgroundColor(animator.animatedValue as Int)
-            }
-            addListener(
-                object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator) {
-                        card.setCardBackgroundColor(originalColor)
-                    }
-                },
-            )
+/**
+ * Il riscontro del tocco su una zona +: scala 0,96 e ritorno in 100ms.
+ *
+ * Solo una trasformazione, niente layout e niente colore. Prima il pulsante ondeggiava e lampeggiava
+ * verso il verde: ma la zona ha il colore della squadra, e un lampo di un altro colore la fa sembrare
+ * di un'altra squadra.
+ */
+fun View.animateZoneTap() {
+    ObjectAnimator
+        .ofPropertyValuesHolder(
+            this,
+            PropertyValuesHolder.ofFloat("scaleX", 1f, 0.96f, 1f),
+            PropertyValuesHolder.ofFloat("scaleY", 1f, 0.96f, 1f),
+        ).apply {
+            duration = 100
             start()
         }
-    }
+}
+
+/** Il numero che cambia: scala 1, 1,06, 1 in 150ms. Nessun layout e nessun colore. */
+fun View.animateScoreNumber() {
+    ObjectAnimator
+        .ofPropertyValuesHolder(
+            this,
+            PropertyValuesHolder.ofFloat("scaleX", 1f, 1.06f, 1f),
+            PropertyValuesHolder.ofFloat("scaleY", 1f, 1.06f, 1f),
+        ).apply {
+            duration = 150
+            start()
+        }
 }
