@@ -100,6 +100,30 @@ class TeamInkTest {
     }
 
     @Test
+    fun `la grafica su un fondo grigio si misura contro quel grigio e non contro il nero`() {
+        val grigio = argb(0x2C2C2C)
+        // Il blu notte schiarito per il nero (#4C539A) su #2C2C2C fa meno di 3: il fondo conta.
+        val suNero = TeamInk.graphicOnBlack(argb(0x1A237E))
+        assertTrue("il caso di partenza deve essere sotto 3", TeamInk.contrast(suNero, grigio) < 3.0)
+        val suGrigio = TeamInk.graphicOn(argb(0x1A237E), grigio)
+        assertTrue("#1A237E su #2C2C2C fa %.2f".format(TeamInk.contrast(suGrigio, grigio)), TeamInk.contrast(suGrigio, grigio) >= 3.0)
+        // Chi ha gia' 3:1 contro quel fondo resta com'e'.
+        assertEquals(argb(0xFFD600), TeamInk.graphicOn(argb(0xFFD600), grigio))
+        // Col fondo nero e' la stessa funzione di graphicOnBlack.
+        assertEquals(TeamInk.graphicOnBlack(argb(0x1A237E)), TeamInk.graphicOn(argb(0x1A237E), TeamInk.NERO))
+    }
+
+    @Test
+    fun `la grafica su #2C2C2C da' almeno 3 su tutto l'RGB`() {
+        val grigio = argb(0x2C2C2C)
+        ogniColore { colore ->
+            val grafica = TeamInk.graphicOn(colore, grigio)
+            val c = TeamInk.contrast(grafica, grigio)
+            assertTrue("#%06X diventa #%06X a %.3f".format(colore and 0xFFFFFF, grafica and 0xFFFFFF, c), c >= 3.0)
+        }
+    }
+
+    @Test
     fun `una soglia piu' alta schiarisce di piu'`() {
         val c = TeamInk.graphicOnBlack(argb(0x000080), min = 4.5)
         assertTrue(TeamInk.contrast(c, TeamInk.NERO) >= 4.5)

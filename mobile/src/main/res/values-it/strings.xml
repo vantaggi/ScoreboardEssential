@@ -87,16 +87,23 @@
     <string name="strip_msg_goal_by">GOL DI %1$s</string>
     <string name="strip_msg_correction">CORREZIONE −1 %1$s</string>
     <string name="strip_msg_undone">ANNULLATO</string>
+    <string name="strip_msg_match_over">PARTITA FINITA</string>
+    <string name="strip_match_over_end">PARTITA FINITA · TERMINA ›</string>
     <plurals name="strip_msg_from_watch">
         <item quantity="one">OROLOGIO: %1$d PUNTO</item>
         <item quantity="many">OROLOGIO: %1$d PUNTI</item>
         <item quantity="other">OROLOGIO: %1$d PUNTI</item>
     </plurals>
     <string name="end_match_title">Termina Partita?</string>
-    <string name="end_match_message">Che cosa vuoi farne?
-
-%1$s: %2$d
-%3$s: %4$d</string>
+    <string name="end_match_over_title">PARTITA FINITA</string>
+    <!-- Il riepilogo del dialogo si compone dal display, come la schermata: niente 0-0 sopra un 5-3. -->
+    <string name="end_summary_football">%1$s %2$s-%3$s %4$s</string>
+    <string name="end_summary_racket">%1$s – %2$s</string>
+    <string name="end_part_set">set %1$s</string>
+    <string name="end_part_game">game %1$s</string>
+    <string name="end_part_point">punto %1$s</string>
+    <string name="btn_save_match">Salva</string>
+    <string name="bar_winner">VINCE %1$s · %2$s</string>
     <string name="btn_end_match">Termina Partita</string>
     <string name="continue_action">Continua</string>
     <string name="match_saved">Partita salvata!</string>
@@ -109,7 +116,7 @@
 
 
     <string name="share_match_report">Condividi</string>
-    <string name="score_period_serving">%1$s - serve %2$s</string>
+    <string name="score_period_serving">%1$s · serve %2$s</string>
     <string name="watch_batch_rejected">L\'orologio ha mandato punti che non sono entrati in questa partita.</string>
     <string name="label_match_history">STORICO</string>
     <string name="label_end_match">FINE PARTITA</string>

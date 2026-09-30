@@ -1,6 +1,7 @@
 package it.vantaggi.scoreboardessential
 
 import android.Manifest
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
@@ -49,6 +50,7 @@ import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
+import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
@@ -119,6 +121,9 @@ internal fun didascaliaDelDettaglio(
 
 // L'increspatura sulla zona premuta: l'inchiostro della squadra al 24% (61 su 255).
 private const val RIPPLE_ALPHA = 61
+
+// Il secondo argomento di VibrationEffect.createWaveform: -1 e' "suona una volta e basta".
+private const val NON_RIPETERE = -1
 
 // Lo stroke della zona + scura sul nero, in dp.
 private const val STROKE_ZONA_DP = 2
@@ -308,6 +313,11 @@ class MainActivity :
         scoreDetailValue = findViewById(R.id.score_detail_value)
         scoreDetailCaption = findViewById(R.id.score_detail_caption)
         matchPeriodTextView = findViewById(R.id.match_period_textview)
+        // Il testo della vittoria accorcia il nome in base alla larghezza: quando la barra prende la
+        // sua misura (la prima volta arriva dopo il primo bind) il testo si riscrive.
+        matchPeriodTextView.addOnLayoutChangeListener { _, sinistra, _, destra, _, vecchiaSinistra, _, vecchiaDestra, _ ->
+            if (destra - sinistra != vecchiaDestra - vecchiaSinistra) viewModel.scoreDisplay.value?.let(::bindPeriod)
+        }
         team1Zone = findViewById(R.id.team1_add_button_card)
         team2Zone = findViewById(R.id.team2_add_button_card)
         keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
@@ -369,7 +379,7 @@ class MainActivity :
             team2ScoreTextView.text = display.side2Primary
             bindScoreDetail(display.side1Secondary, display.matchOver)
             bindPeriod(display)
-            applyMatchOver(display.matchOver)
+            applyMatchOver(display)
             aggiornaDescrizioni()
             aggiornaSchermoAcceso()
             aggiornaStriscia()
@@ -377,18 +387,21 @@ class MainActivity :
 
         viewModel.team1Name.observe(this) { name ->
             mostraNomeSquadra(findViewById(R.id.team1_name_container), team1NameTextView, name)
+            // Il servente e il vincitore nella barra portano il nome: rinominare li riscrive.
+            viewModel.scoreDisplay.value?.let(::bindPeriod)
             aggiornaDescrizioni()
             aggiornaStriscia()
         }
 
         viewModel.team2Name.observe(this) { name ->
             mostraNomeSquadra(findViewById(R.id.team2_name_container), team2NameTextView, name)
+            viewModel.scoreDisplay.value?.let(::bindPeriod)
             aggiornaDescrizioni()
             aggiornaStriscia()
         }
 
         viewModel.team1Color.observe(this) { color ->
-            applicaColoreDiSquadra(team1Zone, findViewById(R.id.team1_plus_icon), findViewById(R.id.team1_color_bar), color)
+            aggiornaZona(1, color)
             // Nel riquadro delle rose la squadra aveva il colore del TEMA (rosa o ciano)
             // mentre la sua card sopra aveva quello scelto dall'utente: le stesse due
             // squadre con due coppie di colori diverse sulla stessa schermata. Rose e
@@ -400,7 +413,7 @@ class MainActivity :
         }
 
         viewModel.team2Color.observe(this) { color ->
-            applicaColoreDiSquadra(team2Zone, findViewById(R.id.team2_plus_icon), findViewById(R.id.team2_color_bar), color)
+            aggiornaZona(2, color)
             findViewById<TextView>(R.id.team2_roster_label).etichettaDiSquadra(color)
             team2FormationLabel.etichettaDiSquadra(color)
             matchLogAdapter.team2Color = color
@@ -601,17 +614,27 @@ class MainActivity :
             )
         ViewCompat.setAccessibilityLiveRegion(lastActionText, ViewCompat.ACCESSIBILITY_LIVE_REGION_NONE)
         lastActionText.text = stato.testo
-        impostaAzioneDellaStriscia(stato.daAttribuire)
+        impostaAzioneDellaStriscia(stato.daAttribuire, stato.terminaPartita)
     }
 
     /**
      * Il tocco sulla striscia e' la scorciatoia del marcatore: apre lo stesso dialogo della riga del
-     * registro. Senza gol da attribuire la striscia non e' un bersaglio. In quest'ordine:
+     * registro. A partita finita e' invece la scorciatoia di TERMINA e apre il dialogo di fine
+     * partita. Senza nessuna delle due la striscia non e' un bersaglio. In quest'ordine:
      * setOnClickListener rende la vista cliccabile anche quando riceve null (vedi MatchLogAdapter).
      */
-    private fun impostaAzioneDellaStriscia(daAttribuire: MatchEvent?) {
-        lastActionStrip.setOnClickListener(daAttribuire?.let { evento -> View.OnClickListener { apriAttribuzione(evento) } })
-        lastActionStrip.isClickable = daAttribuire != null
+    private fun impostaAzioneDellaStriscia(
+        daAttribuire: MatchEvent?,
+        terminaPartita: Boolean = false,
+    ) {
+        val azione =
+            when {
+                terminaPartita -> View.OnClickListener { showEndMatchConfirmation() }
+                daAttribuire != null -> View.OnClickListener { apriAttribuzione(daAttribuire) }
+                else -> null
+            }
+        lastActionStrip.setOnClickListener(azione)
+        lastActionStrip.isClickable = azione != null
     }
 
     /**
@@ -838,28 +861,47 @@ class MainActivity :
             )
         }
 
-        team1Zone.setOnClickListener {
-            it.animateZoneTap()
-            chiudiMessaggioInStriscia()
-            viewModel.addScore(1)
-            playGoalAnimation(1)
-        }
+        team1Zone.setOnClickListener { toccaLaZona(1, it) }
 
         // Il -1 non ha animazione: e' una correzione rara e voluta, il ripple basta.
         findViewById<View>(R.id.team1_subtract_button_card).setOnClickListener {
             decrementScore(1)
         }
 
-        team2Zone.setOnClickListener {
-            it.animateZoneTap()
-            chiudiMessaggioInStriscia()
-            viewModel.addScore(2)
-            playGoalAnimation(2)
-        }
+        team2Zone.setOnClickListener { toccaLaZona(2, it) }
 
         findViewById<View>(R.id.team2_subtract_button_card).setOnClickListener {
             decrementScore(2)
         }
+    }
+
+    /**
+     * Il tocco su una zona +. A partita finita la zona e' spenta ma risponde: niente punto, un colpo
+     * lungo e «PARTITA FINITA» per 3 secondi nella striscia. Altrimenti e' un punto, e il riscontro
+     * (game chiuso, partita finita) si decide dai due display attorno alla chiamata: il ViewModel
+     * aggiorna lo stato in modo sincrono, e un punto dell'orologio non passa da qui.
+     */
+    private fun toccaLaZona(
+        team: Int,
+        zona: View,
+    ) {
+        if (viewModel.scoreDisplay.value?.matchOver == true) {
+            vibrator?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_INERT_TAP, NON_RIPETERE))
+            mostraMessaggioInStriscia(getString(R.string.strip_msg_match_over))
+            return
+        }
+        zona.animateZoneTap()
+        chiudiMessaggioInStriscia()
+        val prima = viewModel.scoreDisplay.value
+        viewModel.addScore(team)
+        val riscontro =
+            riscontroDelPunto(
+                prima,
+                viewModel.scoreDisplay.value,
+                capabilities?.decrementIsUndo == true,
+                modalitaAGame(viewModel.activeSport.value ?: SportRegistry.FOOTBALL),
+            )
+        playGoalAnimation(team, riscontro)
     }
 
     /**
@@ -1014,22 +1056,44 @@ class MainActivity :
     }
 
     /**
-     * A partita finita i due "+" si spengono.
+     * A partita finita i due "+" si spengono, ma rispondono, e lo sconfitto si fa grigio.
      *
-     * Restavano premibili e non facevano niente: il motore ignora un punto dopo la fine, quindi
-     * il numero non cambiava e il tocco spariva nel vuoto. Un comando che si puo' premere e non
-     * fa nulla non si distingue da un'app bloccata, ed e' lo stesso difetto per cui il primo
-     * annullamento dopo un tocco inerte sembrava non funzionare.
+     * Prima restavano premibili e non facevano niente: il motore ignora un punto dopo la fine,
+     * quindi il numero non cambiava e il tocco spariva nel vuoto. Poi si erano resi non cliccabili,
+     * e il tocco restava muto lo stesso. Un comando che non risponde non si distingue da un'app
+     * bloccata: la zona spenta (grigia, con la barra del colore in fondo) resta toccabile solo per
+     * dichiararsi, con un colpo lungo e «PARTITA FINITA» nella striscia (vedi [toccaLaZona]).
      *
      * L'annullamento NON si spegne: e' esattamente cio' che serve se l'ultimo punto era sbagliato,
      * e riportarlo indietro riaccende tutto perche' lo stato torna "non finita".
      */
-    private fun applyMatchOver(finita: Boolean) {
-        listOf(team1Zone, team2Zone).forEach { zona ->
-            zona.isClickable = !finita
-            zona.isFocusable = !finita
-            zona.alpha = if (finita) 0.4f else 1f
-        }
+    private fun applyMatchOver(display: ScoreDisplay) {
+        aggiornaZone()
+        val bianco = ContextCompat.getColor(this, R.color.ink_white)
+        val grigio = ContextCompat.getColor(this, R.color.sidewalk_gray)
+        team1ScoreTextView.setTextColor(coloreDelNumero(1, display, bianco, grigio))
+        team2ScoreTextView.setTextColor(coloreDelNumero(2, display, bianco, grigio))
+    }
+
+    private fun aggiornaZone() {
+        viewModel.team1Color.value?.let { aggiornaZona(1, it) }
+        viewModel.team2Color.value?.let { aggiornaZona(2, it) }
+    }
+
+    /** Una zona con il colore di squadra, accesa o spenta secondo che la partita sia finita. */
+    private fun aggiornaZona(
+        squadra: Int,
+        colore: Int,
+    ) {
+        val prima = squadra == 1
+        applicaStatoDellaZona(
+            if (prima) team1Zone else team2Zone,
+            findViewById(if (prima) R.id.team1_plus_icon else R.id.team2_plus_icon),
+            findViewById(if (prima) R.id.team1_color_bar else R.id.team2_color_bar),
+            findViewById(if (prima) R.id.team1_zone_bar else R.id.team2_zone_bar),
+            colore,
+            viewModel.scoreDisplay.value?.matchOver == true,
+        )
     }
 
     /**
@@ -1074,19 +1138,16 @@ class MainActivity :
      * accanto al nome e' INVISIBLE e non GONE, cosi' niente cambia misura a partita in corso.
      */
     private fun bindPeriod(display: ScoreDisplay) {
-        val servente =
-            when (display.servingSide) {
-                1 -> viewModel.team1Name.value
-                2 -> viewModel.team2Name.value
-                else -> null
-            }
-        val testo =
-            when {
-                display.periodLabel == null -> null
-                servente.isNullOrBlank() -> display.periodLabel
-                else -> getString(R.string.score_period_serving, display.periodLabel, servente)
-            }
-        matchPeriodTextView.text = testo.orEmpty().uppercase(Locale.getDefault())
+        val disponibile = matchPeriodTextView.width - matchPeriodTextView.compoundPaddingLeft - matchPeriodTextView.compoundPaddingRight
+        matchPeriodTextView.text =
+            testoDellaBarra(
+                this,
+                viewModel.activeSport.value ?: SportRegistry.FOOTBALL,
+                display,
+                viewModel.team1Name.value.orEmpty(),
+                viewModel.team2Name.value.orEmpty(),
+                // Non ancora misurata: niente da accorciare, ci pensa il listener del layout.
+            ) { candidato -> disponibile <= 0 || matchPeriodTextView.paint.measureText(candidato) <= disponibile }
         findViewById<View>(R.id.team1_serve_dot).visibility = if (display.servingSide == 1) View.VISIBLE else View.INVISIBLE
         findViewById<View>(R.id.team2_serve_dot).visibility = if (display.servingSide == 2) View.VISIBLE else View.INVISIBLE
     }
@@ -1106,17 +1167,28 @@ class MainActivity :
         scoreDetailCaption.text = didascaliaDelDettaglio(testo, partitaFinita)?.let { getString(it) }.orEmpty()
     }
 
-    private fun playGoalAnimation(team: Int) {
+    private fun playGoalAnimation(
+        team: Int,
+        riscontro: RiscontroDelPunto = RiscontroDelPunto.NESSUNO,
+    ) {
         (if (team == 1) team1ScoreTextView else team2ScoreTextView).animateScoreNumber()
-        playGoalVibrationPattern()
+        playGoalVibrationPattern(riscontro)
     }
 
     /**
      * Un colpo breve di sistema, non piu' la sequenza da 500ms che partiva a ogni + in tutti gli
      * sport: nel padel, con un punto ogni pochi secondi, durava quasi quanto lo scambio di tocchi.
+     * Un game chiuso o la fine della partita lo sostituiscono con un colpo piu' deciso (doppio o
+     * pesante): una vibrazione nuova interrompe quella in corso, quindi ne parte una sola.
      */
-    private fun playGoalVibrationPattern() {
-        vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+    private fun playGoalVibrationPattern(riscontro: RiscontroDelPunto) {
+        val effetto =
+            when (riscontro) {
+                RiscontroDelPunto.NESSUNO -> VibrationEffect.EFFECT_CLICK
+                RiscontroDelPunto.GAME_CHIUSO -> VibrationEffect.EFFECT_DOUBLE_CLICK
+                RiscontroDelPunto.PARTITA_FINITA -> VibrationEffect.EFFECT_HEAVY_CLICK
+            }
+        vibrator?.vibrate(VibrationEffect.createPredefined(effetto))
     }
 
     /**
@@ -1200,30 +1272,38 @@ class MainActivity :
         }
     }
 
+    /**
+     * Il dialogo di TERMINA. Il messaggio viene dal display (vedi [testoDelDialogoDiFine]): a
+     * partita chiusa e' PARTITA FINITA con chi ha vinto e il positivo dice SALVA. SCARTA e' in
+     * #FF6E6E, solo qui: e' il comando che butta via la partita.
+     */
     private fun showEndMatchConfirmation() {
-        val team1Score = viewModel.team1Score.value ?: 0
-        val team2Score = viewModel.team2Score.value ?: 0
         val team1Name = viewModel.team1Name.value ?: "Team 1"
         val team2Name = viewModel.team2Name.value ?: "Team 2"
+        val display = viewModel.scoreDisplay.value ?: return
+        val sport = viewModel.activeSport.value ?: SportRegistry.FOOTBALL
+        val testo = testoDelDialogoDiFine(this, sport, display, team1Name, team2Name, modalitaAGame(sport))
 
-        MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.end_match_title))
-            .setMessage(getString(R.string.end_match_message, team1Name, team1Score, team2Name, team2Score))
-            .setPositiveButton(getString(R.string.btn_end_match)) { _, _ ->
-                if (viewModel.endMatch()) {
-                    snackbarSopraLaStriscia(getString(R.string.match_saved), Snackbar.LENGTH_LONG).show()
-                } else {
-                    snackbarSopraLaStriscia(getString(R.string.match_not_started_error), Snackbar.LENGTH_LONG).show()
-                }
-            }.setNeutralButton(getString(R.string.btn_discard_match)) { _, _ ->
-                // "Termina" salva, "scarta" butta via: due intenzioni diverse, due comandi
-                // diversi. Prima esisteva solo la prima, quindi una partita cominciata per
-                // sbaglio poteva solo finire nello storico.
-                val messaggio =
-                    if (viewModel.discardMatch()) R.string.match_discarded else R.string.match_not_started_error
-                snackbarSopraLaStriscia(getString(messaggio), Snackbar.LENGTH_LONG).show()
-            }.setNegativeButton(getString(R.string.continue_action), null)
-            .show()
+        val dialogo =
+            MaterialAlertDialogBuilder(this)
+                .setTitle(testo.titolo)
+                .setMessage(testo.messaggio)
+                .setPositiveButton(getString(if (testo.salva) R.string.btn_save_match else R.string.btn_end_match)) { _, _ ->
+                    if (viewModel.endMatch()) {
+                        snackbarSopraLaStriscia(getString(R.string.match_saved), Snackbar.LENGTH_LONG).show()
+                    } else {
+                        snackbarSopraLaStriscia(getString(R.string.match_not_started_error), Snackbar.LENGTH_LONG).show()
+                    }
+                }.setNeutralButton(getString(R.string.btn_discard_match)) { _, _ ->
+                    // "Termina" salva, "scarta" butta via: due intenzioni diverse, due comandi
+                    // diversi. Prima esisteva solo la prima, quindi una partita cominciata per
+                    // sbaglio poteva solo finire nello storico.
+                    val messaggio =
+                        if (viewModel.discardMatch()) R.string.match_discarded else R.string.match_not_started_error
+                    snackbarSopraLaStriscia(getString(messaggio), Snackbar.LENGTH_LONG).show()
+                }.setNegativeButton(getString(R.string.continue_action), null)
+                .show()
+        dialogo.getButton(DialogInterface.BUTTON_NEUTRAL).setTextColor(ContextCompat.getColor(this, R.color.error_text))
     }
 
     // Il tempo sta nel testo del pulsante della barra: e' il pulsante a dire se corre, col glifo.
@@ -1350,6 +1430,35 @@ internal fun applicaColoreDiSquadra(
         }
     glifo.imageTintList = ColorStateList.valueOf(inchiostro)
     barretta.setBackgroundColor(TeamInk.graphicOnBlack(colore))
+}
+
+/**
+ * La zona + in gioco o, a partita finita, spenta.
+ *
+ * In gioco e' [applicaColoreDiSquadra] e basta: colore vero, glifo in inchiostro, nessuna barra.
+ * Spenta (DESIGN.md, "Gioco: partita finita") la zona diventa #2C2C2C, il glifo sparisce e in fondo
+ * compare una barra di 4dp nel colore della squadra, cosi' si vede ancora di chi e'. Resta
+ * toccabile: risponde con un messaggio, non con un punto (vedi toccaLaZona). Nessuna misura cambia:
+ * la barra e' sempre nel layout, con alfa 0 durante il gioco. Sta fuori dall'Activity perche' sotto
+ * Robolectric MainActivity non si monta.
+ */
+internal fun applicaStatoDellaZona(
+    zona: MaterialCardView,
+    glifo: ImageView,
+    barretta: View,
+    barraDellaZona: View,
+    colore: Int,
+    finita: Boolean,
+) {
+    applicaColoreDiSquadra(zona, glifo, barretta, colore)
+    glifo.alpha = if (finita) 0f else 1f
+    barraDellaZona.alpha = if (finita) 1f else 0f
+    if (!finita) return
+    zona.setCardBackgroundColor(ContextCompat.getColor(zona.context, R.color.graffiti_dark_gray))
+    zona.strokeWidth = 0
+    zona.rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(TeamInk.BIANCO, RIPPLE_ALPHA))
+    // La barra sta sulla zona grigia, non sul nero: il 3:1 si misura contro #2C2C2C.
+    barraDellaZona.setBackgroundColor(TeamInk.graphicOn(colore, ContextCompat.getColor(zona.context, R.color.graffiti_dark_gray)))
 }
 
 /**

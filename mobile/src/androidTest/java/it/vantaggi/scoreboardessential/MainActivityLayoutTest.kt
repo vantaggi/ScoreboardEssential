@@ -16,8 +16,13 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.Espresso.pressBackUnconditionally
+import androidx.test.espresso.UiController
+import androidx.test.espresso.ViewAction
 import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -326,6 +331,328 @@ class MainActivityLayoutTest {
                     modello!!.selectSport(SportRegistry.FOOTBALL)
                 }
             }
+        }
+    }
+
+    /** [punti] tocchi veri della zona + di [squadra], uno dopo l'altro. */
+    private fun tocca(
+        scenario: ActivityScenario<MainActivity>,
+        squadra: Int,
+        punti: Int,
+    ) {
+        val zona = if (squadra == 1) R.id.team1_add_button_card else R.id.team2_add_button_card
+        repeat(punti) { scenario.onActivity { it.findViewById<View>(zona).performClick() } }
+    }
+
+    /** Il padel da zero, con i nomi di squadra predefiniti; lo sport si rimette al calcio in fondo. */
+    private fun conPadel(prova: (ActivityScenario<MainActivity>, MainViewModel) -> Unit) {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            var modello: MainViewModel? = null
+            scenario.onActivity { activity ->
+                modello = ViewModelProvider(activity)[MainViewModel::class.java]
+                assertTrue("il cambio sport e' stato rifiutato: la partita non e' vuota", modello!!.selectSport(SportRegistry.PADEL))
+            }
+            try {
+                assertTrue(
+                    "la colonna non si e' messa in modalita' padel",
+                    aspettaCheAttivi(scenario) { it.findViewById<View>(R.id.score_detail_container).visibility == View.VISIBLE },
+                )
+                prova(scenario, modello!!)
+            } finally {
+                scenario.onActivity {
+                    modello!!.discardMatch()
+                    modello!!.selectSport(SportRegistry.FOOTBALL)
+                }
+            }
+        }
+    }
+
+    private fun testoDi(
+        scenario: ActivityScenario<MainActivity>,
+        id: Int,
+    ): String {
+        var testo = ""
+        scenario.onActivity { testo = it.findViewById<TextView>(id).text.toString() }
+        return testo
+    }
+
+    @Test
+    fun nelPadel_la_barra_dice_chi_serve_e_il_pallino_passa_di_lato_a_ogni_game() {
+        conPadel { scenario, modello ->
+            lateinit var nome1: String
+            scenario.onActivity {
+                nome1 =
+                    modello.team1Name.value
+                        .orEmpty()
+                        .uppercase(Locale.getDefault())
+            }
+            assertTrue(
+                "la barra non dice PADEL e il servente: \"${testoDi(scenario, R.id.match_period_textview)}\"",
+                aspettaCheAttivi(scenario) {
+                    it
+                        .findViewById<TextView>(R.id.match_period_textview)
+                        .text
+                        .toString()
+                        .startsWith("PADEL") &&
+                        it
+                            .findViewById<TextView>(R.id.match_period_textview)
+                            .text
+                            .toString()
+                            .endsWith(nome1)
+                },
+            )
+            scenario.onActivity {
+                assertEquals("il pallino e' dalla parte di chi serve", View.VISIBLE, it.findViewById<View>(R.id.team1_serve_dot).visibility)
+                assertEquals(
+                    "l'altro pallino e' INVISIBLE e non GONE",
+                    View.INVISIBLE,
+                    it.findViewById<View>(R.id.team2_serve_dot).visibility,
+                )
+            }
+            val iniziale = postiFissi(scenario)
+            tocca(scenario, 1, 4)
+            assertTrue(
+                "dopo il game il pallino non e' passato dall'altra parte",
+                aspettaCheAttivi(scenario) { it.findViewById<View>(R.id.team2_serve_dot).visibility == View.VISIBLE },
+            )
+            scenario.onActivity {
+                assertEquals(View.INVISIBLE, it.findViewById<View>(R.id.team1_serve_dot).visibility)
+                val nome2 =
+                    modello.team2Name.value
+                        .orEmpty()
+                        .uppercase(Locale.getDefault())
+                assertTrue(
+                    "la barra non nomina il nuovo servente ($nome2)",
+                    it
+                        .findViewById<TextView>(R.id.match_period_textview)
+                        .text
+                        .toString()
+                        .endsWith(nome2),
+                )
+            }
+            assertNonSiSposta("dopo il cambio di servizio", iniziale, postiFissi(scenario))
+        }
+    }
+
+    @Test
+    fun nelPadel_al_6a3_la_barra_dice_VINCE_e_un_tocco_sulla_zona_spenta_non_cambia_il_punteggio() {
+        conPadel { scenario, modello ->
+            val iniziale = postiFissi(scenario)
+            // 3-3 a game alternati, poi tre game di fila a Rossi: 6-3.
+            repeat(3) {
+                tocca(scenario, 1, 4)
+                tocca(scenario, 2, 4)
+            }
+            tocca(scenario, 1, 12)
+            assertTrue("al 6-3 la partita non e' finita", aspettaCheAttivi(scenario) { modello.scoreDisplay.value?.matchOver == true })
+            lateinit var atteso: String
+            scenario.onActivity {
+                val nome1 =
+                    modello.team1Name.value
+                        .orEmpty()
+                        .uppercase(Locale.getDefault())
+                atteso = it.getString(R.string.bar_winner, nome1, "6-3").uppercase(Locale.getDefault())
+            }
+            assertTrue(
+                "la barra non dice \"$atteso\": \"${testoDi(scenario, R.id.match_period_textview)}\"",
+                aspettaCheAttivi(scenario) { it.findViewById<TextView>(R.id.match_period_textview).text.toString() == atteso },
+            )
+            scenario.onActivity {
+                assertEquals(
+                    "il vincitore resta bianco",
+                    it.getColor(R.color.ink_white),
+                    it.findViewById<TextView>(R.id.team1_score_textview).currentTextColor,
+                )
+                assertEquals(
+                    "lo sconfitto e' grigio",
+                    it.getColor(R.color.sidewalk_gray),
+                    it.findViewById<TextView>(R.id.team2_score_textview).currentTextColor,
+                )
+                assertEquals("la barra della zona spenta si vede", 1f, it.findViewById<View>(R.id.team1_zone_bar).alpha, 0f)
+                assertTrue("la zona spenta deve restare toccabile", it.findViewById<View>(R.id.team1_add_button_card).isClickable)
+            }
+            assertNonSiSposta("a partita finita", iniziale, postiFissi(scenario))
+
+            // Un tocco vero sulla zona spenta: nessun punto, la striscia dichiara PARTITA FINITA.
+            lateinit var prima: String
+            var righe = 0
+            scenario.onActivity {
+                prima =
+                    "${it.findViewById<TextView>(
+                        R.id.team1_score_textview,
+                    ).text}-${it.findViewById<TextView>(R.id.team2_score_textview).text}"
+                righe =
+                    modello.matchEvents.value
+                        .orEmpty()
+                        .size
+            }
+            onView(withId(R.id.team2_add_button_card)).perform(click())
+            lateinit var dichiarata: String
+            scenario.onActivity { dichiarata = it.getString(R.string.strip_msg_match_over) }
+            assertTrue(
+                "la striscia non dice \"$dichiarata\": \"${testoDi(scenario, R.id.last_action_text)}\"",
+                aspettaCheAttivi(scenario) { it.findViewById<TextView>(R.id.last_action_text).text.toString() == dichiarata },
+            )
+            scenario.onActivity {
+                val dopo = "${it.findViewById<TextView>(
+                    R.id.team1_score_textview,
+                ).text}-${it.findViewById<TextView>(R.id.team2_score_textview).text}"
+                assertEquals("il tocco sulla zona spenta ha cambiato il punteggio", prima, dopo)
+                assertEquals(
+                    "il tocco sulla zona spenta ha scritto nel registro",
+                    righe,
+                    modello.matchEvents.value
+                        .orEmpty()
+                        .size,
+                )
+            }
+            assertNonSiSposta("dopo il tocco sulla zona spenta", iniziale, postiFissi(scenario))
+
+            // ANNULLA riapre la partita: la barra torna a dire chi serve e le zone si riaccendono.
+            onView(withId(R.id.undo_goal_button)).perform(click())
+            onView(withText(R.string.undo)).inRoot(isDialog()).perform(click())
+            assertTrue("ANNULLA non ha riaperto la partita", aspettaCheAttivi(scenario) { modello.scoreDisplay.value?.matchOver == false })
+            assertTrue(
+                "la barra non e' tornata a PADEL · SERVE",
+                aspettaCheAttivi(scenario) {
+                    it
+                        .findViewById<TextView>(R.id.match_period_textview)
+                        .text
+                        .toString()
+                        .startsWith("PADEL")
+                },
+            )
+            scenario.onActivity {
+                assertEquals("riaperta, la barra della zona si spegne", 0f, it.findViewById<View>(R.id.team1_zone_bar).alpha, 0f)
+                assertEquals(
+                    "riaperto, il numero torna bianco",
+                    it.getColor(R.color.ink_white),
+                    it.findViewById<TextView>(R.id.team2_score_textview).currentTextColor,
+                )
+            }
+            assertNonSiSposta("dopo aver riaperto la partita", iniziale, postiFissi(scenario))
+        }
+    }
+
+    @Test
+    fun nelPadel_al_6a3_la_striscia_dice_TERMINA_e_toccandola_si_apre_il_dialogo_di_fine_partita() {
+        conPadel { scenario, modello ->
+            repeat(3) {
+                tocca(scenario, 1, 4)
+                tocca(scenario, 2, 4)
+            }
+            tocca(scenario, 1, 12)
+            assertTrue("al 6-3 la partita non e' finita", aspettaCheAttivi(scenario) { modello.scoreDisplay.value?.matchOver == true })
+            lateinit var atteso: String
+            scenario.onActivity { atteso = it.getString(R.string.strip_match_over_end) }
+            assertTrue(
+                "la striscia non dice \"$atteso\": \"${testoDi(scenario, R.id.last_action_text)}\"",
+                aspettaCheAttivi(scenario) { it.findViewById<TextView>(R.id.last_action_text).text.toString() == atteso },
+            )
+            onView(withId(R.id.last_action_strip)).perform(click())
+            // Il dialogo e' quello di fine partita: titolo PARTITA FINITA e chi ha vinto, non il rifiuto.
+            onView(withText(R.string.end_match_over_title)).inRoot(isDialog()).check(matches(isDisplayed()))
+            onView(withText(R.string.btn_save_match)).inRoot(isDialog()).check(matches(isDisplayed()))
+            onView(withText(R.string.continue_action)).inRoot(isDialog()).perform(click())
+        }
+    }
+
+    @Test
+    fun nelPadel_al_6a3_con_un_nome_lungo_la_barra_accorcia_il_nome_e_il_punteggio_resta_visibile() {
+        conPadel { scenario, modello ->
+            var nomeOriginale = ""
+            scenario.onActivity {
+                nomeOriginale = modello.team1Name.value.orEmpty()
+                modello.setTeam1Name("Maria Antonietta Della")
+            }
+            try {
+                // La barra stretta come su uno schermo da 360dp con i caratteri ingranditi.
+                scenario.onActivity {
+                    val barra = it.findViewById<TextView>(R.id.match_period_textview)
+                    barra.layoutParams =
+                        (barra.layoutParams as android.widget.LinearLayout.LayoutParams).apply {
+                            weight = 0f
+                            width = dp(it, 150).toInt()
+                        }
+                }
+                repeat(3) {
+                    tocca(scenario, 1, 4)
+                    tocca(scenario, 2, 4)
+                }
+                tocca(scenario, 1, 12)
+                assertTrue("al 6-3 la partita non e' finita", aspettaCheAttivi(scenario) { modello.scoreDisplay.value?.matchOver == true })
+                assertTrue(
+                    "il punteggio deve restare, senza ellissi in coda: \"${testoDi(scenario, R.id.match_period_textview)}\"",
+                    aspettaCheAttivi(scenario) {
+                        val barra = it.findViewById<TextView>(R.id.match_period_textview)
+                        val riga = barra.layout
+                        barra.text.endsWith("6-3") && riga != null && riga.getEllipsisCount(0) == 0
+                    },
+                )
+                assertTrue("il nome e' accorciato", testoDi(scenario, R.id.match_period_textview).contains("…"))
+            } finally {
+                scenario.onActivity { modello.setTeam1Name(nomeOriginale) }
+            }
+        }
+    }
+
+    /** Il colore del testo di una voce del dialogo aperto, letto con un'azione Espresso. */
+    private fun coloreDelBottoneDelDialogo(testo: Int): Int {
+        var colore = 0
+        onView(withText(testo)).inRoot(isDialog()).perform(
+            object : ViewAction {
+                override fun getConstraints() = isAssignableFrom(TextView::class.java)
+
+                override fun getDescription() = "legge il colore del testo"
+
+                override fun perform(
+                    uiController: UiController,
+                    view: View,
+                ) {
+                    colore = (view as TextView).currentTextColor
+                }
+            },
+        )
+        return colore
+    }
+
+    @Test
+    fun nelPadel_sul_5a3_e_30a15_TERMINA_mostra_il_punteggio_del_display_e_SCARTA_e_rosso() {
+        conPadel { scenario, modello ->
+            // 3-3 a game alternati, poi due game a Rossi (5-3) e nel game che segue 30-15.
+            repeat(3) {
+                tocca(scenario, 1, 4)
+                tocca(scenario, 2, 4)
+            }
+            tocca(scenario, 1, 8)
+            tocca(scenario, 1, 2)
+            tocca(scenario, 2, 1)
+            lateinit var atteso: String
+            scenario.onActivity {
+                val nome1 =
+                    modello.team1Name.value
+                        .orEmpty()
+                        .uppercase(Locale.getDefault())
+                val nome2 =
+                    modello.team2Name.value
+                        .orEmpty()
+                        .uppercase(Locale.getDefault())
+                atteso =
+                    listOf(
+                        it.getString(R.string.end_summary_racket, nome1, nome2),
+                        it.getString(R.string.end_part_game, "5-3"),
+                        it.getString(R.string.end_part_point, "30-15"),
+                    ).joinToString(" · ")
+                it.findViewById<View>(R.id.reset_scores_button).performClick()
+            }
+            // Il dialogo dice il punteggio vero, non 0-0 e non il rifiuto "non iniziata".
+            onView(withText(atteso)).inRoot(isDialog()).check(matches(isDisplayed()))
+            assertEquals(
+                "SCARTA deve essere #FF6E6E",
+                0xFFFF6E6E.toInt(),
+                coloreDelBottoneDelDialogo(R.string.btn_discard_match),
+            )
+            onView(withText(R.string.continue_action)).inRoot(isDialog()).perform(click())
         }
     }
 

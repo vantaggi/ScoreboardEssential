@@ -194,6 +194,26 @@ class StrisciaTest {
     }
 
     @Test
+    fun `a partita finita la striscia dice TERMINA e apre il dialogo di fine partita`() {
+        val display = ScoreDisplay(side1Primary = "6", side1Secondary = "6-3", side2Primary = "3", matchOver = true)
+        val stato =
+            striscia(listOf(MatchEvent("20'", "Point", team = 1, type = MatchEventType.SCORE, engineIndex = 9), avvio), padel, display)
+
+        assertEquals("PARTITA FINITA · TERMINA ›", stato.testo)
+        assertTrue("toccarla apre TERMINA", stato.terminaPartita)
+        assertNull("e non e' la scorciatoia del marcatore", stato.daAttribuire)
+        // Anche senza registro: a partita finita la striscia e' sempre il comando che conclude.
+        assertTrue(striscia(null, padel, display).terminaPartita)
+    }
+
+    @Test
+    fun `in corso la striscia non e' il comando di TERMINA`() {
+        val display = ScoreDisplay(side1Primary = "30", side1Secondary = "5-3", side2Primary = "15", matchOver = false)
+        assertEquals(false, striscia(listOf(avvio), padel, display).terminaPartita)
+        assertEquals(false, striscia(listOf(gol(1, 0), avvio)).terminaPartita)
+    }
+
+    @Test
     fun `finche le capacita non arrivano vale il calcio`() {
         assertTrue(striscia(listOf(gol(1, 0)), capacita = null).testo.contains("CHI HA SEGNATO"))
     }

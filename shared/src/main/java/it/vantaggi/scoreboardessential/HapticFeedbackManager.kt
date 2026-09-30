@@ -9,4 +9,9 @@ object HapticFeedbackManager {
 
     // Pattern for an alert (e.g., keeper timer end)
     val PATTERN_ALERT = longArrayOf(0, 200, 100, 200)
+
+    // Pattern for a touch that was heard but does nothing (e.g., a tap on a finished match):
+    // one long pulse, the same "not taken" reading on phone and watch. Three short ticks are
+    // reserved for undo (DESIGN.md, "Coerenza fra telefono e orologio").
+    val PATTERN_INERT_TAP = longArrayOf(0, 400)
 }

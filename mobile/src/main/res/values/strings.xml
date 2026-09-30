@@ -90,15 +90,22 @@
     <string name="strip_msg_goal_by">GOAL BY %1$s</string>
     <string name="strip_msg_correction">CORRECTION −1 %1$s</string>
     <string name="strip_msg_undone">UNDONE</string>
+    <string name="strip_msg_match_over">MATCH OVER</string>
+    <string name="strip_match_over_end">MATCH OVER · END ›</string>
     <plurals name="strip_msg_from_watch">
         <item quantity="one">WATCH: %1$d POINT</item>
         <item quantity="other">WATCH: %1$d POINTS</item>
     </plurals>
     <string name="end_match_title">End Match?</string>
-    <string name="end_match_message">What do you want to do with it?
-
-%1$s: %2$d
-%3$s: %4$d</string>
+    <string name="end_match_over_title">MATCH OVER</string>
+    <!-- Il riepilogo del dialogo si compone dal display, come la schermata: niente 0-0 sopra un 5-3. -->
+    <string name="end_summary_football">%1$s %2$s-%3$s %4$s</string>
+    <string name="end_summary_racket">%1$s – %2$s</string>
+    <string name="end_part_set">set %1$s</string>
+    <string name="end_part_game">game %1$s</string>
+    <string name="end_part_point">point %1$s</string>
+    <string name="btn_save_match">Save</string>
+    <string name="bar_winner">WINS %1$s · %2$s</string>
     <string name="btn_end_match">End Match</string>
     <string name="continue_action">Continue</string>
     <string name="match_saved">Match saved!</string>
@@ -111,7 +118,7 @@
 
 
     <string name="share_match_report">Share</string>
-    <string name="score_period_serving">%1$s - serve %2$s</string>
+    <string name="score_period_serving">%1$s · serve %2$s</string>
     <string name="watch_batch_rejected">The watch sent points that did not go into this match.</string>
     <string name="label_match_history">HISTORY</string>
     <string name="label_end_match">END MATCH</string>

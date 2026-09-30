@@ -71,11 +71,24 @@ object TeamInk {
     fun graphicOnBlack(
         argb: Int,
         min: Double = 3.0,
+    ): Int = graphicOn(argb, NERO, min)
+
+    /**
+     * Come [graphicOnBlack] ma su un fondo qualsiasi [sfondo]: la grafica che sta su #1E1E1E o su
+     * #2C2C2C va misurata contro quel grigio, non contro il nero. Un blu notte che su nero fa 3:1
+     * dopo lo schiarimento contro #2C2C2C ne fa meno di 3, e la barretta sparisce nel fondo.
+     * Si schiarisce verso il bianco: per uno sfondo chiaro non c'e' risposta, e il ciclo finisce
+     * sul bianco. Il fondo e' sempre piu' scuro della grafica negli usi reali.
+     */
+    fun graphicOn(
+        argb: Int,
+        sfondo: Int,
+        min: Double = 3.0,
     ): Int {
-        if (contrast(argb, NERO) >= min) return argb
+        if (contrast(argb, sfondo) >= min) return argb
         for (passo in 1..100) {
             val schiarito = versoIlBianco(argb, passo / 100.0)
-            if (contrast(schiarito, NERO) >= min) return schiarito
+            if (contrast(schiarito, sfondo) >= min) return schiarito
         }
         return BIANCO
     }
