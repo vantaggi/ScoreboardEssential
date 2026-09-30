@@ -167,6 +167,20 @@ class ProtocolloV2DelTelefonoTest {
     }
 
     @Test
+    fun `un cambio sport e un arretrato riconsegnati vengono applicati una volta sola`() {
+        consegna(cambioSport(nodoA, 1), cambioSport(nodoA, 1))
+        consegna(arretrato(nodoB, 1), arretrato(nodoB, 1))
+
+        assertEquals(
+            listOf(
+                SimplifiedDataLayerListenerService.ACTION_SPORT_INTENT,
+                SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH,
+            ),
+            ricevuti.map { it.action },
+        )
+    }
+
+    @Test
     fun `una sequenza piu' vecchia dell'ultima viene scartata`() {
         consegna(tocco(nodoA, 5), tocco(nodoA, 3), tocco(nodoA, 6))
 
