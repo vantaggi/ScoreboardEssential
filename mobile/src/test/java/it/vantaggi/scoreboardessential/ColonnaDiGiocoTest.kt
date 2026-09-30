@@ -172,7 +172,9 @@ class ColonnaDiGiocoTest {
                 val a = radice.findViewById<View>(prima)
                 val b = radice.findViewById<View>(dopo)
                 assertTrue(
-                    "${radice.resources.getResourceEntryName(prima)} (fino a ${a.right}px) tocca ${radice.resources.getResourceEntryName(dopo)} (da ${b.left}px) a scala $scala",
+                    "${radice.resources.getResourceEntryName(
+                        prima,
+                    )} (fino a ${a.right}px) tocca ${radice.resources.getResourceEntryName(dopo)} (da ${b.left}px) a scala $scala",
                     a.right <= b.left,
                 )
             }
@@ -237,7 +239,12 @@ class ColonnaDiGiocoTest {
             val annulla = radice.findViewById<TextView>(R.id.undo_goal_button)
             assertEquals("il testo del pulsante non e' quello atteso", "Annulla", annulla.text.toString())
             assertIntero("ANNULLA a scala $scala", annulla)
-            assertEquals("la striscia resta alta 56dp", 56 * densita, radice.findViewById<View>(R.id.last_action_strip).height.toFloat(), 1f)
+            assertEquals(
+                "la striscia resta alta 56dp",
+                56 * densita,
+                radice.findViewById<View>(R.id.last_action_strip).height.toFloat(),
+                1f,
+            )
             assertTrue("ANNULLA a scala $scala e' largo ${annulla.width}px, sotto i 96dp", annulla.width >= 96 * densita - 1f)
             val striscia = radice.findViewById<ViewGroup>(R.id.last_action_strip)
             assertTrue("ANNULLA a scala $scala esce dalla striscia", annulla.right <= striscia.width)
