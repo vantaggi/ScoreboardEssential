@@ -2022,3 +2022,13 @@ Da guardare su un telefono vero: vibrazioni (punto, game, fine partita, tocco in
 `wf9/test-wear-shared`).
 Il 30 settembre il proprietario ha aggiunto alla coda i passi 10 e 11 del design del telefono
 (contorno di sistema e schermate di contorno), in parallelo: `wf10/contorno` e poi `wf10/schermate`.
+
+### Design dell'orologio, passi 4-8, a passi corti - 30 settembre 2026
+
+| Passo | Cosa | Stato |
+|---|---|---|
+| 4 | StatoFiducia e riga di stato | implementazione fatta (Sonnet): `a2bab6b`..`9d1a5a4` (worktree `wf_922f258f-105-1`). Funzione pura a 8 livelli, riga di stato nel gestureHint al posto del pallino, verifica del collegamento di 2s all'avvio, NON CONSEGNATI dopo 10s da collegati, ora dell'ultimo stato vivo salvata, refresh ogni 15s a partita in corso, frasi entro 18 caratteri in it ed en. Revisione in corso (Opus) |
+| 5 | Menu partita al posto di SPORT e AZZERA | da fare |
+| 6 | Quadrante a fasce | da fare |
+| 7 | Aptica per lato e ricevuta del tocco | da fare |
+| 8 | Marcatore non automatico (finestra CHI?) | da fare |
