@@ -82,6 +82,20 @@ private const val PROVA_DI_MISURA = 100f
 // Nel dettaglio dei set il separatore fra set chiusi e game correnti ("6-4 · 3-2"): con lui la didascalia e' SET · GAME.
 private const val SEPARATORE_SET_GAME = " · "
 
+// Il tempo piu' lungo che il pulsante del cronometro mostra: oltre i 99 minuti le cifre diventano sei.
+private const val TEMPO_PIU_LUNGO = "100:00"
+
+/**
+ * La larghezza minima del pulsante del tempo: quella che ha con il tempo piu' lungo, padding e
+ * icona compresi. Cosi' passando i 99 minuti il pulsante non si allarga e non sposta il portiere
+ * e il resto della barra. Si misura con il pennello del pulsante, che ha gia' la dimensione e i
+ * caratteri di sistema di adesso.
+ */
+internal fun larghezzaMinimaDelTempo(pulsante: MaterialButton): Int {
+    val testo = Math.ceil(pulsante.paint.measureText(TEMPO_PIU_LUNGO).toDouble()).toInt()
+    return testo + pulsante.paddingLeft + pulsante.paddingRight + pulsante.iconSize + pulsante.iconPadding
+}
+
 // L'increspatura sulla zona premuta: l'inchiostro della squadra al 24% (61 su 255).
 private const val RIPPLE_ALPHA = 61
 
@@ -265,6 +279,7 @@ class MainActivity :
         team2Zone = findViewById(R.id.team2_add_button_card)
         keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
         timerStartButton = findViewById(R.id.timer_start_button)
+        timerStartButton.minWidth = larghezzaMinimaDelTempo(timerStartButton)
         undoGoalButton = findViewById(R.id.undo_goal_button)
         rostersCard = findViewById(R.id.rosters_card)
         formationsCard = findViewById(R.id.formations_card)

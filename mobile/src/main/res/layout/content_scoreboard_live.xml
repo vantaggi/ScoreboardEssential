@@ -25,9 +25,13 @@
 
     <!--
         Barra. Nel calcio: il tempo come pulsante (il glifo dice se corre), lo slot del portiere
-        (di sola lettura), poi orologio e PARTITA. Nel padel e nel tennis il tempo e il portiere
-        sono GONE e il testo del periodo prende il loro posto. RESET del tempo e impostazioni non
-        sono qui: stanno nel foglio.
+        (di sola lettura), poi orologio e il pulsante del foglio, solo il glifo. Nel padel e nel
+        tennis il tempo e il portiere sono GONE e il testo del periodo prende il loro posto. RESET
+        del tempo e impostazioni non sono qui: stanno nel foglio.
+
+        A 360dp la barra ha 328dp utili. Il tempo (fino a 100:00) e il portiere non hanno una
+        larghezza da spartire: se lo spazio non basta cede solo il testo del periodo, che fa da
+        molla, e il pulsante del foglio, l'unico modo di aprirlo, resta intero e da 48dp.
     -->
     <LinearLayout
         android:id="@+id/game_bar"
@@ -63,7 +67,6 @@
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:layout_marginStart="8dp"
-            android:minWidth="104dp"
             app:cardBackgroundColor="@android:color/transparent"
             app:cardElevation="0dp"
             app:shapeAppearance="@style/ShapeAppearance.App.StreetBadge"
@@ -101,10 +104,10 @@
             android:id="@+id/match_period_textview"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="4dp"
             android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="1"
+            android:paddingHorizontal="4dp"
             android:textAppearance="@style/TextAppearance.App.Game.Command"
             android:textColor="@color/stencil_white"
             tools:text="SET 2 - SERVE ROSSI" />
@@ -118,7 +121,8 @@
             android:src="@drawable/ic_watch_disconnected"
             tools:src="@drawable/ic_watch_connected" />
 
-        <!-- Apre il foglio PARTITA: rose, registro, formazioni e azioni stanno li'. -->
+        <!-- Apre il foglio PARTITA: rose, registro, formazioni e azioni stanno li'. Solo il glifo,
+             con la descrizione a voce: la parola non entra in 328dp con i caratteri ingranditi. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/match_sheet_button"
             style="@style/Widget.App.Button.TextButton.Street"
@@ -128,11 +132,11 @@
             android:insetTop="0dp"
             android:insetBottom="0dp"
             android:maxLines="1"
-            android:minWidth="64dp"
+            android:minWidth="48dp"
             android:paddingHorizontal="4dp"
             android:text="@string/label_open_match_sheet"
             android:textColor="@color/stencil_white"
-            android:textSize="12sp" />
+            android:textSize="24sp" />
     </LinearLayout>
 
     <!--
@@ -365,6 +369,7 @@
     <!--
         La striscia dell'ultima azione. Cambia il testo, mai l'altezza: ANNULLA si spegne quando non
         c'e' niente da annullare, non sparisce. Il testo a sinistra lo scrive il passo successivo.
+        ANNULLA e' largo quanto gli serve, da 96dp in su: in italiano con l'icona non entra in 96.
     -->
     <LinearLayout
         android:id="@+id/last_action_strip"
@@ -389,12 +394,13 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/undo_goal_button"
             style="@style/Widget.App.Button.TextButton.Street"
-            android:layout_width="96dp"
+            android:layout_width="wrap_content"
             android:layout_height="@dimen/game_strip_height"
             android:insetTop="0dp"
             android:insetBottom="0dp"
             android:enabled="false"
             android:maxLines="1"
+            android:minWidth="96dp"
             android:paddingHorizontal="8dp"
             android:text="@string/undo"
             android:textAppearance="@style/TextAppearance.App.Game.Command"

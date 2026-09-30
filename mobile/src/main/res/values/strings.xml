@@ -18,11 +18,11 @@
 
     <!-- Onboarding Step 1: Score Management -->
     <string name="onboarding_score_title">EASY SCORE MANAGEMENT</string>
-    <string name="onboarding_score_description">Tap the big zone of a team to score for it. UNDO takes back the last action. Rosters, match log, colours and sport live under ≡ MATCH.</string>
+    <string name="onboarding_score_description">Tap the big zone of a team to score for it. UNDO takes back the last action. Rosters, match log, colours and sport live under the ≡ button at the top right.</string>
 
     <!-- Onboarding Step 2: Timers and Players -->
     <string name="onboarding_timers_title">MATCH AND KEEPER TIMERS</string>
-    <string name="onboarding_timers_description">Tap the time at the top to start or pause it. In football, the goalkeeper slot next to it counts the keeper. Add players to build your teams from ≡ MATCH.</string>
+    <string name="onboarding_timers_description">Tap the time at the top to start or pause it. In football, the goalkeeper slot next to it counts the keeper. Add players to build your teams from the ≡ button at the top right.</string>
 
     <!-- Onboarding Step 3: Wear OS Sync -->
     <string name="onboarding_wear_title">SYNC WITH WEAR OS</string>
@@ -108,7 +108,7 @@
     <string name="label_formations">FORMATIONS</string>
     <!-- Foglio PARTITA: cio che si consulta, a un tocco dalla schermata di gioco. -->
     <string name="label_match_sheet">MATCH</string>
-    <string name="label_open_match_sheet">≡ MATCH</string>
+    <string name="label_open_match_sheet">≡</string>
     <string name="cd_open_match_sheet">Open the match sheet</string>
     <string name="label_close_sheet">CLOSE</string>
     <string name="label_statistics">STATISTICS</string>
