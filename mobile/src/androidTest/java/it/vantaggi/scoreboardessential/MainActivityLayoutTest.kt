@@ -25,8 +25,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.snackbar.Snackbar
 import it.vantaggi.scoreboardessential.core.SportRegistry
+import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -37,8 +39,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Locale
 
-// Un giocatore che nel database dell'emulatore non esiste: il +1 ai suoi gol non tocca nessuna riga vera.
-private const val ID_FINTO = 987654
+// Il giocatore di prova: il dialogo del marcatore rilegge la rosa dal database, quindi va scritto davvero.
+// Il test lo toglie alla fine; l'id alto evita di toccare i giocatori veri dell'emulatore.
+private const val ID_DI_PROVA = 987654
 
 /**
  * La schermata di gioco, montata davvero.
@@ -338,13 +341,16 @@ class MainActivityLayoutTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             var modello: MainViewModel? = null
             lateinit var nome: String
+            val giocatore = Player(playerId = ID_DI_PROVA, playerName = "Marco B.", appearances = 0, goals = 0)
+            val giocatori =
+                AppDatabase
+                    .getDatabase(InstrumentationRegistry.getInstrumentation().targetContext)
+                    .playerDao()
+            runBlocking { giocatori.insert(giocatore) }
             scenario.onActivity { activity ->
                 modello = ViewModelProvider(activity)[MainViewModel::class.java]
                 // Senza una rosa la scorciatoia mostrerebbe la Snackbar "nessun giocatore".
-                modello!!.addPlayerToTeam(
-                    PlayerWithRoles(Player(playerId = ID_FINTO, playerName = "Marco B.", appearances = 0, goals = 0), emptyList()),
-                    1,
-                )
+                modello!!.addPlayerToTeam(PlayerWithRoles(giocatore, emptyList()), 1)
                 nome =
                     modello!!
                         .team1Name.value
@@ -396,6 +402,7 @@ class MainActivityLayoutTest {
                 }
             } finally {
                 scenario.onActivity { modello!!.discardMatch() }
+                runBlocking { giocatori.delete(giocatore) }
             }
         }
     }
