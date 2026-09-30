@@ -30,13 +30,9 @@ class MatchHistoryViewModel(
         repository.allMatches
             .map { matches ->
                 matches.map { match ->
-                    val formatted =
-                        if (match.players.isNotEmpty()) {
-                            "Players: ${match.players.joinToString(", ") { it.playerName }}"
-                        } else {
-                            ""
-                        }
-                    MatchHistoryUiState(match, formatted)
+                    // Senza etichetta: «Giocatori:» o «Players:» lo mette la card, da risorsa.
+                    val nomi = match.players.joinToString(", ") { it.playerName }
+                    MatchHistoryUiState(match, nomi, RigaDeiSet.of(match.match))
                 }
             }.flowOn(Dispatchers.Default)
             .asLiveData()

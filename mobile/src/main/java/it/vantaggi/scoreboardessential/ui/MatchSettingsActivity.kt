@@ -3,17 +3,21 @@ package it.vantaggi.scoreboardessential.ui
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.skydoves.colorpickerview.ColorPickerView
+import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.databinding.ActivityMatchSettingsBinding
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.sportLabel
+import it.vantaggi.scoreboardessential.sportRulesLine
 import it.vantaggi.scoreboardessential.utils.LocaleHelper
+import it.vantaggi.scoreboardessential.utils.anteprimaDiSquadra
 import it.vantaggi.scoreboardessential.utils.dipingiDiSquadra
 
 class MatchSettingsActivity : AppCompatActivity() {
@@ -139,6 +143,7 @@ class MatchSettingsActivity : AppCompatActivity() {
             if (binding.sportAutoComplete.text.toString() != label) {
                 binding.sportAutoComplete.setText(label, false)
             }
+            binding.sportRulesText.text = sportRulesLine(this, sportId)
             // Le stesse capacita' che la schermata principale usa per spegnere il cronometro:
             // nel padel non c'e' un portiere da cambiare, quindi non c'e' niente da impostare.
             // Prima il campo restava li' a chiedere un numero che nessuno avrebbe mai usato.
@@ -221,6 +226,15 @@ class MatchSettingsActivity : AppCompatActivity() {
         val brightnessSlideBar = dialogView.findViewById<BrightnessSlideBar>(R.id.brightnessSlide)
 
         colorPickerView.attachBrightnessSlider(brightnessSlideBar)
+
+        // L'anteprima parte dal colore attuale e segue la ruota a ogni movimento.
+        val anteprima = dialogView.findViewById<TextView>(R.id.colorPreview)
+        val nome = (if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value).orEmpty()
+        val attuale = (if (team == 1) viewModel.team1Color.value else viewModel.team2Color.value) ?: getColor(R.color.team_spray_yellow)
+        anteprima.anteprimaDiSquadra(attuale, nome)
+        colorPickerView.setColorListener(
+            ColorEnvelopeListener { envelope, _ -> anteprima.anteprimaDiSquadra(envelope.color, nome) },
+        )
 
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.choose_team_color, team)) // Format string

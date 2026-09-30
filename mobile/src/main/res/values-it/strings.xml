@@ -176,6 +176,21 @@
     <string name="sport_padel">Padel</string>
     <string name="sport_tennis">Tennis</string>
     <string name="sport_change_blocked">Termina la partita in corso per cambiare sport</string>
+    <!-- Riga delle regole sotto il selettore dello sport: si compone dalla configurazione del motore -->
+    <string name="rules_single_set">Set unico</string>
+    <string name="rules_best_of">Al meglio di %1$d set</string>
+    <string name="rules_golden_point">punto secco sul 40-40</string>
+    <string name="rules_advantage">vantaggi</string>
+    <string name="rules_killer_point">un vantaggio, poi punto secco</string>
+    <string name="rules_tiebreak_to">tie-break a %1$d</string>
+    <string name="rules_stopwatch">Cronometro</string>
+    <string name="rules_keeper_change">cambio portiere</string>
+    <!-- Anteprima del colore di squadra: un punteggio di esempio e il nome -->
+    <string name="color_preview_text">12\n%1$s</string>
+    <!-- Cronologia -->
+    <string name="history_players">Giocatori: %1$s</string>
+    <string name="history_meta">%1$s · %2$s</string>
+    <string name="history_meta_duration">%1$s · %2$s · %3$s</string>
     <string name="match_ready">Nuova partita pronta</string>
     <string name="match_resumed">Partita ripresa</string>
 
