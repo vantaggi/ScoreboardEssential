@@ -82,8 +82,10 @@
     <string name="strip_none_goal">NO GOALS YET</string>
     <string name="strip_none_point">NO POINTS YET</string>
     <string name="strip_goal_unattributed">GOAL %1$s · WHO SCORED? ›</string>
+    <string name="strip_goal">GOAL %1$s</string>
     <string name="strip_goal_by">GOAL %1$s · %2$s</string>
     <string name="strip_point">POINT %1$s · %2$s</string>
+    <string name="strip_game">GAME %1$s · %2$s</string>
     <!-- Messaggi di 3 secondi nella striscia, al posto delle Snackbar che coprivano le zone. -->
     <string name="strip_msg_goal_by">GOAL BY %1$s</string>
     <string name="strip_msg_correction">CORRECTION −1 %1$s</string>

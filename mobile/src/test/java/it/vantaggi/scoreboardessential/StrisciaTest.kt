@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
+import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
@@ -80,10 +81,27 @@ class StrisciaTest {
     }
 
     @Test
-    fun `una correzione o un avvio in testa non nascondono l'ultimo gol`() {
-        val stato = striscia(listOf(correzione, gol(1, 0), avvio))
+    fun `un avvio in testa non nasconde l'ultimo gol`() {
+        val stato = striscia(listOf(avvio, gol(1, 0)))
 
         assertEquals("GOL ROSSI · CHI HA SEGNATO? ›", stato.testo)
+    }
+
+    @Test
+    fun `dopo un -1 la striscia dice la correzione e il gol tolto non si tocca`() {
+        // Il -1 ha tolto quel gol: attribuirlo darebbe un gol a un giocatore in una partita 0-0.
+        val stato = striscia(listOf(correzione, gol(1, 0), avvio))
+
+        assertEquals("CORREZIONE −1 ROSSI", stato.testo)
+        assertNull("la correzione non e' un bersaglio", stato.daAttribuire)
+    }
+
+    @Test
+    fun `un gol dopo la correzione torna a essere l'ultima azione`() {
+        val stato = striscia(listOf(gol(2, 2), correzione, gol(1, 0), avvio))
+
+        assertEquals("GOL BLU · CHI HA SEGNATO? ›", stato.testo)
+        assertEquals(2, stato.daAttribuire?.engineIndex)
     }
 
     @Test
@@ -115,6 +133,57 @@ class StrisciaTest {
 
         assertEquals("PUNTO ROSSI · 40-30", stato.testo)
         assertNull("negli sport senza marcatore non c'e' scorciatoia", stato.daAttribuire)
+    }
+
+    /** Il display vero del motore dopo [punti] punti a [lato], non un display scritto a mano. */
+    private fun displayDopo(
+        sport: String,
+        punti: Int,
+        lato: Int = 1,
+    ): ScoreDisplay {
+        val regole = SportRegistry.byId(sport)
+        var stato = regole.initial()
+        repeat(punti) { stato = regole.apply(stato, ScoringEvent.Point(side = lato)) }
+        return regole.display(stato)
+    }
+
+    @Test
+    fun `al punto che chiude un game la striscia dice il game e non 0-0`() {
+        // Padel, punto secco: quattro punti chiudono il game, e i primari tornano a 0-0.
+        val display = displayDopo(SportRegistry.PADEL, punti = 4)
+        assertEquals("0", display.side1Primary)
+
+        val stato = striscia(listOf(gol(1, 3), avvio), capacita = padel, display = display)
+
+        assertEquals("GAME ROSSI · 1-0", stato.testo)
+        assertNull(stato.daAttribuire)
+    }
+
+    @Test
+    fun `al game che chiude il set la striscia dice il game del set chiuso`() {
+        // Tennis: sei game a zero chiudono il primo set. I secondari diventano «6-0 · 0-0»: il game
+        // da dire e' l'ultimo del set chiuso, non i game del set nuovo.
+        val display = displayDopo(SportRegistry.TENNIS, punti = 24, lato = 2)
+        assertEquals("0-6 · 0-0", display.side1Secondary)
+
+        val stato = striscia(listOf(gol(2, 23), avvio), capacita = SportRegistry.byId(SportRegistry.TENNIS).capabilities, display = display)
+
+        assertEquals("GAME BLU · 0-6", stato.testo)
+    }
+
+    @Test
+    fun `a meta game la striscia dice ancora il punto`() {
+        val display = displayDopo(SportRegistry.PADEL, punti = 2)
+
+        assertEquals("PUNTO ROSSI · 30-0", striscia(listOf(gol(1, 1), avvio), capacita = padel, display = display).testo)
+    }
+
+    @Test
+    fun `senza marcatore noto la striscia dice solo il gol`() {
+        // Senza indice del motore e senza giocatore: il registro scrive la squadra al posto del nome.
+        assertEquals("GOL ROSSI", striscia(listOf(gol(1, 0).copy(engineIndex = null))).testo)
+        // Giocatore uscito dalla rosa: e' ancora attribuito, ma la riga porta il nome della squadra.
+        assertEquals("GOL ROSSI", striscia(listOf(gol(1, 0, marcatore = "Rossi", idGiocatore = 7))).testo)
     }
 
     @Test

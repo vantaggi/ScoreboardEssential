@@ -79,8 +79,10 @@
     <string name="strip_none_goal">NESSUN GOL</string>
     <string name="strip_none_point">NESSUN PUNTO</string>
     <string name="strip_goal_unattributed">GOL %1$s · CHI HA SEGNATO? ›</string>
+    <string name="strip_goal">GOL %1$s</string>
     <string name="strip_goal_by">GOL %1$s · %2$s</string>
     <string name="strip_point">PUNTO %1$s · %2$s</string>
+    <string name="strip_game">GAME %1$s · %2$s</string>
     <!-- Messaggi di 3 secondi nella striscia, al posto delle Snackbar che coprivano le zone. -->
     <string name="strip_msg_goal_by">GOL DI %1$s</string>
     <string name="strip_msg_correction">CORREZIONE −1 %1$s</string>
