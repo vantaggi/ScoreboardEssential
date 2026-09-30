@@ -131,9 +131,10 @@ class ProtocolloV2DelTelefonoTest {
         shadowOf(Looper.getMainLooper()).idle()
     }
 
-    private fun lati() = ricevuti.filter { it.action == SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT }.map {
-        it.getIntExtra(WearConstants.KEY_SIDE, -1)
-    }
+    private fun lati(): List<Int> =
+        ricevuti
+            .filter { it.action == SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT }
+            .map { it.getIntExtra(WearConstants.KEY_SIDE, -1) }
 
     @Test
     fun `una sequenza crescente viene accettata tutta, nell'ordine`() {

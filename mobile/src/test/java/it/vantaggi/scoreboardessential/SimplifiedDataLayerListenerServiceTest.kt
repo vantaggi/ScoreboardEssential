@@ -73,7 +73,10 @@ class SimplifiedDataLayerListenerServiceTest {
     @Test
     fun `onDataChanged inoltra il punteggio 10 a 5 in broadcast e non lo scrive nel log`() {
         // LocalBroadcastManager vuole un contesto: il servizio va costruito da Robolectric.
-        service = org.robolectric.Robolectric.buildService(SimplifiedDataLayerListenerService::class.java).get()
+        service =
+            org.robolectric.Robolectric
+                .buildService(SimplifiedDataLayerListenerService::class.java)
+                .get()
 
         val ricevuti = mutableListOf<Intent>()
         val receiver =
