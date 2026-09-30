@@ -173,7 +173,7 @@ class MainActivityLayoutTest {
                 val riga = activity.findViewById<View>(R.id.score_row)
                 val disponibile = riga.width / 2f - dp(activity, 16)
                 val larghezza88 = uno.paint.measureText("88")
-                assertTrue("\"88\" e' largo $larghezza88px ma ne ha $disponibile", larghezza88 <= disponibile + 1f)
+                assertTrue("\"88\" e' largo ${larghezza88}px ma ne ha ${disponibile}px", larghezza88 <= disponibile + 1f)
                 val metriche = uno.paint.fontMetrics
                 val scalaConUnPixelInPiu = (uno.textSize + 1f) / uno.textSize
                 val alTetto = uno.textSize >= dp(activity, 150) - 1f
