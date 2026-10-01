@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Il pallino del servizio: un cerchio bianco pieno, grafica e non testo. Le misure le da' la vista
+    (face_dot_size), questo disegno si adatta.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/ink_white" />
+</shape>

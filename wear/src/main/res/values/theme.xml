@@ -42,6 +42,50 @@
         <item name="android:fontFamily">sans-serif-condensed</item>
     </style>
 
+    <!--
+        Il tema del quadrante di gioco: la finestra e' gia' nera, quindi il layout non dipinge un
+        secondo fondo (lint Overdraw). Le schermate di contorno restano sul tema street.
+    -->
+    <style name="Theme.ScoreboardEssential.Face" parent="Theme.ScoreboardEssential">
+        <item name="android:windowBackground">@color/ink_black</item>
+    </style>
+
+    <!--
+        I cinque livelli di lettura del quadrante. Tutti condensed bold salvo il dettaglio, e tutti
+        senza il margine di font: il testo sta in fasce alte quanto serve e non un pixel di piu'.
+        Le misure vengono da dimens, quindi crescono da sole sui tondi da 227dp.
+    -->
+    <style name="TextAppearance.Face.Score" parent="android:TextAppearance">
+        <item name="android:textSize">@dimen/face_score_text_size</item>
+        <item name="android:textColor">@color/ink_white</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.Face.Context" parent="android:TextAppearance">
+        <item name="android:textSize">@dimen/face_context_text_size</item>
+        <item name="android:textColor">@color/ink_white</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.Face.Keeper" parent="android:TextAppearance">
+        <item name="android:textSize">@dimen/face_keeper_text_size</item>
+        <item name="android:textColor">@color/sidewalk_gray</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TextAppearance.Face.Detail" parent="android:TextAppearance">
+        <item name="android:textSize">@dimen/face_detail_text_size</item>
+        <item name="android:textColor">@color/sidewalk_gray</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+    </style>
+    <style name="TextAppearance.Face.Status" parent="android:TextAppearance">
+        <item name="android:textSize">@dimen/wear_hint_text_size</item>
+        <item name="android:textColor">@color/sidewalk_gray</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.04</item>
+    </style>
+
     <style name="ShapeAppearance.App.StreetCard" parent="ShapeAppearance.Material3.MediumComponent">
         <item name="cornerFamily">cut</item>
         <item name="cornerSize">12dp</item>
