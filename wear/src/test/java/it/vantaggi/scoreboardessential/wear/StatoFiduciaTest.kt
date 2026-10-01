@@ -69,7 +69,7 @@ class StatoFiduciaTest {
             listOf(
                 Caso("consegnati", tranquillo.copy(transitorio = Transitorio.Consegnati(4)), Transitorio.Consegnati(4)),
                 Caso("chiusura", tranquillo.copy(transitorio = Transitorio.Chiusura), Transitorio.Chiusura),
-                Caso("non chiusa", tranquillo.copy(transitorio = Transitorio.NonChiusa), Transitorio.NonChiusa),
+                Caso("non chiusa", tranquillo.copy(transitorio = Transitorio.ChiusuraNonConfermata), Transitorio.ChiusuraNonConfermata),
             ),
         )
     }
@@ -198,7 +198,7 @@ class StatoFiduciaTest {
         assertEquals(Tono.AMBRA, Frase.NonConsegnati(1).tono)
         assertEquals(Tono.AMBRA, Frase.InCoda(1).tono)
         assertEquals(Tono.AMBRA, Frase.Scollegato(null).tono)
-        assertEquals(Tono.AMBRA, Transitorio.NonChiusa.tono)
+        assertEquals(Tono.AMBRA, Transitorio.ChiusuraNonConfermata.tono)
         assertEquals(Tono.CHIARO, Frase.Invio(1).tono)
         assertEquals(Tono.CHIARO, Frase.PartitaFinita.tono)
         assertEquals(Tono.CHIARO, Transitorio.Consegnati(1).tono)

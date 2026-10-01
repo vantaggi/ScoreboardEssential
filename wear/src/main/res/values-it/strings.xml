@@ -41,7 +41,7 @@
     <string name="wear_status_not_confirmed">NON CONFERMATO</string>
     <string name="wear_status_delivered">%1$d CONSEGNATI</string>
     <string name="wear_status_closing">CHIUSURA…</string>
-    <string name="wear_status_not_closed">NON CHIUSA</string>
+    <string name="wear_status_close_unconfirmed">NON CONFERMATA</string>
     <string name="wear_status_not_delivered">%1$d NON CONSEGNATI</string>
     <string name="wear_status_sending">INVIO %1$d…</string>
     <string name="wear_status_queued">%1$d IN CODA</string>

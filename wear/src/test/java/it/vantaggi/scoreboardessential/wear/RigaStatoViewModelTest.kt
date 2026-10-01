@@ -6,6 +6,7 @@ import android.os.Vibrator
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -253,11 +254,11 @@ class RigaStatoViewModelTest {
     @Test
     fun `un messaggio transitorio dura 3 secondi e poi la riga torna sola`() {
         collegati()
-        viewModel.mostraTransitorio(Transitorio.NonChiusa)
-        assertEquals(Transitorio.NonChiusa, frase())
+        viewModel.mostraTransitorio(Transitorio.ChiusuraNonConfermata)
+        assertEquals(Transitorio.ChiusuraNonConfermata, frase())
 
         avanza(StatoFiducia.DURATA_TRANSITORIO_MS - 1)
-        assertEquals(Transitorio.NonChiusa, frase())
+        assertEquals(Transitorio.ChiusuraNonConfermata, frase())
 
         avanza(1)
         assertEquals(Frase.TieniMeno, frase())
@@ -279,13 +280,13 @@ class RigaStatoViewModelTest {
         assestati()
         assertEquals(Frase.TieniAnnulla, frase())
 
-        // E NON CHIUSA non scatta piu' a risposta arrivata.
+        // E NON CONFERMATA non scatta piu' a risposta arrivata.
         avanza(WearViewModel.DURATA_ATTESA_CHIUSURA_MS)
         assertEquals(Frase.TieniAnnulla, frase())
     }
 
     @Test
-    fun `senza risposta in 10 secondi CHIUSURA diventa NON CHIUSA, poi la riga torna sola`() {
+    fun `senza risposta in 10 secondi CHIUSURA diventa NON CONFERMATA, poi la riga torna sola`() {
         collegati()
         viewModel.applyStateV2(stato())
         viewModel.chiudiPartita()
@@ -294,7 +295,7 @@ class RigaStatoViewModelTest {
         assertEquals(Transitorio.Chiusura, frase())
 
         avanza(1)
-        assertEquals(Transitorio.NonChiusa, frase())
+        assertEquals(Transitorio.ChiusuraNonConfermata, frase())
 
         avanza(StatoFiducia.DURATA_TRANSITORIO_MS)
         assertEquals(Frase.TieniAnnulla, frase())
@@ -311,6 +312,59 @@ class RigaStatoViewModelTest {
         assestati()
 
         assertEquals(Transitorio.Chiusura, frase())
+    }
+
+    @Test
+    fun `un v2 a partita non cominciata che c'era gia' prima del comando non e' la conferma`() {
+        collegati()
+        // Il registro era vuoto al comando: un v2 vuoto non dice niente sulla chiusura.
+        viewModel.applyStateV2(stato(inCorso = false))
+        viewModel.chiudiPartita()
+
+        viewModel.applyStateV2(stato(inCorso = false))
+        assestati()
+        assertEquals(Transitorio.Chiusura, frase())
+
+        avanza(WearViewModel.DURATA_ATTESA_CHIUSURA_MS)
+        assertEquals(Transitorio.ChiusuraNonConfermata, frase())
+    }
+
+    @Test
+    fun `la conferma di chiusura toglie solo CHIUSURA, non un altro messaggio`() {
+        collegati()
+        viewModel.applyStateV2(stato())
+        viewModel.chiudiPartita()
+        // Un tocco senza ricevuta, mentre si aspetta il telefono: il messaggio e' un altro.
+        viewModel.mostraTransitorio(Transitorio.NonConfermato)
+
+        viewModel.applyStateV2(stato(inCorso = false))
+        assestati()
+
+        assertEquals(Transitorio.NonConfermato, frase())
+    }
+
+    private fun invii(
+        path: String,
+        urgente: Boolean,
+    ) = Mockito
+        .mockingDetails(telefono)
+        .invocations
+        .count { it.method.name == "sendData" && it.arguments[0] == path && it.arguments[2] == urgente }
+
+    @Test
+    fun `chiudere dal polso manda il MATCH_STATE urgente, il reset normale no`() {
+        collegati()
+        viewModel.applyStateV2(stato())
+
+        viewModel.resetMatch()
+        assestati()
+        // Il reset di sempre resta non urgente: il protocollo non cambia.
+        assertEquals(1, invii(WearConstants.PATH_MATCH_STATE, urgente = false))
+        assertEquals(0, invii(WearConstants.PATH_MATCH_STATE, urgente = true))
+
+        viewModel.chiudiPartita()
+        assestati()
+        assertEquals(1, invii(WearConstants.PATH_MATCH_STATE, urgente = true))
     }
 
     @Test

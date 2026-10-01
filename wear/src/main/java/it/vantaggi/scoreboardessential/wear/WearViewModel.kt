@@ -160,7 +160,7 @@ class WearViewModel(
         /** Poco sopra la verifica di 2s: oltre, la richiesta al Data Layer si da' per persa. */
         internal const val TIMEOUT_RICHIESTA_MS = StatoFiducia.DURATA_VERIFICA_MS + 500L
 
-        /** Quanto aspetta CHIUSURA... un v2 a partita non cominciata, prima di dire NON CHIUSA. */
+        /** Quanto aspetta CHIUSURA... un v2 a partita non cominciata, prima di dire NON CONFERMATA. */
         internal const val DURATA_ATTESA_CHIUSURA_MS = 10_000L
     }
 
@@ -308,17 +308,29 @@ class WearViewModel(
 
     /** La chiusura dal polso e' in attesa del v2 che dice matchInProgress=false. */
     private var chiusuraInAttesa = false
+
+    /**
+     * Il registro del telefono non era vuoto quando e' partito il comando. Senza questo, il primo
+     * v2 a partita non cominciata (uno qualunque, anche vecchio) passerebbe per la conferma: la
+     * chiusura vale solo se il registro e' passato da non vuoto a vuoto DOPO il comando.
+     */
+    private var registroPienoAlComando = false
     private var chiusuraJob: Job? = null
 
     /**
      * La fine partita scelta dal menu. Usa il comando che esiste gia' ([resetMatch]); qui si
      * aggiunge solo cio' che il polso DICE mentre aspetta: CHIUSURA... finche' il telefono non
      * risponde con un v2 a partita non cominciata ([applyStateV2]), e dopo
-     * [DURATA_ATTESA_CHIUSURA_MS] senza risposta NON CHIUSA, in ambra. Non si riprova da soli: un
+     * [DURATA_ATTESA_CHIUSURA_MS] senza risposta NON CONFERMATA, in ambra. Non dice "non chiusa":
+     * il comando e' partito e non si ritira, puo' ancora arrivare. Non si riprova da soli: un
      * nuovo tentativo senza id idempotente e' proprio cio' che VALIDAZIONE L5 sconsiglia.
+     *
+     * Il MATCH_STATE parte urgente: un DataItem non urgente puo' arrivare al telefono minuti dopo
+     * i 10 secondi, e chiuderebbe la partita a gioco ripreso o quella successiva.
      */
     fun chiudiPartita() {
-        resetMatch()
+        registroPienoAlComando = statoDalTelefono?.matchInProgress == true
+        resetMatch(urgent = true)
         chiusuraInAttesa = true
         mostraTransitorio(Transitorio.Chiusura, DURATA_ATTESA_CHIUSURA_MS)
         chiusuraJob?.cancel()
@@ -326,7 +338,7 @@ class WearViewModel(
             viewModelScope.launch {
                 delay(DURATA_ATTESA_CHIUSURA_MS)
                 chiusuraInAttesa = false
-                mostraTransitorio(Transitorio.NonChiusa)
+                mostraTransitorio(Transitorio.ChiusuraNonConfermata)
             }
     }
 
@@ -503,11 +515,12 @@ class WearViewModel(
             pending.size > 0 && rebuildLocalState() -> Unit
             else -> _scoreState.value = state
         }
-        // Il telefono ha chiuso: CHIUSURA... ha finito, e NON CHIUSA non deve piu' scattare.
-        if (chiusuraInAttesa && !state.matchInProgress) {
+        // Il telefono ha chiuso: CHIUSURA... ha finito, e NON CONFERMATA non deve piu' scattare.
+        // Si toglie solo CHIUSURA...: un altro messaggio (un tocco non confermato) non e' suo.
+        if (chiusuraInAttesa && registroPienoAlComando && !state.matchInProgress) {
             chiusuraInAttesa = false
             chiusuraJob?.cancel()
-            transitorio = null
+            if (transitorio is Transitorio.Chiusura) transitorio = null
         }
         // Lo stato puo' restare identico mentre l'ora cambia: il collector non se ne accorgerebbe.
         ricalcolaFiducia()
@@ -980,7 +993,10 @@ class WearViewModel(
 
     // --- Reset ---
 
-    fun resetMatch(fromRemote: Boolean = false) {
+    fun resetMatch(
+        fromRemote: Boolean = false,
+        urgent: Boolean = false,
+    ) {
         // Update local state without sending data if fromRemote is true
         if (fromRemote) {
             _team1Score.value = 0
@@ -999,6 +1015,7 @@ class WearViewModel(
                 connectionManager.sendData(
                     path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_MATCH_STATE,
                     data = data,
+                    urgent = urgent,
                 )
             }
         }

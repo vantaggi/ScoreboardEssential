@@ -42,7 +42,7 @@ class StringheStatoTest {
             Transitorio.NonConfermato,
             Transitorio.Consegnati(n),
             Transitorio.Chiusura,
-            Transitorio.NonChiusa,
+            Transitorio.ChiusuraNonConfermata,
         )
 
     private fun verificaLunghezze(lingua: String) {

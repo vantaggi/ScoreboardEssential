@@ -643,7 +643,7 @@ internal fun Frase.testo(context: Context): String =
         Transitorio.NonConfermato -> context.getString(R.string.wear_status_not_confirmed)
         is Transitorio.Consegnati -> context.getString(R.string.wear_status_delivered, n)
         Transitorio.Chiusura -> context.getString(R.string.wear_status_closing)
-        Transitorio.NonChiusa -> context.getString(R.string.wear_status_not_closed)
+        Transitorio.ChiusuraNonConfermata -> context.getString(R.string.wear_status_close_unconfirmed)
     }
 
 /** L'ora e' fissa a 24 ore, "18:42": la stessa larghezza in ogni lingua, dentro i 18 caratteri. */
