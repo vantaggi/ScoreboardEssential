@@ -11,7 +11,7 @@
         <item>0xFFFFD93D</item> <!-- Yellow -->
         <item>0xFFA8E6CF</item> <!-- Mint -->
         <item>0xFFFFB6C1</item> <!-- Light Pink -->
-        <item>0xFFC9B1FF</item> <!-- Purple -->
+        <item>0xFF00E5FF</item> <!-- Neon cyan, come neon_cyan: al posto del viola -->
         <item>0xFF87CEEB</item> <!-- Sky Blue -->
     </integer-array>
 </resources>

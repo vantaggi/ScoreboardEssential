@@ -153,6 +153,13 @@ class StoricoDelContornoTest {
         assertEquals("6-0 · 0-1", RigaDeiSet.of(partita(SportRegistry.TENNIS, 1 to 0, registro)))
     }
 
+    // Subito dopo la chiusura di un set il successivo e' 0-0 anche con qualche punto giocato: non e' un set.
+    @Test
+    fun `un set in corso senza game non entra nella riga`() {
+        val registro = punti(1, 24) + punti(2, 2)
+        assertEquals("6-0", RigaDeiSet.of(partita(SportRegistry.TENNIS, 1 to 0, registro)))
+    }
+
     @Test
     fun `dove non c'e' niente da aggiungere la riga dei set manca`() {
         assertNull("calcio", RigaDeiSet.of(partita(SportRegistry.FOOTBALL, 2 to 1, punti(1, 2) + punti(2, 1))))

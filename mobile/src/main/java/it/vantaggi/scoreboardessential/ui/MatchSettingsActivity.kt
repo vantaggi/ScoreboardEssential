@@ -235,6 +235,9 @@ class MatchSettingsActivity : AppCompatActivity() {
         colorPickerView.setColorListener(
             ColorEnvelopeListener { envelope, _ -> anteprima.anteprimaDiSquadra(envelope.color, nome) },
         )
+        // Senza un colore di partenza la ruota, alla prima misura, sceglie il centro e manda il
+        // bianco al listener: anteprima e colore salvato partirebbero da bianco, non dalla squadra.
+        colorPickerView.setInitialColor(attuale)
 
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.choose_team_color, team)) // Format string

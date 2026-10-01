@@ -96,6 +96,19 @@ class GiocatoriEStatisticheDelContornoTest {
         assertEquals("la prova non ha coperto tutti i colori", colori.toSet(), visti)
     }
 
+    // L'elenco aveva #C9B1FF, l'unico viola rimasto in una palette che il viola lo esclude.
+    @Test
+    fun `nessun colore degli avatar e' viola e sono tutti diversi`() {
+        val colori = base.resources.getIntArray(R.array.avatar_colors)
+        val hsv = FloatArray(3)
+        for (colore in colori) {
+            android.graphics.Color.colorToHSV(colore, hsv)
+            // Stessa soglia di TemaDelTelefonoTest: tonalita' fra 250 e 300 gradi con saturazione che si nota.
+            assertTrue("${Integer.toHexString(colore)} e' viola", !(hsv[0] in 250f..300f && hsv[1] > 0.15f))
+        }
+        assertEquals("colori ripetuti", colori.size, colori.toSet().size)
+    }
+
     // I chip dei ruoli: #E0E0E0 su rosa, ciano, giallo e verde faceva 3,17 / 1,17 / 1,07 / 1,01.
     @Test
     fun `i chip dei ruoli si leggono su ogni categoria`() {

@@ -29,7 +29,9 @@ object RigaDeiSet {
         if (motore.log.isEmpty()) return null
         val riassunto = MatchSummarizer.summarize(motore, emptyList())
         // Il set in corso conta come un set in piu': una partita interrotta non perde il 3-2.
-        val righe = riassunto.sets.map { set(it) } + listOfNotNull(riassunto.currentSet?.let { "${it[0]}-${it[1]}" })
+        // Ma solo se ha un game: subito dopo la chiusura di un set e' uno «0-0» mai giocato.
+        val inCorso = riassunto.currentSet?.takeIf { it[0] + it[1] > 0 }
+        val righe = riassunto.sets.map { set(it) } + listOfNotNull(inCorso?.let { "${it[0]}-${it[1]}" })
         return righe.takeIf { it.isNotEmpty() }?.joinToString(SEPARATORE)
     }
 
