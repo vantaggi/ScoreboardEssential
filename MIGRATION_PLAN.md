@@ -200,6 +200,11 @@ T5→T6 · T6→T9 · T7→T11 · **T10→T14** · T12,T13→T14
   `.git/logs/refs/heads/<branch>` (o dal reflog del worktree), controllando l'oggetto con
   `git cat-file -t`, e riscrivendo il file del riferimento con quell'hash. Il lavoro non committato
   nel worktree era integro (controllato cercando byte zero).
+- **`./gradlew --stop` con piu' build in parallelo (1 ottobre 2026):** ferma tutti i daemon della
+  stessa versione di Gradle, anche quelli delle build di altri worktree; la build del coordinatore
+  muore con «Gradle build daemon has been stopped: stop command received». Non e' un test fallito:
+  si rilancia. Negli agenti in parallelo, per un jar bloccato, meglio chiudere il solo processo che
+  lo tiene, o rilanciare con `--no-daemon`.
 - **Esiste solo `11.json`**: l'export è stato acceso a schema già alla v11, le
   migrazioni storiche non sono validabili a posteriori. Da v12 in poi sì.
 
@@ -2027,7 +2032,7 @@ Il 30 settembre il proprietario ha aggiunto alla coda i passi 10 e 11 del design
 
 | Passo | Cosa | Stato |
 |---|---|---|
-| 4 | StatoFiducia e riga di stato | implementazione fatta (Sonnet): `a2bab6b`..`9d1a5a4` (worktree `wf_922f258f-105-1`). Funzione pura a 8 livelli, riga di stato nel gestureHint al posto del pallino, verifica del collegamento di 2s all'avvio, NON CONSEGNATI dopo 10s da collegati, ora dell'ultimo stato vivo salvata, refresh ogni 15s a partita in corso, frasi entro 18 caratteri in it ed en. Revisione (Opus): 1 media (ogni refreshConnection riarma la verifica di 2s, quindi da scollegati ogni 15s e a ogni risveglio SCOLLEGATO o IN CODA lasciano il posto per un attimo al suggerimento, e TalkBack lo legge), 4 basse (ora dell'ultimo stato vivo non aggiornata ad app chiusa, perche' la scrive il ViewModel e non il servizio; refresh sovrapposti senza timeout; ciclo dei 15s legato a STARTED e non a RESUMED; larghezza delle frasi sul tondo controllata solo contando i caratteri). Correzione da fare |
+| 4 | StatoFiducia e riga di stato | implementazione fatta (Sonnet): `a2bab6b`..`9d1a5a4` (worktree `wf_922f258f-105-1`). Funzione pura a 8 livelli, riga di stato nel gestureHint al posto del pallino, verifica del collegamento di 2s all'avvio, NON CONSEGNATI dopo 10s da collegati, ora dell'ultimo stato vivo salvata, refresh ogni 15s a partita in corso, frasi entro 18 caratteri in it ed en. Revisione (Opus): 1 media (ogni refreshConnection riarma la verifica di 2s, quindi da scollegati ogni 15s e a ogni risveglio SCOLLEGATO o IN CODA lasciano il posto per un attimo al suggerimento, e TalkBack lo legge), 4 basse (ora dell'ultimo stato vivo non aggiornata ad app chiusa, perche' la scrive il ViewModel e non il servizio; refresh sovrapposti senza timeout; ciclo dei 15s legato a STARTED e non a RESUMED; larghezza delle frasi sul tondo controllata solo contando i caratteri). Correzione (Sonnet, ripartita dal WIP `08dfcc5`) `70750a8`, `f739832`: verifica dei 2s solo a collegamento mai determinato, ora dello stato vivo scritta dal servizio, una richiesta alla volta con timeout, ciclo dei 15s a RESUMED, test di larghezza sul tondo a 10sp; 6 falsificazioni. Unito (`a91a22e`): suite verde (549 JVM, wear 88), strumentati 32 su 32 |
 | 5 | Menu partita al posto di SPORT e AZZERA | da fare |
 | 6 | Quadrante a fasce | da fare |
 | 7 | Aptica per lato e ricevuta del tocco | da fare |
