@@ -223,7 +223,7 @@ Orizzontale (values-land/dimens.xml, stesso layout): barra 48, nomi 48, dettagli
 
 - **Costo:** grande
 - **File:** `mobile/src/main/res/layout/activity_match_settings.xml`, `mobile/src/main/res/layout/dialog_color_picker.xml`, `mobile/src/main/res/layout/match_item.xml`, `mobile/src/main/java/it/vantaggi/scoreboardessential/MatchHistoryAdapter.kt`, `mobile/src/main/res/layout/item_player_stat.xml`, `mobile/src/main/java/it/vantaggi/scoreboardessential/ui/statistics/StatisticsAdapter.kt`, `mobile/src/main/res/layout/item_player_management.xml`, `mobile/src/main/java/it/vantaggi/scoreboardessential/PlayersManagementAdapter.kt`, `mobile/src/main/java/it/vantaggi/scoreboardessential/utils/RoleChipExtensions.kt`, `mobile/src/main/res/layout/pdf_match_report.xml`, `mobile/src/main/java/it/vantaggi/scoreboardessential/utils/MatchReportUtils.kt`, `mobile/src/main/res/values/strings.xml`, `mobile/src/main/res/values-it/strings.xml`
-- **Verifica:** Foto prima e dopo per ogni schermata, in verticale. PDF di un padel e di un calcio aperti sul telefono: nel padel niente TABELLINO. Una squadra #1A237E leggibile ovunque. MatchReportUtilsBenchmark ancora verde. lint senza nuove voci.
+- **Verifica:** Foto prima e dopo per ogni schermata, in verticale. PDF di un padel e di un calcio aperti sul telefono: nel padel niente TABELLINO. Una squadra #1A237E leggibile ovunque. MatchReportUtilsTest ancora verde (il benchmark e' stato tolto con L12). lint senza nuove voci.
 
 #### 12. ANNULLA con un tocco, senza dialogo, nel padel e nel tennis: doppio tick e «ANNULLATO: PUNTO ROSSI» per 3s
 

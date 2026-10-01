@@ -2042,8 +2042,8 @@ Il 30 settembre il proprietario ha aggiunto alla coda i passi 10 e 11 del design
 
 | Voce | Cosa | Stato |
 |---|---|---|
-| `wf9/test-mobile` | tolti tre benchmark e un esempio che non asserivano niente; PerformanceTest confronta lo stato lasciato nel database; SimplifiedDataLayerListenerServiceTest verifica il broadcast 10/5; nuovo ProtocolloV2DelTelefonoTest (seq crescente, ripetuta, vecchia, due nodi, memoria alla ricreazione, riconsegne valgono una volta); MatchTimerService con scope e orologio iniettabili e test a tempo virtuale; LavoroResiduoDelLooper contro le coroutine lasciate in coda da altri test | implementazione fatta (Sonnet), `44f5c39`..`a62bc21`, worktree `wf_29c3773f-131-1`; 11 falsificazioni. Revisione da fare |
-| `wf9/test-wear-shared` | OfflineScoreTest con primario sentinella «X»; test della messa in coda sul disco; golden test che raccoglie per riflessione tutte le 76 costanti di WearConstants (congelati anche MSG_SPORT_INTENT, MSG_INTENT_BATCH, MSG_BATCH_ACK e i tre parametri di ritentativo) | implementazione fatta (Sonnet), `2cf47ea`..`bf31288`, worktree `wf_29c3773f-131-2`; falsificato. Revisione da fare |
+| `wf9/test-mobile` | tolti tre benchmark e un esempio che non asserivano niente; PerformanceTest confronta lo stato lasciato nel database; SimplifiedDataLayerListenerServiceTest verifica il broadcast 10/5; nuovo ProtocolloV2DelTelefonoTest (seq crescente, ripetuta, vecchia, due nodi, memoria alla ricreazione, riconsegne valgono una volta); MatchTimerService con scope e orologio iniettabili e test a tempo virtuale; LavoroResiduoDelLooper contro le coroutine lasciate in coda da altri test | implementazione fatta (Sonnet), `44f5c39`..`a62bc21`, worktree `wf_29c3773f-131-1`; 11 falsificazioni. Revisione (Opus): la causa radice delle coroutine in coda e' che i test non chiudevano il ViewModel. Correzione `dfb73a4`, `c2fdfa2`: viewModelScope chiuso prima del database e di resetMain, tolta LavoroResiduoDelLooper (scartava eccezioni), guardia seq <= 0 dichiarata ridondante, PlayerRepositoryPerformanceTest senza misure e con asserzione. Unito |
+| `wf9/test-wear-shared` | OfflineScoreTest con primario sentinella «X»; test della messa in coda sul disco; golden test che raccoglie per riflessione tutte le 76 costanti di WearConstants (congelati anche MSG_SPORT_INTENT, MSG_INTENT_BATCH, MSG_BATCH_ACK e i tre parametri di ritentativo) | implementazione fatta (Sonnet), `2cf47ea`..`bf31288`, worktree `wf_29c3773f-131-2`; falsificato. Revisione (Opus) senza valori congelati cambiati. Correzione `9dfad25`: i tre parametri di ritentativo fuori dal golden (NON_DI_FILO), campi di tipo estraneo segnalati per nome, orario del tocco distinto dalla consegna. Unito |
 
 **Resta di L12:** OptimizedWearDataSyncTest, che sta in :shared (dispatcher da iniettare). **Trovato
 in piu':** in MainViewModelTest i ViewModel lasciano coroutine in coda sul looper che scrivono su un
@@ -2055,8 +2055,8 @@ nel golden test anche se non viaggiano sul filo.
 
 | Passo | Cosa | Stato |
 |---|---|---|
-| 10 | Contorno di sistema: ruoli M3 completi (nessun viola), materialAlertDialogTheme globale, squadre gialla e verde da ColorRepository | implementazione fatta (Sonnet): `82e0e1e`, `d3964c7` su `wf10/contorno` (worktree `wf_9697552a-921-1`); 7 test su 8 falsificati. Scelta dell'agente da confermare: il terziario e i ruoli Fixed seguono il grigio chiaro del testo. Revisione da fare |
-| 11 | Schermate di contorno: anteprima del colore e riga delle regole nelle impostazioni; cronologia con Team.color, vincitore e sconfitto, sport, durata e set; podio rosa; TeamInk su avatar e chip; bande di squadra nel PDF | implementazione fatta (Sonnet): `8c059a2`, `d2792f6`, `dd98239` su `wf10/schermate`, che parte da `wf10/contorno` (worktree `wf_9697552a-921-2`). Revisione da fare |
+| 10 | Contorno di sistema: ruoli M3 completi (nessun viola), materialAlertDialogTheme globale, squadre gialla e verde da ColorRepository | implementazione fatta (Sonnet): `82e0e1e`, `d3964c7` su `wf10/contorno` (worktree `wf_9697552a-921-1`); 7 test su 8 falsificati. Scelta dell'agente da confermare: il terziario e i ruoli Fixed seguono il grigio chiaro del testo. Unito insieme all'11 |
+| 11 | Schermate di contorno: anteprima del colore e riga delle regole nelle impostazioni; cronologia con Team.color, vincitore e sconfitto, sport, durata e set; podio rosa; TeamInk su avatar e chip; bande di squadra nel PDF | implementazione fatta (Sonnet): `8c059a2`, `d2792f6`, `dd98239` su `wf10/schermate`, che parte da `wf10/contorno` (worktree `wf_9697552a-921-2`). Revisione (Opus): 1 media (il selettore del colore partiva dal bianco). Correzione `b5b89a2`: setInitialColor, set in corso senza game escluso dalla riga, viola #C9B1FF tolto dagli avatar (arancio e lime restano). Unito |
 
 ## RIPRESA - fermo il 30 settembre 2026 alle 22:10 (richiesta del proprietario)
 
@@ -2079,3 +2079,10 @@ Ripresa del 1 ottobre alle 01:05, fermata dal proprietario alle 01:09: le tre re
 L12 wear e shared, telefono 10-11) erano appena partite e sono da rifare. La correzione del passo 4
 dell'orologio aveva cominciato: il suo lavoro, non verificato, e' committato come WIP in cima a
 `wf8/fiducia` (e copiato su origin); il prossimo agente di correzione riparte da li'.
+
+**L12 e passi 10-11 del telefono chiusi** (1 ottobre 2026). Unione con un solo conflitto in
+MainViewModelTest, risolto tenendo entrambe le parti (`42e4c43`). Suite verde, **588 test JVM
+distinti** (core 138, mobile 330, shared 31, wear 89), strumentati 32 su 32. Decisioni prese
+seguendo i revisori: i parametri di ritentativo non si congelano; il viola degli avatar si toglie.
+Resta di L12: OptimizedWearDataSyncTest in :shared. Resta aperto: la cache della riga dei set nella
+cronologia (rigioca il registro di ogni partita a ogni emissione, fuori dal main thread).
