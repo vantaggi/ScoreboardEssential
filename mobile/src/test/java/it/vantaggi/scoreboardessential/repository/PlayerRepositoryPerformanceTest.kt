@@ -55,7 +55,8 @@ class PlayerRepositoryPerformanceTest {
                 repository.insertPlayerWithRoles(player.copy(playerName = "Player $i", playerId = 0), roleIds)
             }
 
-            assertEquals("i giocatori inseriti", 100, db.playerDao().getAllPlayers().first().size)
+            val inseriti = db.playerDao().getAllPlayers().first()
+            assertEquals("i giocatori inseriti", 100, inseriti.size)
 
             // Verification
             // Since we are running in a transaction/test, we assume IDs start at 1 if fresh DB.
