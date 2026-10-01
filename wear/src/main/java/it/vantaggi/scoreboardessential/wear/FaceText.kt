@@ -19,7 +19,7 @@ internal object FaceText {
      * Nel motore e' in un companion privato e `:core` non lo espone: l'orologio ne tiene una copia,
      * e FaceTextTest la fissa facendo girare il motore vero. Se il motore lo cambia, il test diventa
      * rosso invece di far comparire a schermo una riga di set intera al posto dei game.
-     * Middot in escape, come nel motore.
+     * Il separatore e' un middot fra due spazi.
      */
     const val SET_SEPARATOR = " · "
 
