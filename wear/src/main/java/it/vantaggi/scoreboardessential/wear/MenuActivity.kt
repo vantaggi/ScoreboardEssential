@@ -147,8 +147,11 @@ class MenuActivity : ComponentActivity() {
         // sottotitolo, e un Toast sul tondo era proprio cio' che il design toglie.
         if (!voce.attiva) return
         when (voce.id) {
-            IdVoce.SPORT -> chiudiConAzione(AZIONE_SPORT)
-            IdVoce.FINE_PARTITA ->
+            IdVoce.SPORT -> {
+                chiudiConAzione(AZIONE_SPORT)
+            }
+
+            IdVoce.FINE_PARTITA -> {
                 when (conferma.tocca(orologio())) {
                     ConfermaSulPosto.Esito.ARMATA -> {
                         handler.removeCallbacks(rientro)
@@ -156,10 +159,15 @@ class MenuActivity : ComponentActivity() {
                         disegna()
                     }
 
-                    ConfermaSulPosto.Esito.IGNORATO -> Unit
+                    ConfermaSulPosto.Esito.IGNORATO -> {
+                        Unit
+                    }
 
-                    ConfermaSulPosto.Esito.CONFERMATA -> chiudiConAzione(AZIONE_FINE)
+                    ConfermaSulPosto.Esito.CONFERMATA -> {
+                        chiudiConAzione(AZIONE_FINE)
+                    }
                 }
+            }
         }
     }
 
@@ -220,9 +228,13 @@ class MenuActivity : ComponentActivity() {
         armata: Boolean,
     ): String =
         when (voce.id) {
-            IdVoce.SPORT -> getString(R.string.wear_sport)
-            IdVoce.FINE_PARTITA ->
+            IdVoce.SPORT -> {
+                getString(R.string.wear_sport)
+            }
+
+            IdVoce.FINE_PARTITA -> {
                 if (armata) getString(R.string.wear_menu_end_confirm, input.risultato) else getString(R.string.wear_menu_end)
+            }
         }
 }
 
@@ -232,11 +244,27 @@ class MenuActivity : ComponentActivity() {
  */
 internal fun SottotitoloVoce.testo(context: Context): String =
     when (this) {
-        is SottotitoloVoce.SportInUso -> sport
-        SottotitoloVoce.PartitaInCorso -> context.getString(R.string.wear_sport_locked)
-        is SottotitoloVoce.PrimaConsegna ->
+        is SottotitoloVoce.SportInUso -> {
+            sport
+        }
+
+        SottotitoloVoce.PartitaInCorso -> {
+            context.getString(R.string.wear_sport_locked)
+        }
+
+        is SottotitoloVoce.PrimaConsegna -> {
             context.resources.getQuantityString(R.plurals.wear_menu_deliver_first, punti, punti)
-        SottotitoloVoce.ServeIlTelefono -> context.getString(R.string.wear_menu_phone_needed)
-        SottotitoloVoce.ChiudiDalTelefono -> context.getString(R.string.wear_menu_football_on_phone)
-        is SottotitoloVoce.SalvaRisultato -> context.getString(R.string.wear_menu_end_saves, risultato)
+        }
+
+        SottotitoloVoce.ServeIlTelefono -> {
+            context.getString(R.string.wear_menu_phone_needed)
+        }
+
+        SottotitoloVoce.ChiudiDalTelefono -> {
+            context.getString(R.string.wear_menu_football_on_phone)
+        }
+
+        is SottotitoloVoce.SalvaRisultato -> {
+            context.getString(R.string.wear_menu_end_saves, risultato)
+        }
     }
