@@ -6,6 +6,7 @@ import android.os.Vibrator
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,8 @@ import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.intrinsics.startCoroutineUninterceptedOrReturn
 
 /**
  * Gli input della riga di stato, dal ViewModel: il tempo si sposta sullo scheduler di test, e
@@ -227,6 +230,9 @@ class RigaStatoViewModelTest {
         viewModel.applyStateV2(stato())
         val vivo = inizio + 5_000
 
+        // L'ora sul disco la scrive WearDataLayerService, non il ViewModel: qui ne fa le veci.
+        LastKnownMatch(RuntimeEnvironment.getApplication()).segnaStatoVivo(vivo)
+
         // Orologio riavviato col telefono in borsa: un ViewModel nuovo, la stessa memoria su disco.
         avanza(60_000)
         collegamento.value = ConnectionState.Disconnected
@@ -300,6 +306,75 @@ class RigaStatoViewModelTest {
         viewModel.refreshConnectionSePartitaInCorso()
         assestati()
         verificheRichieste(1)
+    }
+
+    /**
+     * Il Data Layer che non risponde finche' il test non lo dice: la richiesta resta sospesa, ma
+     * annullabile, come quella vera (che e' sospesa sul Task di GMS).
+     */
+    private fun dataLayerSospeso(): CompletableDeferred<Unit> {
+        val risposta = CompletableDeferred<Unit>()
+        runBlocking {
+            Mockito
+                .doAnswer { invocazione ->
+                    @Suppress("UNCHECKED_CAST")
+                    val continuazione = invocazione.rawArguments.last() as Continuation<Unit>
+                    val attesa: suspend () -> Unit = { risposta.await() }
+                    attesa.startCoroutineUninterceptedOrReturn(continuazione)
+                }.`when`(telefono)
+                .refreshConnection()
+        }
+        return risposta
+    }
+
+    @Test
+    fun `a collegamento gia' noto il rinfresco non fa sparire SCOLLEGATO ne' IN CODA`() {
+        // Il primo rinfresco risponde (il finto ritorna all'istante): da qui il collegamento e' noto.
+        viewModel.refreshConnection()
+        assestati()
+        assertEquals(Frase.Scollegato(null), frase())
+
+        dataLayerSospeso()
+        viewModel.refreshConnection()
+        assestati()
+        // La richiesta e' in volo: la riga non cede il posto al suggerimento del gesto.
+        assertEquals(Frase.Scollegato(null), frase())
+
+        mettiInCoda(1)
+        assertEquals(Frase.InCoda(1), frase())
+
+        avanza(StatoFiducia.DURATA_VERIFICA_MS - 1)
+        assertEquals(Frase.InCoda(1), frase())
+    }
+
+    @Test
+    fun `una richiesta alla volta, e dopo il timeout ne parte un'altra`() {
+        dataLayerSospeso()
+
+        viewModel.refreshConnection()
+        viewModel.refreshConnection()
+        assestati()
+        // La seconda non parte: la prima e' ancora in volo.
+        verificheRichieste(1)
+
+        // Il Data Layer non risponde mai: la richiesta si da' per persa poco sopra i 2s.
+        avanza(WearViewModel.TIMEOUT_RICHIESTA_MS)
+        viewModel.refreshConnection()
+        assestati()
+        verificheRichieste(2)
+    }
+
+    @Test
+    fun `una richiesta scaduta chiude la verifica, e il giro dei 15 secondi non nasconde piu' nulla`() {
+        dataLayerSospeso()
+        viewModel.refreshConnection()
+        avanza(WearViewModel.TIMEOUT_RICHIESTA_MS)
+        assertEquals(Frase.Scollegato(null), frase())
+
+        // Il collegamento e' ormai deciso, anche se come "scollegato": il rinfresco non lo nasconde.
+        viewModel.refreshConnection()
+        assestati()
+        assertEquals(Frase.Scollegato(null), frase())
     }
 
     private fun verificheRichieste(quante: Int) {

@@ -578,6 +578,20 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        // Il listener della capability non vede il Bluetooth che cade: con la partita in corso il
+        // collegamento si richiede da soli ogni 15 secondi. Legato a RESUMED e non a STARTED: a
+        // schermo spento, o col quadrante di sistema in primo piano, l'activity puo' restare STARTED
+        // ma nessuno guarda la riga, e le richieste sarebbero solo batteria. Fuori da RESUMED il
+        // ciclo si ferma, e riparte dal primo onResume (che gia' chiede una volta).
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                while (true) {
+                    delay(INTERVALLO_VERIFICA_MS)
+                    viewModel.refreshConnectionSePartitaInCorso()
+                }
+            }
+        }
     }
 }
 

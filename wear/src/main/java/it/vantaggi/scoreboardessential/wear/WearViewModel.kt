@@ -244,9 +244,10 @@ class WearViewModel(
     val statoFiducia = _statoFiducia.asStateFlow()
 
     /**
-     * Il collegamento e' stato determinato almeno una volta, cioe' ha risposto almeno una
-     * richiesta. Si accende una volta sola e non si spegne piu': e' quello che distingue "non so
-     * ancora com'e'" (l'avvio) da "lo so, e lo rinfresco".
+     * Il collegamento e' stato determinato almeno una volta: una richiesta e' finita, con la
+     * risposta o scaduta (a quel punto la riga dice quello che sa, e non c'e' piu' un "non so ancora"
+     * da proteggere). Si accende una volta sola e non si spegne piu': e' quello che distingue
+     * l'avvio da un rinfresco.
      */
     private var collegamentoNoto = false
 
@@ -273,8 +274,8 @@ class WearViewModel(
         }
         refreshJob =
             viewModelScope.launch {
-                val risposta = withTimeoutOrNull(TIMEOUT_RICHIESTA_MS) { connectionManager.refreshConnection() }
-                if (risposta != null) collegamentoNoto = true
+                withTimeoutOrNull(TIMEOUT_RICHIESTA_MS) { connectionManager.refreshConnection() }
+                collegamentoNoto = true
                 verificaFinoA = 0L
                 ricalcolaFiducia()
             }
