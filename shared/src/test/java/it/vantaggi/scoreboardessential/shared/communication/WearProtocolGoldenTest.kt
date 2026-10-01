@@ -126,12 +126,13 @@ class WearProtocolGoldenTest {
     }
 
     /**
-     * Nessun path v2 deve essere prefisso di un path v1 o viceversa: il filtro nel manifest usa
-     * `pathPrefix="/scoreboard"` e il dispatch e' su uguaglianza, ma una sovrapposizione renderebbe
-     * ambiguo qualunque futuro passaggio a un dispatch per prefisso.
+     * Nessun path deve stare SOTTO un altro, per segmenti: `a` e `a/b` sono in conflitto, `a` e
+     * `ab` no. Il dispatch e' su uguaglianza, ma una sovrapposizione renderebbe ambiguo qualunque
+     * futuro passaggio a un dispatch per prefisso di segmento. (Il `pathPrefix="/scoreboard"` del
+     * manifest e' un prefisso grezzo e per costruzione contiene tutti i path: qui non c'entra.)
      */
     @Test
-    fun `nessun path e' prefisso di un altro`() {
+    fun `nessun path sta sotto un altro per segmenti`() {
         // Per riflessione, non a mano: la lista scritta a mano aveva lasciato fuori MSG_SPORT_INTENT,
         // MSG_INTENT_BATCH e MSG_BATCH_ACK, e ogni path futuro avrebbe fatto lo stesso.
         val paths = costantiDelProtocollo().values.filterIsInstance<String>().filter { it.startsWith("/") }
@@ -162,13 +163,16 @@ class WearProtocolGoldenTest {
     fun `ogni costante di WearConstants e' congelata nel golden`() {
         val trovate = costantiDelProtocollo()
 
-        val nonCongelate = trovate.keys - VALORI_CONGELATI.keys
+        val nonClassificate = trovate.keys - VALORI_CONGELATI.keys - NON_DI_FILO
         assertTrue(
-            "costanti senza riga nel golden (aggiungila con il suo valore): $nonCongelate",
-            nonCongelate.isEmpty(),
+            "costanti senza riga nel golden (aggiungila con il suo valore, o in NON_DI_FILO se non viaggia sul filo): " +
+                "$nonClassificate",
+            nonClassificate.isEmpty(),
         )
-        val sparite = VALORI_CONGELATI.keys - trovate.keys
+        val sparite = (VALORI_CONGELATI.keys + NON_DI_FILO) - trovate.keys
         assertTrue("costanti congelate che non esistono piu' (rinominate o tolte?): $sparite", sparite.isEmpty())
+        val doppie = VALORI_CONGELATI.keys.intersect(NON_DI_FILO)
+        assertTrue("costanti sia congelate sia non di filo: $doppie", doppie.isEmpty())
 
         VALORI_CONGELATI.forEach { (nome, atteso) ->
             assertEquals("valore cambiato per $nome", atteso, trovate.getValue(nome))
@@ -188,15 +192,27 @@ class WearProtocolGoldenTest {
     }
 
     private companion object {
-        /** Le `const val` dell'oggetto: campi statici finali, stringhe o numeri. */
-        fun costantiDelProtocollo(): Map<String, Any> =
-            WearConstants::class.java.declaredFields
-                .filter { Modifier.isStatic(it.modifiers) && Modifier.isFinal(it.modifiers) }
-                .filter { !it.isSynthetic && (it.type == String::class.java || it.type.isPrimitive) }
-                .associate { campo ->
-                    campo.isAccessible = true
-                    campo.name to checkNotNull(campo.get(null))
-                }
+        /**
+         * Le `const val` dell'oggetto: campi statici finali, stringhe o numeri. Un campo di altro
+         * tipo (un `val` non const, una lista) non si salta in silenzio: farebbe uscire una
+         * costante dal golden senza che nulla diventi rosso, quindi fallisce con il suo nome.
+         */
+        fun costantiDelProtocollo(): Map<String, Any> {
+            val campi =
+                WearConstants::class.java.declaredFields
+                    .filter { Modifier.isStatic(it.modifiers) && Modifier.isFinal(it.modifiers) }
+                    .filter { !it.isSynthetic && it.name != "INSTANCE" }
+            val estranei = campi.filter { it.type != String::class.java && !it.type.isPrimitive }
+            assertTrue(
+                "campi statici di WearConstants che non sono String ne' primitivi (il golden non li sa congelare): " +
+                    estranei.map { "${it.name}: ${it.type.simpleName}" },
+                estranei.isEmpty(),
+            )
+            return campi.associate { campo ->
+                campo.isAccessible = true
+                campo.name to checkNotNull(campo.get(null))
+            }
+        }
 
         val VALORI_CONGELATI: Map<String, Any> =
             mapOf(
@@ -276,11 +292,19 @@ class WearProtocolGoldenTest {
                 "KEY_MATCH_ACTIVE" to "match_active",
                 "KEY_TEST_DATA" to "test_data",
                 "EXTRA_TEAM_NUMBER" to "team_number",
-                // Parametri di ritentativo: non viaggiano sul filo, ma stanno nello stesso oggetto
-                // e una costante fuori dal golden e' esattamente il buco che questo test chiude.
-                "MAX_RETRY_ATTEMPTS" to 3,
-                "RETRY_DELAY_MS" to 200L,
-                "MESSAGE_TIMEOUT_MS" to 5000L,
+            )
+
+        /**
+         * Costanti di [WearConstants] che NON viaggiano sul filo: parametri di ritentativo locali,
+         * ognuno libero di cambiare in una release senza rompere un orologio gia' installato. Per
+         * questo non hanno un valore congelato, solo il nome: ogni costante nuova va comunque
+         * classificata, o qui o in [VALORI_CONGELATI].
+         */
+        val NON_DI_FILO: Set<String> =
+            setOf(
+                "MAX_RETRY_ATTEMPTS",
+                "RETRY_DELAY_MS",
+                "MESSAGE_TIMEOUT_MS",
             )
     }
 }

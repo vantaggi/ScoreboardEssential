@@ -272,16 +272,23 @@ class OfflineScoreTest {
         viewModel.applyStateV2(statoDalTelefono(registro = ""))
 
         viewModel.incrementScore(2)
+        val dopoIlPrimoTocco = System.currentTimeMillis()
+        // Il tempo che l'invio fallito impiega a tornare: se l'orario fosse preso alla consegna
+        // e non al tocco, sarebbe per forza posteriore a dopoIlPrimoTocco.
+        Thread.sleep(5)
         aspettaChe { viewModel.pendingCount.value == 1 }
         viewModel.decrementScore(1)
+        val dopoIlSecondoTocco = System.currentTimeMillis()
+        Thread.sleep(5)
         aspettaChe { viewModel.pendingCount.value == 2 }
 
         // Sul disco, non solo nel contatore: e' da li' che riparte un orologio riavviato.
         val voci = coda.all()
         assertEquals(listOf(WearConstants.INTENT_POINT, WearConstants.INTENT_UNDO), voci.map { it.kind })
         assertEquals(listOf(2, 1), voci.map { it.side })
-        // L'orario e' quello del tocco, non della consegna: mai prima dell'inizio del test.
-        assertTrue(voci.all { it.atMillis >= prima })
+        // L'orario e' quello del tocco, non della consegna: compreso fra prima e subito dopo il tocco.
+        assertTrue(voci[0].atMillis in prima..dopoIlPrimoTocco)
+        assertTrue(voci[1].atMillis in prima..dopoIlSecondoTocco)
         assertTrue("l'ordine del tocco si conserva", voci[0].atMillis <= voci[1].atMillis)
     }
 }
