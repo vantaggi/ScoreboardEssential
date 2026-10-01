@@ -203,7 +203,12 @@ class QuadranteFasceTest {
     @Config(qualifiers = "w192dp-h192dp-round-notnight")
     fun `tondo da 192dp, cifre a 58sp, lati da 78x72dp, strisce centrate e bersagli separati`() {
         val q = apri()
-        assertTrue("la configurazione non e' tonda", RuntimeEnvironment.getApplication().resources.configuration.isScreenRound)
+        assertTrue(
+            "la configurazione non e' tonda",
+            RuntimeEnvironment
+                .getApplication()
+                .resources.configuration.isScreenRound,
+        )
         q.applica(stato("AV", "40", giochi = "6-4 · 4-3", periodo = "Set 2"))
 
         verificaCifre(q, 58f)
@@ -273,7 +278,11 @@ class QuadranteFasceTest {
         val q = apri()
         q.applica(stato("0", "15", giochi = "6-4 · 4-3", periodo = "Set 2"))
 
-        assertEquals("4 – 3", q.binding.matchTimer.text.toString())
+        assertEquals(
+            "4 – 3",
+            q.binding.matchTimer.text
+                .toString(),
+        )
         assertEquals(0xFFFFFFFF.toInt(), q.binding.matchTimer.currentTextColor)
     }
 
@@ -304,7 +313,11 @@ class QuadranteFasceTest {
         q.applica(stato("AV", "40", giochi = "6-4", periodo = "Set 2", servizio = 2))
         val b = q.binding
 
-        assertFalse(RuntimeEnvironment.getApplication().resources.configuration.isScreenRound)
+        assertFalse(
+            RuntimeEnvironment
+                .getApplication()
+                .resources.configuration.isScreenRound,
+        )
         verificaCifre(q, 58f)
         verificaLati(q)
         verificaStrisce(q)
@@ -328,5 +341,4 @@ class QuadranteFasceTest {
         verificaStrisce(q)
         assertEquals(0, b.gestureHint.left)
     }
-
 }
