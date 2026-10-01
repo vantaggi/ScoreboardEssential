@@ -6,9 +6,12 @@ import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -19,10 +22,7 @@ import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.ArgumentMatchers.anyMap
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
-import org.mockito.Mockito.atLeast
-import org.mockito.Mockito.timeout
 import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
@@ -33,10 +33,17 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowPowerManager
 
+/**
+ * Il service gira qui su un dispatcher di test e su un orologio che legge il tempo virtuale:
+ * `advanceTimeBy` fa passare i secondi senza aspettarli. Prima i test dormivano davvero
+ * (`Thread.sleep`) e contavano gli invii di una coroutine su Dispatchers.Default, che nessuno
+ * governava.
+ */
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
 class MatchTimerServiceTest {
     private lateinit var service: MatchTimerService
+    private lateinit var scheduler: TestCoroutineScheduler
 
     @Mock
     private lateinit var mockConnectionManager: OptimizedWearDataSync
@@ -52,59 +59,65 @@ class MatchTimerServiceTest {
         val connectionManagerField = MatchTimerService::class.java.getDeclaredField("connectionManager")
         connectionManagerField.isAccessible = true
         connectionManagerField.set(service, mockConnectionManager)
+
+        // Tempo virtuale: il service legge l'ora da qui e le sue coroutine girano sullo stesso scheduler.
+        scheduler = TestCoroutineScheduler()
+        service.clock = { ORA_DI_PARTENZA + scheduler.currentTime }
+        service.scope = CoroutineScope(StandardTestDispatcher(scheduler) + SupervisorJob())
+    }
+
+    @After
+    fun tearDown() {
+        service.scope.cancel()
+    }
+
+    /** Fa passare il tempo virtuale ed esegue tutto cio' che scade entro l'istante finale compreso. */
+    private fun passa(millisecondi: Long) {
+        scheduler.advanceTimeBy(millisecondi)
+        scheduler.runCurrent()
     }
 
     @Test
-    fun `startTimer sends data only once (Optimized)`() =
-        runTest {
-            // Start the timer
-            service.startTimer()
+    fun `startTimer sends data only once (Optimized)`() {
+        service.startTimer()
 
-            // Advance time to allow the loop to run a few times
-            Thread.sleep(2500)
+        // Il sincronismo periodico e' a 60 secondi: in due secondi e mezzo parte solo l'invio di avvio.
+        passa(2_500)
 
-            // Verify sendData is called EXACTLY ONCE
-            verify(mockConnectionManager, times(1)).sendData(
+        verifyBlocking(mockConnectionManager, times(1)) {
+            sendData(
                 path = anyString(),
                 data = anyMap(),
                 urgent = anyBoolean(),
             )
-
-            service.stopTimer()
         }
 
+        service.stopTimer()
+    }
+
     @Test
-    fun `startTimer sends data periodically (with shortened interval)`() =
-        runTest {
-            // Set short interval for testing
-            val originalInterval = MatchTimerService.SYNC_INTERVAL
-            MatchTimerService.SYNC_INTERVAL = 1000L
+    fun `startTimer sends data periodically (with shortened interval)`() {
+        // Set short interval for testing
+        val originalInterval = MatchTimerService.SYNC_INTERVAL
+        MatchTimerService.SYNC_INTERVAL = 1000L
 
-            try {
-                service.startTimer()
+        try {
+            service.startTimer()
 
-                // Wait enough for at least 1 periodic sync (Start + >1s)
-                Thread.sleep(2500)
+            // Avvio a 0, poi un invio a ogni secondo che passa: 1000 e 2000.
+            passa(2_500)
 
-                // Verify: Should be called multiple times (Start + Periodic)
-                verify(mockConnectionManager, atLeast(2)).sendData(
+            verifyBlocking(mockConnectionManager, times(3)) {
+                sendData(
                     path = anyString(),
                     data = anyMap(),
                     urgent = anyBoolean(),
                 )
-            } finally {
-                MatchTimerService.SYNC_INTERVAL = originalInterval
-                service.stopTimer()
             }
+        } finally {
+            MatchTimerService.SYNC_INTERVAL = originalInterval
+            service.stopTimer()
         }
-
-    /** Aspetta una condizione scritta da un thread del service, entro un limite. */
-    private fun aspetta(
-        limiteMs: Long = 3_000,
-        condizione: () -> Boolean,
-    ) {
-        val fine = System.currentTimeMillis() + limiteMs
-        while (!condizione() && System.currentTimeMillis() < fine) Thread.sleep(20)
     }
 
     private fun prefs() = service.getSharedPreferences("MatchTimerPrefs", Context.MODE_PRIVATE)
@@ -119,8 +132,11 @@ class MatchTimerServiceTest {
         val wakeLock = ShadowPowerManager.getLatestWakeLock()
         assertTrue("il conto deve tenere il wake lock", wakeLock.isHeld)
 
-        // Rilascio e salvataggio avvengono sul thread del service, uno dopo l'altro: si aspettano tutti e due.
-        aspetta { !wakeLock.isHeld && !prefs().getBoolean("keeper_running", true) }
+        // Prima del controllo successivo (un secondo) il conto e' ancora in corso.
+        passa(500)
+        assertTrue("il conto deve tenere il wake lock finche' non scade", wakeLock.isHeld)
+
+        passa(1_000)
 
         assertFalse("wake lock ancora tenuto dopo la scadenza", wakeLock.isHeld)
         assertTrue("primo piano non tolto dopo la scadenza", shadowOf(service).isForegroundStopped)
@@ -142,11 +158,12 @@ class MatchTimerServiceTest {
             service.pauseKeeperTimer()
             service.startKeeperTimer(10_000L)
             service.resetKeeperTimer()
-            Thread.sleep(300)
+            // Oltre la durata del conto interrotto: se un job fosse rimasto vivo sarebbe scaduto ora.
+            passa(11_000)
             assertEquals("pausa e azzeramento non sono scadenze", 0, scadenze.size)
 
             service.startKeeperTimer(50L)
-            aspetta { scadenze.isNotEmpty() }
+            passa(1_500)
             assertEquals(1, scadenze.size)
         } finally {
             ascolto.cancel()
@@ -161,13 +178,14 @@ class MatchTimerServiceTest {
     @Test
     fun `pausa e ripresa mandano il residuo in keeper_millis e la durata configurata a parte`() {
         service.startKeeperTimer(300_000L)
-        Thread.sleep(1_200)
+        passa(1_200)
         service.pauseKeeperTimer()
         // Il ViewModel riprende passando la durata configurata: il service riparte dal residuo.
         service.startKeeperTimer(300_000L)
+        scheduler.runCurrent()
 
         val messaggi = argumentCaptor<Map<String, Any>>()
-        verifyBlocking(mockConnectionManager, timeout(2_000).times(3)) {
+        verifyBlocking(mockConnectionManager, times(3)) {
             sendData(eq(WearConstants.PATH_KEEPER_TIMER), messaggi.capture(), any())
         }
         // Gli invii partono in coroutine separate: si riconoscono dal contenuto, non dall'ordine.
@@ -176,12 +194,17 @@ class MatchTimerServiceTest {
         val partenze = tutti.filter { it[WearConstants.KEY_KEEPER_RUNNING] == true }
         assertEquals(2, partenze.size)
         assertTrue("l'avvio manda la durata piena", partenze.any { it[WearConstants.KEY_KEEPER_MILLIS] == 300_000L })
-        assertTrue("in pausa keeper_millis e' il residuo", (pausa[WearConstants.KEY_KEEPER_MILLIS] as Long) < 300_000L)
+        // Il conto ha fatto due passi (a 0 e a 1000) prima della pausa: il residuo e' esattamente 299 secondi.
+        assertEquals("in pausa keeper_millis e' il residuo", 299_000L, pausa[WearConstants.KEY_KEEPER_MILLIS])
         assertTrue(
             "alla ripresa keeper_millis e' il residuo",
-            partenze.any { (it[WearConstants.KEY_KEEPER_MILLIS] as Long) < 300_000L },
+            partenze.any { it[WearConstants.KEY_KEEPER_MILLIS] == 299_000L },
         )
         tutti.forEach { assertEquals(300_000L, it[WearConstants.KEY_KEEPER_DURATION]) }
         service.resetKeeperTimer()
+    }
+
+    private companion object {
+        const val ORA_DI_PARTENZA = 1_700_000_000_000L
     }
 }

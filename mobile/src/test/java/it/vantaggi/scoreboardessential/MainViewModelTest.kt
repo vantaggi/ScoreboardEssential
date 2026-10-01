@@ -9,6 +9,7 @@ import android.os.Looper
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import it.vantaggi.scoreboardessential.core.ExportResult
@@ -39,6 +40,7 @@ import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -74,6 +76,9 @@ class MainViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var viewModel: MainViewModel
+
+    // I ViewModel costruiti oltre a [viewModel]: anche il loro viewModelScope va chiuso a fine test.
+    private val altriViewModel = mutableListOf<MainViewModel>()
     private lateinit var mockApplication: Application
     private lateinit var mockRepository: MatchRepository
     private lateinit var mockUserPreferencesRepository: UserPreferencesRepository
@@ -188,7 +193,27 @@ class MainViewModelTest {
 
     @After
     fun tearDown() {
+        chiudiViewModel()
         Dispatchers.resetMain()
+    }
+
+    /**
+     * Chiude il viewModelScope di tutti i ViewModel del test.
+     *
+     * Senza, i collettori lanciati in init e le scritture in fila della riga viva restano vivi dopo
+     * il test: se il database e' gia' chiuso, riprendono sul looper principale e la loro eccezione
+     * viene addebitata al PROSSIMO runTest (UncaughtExceptionsBeforeTest) di un test senza colpa.
+     */
+    private fun chiudiViewModel() {
+        viewModel.viewModelScope.cancel()
+        altriViewModel.forEach { it.viewModelScope.cancel() }
+        altriViewModel.clear()
+    }
+
+    /** Il ViewModel va chiuso PRIMA del database, che altrimenti sparisce sotto le sue scritture. */
+    private fun chiudiDatabase(db: AppDatabase) {
+        chiudiViewModel()
+        db.close()
     }
 
     @Test
@@ -614,7 +639,7 @@ class MainViewModelTest {
                     matchDao.getPlayerWinCounts().first(),
                 )
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -681,7 +706,7 @@ class MainViewModelTest {
                 assertEquals(listOf("Marco", "Luca", "Anna", "Sara"), dalloStorico.export.players.map { it.name })
                 assertEquals(listOf(1, 1, 2, 2), dalloStorico.export.players.map { it.side })
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -708,7 +733,7 @@ class MainViewModelTest {
 
                 assertEquals(ore18, db.matchDao().getActiveMatchOnce()?.startedAt)
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -750,6 +775,7 @@ class MainViewModelTest {
 
             val conPadel =
                 MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
+            altriViewModel.add(conPadel)
 
             assertEquals(SportRegistry.PADEL, conPadel.activeSport.value)
         }
@@ -1658,6 +1684,7 @@ class MainViewModelTest {
     fun `alla costruzione il service non c'e' ancora, e alla connessione non si azzera niente`() =
         runTest {
             val nuovo = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
+            altriViewModel.add(nuovo)
             val servizio = MainViewModel::class.java.getDeclaredField("matchTimerService").apply { isAccessible = true }
             assertEquals("in init il service non e' ancora legato", null, servizio.get(nuovo))
 
@@ -1749,7 +1776,7 @@ class MainViewModelTest {
 
                 assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 1, 1, 2)), righe(db))
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -1770,7 +1797,7 @@ class MainViewModelTest {
 
                 assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 2, 0, 2)), righe(db))
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -1796,7 +1823,7 @@ class MainViewModelTest {
                 assertEquals(listOf(Riga(false, SportRegistry.FOOTBALL, 1, 0, 1)), righe(db))
                 assertEquals(null, campo("currentMatchId"))
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -1835,7 +1862,7 @@ class MainViewModelTest {
                 advanceUntilIdle()
                 assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 0, 1, 1)), righe(db))
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -1867,7 +1894,7 @@ class MainViewModelTest {
                 advanceUntilIdle()
                 assertEquals(listOf(Riga(true, SportRegistry.PADEL, 0, 0, 1)), righe(db))
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -1895,6 +1922,7 @@ class MainViewModelTest {
             flowOf(MatchSettings("Team 1", "Team 2", Color.RED, Color.BLUE, 300L, sportSalvato)),
         )
         val nuovo = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
+        altriViewModel.add(nuovo)
         // Prima che le coroutine di init partano: col dispatcher del setup sono solo accodate.
         listOf("playerDao", "matchDao", "connectionManager").forEach { nome ->
             val campo = MainViewModel::class.java.getDeclaredField(nome).apply { isAccessible = true }
@@ -1976,7 +2004,7 @@ class MainViewModelTest {
                 assertEquals(3, motore().log.size)
                 assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 2, 1, 3)), righe(db))
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -2021,7 +2049,7 @@ class MainViewModelTest {
                 assertEquals(ripresa, campo("currentMatchId"))
                 assertEquals(3, viewModel.team1Score.value)
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -2091,7 +2119,7 @@ class MainViewModelTest {
                     formazioni(db, viva.matchId),
                 )
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -2120,7 +2148,7 @@ class MainViewModelTest {
 
                 assertEquals(listOf(luca to 1, marco to 1, anna to 2, sara to 2), formazioni(db, id))
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -2145,7 +2173,7 @@ class MainViewModelTest {
                 assertEquals(emptyList<Riga>(), righe(db))
                 assertEquals(emptyList<Pair<Int, Int>>(), formazioni(db, id))
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -2193,7 +2221,7 @@ class MainViewModelTest {
                         .player.appearances,
                 )
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -2240,7 +2268,7 @@ class MainViewModelTest {
                 assertEquals(listOf(anna), viewModel.team2Players.value?.map { it.player.playerId })
                 assertEquals(listOf(marco to 1, anna to 2), formazioni(db, ripresa))
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 
@@ -2273,7 +2301,7 @@ class MainViewModelTest {
                     playerDao.getAllPlayers().first().associate { it.player.playerId to it.player.appearances },
                 )
             } finally {
-                db.close()
+                chiudiDatabase(db)
             }
         }
 }

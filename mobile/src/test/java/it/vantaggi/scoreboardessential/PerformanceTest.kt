@@ -9,13 +9,14 @@ import it.vantaggi.scoreboardessential.database.MatchPlayerCrossRef
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import kotlin.system.measureTimeMillis
 
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
@@ -44,91 +45,43 @@ class PerformanceTest {
         database.close()
     }
 
+    /**
+     * Il percorso a lotto (updatePlayers + insertMatchPlayerCrossRefs) deve lasciare nel database
+     * lo stesso stato del ciclo che scrive un giocatore alla volta. Prima questo test misurava i
+     * millisecondi e non asseriva nulla sul codice vero: un lotto che perdesse righe sarebbe
+     * passato lo stesso.
+     */
     @Test
-    fun benchmarkBatchVsLoop() =
+    fun `il lotto e il ciclo lasciano lo stesso stato nel database`() =
         runTest {
-            // Setup: Create 100 players
-            val players =
-                (1..100).map {
-                    Player(playerName = "Player $it", appearances = 0, goals = 0)
-                }
+            val iniziali = (1..20).map { Player(playerName = "Player $it", appearances = 0, goals = 0) }
+            val conId = iniziali.map { it.copy(playerId = playerDao.insert(it).toInt()) }
 
-            // Insert players initially so they have IDs
-            players.forEach { playerDao.insert(it) }
+            val matchCiclo = 1
+            val matchLotto = 2
+            matchDao.insert(Match(matchCiclo, 1, 2, 0, 0, 0L))
+            matchDao.insert(Match(matchLotto, 1, 2, 0, 0, 0L))
 
-            // Reload players to get assigned IDs
-            val savedPlayers = mutableListOf<Player>()
-            // Simple way to get all players since getAllPlayers returns Flow
-            // We can just query them back one by one or trust the IDs if we knew them,
-            // but let's just rely on Room to generate IDs and fetch them.
-            // Actually, for simplicity, let's just assume we can use the inserted IDs if we insert one by one and capture the ID.
-            // Or we can just use a list of players with IDs 1..100 manually set if autogenerate is not critical for this test,
-            // but autogenerate is true in Entity.
+            // Ciclo: una scrittura per giocatore.
+            for (player in conId) {
+                playerDao.update(player.copy(appearances = 1))
+                matchDao.insertMatchPlayerCrossRef(MatchPlayerCrossRef(matchCiclo, player.playerId))
+            }
+            val dopoCiclo = playerDao.getAllPlayers().first().map { it.player.appearances }
+            val lineupCiclo = matchDao.getMatchLineup(matchCiclo).map { it.localId }.sorted()
 
-            // Let's just re-fetch or use the return value of insert.
-            val playersWithIds =
-                players.map {
-                    val id = playerDao.insert(it)
-                    it.copy(playerId = id.toInt())
-                }
+            // Riporto le presenze a zero, poi scrivo a lotto.
+            playerDao.updatePlayers(conId.map { it.copy(appearances = 0) })
+            assertEquals(List(20) { 0 }, playerDao.getAllPlayers().first().map { it.player.appearances })
 
-            val matchId = 1L
-            matchDao.insert(Match(matchId.toInt(), 1, 2, 0, 0, System.currentTimeMillis()))
+            playerDao.updatePlayers(conId.map { it.copy(appearances = 1) })
+            matchDao.insertMatchPlayerCrossRefs(conId.map { MatchPlayerCrossRef(matchLotto, it.playerId) })
+            val dopoLotto = playerDao.getAllPlayers().first().map { it.player.appearances }
+            val lineupLotto = matchDao.getMatchLineup(matchLotto).map { it.localId }.sorted()
 
-            // --- Benchmark Loop Implementation ---
-            // Reset state
-            playersWithIds.forEach { it.appearances = 0 }
-
-            val timeLoop =
-                measureTimeMillis {
-                    for (player in playersWithIds) {
-                        player.appearances++
-                        playerDao.update(player)
-                        matchDao.insertMatchPlayerCrossRef(MatchPlayerCrossRef(matchId.toInt(), player.playerId))
-                    }
-                }
-            println("Loop implementation took: ${timeLoop}ms")
-
-            // Cleanup for next test
-            // Reset appearances
-            playersWithIds.forEach { it.appearances = 0 }
-            // Remove cross refs
-            // Since we don't have a delete all cross refs easily exposed, and we want a clean state,
-            // we can just use a different match ID for the second test.
-            val matchId2 = 2L
-            matchDao.insert(Match(matchId2.toInt(), 1, 2, 0, 0, System.currentTimeMillis()))
-
-            // --- Benchmark Batch Implementation ---
-            val timeBatch =
-                measureTimeMillis {
-                    // Prepare data
-                    val playersToUpdate =
-                        playersWithIds.map {
-                            it.copy(appearances = it.appearances + 1)
-                        }
-                    val crossRefs =
-                        playersWithIds.map {
-                            MatchPlayerCrossRef(matchId2.toInt(), it.playerId)
-                        }
-
-                    // Execute batch
-                    playerDao.updatePlayers(playersToUpdate)
-                    matchDao.insertMatchPlayerCrossRefs(crossRefs)
-                }
-            println("Batch implementation took: ${timeBatch}ms")
-
-            // Assert improvement
-            // In Robolectric/SQLite in-memory, the difference might be small but batch should still be faster or at least comparable.
-            // On a real device with disk I/O, batch is significantly faster.
-            // We assert that it didn't get significantly slower (e.g. < 2x loop time is acceptable if overhead, but expected is < Loop).
-
-            val result =
-                if (timeBatch < timeLoop) {
-                    "SUCCESS: Batch was faster by ${timeLoop - timeBatch}ms (Loop: ${timeLoop}ms, Batch: ${timeBatch}ms)"
-                } else {
-                    "WARNING: Batch was slower. Loop: ${timeLoop}ms, Batch: ${timeBatch}ms"
-                }
-            println(result)
-            java.io.File("/tmp/benchmark_result.txt").writeText(result)
+            assertEquals(List(20) { 1 }, dopoCiclo)
+            assertEquals(dopoCiclo, dopoLotto)
+            assertEquals(conId.map { it.playerId }.sorted(), lineupCiclo)
+            assertEquals(lineupCiclo, lineupLotto)
         }
 }
