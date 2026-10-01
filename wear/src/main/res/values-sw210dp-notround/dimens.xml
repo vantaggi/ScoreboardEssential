@@ -5,7 +5,6 @@
     precedenza dei qualificatori), quindi la combinazione ha il suo file. Misure grandi, margini di
     fascia a 0.
     -->
-    <dimen name="face_margin_b">0dp</dimen>
     <dimen name="face_margin_d">0dp</dimen>
     <dimen name="face_margin_e">0dp</dimen>
 

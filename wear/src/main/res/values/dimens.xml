@@ -8,14 +8,12 @@
     -->
     <dimen name="box_inset_layout_padding">0dp</dimen>
 
-    <dimen name="face_margin_b">12dp</dimen>
     <dimen name="face_margin_d">16dp</dimen>
     <dimen name="face_margin_e">30dp</dimen>
 
     <!-- Il pallino del servizio: una fascia riservata sul lato esterno di ogni colonna, sempre,
          cosi' il numero non si sposta quando il pallino compare. Il pallino sta al centro della
          fascia: margine di corda piu' mezzo spazio che avanza. -->
-    <dimen name="face_dot_slot">12dp</dimen>
     <dimen name="face_dot_size">8dp</dimen>
     <dimen name="face_dot_inset">14dp</dimen>
     <!-- Dove finiscono le cifre dal lato del centro: il resto del vuoto fra le due colonne. -->
