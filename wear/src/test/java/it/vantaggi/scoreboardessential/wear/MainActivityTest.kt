@@ -3,16 +3,17 @@ package it.vantaggi.scoreboardessential.wear
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.os.Looper
+import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.gms.wearable.CapabilityClient
-import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.MessageClient
-import com.google.android.gms.wearable.NodeClient
+import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -24,6 +25,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
+import java.time.Duration
 
 /**
  * Il quadrante vero, con i suoi collector: i difetti di L7 stavano nel passaggio dal ViewModel
@@ -38,6 +40,8 @@ class MainActivityTest {
     private lateinit var controller: ActivityController<MainActivity>
     private lateinit var viewModel: WearViewModel
     private lateinit var binding: ActivityMainBinding
+    private lateinit var collegamento: MutableStateFlow<ConnectionState>
+    private lateinit var telefono: OptimizedWearDataSync
 
     @Before
     fun setup() {
@@ -49,17 +53,12 @@ class MainActivityTest {
                 .clear()
                 .commit()
         }
-        viewModel =
-            WearViewModel(
-                app,
-                OptimizedWearDataSync(
-                    app,
-                    Mockito.mock(DataClient::class.java),
-                    Mockito.mock(MessageClient::class.java),
-                    Mockito.mock(CapabilityClient::class.java),
-                    Mockito.mock(NodeClient::class.java),
-                ),
-            )
+        // Il collegamento lo decide il test, come farebbe il listener della capability. L'orologio
+        // del ViewModel e' quello di Robolectric, che si sposta con idleFor: niente attese vere.
+        collegamento = MutableStateFlow(ConnectionState.Disconnected)
+        telefono = Mockito.mock(OptimizedWearDataSync::class.java)
+        Mockito.`when`(telefono.connectionState).thenReturn(collegamento)
+        viewModel = WearViewModel(app, telefono, orologio = { SystemClock.uptimeMillis() + 1_000_000L })
         controller = Robolectric.buildActivity(MainActivity::class.java)
         val fabbrica =
             object : ViewModelProvider.Factory {
@@ -204,5 +203,98 @@ class MainActivityTest {
     fun `il fondo del quadrante e' nero puro`() {
         val radice = binding.root.background as ColorDrawable
         assertEquals(0xFF000000.toInt(), radice.color)
+    }
+
+    private fun passano(secondi: Long) = shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(secondi))
+
+    private fun riga() = binding.gestureHint.text.toString()
+
+    private fun coloreRiga() = binding.gestureHint.currentTextColor
+
+    private fun colore(risorsa: Int) = ContextCompat.getColor(controller.get(), risorsa)
+
+    private fun collegati() {
+        collegamento.value = ConnectionState.Connected(1)
+        idle()
+    }
+
+    @Test
+    fun `la riga di stato e' una sola e parla a voce cortese`() {
+        assertEquals(View.ACCESSIBILITY_LIVE_REGION_POLITE, binding.gestureHint.accessibilityLiveRegion)
+    }
+
+    @Test
+    fun `senza anomalie la riga suggerisce il gesto in grigio, senza pallino ne' SCOLLEGATO`() {
+        applica(stato(hasClock = false, periodo = "Set 1"))
+        collegati()
+
+        // Padel: il tocco lungo annulla.
+        assertEquals("HOLD: UNDO", riga())
+        assertEquals(colore(R.color.sidewalk_gray), coloreRiga())
+    }
+
+    @Test
+    fun `all'avvio il collegamento non ancora risposto non lampeggia SCOLLEGATO`() {
+        applica(stato(hasClock = false, periodo = "Set 1"))
+
+        assertEquals("HOLD: UNDO", riga())
+
+        // Passati i 2 secondi senza un collegamento, la riga lo dice a parole e in ambra, con
+        // l'ora dell'ultimo stato che il telefono ha mandato dal vivo (qui, quello di prima).
+        passano(3)
+        assertTrue(riga(), Regex("OFFLINE · \\d\\d:\\d\\d").matches(riga()))
+        assertEquals(colore(R.color.signal_amber), coloreRiga())
+    }
+
+    @Test
+    fun `col telefono lontano i punti in coda si contano in ambra`() {
+        applica(stato(hasClock = false, periodo = "Set 1"))
+        passano(3)
+        mettiInCoda(2)
+
+        assertEquals("2 QUEUED", riga())
+        assertEquals(colore(R.color.signal_amber), coloreRiga())
+    }
+
+    @Test
+    fun `da collegati la coda e' INVIO e dopo 10 secondi NON CONSEGNATI`() {
+        applica(stato(hasClock = false, periodo = "Set 1"))
+        collegati()
+        mettiInCoda(1)
+
+        assertEquals("SENDING 1…", riga())
+        assertEquals(colore(R.color.stencil_white), coloreRiga())
+
+        passano(10)
+        assertEquals("1 NOT DELIVERED", riga())
+        assertEquals(colore(R.color.signal_amber), coloreRiga())
+    }
+
+    @Test
+    fun `a partita finita la riga dice PARTITA FINITA e i lati restano spenti`() {
+        applica(stato(hasClock = false, primo = "6", secondo = "4", finita = true))
+        collegati()
+
+        assertEquals("MATCH OVER", riga())
+        assertEquals(colore(R.color.stencil_white), coloreRiga())
+        assertTrue(!binding.team1Container.isClickable)
+    }
+
+    @Test
+    fun `il giro dei 15 secondi non parte da STARTED, serve la schermata in primo piano`() {
+        // Partita in corso, schermo visibile ma non in primo piano (STARTED senza RESUMED: schermo
+        // spento, quadrante di sistema sopra): nessuno guarda la riga, niente richieste.
+        applica(stato(hasClock = false, periodo = "Set 1"))
+
+        passano(60)
+
+        runBlocking { Mockito.verify(telefono, Mockito.never()).refreshConnection() }
+    }
+
+    private fun mettiInCoda(quanti: Int) {
+        val coda = PendingIntents(RuntimeEnvironment.getApplication())
+        repeat(quanti) { coda.add(PendingIntent("point", 1, 1_000L + it)) }
+        viewModel.refreshPendingCount()
+        idle()
     }
 }

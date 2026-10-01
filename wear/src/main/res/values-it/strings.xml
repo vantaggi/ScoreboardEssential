@@ -3,7 +3,7 @@
 
     <!-- Il gesto lungo cambia significato con lo sport: nel calcio toglie un punto a quella
          squadra, negli sport a set annulla l'ultima azione qualunque lato l'abbia segnata. -->
-    <string name="wear_hint_minus">TIENI: -1</string>
+    <string name="wear_hint_minus">TIENI: −1</string>
     <string name="wear_hint_undo">TIENI: ANNULLA</string>
     <!-- Nome della squadra e punteggio a schermo: TalkBack legge questa frase al posto delle cifre. -->
     <string name="cd_score_side_minus">%1$s, %2$s. Tocca per segnare, tieni premuto per togliere un punto.</string>
@@ -21,15 +21,23 @@
     <string name="wear_no_role">Senza ruolo</string>
     <string name="wear_player_name">Nome giocatore</string>
     <string name="wear_player_position">Ruolo</string>
-    <string name="wear_hint_disconnected">NIENTE TELEFONO</string>
     <string name="cd_keeper_timer">Conto alla rovescia del portiere</string>
-    <string name="cd_connection_ok">Telefono collegato</string>
-    <string name="cd_connection_lost">Telefono non raggiungibile</string>
     <string name="wear_sport">SPORT</string>
     <string name="wear_sport_title">SPORT</string>
     <string name="wear_sport_current">in uso</string>
     <string name="wear_sport_locked">Partita in corso</string>
-    <string name="wear_hint_pending">NIENTE TELEFONO - %1$d IN ATTESA</string>
     <string name="wear_match_over">PARTITA FINITA</string>
+    <!-- Riga di stato: una frase sola, al massimo 18 caratteri anche con un numero a tre cifre.
+         Nel tondo da 192dp il testo piu' lungo si taglia, quindi niente frasi nuove senza misurarle. -->
+    <string name="wear_status_rejected">%1$d RIFIUTATI</string>
+    <string name="wear_status_not_confirmed">NON CONFERMATO</string>
+    <string name="wear_status_delivered">%1$d CONSEGNATI</string>
+    <string name="wear_status_closing">CHIUSURA…</string>
+    <string name="wear_status_not_closed">NON CHIUSA</string>
+    <string name="wear_status_not_delivered">%1$d NON CONSEGNATI</string>
+    <string name="wear_status_sending">INVIO %1$d…</string>
+    <string name="wear_status_queued">%1$d IN CODA</string>
+    <string name="wear_status_offline">SCOLLEGATO</string>
+    <string name="wear_status_offline_at">SCOLLEGATO · %1$s</string>
     <string name="wear_scorer_not_sent">MARCATORE NON INVIATO</string>
 </resources>

@@ -3,7 +3,7 @@
 
     <!-- Il gesto lungo cambia significato con lo sport: nel calcio toglie un punto a quella
          squadra, negli sport a set annulla l'ultima azione qualunque lato l'abbia segnata. -->
-    <string name="wear_hint_minus">HOLD: -1</string>
+    <string name="wear_hint_minus">HOLD: −1</string>
     <string name="wear_hint_undo">HOLD: UNDO</string>
     <!-- Nome della squadra e punteggio a schermo: TalkBack legge questa frase al posto delle cifre. -->
     <string name="cd_score_side_minus">%1$s, %2$s. Tap to add a point, press and hold to remove one.</string>
@@ -21,17 +21,25 @@
     <string name="wear_no_role">No role</string>
     <string name="wear_player_name">Player name</string>
     <string name="wear_player_position">Position</string>
-    <string name="wear_hint_disconnected">NO PHONE</string>
     <string name="cd_keeper_timer">Goalkeeper countdown</string>
     <!-- Uguale nelle due lingue: K e i minuti:secondi che restano al portiere. -->
     <string name="wear_keeper_running" translatable="false">K %1$d:%2$02d</string>
-    <string name="cd_connection_ok">Phone connected</string>
-    <string name="cd_connection_lost">Phone not reachable</string>
     <string name="wear_sport">SPORT</string>
     <string name="wear_sport_title">SPORT</string>
     <string name="wear_sport_current">in use</string>
     <string name="wear_sport_locked">Match in progress</string>
-    <string name="wear_hint_pending">NO PHONE - %1$d WAITING</string>
     <string name="wear_match_over">MATCH OVER</string>
+    <!-- Riga di stato: una frase sola, al massimo 18 caratteri anche con un numero a tre cifre.
+         Nel tondo da 192dp il testo piu' lungo si taglia, quindi niente frasi nuove senza misurarle. -->
+    <string name="wear_status_rejected">%1$d REJECTED</string>
+    <string name="wear_status_not_confirmed">NOT CONFIRMED</string>
+    <string name="wear_status_delivered">%1$d DELIVERED</string>
+    <string name="wear_status_closing">CLOSING…</string>
+    <string name="wear_status_not_closed">NOT CLOSED</string>
+    <string name="wear_status_not_delivered">%1$d NOT DELIVERED</string>
+    <string name="wear_status_sending">SENDING %1$d…</string>
+    <string name="wear_status_queued">%1$d QUEUED</string>
+    <string name="wear_status_offline">OFFLINE</string>
+    <string name="wear_status_offline_at">OFFLINE · %1$s</string>
     <string name="wear_scorer_not_sent">SCORER NOT SENT</string>
 </resources>

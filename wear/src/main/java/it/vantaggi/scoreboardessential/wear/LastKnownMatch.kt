@@ -21,6 +21,7 @@ class LastKnownMatch(
         const val PREFS = "wear_last_known_match"
         const val CHIAVE_SPORT = "sport_id"
         const val CHIAVE_LOG = "event_log"
+        const val CHIAVE_RICEVUTO_ALLE = "received_at"
     }
 
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -28,6 +29,14 @@ class LastKnownMatch(
     val sportId: String get() = prefs.getString(CHIAVE_SPORT, "").orEmpty()
 
     val eventLog: String get() = prefs.getString(CHIAVE_LOG, "").orEmpty()
+
+    /**
+     * Quando il telefono ha parlato l'ultima volta, in millisecondi; zero se non si sa.
+     *
+     * Serve alla riga di stato ("SCOLLEGATO · 18:42") dopo un riavvio dell'orologio: senza questo
+     * l'ora ripartirebbe da niente proprio quando il telefono e' lontano.
+     */
+    val ricevutoAlle: Long get() = prefs.getLong(CHIAVE_RICEVUTO_ALLE, 0L)
 
     fun save(
         sportId: String,
@@ -40,5 +49,15 @@ class LastKnownMatch(
             putString(CHIAVE_SPORT, sportId)
             putString(CHIAVE_LOG, eventLog)
         }
+    }
+
+    /**
+     * Segna l'istante in cui il telefono ha parlato DAL VIVO. Lo chiama [WearDataLayerService],
+     * non il ViewModel: il servizio riceve i v2 anche ad app chiusa, e l'ora dell'ultimo stato
+     * vivo deve seguirli. Uno stato riletto dai DataItem al risveglio e' una copia vecchia e non
+     * passa di qui: l'ora di prima resta quella che era.
+     */
+    fun segnaStatoVivo(ricevutoAlle: Long) {
+        prefs.edit { putLong(CHIAVE_RICEVUTO_ALLE, ricevutoAlle) }
     }
 }
