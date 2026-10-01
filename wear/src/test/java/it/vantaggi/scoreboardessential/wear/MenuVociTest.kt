@@ -9,7 +9,9 @@ import org.junit.Test
  * I blocchi del menu partita, a tabella: JVM puro, nessun Android.
  *
  * Il caso base e' un telefono raggiungibile, nessun punto in coda, padel a partita non cominciata:
- * ogni test cambia UNA cosa, cosi' il blocco che scatta e' quello che il nome dice.
+ * ogni test cambia UNA cosa, cosi' il blocco che scatta e' quello che il nome dice. SPORT e FINE
+ * PARTITA non sono mai accese insieme (lo sport si cambia solo a registro vuoto, la partita si
+ * chiude solo a registro pieno): i test di FINE PARTITA partono da `partitaIniziata = true`.
  */
 class MenuVociTest {
     private fun input(
@@ -28,13 +30,15 @@ class MenuVociTest {
     ) = MenuVoci.calcola(input).first { it.id == id }
 
     @Test
-    fun `senza blocchi le due voci sono attive e dicono sport e risultato`() {
-        val voci = MenuVoci.calcola(input())
+    fun `senza blocchi ogni voce e' attiva e dice sport o risultato`() {
+        val aRegistroVuoto = MenuVoci.calcola(input())
+        assertEquals(listOf(IdVoce.SPORT, IdVoce.FINE_PARTITA), aRegistroVuoto.map { it.id })
+        assertTrue(aRegistroVuoto[0].attiva)
+        assertEquals(SottotitoloVoce.SportInUso("Padel"), aRegistroVuoto[0].sottotitolo)
 
-        assertEquals(listOf(IdVoce.SPORT, IdVoce.FINE_PARTITA), voci.map { it.id })
-        assertTrue(voci.all { it.attiva })
-        assertEquals(SottotitoloVoce.SportInUso("Padel"), voci[0].sottotitolo)
-        assertEquals(SottotitoloVoce.SalvaRisultato("3–2"), voci[1].sottotitolo)
+        val aPartitaCominciata = MenuVoci.calcola(input(partitaIniziata = true))
+        assertTrue(aPartitaCominciata[1].attiva)
+        assertEquals(SottotitoloVoce.SalvaRisultato("3–2"), aPartitaCominciata[1].sottotitolo)
     }
 
     @Test
@@ -47,7 +51,7 @@ class MenuVociTest {
 
     @Test
     fun `da scollegati FINE PARTITA e' disattivata e chiede il telefono`() {
-        val fine = voce(IdVoce.FINE_PARTITA, input(collegato = false))
+        val fine = voce(IdVoce.FINE_PARTITA, input(collegato = false, partitaIniziata = true))
 
         assertFalse(fine.attiva)
         assertEquals(SottotitoloVoce.ServeIlTelefono, fine.sottotitolo)
@@ -55,7 +59,7 @@ class MenuVociTest {
 
     @Test
     fun `nel calcio col v2 FINE PARTITA e' disattivata finche' L4 non e' corretto`() {
-        val fine = voce(IdVoce.FINE_PARTITA, input(calcioConV2 = true))
+        val fine = voce(IdVoce.FINE_PARTITA, input(calcioConV2 = true, partitaIniziata = true))
 
         assertFalse(fine.attiva)
         assertEquals(SottotitoloVoce.ChiudiDalTelefono, fine.sottotitolo)
@@ -66,11 +70,11 @@ class MenuVociTest {
         // Il caso tipico: scollegati con dei punti in coda. Il numero e' piu' utile del motivo generico.
         assertEquals(
             SottotitoloVoce.PrimaConsegna(3),
-            voce(IdVoce.FINE_PARTITA, input(inCoda = 3, collegato = false, calcioConV2 = true)).sottotitolo,
+            voce(IdVoce.FINE_PARTITA, input(inCoda = 3, collegato = false, calcioConV2 = true, partitaIniziata = true)).sottotitolo,
         )
         assertEquals(
             SottotitoloVoce.ServeIlTelefono,
-            voce(IdVoce.FINE_PARTITA, input(collegato = false, calcioConV2 = true)).sottotitolo,
+            voce(IdVoce.FINE_PARTITA, input(collegato = false, calcioConV2 = true, partitaIniziata = true)).sottotitolo,
         )
     }
 
@@ -101,9 +105,27 @@ class MenuVociTest {
     }
 
     @Test
-    fun `FINE PARTITA non guarda se la partita e' cominciata`() {
+    fun `a partita non cominciata FINE PARTITA e' disattivata e dice che non c'e' niente da salvare`() {
+        // Il telefono non salva un registro vuoto: promettere "Salva 0–0" e poi tacere era la bugia.
+        val fine = voce(IdVoce.FINE_PARTITA, input(partitaIniziata = false))
+
+        assertFalse(fine.attiva)
+        assertEquals(SottotitoloVoce.NienteDaSalvare, fine.sottotitolo)
+    }
+
+    @Test
+    fun `a partita cominciata, anche finita, FINE PARTITA e' attiva`() {
         // A partita finita il registro non e' vuoto, ed e' proprio il momento di chiuderla.
         assertTrue(voce(IdVoce.FINE_PARTITA, input(partitaIniziata = true)).attiva)
+    }
+
+    @Test
+    fun `niente da salvare vince su telefono assente e calcio, ma non sulla coda`() {
+        assertEquals(
+            SottotitoloVoce.NienteDaSalvare,
+            voce(IdVoce.FINE_PARTITA, input(collegato = false, calcioConV2 = true)).sottotitolo,
+        )
+        assertEquals(SottotitoloVoce.PrimaConsegna(1), voce(IdVoce.FINE_PARTITA, input(inCoda = 1)).sottotitolo)
     }
 
     @Test

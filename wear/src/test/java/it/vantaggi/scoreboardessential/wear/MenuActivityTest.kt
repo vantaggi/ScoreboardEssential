@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Looper
 import android.os.SystemClock
+import android.view.MotionEvent
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.material.card.MaterialCardView
@@ -39,7 +41,7 @@ class MenuActivityTest {
         InputMenu(
             inCoda = 0,
             collegato = true,
-            partitaIniziata = false,
+            partitaIniziata = true,
             calcioConV2 = false,
             haElencoSport = true,
             sport = "Padel",
@@ -165,8 +167,31 @@ class MenuActivityTest {
     }
 
     @Test
+    fun `a partita non cominciata FINE PARTITA e' spenta e dice che non c'e' niente da salvare`() {
+        val activity = apri(base.copy(partitaIniziata = false))
+
+        assertFalse(fine(activity).isEnabled)
+        assertEquals(activity.getString(R.string.wear_menu_nothing_to_save), sottotitolo(fine(activity)).text.toString())
+
+        fine(activity).performClick()
+        avanza(1_000)
+        fine(activity).performClick()
+
+        assertFalse(activity.isFinishing)
+        assertNull(azione(activity))
+    }
+
+    @Test
+    fun `la card della fine partita si annuncia a TalkBack, quella dello sport no`() {
+        val activity = apri(base.copy(partitaIniziata = false))
+
+        assertEquals(View.ACCESSIBILITY_LIVE_REGION_POLITE, fine(activity).accessibilityLiveRegion)
+        assertEquals(View.ACCESSIBILITY_LIVE_REGION_NONE, card(activity, 0).accessibilityLiveRegion)
+    }
+
+    @Test
     fun `SPORT attiva chiude e chiede la lista degli sport`() {
-        val activity = apri()
+        val activity = apri(base.copy(partitaIniziata = false))
 
         card(activity, 0).performClick()
 
@@ -176,7 +201,7 @@ class MenuActivityTest {
 
     @Test
     fun `con la partita cominciata SPORT e' spenta e non apre niente`() {
-        val activity = apri(base.copy(partitaIniziata = true))
+        val activity = apri()
 
         card(activity, 0).performClick()
 
@@ -222,6 +247,21 @@ class MenuActivityTest {
         assertTrue(activity.isFinishing)
     }
 
+    @Test
+    fun `ruotare la corona e' un'interazione e riporta a 10 secondi la chiusura automatica`() {
+        val activity = apri()
+        val corona = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_SCROLL, 0f, 0f, 0)
+
+        avanza(9_000)
+        activity.dispatchGenericMotionEvent(corona)
+        avanza(9_000)
+        assertFalse(activity.isFinishing)
+
+        avanza(1_000)
+        assertTrue(activity.isFinishing)
+        corona.recycle()
+    }
+
     // --- Le frasi sul tondo ---
 
     private fun contesto(lingua: String): Context {
@@ -241,6 +281,7 @@ class MenuActivityTest {
                 SottotitoloVoce.PartitaInCorso,
                 SottotitoloVoce.ServeIlTelefono,
                 SottotitoloVoce.ChiudiDalTelefono,
+                SottotitoloVoce.NienteDaSalvare,
                 SottotitoloVoce.SalvaRisultato("40–AV"),
             ) + listOf(1, 2, 99, 999).map { SottotitoloVoce.PrimaConsegna(it) }
         sottotitoli.forEach { sottotitolo ->
@@ -269,6 +310,8 @@ class MenuActivityTest {
         assertEquals("Prima consegna 1 punto", SottotitoloVoce.PrimaConsegna(1).testo(contesto("it")))
         assertEquals("Deliver 2 points first", SottotitoloVoce.PrimaConsegna(2).testo(contesto("en")))
         assertEquals("Serve il telefono", SottotitoloVoce.ServeIlTelefono.testo(contesto("it")))
+        assertEquals("Niente da salvare", SottotitoloVoce.NienteDaSalvare.testo(contesto("it")))
+        assertEquals("Nothing to save", SottotitoloVoce.NienteDaSalvare.testo(contesto("en")))
         assertEquals("Salva 3–2 sul telefono", SottotitoloVoce.SalvaRisultato("3–2").testo(contesto("it")))
         assertEquals("CHIUDERE 3–2?", contesto("it").getString(R.string.wear_menu_end_confirm, "3–2"))
         assertEquals("FINE PARTITA", contesto("it").getString(R.string.wear_menu_end))

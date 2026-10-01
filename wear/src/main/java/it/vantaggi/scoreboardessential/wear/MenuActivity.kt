@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -42,7 +43,7 @@ class MenuActivity : ComponentActivity() {
         private const val EXTRA_IN_CODA = "menu_in_coda"
         private const val EXTRA_COLLEGATO = "menu_collegato"
         private const val EXTRA_PARTITA_INIZIATA = "menu_partita_iniziata"
-        private const val EXTRA_CALCIO_V2 = "menu_calcio_v2"
+        internal const val EXTRA_CALCIO_V2 = "menu_calcio_v2"
         private const val EXTRA_ELENCO_SPORT = "menu_elenco_sport"
         private const val EXTRA_SPORT = "menu_sport"
         private const val EXTRA_RISULTATO = "menu_risultato"
@@ -114,6 +115,9 @@ class MenuActivity : ComponentActivity() {
         MenuVoci.calcola(input).forEach { voce ->
             val card = LayoutInflater.from(this).inflate(R.layout.item_sport_wear, contenitore, false) as MaterialCardView
             card.setOnClickListener { alTocco(voce) }
+            // Armarsi e rientrare cambia titolo e sottotitolo: TalkBack deve dirlo, perche' chi non
+            // vede la card rossa non saprebbe che il tocco e' gia' armato.
+            if (voce.id == IdVoce.FINE_PARTITA) card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
             contenitore.addView(card)
             righe += Riga(voce, card)
         }
@@ -130,6 +134,16 @@ class MenuActivity : ComponentActivity() {
     override fun onUserInteraction() {
         super.onUserInteraction()
         riarmaChiusura()
+    }
+
+    /**
+     * La corona e' un evento di movimento generico, e per quelli onUserInteraction non scatta. Lo
+     * ScrollView che scorre riarma da solo, ma a fine corsa (voci tutte visibili) ruotare la
+     * corona non sposta niente: senza questo il menu si chiuderebbe sotto la mano.
+     */
+    override fun dispatchGenericMotionEvent(ev: MotionEvent): Boolean {
+        riarmaChiusura()
+        return super.dispatchGenericMotionEvent(ev)
     }
 
     override fun onDestroy() {
@@ -258,6 +272,10 @@ internal fun SottotitoloVoce.testo(context: Context): String =
 
         SottotitoloVoce.ServeIlTelefono -> {
             context.getString(R.string.wear_menu_phone_needed)
+        }
+
+        SottotitoloVoce.NienteDaSalvare -> {
+            context.getString(R.string.wear_menu_nothing_to_save)
         }
 
         SottotitoloVoce.ChiudiDalTelefono -> {

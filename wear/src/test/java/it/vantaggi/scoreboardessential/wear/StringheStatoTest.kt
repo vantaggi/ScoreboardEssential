@@ -76,6 +76,9 @@ class StringheStatoTest {
         assertEquals("MATCH OVER", Frase.PartitaFinita.testo(contesto("en")))
         assertEquals("TIENI: −1", Frase.TieniMeno.testo(contesto("it")))
         assertEquals("HOLD: UNDO", Frase.TieniAnnulla.testo(contesto("en")))
+        // La chiusura e' partita e non si ritira: la frase dice che manca la conferma, non "non chiusa".
+        assertEquals("NON CONFERMATA", Transitorio.ChiusuraNonConfermata.testo(contesto("it")))
+        assertEquals("NOT CONFIRMED", Transitorio.ChiusuraNonConfermata.testo(contesto("en")))
     }
 
     @Test

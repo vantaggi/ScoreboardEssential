@@ -19,6 +19,7 @@
     <string name="wear_menu_tap_again">Tap again</string>
     <string name="wear_menu_phone_needed">Phone needed</string>
     <string name="wear_menu_football_on_phone">End it on the phone</string>
+    <string name="wear_menu_nothing_to_save">Nothing to save</string>
     <plurals name="wear_menu_deliver_first">
         <item quantity="one">Deliver %1$d point first</item>
         <item quantity="other">Deliver %1$d points first</item>

@@ -25,6 +25,9 @@ sealed class SottotitoloVoce {
 
     data object ServeIlTelefono : SottotitoloVoce()
 
+    /** Registro vuoto: il telefono non salverebbe niente, e la chiusura non avrebbe cosa confermare. */
+    data object NienteDaSalvare : SottotitoloVoce()
+
     /** Nel calcio la chiusura dal polso e' bloccata finche' VALIDAZIONE L4 non e' corretta. */
     data object ChiudiDalTelefono : SottotitoloVoce()
 
@@ -86,10 +89,13 @@ object MenuVoci {
 
     private fun voceFine(input: InputMenu): Voce {
         // L'ordine e' quello del design. Con la coda piena si fonderebbero due partite (L4 alta);
-        // da scollegati la chiusura non arriverebbe; nel calcio perderebbe la partita (L4 alta).
+        // a partita non cominciata non c'e' niente da salvare (il telefono non salva un 0-0 e il
+        // polso aspetterebbe invano la conferma); da scollegati la chiusura non arriverebbe; nel
+        // calcio perderebbe la partita (L4 alta).
         val blocco =
             when {
                 input.inCoda > 0 -> SottotitoloVoce.PrimaConsegna(input.inCoda)
+                !input.partitaIniziata -> SottotitoloVoce.NienteDaSalvare
                 !input.collegato -> SottotitoloVoce.ServeIlTelefono
                 input.calcioConV2 -> SottotitoloVoce.ChiudiDalTelefono
                 else -> null

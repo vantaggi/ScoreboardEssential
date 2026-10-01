@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
             if (esito.resultCode != android.app.Activity.RESULT_OK) return@registerForActivityResult
             when (esito.data?.getStringExtra(MenuActivity.EXTRA_AZIONE)) {
                 MenuActivity.AZIONE_SPORT -> apriSceltaSport()
-                MenuActivity.AZIONE_FINE -> viewModel.chiudiPartita()
+                MenuActivity.AZIONE_FINE -> chiudiSeAncoraPossibile()
             }
         }
 
@@ -258,6 +258,22 @@ class MainActivity : ComponentActivity() {
      * voci accendere, e il menu restituisce solo che cosa si e' scelto.
      */
     private fun apriMenu() {
+        menu.launch(MenuActivity.intent(this, inputMenu()))
+    }
+
+    /**
+     * Il menu ha fotografato i fatti all'apertura, ma fra i due tocchi della conferma possono
+     * passare secondi: arrivare una coda, un v2 di calcio, una chiusura gia' fatta. I blocchi si
+     * ricalcolano sui fatti di adesso, e se FINE PARTITA non e' piu' accesa si riapre il menu, che
+     * dice a parole perche' (il sottotitolo della voce spenta).
+     */
+    private fun chiudiSeAncoraPossibile() {
+        val fine = MenuVoci.calcola(inputMenu()).first { it.id == IdVoce.FINE_PARTITA }
+        if (fine.attiva) viewModel.chiudiPartita() else apriMenu()
+    }
+
+    /** I fatti su cui [MenuVoci] decide, letti adesso. */
+    private fun inputMenu(): InputMenu {
         val stato = viewModel.scoreState.value
         // Senza v2 il punteggio e' quello che il polso ha contato da solo.
         val risultato =
@@ -266,20 +282,17 @@ class MainActivity : ComponentActivity() {
             } else {
                 "${viewModel.team1Score.value}–${viewModel.team2Score.value}"
             }
-        menu.launch(
-            MenuActivity.intent(
-                this,
-                InputMenu(
-                    inCoda = viewModel.pendingCount.value,
-                    collegato = viewModel.connectionState.value is ConnectionState.Connected,
-                    // Senza v2, un tocco in coda e' l'unico segno che si sta giocando.
-                    partitaIniziata = stato?.matchInProgress ?: (viewModel.pendingCount.value > 0),
-                    calcioConV2 = stato?.sportId == SportRegistry.FOOTBALL,
-                    haElencoSport = stato != null && stato.sportIds.size > 1,
-                    sport = stato?.sportLabel.orEmpty(),
-                    risultato = risultato,
-                ),
-            ),
+        return InputMenu(
+            inCoda = viewModel.pendingCount.value,
+            collegato = viewModel.connectionState.value is ConnectionState.Connected,
+            // Senza v2, un tocco in coda o un punto a schermo sono gli unici segni che si sta giocando.
+            partitaIniziata =
+                stato?.matchInProgress
+                    ?: (viewModel.pendingCount.value > 0 || viewModel.team1Score.value + viewModel.team2Score.value > 0),
+            calcioConV2 = stato?.sportId == SportRegistry.FOOTBALL,
+            haElencoSport = stato != null && stato.sportIds.size > 1,
+            sport = stato?.sportLabel.orEmpty(),
+            risultato = risultato,
         )
     }
 
