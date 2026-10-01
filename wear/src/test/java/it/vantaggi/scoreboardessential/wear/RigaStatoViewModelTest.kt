@@ -264,6 +264,56 @@ class RigaStatoViewModelTest {
     }
 
     @Test
+    fun `chiudere dal polso dice CHIUSURA fino al v2 a partita non cominciata`() {
+        collegati()
+        viewModel.applyStateV2(stato())
+        viewModel.chiudiPartita()
+        assestati()
+        assertEquals(Transitorio.Chiusura, frase())
+
+        // Piu' dei 3 secondi di un transitorio qualunque: la riga aspetta il telefono, non il tempo.
+        avanza(StatoFiducia.DURATA_TRANSITORIO_MS + 1)
+        assertEquals(Transitorio.Chiusura, frase())
+
+        viewModel.applyStateV2(stato(inCorso = false))
+        assestati()
+        assertEquals(Frase.TieniAnnulla, frase())
+
+        // E NON CHIUSA non scatta piu' a risposta arrivata.
+        avanza(WearViewModel.DURATA_ATTESA_CHIUSURA_MS)
+        assertEquals(Frase.TieniAnnulla, frase())
+    }
+
+    @Test
+    fun `senza risposta in 10 secondi CHIUSURA diventa NON CHIUSA, poi la riga torna sola`() {
+        collegati()
+        viewModel.applyStateV2(stato())
+        viewModel.chiudiPartita()
+
+        avanza(WearViewModel.DURATA_ATTESA_CHIUSURA_MS - 1)
+        assertEquals(Transitorio.Chiusura, frase())
+
+        avanza(1)
+        assertEquals(Transitorio.NonChiusa, frase())
+
+        avanza(StatoFiducia.DURATA_TRANSITORIO_MS)
+        assertEquals(Frase.TieniAnnulla, frase())
+    }
+
+    @Test
+    fun `un v2 a partita ancora cominciata non chiude CHIUSURA`() {
+        collegati()
+        viewModel.applyStateV2(stato())
+        viewModel.chiudiPartita()
+
+        // Un v2 vecchio, arrivato prima che il telefono abbia applicato la chiusura.
+        viewModel.applyStateV2(stato(inCorso = true))
+        assestati()
+
+        assertEquals(Transitorio.Chiusura, frase())
+    }
+
+    @Test
     fun `la conferma del telefono svuota la coda e dice CONSEGNATI per qualche secondo`() {
         collegati()
         mettiInCoda(2)
