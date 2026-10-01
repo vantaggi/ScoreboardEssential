@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import it.vantaggi.scoreboardessential.R
+import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.domain.models.MatchReportData
@@ -98,6 +99,17 @@ object MatchReportUtils {
         return scorers
     }
 
+    /** La banda nel colore della squadra, con i testi sopra nell'inchiostro di [TeamInk]. */
+    private fun dipingiBanda(
+        context: Context,
+        banda: View,
+        colore: Int,
+        vararg testi: TextView,
+    ) {
+        banda.riempiDiSquadra(colore, context.getColor(R.color.asphalt_dark))
+        testi.forEach { it.setTextColor(TeamInk.on(colore)) }
+    }
+
     /** La pagina del report, gia' riempita ma non ancora misurata ne' disegnata. */
     internal fun buildReportView(
         context: Context,
@@ -122,15 +134,23 @@ object MatchReportUtils {
         team2NameTextView.text = data.team2Name
         team2ScoreTextView.text = data.team2Score.toString()
 
-        // Apply Dynamic Colors
-        data.team1Color?.let {
-            team1NameTextView.setTextColor(it)
-            team1ScoreTextView.setTextColor(it)
-        }
-        data.team2Color?.let {
-            team2NameTextView.setTextColor(it)
-            team2ScoreTextView.setTextColor(it)
-        }
+        // Due bande, una per squadra nel suo colore: nome e punteggio in TeamInk. Il colore grezzo
+        // come testo sul fondo scuro del PDF non si leggeva, e il PDF e' l'unica cosa che esce dal
+        // telefono. Senza colore si ripiega sui predefiniti (giallo e verde).
+        dipingiBanda(
+            context,
+            view.findViewById(R.id.pdf_team1_band),
+            data.team1Color ?: context.getColor(R.color.team_spray_yellow),
+            team1NameTextView,
+            team1ScoreTextView,
+        )
+        dipingiBanda(
+            context,
+            view.findViewById(R.id.pdf_team2_band),
+            data.team2Color ?: context.getColor(R.color.team_electric_green),
+            team2NameTextView,
+            team2ScoreTextView,
+        )
 
         // Populate Formations
         data.team1Players.forEach { player ->

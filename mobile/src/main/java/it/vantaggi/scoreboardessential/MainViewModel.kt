@@ -44,6 +44,7 @@ import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.domain.models.MatchReportData
+import it.vantaggi.scoreboardessential.repository.ColorRepository
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
@@ -79,6 +80,7 @@ class MainViewModel(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val matchSettingsRepository: MatchSettingsRepository,
     application: Application,
+    colorRepository: ColorRepository = ColorRepository(application),
 ) : AndroidViewModel(application) {
     private val playerDao: PlayerDao = AppDatabase.getDatabase(application).playerDao()
     private val matchDao: MatchDao = AppDatabase.getDatabase(application).matchDao()
@@ -359,11 +361,11 @@ class MainViewModel(
     private val _team2Name = MutableLiveData("TEAM 2")
     val team2Name: LiveData<String> = _team2Name
 
-    // Team Colors
-    private val _team1Color = MutableLiveData(0xFFFFA726.toInt())
+    // Team Colors: i predefiniti hanno una sola fonte, ColorRepository (giallo e verde).
+    private val _team1Color = MutableLiveData(colorRepository.getTeam1DefaultColor())
     val team1Color: LiveData<Int> = _team1Color
 
-    private val _team2Color = MutableLiveData(0xFFAEEA00.toInt())
+    private val _team2Color = MutableLiveData(colorRepository.getTeam2DefaultColor())
     val team2Color: LiveData<Int> = _team2Color
 
     // Keeper Timer

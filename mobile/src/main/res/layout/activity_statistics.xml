@@ -10,7 +10,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/asphalt_black"
+        android:background="@android:color/transparent"
         app:layout_constraintTop_toTopOf="parent"
         app:titleTextColor="@color/stencil_white" />
 
@@ -20,8 +20,8 @@
         android:layout_height="wrap_content"
         android:background="@color/asphalt_dark"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
-        app:tabIndicatorColor="@color/team_spray_yellow"
-        app:tabSelectedTextColor="@color/team_spray_yellow"
+        app:tabIndicatorColor="@color/graffiti_pink"
+        app:tabSelectedTextColor="@color/graffiti_pink"
         app:tabTextColor="@color/sidewalk_gray" />
 
     <androidx.recyclerview.widget.RecyclerView

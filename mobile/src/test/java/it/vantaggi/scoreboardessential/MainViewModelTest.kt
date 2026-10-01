@@ -216,6 +216,34 @@ class MainViewModelTest {
         db.close()
     }
 
+    // Passo 10: i valori iniziali erano arancio e lime scritti nel ViewModel, mentre ColorRepository
+    // (e il resto dell'app) dice giallo e verde. Una sola fonte: il ViewModel la chiede al repository.
+    @Test
+    fun `i colori iniziali delle squadre vengono da ColorRepository`() {
+        val coloriFinti =
+            mock(ColorRepository::class.java).apply {
+                `when`(getTeam1DefaultColor()).thenReturn(0xFF112233.toInt())
+                `when`(getTeam2DefaultColor()).thenReturn(0xFF445566.toInt())
+            }
+
+        val conRepositoryFinto =
+            MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication, coloriFinti)
+        altriViewModel.add(conRepositoryFinto)
+
+        assertEquals(0xFF112233.toInt(), conRepositoryFinto.team1Color.value)
+        assertEquals(0xFF445566.toInt(), conRepositoryFinto.team2Color.value)
+    }
+
+    @Test
+    fun `al primo avvio le squadre sono gialla e verde, non arancio e lime`() {
+        val predefiniti = ColorRepository(ApplicationProvider.getApplicationContext<Application>())
+
+        assertEquals(predefiniti.getTeam1DefaultColor(), viewModel.team1Color.value)
+        assertEquals(predefiniti.getTeam2DefaultColor(), viewModel.team2Color.value)
+        assertEquals(0xFFFFD600.toInt(), viewModel.team1Color.value)
+        assertEquals(0xFF76FF03.toInt(), viewModel.team2Color.value)
+    }
+
     @Test
     fun `setTeam1Color updates team1Color LiveData`() {
         // Arrange

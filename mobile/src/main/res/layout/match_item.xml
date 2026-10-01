@@ -16,77 +16,117 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Sport, data e durata in una riga: un 6-4 di padel e un 2-1 di calcio non si confondono. -->
         <TextView
             android:id="@+id/timestamp_textview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textAppearance="?attr/textAppearanceLabelMedium"
-            android:textColor="@color/sidewalk_gray"
-            android:fontFamily="sans-serif-condensed"
             android:layout_marginBottom="12dp"
-            tools:text="12/12/2023 15:30" />
+            android:fontFamily="sans-serif-condensed"
+            android:letterSpacing="0.12"
+            android:textColor="@color/sidewalk_gray"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            tools:text="PADEL · 12/09 18:30 · 47 MIN" />
 
+        <!-- Una riga per squadra: etichetta nel colore con cui si e' giocato, risultato a destra.
+             Chi ha vinto si legge senza il colore: #E0E0E0 contro #9E9E9E. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/team1_name_textview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start|center_vertical"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-condensed"
+                    android:maxLines="1"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="4dp"
+                    android:textAllCaps="true"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:background="@color/team_spray_yellow"
+                    tools:text="Team Alpha" />
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/team1_score_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?attr/textAppearanceDisplayLarge"
-                android:textColor="@color/team_spray_yellow"
-                android:fontFamily="sans-serif-black"
+                android:fontFeatureSettings="tnum"
+                android:fontFamily="sans-serif-condensed"
+                android:textColor="@color/stencil_white"
+                android:textSize="32sp"
+                android:textStyle="bold"
                 tools:text="10" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="@color/sidewalk_gray"
-                android:layout_marginHorizontal="16dp"/>
-
-            <TextView
-                android:id="@+id/team2_score_textview"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="?attr/textAppearanceDisplayLarge"
-                android:textColor="@color/team_electric_green"
-                android:fontFamily="sans-serif-black"
-                tools:text="8" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="4dp">
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/team1_name_textview"
+            <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="start"
-                android:textAppearance="?attr/textAppearanceHeadlineMedium"
-                android:textColor="@color/team_spray_yellow"
-                android:fontFamily="sans-serif-condensed"
-                tools:text="Team Alpha" />
+                android:layout_marginEnd="16dp"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/team2_name_textview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start|center_vertical"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-condensed"
+                    android:maxLines="1"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="4dp"
+                    android:textAllCaps="true"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:background="@color/team_electric_green"
+                    tools:text="Team Beta" />
+            </FrameLayout>
 
             <TextView
-                android:id="@+id/team2_name_textview"
-                android:layout_width="0dp"
+                android:id="@+id/team2_score_textview"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="end"
-                android:textAppearance="?attr/textAppearanceHeadlineMedium"
-                android:textColor="@color/team_electric_green"
+                android:fontFeatureSettings="tnum"
                 android:fontFamily="sans-serif-condensed"
-                tools:text="Team Beta" />
+                android:textColor="@color/sidewalk_gray"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                tools:text="8" />
         </LinearLayout>
+
+        <!-- I set per il tennis, la regola per il padel: c'e' solo dove dice qualcosa. -->
+        <TextView
+            android:id="@+id/sets_textview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="sans-serif-condensed"
+            android:textColor="@color/sidewalk_gray"
+            android:textSize="14sp"
+            android:visibility="gone"
+            tools:text="6-4 · 3-6 · 7-6 (7-4)"
+            tools:visibility="visible" />
 
         <TextView
             android:id="@+id/players_textview"

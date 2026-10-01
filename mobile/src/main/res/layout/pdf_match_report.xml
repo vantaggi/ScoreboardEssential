@@ -18,13 +18,15 @@
         android:textColor="@color/stencil_white"
         android:layout_marginBottom="16dp"/>
 
-    <!-- Result Section -->
+    <!-- Result Section: una banda per squadra nel suo colore, nome e punteggio in TeamInk.
+         Il colore grezzo come testo su #121212 non si leggeva (il blu #0D47A1 fa 2,17:1). -->
     <LinearLayout
+        android:id="@+id/pdf_team1_band"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="24dp">
+        android:orientation="horizontal"
+        android:padding="16dp">
 
         <TextView
             android:id="@+id/pdf_team1_name"
@@ -32,8 +34,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textAppearance="?attr/textAppearanceHeadlineMedium"
-            android:textColor="@color/team_spray_yellow"
-            android:gravity="end"
+            android:textColor="@color/asphalt_black"
             tools:text="TEAM 1"/>
 
         <TextView
@@ -41,27 +42,19 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?attr/textAppearanceDisplayLarge"
-            android:textColor="@color/team_spray_yellow"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
+            android:textColor="@color/asphalt_black"
             tools:text="10"/>
+    </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceHeadlineMedium"
-            android:textColor="@color/stencil_white"
-            android:text="VS"/>
-
-        <TextView
-            android:id="@+id/pdf_team2_score"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceDisplayLarge"
-            android:textColor="@color/neon_cyan"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            tools:text="8"/>
+    <LinearLayout
+        android:id="@+id/pdf_team2_band"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="24dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="16dp">
 
         <TextView
             android:id="@+id/pdf_team2_name"
@@ -69,9 +62,16 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textAppearance="?attr/textAppearanceHeadlineMedium"
-            android:textColor="@color/neon_cyan"
-            android:gravity="start"
+            android:textColor="@color/asphalt_black"
             tools:text="TEAM 2"/>
+
+        <TextView
+            android:id="@+id/pdf_team2_score"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceDisplayLarge"
+            android:textColor="@color/asphalt_black"
+            tools:text="8"/>
     </LinearLayout>
 
     <!-- Formations Section -->

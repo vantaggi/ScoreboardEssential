@@ -1,6 +1,7 @@
 package it.vantaggi.scoreboardessential.utils
 
 import android.content.res.ColorStateList
+import android.view.View
 import android.widget.TextView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.shape.MaterialShapeDrawable
@@ -28,9 +29,51 @@ fun MaterialButton.dipingiDiSquadra(colore: Int) {
  * Prima il colore della squadra era il colore del TESTO su #1E1E1E: con un blu notte l'etichetta
  * spariva (1,26:1). Come riempimento il colore resta riconoscibile e il testo sopra regge sempre
  * almeno 4,58:1.
+ *
+ * Il riempimento deve anche staccarsi dal fondo su cui sta ([sfondo], di norma la card #1E1E1E):
+ * sotto 3:1 (WCAG 1.4.11) un blu notte diventa una macchia nel grigio, e allora prende un
+ * contorno da 1dp #9E9E9E. Il colore resta quello scelto, e' il bordo a farlo vedere.
  */
-fun TextView.etichettaDiSquadra(colore: Int) {
-    val forma = ShapeAppearanceModel.builder(context, R.style.ShapeAppearance_App_StreetBadge, 0).build()
-    background = MaterialShapeDrawable(forma).apply { fillColor = ColorStateList.valueOf(colore) }
+fun TextView.etichettaDiSquadra(
+    colore: Int,
+    sfondo: Int = context.getColor(R.color.concrete_gray),
+) {
+    riempiDiSquadra(colore, sfondo)
     setTextColor(TeamInk.on(colore))
 }
+
+/**
+ * Il riempimento StreetBadge nel colore della squadra, col contorno se non si stacca da [sfondo].
+ * Lo usano le etichette e le bande del PDF: chi ci scrive sopra sceglie l'inchiostro con [TeamInk].
+ */
+fun View.riempiDiSquadra(
+    colore: Int,
+    sfondo: Int,
+) {
+    val forma = ShapeAppearanceModel.builder(context, R.style.ShapeAppearance_App_StreetBadge, 0).build()
+    background =
+        MaterialShapeDrawable(forma).apply {
+            fillColor = ColorStateList.valueOf(colore)
+            if (TeamInk.contrast(colore, sfondo) < CONTRASTO_GRAFICA) {
+                setStroke(resources.displayMetrics.density, context.getColor(R.color.sidewalk_gray))
+            }
+        }
+}
+
+/**
+ * L'anteprima del selettore di colore: un punteggio di esempio e il nome della squadra sul colore
+ * che si sta muovendo, con l'inchiostro che avranno davvero. Cosi' l'utente vede come si
+ * leggera' il colore prima della partita, non a bordo campo.
+ *
+ * Il fondo del dialogo e' #2C2C2C, non la card: il contorno si decide contro quello.
+ */
+fun TextView.anteprimaDiSquadra(
+    colore: Int,
+    nome: String,
+) {
+    etichettaDiSquadra(colore, context.getColor(R.color.graffiti_dark_gray))
+    text = context.getString(R.string.color_preview_text, nome)
+}
+
+/** Sotto questo contrasto una grafica non si stacca dal fondo (WCAG 1.4.11). */
+private const val CONTRASTO_GRAFICA = 3.0
