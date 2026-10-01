@@ -225,6 +225,12 @@ Corretto: 2e54ddd, la scelta si apre solo dopo che l'intenzione del punto e' arr
 
 ## L4 Fine partita e comandi dall'orologio come intenzioni v2
 
+**Nota del 1 ottobre 2026 (design dell'orologio, passo 5).** FINE PARTITA dal menu del polso manda
+ora MATCH_STATE=false come DataItem **urgente** (solo quel percorso: `resetMatch(urgent = true)`), e la
+riga di stato dice "NON CONFERMATA" se in 10s non arriva un v2 col registro passato da pieno a vuoto.
+Il resto di questo lotto resta aperto: nel calcio la voce e' spenta finche' L4 non e' corretto, e un
+MATCH_STATE arrivato in ritardo puo' ancora chiudere una partita (manca l'intenzione con id idempotente).
+
 ### [alta] AZZERA/Finisci sull'orologio nel calcio: lo 0-0 v1 urgente svuota il motore del telefono prima di endMatch, e la partita va persa o viene salvata 0-0
 
 `wear/src/main/java/it/vantaggi/scoreboardessential/wear/WearViewModel.kt` - aree: persistenza, protocollo, ui-wear, concorrenza
