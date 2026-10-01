@@ -12,6 +12,7 @@ import com.google.android.gms.wearable.NodeClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.shared.BuildConfig
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -41,8 +42,11 @@ class OptimizedWearDataSync(
     private val messageClient: MessageClient = Wearable.getMessageClient(context),
     private val capabilityClient: CapabilityClient = Wearable.getCapabilityClient(context),
     private val nodeClient: NodeClient = Wearable.getNodeClient(context),
+    // Iniettabile solo per i test: il costruttore lancia subito un refresh, e su Dispatchers.IO
+    // gira fuori dal controllo di runTest. In produzione resta IO, come prima.
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
-    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     val connectionState = _connectionState.asStateFlow()
@@ -129,7 +133,7 @@ class OptimizedWearDataSync(
         data: Map<String, Any>,
         urgent: Boolean = false,
     ) {
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             var attempt = 0
             var success = false
             while (attempt < WearConstants.MAX_RETRY_ATTEMPTS && !success) {
@@ -189,7 +193,7 @@ class OptimizedWearDataSync(
         path: String,
         data: ByteArray? = null,
     ): Boolean =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             try {
                 // Stesso criterio del pallino: se il nodo non e' collegato davvero il tocco deve finire
                 // nella coda offline, non essere confermato con la vibrazione e poi perso.
@@ -224,7 +228,7 @@ class OptimizedWearDataSync(
         }
 
     suspend fun testConnection(): Boolean {
-        return withContext(Dispatchers.IO) {
+        return withContext(ioDispatcher) {
             try {
                 // Stesso criterio di sendMessage: e' questo esito che decide il toast del telefono.
                 val nodes = nodiCollegati()
