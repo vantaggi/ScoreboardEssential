@@ -1,6 +1,8 @@
 package it.vantaggi.scoreboardessential.wear
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.graphics.drawable.ColorDrawable
 import android.os.Looper
 import android.os.SystemClock
@@ -15,6 +17,7 @@ import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -216,6 +219,91 @@ class MainActivityTest {
     private fun collegati() {
         collegamento.value = ConnectionState.Connected(1)
         idle()
+    }
+
+    // --- La colla fra il quadrante e il menu partita ---
+
+    private fun statoSport(
+        sportId: String,
+        inCorso: Boolean = true,
+    ) = WearScoreState(
+        side1Primary = "6",
+        side1Secondary = "",
+        side2Primary = "4",
+        side2Secondary = "",
+        periodLabel = "",
+        hasClock = false,
+        hasAuxTimer = false,
+        attributesScorer = false,
+        decrementIsUndo = true,
+        sportId = sportId,
+        sportLabel = sportId,
+        sportIds = listOf("padel", "football"),
+        sportLabels = listOf("Padel", "Calcio"),
+        matchInProgress = inCorso,
+        matchOver = false,
+        eventLog = "",
+    )
+
+    private fun apriMenu(): Intent {
+        binding.btnMenu.performClick()
+        return shadowOf(controller.get()).nextStartedActivityForResult.intent
+    }
+
+    private fun sceglieFine(richiesta: Intent) {
+        shadowOf(controller.get()).receiveResult(
+            richiesta,
+            Activity.RESULT_OK,
+            Intent().putExtra(MenuActivity.EXTRA_AZIONE, MenuActivity.AZIONE_FINE),
+        )
+        idle()
+    }
+
+    @Test
+    fun `con un v2 di calcio il menu parte con calcioConV2 acceso, con un v2 di padel spento`() {
+        applica(statoSport("football"))
+        assertTrue(apriMenu().getBooleanExtra(MenuActivity.EXTRA_CALCIO_V2, false))
+
+        applica(statoSport("padel"))
+        assertFalse(apriMenu().getBooleanExtra(MenuActivity.EXTRA_CALCIO_V2, true))
+    }
+
+    @Test
+    fun `la fine partita scelta nel menu porta il ViewModel a CHIUSURA`() {
+        collegati()
+        applica(statoSport("padel"))
+
+        sceglieFine(apriMenu())
+
+        assertEquals(Transitorio.Chiusura, viewModel.statoFiducia.value)
+    }
+
+    @Test
+    fun `se dopo l'apertura del menu arriva un v2 di calcio la chiusura non parte e il menu dice perche'`() {
+        collegati()
+        applica(statoSport("padel"))
+        val richiesta = apriMenu()
+
+        applica(statoSport("football"))
+        sceglieFine(richiesta)
+
+        assertFalse(viewModel.statoFiducia.value is Transitorio.Chiusura)
+        // Il menu si riapre: la voce spenta ha il suo motivo scritto nel sottotitolo.
+        val riaperto = shadowOf(controller.get()).nextStartedActivityForResult.intent
+        assertEquals(MenuActivity::class.java.name, riaperto.component?.className)
+        assertTrue(riaperto.getBooleanExtra(MenuActivity.EXTRA_CALCIO_V2, false))
+    }
+
+    @Test
+    fun `se dopo l'apertura del menu il registro e' gia' vuoto la chiusura non parte`() {
+        collegati()
+        applica(statoSport("padel"))
+        val richiesta = apriMenu()
+
+        applica(statoSport("padel", inCorso = false))
+        sceglieFine(richiesta)
+
+        assertFalse(viewModel.statoFiducia.value is Transitorio.Chiusura)
     }
 
     @Test

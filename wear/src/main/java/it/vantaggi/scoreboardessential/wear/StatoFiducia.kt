@@ -74,7 +74,8 @@ sealed class Transitorio(
 
     data object Chiusura : Transitorio(Tono.CHIARO)
 
-    data object NonChiusa : Transitorio(Tono.AMBRA)
+    /** Il comando e' partito e non si ritira: si dice che manca la conferma, non che non e' chiusa. */
+    data object ChiusuraNonConfermata : Transitorio(Tono.AMBRA)
 }
 
 /**

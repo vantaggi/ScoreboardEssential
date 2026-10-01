@@ -159,6 +159,9 @@ class WearViewModel(
 
         /** Poco sopra la verifica di 2s: oltre, la richiesta al Data Layer si da' per persa. */
         internal const val TIMEOUT_RICHIESTA_MS = StatoFiducia.DURATA_VERIFICA_MS + 500L
+
+        /** Quanto aspetta CHIUSURA... un v2 a partita non cominciata, prima di dire NON CONFERMATA. */
+        internal const val DURATA_ATTESA_CHIUSURA_MS = 10_000L
     }
 
     /**
@@ -294,10 +297,49 @@ class WearViewModel(
     }
 
     /** Un messaggio che dura 2-3s sopra la riga di stato, poi la riga torna da sola. */
-    fun mostraTransitorio(messaggio: Transitorio) {
+    fun mostraTransitorio(
+        messaggio: Transitorio,
+        durataMs: Long = StatoFiducia.DURATA_TRANSITORIO_MS,
+    ) {
         transitorio = messaggio
-        transitorioFinoA = orologio() + StatoFiducia.DURATA_TRANSITORIO_MS
+        transitorioFinoA = orologio() + durataMs
         ricalcolaFiducia()
+    }
+
+    /** La chiusura dal polso e' in attesa del v2 che dice matchInProgress=false. */
+    private var chiusuraInAttesa = false
+
+    /**
+     * Il registro del telefono non era vuoto quando e' partito il comando. Senza questo, il primo
+     * v2 a partita non cominciata (uno qualunque, anche vecchio) passerebbe per la conferma: la
+     * chiusura vale solo se il registro e' passato da non vuoto a vuoto DOPO il comando.
+     */
+    private var registroPienoAlComando = false
+    private var chiusuraJob: Job? = null
+
+    /**
+     * La fine partita scelta dal menu. Usa il comando che esiste gia' ([resetMatch]); qui si
+     * aggiunge solo cio' che il polso DICE mentre aspetta: CHIUSURA... finche' il telefono non
+     * risponde con un v2 a partita non cominciata ([applyStateV2]), e dopo
+     * [DURATA_ATTESA_CHIUSURA_MS] senza risposta NON CONFERMATA, in ambra. Non dice "non chiusa":
+     * il comando e' partito e non si ritira, puo' ancora arrivare. Non si riprova da soli: un
+     * nuovo tentativo senza id idempotente e' proprio cio' che VALIDAZIONE L5 sconsiglia.
+     *
+     * Il MATCH_STATE parte urgente: un DataItem non urgente puo' arrivare al telefono minuti dopo
+     * i 10 secondi, e chiuderebbe la partita a gioco ripreso o quella successiva.
+     */
+    fun chiudiPartita() {
+        registroPienoAlComando = statoDalTelefono?.matchInProgress == true
+        resetMatch(urgent = true)
+        chiusuraInAttesa = true
+        mostraTransitorio(Transitorio.Chiusura, DURATA_ATTESA_CHIUSURA_MS)
+        chiusuraJob?.cancel()
+        chiusuraJob =
+            viewModelScope.launch {
+                delay(DURATA_ATTESA_CHIUSURA_MS)
+                chiusuraInAttesa = false
+                mostraTransitorio(Transitorio.ChiusuraNonConfermata)
+            }
     }
 
     /**
@@ -472,6 +514,13 @@ class WearViewModel(
             batchInVolo != null -> Unit
             pending.size > 0 && rebuildLocalState() -> Unit
             else -> _scoreState.value = state
+        }
+        // Il telefono ha chiuso: CHIUSURA... ha finito, e NON CONFERMATA non deve piu' scattare.
+        // Si toglie solo CHIUSURA...: un altro messaggio (un tocco non confermato) non e' suo.
+        if (chiusuraInAttesa && registroPienoAlComando && !state.matchInProgress) {
+            chiusuraInAttesa = false
+            chiusuraJob?.cancel()
+            if (transitorio is Transitorio.Chiusura) transitorio = null
         }
         // Lo stato puo' restare identico mentre l'ora cambia: il collector non se ne accorgerebbe.
         ricalcolaFiducia()
@@ -944,7 +993,10 @@ class WearViewModel(
 
     // --- Reset ---
 
-    fun resetMatch(fromRemote: Boolean = false) {
+    fun resetMatch(
+        fromRemote: Boolean = false,
+        urgent: Boolean = false,
+    ) {
         // Update local state without sending data if fromRemote is true
         if (fromRemote) {
             _team1Score.value = 0
@@ -963,6 +1015,7 @@ class WearViewModel(
                 connectionManager.sendData(
                     path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_MATCH_STATE,
                     data = data,
+                    urgent = urgent,
                 )
             }
         }

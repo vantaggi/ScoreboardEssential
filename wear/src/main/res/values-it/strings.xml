@@ -10,11 +10,20 @@
     <string name="cd_score_side_undo">%1$s, %2$s. Tocca per segnare, tieni premuto per annullare l ultima azione.</string>
     <string name="cd_team_fallback">Squadra %1$d</string>
 
-    <string name="wear_reset">AZZERA</string>
-    <string name="wear_reset_title">Finire la partita?</string>
-    <string name="wear_reset_message">Punteggi e cronometri tornano a zero.</string>
-    <string name="wear_reset_confirm">Finisci</string>
-    <string name="wear_reset_cancel">Annulla</string>
+    <!-- Menu partita: frasi corte, perche' il tondo da 192dp lascia circa 100dp di larghezza alla voce. -->
+    <string name="cd_menu">Menu partita</string>
+    <string name="wear_menu_title">PARTITA</string>
+    <string name="wear_menu_end">FINE PARTITA</string>
+    <string name="wear_menu_end_saves">Salva %1$s sul telefono</string>
+    <string name="wear_menu_end_confirm">CHIUDERE %1$s?</string>
+    <string name="wear_menu_tap_again">Tocca di nuovo</string>
+    <string name="wear_menu_phone_needed">Serve il telefono</string>
+    <string name="wear_menu_football_on_phone">Chiudi dal telefono</string>
+    <string name="wear_menu_nothing_to_save">Niente da salvare</string>
+    <plurals name="wear_menu_deliver_first">
+        <item quantity="one">Prima consegna %1$d punto</item>
+        <item quantity="other">Prima consegna %1$d punti</item>
+    </plurals>
     <string name="wear_who_scored">CHI HA SEGNATO?</string>
     <string name="wear_no_players">Nessun giocatore</string>
     <string name="wear_nobody">NESSUNO</string>
@@ -33,7 +42,7 @@
     <string name="wear_status_not_confirmed">NON CONFERMATO</string>
     <string name="wear_status_delivered">%1$d CONSEGNATI</string>
     <string name="wear_status_closing">CHIUSURA…</string>
-    <string name="wear_status_not_closed">NON CHIUSA</string>
+    <string name="wear_status_close_unconfirmed">NON CONFERMATA</string>
     <string name="wear_status_not_delivered">%1$d NON CONSEGNATI</string>
     <string name="wear_status_sending">INVIO %1$d…</string>
     <string name="wear_status_queued">%1$d IN CODA</string>
