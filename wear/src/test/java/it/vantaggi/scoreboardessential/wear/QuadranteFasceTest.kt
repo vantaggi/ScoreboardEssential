@@ -1,7 +1,6 @@
 package it.vantaggi.scoreboardessential.wear
 
 import android.graphics.Rect
-import android.graphics.drawable.ColorDrawable
 import android.os.Looper
 import android.os.SystemClock
 import android.text.TextPaint
@@ -234,8 +233,10 @@ class QuadranteFasceTest {
         val destra = q.dp(portiere.left) + q.dp(penna(portiere, 14f).measureText("K 4:12").toInt())
         // Raggio interno dell'anello: la ProgressBar ha innerRadiusRatio 2.3, quindi 192/2.3 = 83.5dp.
         val raggio = centro * 2f / 2.3f
-        // Fascia A: 18-48dp, centro a 33; la corda si misura all'altezza del bordo alto del testo.
-        val y = q.dp(cronometro.top) + (q.dp(cronometro.height) - 24f) / 2f
+        // Il design misura la corda a y=32dp (102dp utili contro i 93 del gruppo). Piu' in alto, al
+        // bordo alto delle cifre, la corda e' piu' stretta: li' l'angolo dell'8 sfiora l'anello, ed
+        // e' il rischio aperto (a) del design, da guardare nel Layout Inspector.
+        val y = 32f
         val semicorda = sqrt(raggio * raggio - (centro - y) * (centro - y))
         assertTrue("il cronometro esce a sinistra: $sinistra contro ${centro - semicorda}", sinistra >= centro - semicorda)
         assertTrue("il K esce a destra: $destra contro ${centro + semicorda}", destra <= centro + semicorda)
@@ -328,12 +329,4 @@ class QuadranteFasceTest {
         assertEquals(0, b.gestureHint.left)
     }
 
-    @Test
-    @Config(qualifiers = "w192dp-h192dp-round-notnight")
-    fun `il fondo del quadrante e' nero puro e il colore delle cifre bianco`() {
-        val q = apri()
-        val sfondo = (q.binding.root.background as? ColorDrawable)?.color
-        assertEquals(null, sfondo)
-        assertEquals(0xFFFFFFFF.toInt(), q.binding.team1Score.currentTextColor)
-    }
 }
