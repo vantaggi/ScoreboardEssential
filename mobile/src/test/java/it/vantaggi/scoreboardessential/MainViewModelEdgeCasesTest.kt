@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Intent
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
+import androidx.lifecycle.viewModelScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.test.core.app.ApplicationProvider
 import it.vantaggi.scoreboardessential.database.MatchDao
@@ -15,6 +16,7 @@ import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSyn
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -88,6 +90,8 @@ class MainViewModelEdgeCasesTest {
 
     @After
     fun tearDown() {
+        // Il viewModelScope si chiude prima di resetMain: onCleared da solo non lo cancella.
+        viewModel.viewModelScope.cancel()
         Dispatchers.resetMain()
         val onClearedMethod = androidx.lifecycle.ViewModel::class.java.getDeclaredMethod("onCleared")
         onClearedMethod.isAccessible = true

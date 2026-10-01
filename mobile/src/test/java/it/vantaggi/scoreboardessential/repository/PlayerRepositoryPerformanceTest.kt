@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.Role
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -13,8 +14,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.io.File
-import kotlin.system.measureTimeMillis
 
 @RunWith(RobolectricTestRunner::class)
 class PlayerRepositoryPerformanceTest {
@@ -48,19 +47,15 @@ class PlayerRepositoryPerformanceTest {
     }
 
     @Test
-    fun benchmarkInsertPlayerWithRoles() =
+    fun `cento giocatori inseriti con venti ruoli ciascuno restano cento, ognuno con i suoi venti`() =
         runTest {
             val player = Player(playerName = "Test Player", appearances = 0, goals = 0)
 
-            val time =
-                measureTimeMillis {
-                    for (i in 0 until 100) {
-                        repository.insertPlayerWithRoles(player.copy(playerName = "Player $i", playerId = 0), roleIds)
-                    }
-                }
-            val result = "BENCHMARK_RESULT: Time taken to insert 100 players with ${roleIds.size} roles each: ${time}ms"
-            println(result)
-            File("benchmark_results.txt").writeText(result)
+            for (i in 0 until 100) {
+                repository.insertPlayerWithRoles(player.copy(playerName = "Player $i", playerId = 0), roleIds)
+            }
+
+            assertEquals("i giocatori inseriti", 100, db.playerDao().getAllPlayers().first().size)
 
             // Verification
             // Since we are running in a transaction/test, we assume IDs start at 1 if fresh DB.

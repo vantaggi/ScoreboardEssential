@@ -57,7 +57,6 @@ class ProtocolloV2DelTelefonoTest {
 
     @Before
     fun setup() {
-        assorbiLavoroResiduoDelLooper()
         nodoA = "orologio-A-${UUID.randomUUID()}"
         nodoB = "orologio-B-${UUID.randomUUID()}"
         service = Robolectric.buildService(SimplifiedDataLayerListenerService::class.java).get()
@@ -69,7 +68,6 @@ class ProtocolloV2DelTelefonoTest {
     @After
     fun tearDown() {
         manager.unregisterReceiver(receiver)
-        assorbiLavoroResiduoDelLooper()
     }
 
     private fun messaggio(
@@ -235,6 +233,10 @@ class ProtocolloV2DelTelefonoTest {
 
     @Test
     fun `sequenza zero o negativa e lato non valido vengono scartati`() {
+        // La guardia `seq <= 0` del servizio e' ridondante: anche senza, 0 e i negativi non superano
+        // `seq <= ultima`, perche' la memoria parte da 0 e conserva solo sequenze positive. Per le
+        // sequenze questo test documenta il contratto, non lo protegge. Quello che protegge e' il
+        // lato non valido: lo scarto deve avvenire PRIMA di aggiornare la sequenza del nodo.
         consegna(tocco(nodoA, 0), tocco(nodoA, -3), tocco(nodoA, 1, lato = 3), tocco(nodoA, 1, lato = 0))
 
         assertEquals(0, ricevuti.size)
