@@ -159,6 +159,9 @@ class WearViewModel(
 
         /** Poco sopra la verifica di 2s: oltre, la richiesta al Data Layer si da' per persa. */
         internal const val TIMEOUT_RICHIESTA_MS = StatoFiducia.DURATA_VERIFICA_MS + 500L
+
+        /** Quanto aspetta CHIUSURA... un v2 a partita non cominciata, prima di dire NON CHIUSA. */
+        internal const val DURATA_ATTESA_CHIUSURA_MS = 10_000L
     }
 
     /**
@@ -294,10 +297,37 @@ class WearViewModel(
     }
 
     /** Un messaggio che dura 2-3s sopra la riga di stato, poi la riga torna da sola. */
-    fun mostraTransitorio(messaggio: Transitorio) {
+    fun mostraTransitorio(
+        messaggio: Transitorio,
+        durataMs: Long = StatoFiducia.DURATA_TRANSITORIO_MS,
+    ) {
         transitorio = messaggio
-        transitorioFinoA = orologio() + StatoFiducia.DURATA_TRANSITORIO_MS
+        transitorioFinoA = orologio() + durataMs
         ricalcolaFiducia()
+    }
+
+    /** La chiusura dal polso e' in attesa del v2 che dice matchInProgress=false. */
+    private var chiusuraInAttesa = false
+    private var chiusuraJob: Job? = null
+
+    /**
+     * La fine partita scelta dal menu. Usa il comando che esiste gia' ([resetMatch]); qui si
+     * aggiunge solo cio' che il polso DICE mentre aspetta: CHIUSURA... finche' il telefono non
+     * risponde con un v2 a partita non cominciata ([applyStateV2]), e dopo
+     * [DURATA_ATTESA_CHIUSURA_MS] senza risposta NON CHIUSA, in ambra. Non si riprova da soli: un
+     * nuovo tentativo senza id idempotente e' proprio cio' che VALIDAZIONE L5 sconsiglia.
+     */
+    fun chiudiPartita() {
+        resetMatch()
+        chiusuraInAttesa = true
+        mostraTransitorio(Transitorio.Chiusura, DURATA_ATTESA_CHIUSURA_MS)
+        chiusuraJob?.cancel()
+        chiusuraJob =
+            viewModelScope.launch {
+                delay(DURATA_ATTESA_CHIUSURA_MS)
+                chiusuraInAttesa = false
+                mostraTransitorio(Transitorio.NonChiusa)
+            }
     }
 
     /**
@@ -472,6 +502,12 @@ class WearViewModel(
             batchInVolo != null -> Unit
             pending.size > 0 && rebuildLocalState() -> Unit
             else -> _scoreState.value = state
+        }
+        // Il telefono ha chiuso: CHIUSURA... ha finito, e NON CHIUSA non deve piu' scattare.
+        if (chiusuraInAttesa && !state.matchInProgress) {
+            chiusuraInAttesa = false
+            chiusuraJob?.cancel()
+            transitorio = null
         }
         // Lo stato puo' restare identico mentre l'ora cambia: il collector non se ne accorgerebbe.
         ricalcolaFiducia()

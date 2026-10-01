@@ -14,27 +14,34 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
-        android:layout_margin="4dp">
+        android:gravity="center_vertical"
+        android:minHeight="52dp"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:layout_margin="2dp">
 
+        <!-- Titolo a 20sp bold: e' testo grande WCAG, serve a FINE PARTITA rosso su #1E1E1E. -->
         <TextView
             android:id="@+id/sport_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textSize="20sp"
             android:textColor="@color/stencil_white"
             android:gravity="center" />
 
+        <!-- La riga secondaria: "in uso" nella scelta dello sport, il perche' o il risultato nel menu. -->
         <TextView
             android:id="@+id/sport_current"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/wear_sport_current"
             android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textSize="13sp"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:gravity="center"
             android:visibility="gone"
-            android:layout_marginTop="4dp" />
+            android:layout_marginTop="2dp" />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

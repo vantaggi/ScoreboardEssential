@@ -188,54 +188,27 @@
             android:autoSizeMinTextSize="10sp"
             android:autoSizeMaxTextSize="@dimen/wear_hint_text_size"
             android:autoSizeStepGranularity="1sp"
-            app:layout_constraintBottom_toTopOf="@id/btn_start_new_match"
+            app:layout_constraintBottom_toTopOf="@id/btn_menu"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
         <!--
-            In basso due comandi: lo sport e la fine della partita. Sono l'unica coppia della
-            schermata, quindi una catena "packed" invece di misure fisse: le etichette sono corte
-            e restano entro il quadrato inscritto anche sui quadranti tondi.
+            In basso un solo bersaglio: il menu partita. Lo sport e la fine della partita sono
+            azioni da una volta per partita e non devono stare sotto il pollice di chi segna senza
+            guardare. Il glifo e' un vettore, non un testo: il significato lo dice la descrizione.
         -->
-        <Button
-            android:id="@+id/btn_sport"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/wear_sport"
-            style="@style/Widget.AppCompat.Button.Borderless"
-            android:textColor="@color/sidewalk_gray"
-            android:fontFamily="sans-serif-condensed"
-            android:textStyle="bold"
-            android:textSize="@dimen/wear_button_text_size"
-            android:minWidth="48dp"
-            android:minHeight="48dp"
-            android:paddingHorizontal="8dp"
-            android:visibility="gone"
-            app:layout_constraintHorizontal_chainStyle="packed"
+        <ImageButton
+            android:id="@+id/btn_menu"
+            android:layout_width="96dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_menu"
+            android:scaleType="center"
+            android:src="@drawable/ic_menu_dots"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btn_start_new_match"
-            android:layout_marginBottom="12dp"
-            tools:visibility="visible" />
-
-        <!-- Reset Button - Bottom Center -->
-        <Button
-            android:id="@+id/btn_start_new_match"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/wear_reset"
-            style="@style/Widget.AppCompat.Button.Borderless"
-            android:textColor="@color/sidewalk_gray"
-            android:fontFamily="sans-serif-condensed"
-            android:textStyle="bold"
-            android:textSize="@dimen/wear_button_text_size"
-            android:minWidth="48dp"
-            android:minHeight="48dp"
-            android:paddingHorizontal="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/btn_sport"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginBottom="12dp"/>
+            android:layout_marginBottom="8dp" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.wear.widget.BoxInsetLayout>

@@ -12,6 +12,9 @@
     <color name="team_spray_yellow">#FFD600</color>
     <color name="team_electric_green">#76FF03</color>
     <color name="error_red">#FF1744</color>
+    <!-- Testo distruttivo su fondi grigi (6.12:1 su #1E1E1E): error_red e' testo solo su nero.
+         Stesso nome e valore del telefono; quando i token passeranno in :shared va tolto da qui. -->
+    <color name="error_text">#FF6E6E</color>
     <!-- Stati di consegna: il punto e' salvo, ma il telefono non ce l'ha. 11.7:1 su nero. Solo al
          polso, perche' la coda di consegna esiste solo li'. -->
     <color name="signal_amber">#FFB300</color>

@@ -25,6 +25,8 @@
 
         <activity android:name=".SportSelectionActivity" android:exported="false" android:taskAffinity="" android:label="@string/wear_sport" />
 
+        <activity android:name=".MenuActivity" android:exported="false" android:taskAffinity="" android:label="@string/wear_menu_title" />
+
         <!--
             Nessun android:permission su questo servizio. Qui c'era BIND_WEARABLE_LISTENER_SERVICE,
             messo per restringere chi puo' collegarsi: ma Google Play Services quel permesso non

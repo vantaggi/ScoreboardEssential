@@ -14,6 +14,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
+import it.vantaggi.scoreboardessential.core.SportRegistry
+import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
 import kotlinx.coroutines.delay
@@ -41,6 +43,19 @@ class MainActivity : ComponentActivity() {
             val sportId = esito.data?.getStringExtra(SportSelectionActivity.EXTRA_CHOSEN)
             if (esito.resultCode == android.app.Activity.RESULT_OK && !sportId.isNullOrBlank()) {
                 viewModel.requestSport(sportId)
+            }
+        }
+
+    /**
+     * Il menu partita torna qui con la scelta: lo sport apre la sua lista, la fine chiude la
+     * partita. Con un risultato annullato (indietro o chiusura automatica) non si fa niente.
+     */
+    private val menu =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { esito ->
+            if (esito.resultCode != android.app.Activity.RESULT_OK) return@registerForActivityResult
+            when (esito.data?.getStringExtra(MenuActivity.EXTRA_AZIONE)) {
+                MenuActivity.AZIONE_SPORT -> apriSceltaSport()
+                MenuActivity.AZIONE_FINE -> viewModel.chiudiPartita()
             }
         }
 
@@ -235,35 +250,51 @@ class MainActivity : ComponentActivity() {
             viewModel.toggleKeeperTimer()
         }
 
-        binding.btnSport.setOnClickListener {
-            val stato = viewModel.scoreState.value ?: return@setOnClickListener
-            if (stato.matchInProgress) {
-                // Il telefono rifiuterebbe comunque: dirlo QUI evita di far partire una richiesta
-                // che si sa gia' come finisce, e di far aspettare una risposta che non cambia niente.
-                android.widget.Toast
-                    .makeText(this, R.string.wear_sport_locked, android.widget.Toast.LENGTH_SHORT)
-                    .show()
-                return@setOnClickListener
-            }
-            sceltaSport.launch(
-                Intent(this, SportSelectionActivity::class.java).apply {
-                    putExtra(SportSelectionActivity.EXTRA_IDS, ArrayList(stato.sportIds))
-                    putExtra(SportSelectionActivity.EXTRA_LABELS, ArrayList(stato.sportLabels))
-                    putExtra(SportSelectionActivity.EXTRA_CURRENT, stato.sportLabel)
-                },
-            )
-        }
+        binding.btnMenu.setOnClickListener { apriMenu() }
+    }
 
-        binding.btnStartNewMatch.setOnClickListener {
-            android.app.AlertDialog
-                .Builder(this)
-                .setTitle(R.string.wear_reset_title)
-                .setMessage(R.string.wear_reset_message)
-                .setPositiveButton(R.string.wear_reset_confirm) { _, _ ->
-                    viewModel.resetMatch()
-                }.setNegativeButton(R.string.wear_reset_cancel, null)
-                .show()
-        }
+    /**
+     * Sport e fine partita stanno nel menu: qui si raccolgono i fatti su cui MenuVoci decide quali
+     * voci accendere, e il menu restituisce solo che cosa si e' scelto.
+     */
+    private fun apriMenu() {
+        val stato = viewModel.scoreState.value
+        // Senza v2 il punteggio e' quello che il polso ha contato da solo.
+        val risultato =
+            if (stato != null) {
+                "${stato.side1Primary}–${stato.side2Primary}"
+            } else {
+                "${viewModel.team1Score.value}–${viewModel.team2Score.value}"
+            }
+        menu.launch(
+            MenuActivity.intent(
+                this,
+                InputMenu(
+                    inCoda = viewModel.pendingCount.value,
+                    collegato = viewModel.connectionState.value is ConnectionState.Connected,
+                    // Senza v2, un tocco in coda e' l'unico segno che si sta giocando.
+                    partitaIniziata = stato?.matchInProgress ?: (viewModel.pendingCount.value > 0),
+                    calcioConV2 = stato?.sportId == SportRegistry.FOOTBALL,
+                    haElencoSport = stato != null && stato.sportIds.size > 1,
+                    sport = stato?.sportLabel.orEmpty(),
+                    risultato = risultato,
+                ),
+            ),
+        )
+    }
+
+    private fun apriSceltaSport() {
+        val stato = viewModel.scoreState.value ?: return
+        // Il menu l'ha gia' deciso, ma fra il tocco e qui puo' essere arrivato un nuovo stato: il
+        // telefono rifiuterebbe comunque, e far partire una richiesta persa non cambia niente.
+        if (stato.matchInProgress) return
+        sceltaSport.launch(
+            Intent(this, SportSelectionActivity::class.java).apply {
+                putExtra(SportSelectionActivity.EXTRA_IDS, ArrayList(stato.sportIds))
+                putExtra(SportSelectionActivity.EXTRA_LABELS, ArrayList(stato.sportLabels))
+                putExtra(SportSelectionActivity.EXTRA_CURRENT, stato.sportLabel)
+            },
+        )
     }
 
     /**
@@ -276,9 +307,6 @@ class MainActivity : ComponentActivity() {
         bindDetail(binding.team1ScoreDetail, state.side1Secondary)
         bindDetail(binding.team2ScoreDetail, state.side2Secondary)
         applyGestureLabels(state.decrementIsUndo)
-        // Senza elenco non c'e' niente da scegliere: succede con un telefono che parla una bozza
-        // precedente del v2. Il comando non compare invece di aprire una lista vuota.
-        binding.btnSport.visibility = if (state.sportIds.size > 1) View.VISIBLE else View.GONE
         applyMatchOver(state.matchOver)
 
         applyClockRole(state)
