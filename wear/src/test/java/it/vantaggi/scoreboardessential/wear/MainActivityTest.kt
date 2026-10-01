@@ -13,6 +13,7 @@ import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -40,6 +41,7 @@ class MainActivityTest {
     private lateinit var viewModel: WearViewModel
     private lateinit var binding: ActivityMainBinding
     private lateinit var collegamento: MutableStateFlow<ConnectionState>
+    private lateinit var telefono: OptimizedWearDataSync
 
     @Before
     fun setup() {
@@ -54,7 +56,7 @@ class MainActivityTest {
         // Il collegamento lo decide il test, come farebbe il listener della capability. L'orologio
         // del ViewModel e' quello di Robolectric, che si sposta con idleFor: niente attese vere.
         collegamento = MutableStateFlow(ConnectionState.Disconnected)
-        val telefono = Mockito.mock(OptimizedWearDataSync::class.java)
+        telefono = Mockito.mock(OptimizedWearDataSync::class.java)
         Mockito.`when`(telefono.connectionState).thenReturn(collegamento)
         viewModel = WearViewModel(app, telefono, orologio = { SystemClock.uptimeMillis() + 1_000_000L })
         controller = Robolectric.buildActivity(MainActivity::class.java)
@@ -276,6 +278,17 @@ class MainActivityTest {
         assertEquals("MATCH OVER", riga())
         assertEquals(colore(R.color.stencil_white), coloreRiga())
         assertTrue(!binding.team1Container.isClickable)
+    }
+
+    @Test
+    fun `il giro dei 15 secondi non parte da STARTED, serve la schermata in primo piano`() {
+        // Partita in corso, schermo visibile ma non in primo piano (STARTED senza RESUMED: schermo
+        // spento, quadrante di sistema sopra): nessuno guarda la riga, niente richieste.
+        applica(stato(hasClock = false, periodo = "Set 1"))
+
+        passano(60)
+
+        runBlocking { Mockito.verify(telefono, Mockito.never()).refreshConnection() }
     }
 
     private fun mettiInCoda(quanti: Int) {
