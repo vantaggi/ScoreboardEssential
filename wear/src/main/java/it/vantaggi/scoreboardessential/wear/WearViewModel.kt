@@ -412,9 +412,9 @@ class WearViewModel(
     // proprieta' resta quella di prima, con un flusso dietro che tiene i due in accordo.
     private val _matchTimerRunning = MutableStateFlow(false)
     val matchTimerRunning = _matchTimerRunning.asStateFlow()
-    private var isMatchTimerRunning: Boolean
-        get() = _matchTimerRunning.value
+    private var isMatchTimerRunning: Boolean = false
         set(value) {
+            field = value
             _matchTimerRunning.value = value
         }
 
