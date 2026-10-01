@@ -8,7 +8,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -131,19 +130,12 @@ class MenuActivity : ComponentActivity() {
         riarmaChiusura()
     }
 
+    // Anche la rotazione della corona passa di qui: Activity.dispatchGenericMotionEvent chiama
+    // onUserInteraction prima di consegnare l'evento, anche quando lo ScrollView non ha dove
+    // scorrere (lo prova il test sulla corona). Un override dedicato sarebbe codice morto.
     override fun onUserInteraction() {
         super.onUserInteraction()
         riarmaChiusura()
-    }
-
-    /**
-     * La corona e' un evento di movimento generico, e per quelli onUserInteraction non scatta. Lo
-     * ScrollView che scorre riarma da solo, ma a fine corsa (voci tutte visibili) ruotare la
-     * corona non sposta niente: senza questo il menu si chiuderebbe sotto la mano.
-     */
-    override fun dispatchGenericMotionEvent(ev: MotionEvent): Boolean {
-        riarmaChiusura()
-        return super.dispatchGenericMotionEvent(ev)
     }
 
     override fun onDestroy() {
