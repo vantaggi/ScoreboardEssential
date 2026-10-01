@@ -9,6 +9,8 @@ import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -49,6 +51,10 @@ class OptimizedWearDataSyncTest {
     @Mock
     private lateinit var mockNode: Node
 
+    // Il costruttore lancia subito un refresh sul dispatcher: con questo gira solo quando il test
+    // lo decide (advanceUntilIdle), non su un thread IO vero fuori da runTest.
+    private val testDispatcher = StandardTestDispatcher()
+
     private lateinit var optimizedWearDataSync: OptimizedWearDataSync
 
     @Before
@@ -64,8 +70,11 @@ class OptimizedWearDataSyncTest {
         whenever(mockCapabilityClient.getCapability(any(), any())).thenReturn(task)
         // Di base il nodo e' collegato davvero; i test sul collegamento fantasma lo tolgono.
         whenever(mockNodeClient.connectedNodes).thenReturn(Tasks.forResult(listOf(mockNode)))
+    }
 
-        // Initialize with mocks - this bypasses the Wearable.getDataClient static calls
+    // Va chiamata DOPO gli stub: il costruttore avvia subito il refresh, che li legge.
+    // Con i mock bypassa le chiamate statiche a Wearable.getDataClient.
+    private fun creaSync() {
         optimizedWearDataSync =
             OptimizedWearDataSync(
                 mockContext,
@@ -73,18 +82,20 @@ class OptimizedWearDataSyncTest {
                 mockMessageClient,
                 mockCapabilityClient,
                 mockNodeClient,
+                testDispatcher,
             )
     }
 
     @Test
     fun `sendMessage sends to capable nodes`() =
-        runTest {
+        runTest(testDispatcher) {
             // Arrange
             val path = "/test/path"
             val data = "test data".toByteArray()
 
             val voidTask = Tasks.forResult<Int>(1) // sendMessage returns Task<Integer>
             whenever(mockMessageClient.sendMessage(any(), any(), any())).thenReturn(voidTask)
+            creaSync()
 
             // Act
             optimizedWearDataSync.sendMessage(path, data)
@@ -105,10 +116,11 @@ class OptimizedWearDataSyncTest {
 
     @Test
     fun `testConnection returns true when nodes are available`() =
-        runTest {
+        runTest(testDispatcher) {
             // Arrange
             val voidTask = Tasks.forResult<Int>(1)
             whenever(mockMessageClient.sendMessage(any(), any(), any())).thenReturn(voidTask)
+            creaSync()
 
             // Act
             val result = optimizedWearDataSync.testConnection()
@@ -123,8 +135,9 @@ class OptimizedWearDataSyncTest {
     // i dati non passano. Conta solo il nodo che compare anche tra i connectedNodes.
     @Test
     fun `capability senza nodo collegato vale Disconnected`() =
-        runTest {
+        runTest(testDispatcher) {
             whenever(mockNodeClient.connectedNodes).thenReturn(Tasks.forResult(emptyList()))
+            creaSync()
 
             optimizedWearDataSync.refreshConnection()
 
@@ -133,7 +146,9 @@ class OptimizedWearDataSyncTest {
 
     @Test
     fun `stesso nodo in capability e connectedNodes vale Connected`() =
-        runTest {
+        runTest(testDispatcher) {
+            creaSync()
+
             optimizedWearDataSync.refreshConnection()
 
             assertEquals(ConnectionState.Connected(1), optimizedWearDataSync.connectionState.value)
@@ -143,9 +158,10 @@ class OptimizedWearDataSyncTest {
     // collegato il tocco deve risultare NON consegnato, cosi' finisce in coda invece di sparire.
     @Test
     fun `sendMessage senza nodo collegato ritorna false e non spedisce`() =
-        runTest {
+        runTest(testDispatcher) {
             whenever(mockNodeClient.connectedNodes).thenReturn(Tasks.forResult(emptyList()))
             whenever(mockMessageClient.sendMessage(any(), any(), any())).thenReturn(Tasks.forResult(1))
+            creaSync()
 
             val consegnato = optimizedWearDataSync.sendMessage("/test/path", "x".toByteArray())
 
@@ -155,10 +171,36 @@ class OptimizedWearDataSyncTest {
 
     @Test
     fun `testConnection senza nodo collegato ritorna false`() =
-        runTest {
+        runTest(testDispatcher) {
             whenever(mockNodeClient.connectedNodes).thenReturn(Tasks.forResult(emptyList()))
             whenever(mockMessageClient.sendMessage(any(), any(), any())).thenReturn(Tasks.forResult(1))
+            creaSync()
 
             assertFalse(optimizedWearDataSync.testConnection())
+        }
+
+    // All'avvio il costruttore rinfresca lo stato da solo: senza, il pallino resterebbe
+    // Disconnected fino al primo evento della capability, che col Bluetooth stabile non arriva.
+    @Test
+    fun `alla costruzione il refresh iniziale porta lo stato a Connected`() =
+        runTest(testDispatcher) {
+            creaSync()
+            assertEquals(ConnectionState.Disconnected, optimizedWearDataSync.connectionState.value)
+
+            advanceUntilIdle()
+
+            assertEquals(ConnectionState.Connected(1), optimizedWearDataSync.connectionState.value)
+        }
+
+    // Dopo cleanup() lo scope e' cancellato: un refresh ancora in coda non deve piu' toccare lo stato.
+    @Test
+    fun `cleanup cancella il refresh iniziale ancora in coda`() =
+        runTest(testDispatcher) {
+            creaSync()
+
+            optimizedWearDataSync.cleanup()
+            advanceUntilIdle()
+
+            assertEquals(ConnectionState.Disconnected, optimizedWearDataSync.connectionState.value)
         }
 }
