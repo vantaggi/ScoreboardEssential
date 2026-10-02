@@ -603,7 +603,7 @@ class WearViewModel(
         // stato, e qui non si tocca. Tutto il resto fa decadere quella che c'era.
         chiudiFinestraChiSeNonVera(state)
         // L'ora sul disco la scrive WearDataLayerService, che c'e' anche ad app chiusa.
-        ultimaNota.save(state.sportId, state.eventLog)
+        ultimaNota.save(state.sportId, state.eventLog, state.servingSlot)
         when {
             batchInVolo != null -> Unit
             pending.size > 0 && rebuildLocalState() -> Unit
@@ -925,6 +925,8 @@ class WearViewModel(
             // A freddo non si sa: lo dira' il ricalcolo, che parte subito dopo.
             matchOver = false,
             eventLog = ultimaNota.eventLog,
+            // Senza questo il ricalcolo tratterebbe un tennis in doppio come un singolare.
+            servingSlot = if (ultimaNota.inCoppia) 1 else 0,
         )
     }
 

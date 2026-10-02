@@ -21,6 +21,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -282,6 +283,38 @@ class OfflineScoreTest {
 
         assertEquals("terzo game: batte il secondo giocatore", 2, viewModel.scoreState.value?.servingSlot)
         assertEquals(1, viewModel.scoreState.value?.servingSide)
+    }
+
+    @Test
+    fun `un tennis in doppio ritrovato dal disco senza telefono ha ancora due pallini`() {
+        // Il telefono racconta un doppio (batte il primo), poi l'orologio si riavvia: la memoria
+        // e' vuota, resta il disco. Senza il flag salvato il ricalcolo lo prenderebbe per singolare.
+        LastKnownMatch(RuntimeEnvironment.getApplication())
+            .save(SportRegistry.TENNIS, "", servingSlot = 1)
+        repeat(8) { i -> coda.add(PendingIntent(WearConstants.INTENT_POINT, if (i < 4) 1 else 2, (i + 1) * 1_000L)) }
+
+        viewModel.refreshPendingCount()
+
+        assertEquals("terzo game: batte il secondo giocatore", 2, viewModel.scoreState.value?.servingSlot)
+    }
+
+    @Test
+    fun `la coppia salvata si azzera quando la partita cambia`() {
+        val nota = LastKnownMatch(RuntimeEnvironment.getApplication())
+        val registro = MatchLogCodec.encode(motorePadel().also { it.apply(ScoringEvent.Point(side = 1)) }.log)
+        nota.save(SportRegistry.TENNIS, registro, servingSlot = 1)
+        // Stesso sport e registro che prosegue: il telefono puo' non mandare lo slot, il flag resta.
+        nota.save(SportRegistry.TENNIS, registro, servingSlot = 0)
+        assertTrue(nota.inCoppia)
+
+        // Registro che riparte da vuoto: nuova partita, singolare.
+        nota.save(SportRegistry.TENNIS, "", servingSlot = 0)
+        assertFalse(nota.inCoppia)
+
+        nota.save(SportRegistry.TENNIS, registro, servingSlot = 1)
+        // Sport diverso: il flag non si porta dietro.
+        nota.save(SportRegistry.PADEL, registro, servingSlot = 0)
+        assertFalse(nota.inCoppia)
     }
 
     @Test
