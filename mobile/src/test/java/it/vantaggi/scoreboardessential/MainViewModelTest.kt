@@ -94,6 +94,7 @@ class MainViewModelTest {
     // Gli stati del portiere del service finto: i test di L8 li muovono.
     private val portiereInCorso = kotlinx.coroutines.flow.MutableStateFlow(false)
     private val portiereScaduto = kotlinx.coroutines.flow.MutableSharedFlow<Unit>()
+    private val portiereValore = kotlinx.coroutines.flow.MutableStateFlow(0L)
 
     @Before
     fun setup() {
@@ -110,7 +111,7 @@ class MainViewModelTest {
         // Mock StateFlows to avoid NPE in onServiceConnected
         whenever(mockMatchTimerService.matchTimerValue).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(0L))
         whenever(mockMatchTimerService.isMatchTimerRunning).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(false))
-        whenever(mockMatchTimerService.keeperTimerValue).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(0L))
+        whenever(mockMatchTimerService.keeperTimerValue).thenReturn(portiereValore)
         whenever(mockMatchTimerService.isKeeperTimerRunning).thenReturn(portiereInCorso)
         whenever(mockMatchTimerService.keeperTimerExpired).thenReturn(portiereScaduto)
 
@@ -1741,13 +1742,17 @@ class MainViewModelTest {
 
             viewModel.toccaIlPortiere()
 
-            verify(mockMatchTimerService).startKeeperTimer(300_000L, false)
+            verify(mockMatchTimerService).restartKeeperTimer(300_000L)
+            verify(mockMatchTimerService, never()).startKeeperTimer(any(), any())
             verify(mockMatchTimerService, never()).resetKeeperTimer(any())
         }
 
-    /** Passo 13: in corso il tocco riparte da capo, cioe' azzera e poi avvia dalla durata piena. */
+    /**
+     * Passo 13: in corso il tocco riparte da capo con l'operazione unica del service, non con un
+     * azzeramento e un avvio separati: due invii all'orologio sullo stesso path, e vinceva l'ultimo.
+     */
     @Test
-    fun `il tocco sul portiere in corso riparte da capo`() =
+    fun `il tocco sul portiere in corso riparte da capo con una operazione sola`() =
         runTest {
             collegaIlService()
             advanceUntilIdle()
@@ -1757,9 +1762,33 @@ class MainViewModelTest {
 
             viewModel.toccaIlPortiere()
 
-            val inOrdine = org.mockito.Mockito.inOrder(mockMatchTimerService)
-            inOrdine.verify(mockMatchTimerService).resetKeeperTimer(false)
-            inOrdine.verify(mockMatchTimerService).startKeeperTimer(300_000L, false)
+            verify(mockMatchTimerService).restartKeeperTimer(300_000L)
+            verify(mockMatchTimerService, never()).resetKeeperTimer(any())
+            verify(mockMatchTimerService, never()).startKeeperTimer(any(), any())
+        }
+
+    /**
+     * Pausa dall'orologio con un residuo, poi il cambio di durata nelle impostazioni: la copia nel
+     * ViewModel dice "fermo a durata piena" (setKeeperTimer la sovrascrive) mentre il service ha
+     * ancora il residuo. Il tocco deve partire dalla durata piena lo stesso, senza dedurre dalla copia.
+     */
+    @Test
+    fun `il tocco dopo una pausa dall'orologio e un cambio di durata riparte dalla durata piena`() =
+        runTest {
+            collegaIlService()
+            advanceUntilIdle()
+            viewModel.setKeeperTimer(300)
+            portiereInCorso.value = true
+            advanceUntilIdle()
+            portiereValore.value = 120_000L
+            portiereInCorso.value = false
+            advanceUntilIdle()
+            viewModel.setKeeperTimer(300)
+
+            viewModel.toccaIlPortiere()
+
+            verify(mockMatchTimerService).restartKeeperTimer(300_000L)
+            verify(mockMatchTimerService, never()).startKeeperTimer(any(), any())
         }
 
     /**
@@ -1786,7 +1815,7 @@ class MainViewModelTest {
 
             viewModel.toccaIlPortiere()
 
-            verify(mockMatchTimerService).startKeeperTimer(300_000L, false)
+            verify(mockMatchTimerService).restartKeeperTimer(300_000L)
             verify(mockMatchTimerService, never()).resetKeeperTimer(any())
             assertEquals("il tocco toglie SCADUTO", false, viewModel.isKeeperTimerExpired.value)
         }

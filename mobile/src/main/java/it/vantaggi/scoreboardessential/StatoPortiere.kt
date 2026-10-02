@@ -31,15 +31,3 @@ internal fun descrizioneDelPortiere(
         StatoPortiere.IN_CORSO -> context.getString(R.string.cd_keeper_running, conto)
         StatoPortiere.SCADUTO -> context.getString(R.string.cd_keeper_expired)
     }
-
-/**
- * Il tocco parte sempre dalla durata piena, mai da un residuo: davanti a un residuo il service
- * riprenderebbe da li'. Quindi un conto in corso (il cambio e' avvenuto) o fermo a meta', in pausa
- * dall'orologio ([residuo] fra 0 e [durata], esclusi), va azzerato prima di ripartire. Da fermo
- * a durata piena, o scaduto a zero, non c'e' niente da azzerare.
- */
-internal fun toccoDelPortiereAzzera(
-    inCorso: Boolean,
-    residuo: Long,
-    durata: Long,
-): Boolean = inCorso || residuo in 1 until durata

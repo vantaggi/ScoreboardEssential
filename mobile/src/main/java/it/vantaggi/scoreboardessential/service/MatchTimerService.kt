@@ -294,6 +294,8 @@ class MatchTimerService : Service() {
         if (wakeLock?.isHeld == false) {
             wakeLock?.acquire()
         }
+        // Un conto che parte chiude l'avviso di scadenza di quello di prima (il tocco su CAMBIO).
+        NotificationManagerCompat.from(this).cancel(KEEPER_TIMER_EXPIRED_NOTIFICATION_ID)
         // Una ripresa non cambia la durata configurata: il residuo e' solo il punto da cui ripartire.
         if (keeperRemainingOnPause <= 0) keeperDuration = durationMillis
         val duration = if (keeperRemainingOnPause > 0) keeperRemainingOnPause else durationMillis
@@ -362,11 +364,9 @@ class MatchTimerService : Service() {
     }
 
     fun resetKeeperTimer(fromRemote: Boolean = false) {
-        _isKeeperTimerRunning.value = false
-        keeperTimerJob?.cancel()
-        _keeperTimerValue.value = 0L
-        keeperTimerEndTime = 0L
-        keeperRemainingOnPause = 0L
+        azzeraIlConto()
+        // Come l'avvio: un azzeramento chiude l'avviso di scadenza ancora in vista.
+        NotificationManagerCompat.from(this).cancel(KEEPER_TIMER_EXPIRED_NOTIFICATION_ID)
 
         if (!fromRemote) {
             scope.launch {
@@ -379,6 +379,27 @@ class MatchTimerService : Service() {
         }
         checkStopForegroundAndWakeLock()
         saveState()
+    }
+
+    /**
+     * Riparte da capo dalla durata piena, qualunque cosa ci sia nel conto: in corso, fermo a meta'
+     * o scaduto. Un'operazione sola e un solo messaggio all'orologio. Con [resetKeeperTimer] e poi
+     * [startKeeperTimer] i due invii partivano da due coroutine sullo stesso path, e l'ultimo a
+     * scrivere vinceva senza un ordine garantito: l'orologio poteva restare con l'azzeramento.
+     */
+    fun restartKeeperTimer(durationMillis: Long) {
+        azzeraIlConto()
+        _keeperTimerValue.value = durationMillis
+        startKeeperTimer(durationMillis)
+    }
+
+    /** Lo stato interno del conto a zero, senza dirlo a nessuno: il chiamante decide che cosa mandare. */
+    private fun azzeraIlConto() {
+        _isKeeperTimerRunning.value = false
+        keeperTimerJob?.cancel()
+        _keeperTimerValue.value = 0L
+        keeperTimerEndTime = 0L
+        keeperRemainingOnPause = 0L
     }
 
     /**

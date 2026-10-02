@@ -1588,22 +1588,19 @@ class MainViewModel(
     }
 
     /**
-     * Il tocco sullo slot del portiere sul telefono. Parte sempre dalla durata piena: da fermo o
-     * scaduto avvia, in corso riparte da capo (il cambio e' avvenuto). Un conto in corso o fermo a
-     * meta' (pausa dall'orologio) si azzera prima, altrimenti il service riprenderebbe dal residuo.
-     * L'azzeramento va al service e non a [resetKeeperTimer]: nel registro resta solo
-     * «Keeper timer started», senza una riga di azzeramento che nessuno ha chiesto.
+     * Il tocco sullo slot del portiere sul telefono. Parte sempre dalla durata piena, qualunque
+     * cosa dica la copia del conto qui: da fermo, scaduto, in corso (il cambio e' avvenuto) o fermo
+     * a meta' (pausa dall'orologio) il service azzera e riavvia in un'operazione sola
+     * ([MatchTimerService.restartKeeperTimer]). La copia nel ViewModel la possono sovrascrivere
+     * [setKeeperTimer] e l'orologio, e dedurre da lei se azzerare lasciava il residuo nel service.
+     * Nel registro resta solo «Keeper timer started», senza una riga di azzeramento che nessuno
+     * ha chiesto.
      */
     fun toccaIlPortiere() {
         if (!isServiceBound) return
-        val azzera =
-            toccoDelPortiereAzzera(
-                inCorso = _isKeeperTimerRunning.value ?: false,
-                residuo = _keeperTimerValue.value ?: 0L,
-                durata = keeperTimerDuration,
-            )
-        if (azzera) matchTimerService?.resetKeeperTimer()
-        startKeeperTimer()
+        _isKeeperTimerExpired.value = false
+        matchTimerService?.restartKeeperTimer(keeperTimerDuration)
+        addMatchEvent("Keeper timer started (${keeperTimerDuration / 1000}s)")
     }
 
     fun pauseKeeperTimer(fromRemote: Boolean = false) {
