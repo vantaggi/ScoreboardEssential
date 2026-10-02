@@ -2137,3 +2137,15 @@ Fermo il 2 ottobre alle 15:00: limite delle 5 ore al 98% (si azzera alle 16:20),
 3. Pallini: si salva sull'orologio se la partita e' in coppia (rimedio della media). Il padel con un
    telefono senza la chiave serving_slot puo' mostrare 1 pallino sul telefono e 2 al polso: accettato
    come effetto della convivenza fra versioni.
+
+**Chiuso il 2 ottobre** (`dcb2641`, `e77b0e7`, `91fa668`): pallini di chi batte (con la coppia salvata
+al polso per il riavvio a freddo, `75a2d4a`), SPORT spenta da scollegati, Cronaca del tennis singolare
+(lato al servizio dall'alternanza, servizio e palle break per squadra, frase senza rose; revisione Opus:
+col punteggio a game la griglia non mostra piu' la B, corretto nel merge). Suite verde, **776 test JVM
+distinti** (core 154, mobile 342, shared 33, wear 247), strumentati 32 su 32 (laZonaPiuNonSiSposta
+compresa, con lo slot dei pallini largo 28dp).
+**Limite dichiarato:** nel singolare chi serve per primo e' sempre il lato 1 (nessun comando per
+sceglierlo): tabellone, pallino e Cronaca concordano fra loro. Un comando per scegliere chi serve per
+primo a partita ferma e' una funzione futura. Il nome `isSingles` vale per ogni tennis senza ordine di
+quattro (anche un doppio senza rose): i numeri restano giusti perche' anche nel doppio i lati alternano
+a ogni game; da unificare con `SportConfig.doublesWithoutOrder`.
