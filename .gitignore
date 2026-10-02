@@ -29,3 +29,7 @@ keystore.properties
 
 # Log del daemon Kotlin, rigenerati a ogni build
 .kotlin/
+
+# Resoconti di crash della JVM (daemon di Gradle)
+hs_err_pid*.log
+replay_pid*.log
