@@ -590,6 +590,43 @@ class MainActivityLayoutTest {
         }
     }
 
+    /**
+     * Nel padel ANNULLA e' un tocco solo e senza dialogo: due tocchi rapidi toglievano due punti.
+     * I tocchi sono due performClick nello stesso passo sul thread principale, quindi entro i 500 ms
+     * qualunque sia la velocita' dell'emulatore.
+     */
+    @Test
+    fun nelPadel_due_tocchi_rapidi_su_ANNULLA_tolgono_un_punto_solo_e_uno_piu_tardi_ne_toglie_un_altro() {
+        conPadel { scenario, modello ->
+            fun punteggio(): String {
+                var testo = ""
+                scenario.onActivity {
+                    testo =
+                        modello.scoreDisplay.value
+                            ?.let { d -> "${d.side1Primary}-${d.side2Primary}" }
+                            .orEmpty()
+                }
+                return testo
+            }
+            val zero = punteggio()
+            scenario.onActivity { modello.addScore(1) }
+            val unPunto = punteggio()
+            scenario.onActivity { modello.addScore(1) }
+            assertTrue("i due punti non cambiano il punteggio: la prova non misurerebbe niente", punteggio() != unPunto)
+
+            scenario.onActivity {
+                val annulla = it.findViewById<View>(R.id.undo_goal_button)
+                annulla.performClick()
+                annulla.performClick()
+            }
+            assertEquals("due tocchi rapidi devono togliere un punto solo", unPunto, punteggio())
+
+            Thread.sleep(700)
+            scenario.onActivity { it.findViewById<View>(R.id.undo_goal_button).performClick() }
+            assertEquals("un tocco dopo il rimbalzo e' una scelta e toglie l'altro punto", zero, punteggio())
+        }
+    }
+
     @Test
     fun nelCalcio_ANNULLA_apre_ancora_il_dialogo_e_non_toglie_il_gol_finche_non_si_conferma() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->

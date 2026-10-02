@@ -1632,6 +1632,30 @@ class MainViewModelTest {
             viewModel.team1Score.removeObserver(scoreObserver)
         }
 
+    /**
+     * Il telefono non rimanda ANNULLA: a fine ripristino toglierebbe un punto che chi tocca non ha mai
+     * visto, e la striscia non ha modo di dirlo. Si scarta, e finito il ripristino non succede niente.
+     */
+    @Test
+    fun `annullaUltimaAzione non rimandabile durante il ripristino viene scartata`() =
+        runTest {
+            val scoreObserver = Observer<Int> {}
+            viewModel.team1Score.observeForever(scoreObserver)
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            imposta("ripristinoInCorso", true)
+
+            assertEquals("scartato, non rimandato", null, viewModel.annullaUltimaAzione(rimandabile = false))
+            // Chiude la finestra del ripristino e applica i tocchi tenuti da parte (privato: via reflection).
+            MainViewModel::class.java
+                .getDeclaredMethod("fineRipristino")
+                .apply { isAccessible = true }
+                .invoke(viewModel)
+
+            assertEquals("a ripristino finito il punto e' ancora li'", 1, viewModel.team1Score.value)
+            viewModel.team1Score.removeObserver(scoreObserver)
+        }
+
     @Test
     fun `attributeScorer dice se ha attribuito`() =
         runTest {

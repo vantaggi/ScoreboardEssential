@@ -138,6 +138,19 @@ private fun String.maiuscolo(): String = uppercase(Locale.getDefault())
  */
 internal fun annullaChiedeConferma(capacita: SportCapabilities?): Boolean = capacita?.attributesScorer != false
 
+/** Il tempo entro cui un secondo tocco su ANNULLA e' un rimbalzo del dito e non una scelta. */
+internal const val FINESTRA_TOCCHI_ANNULLA_MS = 500L
+
+/**
+ * Nel padel e nel tennis ANNULLA e' un tocco solo, senza il dialogo che faceva da filtro: due tocchi
+ * rapidi toglievano due punti. Il secondo entro [FINESTRA_TOCCHI_ANNULLA_MS] dal precedente si ignora.
+ * [precedente] e' l'istante dell'ultimo tocco accettato, null se non ce ne sono stati.
+ */
+internal fun toccoAnnullaRipetuto(
+    adesso: Long,
+    precedente: Long?,
+): Boolean = precedente != null && adesso - precedente < FINESTRA_TOCCHI_ANNULLA_MS
+
 /**
  * Il messaggio di 3 secondi dopo ANNULLA: cosa e' stato tolto e a chi, «ANNULLATO: PUNTO ROSSI».
  * Una correzione tolta (il -1 del calcio) e' una «CORREZIONE», non un gol.

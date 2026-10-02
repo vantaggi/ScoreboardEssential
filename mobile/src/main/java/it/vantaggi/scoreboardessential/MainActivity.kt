@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -205,6 +206,9 @@ class MainActivity :
     private lateinit var team2FormationLabel: TextView
 
     private var vibrator: Vibrator? = null
+
+    // L'istante dell'ultimo tocco su ANNULLA accettato, per ignorare il rimbalzo del dito.
+    private var ultimoToccoAnnulla: Long? = null
 
     private val requestPermissionLauncher =
         registerForActivityResult(
@@ -989,10 +993,16 @@ class MainActivity :
      * Annulla l'ultima azione e ne da' il segno: il doppio tick dell'annullamento (lo stesso
      * schema condiviso con l'orologio, HapticFeedbackManager.PATTERN_UNDO) e «ANNULLATO: PUNTO
      * ROSSI» per 3 secondi nella striscia. Tutti e due solo se il motore ha tolto davvero
-     * qualcosa: il tocco puo' essere rimandato dal ripristino, o non trovare che eventi inerti.
+     * qualcosa: il tocco puo' cadere durante il ripristino (e si scarta), o non trovare che eventi
+     * inerti. Un tocco entro mezzo secondo dal precedente si ignora ([toccoAnnullaRipetuto]).
      */
     private fun annullaEMostra() {
-        val tolto = viewModel.annullaUltimaAzione() ?: return
+        val adesso = SystemClock.elapsedRealtime()
+        if (toccoAnnullaRipetuto(adesso, ultimoToccoAnnulla)) return
+        ultimoToccoAnnulla = adesso
+        // Rimandarlo non serve: durante il ripristino a schermo non c'e' ancora niente da annullare,
+        // e a ripristino finito toglierebbe un punto che chi tocca non ha mai visto, senza segnale.
+        val tolto = viewModel.annullaUltimaAzione(rimandabile = false) ?: return
         vibrator?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_UNDO, NON_RIPETERE))
         mostraMessaggioInStriscia(
             testoDellAnnullamento(

@@ -1501,8 +1501,13 @@ class MainViewModel(
      * Restituisce l'evento tolto, cosi' la striscia puo' dire COSA e' stato annullato («ANNULLATO:
      * PUNTO ROSSI»). Null se non ha tolto niente: non c'era niente da annullare, ha trovato solo
      * eventi inerti o il tocco e' stato rimandato dal ripristino.
+     *
+     * Durante il ripristino il tocco si rimanda, a meno che [rimandabile] sia falso: allora si scarta.
+     * Il telefono scarta, perche' rifarlo dopo toglierebbe un punto che chi tocca non ha visto, senza
+     * poterlo dire nella striscia; l'orologio e il "-" rimandano come sempre.
      */
-    fun annullaUltimaAzione(): ScoringEvent? {
+    fun annullaUltimaAzione(rimandabile: Boolean = true): ScoringEvent? {
+        if (ripristinoInCorso && !rimandabile) return null
         // Rimandato non vuol dire tolto: il tocco verra' rifatto a fine ripristino.
         if (rimandataDalRipristino { annullaUltimaAzione() }) return null
         if (!engine.canUndo()) return null
