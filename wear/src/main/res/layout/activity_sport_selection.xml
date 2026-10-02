@@ -13,19 +13,26 @@
         android:orientation="vertical"
         app:layout_boxedEdges="all">
 
+        <!-- Il titolo e' una riga a 14sp: lascia lo spazio alle voci, che sono la cosa da leggere. -->
         <TextView
+            android:id="@+id/sport_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/wear_sport_title"
             android:textAppearance="?attr/textAppearanceHeadlineMedium"
+            android:textSize="14sp"
+            android:maxLines="1"
             android:gravity="center"
             android:layout_marginBottom="8dp" />
 
+        <!-- Focusable perche' la corona scorre la vista che ha il focus (requestFocus in onCreate). -->
         <androidx.wear.widget.WearableRecyclerView
             android:id="@+id/sport_list"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:focusable="true"
+            android:focusableInTouchMode="true" />
 
     </LinearLayout>
 

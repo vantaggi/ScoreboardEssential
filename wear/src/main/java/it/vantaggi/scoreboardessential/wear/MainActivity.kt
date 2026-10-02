@@ -974,6 +974,8 @@ internal fun Frase.testo(context: Context): String =
         is Transitorio.Consegnati -> context.getString(R.string.wear_status_delivered, n)
         Transitorio.Chiusura -> context.getString(R.string.wear_status_closing)
         Transitorio.ChiusuraNonConfermata -> context.getString(R.string.wear_status_close_unconfirmed)
+        Transitorio.CambioSport -> context.getString(R.string.wear_status_changing_sport)
+        Transitorio.SportNonCambiato -> context.getString(R.string.wear_status_sport_unchanged)
     }
 
 /** L'ora e' fissa a 24 ore, "18:42": la stessa larghezza in ogni lingua, dentro i 18 caratteri. */

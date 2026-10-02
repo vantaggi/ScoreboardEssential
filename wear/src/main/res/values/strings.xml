@@ -45,7 +45,8 @@
     <string name="wear_keeper_running" translatable="false">K %1$d:%2$02d</string>
     <string name="wear_sport">SPORT</string>
     <string name="wear_sport_title">SPORT</string>
-    <string name="wear_sport_current">in use</string>
+    <!-- Il segno davanti si legge anche senza il colore: in uso e' ciano, ma la spunta dice la stessa cosa. -->
+    <string name="wear_sport_current">✓ in use</string>
     <string name="wear_sport_locked">Match in progress</string>
     <string name="wear_match_over">MATCH OVER</string>
     <!-- Riga di stato: una frase sola, al massimo 18 caratteri anche con un numero a tre cifre.
@@ -55,6 +56,8 @@
     <string name="wear_status_delivered">%1$d DELIVERED</string>
     <string name="wear_status_closing">CLOSING…</string>
     <string name="wear_status_close_unconfirmed">NOT CONFIRMED</string>
+    <string name="wear_status_changing_sport">CHANGING SPORT…</string>
+    <string name="wear_status_sport_unchanged">SPORT NOT CHANGED</string>
     <string name="wear_status_not_delivered">%1$d NOT DELIVERED</string>
     <string name="wear_status_sending">SENDING %1$d…</string>
     <string name="wear_status_queued">%1$d QUEUED</string>

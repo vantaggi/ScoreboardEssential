@@ -179,6 +179,12 @@ class WearViewModel(
         /** Quanto aspetta CHIUSURA... un v2 a partita non cominciata, prima di dire NON CONFERMATA. */
         internal const val DURATA_ATTESA_CHIUSURA_MS = 10_000L
 
+        /**
+         * Tetto di CAMBIO SPORT...: copre l'invio e i 2,5s di attesa dello stato. Di norma la riga si
+         * chiude prima, perche' arriva lo stato col nuovo sport o scade la ricevuta.
+         */
+        internal const val DURATA_CAMBIO_SPORT_MS = 10_000L
+
         /** Quanto resta offerto CHI? dopo un gol confermato, poi il bersaglio torna al menu. */
         internal const val DURATA_FINESTRA_CHI_MS = 8_000L
     }
@@ -684,6 +690,7 @@ class WearViewModel(
         ricevutaSport?.takeIf { it.sportId == state.sportId }?.let {
             it.scadenza?.cancel()
             ricevutaSport = null
+            finisciCambioSport()
             haptics.suona(HapticFeedbackManager.PATTERN_CONFIRM)
         }
     }
@@ -764,10 +771,15 @@ class WearViewModel(
      *
      * CHIUSURA... non si sostituisce: e' un'attesa piu' grossa, e per un tocco basta la vibrazione.
      */
-    private fun nonConfermato() {
+    private fun nonConfermato(messaggio: Transitorio = Transitorio.NonConfermato) {
         haptics.suona(WearPatterns.NON_CONFERMATO)
         if (transitorio is Transitorio.Chiusura && orologio() < transitorioFinoA) return
-        mostraTransitorio(Transitorio.NonConfermato)
+        mostraTransitorio(messaggio)
+    }
+
+    /** Lo sport chiesto e' arrivato: CAMBIO SPORT... ha detto quel che doveva, e la riga torna sola. */
+    private fun finisciCambioSport() {
+        if (transitorio == Transitorio.CambioSport) transitorio = null
     }
 
     /** Come [apriRicevuta], per il cambio sport: la conferma e' lo stato con lo sport chiesto. */
@@ -775,6 +787,8 @@ class WearViewModel(
         ricevutaSport?.scadenza?.cancel()
         if (statoDalTelefono?.sportId == sportId) {
             ricevutaSport = null
+            finisciCambioSport()
+            ricalcolaFiducia()
             haptics.suona(HapticFeedbackManager.PATTERN_CONFIRM)
             return
         }
@@ -785,7 +799,7 @@ class WearViewModel(
                 delay(SCADENZA_RICEVUTA_MS)
                 if (ricevutaSport === ricevuta) {
                     ricevutaSport = null
-                    nonConfermato()
+                    nonConfermato(Transitorio.SportNonCambiato)
                 }
             }
     }
@@ -1064,6 +1078,9 @@ class WearViewModel(
      */
     fun requestSport(sportId: String) {
         val seq = ++intentSequence
+        // Dalla scelta in poi la riga lo dice: CAMBIO SPORT... finche' il quadrante non riceve lo
+        // stato col nuovo sport, SPORT NON CAMBIATO se non arriva (o se il messaggio non parte).
+        mostraTransitorio(Transitorio.CambioSport, DURATA_CAMBIO_SPORT_MS)
         viewModelScope.launch {
             val payload =
                 DataMap().apply {
@@ -1072,7 +1089,12 @@ class WearViewModel(
                 }
             val consegnato = connectionManager.sendMessage(WearConstants.MSG_SPORT_INTENT, payload.toByteArray())
             // Consegnato non e' cambiato: la conferma e' lo stato con lo sport chiesto.
-            if (consegnato) apriRicevutaSport(sportId) else triggerFailureVibration()
+            if (consegnato) {
+                apriRicevutaSport(sportId)
+            } else {
+                triggerFailureVibration()
+                mostraTransitorio(Transitorio.SportNonCambiato)
+            }
         }
     }
 
