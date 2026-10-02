@@ -80,6 +80,7 @@ class ChronicleActivityTest {
         sides: List<Int>,
         serveOrder: String,
         stepMs: Long?,
+        sportId: String = SportRegistry.PADEL,
     ): Int =
         runBlocking {
             val registro = sides.mapIndexed { i, side -> LoggedEvent(ScoringEvent.Point(side), stepMs?.let { i * it }) }
@@ -90,7 +91,7 @@ class ChronicleActivityTest {
                     team1Score = 1,
                     team2Score = 0,
                     timestamp = 1_790_193_000_000L,
-                    sportId = SportRegistry.PADEL,
+                    sportId = sportId,
                     eventLog = MatchLogCodec.encode(registro),
                     serveOrder = serveOrder,
                     startedAt = if (stepMs == null) null else 1_790_190_240_000L,
@@ -193,6 +194,50 @@ class ChronicleActivityTest {
 
         assertTrue(sezione(cronaca, R.id.section_moments).contains("Tie-break del 1° set a Rossi, 7-5"))
         assertTrue(sezione(cronaca, R.id.section_games).contains("TB 7-5"))
+    }
+
+    /**
+     * Nel singolare l'ordine di servizio non esiste e non serve: il servizio si legge per squadra,
+     * senza la frase delle rose a due. Rossi serve il game 0 e lo perde, Blu serve il game 1 e lo
+     * perde, Rossi tiene il game 2: 4 punti su 8 e 1 game su 2 per Rossi, 0 su 4 e 0 su 1 per Blu.
+     */
+    @Test
+    fun `nel singolare il servizio e le palle break si leggono per squadra`() {
+        val id = salva(game(2) + game(1) + game(1), serveOrder = "", stepMs = null, sportId = SportRegistry.TENNIS)
+
+        val cronaca = apri(id)
+
+        val servizio = sezione(cronaca, R.id.section_serve)
+        assertEquals(
+            listOf(
+                "Al servizio",
+                "Punti vinti",
+                "Game tenuti",
+                "Rossi",
+                "4/8  50%",
+                "1/2",
+                "Blu",
+                "0/4  0%",
+                "0/1",
+                "Rossi: palle break convertite 1 su 1",
+                "Blu: palle break convertite 1 su 1",
+            ),
+            servizio,
+        )
+        assertTrue(sezione(cronaca, R.id.section_games).any { it.contains("B = break") })
+    }
+
+    /** Senza punti il singolare non suggerisce le rose: non c'entrano. */
+    @Test
+    fun `nel singolare senza punti la frase non parla di rose`() {
+        val id = salva(emptyList(), serveOrder = "", stepMs = null, sportId = SportRegistry.TENNIS)
+
+        val cronaca = apri(id)
+
+        val servizio = sezione(cronaca, R.id.section_serve)
+        assertEquals(1, servizio.size)
+        assertFalse(servizio.single().contains("rose"))
+        assertTrue(servizio.single().startsWith("Servizio e palle break si ricavano dai punti"))
     }
 
     @Test

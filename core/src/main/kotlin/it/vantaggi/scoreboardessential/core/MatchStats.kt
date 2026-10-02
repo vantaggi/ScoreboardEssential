@@ -11,7 +11,7 @@ data class PointStat(
     val side: Int,
     /** Id di chi serviva; null senza ordine di servizio. */
     val server: Int?,
-    /** Lato al servizio; null senza ordine di servizio, come [server]. */
+    /** Lato al servizio; null senza ordine di servizio, salvo nel tennis singolare ([MatchStats.isSingles]). */
     val servingSide: Int?,
     val atMillis: Long?,
     /** Indice del set, da 0. */
@@ -91,10 +91,10 @@ data class PlayerServe(
     val line: ServeLine,
 )
 
-/** Il servizio della partita; esiste solo con l'ordine di servizio e in modalita' punti. */
+/** Il servizio della partita; esiste solo se si sa il lato al servizio e in modalita' punti. */
 data class ServeStats(
     val bySide: List<ServeLine>,
-    /** Nell'ordine di servizio. */
+    /** Nell'ordine di servizio; vuoto nel singolare, dove il giocatore non e' noto. */
     val byPlayer: List<PlayerServe>,
 )
 
@@ -224,7 +224,9 @@ data class MatchStats(
          * Il lato al servizio e' `serveIndex % 2 + 1`, come in [RacketRules.display]: l'ordine e'
          * A1, B1, A2, B2 con A il lato 1, e il telefono lo costruisce cosi'. Senza un ordine di
          * quattro giocatori il servitore resta ignoto, e con lui palle break e game tenuti, come
-         * nella dashboard.
+         * nella dashboard. Fa eccezione il tennis singolare ([isSingles]): un giocatore per lato,
+         * quindi chi serve lo dice l'alternanza stessa e i conteggi per lato sono pieni; resta
+         * ignoto solo il nome, che senza rose non c'e'.
          *
          * Null per gli sport che non sono con racchetta: la Cronaca e' fatta di game e set.
          */
@@ -236,6 +238,8 @@ data class MatchStats(
             var state = rules.initial() as? RacketScore ?: return null
             val pointsMode = rules.config.mode == ScoringMode.POINTS
             val order = serveOrder.takeIf { it.size == PLAYERS_PER_MATCH }
+            // Il lato al servizio si sa con l'ordine di quattro o, nel singolare, dall'alternanza.
+            val knowsServingSide = order != null || isSingles(rules.id, serveOrder)
 
             val points = ArrayList<PointStat>()
             val games = ArrayList<GameStat>()
@@ -272,7 +276,7 @@ data class MatchStats(
                 val i = points.size
                 val inTieBreak = state.game is GamePoints.TieBreak
                 val server = order?.get(state.serveIndex % PLAYERS_PER_MATCH)
-                val servingSide = if (order == null) null else state.serveIndex % 2 + 1
+                val servingSide = if (knowsServingSide) state.serveIndex % 2 + 1 else null
 
                 // Che cosa c'era in palio: si prova a dare il punto a ciascuno dei due lati.
                 val probe = listOf(1, 2).map { rules.apply(state, ScoringEvent.Point(it)) as RacketScore }
@@ -403,7 +407,7 @@ data class MatchStats(
             val comebacks = comebacks(sets, progressBySet)
             val matchTurnedAround = ended && sets.size > 1 && sets[0].winner != state.wonBy
             val serve =
-                if (order != null && pointsMode && points.isNotEmpty()) {
+                if (knowsServingSide && pointsMode && points.isNotEmpty()) {
                     ServeStats(
                         bySide = sideServe.map { it.line() },
                         byPlayer = playerServe.map { (id, counter) -> PlayerServe(id, counter.line()) },
@@ -436,6 +440,16 @@ data class MatchStats(
                 )
             return stats.copy(moments = moments(stats))
         }
+
+        /**
+         * Un giocatore per lato: tennis senza ordine di quattro. Il padel si gioca sempre in
+         * coppia, quindi senza ordine il lato al servizio resta ignoto; un tennis con l'ordine di
+         * quattro e' un doppio e conta per giocatore.
+         */
+        fun isSingles(
+            sportId: String,
+            serveOrder: List<Int>,
+        ): Boolean = sportId == SportRegistry.TENNIS && serveOrder.size != PLAYERS_PER_MATCH
 
         /** Tutti i game giocati, compresi quelli dei set chiusi: il tie-break vale un game. */
         private fun gamesPlayed(state: RacketScore): Int = state.gamesInSet.sum() + state.closedSets.sumOf { it.games.sum() }
