@@ -144,7 +144,7 @@ class PlayerSelectionActivityTest {
     private fun scegliRossi(collegato: Boolean = true): PlayerSelectionActivity {
         val activity = apri(collegato = collegato)
         // Passata la guardia dei 400ms: prima un tocco non sceglie nessuno.
-        avanza(PlayerSelectionActivity.GUARDIA_APERTURA_MS)
+        avanza(400L)
         // Posizione 0 e' SALTA: Rossi e' la seconda riga.
         riga(activity, 1).performClick()
         aspettaLaChiusura(activity)
@@ -238,7 +238,7 @@ class PlayerSelectionActivityTest {
     fun `un tocco entro 400ms dall'apertura non sceglie nessuno, nemmeno SALTA`() {
         val activity = apri()
 
-        avanza(PlayerSelectionActivity.GUARDIA_APERTURA_MS - 1)
+        avanza(400L - 1)
         riga(activity, 0).performClick()
 
         assertFalse("SALTA ha chiuso dentro la guardia", activity.isFinishing)
@@ -248,7 +248,7 @@ class PlayerSelectionActivityTest {
     fun `entro 400ms nemmeno un giocatore parte, a 400ms si`() {
         val activity = apri()
 
-        avanza(PlayerSelectionActivity.GUARDIA_APERTURA_MS - 1)
+        avanza(400L - 1)
         riga(activity, 1).performClick()
         // L'invio si segna in modo sincrono prima di partire: se il tocco fosse passato, sarebbe
         // gia' acceso. L'esito arriva da un thread vero, e' inutile aspettarlo per provare un "no".
@@ -271,7 +271,7 @@ class PlayerSelectionActivityTest {
     fun `passati 400ms SALTA chiude senza mandare niente`() {
         val activity = apri()
 
-        avanza(PlayerSelectionActivity.GUARDIA_APERTURA_MS)
+        avanza(400L)
         riga(activity, 0).performClick()
 
         assertTrue(activity.isFinishing)
@@ -288,7 +288,7 @@ class PlayerSelectionActivityTest {
         val activity = apri()
         val dopo = SystemClock.uptimeMillis()
 
-        avanza(prima + PlayerSelectionActivity.CHIUSURA_AUTOMATICA_MS - 1 - dopo)
+        avanza(prima + 15_000L - 1 - dopo)
         assertFalse("chiusa un istante prima dei 15s", activity.isFinishing)
 
         avanza(dopo - prima + 1)
@@ -302,7 +302,7 @@ class PlayerSelectionActivityTest {
 
         // La corona o un tocco: Activity.onUserInteraction.
         activity.onUserInteraction()
-        avanza(PlayerSelectionActivity.CHIUSURA_AUTOMATICA_MS - 1)
+        avanza(15_000L - 1)
         assertFalse("i 15s non sono ripartiti dall'input", activity.isFinishing)
 
         avanza(1)

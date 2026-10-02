@@ -159,7 +159,7 @@ class MarcatoreQuadranteTest {
     fun `dopo 8 secondi CHI sparisce e il tocco riapre il menu`() {
         golConfermato()
 
-        avanza(WearViewModel.DURATA_FINESTRA_CHI_MS)
+        avanza(8_000L)
 
         assertEquals(View.GONE, binding.chiCapsule.visibility)
         assertEquals(View.VISIBLE, binding.menuGlyph.visibility)
@@ -170,7 +170,7 @@ class MarcatoreQuadranteTest {
     @Test
     fun `il quadrante non apre mai la lista da solo`() {
         golConfermato()
-        avanza(WearViewModel.DURATA_FINESTRA_CHI_MS + 1_000)
+        avanza(8_000L + 1_000)
 
         // Prima la lista si apriva da sola dopo ogni gol: ora niente parte senza un tocco.
         assertNull(shadowOf(controller.get()).nextStartedActivity)

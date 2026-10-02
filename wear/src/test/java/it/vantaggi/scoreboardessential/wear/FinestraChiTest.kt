@@ -281,7 +281,7 @@ class FinestraChiTest {
         golConfermato()
         assertNotNull(viewModel.finestraChi.value)
 
-        avanza(WearViewModel.DURATA_FINESTRA_CHI_MS - 1)
+        avanza(8_000L - 1)
         assertNotNull("chiusa un istante prima degli 8s", viewModel.finestraChi.value)
 
         avanza(1)
@@ -298,7 +298,7 @@ class FinestraChiTest {
         assertEquals(2, viewModel.finestraChi.value!!.lato)
         assertEquals("1–1", viewModel.finestraChi.value!!.risultato)
         // I 5s del primo gol non contano piu': il secondo ha i suoi 8.
-        avanza(WearViewModel.DURATA_FINESTRA_CHI_MS - 1)
+        avanza(8_000L - 1)
         assertNotNull(viewModel.finestraChi.value)
         avanza(1)
         assertNull(viewModel.finestraChi.value)
@@ -331,7 +331,7 @@ class FinestraChiTest {
 
         viewModel.chiudiFinestraChi()
         // Il timer degli 8s non deve riaprire niente ne' toccare un'offerta successiva.
-        avanza(WearViewModel.DURATA_FINESTRA_CHI_MS)
+        avanza(8_000L)
 
         assertNull(viewModel.finestraChi.value)
     }
