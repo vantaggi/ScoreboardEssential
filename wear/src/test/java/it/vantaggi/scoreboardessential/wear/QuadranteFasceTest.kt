@@ -1,9 +1,11 @@
 package it.vantaggi.scoreboardessential.wear
 
+import android.app.Activity
 import android.graphics.Rect
 import android.os.Looper
 import android.os.SystemClock
 import android.text.TextPaint
+import android.util.DisplayMetrics
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -31,7 +33,7 @@ import kotlin.math.sqrt
 /**
  * Il quadrante a fasce MISURATO: tondo da 192dp, tondo da 227dp e un quadrato.
  *
- * Le misure del design (cifre a 58sp, lati da 78x72dp, nessun testo tagliato, il gruppo
+ * Le misure del design (cifre a 58dp, lati da 78x72dp, nessun testo tagliato, il gruppo
  * cronometro+K dentro l'anello) erano conti sul layout, non misure. Qui si impagina il quadrante
  * vero con la grafica nativa, perche' con quella di default measureText restituisce un pixel a
  * carattere e non direbbe niente (stessa ragione di RigaStatoLarghezzaTest).
@@ -58,7 +60,31 @@ class QuadranteFasceTest {
         }
     }
 
-    private fun apri(): Quadrante {
+    /**
+     * Il carattere di sistema grande dell'orologio (Impostazioni, Dimensione del carattere).
+     *
+     * Va messo sulle risorse dell'activity PRIMA di create(), perche' e' li' che la vista risolve
+     * gli sp. RuntimeEnvironment.setFontScale non basta: sull'SDK 34 gli sp passano da un
+     * convertitore non lineare che Robolectric non aggiorna, e 58sp restano 58px. Qui si toglie il
+     * convertitore e si imposta scaledDensity: la conversione diventa lineare, che e' un po' piu'
+     * severa di quella vera (a 1,24 il convertitore del sistema ingrandisce meno di 24%).
+     */
+    @Suppress("DEPRECATION")
+    private fun caratteriGrandi(
+        attivita: Activity,
+        scala: Float,
+    ) {
+        val risorse = attivita.resources
+        risorse.configuration.fontScale = scala
+        val metriche = risorse.displayMetrics
+        metriche.scaledDensity = metriche.density * scala
+        DisplayMetrics::class.java
+            .getDeclaredField("fontScaleConverter")
+            .apply { isAccessible = true }
+            .set(metriche, null)
+    }
+
+    private fun apri(scalaCaratteri: Float = 1f): Quadrante {
         val app = RuntimeEnvironment.getApplication()
         val telefono = Mockito.mock(OptimizedWearDataSync::class.java)
         Mockito.`when`(telefono.connectionState).thenReturn(MutableStateFlow(ConnectionState.Disconnected))
@@ -70,6 +96,7 @@ class QuadranteFasceTest {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T = viewModel as T
             }
         ViewModelProvider(controller.get(), fabbrica)[WearViewModel::class.java]
+        if (scalaCaratteri != 1f) caratteriGrandi(controller.get(), scalaCaratteri)
         controller.create().start().visible()
         shadowOf(Looper.getMainLooper()).idle()
         val contenuto = controller.get().findViewById<ViewGroup>(android.R.id.content)
@@ -116,9 +143,10 @@ class QuadranteFasceTest {
     private fun penna(
         vista: TextView,
         sp: Float,
+        unita: Int = TypedValue.COMPLEX_UNIT_SP,
     ): TextPaint {
         val p = TextPaint(vista.paint)
-        p.textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, vista.resources.displayMetrics)
+        p.textSize = TypedValue.applyDimension(unita, sp, vista.resources.displayMetrics)
         return p
     }
 
@@ -128,25 +156,25 @@ class QuadranteFasceTest {
 
     private fun verificaCifre(
         quadrante: Quadrante,
-        spAttesi: Float,
+        dpAttesi: Float,
     ) {
         val b = quadrante.binding
         listOf(b.team1Score, b.team2Score).forEach { cifre ->
             // Dimensione FISSA: con l'autoSize "AV" e "40" uscirebbero a misure diverse.
             assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, cifre.autoSizeTextType)
-            val attesa = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, spAttesi, cifre.resources.displayMetrics)
+            val attesa = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dpAttesi, cifre.resources.displayMetrics)
             assertEquals(attesa, cifre.textSize, 0.01f)
 
             val disponibile = larghezzaUtile(cifre)
             assertTrue("le cifre non sono state impaginate", disponibile > 0)
             // Il token piu' largo e' "AV" (vantaggio): se entra lui entrano 15, 30, 40, PV e 88.
             listOf("AV", "PV", "40", "15", "30", "88").forEach { testo ->
-                val larghezza = penna(cifre, spAttesi).measureText(testo)
+                val larghezza = penna(cifre, dpAttesi, TypedValue.COMPLEX_UNIT_DIP).measureText(testo)
                 assertTrue("\"$testo\" misura ${larghezza}px: la grafica non e' nativa?", larghezza > testo.length * 2f)
-                assertTrue("\"$testo\" a ${spAttesi}sp e' largo ${larghezza}px e non entra nei ${disponibile}px", larghezza <= disponibile)
+                assertTrue("\"$testo\" a ${dpAttesi}dp e' largo ${larghezza}px e non entra nei ${disponibile}px", larghezza <= disponibile)
             }
             // E in altezza: senza il margine di font il testo sta fra ascent e descent.
-            val metriche = penna(cifre, spAttesi).fontMetrics
+            val metriche = penna(cifre, dpAttesi, TypedValue.COMPLEX_UNIT_DIP).fontMetrics
             val altezza = metriche.descent - metriche.ascent
             assertTrue("le cifre sono alte ${altezza}px e la vista ${cifre.height}px", altezza <= cifre.height)
         }
@@ -201,7 +229,7 @@ class QuadranteFasceTest {
 
     @Test
     @Config(qualifiers = "w192dp-h192dp-round-notnight")
-    fun `tondo da 192dp, cifre a 58sp, lati da 78x72dp, strisce centrate e bersagli separati`() {
+    fun `tondo da 192dp, cifre a 58dp, lati da 78x72dp, strisce centrate e bersagli separati`() {
         val q = apri()
         assertTrue(
             "la configurazione non e' tonda",
@@ -290,7 +318,7 @@ class QuadranteFasceTest {
 
     @Test
     @Config(qualifiers = "w227dp-h227dp-round-notnight")
-    fun `tondo da 227dp, cifre a 68sp, pallino da 10dp, strisce da 33x5dp`() {
+    fun `tondo da 227dp, cifre a 68dp, pallino da 10dp, strisce da 33x5dp`() {
         val q = apri()
         q.applica(stato("AV", "40", giochi = "6-4", periodo = "Set 2", servizio = 1))
 
@@ -327,6 +355,84 @@ class QuadranteFasceTest {
         assertEquals(0, b.faceDetail.left)
         // L'anello resta, bianco di nulla: e' la prima vista della radice.
         assertTrue(b.keeperProgressBar.parent === b.root)
+    }
+
+    // --- carattere di sistema grande ---
+
+    /**
+     * Le cifre nella layout VERA della vista, con i token che il punteggio puo' mostrare: una riga,
+     * il testo intero, la riga piu' stretta della vista. Con maxLines=1 e senza ellipsize una cifra
+     * che non entra non va a capo ne' mostra i puntini: viene tagliata in silenzio, "AV" diventa
+     * "A" e "40" diventa "4", cioe' un punteggio sbagliato a schermo. measureText non lo vede: lo
+     * vede solo la layout.
+     */
+    private fun verificaCifreNellaLayout(
+        quadrante: Quadrante,
+        scalaCaratteri: Float,
+    ) {
+        val b = quadrante.binding
+        listOf("AV", "88", "40", "10").forEach { testo ->
+            quadrante.applica(stato(testo, testo))
+            listOf(b.team1Score, b.team2Score).forEach { cifre ->
+                assertEquals(testo, cifre.text.toString())
+                assertEquals(scalaCaratteri, cifre.resources.configuration.fontScale, 0f)
+                val layout = cifre.layout
+                assertEquals("\"$testo\" va a capo a fontScale $scalaCaratteri", 1, layout.lineCount)
+                assertEquals("\"$testo\" e' tagliato a fontScale $scalaCaratteri", testo.length, layout.getLineEnd(0))
+                assertTrue(
+                    "\"$testo\" e' largo ${layout.getLineWidth(0)}px nei ${larghezzaUtile(cifre)}px, fontScale $scalaCaratteri",
+                    layout.getLineWidth(0) <= larghezzaUtile(cifre),
+                )
+            }
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w192dp-h192dp-round-notnight")
+    fun `tondo da 192dp, a fontScale 1,24 le cifre restano intere`() {
+        val q = apri(1.24f)
+        verificaCifreNellaLayout(q, 1.24f)
+        verificaCifre(q, 58f)
+    }
+
+    @Test
+    @Config(qualifiers = "w192dp-h192dp-round-notnight")
+    fun `tondo da 192dp, a fontScale 1,0 le cifre restano intere`() {
+        val q = apri(1f)
+        verificaCifreNellaLayout(q, 1f)
+        verificaCifre(q, 58f)
+    }
+
+    @Test
+    @Config(qualifiers = "w227dp-h227dp-round-notnight")
+    fun `tondo da 227dp, a fontScale 1,24 le cifre restano intere`() {
+        val q = apri(1.24f)
+        verificaCifreNellaLayout(q, 1.24f)
+        verificaCifre(q, 68f)
+    }
+
+    @Test
+    @Config(qualifiers = "w227dp-h227dp-round-notnight")
+    fun `tondo da 227dp, a fontScale 1,0 le cifre restano intere`() {
+        val q = apri(1f)
+        verificaCifreNellaLayout(q, 1f)
+        verificaCifre(q, 68f)
+    }
+
+    @Test
+    @Config(qualifiers = "w192dp-h192dp-notround-notnight")
+    fun `quadrato, a fontScale 1,24 le cifre restano intere`() {
+        val q = apri(1.24f)
+        verificaCifreNellaLayout(q, 1.24f)
+        verificaCifre(q, 58f)
+    }
+
+    @Test
+    @Config(qualifiers = "w192dp-h192dp-notround-notnight")
+    fun `quadrato, a fontScale 1,0 le cifre restano intere`() {
+        val q = apri(1f)
+        verificaCifreNellaLayout(q, 1f)
+        verificaCifre(q, 58f)
     }
 
     @Test

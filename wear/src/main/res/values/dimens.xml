@@ -30,8 +30,12 @@
     <dimen name="face_menu_inset">24dp</dimen>
 
     <!-- Testi: le cifre sono a dimensione FISSA, niente autoSize, cosi' "AV" e "40" hanno la stessa
-         misura da un lato all'altro e fra uno stato e l'altro. -->
-    <dimen name="face_score_text_size">58sp</dimen>
+         misura da un lato all'altro e fra uno stato e l'altro. In dp e non in sp: stanno in colonne
+         fisse da 68dp con una riga sola e senza puntini, e col carattere di sistema grande (fino a
+         1,24 sull'orologio) 58sp diventano 72: "AV" andava a capo e "40" restava "4", cioe' un
+         punteggio sbagliato. Non e' un testo da leggere ingrandito: e' gia' la cosa piu' grande
+         dello schermo, e a ingrandirsi sono gli altri livelli. -->
+    <dimen name="face_score_text_size">58dp</dimen>
     <dimen name="face_context_text_size">20sp</dimen>
     <dimen name="face_keeper_text_size">14sp</dimen>
     <dimen name="face_detail_text_size">13sp</dimen>
