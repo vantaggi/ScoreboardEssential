@@ -1,10 +1,13 @@
 package it.vantaggi.scoreboardessential.wear
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.wear.widget.WearableLinearLayoutManager
 import androidx.wear.widget.WearableRecyclerView
+import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
@@ -34,11 +38,30 @@ data class WearPlayer(
  * Lets the watch user pick which player scored. The roster is passed in via the launching
  * Intent ([WearDataLayerService.EXTRA_PLAYERS]); the selection is sent back to the phone as a
  * [WearConstants.MSG_SCORER_SELECTED] message, which the phone attributes to the goal.
+ *
+ * Non si apre mai da sola: la apre il tocco sul bersaglio CHI?, che compare per qualche secondo
+ * dopo un gol confermato (WearViewModel.finestraChi). E' una schermata di gioco: su nero, con SALTA
+ * in cima, righe da 52dp e la barra del colore della squadra che ha segnato. Per 400ms
+ * dall'apertura i tocchi non scelgono nessuno: il dito che stava segnando e' ancora in aria, e il
+ * rimbalzo non deve attribuire un gol a chi capita sotto. Dopo 15s senza input si chiude come
+ * SALTA.
  */
 class PlayerSelectionActivity : ComponentActivity() {
     companion object {
         /** Id della voce di uscita: nessun giocatore vero puo' averlo. */
         private const val NESSUNO = -1
+
+        /** Il colore della squadra che ha segnato (ARGB), per la barra: va portato a 3:1 sul nero. */
+        const val EXTRA_COLOR = "scorer_color"
+
+        /** Il punteggio dopo il gol, per l'intestazione: dice QUALE gol si sta attribuendo. */
+        const val EXTRA_RISULTATO = "scorer_score"
+
+        /** Nei primi 400ms un tocco non sceglie nessuno, SALTA compreso. */
+        internal const val GUARDIA_APERTURA_MS = 400L
+
+        /** Senza input la schermata torna al quadrante da sola, come se si fosse scelto SALTA. */
+        internal const val CHIUSURA_AUTOMATICA_MS = 15_000L
 
         /**
          * Da dove prende il canale verso il telefono. Sostituibile sotto test per la stessa ragione
@@ -46,44 +69,105 @@ class PlayerSelectionActivity : ComponentActivity() {
          */
         @VisibleForTesting
         internal var creaSync: (Context) -> OptimizedWearDataSync = { OptimizedWearDataSync(it) }
+
+        /**
+         * L'istante con cui si misura la guardia dei 400ms. Iniettabile come
+         * [MenuActivity.orologio]: un test sposta un numero invece di aspettare. La chiusura dei
+         * 15s passa invece dal looper, che i test spostano a parte.
+         */
+        @VisibleForTesting
+        internal var orologio: () -> Long = SystemClock::uptimeMillis
+
+        fun intent(
+            context: Context,
+            lato: Int,
+            giocatori: List<PlayerData>,
+            colore: Int,
+            risultato: String,
+        ): Intent =
+            Intent(context, PlayerSelectionActivity::class.java)
+                .putExtra(WearConstants.EXTRA_TEAM_NUMBER, lato)
+                .putExtra(WearDataLayerService.EXTRA_PLAYERS, PlayerData.encodeList(giocatori))
+                .putExtra(EXTRA_COLOR, colore)
+                .putExtra(EXTRA_RISULTATO, risultato)
     }
 
+    private val handler = Handler(Looper.getMainLooper())
     private lateinit var playerList: WearableRecyclerView
     private lateinit var adapter: PlayerAdapter
     private var teamNumber: Int = 1
     private lateinit var sync: OptimizedWearDataSync
     private var inInvio = false
+    private var apertaAlle = 0L
+
+    private val chiusuraAutomatica = Runnable { finish() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player_selection)
+        apertaAlle = orologio()
 
         sync = creaSync(applicationContext)
         val rawTeamNumber = intent.getIntExtra(WearConstants.EXTRA_TEAM_NUMBER, 1)
         teamNumber = if (WearDataValidator.isValidTeamNumber(rawTeamNumber)) rawTeamNumber else 1
 
-        setupRecyclerView()
+        val colore = coloreBarra(intent.getIntExtra(EXTRA_COLOR, defaultColore(teamNumber)))
+        mostraIntestazione(colore, intent.getStringExtra(EXTRA_RISULTATO).orEmpty())
+        setupRecyclerView(colore)
         showPlayers(PlayerData.decodeList(intent.getStringExtra(WearDataLayerService.EXTRA_PLAYERS)))
+        riarmaChiusura()
     }
 
-    private fun setupRecyclerView() {
+    /** Il colore della squadra e' grafica: portato a 3:1 sul nero, mai colore di un testo. */
+    private fun coloreBarra(colore: Int): Int = TeamInk.graphicOnBlack(colore) or TeamInk.NERO
+
+    private fun defaultColore(lato: Int): Int =
+        ContextCompat.getColor(this, if (lato == 2) R.color.team_electric_green else R.color.team_spray_yellow)
+
+    private fun mostraIntestazione(
+        colore: Int,
+        risultato: String,
+    ) {
+        findViewById<TextView>(R.id.goal_header).text =
+            if (risultato.isBlank()) {
+                getString(R.string.wear_goal_header_plain)
+            } else {
+                getString(R.string.wear_goal_header, risultato)
+            }
+        findViewById<View>(R.id.goal_bar).setBackgroundColor(colore)
+    }
+
+    private fun setupRecyclerView(colore: Int) {
         playerList = findViewById(R.id.player_list)
-        adapter = PlayerAdapter { player -> selectPlayer(player) }
+        adapter = PlayerAdapter(colore) { player -> selectPlayer(player) }
         playerList.layoutManager = WearableLinearLayoutManager(this)
         playerList.adapter = adapter
         playerList.isEdgeItemsCenteringEnabled = true
+        // Anche scorrere con la corona e' input: non deve chiudere la lista sotto le dita.
+        playerList.addOnScrollListener(
+            object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(
+                    recyclerView: RecyclerView,
+                    dx: Int,
+                    dy: Int,
+                ) {
+                    riarmaChiusura()
+                }
+            },
+        )
+        // Il focus serve alla corona: senza, ruotarla non scorre niente.
+        playerList.requestFocus()
     }
 
     private fun showPlayers(players: List<PlayerData>) {
         val wearPlayers = players.map { WearPlayer(it.id, it.name, it.roles) }
-        // In coda alla rosa una voce per uscire senza attribuire. La schermata si apre DA SOLA
-        // dopo ogni gol: senza questa voce l'unico modo di uscire era un gesto di sistema, e chi
-        // non sapeva chi avesse segnato doveva comunque scegliere qualcuno.
+        // SALTA in cima: chi non sa chi ha segnato, o non vuole dirlo adesso, ha la via d'uscita
+        // sotto il pollice senza scorrere. Prima NESSUNO stava in fondo alla rosa.
         adapter.submitList(
             if (wearPlayers.isEmpty()) {
                 wearPlayers
             } else {
-                wearPlayers + WearPlayer(NESSUNO, getString(R.string.wear_nobody), emptyList())
+                listOf(WearPlayer(NESSUNO, getString(R.string.wear_skip), emptyList())) + wearPlayers
             },
         )
 
@@ -98,6 +182,8 @@ class PlayerSelectionActivity : ComponentActivity() {
     }
 
     private fun selectPlayer(player: WearPlayer) {
+        // Il dito che ha segnato e' ancora vicino: un tocco appena aperta la lista e' un rimbalzo.
+        if (orologio() - apertaAlle < GUARDIA_APERTURA_MS) return
         if (player.id == NESSUNO) {
             // Il gol resta, il marcatore no: il telefono ne registra gia' uno senza nome.
             finish()
@@ -139,13 +225,27 @@ class PlayerSelectionActivity : ComponentActivity() {
         }
     }
 
+    // Anche la rotazione della corona passa di qui: Activity.dispatchGenericMotionEvent chiama
+    // onUserInteraction prima di consegnare l'evento (stessa ragione di MenuActivity).
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        riarmaChiusura()
+    }
+
+    private fun riarmaChiusura() {
+        handler.removeCallbacks(chiusuraAutomatica)
+        handler.postDelayed(chiusuraAutomatica, CHIUSURA_AUTOMATICA_MS)
+    }
+
     override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
         sync.cleanup()
         super.onDestroy()
     }
 }
 
 class PlayerAdapter(
+    private val coloreBarra: Int,
     private val onPlayerClick: (WearPlayer) -> Unit,
 ) : RecyclerView.Adapter<PlayerAdapter.PlayerViewHolder>() {
     private var players: List<WearPlayer> = emptyList()
@@ -170,7 +270,8 @@ class PlayerAdapter(
         holder: PlayerViewHolder,
         position: Int,
     ) {
-        holder.bind(players[position], onPlayerClick)
+        // La prima voce e' SALTA: grigia e senza barra, perche' non e' di nessuna squadra.
+        holder.bind(players[position], coloreBarra, position == 0, onPlayerClick)
     }
 
     override fun getItemCount() = players.size
@@ -179,26 +280,21 @@ class PlayerAdapter(
         itemView: View,
     ) : RecyclerView.ViewHolder(itemView) {
         private val playerName: TextView = itemView.findViewById(R.id.player_name)
-        private val playerRole: TextView = itemView.findViewById(R.id.player_role)
+        private val playerBar: View = itemView.findViewById(R.id.player_bar)
 
         fun bind(
             player: WearPlayer,
+            coloreBarra: Int,
+            salta: Boolean,
             onPlayerClick: (WearPlayer) -> Unit,
         ) {
             playerName.text = player.name
-
-            val rolesText = player.roles.joinToString(", ")
-            if (BuildConfig.DEBUG) {
-                Log.d("PlayerAdapter", "Binding player")
-            }
-
-            if (rolesText.isEmpty()) {
-                playerRole.text = itemView.context.getString(R.string.wear_no_role)
-                playerRole.visibility = View.GONE
-            } else {
-                playerRole.text = rolesText
-                playerRole.visibility = View.VISIBLE
-            }
+            playerName.setTextColor(
+                ContextCompat.getColor(itemView.context, if (salta) R.color.sidewalk_gray else R.color.ink_white),
+            )
+            // INVISIBLE e non GONE: SALTA resta allineato ai nomi.
+            playerBar.visibility = if (salta) View.INVISIBLE else View.VISIBLE
+            playerBar.setBackgroundColor(coloreBarra)
 
             itemView.setOnClickListener {
                 val position = bindingAdapterPosition

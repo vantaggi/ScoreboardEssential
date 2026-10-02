@@ -1,40 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<!--
+    Una riga della scelta del marcatore: la barra del colore della squadra e il nome, niente card
+    e niente ruolo (il marcatore si riconosce dal nome). Alta almeno 52dp, il minimo per un tocco
+    sicuro con il polso in movimento. La stessa riga serve a SALTA, con la barra spenta.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardBackgroundColor="@color/concrete_gray"
-    app:shapeAppearance="@style/ShapeAppearance.App.StreetCard"
-    app:cardElevation="0dp"
+    android:background="?attr/selectableItemBackground"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:minHeight="52dp"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/scorer_row_inset"
+    android:paddingEnd="@dimen/scorer_row_inset">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <View
+        android:id="@+id/player_bar"
+        android:layout_width="4dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="10dp"
+        android:importantForAccessibility="no" />
+
+    <TextView
+        android:id="@+id/player_name"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:layout_margin="4dp">
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:fontFamily="sans-serif-condensed"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="@color/ink_white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textAlignment="viewStart" />
 
-        <TextView
-            android:id="@+id/player_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/wear_player_name"
-            android:textAppearance="?attr/textAppearanceHeadlineSmall"
-            android:textColor="@color/stencil_white"
-            android:gravity="center" />
-
-        <TextView
-            android:id="@+id/player_role"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/wear_player_position"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:gravity="center"
-            android:layout_marginTop="4dp" />
-
-    </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+</LinearLayout>

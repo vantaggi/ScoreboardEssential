@@ -30,10 +30,12 @@
     </plurals>
     <string name="wear_who_scored">WHO SCORED?</string>
     <string name="wear_no_players">No players</string>
-    <string name="wear_nobody">NOBODY</string>
-    <string name="wear_no_role">No role</string>
-    <string name="wear_player_name">Player name</string>
-    <string name="wear_player_position">Position</string>
+    <!-- Il marcatore: la finestra in basso dice CHI?, la lista si apre con SALTA in cima. Frasi
+         brevi, perche' il tondo da 192dp lascia circa 100dp di larghezza. -->
+    <string name="wear_who_short">WHO?</string>
+    <string name="wear_skip">SKIP</string>
+    <string name="wear_goal_header">GOAL · %1$s</string>
+    <string name="wear_goal_header_plain">GOAL</string>
     <string name="cd_keeper_timer">Goalkeeper countdown</string>
     <!-- Uguale nelle due lingue: K e i minuti:secondi che restano al portiere. -->
     <string name="wear_keeper_running" translatable="false">K %1$d:%2$02d</string>

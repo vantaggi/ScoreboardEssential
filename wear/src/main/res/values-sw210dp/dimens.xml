@@ -22,6 +22,9 @@
 
     <dimen name="face_menu_inset">28dp</dimen>
 
+    <dimen name="scorer_top_inset">26dp</dimen>
+    <dimen name="scorer_row_inset">26dp</dimen>
+
     <dimen name="face_score_text_size">68dp</dimen>
     <dimen name="face_context_text_size">24sp</dimen>
     <dimen name="face_keeper_text_size">16sp</dimen>
