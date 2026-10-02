@@ -55,7 +55,10 @@ class StatoPortiereTest {
     fun `il tocco azzera il conto in corso o fermo a meta ma non quello fermo a durata piena o scaduto`() {
         val durata = 300_000L
         assertTrue("in corso: il cambio e' avvenuto, si riparte da capo", toccoDelPortiereAzzera(true, 120_000L, durata))
-        assertTrue("fermo a meta' (pausa dall'orologio): il service riprenderebbe dal residuo", toccoDelPortiereAzzera(false, 120_000L, durata))
+        assertTrue(
+            "fermo a meta' (pausa dall'orologio): il service riprenderebbe dal residuo",
+            toccoDelPortiereAzzera(false, 120_000L, durata),
+        )
         assertFalse("fermo a durata piena: niente da azzerare", toccoDelPortiereAzzera(false, durata, durata))
         assertFalse("scaduto a zero: niente da azzerare", toccoDelPortiereAzzera(false, 0L, durata))
     }

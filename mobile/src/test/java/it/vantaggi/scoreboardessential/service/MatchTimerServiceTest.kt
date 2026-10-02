@@ -212,7 +212,11 @@ class MatchTimerServiceTest {
      */
     @Test
     fun `dopo un riavvio con la fine del conto gia' passata il service riparte fermo e senza scadenza`() {
-        prefs().edit().putBoolean("keeper_running", true).putLong("keeper_end_time", System.currentTimeMillis() - 10_000L).commit()
+        prefs()
+            .edit()
+            .putBoolean("keeper_running", true)
+            .putLong("keeper_end_time", System.currentTimeMillis() - 10_000L)
+            .commit()
 
         val riavviato = Robolectric.buildService(MatchTimerService::class.java).create().get()
         try {

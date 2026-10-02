@@ -553,7 +553,10 @@ class MainActivityLayoutTest {
             val iniziale = postiFissi(scenario)
             lateinit var prima: String
             scenario.onActivity {
-                prima = modello.scoreDisplay.value?.let { d -> "${d.side1Primary}-${d.side2Primary}" }.orEmpty()
+                prima =
+                    modello.scoreDisplay.value
+                        ?.let { d -> "${d.side1Primary}-${d.side2Primary}" }
+                        .orEmpty()
             }
             onView(withId(R.id.team1_add_button_card)).perform(click())
             assertTrue(
@@ -572,9 +575,16 @@ class MainActivityLayoutTest {
                 aspettaCheAttivi(scenario) { it.findViewById<TextView>(R.id.last_action_text).text.toString() == atteso },
             )
             scenario.onActivity {
-                val dopo = modello.scoreDisplay.value?.let { d -> "${d.side1Primary}-${d.side2Primary}" }.orEmpty()
+                val dopo =
+                    modello.scoreDisplay.value
+                        ?.let { d -> "${d.side1Primary}-${d.side2Primary}" }
+                        .orEmpty()
                 assertEquals("ANNULLA non ha riportato il punteggio di prima", prima, dopo)
-                assertEquals("ANNULLA si spegne: non c'e' piu' niente da annullare", false, it.findViewById<View>(R.id.undo_goal_button).isEnabled)
+                assertEquals(
+                    "ANNULLA si spegne: non c'e' piu' niente da annullare",
+                    false,
+                    it.findViewById<View>(R.id.undo_goal_button).isEnabled,
+                )
             }
             assertNonSiSposta("dopo ANNULLA con un tocco", iniziale, postiFissi(scenario))
         }
@@ -603,6 +613,79 @@ class MainActivityLayoutTest {
                 "ANNULLA non si e' spento dopo la conferma",
                 aspettaCheAttivi(scenario) { !it.findViewById<View>(R.id.undo_goal_button).isEnabled },
             )
+        }
+    }
+
+    @Test
+    fun ilPortiere_toccato_scade_e_lo_slot_diventa_rosso_con_CAMBIO_senza_spostare_niente() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var modello: MainViewModel
+            scenario.onActivity { modello = ViewModelProvider(it)[MainViewModel::class.java] }
+            assertTrue(
+                "il servizio del cronometro non si e' collegato",
+                aspettaCheAttivi(scenario) { it.findViewById<View>(R.id.timer_start_button).isEnabled },
+            )
+            try {
+                // Due secondi: il service conta a passi di un secondo, scade al terzo controllo.
+                scenario.onActivity { modello.setKeeperTimer(2) }
+                val iniziale = postiFissi(scenario)
+                var slotPrima = Posto(0, 0, 0, 0)
+                scenario.onActivity {
+                    val slot = it.findViewById<View>(R.id.keeper_slot)
+                    slotPrima = Posto(0, 0, slot.width, slot.height)
+                    assertTrue("lo slot del portiere deve essere toccabile", slot.isClickable)
+                    assertTrue("lo slot e' alto ${slot.height}px, sotto i 48dp", slot.height >= dp(it, 48))
+                }
+                onView(withId(R.id.keeper_slot)).perform(click())
+                assertTrue(
+                    "il tocco non ha avviato il conto",
+                    aspettaCheAttivi(scenario) {
+                        it.findViewById<TextView>(R.id.keeper_timer_textview).currentTextColor ==
+                            it.getColor(R.color.graffiti_pink)
+                    },
+                )
+                // Il conto scade: dopo la scadenza lo slot e' pieno #FF1744 con CAMBIO in #000000.
+                assertTrue(
+                    "dopo la scadenza lo slot non e' diventato rosso",
+                    aspettaCheAttivi(scenario) { modello.isKeeperTimerExpired.value == true },
+                )
+                InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+                scenario.onActivity {
+                    val slot = it.findViewById<com.google.android.material.card.MaterialCardView>(R.id.keeper_slot)
+                    val valore = it.findViewById<TextView>(R.id.keeper_timer_textview)
+                    assertEquals("lo slot scaduto e' pieno #FF1744", it.getColor(R.color.error_red), slot.cardBackgroundColor.defaultColor)
+                    assertEquals("CAMBIO e' in #000000", it.getColor(R.color.asphalt_black), valore.currentTextColor)
+                    assertEquals("lo slot scaduto dice CAMBIO", it.getString(R.string.label_keeper_change), valore.text.toString())
+                    assertEquals(
+                        "TalkBack dice lo stato e l'azione",
+                        it.getString(R.string.cd_keeper_expired),
+                        slot.contentDescription?.toString(),
+                    )
+                    assertEquals("lo slot scaduto non cambia larghezza", slotPrima.larghezza, slot.width)
+                    assertEquals("lo slot scaduto non cambia altezza", slotPrima.altezza, slot.height)
+                }
+                assertNonSiSposta("quando il portiere scade", iniziale, postiFissi(scenario))
+
+                // Un tocco lo toglie: riparte dalla durata piena e torna il conto. performClick e non un
+                // tocco vero: alla scadenza la notifica del service compare in alto (heads-up) proprio
+                // sopra la barra, e il tocco di Espresso cadrebbe su di lei.
+                scenario.onActivity { it.findViewById<View>(R.id.keeper_slot).performClick() }
+                assertTrue(
+                    "il tocco non ha tolto SCADUTO",
+                    aspettaCheAttivi(scenario) { modello.isKeeperTimerExpired.value == false },
+                )
+                scenario.onActivity {
+                    val valore = it.findViewById<TextView>(R.id.keeper_timer_textview)
+                    assertTrue("il conto non e' tornato: \"${valore.text}\"", valore.text.toString().matches(Regex("\\d\\d:\\d\\d")))
+                }
+                assertNonSiSposta("dopo il tocco che toglie SCADUTO", iniziale, postiFissi(scenario))
+            } finally {
+                // Il service del cronometro sopravvive al test: lo si lascia fermo e con la durata di prima.
+                scenario.onActivity {
+                    modello.resetKeeperTimer()
+                    modello.setKeeperTimer(300)
+                }
+            }
         }
     }
 

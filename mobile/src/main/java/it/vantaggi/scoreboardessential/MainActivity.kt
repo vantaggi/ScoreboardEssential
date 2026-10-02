@@ -331,6 +331,7 @@ class MainActivity :
         keeperSlot = findViewById(R.id.keeper_slot)
         keeperTimerLabel = findViewById(R.id.keeper_timer_label)
         dimensioneDelConto = keeperTimerTextView.textSize
+        keeperTimerTextView.minWidth = kotlin.math.ceil(larghezzaDelContoPiuLargo()).toInt()
         timerStartButton = findViewById(R.id.timer_start_button)
         timerStartButton.minWidth = larghezzaMinimaDelTempo(timerStartButton)
         undoGoalButton = findViewById(R.id.undo_goal_button)
@@ -1410,11 +1411,23 @@ class MainActivity :
      * stringerebbe e lo spazio lasciato libero sposterebbe i comandi accanto (laZonaPiuNonSiSposta).
      */
     private fun dimensioneDelCambio(): Float {
-        val misura = Paint(keeperTimerTextView.paint).apply { textSize = dimensioneDelConto }
-        val larghezzaDelConto = misura.measureText("00:00")
-        val larghezzaDellaParola = misura.measureText(getString(R.string.label_keeper_change))
+        val larghezzaDelConto = larghezzaDelContoPiuLargo()
+        val larghezzaDellaParola = misuraDelConto().measureText(getString(R.string.label_keeper_change))
         if (larghezzaDellaParola <= larghezzaDelConto) return dimensioneDelConto
         return dimensioneDelConto * larghezzaDelConto / larghezzaDellaParola
+    }
+
+    private fun misuraDelConto() = Paint(keeperTimerTextView.paint).apply { textSize = dimensioneDelConto }
+
+    /**
+     * Il conto piu' largo, «88:88» fra le coppie di cifre uguali: le cifre del carattere non sono
+     * tutte larghe uguale (due pixel di differenza fra «02:00» e «00:00» sono bastati a far muovere
+     * lo slot). Il valore ha questa come larghezza minima, cosi' lo slot misura sempre lo stesso,
+     * qualunque sia il conto o CAMBIO.
+     */
+    private fun larghezzaDelContoPiuLargo(): Float {
+        val misura = misuraDelConto()
+        return ('0'..'9').maxOf { cifra -> misura.measureText("$cifra$cifra:$cifra$cifra") }
     }
 
     private fun requestNotificationPermission() {
