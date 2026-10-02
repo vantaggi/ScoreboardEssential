@@ -354,7 +354,7 @@ class PlayerSelectionActivityTest {
                 Answer { invocazione ->
                     if (invocazione.method.name == "sendMessage") {
                         @Suppress("UNCHECKED_CAST")
-                        invioSospeso = invocazione.arguments.last() as Continuation<Boolean>
+                        invioSospeso = invocazione.rawArguments.last() as Continuation<Boolean>
                         COROUTINE_SUSPENDED
                     } else {
                         Mockito.RETURNS_DEFAULTS.answer(invocazione)
