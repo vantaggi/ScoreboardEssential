@@ -76,6 +76,12 @@ sealed class Transitorio(
 
     /** Il comando e' partito e non si ritira: si dice che manca la conferma, non che non e' chiusa. */
     data object ChiusuraNonConfermata : Transitorio(Tono.AMBRA)
+
+    /** La scelta dello sport e' partita: dura finche' il quadrante non riceve lo stato col nuovo sport. */
+    data object CambioSport : Transitorio(Tono.CHIARO)
+
+    /** Lo stato col nuovo sport non e' arrivato: il quadrante e' rimasto com'era. */
+    data object SportNonCambiato : Transitorio(Tono.AMBRA)
 }
 
 /**

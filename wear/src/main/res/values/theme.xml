@@ -45,9 +45,14 @@
     <!--
         Il tema del quadrante di gioco: la finestra e' gia' nera, quindi il layout non dipinge un
         secondo fondo (lint Overdraw). Le schermate di contorno restano sul tema street.
+
+        Niente chiusura con lo swipe verso destra: a meta' partita chiuderebbe il quadrante e con lui
+        il ViewModel, e si perderebbe cio' che il polso non ha ancora consegnato. Si esce col tasto.
+        Vale solo qui: le altre schermate tengono lo swipe come indietro.
     -->
     <style name="Theme.ScoreboardEssential.Face" parent="Theme.ScoreboardEssential">
         <item name="android:windowBackground">@color/ink_black</item>
+        <item name="android:windowSwipeToDismiss">false</item>
     </style>
 
     <!--

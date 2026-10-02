@@ -635,14 +635,70 @@ class RicevuteTocchiTest {
     }
 
     @Test
-    fun `senza lo stato dello sport chiesto il cambio dice NON CONFERMATO`() {
+    fun `senza lo stato dello sport chiesto il cambio dice SPORT NON CAMBIATO`() {
         viewModel.requestSport("tennis")
         assestati()
 
         avanza(WearViewModel.SCADENZA_RICEVUTA_MS)
 
         assertEquals(listOf(listOf(0L, 400L)), vibrazioni())
-        assertEquals(Transitorio.NonConfermato, viewModel.statoFiducia.value)
+        assertEquals(Transitorio.SportNonCambiato, viewModel.statoFiducia.value)
+
+        // E' un messaggio, non uno stato: dopo 3s la riga torna com'era.
+        avanza(StatoFiducia.DURATA_TRANSITORIO_MS)
+        assertEquals(Frase.TieniAnnulla, viewModel.statoFiducia.value)
+    }
+
+    @Test
+    fun `lo stato col nuovo sport, arrivato dopo la scadenza, toglie SPORT NON CAMBIATO`() {
+        viewModel.requestSport("tennis")
+        assestati()
+        avanza(WearViewModel.SCADENZA_RICEVUTA_MS)
+        assertEquals(Transitorio.SportNonCambiato, viewModel.statoFiducia.value)
+
+        // Lo stato arriva in ritardo, entro i 3s del messaggio: la frase non e' piu' vera.
+        viewModel.applyStateV2(stato(registro(0), sportId = "tennis"))
+        assestati()
+
+        assertEquals(Frase.TieniAnnulla, viewModel.statoFiducia.value)
+    }
+
+    @Test
+    fun `la scelta dello sport dice CAMBIO SPORT finche' il quadrante non riceve lo stato nuovo`() {
+        viewModel.requestSport("tennis")
+        assestati()
+        assertEquals(Transitorio.CambioSport, viewModel.statoFiducia.value)
+
+        // Passa piu' del transitorio di sempre (3s) e meno della ricevuta: la riga non torna da sola.
+        avanza(WearViewModel.SCADENZA_RICEVUTA_MS - 1)
+        assertEquals(Transitorio.CambioSport, viewModel.statoFiducia.value)
+
+        // Uno stato dello sport di prima non dice che il cambio e' fatto.
+        viewModel.applyStateV2(stato(registro(0), sportId = "padel"))
+        assestati()
+        assertEquals(Transitorio.CambioSport, viewModel.statoFiducia.value)
+
+        viewModel.applyStateV2(stato(registro(0), sportId = "tennis"))
+        assestati()
+        assertEquals(Frase.TieniAnnulla, viewModel.statoFiducia.value)
+
+        // E la scadenza della ricevuta non la riporta indietro.
+        avanza(10_000)
+        assertEquals(Frase.TieniAnnulla, viewModel.statoFiducia.value)
+    }
+
+    @Test
+    fun `lo stato col nuovo sport arrivato durante l'invio chiude CAMBIO SPORT`() {
+        durantInvio = {
+            durantInvio = null
+            viewModel.applyStateV2(stato(registro(0), sportId = "tennis"))
+        }
+
+        viewModel.requestSport("tennis")
+        assestati()
+
+        assertEquals(Frase.TieniAnnulla, viewModel.statoFiducia.value)
+        assertEquals(listOf(HapticFeedbackManager.PATTERN_CONFIRM.toList()), vibrazioni())
     }
 
     @Test
@@ -652,6 +708,8 @@ class RicevuteTocchiTest {
         viewModel.requestSport("tennis")
         assestati()
         assertEquals(listOf(listOf(0L, 400L)), vibrazioni())
+        // Il messaggio non e' partito: la riga lo dice subito, senza aspettare una ricevuta.
+        assertEquals(Transitorio.SportNonCambiato, viewModel.statoFiducia.value)
 
         avanza(10_000)
         assertEquals(1, vibrazioni().size)

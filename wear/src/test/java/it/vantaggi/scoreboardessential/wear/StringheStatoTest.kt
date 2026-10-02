@@ -43,6 +43,8 @@ class StringheStatoTest {
             Transitorio.Consegnati(n),
             Transitorio.Chiusura,
             Transitorio.ChiusuraNonConfermata,
+            Transitorio.CambioSport,
+            Transitorio.SportNonCambiato,
         )
 
     private fun verificaLunghezze(lingua: String) {
@@ -79,6 +81,11 @@ class StringheStatoTest {
         // La chiusura e' partita e non si ritira: la frase dice che manca la conferma, non "non chiusa".
         assertEquals("NON CONFERMATA", Transitorio.ChiusuraNonConfermata.testo(contesto("it")))
         assertEquals("NOT CONFIRMED", Transitorio.ChiusuraNonConfermata.testo(contesto("en")))
+        // Il cambio sport: l'italiano di SPORT NON CAMBIATO sta al limite, 18 su 18.
+        assertEquals("CAMBIO SPORT…", Transitorio.CambioSport.testo(contesto("it")))
+        assertEquals("CHANGING SPORT…", Transitorio.CambioSport.testo(contesto("en")))
+        assertEquals("SPORT NON CAMBIATO", Transitorio.SportNonCambiato.testo(contesto("it")))
+        assertEquals("SPORT NOT CHANGED", Transitorio.SportNonCambiato.testo(contesto("en")))
     }
 
     @Test

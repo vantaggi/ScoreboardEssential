@@ -10,6 +10,8 @@
     <color name="concrete_gray">#1E1E1E</color>
     <color name="stencil_white">#E0E0E0</color>
     <color name="sidewalk_gray">#9E9E9E</color>
+    <!-- Il solo grigio che parla in ambient (la riga di stato): 11.2:1 su nero, senza colore. -->
+    <color name="ambient_gray">#BDBDBD</color>
     <color name="graffiti_pink">#F50057</color>
     <color name="neon_cyan">#00E5FF</color>
     <color name="team_spray_yellow">#FFD600</color>

@@ -73,6 +73,7 @@ class RigaStatoLarghezzaTest {
             listOf(
                 italiano.getString(R.string.wear_status_offline_at, "18:42"),
                 italiano.getString(R.string.wear_status_not_delivered, 999),
+                italiano.getString(R.string.wear_status_sport_unchanged),
             )
         // Il carattere come lo disegna la riga (famiglia, grassetto, spaziatura) a 10sp, il minimo dell'autoSize.
         val penna = TextPaint(riga.paint)

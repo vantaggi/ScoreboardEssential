@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.wear.widget.WearableLinearLayoutManager
 import androidx.wear.widget.WearableRecyclerView
@@ -56,6 +57,8 @@ class SportSelectionActivity : ComponentActivity() {
                 }
                 finish()
             }
+        // Il focus serve alla corona: senza, ruotarla non scorre niente.
+        lista.requestFocus()
     }
 }
 
@@ -95,7 +98,10 @@ class SportAdapter(
             onClick: (SportChoice) -> Unit,
         ) {
             nome.text = scelta.label
-            // Quale sport si stia giocando si legge a parole, non dal colore di una riga.
+            // Quale sport si stia giocando si legge a parole, non dal colore di una riga: la spunta
+            // e' nel testo, e il ciano (10.84:1 su #1E1E1E) e' solo un rinforzo. Il colore sta qui e
+            // non nel layout, che il menu riusa per sottotitoli grigi.
+            stato.setTextColor(ContextCompat.getColor(stato.context, R.color.neon_cyan))
             stato.visibility = if (scelta.current) View.VISIBLE else View.GONE
             itemView.setOnClickListener { onClick(scelta) }
         }
