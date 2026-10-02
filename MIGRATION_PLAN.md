@@ -2103,7 +2103,9 @@ grande, la conferma senza prova, il nome su un gol vecchio). Da provare su un or
 vibrazioni, tick, CHI?, corona, TalkBack, quadrante con il carattere grande e Layout Inspector.
 Tolto anche `hs_err_pid26040.log`, committato per sbaglio con L11, e ignorati i prossimi.
 
-**Resta nella coda:** l'instabilita' di MainViewModelTest (causa probabile scritta sopra), lint-baseline
+**Instabilita' di MainViewModelTest** (2 ottobre, `2fe13ac`, unito in `0b8a398`): playerDao, matchDao e connectionManager iniettati nel costruttore del MainViewModel con i default di prima; i test passano i finti al costruttore invece di sostituirli per riflessione, e un test verifica che non si apra piu' l'AppDatabase vero. L'instabilita' non si e' riprodotta su daf1db3 (4 corse), quindi il rimedio toglie la causa probabile ma non e' provato dalla scomparsa del sintomo: da osservare. 735 JVM verdi; strumentati non rifatti (emulatore spento, MainActivity e factory invariate).
+
+**Resta nella coda:** lint-baseline
 da rigenerare, la cache della riga dei set nella cronologia. Fuori coda come prima: L4, L5, L6 (servono
 le prove con telefono e orologio accoppiati), I4 e I5 su Padel Elite. Decisioni aperte: SPORT bloccato
 da scollegati nel menu dell'orologio; servizio e palle break nella Cronaca del tennis singolare.
