@@ -164,7 +164,8 @@ class MarcatoreQuadranteTest {
         assertEquals(View.GONE, binding.chiCapsule.visibility)
         assertEquals(View.VISIBLE, binding.menuGlyph.visibility)
         binding.btnMenu.performClick()
-        assertEquals(MenuActivity::class.java.name, shadowOf(controller.get()).nextStartedActivityForResult.intent.component?.className)
+        val avviata = shadowOf(controller.get()).nextStartedActivityForResult.intent
+        assertEquals(MenuActivity::class.java.name, avviata.component?.className)
     }
 
     @Test
