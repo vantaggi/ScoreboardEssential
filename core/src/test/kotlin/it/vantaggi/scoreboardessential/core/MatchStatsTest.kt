@@ -383,6 +383,113 @@ class MatchStatsTest {
         assertEquals(listOf(1, 0), s.points.map { it.diff })
     }
 
+    // --- tennis singolare: il lato al servizio viene dall'alternanza --------------------------
+
+    /** Quattro punti di fila: chi serve tiene il game, chi riceve lo vince. */
+    private fun quattro(side: Int) = List(4) { side }
+
+    /**
+     * Due set giocati col motore vero, tennis a vantaggi, senza ordine di servizio. Serve il lato 1
+     * nei game pari del set (0, 2, ...), il lato 2 nei dispari.
+     *
+     * Primo set: il lato 2 rompe il game 0 (2,2,2,1,2: salva una palla break e converte l'altra), il
+     * lato 1 rompe il game 1 (4-0), poi tutti i game tenuti fino al 6-6 e un tie-break 7-3 per il
+     * lato 1. Il secondo set lo apre a servire il lato 2, che aveva ricevuto il primo punto del
+     * tie-break: il lato 1 lo rompe subito (1,1,1,2,1), tiene il suo primo game dopo aver salvato tre
+     * palle break (2,2,2,1,1,1,1,1) e chiude 6-4.
+     */
+    private fun singolare(): MatchEngine {
+        val sides = ArrayList<Int>()
+        sides += listOf(2, 2, 2, 1, 2)
+        sides += quattro(1)
+        // Game 2..11: i pari li tiene il lato 1, i dispari il lato 2.
+        for (g in 2..11) sides += quattro(if (g % 2 == 0) 1 else 2)
+        sides += listOf(1, 2, 2, 1, 1, 1, 2, 1, 1, 1)
+        sides += listOf(1, 1, 1, 2, 1)
+        sides += listOf(2, 2, 2, 1, 1, 1, 1, 1)
+        // Game 15..22: serve il lato 2 nei dispari e li tiene, serve il lato 1 nei pari e li tiene.
+        for (g in 15..22) sides += quattro(if (g % 2 == 0) 1 else 2)
+        val engine = MatchEngine(SportRegistry.byId(SportRegistry.TENNIS))
+        sides.forEach { engine.apply(ScoringEvent.Point(it)) }
+        return engine
+    }
+
+    /** Il lato al servizio non e' una stima: e' quello che il tabellone mostrava, punto per punto. */
+    @Test
+    fun singolare_ilLatoAlServizioEQuelloDelTabellone() {
+        val engine = singolare()
+        val s = checkNotNull(MatchStats.of(engine))
+        assertEquals(104, s.points.size)
+        val replay = MatchEngine(engine.rules)
+        val mostrati =
+            engine.log.map { entry ->
+                val lato = engine.rules.display(replay.state).servingSide
+                replay.apply(entry.event)
+                lato
+            }
+        assertEquals(mostrati, s.points.map { it.servingSide })
+        assertTrue(s.points.all { it.server == null })
+    }
+
+    /** Nel tie-break serve 1, poi 2 e 2, 1 e 1, 2 e 2, 1 e 1, 2; il set dopo lo apre chi ha ricevuto. */
+    @Test
+    fun singolare_tieBreakESetDopo() {
+        val s = checkNotNull(MatchStats.of(singolare()))
+        val tieBreak = s.points.filter { it.inTieBreak }
+        assertEquals(listOf(1, 2, 2, 1, 1, 2, 2, 1, 1, 2), tieBreak.map { it.servingSide })
+        assertEquals(listOf(7, 3), s.sets[0].tieBreak)
+        // Il game 12 e' il tie-break, il game 13 il primo del secondo set.
+        assertEquals(2, s.games[13].servingSide)
+        assertEquals(1, s.games[0].servingSide)
+        assertNull(s.games[12].hold)
+    }
+
+    @Test
+    fun singolare_servizioPerLatoSenzaGiocatori() {
+        val s = checkNotNull(MatchStats.of(singolare()))
+        val serve = checkNotNull(s.serve)
+        // Lato 1: 25 + 24 punti al servizio, 21 + 21 vinti; 6 + 5 game, 5 + 5 tenuti.
+        assertEquals(ServeLine(points = 49, won = 42, games = 11, held = 10), serve.bySide[0])
+        // Lato 2: 24 + 21 punti, 20 + 17 vinti; 6 + 5 game, 5 + 4 tenuti.
+        assertEquals(ServeLine(points = 45, won = 37, games = 11, held = 9), serve.bySide[1])
+        // Chi serviva come persona non si sa: il servizio e' per lato, non per giocatore.
+        assertTrue(serve.byPlayer.isEmpty())
+    }
+
+    @Test
+    fun singolare_palleBreakEBreak() {
+        val s = checkNotNull(MatchStats.of(singolare()))
+        // Il lato 1 riceve 1 + 2 palle break e ne converte 1 + 1; il lato 2 ne ha 2 + 3 e ne converte 1 + 0.
+        assertEquals(listOf(3, 5), s.breaks.chances)
+        assertEquals(listOf(2, 1), s.breaks.converted)
+        // Un break e' un game perso da chi serviva: stessi numeri visti dai game.
+        assertEquals(listOf(0, 1, 13), s.games.withIndex().filter { it.value.hold == false }.map { it.index })
+        assertEquals(listOf(1, 2, 2), s.games.filter { it.hold == false }.map { it.servingSide })
+        assertTrue(s.points.any { it.breakPoint })
+    }
+
+    /** Il padel senza ordine resta com'e': il tabellone non sapeva chi serviva. */
+    @Test
+    fun padelSenzaOrdine_restaSenzaServizio() {
+        val engine = MatchEngine(SportRegistry.byId(SportRegistry.PADEL))
+        (0 until 12).flatMap { g -> quattro(if (g % 2 == 0) 1 else 2) }.forEach { engine.apply(ScoringEvent.Point(it)) }
+        val s = checkNotNull(MatchStats.of(engine))
+        assertNull(s.serve)
+        assertEquals(listOf(0, 0), s.breaks.chances)
+        assertTrue(s.games.all { it.hold == null })
+        assertTrue(s.points.all { it.servingSide == null })
+    }
+
+    /** Il tennis in doppio, con l'ordine di quattro, conta per giocatore come il padel. */
+    @Test
+    fun tennisConOrdine_contaPerGiocatore() {
+        val engine = MatchEngine(SportRegistry.forMatch(SportRegistry.TENNIS, serveOrder))
+        quattro(1).forEach { engine.apply(ScoringEvent.Point(it)) }
+        val s = checkNotNull(MatchStats.of(engine))
+        assertEquals(listOf(1, 2, 3, 4), checkNotNull(s.serve).byPlayer.map { it.playerId })
+        assertEquals(1, s.games.single().server)
+    }
+
     @Test
     fun ilCalcioNonHaCronaca() {
         assertNull(MatchStats.of(MatchEngine(SportRegistry.byId(SportRegistry.FOOTBALL))))
