@@ -38,6 +38,15 @@ class RacketRules(
             scoreEventKey = "point",
         )
 
+    /** In coppia: quattro giocatori nell'ordine di servizio, oppure uno sport che lo e' sempre. */
+    private val inCoppia: Boolean get() = config.serveOrder.size == 4 || config.doublesWithoutOrder
+
+    /**
+     * Le stesse regole, ma in coppia anche senza ordine di servizio. Serve all'orologio, che non
+     * conosce le rose: sa dal telefono che si gioca in coppia e rifa' il calcolo da solo.
+     */
+    fun conIlServizioInCoppia(): RacketRules = RacketRules(id = id, config = config.copy(doublesWithoutOrder = true))
+
     override fun initial(): ScoreState = RacketScore()
 
     override fun apply(
@@ -73,6 +82,7 @@ class RacketRules(
             servingSide = if (ended) null else state.serveIndex % 2 + 1,
             servingPlayerId =
                 if (ended || config.serveOrder.size != 4) null else config.serveOrder[state.serveIndex % 4],
+            servingPlayerSlot = if (ended || !inCoppia) null else servingPlayerSlot(state.serveIndex),
             matchOver = ended,
         )
     }
@@ -255,3 +265,13 @@ class RacketRules(
         const val SEPARATOR = " \u00B7 "
     }
 }
+
+/**
+ * Quale giocatore della squadra al servizio batte, in coppia: 1 il primo, 2 il secondo.
+ *
+ * La rotazione e' A1, B1, A2, B2, quindi `serveIndex % 4` vale 0 e 1 per i primi delle due
+ * squadre, 2 e 3 per i secondi: il numero di pallini segue 1, 1, 2, 2 a ogni game. Nel tie-break
+ * l'indice avanza dopo il primo punto e poi ogni due, e alla chiusura torna a quello d'apertura
+ * piu' uno: la formula non ha casi speciali, perche' li ha gia' il contatore.
+ */
+fun servingPlayerSlot(serveIndex: Int): Int = serveIndex % 4 / 2 + 1
