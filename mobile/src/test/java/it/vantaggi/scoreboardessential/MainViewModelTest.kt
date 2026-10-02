@@ -2394,6 +2394,193 @@ class MainViewModelTest {
             }
         }
 
+    /** Gli id nell'ordine delle rose di [squadra]. */
+    private fun rosa(
+        vm: MainViewModel,
+        squadra: Int,
+    ): List<Int>? = (if (squadra == 1) vm.team1Players.value else vm.team2Players.value)?.map { it.player.playerId }
+
+    /**
+     * COPPIE, passo 14: lo scambio a registro vuoto inverte l'ordine dei due, e con lui chi serve
+     * per primo. Qui la riga viva esiste gia' (un punto, poi annullato a zero): le formazioni
+     * si riscrivono nel nuovo ordine, e con loro l'ordine di servizio della riga. Senza la
+     * riscrittura dell'ordine la riga tornava con le rose nuove e l'ordine vecchio.
+     */
+    @Test
+    fun `lo scambio a registro vuoto cambia chi serve per primo e riscrive rose e ordine della riga`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (marco, anna, luca, sara) = quattroDelPadel(playerDao)
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                val id = db.matchDao().getActiveMatchOnce()!!.matchId
+                viewModel.annullaUltimaAzione(rimandabile = false)
+                advanceUntilIdle()
+                assertTrue("registro di nuovo vuoto", motore().log.isEmpty())
+
+                viewModel.swapPlayers(1)
+                advanceUntilIdle()
+
+                assertEquals(listOf(luca, marco), rosa(viewModel, 1))
+                assertEquals(listOf(anna, sara), rosa(viewModel, 2))
+                assertEquals(listOf(luca, anna, marco, sara), motore().rules.config.serveOrder)
+                assertEquals(listOf(luca to 1, marco to 1, anna to 2, sara to 2), formazioni(db, id))
+                assertEquals(listOf(luca, anna, marco, sara).joinToString(","), db.matchDao().getMatchById(id)!!.serveOrder)
+
+                // Anche l'altra squadra, e un secondo scambio rimette le cose com'erano.
+                viewModel.swapPlayers(2)
+                advanceUntilIdle()
+                assertEquals(listOf(luca, sara, marco, anna), motore().rules.config.serveOrder)
+                viewModel.swapPlayers(1)
+                viewModel.swapPlayers(2)
+                advanceUntilIdle()
+                assertEquals(listOf(marco, anna, luca, sara), motore().rules.config.serveOrder)
+                assertEquals(listOf(marco to 1, luca to 1, anna to 2, sara to 2), formazioni(db, id))
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    /** Lo scambio prima del primo punto (nessuna riga viva): la riga nasce gia' nell'ordine nuovo. */
+    @Test
+    fun `lo scambio prima del primo punto resta dopo la morte del processo`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (marco, anna, luca, sara) = quattroDelPadel(playerDao)
+
+                viewModel.swapPlayers(2)
+                repeat(2) { viewModel.addScore(1) }
+                advanceUntilIdle()
+
+                val nuovo = nuovoViewModel(sportSalvato = SportRegistry.PADEL)
+                advanceUntilIdle()
+
+                assertEquals(listOf(marco, luca), rosa(nuovo, 1))
+                assertEquals("l'ordine delle rose torna com'era dopo lo scambio", listOf(sara, anna), rosa(nuovo, 2))
+                val campoMotore = MainViewModel::class.java.getDeclaredField("engine")
+                campoMotore.isAccessible = true
+                assertEquals(
+                    listOf(marco, sara, luca, anna),
+                    (campoMotore.get(nuovo) as MatchEngine).rules.config.serveOrder,
+                )
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    /** Dal primo punto l'ordine e' quello della partita: lo scambio non fa niente, ne' in memoria ne' sulla riga. */
+    @Test
+    fun `lo scambio a partita iniziata non fa niente`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (marco, anna, luca, sara) = quattroDelPadel(playerDao)
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                val id = db.matchDao().getActiveMatchOnce()!!.matchId
+
+                viewModel.swapPlayers(1)
+                viewModel.swapPlayers(2)
+                advanceUntilIdle()
+
+                assertEquals(listOf(marco, luca), rosa(viewModel, 1))
+                assertEquals(listOf(anna, sara), rosa(viewModel, 2))
+                assertEquals(listOf(marco, anna, luca, sara), motore().rules.config.serveOrder)
+                assertEquals(listOf(marco to 1, luca to 1, anna to 2, sara to 2), formazioni(db, id))
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    /** Con un solo giocatore non c'e' niente da scambiare. */
+    @Test
+    fun `lo scambio con meno di due giocatori non fa niente`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                val marco = playerDao.insert(Player(playerName = "Marco", appearances = 0, goals = 0)).toInt()
+                viewModel.addPlayerToTeam(PlayerWithRoles(Player(marco, "Marco", 0, 0), emptyList()), 1)
+
+                viewModel.swapPlayers(1)
+                viewModel.swapPlayers(2)
+                advanceUntilIdle()
+
+                assertEquals(listOf(marco), rosa(viewModel, 1))
+                assertEquals(emptyList<Int>(), rosa(viewModel, 2))
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    /**
+     * L'export di Padel Elite con 2+2 giocatori non dice piu' che ne servono quattro, ne' prima
+     * ne' dopo lo scambio: e' pronto, e porta i giocatori nell'ordine nuovo.
+     */
+    @Test
+    fun `l'export del padel con due giocatori per lato e' pronto, anche dopo lo scambio`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                quattroDelPadel(playerDao)
+                viewModel.swapPlayers(1)
+                repeat(3) { viewModel.addScore(2) }
+                advanceUntilIdle()
+
+                val esito = viewModel.buildExport()
+
+                assertTrue("atteso Ready, ottenuto $esito", esito is ExportResult.Ready)
+                assertEquals(listOf("Luca", "Marco", "Anna", "Sara"), (esito as ExportResult.Ready).export.players.map { it.name })
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    /**
+     * Il tennis e' un singolare finche' le rose non hanno due giocatori per lato: allora e' un
+     * doppio, e togliendone uno torna singolare. I giocatori per lato seguono le rose.
+     */
+    @Test
+    fun `i giocatori per lato del tennis seguono le rose`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.TENNIS)
+                advanceUntilIdle()
+                assertEquals(1, viewModel.sportCapabilities.value?.playersPerSide)
+
+                quattroDelPadel(playerDao)
+                assertEquals(2, viewModel.sportCapabilities.value?.playersPerSide)
+
+                viewModel.removePlayerFromTeam(viewModel.team2Players.value!!.last(), 2)
+                assertEquals("con un lato a uno e' di nuovo un singolare", 1, viewModel.sportCapabilities.value?.playersPerSide)
+                assertEquals(emptyList<Int>(), motore().rules.config.serveOrder)
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
     /** Non ci sono FK in cascata: scartare la riga viva lasciava orfane le sue formazioni. */
     @Test
     fun `scartare la riga viva cancella anche le sue formazioni`() =
