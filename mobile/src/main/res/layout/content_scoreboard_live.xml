@@ -197,14 +197,34 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <View
-                        android:id="@+id/team1_serve_dot"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                    <!-- Lo slot ha sempre la larghezza di due pallini: uno o due si accendono, ma
+                         niente cambia misura a partita in corso. -->
+                    <LinearLayout
+                        android:id="@+id/team1_serve_slot"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:layout_marginEnd="6dp"
-                        android:background="@drawable/bg_serve_dot"
+                        android:gravity="center_vertical"
                         android:importantForAccessibility="no"
-                        android:visibility="invisible" />
+                        android:orientation="horizontal">
+
+                        <View
+                            android:id="@+id/team1_serve_dot"
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:background="@drawable/bg_serve_dot"
+                            android:importantForAccessibility="no"
+                            android:visibility="invisible" />
+
+                        <View
+                            android:id="@+id/team1_serve_dot_second"
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:layout_marginStart="4dp"
+                            android:background="@drawable/bg_serve_dot"
+                            android:importantForAccessibility="no"
+                            android:visibility="invisible" />
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/team1_name_textview"
@@ -250,14 +270,32 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <View
-                        android:id="@+id/team2_serve_dot"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
+                    <LinearLayout
+                        android:id="@+id/team2_serve_slot"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:layout_marginEnd="6dp"
-                        android:background="@drawable/bg_serve_dot"
+                        android:gravity="center_vertical"
                         android:importantForAccessibility="no"
-                        android:visibility="invisible" />
+                        android:orientation="horizontal">
+
+                        <View
+                            android:id="@+id/team2_serve_dot"
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:background="@drawable/bg_serve_dot"
+                            android:importantForAccessibility="no"
+                            android:visibility="invisible" />
+
+                        <View
+                            android:id="@+id/team2_serve_dot_second"
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:layout_marginStart="4dp"
+                            android:background="@drawable/bg_serve_dot"
+                            android:importantForAccessibility="no"
+                            android:visibility="invisible" />
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/team2_name_textview"

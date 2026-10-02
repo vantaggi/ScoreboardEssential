@@ -96,9 +96,29 @@ class MenuVociTest {
     }
 
     @Test
-    fun `SPORT resta attiva da scollegati e nel calcio, i blocchi sono solo di FINE PARTITA`() {
-        // Il controllo dei test sopra: un blocco non deve allargarsi alla voce accanto.
-        val sport = voce(IdVoce.SPORT, input(collegato = false, calcioConV2 = true, sport = "Calcio"))
+    fun `da scollegati SPORT e' disattivata e chiede il telefono`() {
+        // Decisione del proprietario: la richiesta di cambio sport senza telefono non arriverebbe.
+        val sport = voce(IdVoce.SPORT, input(collegato = false))
+
+        assertFalse(sport.attiva)
+        assertEquals(SottotitoloVoce.ServeIlTelefono, sport.sottotitolo)
+    }
+
+    @Test
+    fun `SPORT segue l'ordine di FINE PARTITA, coda poi partita poi telefono`() {
+        assertEquals(
+            SottotitoloVoce.PrimaConsegna(2),
+            voce(IdVoce.SPORT, input(inCoda = 2, partitaIniziata = true, collegato = false)).sottotitolo,
+        )
+        assertEquals(
+            SottotitoloVoce.PartitaInCorso,
+            voce(IdVoce.SPORT, input(partitaIniziata = true, collegato = false)).sottotitolo,
+        )
+    }
+
+    @Test
+    fun `nel calcio SPORT resta attiva, il blocco L4 e' solo di FINE PARTITA`() {
+        val sport = voce(IdVoce.SPORT, input(calcioConV2 = true, sport = "Calcio"))
 
         assertTrue(sport.attiva)
         assertEquals(SottotitoloVoce.SportInUso("Calcio"), sport.sottotitolo)

@@ -287,11 +287,23 @@
                 android:importantForAccessibility="no"
                 android:visibility="gone"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintVertical_bias="0.24"
                 app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="@dimen/face_dot_top"
                 android:layout_marginStart="@dimen/face_dot_inset"
                 tools:visibility="visible" />
+
+            <!-- Il secondo pallino: batte il secondo giocatore della squadra. Sta verso le cifre,
+                 accanto al primo, che non si muove. -->
+            <View
+                android:id="@+id/team1ServeDotSecond"
+                android:layout_width="@dimen/face_dot_size"
+                android:layout_height="@dimen/face_dot_size"
+                android:background="@drawable/bg_serving_dot"
+                android:importantForAccessibility="no"
+                android:visibility="gone"
+                app:layout_constraintTop_toTopOf="@id/team1ServeDot"
+                app:layout_constraintStart_toEndOf="@id/team1ServeDot"
+                android:layout_marginStart="@dimen/face_dot_gap" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -328,10 +340,20 @@
                 android:importantForAccessibility="no"
                 android:visibility="gone"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintVertical_bias="0.24"
                 app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="@dimen/face_dot_top"
                 android:layout_marginEnd="@dimen/face_dot_inset" />
+
+            <View
+                android:id="@+id/team2ServeDotSecond"
+                android:layout_width="@dimen/face_dot_size"
+                android:layout_height="@dimen/face_dot_size"
+                android:background="@drawable/bg_serving_dot"
+                android:importantForAccessibility="no"
+                android:visibility="gone"
+                app:layout_constraintTop_toTopOf="@id/team2ServeDot"
+                app:layout_constraintEnd_toStartOf="@id/team2ServeDot"
+                android:layout_marginEnd="@dimen/face_dot_gap" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!--

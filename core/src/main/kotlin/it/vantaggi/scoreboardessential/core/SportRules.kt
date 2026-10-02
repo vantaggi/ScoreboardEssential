@@ -71,6 +71,14 @@ data class SportConfig(
      * Vuota quando lo sport non modella il servizio, o quando l'utente non l'ha impostata.
      */
     val serveOrder: List<Int> = emptyList(),
+    /**
+     * Si gioca in coppia anche quando l'ordine di servizio non e' impostato?
+     *
+     * Il padel si', sempre: la rotazione A1, B1, A2, B2 vale con o senza i nomi. Il tennis no:
+     * senza le rose (due giocatori per squadra) e' un singolare, e un singolare ha un solo
+     * giocatore per lato. Con un [serveOrder] di quattro giocatori si gioca in coppia comunque.
+     */
+    val doublesWithoutOrder: Boolean = true,
 )
 
 /**
@@ -109,6 +117,12 @@ data class ScoreDisplay(
     val servingSide: Int? = null,
     /** Giocatore al servizio, quando l'ordine di servizio e' stato impostato. */
     val servingPlayerId: Int? = null,
+    /**
+     * Quale giocatore della squadra al servizio batte, in coppia: 1 il primo, 2 il secondo.
+     * Null nel singolare, quando nessuno serve e a partita finita. Si ricava dal solo
+     * `serveIndex` (vedi [servingPlayerSlot]), quindi non richiede i nomi.
+     */
+    val servingPlayerSlot: Int? = null,
     /**
      * La partita e' finita: da qui in poi nessun punto puo' cambiare il risultato.
      *

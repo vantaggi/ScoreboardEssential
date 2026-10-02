@@ -77,11 +77,15 @@ object MenuVoci {
         )
 
     private fun voceSport(input: InputMenu): Voce {
-        // L'arretrato non dice di che sport e': con punti in coda non si cambia sport dal polso.
+        // Stesso ordine di FINE PARTITA, cosi' le due voci non si contraddicono: prima la coda
+        // (il numero dei punti e' piu' utile del motivo generico, e l'arretrato non dice di che
+        // sport e'), poi la partita cominciata (il telefono rifiuterebbe il cambio), poi il
+        // telefono assente (la richiesta non arriverebbe).
         val blocco =
             when {
-                input.partitaIniziata -> SottotitoloVoce.PartitaInCorso
                 input.inCoda > 0 -> SottotitoloVoce.PrimaConsegna(input.inCoda)
+                input.partitaIniziata -> SottotitoloVoce.PartitaInCorso
+                !input.collegato -> SottotitoloVoce.ServeIlTelefono
                 else -> null
             }
         return Voce(IdVoce.SPORT, blocco == null, blocco ?: SottotitoloVoce.SportInUso(input.sport))

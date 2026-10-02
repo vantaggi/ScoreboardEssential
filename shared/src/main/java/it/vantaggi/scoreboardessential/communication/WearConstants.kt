@@ -89,6 +89,15 @@ object WearConstants {
     const val KEY_SERVING_SIDE = "serving_side"
 
     /**
+     * Quale giocatore della squadra al servizio batte, in coppia: 1 il primo, 2 il secondo.
+     *
+     * Additiva: 0 vuol dire "nessuno, o singolare", ed e' anche il valore di un telefono che non
+     * la manda. Accanto a [KEY_SERVING_SIDE], che resta invariata, perche' l'orologio la usa sia
+     * per i pallini sia per sapere che si gioca in coppia quando rifa' il calcolo da solo.
+     */
+    const val KEY_SERVING_SLOT = "serving_slot"
+
+    /**
      * Lo sport corrente e quelli scegliibili, gia' tradotti dal telefono.
      *
      * L'orologio non dipende da :core e non deve dipendervi: se conoscesse l'elenco degli sport,

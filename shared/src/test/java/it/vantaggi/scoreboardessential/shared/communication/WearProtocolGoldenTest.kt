@@ -101,6 +101,7 @@ class WearProtocolGoldenTest {
         assertEquals("side2_secondary", WearConstants.KEY_SIDE2_SECONDARY)
         assertEquals("period_label", WearConstants.KEY_PERIOD_LABEL)
         assertEquals("serving_side", WearConstants.KEY_SERVING_SIDE)
+        assertEquals("serving_slot", WearConstants.KEY_SERVING_SLOT)
         assertEquals("cap_has_clock", WearConstants.KEY_CAP_HAS_CLOCK)
         assertEquals("cap_has_aux_timer", WearConstants.KEY_CAP_HAS_AUX_TIMER)
         assertEquals("cap_attributes_scorer", WearConstants.KEY_CAP_ATTRIBUTES_SCORER)
@@ -247,6 +248,7 @@ class WearProtocolGoldenTest {
                 "KEY_SIDE2_SECONDARY" to "side2_secondary",
                 "KEY_PERIOD_LABEL" to "period_label",
                 "KEY_SERVING_SIDE" to "serving_side",
+                "KEY_SERVING_SLOT" to "serving_slot",
                 "KEY_SPORT_LABEL" to "sport_label",
                 "KEY_SPORT_IDS" to "sport_ids",
                 "KEY_SPORT_LABELS" to "sport_labels",

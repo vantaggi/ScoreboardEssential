@@ -26,10 +26,17 @@ object SportRegistry {
                 id = PADEL,
                 config = SportConfig(mode = ScoringMode.POINTS, deuce = DeuceRule.GOLDEN_POINT, sets = 1),
             ),
-            // Tennis: vantaggi, al meglio di tre set. Una riga di configurazione.
+            // Tennis: vantaggi, al meglio di tre set. Una riga di configurazione. Senza le rose e'
+            // un singolare: in coppia si gioca solo con l'ordine di servizio a quattro.
             RacketRules(
                 id = TENNIS,
-                config = SportConfig(mode = ScoringMode.POINTS, deuce = DeuceRule.ADVANTAGE, sets = 3),
+                config =
+                    SportConfig(
+                        mode = ScoringMode.POINTS,
+                        deuce = DeuceRule.ADVANTAGE,
+                        sets = 3,
+                        doublesWithoutOrder = false,
+                    ),
             ),
         )
 

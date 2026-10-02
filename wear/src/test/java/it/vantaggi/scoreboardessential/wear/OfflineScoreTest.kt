@@ -21,6 +21,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -250,6 +251,82 @@ class OfflineScoreTest {
         assertEquals(2, atteso)
         // Senza il ricalcolo resterebbe l'1 del telefono: il pallino, quando ci sara', mentirebbe.
         assertEquals(atteso, viewModel.scoreState.value?.servingSide)
+    }
+
+    @Test
+    fun `chi batte si ricalcola al polso come il telefono, nel padel`() {
+        // Un game a testa, poi un terzo alla squadra 1: batte il secondo giocatore della 1.
+        viewModel.applyStateV2(statoDalTelefono(registro = "").copy(servingSide = 1, servingSlot = 1))
+        val lati = listOf(1, 1, 1, 1, 2, 2, 2, 2)
+        lati.forEachIndexed { i, lato -> coda.add(PendingIntent(WearConstants.INTENT_POINT, lato, (i + 1) * 1_000L)) }
+        viewModel.refreshPendingCount()
+
+        val telefono = motorePadel()
+        lati.forEach { telefono.apply(ScoringEvent.Point(side = it)) }
+        val atteso = SportRegistry.byId(SportRegistry.PADEL).display(telefono.state)
+
+        assertEquals(1, atteso.servingSide)
+        assertEquals(2, atteso.servingPlayerSlot)
+        assertEquals(atteso.servingSide, viewModel.scoreState.value?.servingSide)
+        assertEquals(atteso.servingPlayerSlot, viewModel.scoreState.value?.servingSlot)
+    }
+
+    @Test
+    fun `nel tennis l'orologio sa che si gioca in coppia solo dal telefono`() {
+        // Il telefono dice "batte il primo": e' un tennis in coppia, e il polso non ha le rose per
+        // saperlo da solo. Otto punti da soli (quattro per squadra) chiudono due game.
+        viewModel.applyStateV2(
+            statoDalTelefono(registro = "").copy(sportId = SportRegistry.TENNIS, servingSide = 1, servingSlot = 1),
+        )
+        repeat(8) { i -> coda.add(PendingIntent(WearConstants.INTENT_POINT, if (i < 4) 1 else 2, (i + 1) * 1_000L)) }
+        viewModel.refreshPendingCount()
+
+        assertEquals("terzo game: batte il secondo giocatore", 2, viewModel.scoreState.value?.servingSlot)
+        assertEquals(1, viewModel.scoreState.value?.servingSide)
+    }
+
+    @Test
+    fun `un tennis in doppio ritrovato dal disco senza telefono ha ancora due pallini`() {
+        // Il telefono racconta un doppio (batte il primo), poi l'orologio si riavvia: la memoria
+        // e' vuota, resta il disco. Senza il flag salvato il ricalcolo lo prenderebbe per singolare.
+        LastKnownMatch(RuntimeEnvironment.getApplication())
+            .save(SportRegistry.TENNIS, "", servingSlot = 1)
+        repeat(8) { i -> coda.add(PendingIntent(WearConstants.INTENT_POINT, if (i < 4) 1 else 2, (i + 1) * 1_000L)) }
+
+        viewModel.refreshPendingCount()
+
+        assertEquals("terzo game: batte il secondo giocatore", 2, viewModel.scoreState.value?.servingSlot)
+    }
+
+    @Test
+    fun `la coppia salvata si azzera quando la partita cambia`() {
+        val nota = LastKnownMatch(RuntimeEnvironment.getApplication())
+        val registro = MatchLogCodec.encode(motorePadel().also { it.apply(ScoringEvent.Point(side = 1)) }.log)
+        nota.save(SportRegistry.TENNIS, registro, servingSlot = 1)
+        // Stesso sport e registro che prosegue: il telefono puo' non mandare lo slot, il flag resta.
+        nota.save(SportRegistry.TENNIS, registro, servingSlot = 0)
+        assertTrue(nota.inCoppia)
+
+        // Registro che riparte da vuoto: nuova partita, singolare.
+        nota.save(SportRegistry.TENNIS, "", servingSlot = 0)
+        assertFalse(nota.inCoppia)
+
+        nota.save(SportRegistry.TENNIS, registro, servingSlot = 1)
+        // Sport diverso: il flag non si porta dietro.
+        nota.save(SportRegistry.PADEL, registro, servingSlot = 0)
+        assertFalse(nota.inCoppia)
+    }
+
+    @Test
+    fun `nel singolare l'orologio non inventa un secondo giocatore`() {
+        viewModel.applyStateV2(
+            statoDalTelefono(registro = "").copy(sportId = SportRegistry.TENNIS, servingSide = 1, servingSlot = 0),
+        )
+        repeat(8) { i -> coda.add(PendingIntent(WearConstants.INTENT_POINT, if (i < 4) 1 else 2, (i + 1) * 1_000L)) }
+        viewModel.refreshPendingCount()
+
+        assertEquals(0, viewModel.scoreState.value?.servingSlot)
+        assertEquals(1, viewModel.scoreState.value?.servingSide)
     }
 
     /**

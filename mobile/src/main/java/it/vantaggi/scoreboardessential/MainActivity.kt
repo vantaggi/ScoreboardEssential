@@ -1164,8 +1164,12 @@ class MainActivity :
                 viewModel.team2Name.value.orEmpty(),
                 // Non ancora misurata: niente da accorciare, ci pensa il listener del layout.
             ) { candidato -> disponibile <= 0 || matchPeriodTextView.paint.measureText(candidato) <= disponibile }
-        findViewById<View>(R.id.team1_serve_dot).visibility = if (display.servingSide == 1) View.VISIBLE else View.INVISIBLE
-        findViewById<View>(R.id.team2_serve_dot).visibility = if (display.servingSide == 2) View.VISIBLE else View.INVISIBLE
+        mostraIlServizio(
+            findViewById<View>(android.R.id.content),
+            display,
+            viewModel.team1Name.value.orEmpty(),
+            viewModel.team2Name.value.orEmpty(),
+        )
     }
 
     /**
@@ -1491,4 +1495,50 @@ internal fun mostraNomeSquadra(
 ) {
     testo.text = nome.uppercase(Locale.getDefault())
     contenitore.contentDescription = contenitore.context.getString(R.string.cd_edit_team_name, nome)
+}
+
+/**
+ * I pallini del servizio: uno se batte il primo giocatore della squadra, due se batte il secondo.
+ *
+ * Niente nomi e niente numeri a schermo: la barra dice gia' chi serve, qui si dice quale dei due.
+ * Il singolare ha un solo giocatore per lato, quindi un pallino. Lo slot ha sempre la larghezza
+ * di due pallini e quelli spenti sono INVISIBLE e non GONE, cosi' nulla si sposta. Sta fuori
+ * dall'Activity perche' sotto Robolectric MainActivity non si monta.
+ *
+ * TalkBack non vede i pallini uno a uno: lo slot ha una descrizione sola, e solo mentre la
+ * squadra serve, che dice chi batte.
+ */
+internal fun mostraIlServizio(
+    radice: View,
+    display: ScoreDisplay,
+    nome1: String,
+    nome2: String,
+) {
+    val lati =
+        listOf(
+            listOf(R.id.team1_name_container, R.id.team1_serve_slot, R.id.team1_serve_dot, R.id.team1_serve_dot_second),
+            listOf(R.id.team2_name_container, R.id.team2_serve_slot, R.id.team2_serve_dot, R.id.team2_serve_dot_second),
+        )
+    lati.forEachIndexed { indice, ids ->
+        val nome = if (indice == 0) nome1 else nome2
+        val serve = display.servingSide == indice + 1
+        val slot = radice.findViewById<View>(ids[1])
+        radice.findViewById<View>(ids[2]).visibility = if (serve) View.VISIBLE else View.INVISIBLE
+        radice.findViewById<View>(ids[3]).visibility =
+            if (serve && display.servingPlayerSlot == 2) View.VISIBLE else View.INVISIBLE
+        val frase =
+            when {
+                !serve -> null
+                display.servingPlayerSlot == 1 -> R.string.cd_serving_first_player
+                display.servingPlayerSlot == 2 -> R.string.cd_serving_second_player
+                else -> R.string.cd_serving
+            }?.let { slot.context.getString(it, nome) }
+        slot.contentDescription = frase
+        slot.importantForAccessibility =
+            if (frase == null) View.IMPORTANT_FOR_ACCESSIBILITY_NO else View.IMPORTANT_FOR_ACCESSIBILITY_YES
+        // Il contenitore del nome e' un bersaglio solo: TalkBack legge la SUA descrizione e non
+        // quella dei figli, quindi chi serve va detto anche li'.
+        val modifica = slot.context.getString(R.string.cd_edit_team_name, nome)
+        radice.findViewById<View>(ids[0]).contentDescription = if (frase == null) modifica else "$modifica. $frase"
+    }
 }
