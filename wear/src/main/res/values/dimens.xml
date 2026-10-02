@@ -11,6 +11,9 @@
     <dimen name="face_margin_d">16dp</dimen>
     <dimen name="face_margin_e">30dp</dimen>
 
+    <!-- Il vuoto fra il testo della fascia A e il centro, dal lato del cronometro. -->
+    <dimen name="face_context_gap">5dp</dimen>
+
     <!-- Il pallino del servizio: una fascia riservata sul lato esterno di ogni colonna, sempre,
          cosi' il numero non si sposta quando il pallino compare. Il pallino sta al centro della
          fascia: margine di corda piu' mezzo spazio che avanza. -->

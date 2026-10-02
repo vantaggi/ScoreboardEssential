@@ -158,11 +158,17 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Fascia A, bersagli: cronometro a sinistra del centro, portiere a destra. -->
+        <!--
+            Fascia A, bersagli: cronometro a sinistra del centro, portiere a destra. Il cronometro e'
+            sempre esposto a TalkBack (importantForAccessibility=yes): nella racchetta non e' un
+            comando, quindi non e' cliccabile, e senza il "yes" la vista non e' importante e la
+            descrizione dei game, che mette il delegato di MainActivity, non verrebbe mai letta.
+        -->
         <View
             android:id="@+id/touchTimer"
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:importantForAccessibility="yes"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toTopOf="@id/guide_46"
             app:layout_constraintStart_toStartOf="parent"
@@ -179,10 +185,11 @@
             app:layout_constraintEnd_toEndOf="parent" />
 
         <!--
-            Fascia A, testi. Il cronometro (nel calcio) o i game del set in corso (nella racchetta)
-            sta a destra, fermo su x=91; il portiere a sinistra, fermo da x=101: le due posizioni
-            non cambiano quando cambia il testo. Il gruppo e' largo circa 92dp contro i 102 utili
-            dentro l'anello a quell'altezza.
+            Fascia A, testi. Il cronometro (nel calcio) sta a destra, fermo su x=91; il portiere a
+            sinistra, fermo da x=101: le due posizioni non cambiano quando cambia il testo. Il
+            gruppo e' largo circa 92dp contro i 102 utili dentro l'anello a quell'altezza. Nella
+            racchetta il K non c'e' e i game del set in corso stanno al centro dello schermo:
+            MainActivity (posizionaContesto) allarga allora la vista a tutta la fascia e la centra.
         -->
         <TextView
             android:id="@+id/matchTimer"
@@ -198,7 +205,7 @@
             app:layout_constraintBottom_toTopOf="@id/guide_48"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/guide_center"
-            android:layout_marginEnd="5dp" />
+            android:layout_marginEnd="@dimen/face_context_gap" />
 
         <TextView
             android:id="@+id/keeperTimer"

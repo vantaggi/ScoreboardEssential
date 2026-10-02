@@ -4,11 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -470,15 +472,42 @@ class MainActivity : ComponentActivity() {
     private fun renderContesto() {
         val stato = viewModel.scoreState.value
         if (stato != null && !stato.hasClock) {
+            posizionaContesto(centrato = true)
             binding.matchTimer.text = FaceText.split(stato).first
             binding.matchTimer.setTextColor(ContextCompat.getColor(this, R.color.ink_white))
             binding.touchTimer.isClickable = false
             return
         }
+        posizionaContesto(centrato = false)
         binding.matchTimer.text = viewModel.matchTimer.value
         val corre = viewModel.matchTimerRunning.value
         binding.matchTimer.setTextColor(ContextCompat.getColor(this, if (corre) R.color.ink_white else R.color.sidewalk_gray))
         binding.touchTimer.isClickable = true
+    }
+
+    /**
+     * Dove sta il testo della fascia A.
+     *
+     * Col cronometro (calcio) e' allineato a destra e finisce 5dp prima del centro, dove comincia
+     * il K: le due posizioni non cambiano col testo. Senza (racchetta) il K non c'e' e i game stanno
+     * al centro dello schermo: restando fermi su x=91 col K nascosto sarebbero fuori centro.
+     */
+    private fun posizionaContesto(centrato: Boolean) {
+        val vista = binding.matchTimer
+        val gravita = if (centrato) Gravity.CENTER else Gravity.END or Gravity.CENTER_VERTICAL
+        if (vista.gravity == gravita) return
+        vista.gravity = gravita
+        val parametri = vista.layoutParams as ConstraintLayout.LayoutParams
+        if (centrato) {
+            parametri.endToStart = ConstraintLayout.LayoutParams.UNSET
+            parametri.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
+            parametri.marginEnd = 0
+        } else {
+            parametri.endToEnd = ConstraintLayout.LayoutParams.UNSET
+            parametri.endToStart = R.id.guide_center
+            parametri.marginEnd = resources.getDimensionPixelSize(R.dimen.face_context_gap)
+        }
+        vista.layoutParams = parametri
     }
 
     /** Cosa legge TalkBack sul bersaglio della fascia A, calcolato adesso; niente se non c'e' niente. */

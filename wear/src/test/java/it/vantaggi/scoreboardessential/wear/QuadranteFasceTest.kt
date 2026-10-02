@@ -7,6 +7,7 @@ import android.os.SystemClock
 import android.text.TextPaint
 import android.util.DisplayMetrics
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -355,6 +356,65 @@ class QuadranteFasceTest {
         assertEquals(0, b.faceDetail.left)
         // L'anello resta, bianco di nulla: e' la prima vista della radice.
         assertTrue(b.keeperProgressBar.parent === b.root)
+    }
+
+    // --- fascia A: TalkBack e posizione ---
+
+    /**
+     * TalkBack vede un nodo solo se la vista e' importante per l'accessibilita'. Con "auto" il
+     * bersaglio dei game, nella racchetta, non lo e': non e' cliccabile (non e' un comando) e la
+     * descrizione la mette solo il delegato, che per View.isImportantForAccessibility non conta.
+     * Risultato: i game del set non venivano mai letti.
+     */
+    private fun verificaBersaglioContestoLeggibile(quadrante: Quadrante) {
+        val bersaglio = quadrante.binding.touchTimer
+        assertTrue("il bersaglio della fascia A non e' esposto a TalkBack", bersaglio.isImportantForAccessibility)
+        val nodo = bersaglio.createAccessibilityNodeInfo()
+        assertFalse("il nodo non ha descrizione", nodo.contentDescription.isNullOrEmpty())
+    }
+
+    @Test
+    @Config(qualifiers = "w192dp-h192dp-round-notnight")
+    fun `calcio, il bersaglio del cronometro e' esposto a TalkBack con la sua descrizione`() {
+        val q = apri()
+        q.applica(stato("1", "0", hasClock = true))
+        verificaBersaglioContestoLeggibile(q)
+    }
+
+    @Test
+    @Config(qualifiers = "w192dp-h192dp-round-notnight")
+    fun `tennis, il bersaglio dei game e' esposto a TalkBack con la sua descrizione`() {
+        val q = apri()
+        q.applica(stato("0", "15", giochi = "6-4 · 4-3", periodo = "Set 2"))
+        verificaBersaglioContestoLeggibile(q)
+        assertTrue(
+            q.binding.touchTimer
+                .createAccessibilityNodeInfo()
+                .contentDescription
+                .contains("4 – 3"),
+        )
+    }
+
+    @Test
+    @Config(qualifiers = "w192dp-h192dp-round-notnight")
+    fun `tennis, i game del set stanno al centro dello schermo e nel calcio il cronometro resta a sinistra`() {
+        val q = apri()
+        q.applica(stato("0", "15", giochi = "6-4 · 4-3", periodo = "Set 2"))
+        val centroSchermo = q.binding.root.width / 2f
+        val game = q.binding.matchTimer
+        assertEquals(
+            "i game non sono centrati: la vista va da ${game.left} a ${game.right}",
+            centroSchermo,
+            (game.left + game.right) / 2f,
+            1.5f,
+        )
+        assertEquals(Gravity.CENTER, game.gravity)
+
+        q.applica(stato("1", "0", hasClock = true))
+        // Col cronometro l'allineamento a destra resta: il testo finisce prima del centro, dove
+        // comincia il K, e non si sposta quando cambiano le cifre.
+        assertTrue("il cronometro non e' piu' a sinistra del centro", q.binding.matchTimer.right <= centroSchermo)
+        assertEquals(Gravity.END or Gravity.CENTER_VERTICAL, q.binding.matchTimer.gravity)
     }
 
     // --- carattere di sistema grande ---
