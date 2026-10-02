@@ -131,7 +131,7 @@ class PlayerSelectionActivity : ComponentActivity() {
             if (consegnato) {
                 vibratore?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_CONFIRM, -1))
             } else {
-                vibratore?.vibrate(VibrationEffect.createWaveform(WearViewModel.PATTERN_ERRORE, -1))
+                vibratore?.vibrate(VibrationEffect.createWaveform(WearPatterns.NON_CONFERMATO, -1))
                 // Il toast sopravvive alla chiusura: chi guarda il polso legge perche' ha vibrato.
                 Toast.makeText(this@PlayerSelectionActivity, R.string.wear_scorer_not_sent, Toast.LENGTH_SHORT).show()
             }

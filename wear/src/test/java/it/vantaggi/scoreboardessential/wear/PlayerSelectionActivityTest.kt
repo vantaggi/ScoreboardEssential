@@ -102,7 +102,7 @@ class PlayerSelectionActivityTest {
 
         val activity = scegliRossi()
 
-        assertArrayEquals(WearViewModel.PATTERN_ERRORE, ultimaVibrazione())
+        assertArrayEquals(WearPatterns.NON_CONFERMATO, ultimaVibrazione())
         assertEquals(activity.getString(R.string.wear_scorer_not_sent), ShadowToast.getTextOfLatestToast())
     }
 
