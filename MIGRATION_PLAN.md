@@ -2149,3 +2149,9 @@ sceglierlo): tabellone, pallino e Cronaca concordano fra loro. Un comando per sc
 primo a partita ferma e' una funzione futura. Il nome `isSingles` vale per ogni tennis senza ordine di
 quattro (anche un doppio senza rose): i numeri restano giusti perche' anche nel doppio i lati alternano
 a ogni game; da unificare con `SportConfig.doublesWithoutOrder`.
+
+**lint-baseline rigenerata** (2 ottobre): :mobile da 186 a 59 voci, :wear da 52 a 43, con
+updateLintBaselineDebug. Scelta: la baseline assorbe anche i pochi avvisi gia' noti che lint mostrava
+come nuovi da settimane (NotifyDataSetChanged in applyCapabilities, LabelFor in activity_match_settings,
+UnusedAttribute nel manifest, Overdraw delle schermate di selezione dell'orologio): da qui in avanti
+lint segnala solo cio' che nasce dopo. Resta in coda solo la cache della riga dei set nella cronologia.
