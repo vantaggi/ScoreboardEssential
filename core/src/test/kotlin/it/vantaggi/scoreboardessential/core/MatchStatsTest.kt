@@ -463,7 +463,8 @@ class MatchStatsTest {
         assertEquals(listOf(3, 5), s.breaks.chances)
         assertEquals(listOf(2, 1), s.breaks.converted)
         // Un break e' un game perso da chi serviva: stessi numeri visti dai game.
-        assertEquals(listOf(0, 1, 13), s.games.withIndex().filter { it.value.hold == false }.map { it.index })
+        val rotti = s.games.indices.filter { s.games[it].hold == false }
+        assertEquals(listOf(0, 1, 13), rotti)
         assertEquals(listOf(1, 2, 2), s.games.filter { it.hold == false }.map { it.servingSide })
         assertTrue(s.points.any { it.breakPoint })
     }
