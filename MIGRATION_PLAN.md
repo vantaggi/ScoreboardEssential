@@ -2128,3 +2128,12 @@ sale di circa 13dp), push.
 
 Fermo il 2 ottobre alle 15:00: limite delle 5 ore al 98% (si azzera alle 16:20), settimanale all'83%
 (si azzera domenica 4 ottobre alle 20:00).
+
+**Decisioni prese il 2 ottobre** (il proprietario ha chiesto di decidere al suo posto):
+1. Nel menu dell'orologio SPORT e' spenta anche da scollegati («Serve il telefono»), come FINE PARTITA:
+   la richiesta senza telefono falliva con la vibrazione d'errore.
+2. La Cronaca del tennis singolare calcola servizio, game tenuti e palle break: nel singolare il lato al
+   servizio si ricava dall'alternanza dei game (serveIndex), senza bisogno di un ordine di quattro.
+3. Pallini: si salva sull'orologio se la partita e' in coppia (rimedio della media). Il padel con un
+   telefono senza la chiave serving_slot puo' mostrare 1 pallino sul telefono e 2 al polso: accettato
+   come effetto della convivenza fra versioni.
