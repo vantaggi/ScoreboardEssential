@@ -1126,7 +1126,6 @@ class MainActivityLayoutTest {
         }
     }
 
-
     /**
      * Passo 14: nel padel il foglio ha la card COPPIE con due posti numerati per lato. Toccare
      * SCAMBIA li inverte (e con loro chi serve per primo); dopo il primo punto il comando si
@@ -1187,6 +1186,7 @@ class MainActivityLayoutTest {
             inseriti.forEach { runBlocking { giocatori.delete(it) } }
         }
     }
+
     /** Porta in fondo il foglio aperto, dove stanno gli ultimi pulsanti. */
     private fun scorriInFondo(scenario: ActivityScenario<MainActivity>) {
         scenario.onActivity { it.findViewById<NestedScrollView>(R.id.match_sheet).fullScroll(View.FOCUS_DOWN) }

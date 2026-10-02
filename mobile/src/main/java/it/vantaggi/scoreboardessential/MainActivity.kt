@@ -598,13 +598,12 @@ class MainActivity :
      * si spegne dal primo punto, come l'ordine di servizio che non cambia a partita iniziata.
      */
     private fun aggiornaLeCoppie() {
+        val rosa1 = viewModel.team1Players.value.orEmpty()
+        val rosa2 = viewModel.team2Players.value.orEmpty()
         mostraLeCoppie(
             findViewById(R.id.scoreboard_details),
             capabilities?.playersPerSide,
-            listOf(
-                viewModel.team1Players.value.orEmpty().map { it.player.playerName },
-                viewModel.team2Players.value.orEmpty().map { it.player.playerName },
-            ),
+            listOf(rosa1.map { it.player.playerName }, rosa2.map { it.player.playerName }),
             listOf(viewModel.team1Name.value ?: "Team 1", viewModel.team2Name.value ?: "Team 2"),
             viewModel.canUndo.value == true,
         )
