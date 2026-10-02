@@ -884,18 +884,6 @@ class WearViewModel(
     }
 
     // --- Match Timer Management ---
-    fun setMatchTimer(time: String) {
-        matchTimerJob?.cancel() // Stop the internal timer
-        _matchTimer.value = time
-    }
-
-    fun setMatchTimerMillis(millis: Long) {
-        matchTimerJob?.cancel() // Stop internal timer if we get an update from mobile
-        val minutes = (millis / 1000) / 60
-        val seconds = (millis / 1000) % 60
-        _matchTimer.value = String.format("%02d:%02d", minutes, seconds)
-    }
-
     fun syncMatchTimer(
         millis: Long,
         isRunning: Boolean,
