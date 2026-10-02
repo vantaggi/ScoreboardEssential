@@ -22,7 +22,8 @@ object FootballRules : SportRules {
         SportCapabilities(
             clock = ClockMode.COUNT_UP,
             hasAuxCountdown = true,
-            hasRoles = true,
+            hasFormations = true,
+            playersPerSide = null,
             attributesScorer = true,
             decrementIsUndo = false,
             scoreEventKey = "goal",

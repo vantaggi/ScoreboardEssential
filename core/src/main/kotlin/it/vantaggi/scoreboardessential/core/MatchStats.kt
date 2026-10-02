@@ -446,11 +446,15 @@ data class MatchStats(
          * Un giocatore per lato: tennis senza ordine di quattro. Il padel si gioca sempre in
          * coppia, quindi senza ordine il lato al servizio resta ignoto; un tennis con l'ordine di
          * quattro e' un doppio e conta per giocatore.
+         *
+         * Il criterio e' uno solo e sta nelle regole ([SportConfig.doublesWithoutOrder], letto
+         * da [SportCapabilities.playersPerSide]): il telefono decide con lo stesso se mostrare
+         * le coppie. Il calcio non ha ne' coppie ne' singoli, quindi non e' un singolare.
          */
         fun isSingles(
             sportId: String,
             serveOrder: List<Int>,
-        ): Boolean = sportId == SportRegistry.TENNIS && serveOrder.size != PLAYERS_PER_MATCH
+        ): Boolean = SportRegistry.forMatch(sportId, serveOrder).capabilities.playersPerSide == 1
 
         /** Tutti i game giocati, compresi quelli dei set chiusi: il tie-break vale un game. */
         private fun gamesPlayed(state: RacketScore): Int = state.gamesInSet.sum() + state.closedSets.sumOf { it.games.sum() }

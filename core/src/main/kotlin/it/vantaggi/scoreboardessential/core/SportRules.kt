@@ -83,14 +83,21 @@ data class SportConfig(
 
 /**
  * Tutto cio' che l'interfaccia, l'orologio e il service devono sapere **senza** conoscere lo
- * sport. Sei campi, ciascuno con almeno un consumatore reale: nessuno e' speculativo.
+ * sport. Sette campi, ciascuno con almeno un consumatore reale: nessuno e' speculativo.
  */
 data class SportCapabilities(
     val clock: ClockMode,
     /** Il countdown ausiliario. Oggi esiste solo per la rotazione del portiere nel calcio. */
     val hasAuxCountdown: Boolean,
-    /** Ruoli, roster e formazioni hanno senso per questo sport? */
-    val hasRoles: Boolean,
+    /** Le formazioni (modulo e ruoli in campo) hanno senso per questo sport? Oggi solo il calcio. */
+    val hasFormations: Boolean,
+    /**
+     * Quanti giocatori ha ogni lato in campo: 2 nel padel e nel tennis in doppio, 1 nel tennis
+     * singolare, null quando lo sport non ha coppie ne' singoli da ordinare (il calcio).
+     * Il tennis e' un singolare finche' non c'e' un ordine di servizio a quattro: lo decide
+     * [SportConfig.doublesWithoutOrder], lo stesso criterio di [MatchStats.isSingles].
+     */
+    val playersPerSide: Int?,
     /** Segnando si chiede chi ha realizzato il punto? */
     val attributesScorer: Boolean,
     /** Il pulsante "-" e' un annullamento invece di una correzione? */
