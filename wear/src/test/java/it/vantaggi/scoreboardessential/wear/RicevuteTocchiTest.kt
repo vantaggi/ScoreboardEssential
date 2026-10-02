@@ -650,6 +650,20 @@ class RicevuteTocchiTest {
     }
 
     @Test
+    fun `lo stato col nuovo sport, arrivato dopo la scadenza, toglie SPORT NON CAMBIATO`() {
+        viewModel.requestSport("tennis")
+        assestati()
+        avanza(WearViewModel.SCADENZA_RICEVUTA_MS)
+        assertEquals(Transitorio.SportNonCambiato, viewModel.statoFiducia.value)
+
+        // Lo stato arriva in ritardo, entro i 3s del messaggio: la frase non e' piu' vera.
+        viewModel.applyStateV2(stato(registro(0), sportId = "tennis"))
+        assestati()
+
+        assertEquals(Frase.TieniAnnulla, viewModel.statoFiducia.value)
+    }
+
+    @Test
     fun `la scelta dello sport dice CAMBIO SPORT finche' il quadrante non riceve lo stato nuovo`() {
         viewModel.requestSport("tennis")
         assestati()

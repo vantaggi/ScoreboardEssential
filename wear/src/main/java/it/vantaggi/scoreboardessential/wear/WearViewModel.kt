@@ -598,6 +598,11 @@ class WearViewModel(
         dalVivo: Boolean = true,
     ) {
         protocolV2Seen = true
+        // Lo sport e' cambiato: SPORT NON CAMBIATO, a ricevuta scaduta, non e' piu' vero.
+        val sportPrima = statoDalTelefono?.sportId
+        if (sportPrima != null && sportPrima != state.sportId && transitorio == Transitorio.SportNonCambiato) {
+            transitorio = null
+        }
         statoDalTelefono = state
         if (dalVivo) {
             ultimoStatoVivoAlle = orologio()
