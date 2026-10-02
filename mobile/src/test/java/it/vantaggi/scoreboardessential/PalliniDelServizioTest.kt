@@ -55,7 +55,14 @@ class PalliniDelServizioTest {
         radice: View,
         squadra: Int,
     ): Int {
-        val ids = if (squadra == 1) listOf(R.id.team1_serve_dot, R.id.team1_serve_dot_second) else listOf(R.id.team2_serve_dot, R.id.team2_serve_dot_second)
+        val ids =
+            if (squadra ==
+                1
+            ) {
+                listOf(R.id.team1_serve_dot, R.id.team1_serve_dot_second)
+            } else {
+                listOf(R.id.team2_serve_dot, R.id.team2_serve_dot_second)
+            }
         return ids.count { radice.findViewById<View>(it).visibility == View.VISIBLE }
     }
 

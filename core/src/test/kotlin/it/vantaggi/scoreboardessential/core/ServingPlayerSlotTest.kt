@@ -129,8 +129,7 @@ class ServingPlayerSlotTest {
     private fun play(
         rules: RacketRules,
         sides: List<Int>,
-    ): RacketScore =
-        sides.fold(rules.initial()) { state, side -> rules.apply(state, ScoringEvent.Point(side)) } as RacketScore
+    ): RacketScore = sides.fold(rules.initial()) { state, side -> rules.apply(state, ScoringEvent.Point(side)) } as RacketScore
 
     private companion object {
         fun taps(

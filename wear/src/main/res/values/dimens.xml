@@ -15,7 +15,7 @@
     <dimen name="face_context_gap">5dp</dimen>
 
     <!-- Il pallino del servizio: una fascia riservata sul lato esterno di ogni colonna, sempre,
-         cosi' il numero non si ssposta quando il pallino compare. Il primo pallino sta sul lato
+         cosi' il numero non si sposta quando il pallino compare. Il primo pallino sta sul lato
          esterno a distanza di corda, il secondo (batte il secondo giocatore) accanto, verso le
          cifre, ma piu' in alto del loro bordo. -->
     <dimen name="face_dot_size">8dp</dimen>

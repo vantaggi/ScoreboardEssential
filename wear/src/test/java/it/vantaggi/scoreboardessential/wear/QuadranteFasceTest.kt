@@ -599,7 +599,10 @@ class QuadranteFasceTest {
                     val r = q.rettangolo(punto)
                     listOf(r.left to r.top, r.right to r.top, r.left to r.bottom, r.right to r.bottom).forEach { (x, y) ->
                         val distanza = sqrt((x - raggio) * (x - raggio) + (y - raggio) * (y - raggio))
-                        assertTrue("uno spigolo e' a ${q.dp(distanza.toInt())}dp dal centro, il raggio e' ${q.dp(raggio.toInt())}dp", distanza <= raggio)
+                        assertTrue(
+                            "uno spigolo e' a ${q.dp(distanza.toInt())}dp dal centro, il raggio e' ${q.dp(raggio.toInt())}dp",
+                            distanza <= raggio,
+                        )
                     }
                 }
             }
@@ -646,13 +649,33 @@ class QuadranteFasceTest {
         val q = apri()
         val b = q.binding
         q.applica(stato("40", "30", periodo = "Set 1", servizio = 1, giocatore = 2))
-        assertTrue(b.team1Container.contentDescription.toString().endsWith("Team 1 serving, second player"))
-        assertFalse(b.team2Container.contentDescription.toString().contains("serving"))
+        assertTrue(
+            b.team1Container.contentDescription
+                .toString()
+                .endsWith("Team 1 serving, second player"),
+        )
+        assertFalse(
+            b.team2Container.contentDescription
+                .toString()
+                .contains("serving"),
+        )
         q.applica(stato("40", "30", periodo = "Set 1", servizio = 2, giocatore = 1))
-        assertTrue(b.team2Container.contentDescription.toString().endsWith("Team 2 serving, first player"))
-        assertFalse(b.team1Container.contentDescription.toString().contains("serving"))
+        assertTrue(
+            b.team2Container.contentDescription
+                .toString()
+                .endsWith("Team 2 serving, first player"),
+        )
+        assertFalse(
+            b.team1Container.contentDescription
+                .toString()
+                .contains("serving"),
+        )
         q.applica(stato("40", "30", periodo = "Set 1", servizio = 2, giocatore = 0))
-        assertTrue(b.team2Container.contentDescription.toString().endsWith("Team 2 serving"))
+        assertTrue(
+            b.team2Container.contentDescription
+                .toString()
+                .endsWith("Team 2 serving"),
+        )
     }
 
     @Test
@@ -660,6 +683,10 @@ class QuadranteFasceTest {
     fun `TalkBack in italiano`() {
         val q = apri()
         q.applica(stato("40", "30", periodo = "Set 1", servizio = 1, giocatore = 2))
-        assertTrue(q.binding.team1Container.contentDescription.toString().endsWith("Squadra 1 al servizio, secondo giocatore"))
+        assertTrue(
+            q.binding.team1Container.contentDescription
+                .toString()
+                .endsWith("Squadra 1 al servizio, secondo giocatore"),
+        )
     }
 }
