@@ -290,7 +290,13 @@ class PlayerSelectionActivityTest {
         val controller = Robolectric.buildActivity(PlayerSelectionActivity::class.java, intent).create()
         // Gonfiare i layout su un orologio costa tempo: la lista compare solo dopo.
         adesso += 300L
-        val activity = controller.start().postCreate(null).resume().visible().get()
+        val activity =
+            controller
+                .start()
+                .postCreate(null)
+                .resume()
+                .visible()
+                .get()
         val lista = activity.findViewById<RecyclerView>(R.id.player_list)
         lista.measure(
             View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY),
