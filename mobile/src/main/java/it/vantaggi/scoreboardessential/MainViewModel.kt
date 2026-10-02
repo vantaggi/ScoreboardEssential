@@ -462,18 +462,25 @@ class MainViewModel(
         if (engine.log.isNotEmpty()) return
         val uno = _team1Players.value.orEmpty()
         val due = _team2Players.value.orEmpty()
-        if (uno.size < 2 || due.size < 2) return
+        // Con meno di due per lato non c'e' un ordine: se ce n'era uno (una rosa che si svuota)
+        // si toglie, altrimenti un tennis tornato a un giocatore per lato resterebbe in coppia.
         val ordine =
-            listOf(
-                uno[0].player.playerId,
-                due[0].player.playerId,
-                uno[1].player.playerId,
-                due[1].player.playerId,
-            )
+            if (uno.size < 2 || due.size < 2) {
+                emptyList()
+            } else {
+                listOf(
+                    uno[0].player.playerId,
+                    due[0].player.playerId,
+                    uno[1].player.playerId,
+                    due[1].player.playerId,
+                )
+            }
         if (ordine == sportRules.config.serveOrder) return
         sportRules = SportRegistry.forMatch(sportRules.id, ordine)
         engine = MatchEngine(sportRules)
         _scoreDisplay.value = sportRules.display(engine.state)
+        // Il tennis diventa doppio o singolare con le rose: i giocatori per lato seguono l'ordine.
+        if (_sportCapabilities.value != sportRules.capabilities) _sportCapabilities.value = sportRules.capabilities
         // Le regole sono cambiate, quindi lo stato autoritativo e' cambiato: l'orologio va
         // riallineato anche se oggi l'unico campo diverso -- chi serve -- non lo mostra ancora.
         // Uno stato spedito solo a meta' e' il modo in cui nascono le divergenze.
@@ -869,6 +876,25 @@ class MainViewModel(
     }
 
     /**
+     * Scambia i due giocatori di una squadra: chi era primo diventa secondo, e con lui cambia chi
+     * serve per primo ([refreshServeOrder]). Solo a registro vuoto: dal primo punto l'ordine e'
+     * quello della partita, e riscriverlo falserebbe l'attribuzione dei punti gia' giocati.
+     *
+     * Come ogni cambio di rosa aspetta la fine del ripristino e riscrive le rose della riga viva:
+     * dopo un punto annullato a zero la riga esiste ancora, e deve tornare con l'ordine nuovo.
+     */
+    fun swapPlayers(teamId: Int) {
+        if (rimandataDalRipristino { swapPlayers(teamId) }) return
+        if (engine.log.isNotEmpty()) return
+        val rosa = if (teamId == 1) _team1Players else _team2Players
+        val giocatori = rosa.value.orEmpty()
+        if (giocatori.size < 2) return
+        rosa.value = listOf(giocatori[1], giocatori[0]) + giocatori.drop(2)
+        refreshServeOrder()
+        salvaRoseDellaRigaViva()
+    }
+
+    /**
      * Riscrive le rose sulla riga viva, se c'e', in fila con le altre sue scritture.
      *
      * Le rose vivevano solo in memoria: dopo la morte del processo la partita tornava senza
@@ -888,6 +914,9 @@ class MainViewModel(
             _team1Players.value.orEmpty().map { it.player.playerId },
             _team2Players.value.orEmpty().map { it.player.playerId },
         )
+        // L'ordine di servizio segue le rose finche' il registro e' vuoto: dopo un punto annullato
+        // a zero la riga c'e' gia', e senza questo tornava con le rose nuove e l'ordine vecchio.
+        matchDao.updateLiveServeOrder(id.toInt(), Match.encodeServeOrder(sportRules.config.serveOrder))
     }
 
     fun createNewPlayer(

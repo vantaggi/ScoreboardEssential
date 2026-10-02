@@ -406,6 +406,7 @@ class MainActivity :
             viewModel.scoreDisplay.value?.let(::bindPeriod)
             aggiornaDescrizioni()
             aggiornaStriscia()
+            aggiornaLeCoppie()
         }
 
         viewModel.team2Name.observe(this) { name ->
@@ -413,6 +414,7 @@ class MainActivity :
             viewModel.scoreDisplay.value?.let(::bindPeriod)
             aggiornaDescrizioni()
             aggiornaStriscia()
+            aggiornaLeCoppie()
         }
 
         viewModel.team1Color.observe(this) { color ->
@@ -422,6 +424,7 @@ class MainActivity :
             // squadre con due coppie di colori diverse sulla stessa schermata. Rose e
             // formazioni portano il colore come riempimento del tag, mai come testo.
             findViewById<TextView>(R.id.team1_roster_label).etichettaDiSquadra(color)
+            findViewById<TextView>(R.id.team1_pair_label).etichettaDiSquadra(color)
             team1FormationLabel.etichettaDiSquadra(color)
             matchLogAdapter.team1Color = color
             matchLogAdapter.notifyDataSetChanged()
@@ -430,6 +433,7 @@ class MainActivity :
         viewModel.team2Color.observe(this) { color ->
             aggiornaZona(2, color)
             findViewById<TextView>(R.id.team2_roster_label).etichettaDiSquadra(color)
+            findViewById<TextView>(R.id.team2_pair_label).etichettaDiSquadra(color)
             team2FormationLabel.etichettaDiSquadra(color)
             matchLogAdapter.team2Color = color
             matchLogAdapter.notifyDataSetChanged()
@@ -456,11 +460,13 @@ class MainActivity :
         viewModel.team1Players.observe(this) { players ->
             team1RosterAdapter.submitList(players)
             updateFormation(1, players)
+            aggiornaLeCoppie()
         }
 
         viewModel.team2Players.observe(this) { players ->
             team2RosterAdapter.submitList(players)
             updateFormation(2, players)
+            aggiornaLeCoppie()
         }
 
         // La notizia dell'orologio e' uno stato: il badge e la card restano finche' non c'e' una
@@ -522,6 +528,8 @@ class MainActivity :
 
         viewModel.canUndo.observe(this) {
             refreshUndoButtonState()
+            // Il registro non vuoto e' anche il lucchetto dello scambio delle coppie.
+            aggiornaLeCoppie()
         }
 
         viewModel.sportCapabilities.observe(this) { sportCapabilities ->
@@ -569,10 +577,12 @@ class MainActivity :
         findViewById<View>(R.id.sheet_reset_timer_button).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
         // Le rose restano in ogni sport: nel padel e nel tennis sono l'unico posto dove si
         // assegnano i giocatori ai lati, e senza di loro l'export verso Padel Elite (4 giocatori,
-        // 2 per lato) e l'ordine di servizio per nome erano impossibili. Legarle a hasRoles le
-        // spegneva insieme alle formazioni, che invece sono davvero solo del calcio.
+        // 2 per lato) e l'ordine di servizio per nome erano impossibili. Legarle alle formazioni le
+        // spegneva insieme a loro, che invece sono davvero solo del calcio. Le coppie seguono i
+        // giocatori per lato: ci sono nel padel e nel tennis in doppio, non nel calcio.
         rostersCard.visibility = View.VISIBLE
-        formationsCard.visibility = if (sportCapabilities.hasRoles) View.VISIBLE else View.GONE
+        formationsCard.visibility = if (sportCapabilities.hasFormations) View.VISIBLE else View.GONE
+        aggiornaLeCoppie()
         refreshUndoButtonState()
         // Negli sport senza marcatore non esistono gol: il dialogo e il registro parlano di punti, e
         // le righe del registro smettono di offrire un marcatore da scegliere.
@@ -581,6 +591,23 @@ class MainActivity :
         aggiornaDescrizioni()
         aggiornaStriscia()
         dimensionaINumeri(if (sportASet) TOKEN_PIU_LARGO_RACCHETTA else TOKEN_PIU_LARGO_CALCIO)
+    }
+
+    /**
+     * La card COPPIE segue le capacita' (giocatori per lato), le rose e il registro: lo scambio
+     * si spegne dal primo punto, come l'ordine di servizio che non cambia a partita iniziata.
+     */
+    private fun aggiornaLeCoppie() {
+        mostraLeCoppie(
+            findViewById(R.id.scoreboard_details),
+            capabilities?.playersPerSide,
+            listOf(
+                viewModel.team1Players.value.orEmpty().map { it.player.playerName },
+                viewModel.team2Players.value.orEmpty().map { it.player.playerName },
+            ),
+            listOf(viewModel.team1Name.value ?: "Team 1", viewModel.team2Name.value ?: "Team 2"),
+            viewModel.canUndo.value == true,
+        )
     }
 
     /**
@@ -1023,6 +1050,9 @@ class MainActivity :
         findViewById<Button>(R.id.add_team2_player_button).setOnClickListener {
             showAddPlayerToTeamDialog(2)
         }
+
+        findViewById<Button>(R.id.team1_swap_button).setOnClickListener { viewModel.swapPlayers(1) }
+        findViewById<Button>(R.id.team2_swap_button).setOnClickListener { viewModel.swapPlayers(2) }
 
         findViewById<Button>(R.id.players_button).setOnClickListener {
             startActivity(Intent(this, PlayersManagementActivity::class.java))

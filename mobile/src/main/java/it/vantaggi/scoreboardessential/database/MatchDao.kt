@@ -153,6 +153,13 @@ interface MatchDao {
         eventLog: String,
     )
 
+    /** L'ordine di servizio della riga viva, quando cambia con le rose a registro vuoto. */
+    @Query("UPDATE matches SET serveOrder = :serveOrder WHERE matchId = :matchId")
+    suspend fun updateLiveServeOrder(
+        matchId: Int,
+        serveOrder: String,
+    )
+
     /** Chiude la partita viva: smette di essere attiva e fissa il risultato finale. */
     @Query(
         """
