@@ -393,21 +393,21 @@ class WearViewModelTest {
     }
 
     @Test
-    fun `a partita finita il tocco rifiutato vibra da errore, a partita in corso no`() {
+    fun `a partita finita il tocco rifiutato sta in silenzio al polso, a partita in corso suona il tick`() {
         // Il padel e' dove la partita finisce davvero: il calcio non ha matchOver.
         viewModel.applyStateV2(statoCalcio(finita = true).copy(sportId = "padel", hasClock = false))
 
         viewModel.incrementScore(1)
 
-        // Scartato ma sentito: il doppio colpo di errore, subito, senza aspettare il telefono.
-        Mockito.verify(vibrator, Mockito.times(1)).vibrate(Mockito.any(VibrationEffect::class.java))
+        // Silenzio: a dirlo e' la parola PARTITA FINITA (DESIGN.md, "Coerenza fra telefono e
+        // orologio"), e il colpo lungo vale "NON CONFERMATO", che qui non e' vero.
+        Mockito.verify(vibrator, Mockito.never()).vibrate(Mockito.any(VibrationEffect::class.java))
 
-        // Controllo: a partita in corso la guardia non vibra. La conferma del tocco normale arriva
-        // solo dopo l'invio, in una coroutine che qui non viene fatta girare.
-        Mockito.clearInvocations(vibrator)
+        // Controllo: a partita in corso lo stesso tocco suona subito il tick. La conferma di lato
+        // arriva solo dopo l'invio e lo stato, in una coroutine che qui non viene fatta girare.
         viewModel.applyStateV2(statoCalcio(finita = false).copy(sportId = "padel", hasClock = false))
         viewModel.incrementScore(1)
-        Mockito.verify(vibrator, Mockito.never()).vibrate(Mockito.any(VibrationEffect::class.java))
+        Mockito.verify(vibrator, Mockito.times(1)).vibrate(Mockito.any(VibrationEffect::class.java))
     }
 
     @Test

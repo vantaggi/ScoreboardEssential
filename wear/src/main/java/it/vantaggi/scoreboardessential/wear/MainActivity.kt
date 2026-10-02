@@ -229,6 +229,7 @@ class MainActivity : ComponentActivity() {
         // etichetta. Un gesto che toglie punti non puo' stare nascosto meta' schermo: chi teneva
         // premuto per sbaglio un po' piu' in basso vedeva sparire un punto e non sapeva perche'.
         // Ora la divisione non esiste piu', e cosa fa il tocco lungo lo dice gestureHint.
+        // Il tick lo suona il ViewModel (WearHaptics), non performHapticFeedback.
         binding.team1Container.setOnClickListener { viewModel.incrementScore(1) }
         binding.team2Container.setOnClickListener { viewModel.incrementScore(2) }
 

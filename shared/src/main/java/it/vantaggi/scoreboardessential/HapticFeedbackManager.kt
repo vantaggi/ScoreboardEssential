@@ -14,4 +14,10 @@ object HapticFeedbackManager {
     // one long pulse, the same "not taken" reading on phone and watch. Three short ticks are
     // reserved for undo (DESIGN.md, "Coerenza fra telefono e orologio").
     val PATTERN_INERT_TAP = longArrayOf(0, 400)
+
+    // Pattern for undo/correction: three short ticks. Shared because the phone speaks it too (undo
+    // with one tap, step 12) and on the watch it is the takeback signal. It is NOT the old
+    // finished-match tap, which became PATTERN_INERT_TAP above (DESIGN.md, "Coerenza fra telefono
+    // e orologio").
+    val PATTERN_UNDO = longArrayOf(0, 30, 50, 30, 50, 30)
 }
