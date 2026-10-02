@@ -755,6 +755,13 @@ Emulatore: chiudere l'app del telefono o scollegare il telefono emulato: 'SCOLLE
 - stringa senza separatore: A = stringa intera.
 Emulatore Wear_OS_Small_Round, screenshot in calcio, padel e tennis. Col Layout Inspector: cifre a 58sp senza taglio con 'AV', '40' e '15'; lati di almeno 78×72dp; gruppo cronometro+K dentro l'anello; nessun testo tagliato dal bordo.
 
+**Come e' stato fatto (passo 6, 2 ottobre 2026).** Le cifre sono **58dp e 68dp**, non sp: in sp, col
+carattere di sistema grande (fontScale 1,06-1,24 su Wear OS), 'AV' diventava 'A' e '40' diventava '4'
+dentro le colonne da 68dp. La misura resta fissa per tutta la partita e uguale sui due lati, come voleva
+la scheda; gli altri livelli del quadrante (cronometro, K, D, E) restano in sp. Nella racchetta i game
+della fascia A sono centrati sullo schermo; nel calcio il gruppo cronometro+K resta allineato a destra
+sull'asse. Dove questo documento dice "58sp" per le cifre dell'orologio, vale 58dp.
+
 #### 7. Aptica per lato e ricevuta del tocco: WearHaptics con interfaccia iniettabile, ricevute con lunghezza del r
 
 7. Aptica per lato e ricevuta del tocco: WearHaptics con interfaccia iniettabile, ricevute con lunghezza del registro e scadenza a 2.5s, tick immediato, NON CONFERMATO senza messa in coda, requestSport confermato all'arrivo dello stato.
