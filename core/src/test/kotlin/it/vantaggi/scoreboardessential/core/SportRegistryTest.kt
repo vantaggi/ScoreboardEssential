@@ -58,7 +58,7 @@ class SportRegistryTest {
     }
 
     @Test
-    fun `i giocatori per lato: nessuno nel calcio, due nel padel, uno nel tennis senza rose`() {
+    fun `i giocatori per lato, nessuno nel calcio, due nel padel, uno nel tennis senza rose`() {
         assertNull(SportRegistry.byId("football").capabilities.playersPerSide)
         assertEquals(2, SportRegistry.byId("padel").capabilities.playersPerSide)
         assertEquals(1, SportRegistry.byId("tennis").capabilities.playersPerSide)
