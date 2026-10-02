@@ -98,14 +98,17 @@ class PlayerSelectionActivity : ComponentActivity() {
     private var teamNumber: Int = 1
     private lateinit var sync: OptimizedWearDataSync
     private var inInvio = false
-    private var apertaAlle = 0L
+
+    // Il momento in cui la lista e' davanti al dito, non quello in cui nasce: tra onCreate e la
+    // comparsa a schermo, su un orologio, passa il tempo di gonfiare i layout. Null finche' non e'
+    // visibile: un tocco prima non sceglie nessuno.
+    private var apertaAlle: Long? = null
 
     private val chiusuraAutomatica = Runnable { finish() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player_selection)
-        apertaAlle = orologio()
 
         sync = creaSync(applicationContext)
         val rawTeamNumber = intent.getIntExtra(WearConstants.EXTRA_TEAM_NUMBER, 1)
@@ -116,6 +119,12 @@ class PlayerSelectionActivity : ComponentActivity() {
         setupRecyclerView(colore)
         showPlayers(PlayerData.decodeList(intent.getStringExtra(WearDataLayerService.EXTRA_PLAYERS)))
         riarmaChiusura()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Solo la prima volta: tornare dal blocco schermo non e' un'apertura nuova.
+        if (apertaAlle == null) apertaAlle = orologio()
     }
 
     /** Il colore della squadra e' grafica: portato a 3:1 sul nero, mai colore di un testo. */
@@ -162,27 +171,17 @@ class PlayerSelectionActivity : ComponentActivity() {
     private fun showPlayers(players: List<PlayerData>) {
         val wearPlayers = players.map { WearPlayer(it.id, it.name, it.roles) }
         // SALTA in cima: chi non sa chi ha segnato, o non vuole dirlo adesso, ha la via d'uscita
-        // sotto il pollice senza scorrere. Prima NESSUNO stava in fondo alla rosa.
-        adapter.submitList(
-            if (wearPlayers.isEmpty()) {
-                wearPlayers
-            } else {
-                listOf(WearPlayer(NESSUNO, getString(R.string.wear_skip), emptyList())) + wearPlayers
-            },
-        )
+        // sotto il pollice senza scorrere. Prima NESSUNO stava in fondo alla rosa. C'e' anche con
+        // la rosa vuota: la lista senza uscita sarebbe una schermata che si chiude solo da sola.
+        adapter.submitList(listOf(WearPlayer(NESSUNO, getString(R.string.wear_skip), emptyList())) + wearPlayers)
 
-        val emptyStateText = findViewById<TextView>(R.id.empty_state_text)
-        if (wearPlayers.isEmpty()) {
-            playerList.visibility = View.GONE
-            emptyStateText.visibility = View.VISIBLE
-        } else {
-            playerList.visibility = View.VISIBLE
-            emptyStateText.visibility = View.GONE
-        }
+        // La lista resta sempre: con la rosa vuota ha solo SALTA, e sotto la scritta dice perche'.
+        findViewById<TextView>(R.id.empty_state_text).visibility = if (wearPlayers.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun selectPlayer(player: WearPlayer) {
         // Il dito che ha segnato e' ancora vicino: un tocco appena aperta la lista e' un rimbalzo.
+        val apertaAlle = apertaAlle ?: return
         if (orologio() - apertaAlle < GUARDIA_APERTURA_MS) return
         if (player.id == NESSUNO) {
             // Il gol resta, il marcatore no: il telefono ne registra gia' uno senza nome.
@@ -211,6 +210,9 @@ class PlayerSelectionActivity : ComponentActivity() {
         if (inInvio) return
         // Un secondo tocco durante l'attesa manderebbe un secondo marcatore per lo stesso gol.
         inInvio = true
+        // Finche' l'esito non c'e', la schermata non si chiude da sola: il doppio tocco di TalkBack
+        // non passa da onUserInteraction, e chiuderla a meta' invio toglierebbe vibrazione e toast.
+        riarmaChiusura()
         lifecycleScope.launch {
             val consegnato = sync.sendMessage(path, message.toByteArray())
             val vibratore = ContextCompat.getSystemService(this@PlayerSelectionActivity, Vibrator::class.java)
@@ -234,7 +236,8 @@ class PlayerSelectionActivity : ComponentActivity() {
 
     private fun riarmaChiusura() {
         handler.removeCallbacks(chiusuraAutomatica)
-        handler.postDelayed(chiusuraAutomatica, CHIUSURA_AUTOMATICA_MS)
+        // Durante un invio la chiusura la fa l'esito, non il tempo.
+        if (!inInvio) handler.postDelayed(chiusuraAutomatica, CHIUSURA_AUTOMATICA_MS)
     }
 
     override fun onDestroy() {

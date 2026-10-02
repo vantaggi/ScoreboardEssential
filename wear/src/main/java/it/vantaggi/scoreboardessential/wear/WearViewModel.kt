@@ -499,6 +499,14 @@ class WearViewModel(
     val finestraChi = _finestraChi.asStateFlow()
     private var finestraChiJob: Job? = null
 
+    /**
+     * Il registro dello stato con cui e' nata l'offerta. Il telefono attribuisce all'ultimo punto
+     * del lato senza marcatore, senza limite di eta': se il registro cambia (un annullamento, un
+     * nome dato dal telefono, una partita nuova) il gol offerto non e' piu' quello, e il nome
+     * andrebbe a un gol vecchio.
+     */
+    private var registroDellOfferta: String? = null
+
     // Player data
     private val _allPlayers = MutableStateFlow<List<PlayerData>>(emptyList())
     val allPlayers = _allPlayers.asStateFlow()
@@ -535,12 +543,15 @@ class WearViewModel(
     fun chiudiFinestraChi() {
         finestraChiJob?.cancel()
         finestraChiJob = null
+        registroDellOfferta = null
         _finestraChi.value = null
     }
 
     /** Replaces the cached roster pushed from the phone. */
     fun setAllPlayers(players: List<PlayerData>) {
         _allPlayers.value = players
+        // Senza nomi la lista avrebbe solo SALTA: l'offerta non ha piu' niente da offrire.
+        if (players.isEmpty()) chiudiFinestraChi()
     }
 
     fun updateScoresFromMobile(
@@ -580,6 +591,9 @@ class WearViewModel(
             // risveglio e' una copia, e chiuderebbe una ricevuta con uno stato vecchio.
             chiudiRicevute(state)
         }
+        // Dopo le ricevute: un gol nuovo ha appena aperto la sua offerta, col registro di questo
+        // stato, e qui non si tocca. Tutto il resto fa decadere quella che c'era.
+        chiudiFinestraChiSeNonVera(state)
         // L'ora sul disco la scrive WearDataLayerService, che c'e' anche ad app chiusa.
         ultimaNota.save(state.sportId, state.eventLog)
         when {
@@ -667,6 +681,15 @@ class WearViewModel(
     }
 
     /**
+     * CHI? vale per il gol con cui e' nata: se lo stato del telefono ha un registro diverso (un
+     * ANNULLA, un marcatore dato dal telefono, una partita nuova) o la partita e' finita, si chiude.
+     */
+    private fun chiudiFinestraChiSeNonVera(state: WearScoreState) {
+        if (_finestraChi.value == null) return
+        if (state.matchOver || state.eventLog != registroDellOfferta) chiudiFinestraChi()
+    }
+
+    /**
      * Offre CHI? per [DURATA_FINESTRA_CHI_MS]: il bersaglio in basso lo dice e un tocco apre la
      * lista. Solo se lo sport attribuisce (il padel no), la rosa c'e' e il telefono e' collegato:
      * da scollegati la scelta si perderebbe in silenzio, e l'attribuzione si fa dopo, dal registro
@@ -680,11 +703,12 @@ class WearViewModel(
         if (_allPlayers.value.isEmpty()) return
         if (connectionState.value !is ConnectionState.Connected) return
         finestraChiJob?.cancel()
+        registroDellOfferta = state.eventLog
         _finestraChi.value = FinestraChi(lato, "${state.side1Primary}–${state.side2Primary}")
         finestraChiJob =
             viewModelScope.launch {
                 delay(DURATA_FINESTRA_CHI_MS)
-                _finestraChi.value = null
+                chiudiFinestraChi()
             }
     }
 
@@ -830,9 +854,10 @@ class WearViewModel(
         // Il marcatore non si apre piu' da solo: lo offre la finestra CHI?, e solo dopo che il
         // telefono ha rimandato lo stato col gol dentro (vedi chiudiRicevute). Senza telefono la
         // scelta fatta al polso non arrivava a nessuno; il punto invece finisce in coda come
-        // sempre, e il marcatore si attribuira' dal registro del telefono. Nel v1 lo sport non lo
-        // dice: vale la rosa.
-        val chiediMarcatore = !protocolV2Seen || _scoreState.value?.attributesScorer == true
+        // sempre, e il marcatore si attribuira' dal registro del telefono. Con un telefono v1 non
+        // ci sono ricevute, quindi nemmeno CHI?: il marcatore si attribuisce dal registro del
+        // telefono (DESIGN.md: l'offerta viene dopo la ricevuta v2).
+        val chiediMarcatore = _scoreState.value?.attributesScorer == true
         val tickAlle = orologio()
         haptics.tick()
         sendScoreIntent(team, WearConstants.INTENT_POINT, chiediMarcatore, tickAlle)

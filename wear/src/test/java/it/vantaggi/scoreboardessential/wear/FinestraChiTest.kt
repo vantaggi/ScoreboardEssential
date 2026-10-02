@@ -122,6 +122,7 @@ class FinestraChiTest {
         sportId: String = "football",
         attribuisce: Boolean = true,
         punti: Pair<String, String> = "0" to "0",
+        finita: Boolean = false,
     ) = WearScoreState(
         side1Primary = punti.first,
         side1Secondary = "",
@@ -137,7 +138,7 @@ class FinestraChiTest {
         sportIds = emptyList(),
         sportLabels = emptyList(),
         matchInProgress = true,
-        matchOver = false,
+        matchOver = finita,
         eventLog = registro,
     )
 
@@ -323,6 +324,75 @@ class FinestraChiTest {
         viewModel.decrementScore(1)
 
         assertNull(viewModel.finestraChi.value)
+    }
+
+    // --- Non piu' vera: il gol offerto non e' piu' quello che il telefono attribuirebbe ---
+
+    @Test
+    fun `se il registro si accorcia dopo l'offerta (un ANNULLA) la finestra si chiude`() {
+        golConfermato(registroNuovo = 2, stato = statoCalcio(registro(2), punti = "2" to "0"))
+        assertNotNull(viewModel.finestraChi.value)
+
+        // L'ANNULLA parte dal telefono: nessun tocco del polso, solo uno stato col registro corto.
+        viewModel.applyStateV2(statoCalcio(registro(1), punti = "1" to "0"))
+        assestati()
+
+        assertNull("CHI? e' rimasto sul gol annullato", viewModel.finestraChi.value)
+    }
+
+    @Test
+    fun `se il telefono da' il nome al gol (stessa lunghezza, registro diverso) la finestra si chiude`() {
+        golConfermato()
+        assertNotNull(viewModel.finestraChi.value)
+
+        // Stessa lunghezza, ma l'evento ora ha un marcatore: lo ha attribuito il telefono.
+        val conNome = MatchLogCodec.encode(listOf(LoggedEvent(ScoringEvent.Point(side = 1, playerId = 7))))
+        viewModel.applyStateV2(statoCalcio(conNome, punti = "1" to "0"))
+        assestati()
+
+        assertNull("il nome andrebbe a un gol gia' attribuito", viewModel.finestraChi.value)
+    }
+
+    @Test
+    fun `lo stesso registro in uno stato nuovo lascia la finestra aperta`() {
+        golConfermato()
+
+        // Il telefono rimanda lo stato (il cronometro e' andato avanti): il gol e' sempre quello.
+        viewModel.applyStateV2(statoCalcio(registro(1), punti = "1" to "0"))
+        assestati()
+
+        assertNotNull(viewModel.finestraChi.value)
+    }
+
+    @Test
+    fun `a partita finita la finestra si chiude`() {
+        golConfermato()
+        assertNotNull(viewModel.finestraChi.value)
+
+        viewModel.applyStateV2(statoCalcio(registro(1), punti = "1" to "0", finita = true))
+        assestati()
+
+        assertNull("CHI? e' rimasto sopra PARTITA FINITA", viewModel.finestraChi.value)
+    }
+
+    @Test
+    fun `una partita nuova (registro vuoto) chiude la finestra`() {
+        golConfermato()
+
+        viewModel.applyStateV2(statoCalcio(registro(0)))
+        assestati()
+
+        assertNull(viewModel.finestraChi.value)
+    }
+
+    @Test
+    fun `se la rosa si svuota mentre CHI e' offerto la finestra si chiude`() {
+        golConfermato()
+        assertNotNull(viewModel.finestraChi.value)
+
+        viewModel.setAllPlayers(emptyList())
+
+        assertNull("la lista avrebbe solo SALTA", viewModel.finestraChi.value)
     }
 
     @Test

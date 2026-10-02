@@ -30,12 +30,16 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito
+import org.mockito.stubbing.Answer
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowToast
 import java.time.Duration
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.resume
 
 /**
  * La scelta del marcatore: la lista su nero con SALTA in cima, e il polso che dice se il nome e'
@@ -98,8 +102,9 @@ class PlayerSelectionActivityTest {
         colore: Int = 0xFFFFD600.toInt(),
         risultato: String = "3–2",
         collegato: Boolean = true,
+        canale: ((Context) -> OptimizedWearDataSync)? = null,
     ): PlayerSelectionActivity {
-        PlayerSelectionActivity.creaSync = telefono(collegato)
+        PlayerSelectionActivity.creaSync = canale ?: telefono(collegato)
         val intent = PlayerSelectionActivity.intent(RuntimeEnvironment.getApplication(), 1, giocatori, colore, risultato)
         val activity = Robolectric.buildActivity(PlayerSelectionActivity::class.java, intent).setup().get()
         // La lista si misura a mano: dentro il test nessuno la impagina.
@@ -276,6 +281,117 @@ class PlayerSelectionActivityTest {
 
         assertTrue(activity.isFinishing)
         assertNull(ShadowToast.getTextOfLatestToast())
+    }
+
+    @Test
+    fun `la guardia dei 400ms parte da quando la lista e' visibile, non da onCreate`() {
+        PlayerSelectionActivity.creaSync = telefono(true)
+        val intent = PlayerSelectionActivity.intent(RuntimeEnvironment.getApplication(), 1, listOf(rossi), 0xFFFFD600.toInt(), "3–2")
+        val controller = Robolectric.buildActivity(PlayerSelectionActivity::class.java, intent).create()
+        // Gonfiare i layout su un orologio costa tempo: la lista compare solo dopo.
+        adesso += 300L
+        val activity = controller.start().postCreate(null).resume().visible().get()
+        val lista = activity.findViewById<RecyclerView>(R.id.player_list)
+        lista.measure(
+            View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY),
+        )
+        lista.layout(0, 0, 400, 400)
+
+        // 100ms dopo la comparsa sono 400ms dopo onCreate: la guardia vera non e' ancora passata.
+        avanza(100L)
+        riga(activity, 1).performClick()
+        assertFalse("la guardia e' partita da onCreate e non dal primo frame", inInvio(activity))
+
+        avanza(300L - 1)
+        riga(activity, 1).performClick()
+        assertFalse("un millisecondo prima dei 400ms dalla comparsa", inInvio(activity))
+
+        avanza(1L)
+        riga(activity, 1).performClick()
+        assertTrue(inInvio(activity))
+        aspettaLaChiusura(activity)
+    }
+
+    // --- Rosa vuota ---
+
+    @Test
+    fun `con la rosa vuota la lista ha SALTA e la scritta che dice perche'`() {
+        val activity = apri(giocatori = emptyList())
+
+        assertEquals(1, activity.findViewById<RecyclerView>(R.id.player_list).adapter!!.itemCount)
+        assertEquals(activity.getString(R.string.wear_skip), nome(activity, 0))
+        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.player_list).visibility)
+        assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.empty_state_text).visibility)
+    }
+
+    @Test
+    fun `con la rosa vuota SALTA chiude la lista`() {
+        val activity = apri(giocatori = emptyList())
+
+        avanza(400L)
+        riga(activity, 0).performClick()
+
+        assertTrue("senza giocatori SALTA e' l'unica uscita", activity.isFinishing)
+    }
+
+    @Test
+    fun `con una rosa la scritta della rosa vuota non c'e'`() {
+        val activity = apri(giocatori = listOf(rossi))
+
+        assertEquals(View.GONE, activity.findViewById<View>(R.id.empty_state_text).visibility)
+    }
+
+    // --- Invio in corso: i 15s non chiudono a meta' ---
+
+    /** Un telefono che non risponde mai da solo: l'esito lo da' il test con [invioSospeso]. */
+    private var invioSospeso: Continuation<Boolean>? = null
+
+    private val telefonoCheNonRisponde: (Context) -> OptimizedWearDataSync =
+        {
+            Mockito.mock(
+                OptimizedWearDataSync::class.java,
+                Answer { invocazione ->
+                    if (invocazione.method.name == "sendMessage") {
+                        @Suppress("UNCHECKED_CAST")
+                        invioSospeso = invocazione.arguments.last() as Continuation<Boolean>
+                        COROUTINE_SUSPENDED
+                    } else {
+                        Mockito.RETURNS_DEFAULTS.answer(invocazione)
+                    }
+                },
+            )
+        }
+
+    @Test
+    fun `un invio ancora senza esito non viene chiuso dai 15 secondi`() {
+        val activity = apri(canale = telefonoCheNonRisponde)
+        avanza(400L)
+        riga(activity, 1).performClick()
+        assertTrue(inInvio(activity))
+
+        // Il doppio tocco di TalkBack non passa da onUserInteraction: i 15s non si riarmano da soli.
+        avanza(15_000L)
+        assertFalse("la schermata si e' chiusa prima dell'esito dell'invio", activity.isFinishing)
+
+        // Quando l'esito arriva, si chiude (e vibra) come sempre.
+        invioSospeso!!.resume(true)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(activity.isFinishing)
+        assertArrayEquals(HapticFeedbackManager.PATTERN_CONFIRM, ultimaVibrazione())
+    }
+
+    @Test
+    fun `un input durante un invio non riarma i 15 secondi`() {
+        val activity = apri(canale = telefonoCheNonRisponde)
+        avanza(400L)
+        riga(activity, 1).performClick()
+
+        avanza(10_000)
+        activity.onUserInteraction()
+        avanza(15_000L)
+
+        assertFalse("l'input durante l'invio ha riarmato la chiusura", activity.isFinishing)
     }
 
     // --- Chiusura a 15s ---
