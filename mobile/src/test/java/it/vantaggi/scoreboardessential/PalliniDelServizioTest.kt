@@ -141,6 +141,17 @@ class PalliniDelServizioTest {
     }
 
     @Test
+    fun `il contenitore cliccabile del nome dice anche chi serve`() {
+        val radice = gonfia()
+        mostraIlServizio(radice, display(2, 2), "ROSSI", "BIANCHI")
+        assertEquals("Edit the name of ROSSI", radice.findViewById<View>(R.id.team1_name_container).contentDescription)
+        assertEquals(
+            "Edit the name of BIANCHI. BIANCHI serving, second player",
+            radice.findViewById<View>(R.id.team2_name_container).contentDescription,
+        )
+    }
+
+    @Test
     @Config(qualifiers = "it-w411dp-h923dp-xxhdpi")
     fun `TalkBack in italiano`() {
         val radice = gonfia()

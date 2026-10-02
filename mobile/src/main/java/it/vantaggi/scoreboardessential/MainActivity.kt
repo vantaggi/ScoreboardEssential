@@ -1516,24 +1516,29 @@ internal fun mostraIlServizio(
 ) {
     val lati =
         listOf(
-            Triple(R.id.team1_serve_slot, R.id.team1_serve_dot, R.id.team1_serve_dot_second) to nome1,
-            Triple(R.id.team2_serve_slot, R.id.team2_serve_dot, R.id.team2_serve_dot_second) to nome2,
+            listOf(R.id.team1_name_container, R.id.team1_serve_slot, R.id.team1_serve_dot, R.id.team1_serve_dot_second),
+            listOf(R.id.team2_name_container, R.id.team2_serve_slot, R.id.team2_serve_dot, R.id.team2_serve_dot_second),
         )
-    lati.forEachIndexed { indice, (ids, nome) ->
+    lati.forEachIndexed { indice, ids ->
+        val nome = if (indice == 0) nome1 else nome2
         val serve = display.servingSide == indice + 1
-        val slot = radice.findViewById<View>(ids.first)
-        radice.findViewById<View>(ids.second).visibility = if (serve) View.VISIBLE else View.INVISIBLE
-        radice.findViewById<View>(ids.third).visibility =
+        val slot = radice.findViewById<View>(ids[1])
+        radice.findViewById<View>(ids[2]).visibility = if (serve) View.VISIBLE else View.INVISIBLE
+        radice.findViewById<View>(ids[3]).visibility =
             if (serve && display.servingPlayerSlot == 2) View.VISIBLE else View.INVISIBLE
-        val descrizione =
+        val frase =
             when {
                 !serve -> null
                 display.servingPlayerSlot == 1 -> R.string.cd_serving_first_player
                 display.servingPlayerSlot == 2 -> R.string.cd_serving_second_player
                 else -> R.string.cd_serving
-            }
-        slot.contentDescription = descrizione?.let { slot.context.getString(it, nome) }
+            }?.let { slot.context.getString(it, nome) }
+        slot.contentDescription = frase
         slot.importantForAccessibility =
-            if (descrizione == null) View.IMPORTANT_FOR_ACCESSIBILITY_NO else View.IMPORTANT_FOR_ACCESSIBILITY_YES
+            if (frase == null) View.IMPORTANT_FOR_ACCESSIBILITY_NO else View.IMPORTANT_FOR_ACCESSIBILITY_YES
+        // Il contenitore del nome e' un bersaglio solo: TalkBack legge la SUA descrizione e non
+        // quella dei figli, quindi chi serve va detto anche li'.
+        val modifica = slot.context.getString(R.string.cd_edit_team_name, nome)
+        radice.findViewById<View>(ids[0]).contentDescription = if (frase == null) modifica else "$modifica. $frase"
     }
 }
