@@ -2158,3 +2158,12 @@ updateLintBaselineDebug. Scelta: la baseline assorbe anche i pochi avvisi gia' n
 come nuovi da settimane (NotifyDataSetChanged in applyCapabilities, LabelFor in activity_match_settings,
 UnusedAttribute nel manifest, Overdraw delle schermate di selezione dell'orologio): da qui in avanti
 lint segnala solo cio' che nasce dopo. Resta in coda solo la cache della riga dei set nella cronologia.
+
+**Chiusi il 2 ottobre sera** (unione `926bafe`): orologio passi 9 e 10 (ambient con cifre light e niente
+colori, guardia di 500ms al risveglio, niente swipe sul quadrante, selezione sport con CAMBIO SPORT e
+SPORT NON CAMBIATO; in ambient niente refresh del collegamento, ricontrollato all'uscita), telefono passi
+12 e 13 (ANNULLA con un tocco nel padel e nel tennis con tocchi ripetuti entro 500ms ignorati e tocco
+durante il ripristino scartato; portiere comandabile dal telefono con riavvio da capo in un solo
+messaggio e stato SCADUTO rosso con CAMBIO), cache della riga dei set nella cronologia. Ogni passo con
+revisione Opus e correzione. Suite verde, **822 test JVM distinti** (core 154, mobile 362, shared 33,
+wear 273), strumentati 36 su 36.
