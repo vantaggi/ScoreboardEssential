@@ -308,7 +308,7 @@ class WearViewModelTest {
         // La sequenza si consuma PRIMA dell'invio: se non si e' mossa, nessuna intenzione e'
         // partita e nessuna e' finita in coda. Il telefono non vede niente, niente riga fantasma.
         assertEquals(prima, sequenza())
-        assertNull(viewModel.showPlayerSelection.value)
+        assertNull(viewModel.finestraChi.value)
     }
 
     @Test
@@ -320,11 +320,12 @@ class WearViewModelTest {
         val prima = sequenza()
 
         viewModel.incrementScore(1)
-        // La scelta si apre dopo l'esito dell'invio, non insieme al tocco.
-        aspettaChe { viewModel.showPlayerSelection.value != null }
 
+        // La sequenza si consuma prima dell'invio: l'intenzione e' partita. La scelta del marcatore
+        // non si apre ne' al tocco ne' alla consegna: la offre CHI? dopo lo stato del telefono
+        // (FinestraChiTest).
         assertEquals(prima + 1, sequenza())
-        assertEquals(1, viewModel.showPlayerSelection.value)
+        assertNull(viewModel.finestraChi.value)
     }
 
     /**
@@ -376,7 +377,7 @@ class WearViewModelTest {
         viewModel.incrementScore(1)
         aspettaChe { viewModel.pendingCount.value == 1 }
 
-        assertNull(viewModel.showPlayerSelection.value)
+        assertNull(viewModel.finestraChi.value)
     }
 
     @Test
@@ -389,7 +390,7 @@ class WearViewModelTest {
         viewModel.incrementScore(1)
         aspettaChe { viewModel.pendingCount.value == 1 }
 
-        assertNull(viewModel.showPlayerSelection.value)
+        assertNull(viewModel.finestraChi.value)
     }
 
     @Test
