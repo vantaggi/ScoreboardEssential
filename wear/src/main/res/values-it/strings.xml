@@ -9,6 +9,10 @@
     <string name="cd_score_side_minus">%1$s, %2$s. Tocca per segnare, tieni premuto per togliere un punto.</string>
     <string name="cd_score_side_undo">%1$s, %2$s. Tocca per segnare, tieni premuto per annullare l ultima azione.</string>
     <string name="cd_team_fallback">Squadra %1$d</string>
+    <!-- Chi serve: uno o due pallini accanto alle cifre, per il primo o il secondo giocatore. -->
+    <string name="cd_serving">%1$s al servizio</string>
+    <string name="cd_serving_first_player">%1$s al servizio, primo giocatore</string>
+    <string name="cd_serving_second_player">%1$s al servizio, secondo giocatore</string>
     <!-- Cronometro del calcio e game del set in corso: il bersaglio in alto a sinistra. -->
     <string name="cd_match_clock_running">Cronometro %1$s, in corso. Tocca per fermare.</string>
     <string name="cd_match_clock_stopped">Cronometro %1$s, fermo. Tocca per avviare.</string>

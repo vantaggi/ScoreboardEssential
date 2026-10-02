@@ -438,6 +438,22 @@ class WearViewModelTest {
         assertEquals(0, WearScoreState.fromDataMap(DataMap()).servingSide)
     }
 
+    @Test
+    fun `quale giocatore batte arriva dalla chiave additiva, e senza chiave vale 0`() {
+        val secondo =
+            DataMap().apply {
+                putInt(WearConstants.KEY_SERVING_SIDE, 1)
+                putInt(WearConstants.KEY_SERVING_SLOT, 2)
+            }
+        assertEquals(2, WearScoreState.fromDataMap(secondo).servingSlot)
+        assertEquals(1, WearScoreState.fromDataMap(secondo).servingSide)
+
+        // Un telefono precedente non la manda: il lato che serve arriva uguale e il pallino e' uno.
+        val vecchio = DataMap().apply { putInt(WearConstants.KEY_SERVING_SIDE, 2) }
+        assertEquals(0, WearScoreState.fromDataMap(vecchio).servingSlot)
+        assertEquals(2, WearScoreState.fromDataMap(vecchio).servingSide)
+    }
+
     /**
      * L8: il telefono manda il residuo in pausa, e l'orologio lo salvava come durata: dopo una
      * pausa a 2:00 ogni conto successivo durava 2 minuti invece di 5. Con la durata a parte, la

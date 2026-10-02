@@ -66,6 +66,10 @@ class MainActivity : ComponentActivity() {
     // Serve solo alla descrizione dei lati per TalkBack: cosa dice la riga in basso lo decide
     // StatoFiducia nel ViewModel, non questa schermata.
     private var annullamentoGlobale = false
+
+    /** Chi serve, come l'ultimo stato l'ha detto: serve alla descrizione dei lati (0 = nessuno). */
+    private var serveLato = 0
+    private var serveGiocatore = 0
     private val viewModel: WearViewModel by viewModels()
 
     private var stateRestored = false
@@ -373,10 +377,20 @@ class MainActivity : ComponentActivity() {
         applyAuxTimerRole(state)
     }
 
-    /** Il pallino bianco sul lato esterno della colonna di chi serve; con 0 (calcio, finita) nessuno. */
+    /**
+     * Il pallino bianco sul lato esterno della colonna di chi serve; con 0 (calcio, finita)
+     * nessuno. Un pallino se batte il primo giocatore o si gioca in singolare, due se batte il
+     * secondo: il secondo sta accanto al primo, verso le cifre, e il primo non si muove.
+     */
     private fun applyServing(state: WearScoreState) {
         binding.team1ServeDot.visibility = if (state.servingSide == 1) View.VISIBLE else View.GONE
         binding.team2ServeDot.visibility = if (state.servingSide == 2) View.VISIBLE else View.GONE
+        val secondo = state.servingSlot == 2
+        binding.team1ServeDotSecond.visibility = if (state.servingSide == 1 && secondo) View.VISIBLE else View.GONE
+        binding.team2ServeDotSecond.visibility = if (state.servingSide == 2 && secondo) View.VISIBLE else View.GONE
+        serveLato = state.servingSide
+        serveGiocatore = state.servingSlot
+        describeSides()
     }
 
     /** Il colore della squadra e' solo grafica: portato a 3:1 sul nero, mai colore di un testo. */
@@ -410,9 +424,30 @@ class MainActivity : ComponentActivity() {
     private fun describeSides() {
         val descrizione = if (annullamentoGlobale) R.string.cd_score_side_undo else R.string.cd_score_side_minus
         binding.team1Container.contentDescription =
-            getString(descrizione, teamName(viewModel.team1Name.value, 1), binding.team1Score.text.toString())
+            getString(descrizione, teamName(viewModel.team1Name.value, 1), binding.team1Score.text.toString()) +
+            chiServe(1, teamName(viewModel.team1Name.value, 1))
         binding.team2Container.contentDescription =
-            getString(descrizione, teamName(viewModel.team2Name.value, 2), binding.team2Score.text.toString())
+            getString(descrizione, teamName(viewModel.team2Name.value, 2), binding.team2Score.text.toString()) +
+            chiServe(2, teamName(viewModel.team2Name.value, 2))
+    }
+
+    /**
+     * La frase di chi serve, in coda alla descrizione del lato: i pallini non hanno una
+     * descrizione propria, perche' il lato e' un bersaglio solo e TalkBack legge la sua. Vuota
+     * per la squadra che non serve.
+     */
+    private fun chiServe(
+        lato: Int,
+        nome: String,
+    ): String {
+        if (serveLato != lato) return ""
+        val frase =
+            when (serveGiocatore) {
+                1 -> R.string.cd_serving_first_player
+                2 -> R.string.cd_serving_second_player
+                else -> R.string.cd_serving
+            }
+        return " " + getString(frase, nome)
     }
 
     /** Il nome scelto sul telefono, lo stesso che legge TalkBack la'; "Squadra 1" finche' non arriva. */

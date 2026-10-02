@@ -9,6 +9,7 @@ import com.google.android.gms.wearable.DataMap
 import it.vantaggi.scoreboardessential.core.ClockMode
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
+import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
@@ -62,6 +63,12 @@ data class WearScoreState(
      * andava perso. Col default i costruttori esistenti non cambiano; non e' ancora disegnato.
      */
     val servingSide: Int = 0,
+    /**
+     * Quale giocatore della squadra al servizio batte, in coppia: 1 il primo (un pallino), 2 il
+     * secondo (due pallini). 0 nel singolare, quando nessuno serve e con un telefono che non
+     * manda la chiave: in quel caso, con un servizio in corso, il pallino resta uno.
+     */
+    val servingSlot: Int = 0,
 ) {
     companion object {
         private const val TAG = "WearScoreState"
@@ -101,6 +108,7 @@ data class WearScoreState(
                 matchOver = dataMap.getBoolean(WearConstants.KEY_MATCH_OVER, false),
                 eventLog = dataMap.getString(WearConstants.KEY_EVENT_LOG, ""),
                 servingSide = dataMap.getInt(WearConstants.KEY_SERVING_SIDE, 0),
+                servingSlot = dataMap.getInt(WearConstants.KEY_SERVING_SLOT, 0),
             )
         }
     }
@@ -941,7 +949,12 @@ class WearViewModel(
         // di uno schermo vuoto -- e' il caso che il test ha scoperto.
         if (base.sportId.isBlank()) return false
 
-        val rules = SportRegistry.byId(base.sportId)
+        // L'orologio non ha le rose, quindi non sa se un tennis e' in coppia: lo sa dal telefono,
+        // che manda il giocatore al servizio (1 o 2) solo in coppia. Il padel lo e' sempre.
+        val rules =
+            SportRegistry.byId(base.sportId).let {
+                if (it is RacketRules && base.servingSlot != 0) it.conIlServizioInCoppia() else it
+            }
         val engine = MatchEngine(rules)
         MatchLogCodec.decode(base.eventLog)?.let { engine.restoreLog(it) }
         pending.all().forEach { intento ->
@@ -963,6 +976,7 @@ class WearViewModel(
                 matchOver = display.matchOver,
                 // Il servizio cambia con i game segnati in coda: quello del telefono e' vecchio.
                 servingSide = display.servingSide ?: 0,
+                servingSlot = display.servingPlayerSlot ?: 0,
             )
         return true
     }

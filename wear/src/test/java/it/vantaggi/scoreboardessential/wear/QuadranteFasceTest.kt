@@ -120,6 +120,7 @@ class QuadranteFasceTest {
         periodo: String = "",
         finita: Boolean = false,
         servizio: Int = 0,
+        giocatore: Int = 0,
     ) = WearScoreState(
         side1Primary = primo,
         side1Secondary = giochi,
@@ -138,6 +139,7 @@ class QuadranteFasceTest {
         matchOver = finita,
         eventLog = "",
         servingSide = servizio,
+        servingSlot = giocatore,
     )
 
     /** Il carattere come lo disegna la vista, alla dimensione data (sp). */
@@ -506,5 +508,158 @@ class QuadranteFasceTest {
         verificaLati(q)
         verificaStrisce(q)
         assertEquals(0, b.gestureHint.left)
+    }
+
+    // --- i pallini del servizio: uno o due, senza spostare niente ---
+
+    /** I pallini visibili del lato: quanti sono. */
+    private fun pallini(
+        q: Quadrante,
+        lato: Int,
+    ): Int {
+        val b = q.binding
+        val viste = if (lato == 1) listOf(b.team1ServeDot, b.team1ServeDotSecond) else listOf(b.team2ServeDot, b.team2ServeDotSecond)
+        return viste.count { it.visibility == View.VISIBLE }
+    }
+
+    /** Il rettangolo del testo che le cifre disegnano davvero, nelle coordinate del loro lato. */
+    private fun inchiostro(
+        cifre: TextView,
+        testo: String,
+    ): Rect {
+        val limiti = Rect()
+        cifre.paint.getTextBounds(testo, 0, testo.length, limiti)
+        val x = cifre.left + cifre.paddingLeft + (larghezzaUtile(cifre) - cifre.paint.measureText(testo)) / 2f
+        val base = cifre.top + cifre.baseline
+        return Rect((x + limiti.left).toInt(), base + limiti.top, (x + limiti.right).toInt(), base + limiti.bottom)
+    }
+
+    /**
+     * Uno o due pallini: stessa misura, il primo fermo, il secondo accanto verso le cifre; niente
+     * sposta le cifre, e i pallini non toccano il testo ne' escono dal lato o dal cerchio.
+     */
+    private fun verificaPallini(
+        q: Quadrante,
+        dotDp: Float,
+        tondo: Boolean,
+    ) {
+        val b = q.binding
+        val lati =
+            listOf(
+                Triple(b.team1Container, b.team1Score, listOf(b.team1ServeDot, b.team1ServeDotSecond)),
+                Triple(b.team2Container, b.team2Score, listOf(b.team2ServeDot, b.team2ServeDotSecond)),
+            )
+        // Il caso peggiore per le cifre: i token piu' larghi e piu' alti.
+        val token = listOf("AV", "PV", "40", "15", "30", "88")
+
+        lati.forEachIndexed { indice, (lato, cifre, dots) ->
+            val squadra = indice + 1
+            val altro = 3 - squadra
+            q.applica(stato("40", "40", giochi = "6-4", periodo = "Set 2"))
+            val cifreSenza = Rect(cifre.left, cifre.top, cifre.right, cifre.bottom)
+            q.applica(stato("40", "40", giochi = "6-4", periodo = "Set 2", servizio = squadra, giocatore = 1))
+            assertEquals("batte il primo di $squadra: un pallino", 1, pallini(q, squadra))
+            assertEquals(0, pallini(q, altro))
+            val primoDa = Rect(dots[0].left, dots[0].top, dots[0].right, dots[0].bottom)
+            q.applica(stato("40", "40", giochi = "6-4", periodo = "Set 2", servizio = squadra, giocatore = 2))
+            assertEquals("batte il secondo di $squadra: due pallini", 2, pallini(q, squadra))
+            assertEquals(0, pallini(q, altro))
+            // Le cifre e il primo pallino non si muovono quando compare il secondo.
+            assertEquals(cifreSenza, Rect(cifre.left, cifre.top, cifre.right, cifre.bottom))
+            assertEquals(primoDa, Rect(dots[0].left, dots[0].top, dots[0].right, dots[0].bottom))
+
+            dots.forEach {
+                assertEquals("pallino uguale a quello di oggi", dotDp, q.dp(it.width), 0.5f)
+                assertEquals(dotDp, q.dp(it.height), 0.5f)
+            }
+            // Affiancati, con un piccolo spazio, alla stessa altezza.
+            assertEquals(dots[0].top, dots[1].top)
+            val spazio = if (squadra == 1) dots[1].left - dots[0].right else dots[0].left - dots[1].right
+            assertTrue("fra i pallini ci sono ${q.dp(spazio)}dp", q.dp(spazio) in 2f..5f)
+            // Il secondo e' verso il centro: dal lato esterno il primo, poi il secondo.
+            if (squadra == 1) assertTrue(dots[1].left > dots[0].left) else assertTrue(dots[1].right < dots[0].right)
+
+            // Dentro il lato.
+            val sulLato = Rect(0, 0, lato.width, lato.height)
+            dots.forEach { assertTrue("il pallino esce dal lato", sulLato.contains(it.left, it.top, it.right, it.bottom)) }
+
+            // Mai sopra il testo, per nessuno dei punteggi piu' larghi.
+            val coppia = Rect(minOf(dots[0].left, dots[1].left), dots[0].top, maxOf(dots[0].right, dots[1].right), dots[0].bottom)
+            token.forEach { testo ->
+                cifre.text = testo
+                val segno = inchiostro(cifre, testo)
+                assertFalse("i pallini toccano \"$testo\": $coppia contro $segno", Rect.intersects(coppia, segno))
+            }
+            cifre.text = "40"
+
+            if (tondo) {
+                // Gli spigoli dei pallini stanno dentro il cerchio dello schermo.
+                val raggio = q.radice.width / 2f
+                dots.forEach { punto ->
+                    val r = q.rettangolo(punto)
+                    listOf(r.left to r.top, r.right to r.top, r.left to r.bottom, r.right to r.bottom).forEach { (x, y) ->
+                        val distanza = sqrt((x - raggio) * (x - raggio) + (y - raggio) * (y - raggio))
+                        assertTrue("uno spigolo e' a ${q.dp(distanza.toInt())}dp dal centro, il raggio e' ${q.dp(raggio.toInt())}dp", distanza <= raggio)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w192dp-h192dp-round-notnight")
+    fun `tondo da 192dp, uno o due pallini senza spostare niente`() {
+        val q = apri()
+        verificaPallini(q, 8f, tondo = true)
+    }
+
+    @Test
+    @Config(qualifiers = "w227dp-h227dp-round-notnight")
+    fun `tondo da 227dp, uno o due pallini senza spostare niente`() {
+        val q = apri()
+        verificaPallini(q, 10f, tondo = true)
+    }
+
+    @Test
+    @Config(qualifiers = "w192dp-h192dp-notround-notnight")
+    fun `quadrato, uno o due pallini senza spostare niente`() {
+        val q = apri()
+        verificaPallini(q, 8f, tondo = false)
+    }
+
+    @Test
+    @Config(qualifiers = "w192dp-h192dp-round-notnight")
+    fun `nel singolare un pallino, a partita finita e nel calcio nessuno`() {
+        val q = apri()
+        q.applica(stato("40", "30", giochi = "6-4", periodo = "Set 2", servizio = 2, giocatore = 0))
+        assertEquals(1, pallini(q, 2))
+        assertEquals(0, pallini(q, 1))
+        q.applica(stato("2", "0", giochi = "6-4", periodo = "", finita = true))
+        assertEquals(0, pallini(q, 1) + pallini(q, 2))
+        q.applica(stato("1", "0", hasClock = true))
+        assertEquals(0, pallini(q, 1) + pallini(q, 2))
+    }
+
+    @Test
+    @Config(qualifiers = "w192dp-h192dp-round-notnight")
+    fun `TalkBack, il lato che serve dice anche chi batte`() {
+        val q = apri()
+        val b = q.binding
+        q.applica(stato("40", "30", periodo = "Set 1", servizio = 1, giocatore = 2))
+        assertTrue(b.team1Container.contentDescription.toString().endsWith("Team 1 serving, second player"))
+        assertFalse(b.team2Container.contentDescription.toString().contains("serving"))
+        q.applica(stato("40", "30", periodo = "Set 1", servizio = 2, giocatore = 1))
+        assertTrue(b.team2Container.contentDescription.toString().endsWith("Team 2 serving, first player"))
+        assertFalse(b.team1Container.contentDescription.toString().contains("serving"))
+        q.applica(stato("40", "30", periodo = "Set 1", servizio = 2, giocatore = 0))
+        assertTrue(b.team2Container.contentDescription.toString().endsWith("Team 2 serving"))
+    }
+
+    @Test
+    @Config(qualifiers = "it-w192dp-h192dp-round-notnight")
+    fun `TalkBack in italiano`() {
+        val q = apri()
+        q.applica(stato("40", "30", periodo = "Set 1", servizio = 1, giocatore = 2))
+        assertTrue(q.binding.team1Container.contentDescription.toString().endsWith("Squadra 1 al servizio, secondo giocatore"))
     }
 }

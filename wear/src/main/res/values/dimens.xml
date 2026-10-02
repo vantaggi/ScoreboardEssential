@@ -15,10 +15,16 @@
     <dimen name="face_context_gap">5dp</dimen>
 
     <!-- Il pallino del servizio: una fascia riservata sul lato esterno di ogni colonna, sempre,
-         cosi' il numero non si sposta quando il pallino compare. Il pallino sta al centro della
-         fascia: margine di corda piu' mezzo spazio che avanza. -->
+         cosi' il numero non si ssposta quando il pallino compare. Il primo pallino sta sul lato
+         esterno a distanza di corda, il secondo (batte il secondo giocatore) accanto, verso le
+         cifre, ma piu' in alto del loro bordo. -->
     <dimen name="face_dot_size">8dp</dimen>
     <dimen name="face_dot_inset">14dp</dimen>
+    <!-- Il vuoto fra i due pallini, quando batte il secondo giocatore. -->
+    <dimen name="face_dot_gap">3dp</dimen>
+    <!-- Dal bordo alto del lato: i pallini stanno sopra l'altezza delle cifre, cosi' il secondo
+         non finisce mai sul testo. -->
+    <dimen name="face_dot_top">2dp</dimen>
     <!-- Dove finiscono le cifre dal lato del centro: il resto del vuoto fra le due colonne. -->
     <dimen name="face_digits_gutter">4dp</dimen>
     <!-- Margine delle cifre dal lato esterno: corda piu' fascia del pallino. -->

@@ -252,6 +252,50 @@ class OfflineScoreTest {
         assertEquals(atteso, viewModel.scoreState.value?.servingSide)
     }
 
+    @Test
+    fun `chi batte si ricalcola al polso come il telefono, nel padel`() {
+        // Un game a testa, poi un terzo alla squadra 1: batte il secondo giocatore della 1.
+        viewModel.applyStateV2(statoDalTelefono(registro = "").copy(servingSide = 1, servingSlot = 1))
+        val lati = listOf(1, 1, 1, 1, 2, 2, 2, 2)
+        lati.forEachIndexed { i, lato -> coda.add(PendingIntent(WearConstants.INTENT_POINT, lato, (i + 1) * 1_000L)) }
+        viewModel.refreshPendingCount()
+
+        val telefono = motorePadel()
+        lati.forEach { telefono.apply(ScoringEvent.Point(side = it)) }
+        val atteso = SportRegistry.byId(SportRegistry.PADEL).display(telefono.state)
+
+        assertEquals(1, atteso.servingSide)
+        assertEquals(2, atteso.servingPlayerSlot)
+        assertEquals(atteso.servingSide, viewModel.scoreState.value?.servingSide)
+        assertEquals(atteso.servingPlayerSlot, viewModel.scoreState.value?.servingSlot)
+    }
+
+    @Test
+    fun `nel tennis l'orologio sa che si gioca in coppia solo dal telefono`() {
+        // Il telefono dice "batte il primo": e' un tennis in coppia, e il polso non ha le rose per
+        // saperlo da solo. Otto punti da soli (quattro per squadra) chiudono due game.
+        viewModel.applyStateV2(
+            statoDalTelefono(registro = "").copy(sportId = SportRegistry.TENNIS, servingSide = 1, servingSlot = 1),
+        )
+        repeat(8) { i -> coda.add(PendingIntent(WearConstants.INTENT_POINT, if (i < 4) 1 else 2, (i + 1) * 1_000L)) }
+        viewModel.refreshPendingCount()
+
+        assertEquals("terzo game: batte il secondo giocatore", 2, viewModel.scoreState.value?.servingSlot)
+        assertEquals(1, viewModel.scoreState.value?.servingSide)
+    }
+
+    @Test
+    fun `nel singolare l'orologio non inventa un secondo giocatore`() {
+        viewModel.applyStateV2(
+            statoDalTelefono(registro = "").copy(sportId = SportRegistry.TENNIS, servingSide = 1, servingSlot = 0),
+        )
+        repeat(8) { i -> coda.add(PendingIntent(WearConstants.INTENT_POINT, if (i < 4) 1 else 2, (i + 1) * 1_000L)) }
+        viewModel.refreshPendingCount()
+
+        assertEquals(0, viewModel.scoreState.value?.servingSlot)
+        assertEquals(1, viewModel.scoreState.value?.servingSide)
+    }
+
     /**
      * L'invio passa da Dispatchers.IO, un thread vero che il dispatcher di test non governa: si
      * fa girare il Main finto finche' l'esito non e' tornato, con un limite.
