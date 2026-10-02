@@ -223,6 +223,7 @@
     <string name="chronicle_games_legend">Il colore dice chi ha vinto il game, il numero è il punteggio dopo il game.</string>
     <string name="chronicle_games_legend_breaks">Il colore dice chi ha vinto il game, il numero è il punteggio dopo il game. B = break: il game lo ha vinto chi riceveva.</string>
     <string name="chronicle_serve_unknown">Il tabellone non sapeva chi serviva: con due giocatori per squadra nelle rose prima del primo punto, qui vedrai punti e game vinti al servizio da ciascuno.</string>
+    <string name="chronicle_serve_unknown_singles">Servizio e palle break si ricavano dai punti giocati: senza punti registrati, per esempio con il punteggio a game, non ci sono dati da mostrare.</string>
     <string name="chronicle_serve_header_player">Al servizio</string>
     <string name="chronicle_serve_header_points">Punti vinti</string>
     <string name="chronicle_serve_header_games">Game tenuti</string>

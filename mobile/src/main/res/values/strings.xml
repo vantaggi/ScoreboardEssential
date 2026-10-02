@@ -224,6 +224,7 @@
     <string name="chronicle_games_legend">The colour tells who won the game, the number is the score after the game.</string>
     <string name="chronicle_games_legend_breaks">The colour tells who won the game, the number is the score after the game. B = break: the game was won by the receiving side.</string>
     <string name="chronicle_serve_unknown">The scoreboard did not know who was serving: with two players per team in the rosters before the first point, here you will see the points and games each player won on serve.</string>
+    <string name="chronicle_serve_unknown_singles">Serve and break points come from the points played: with no points recorded, for example when scoring by games, there is nothing to show.</string>
     <string name="chronicle_serve_header_player">On serve</string>
     <string name="chronicle_serve_header_points">Points won</string>
     <string name="chronicle_serve_header_games">Games held</string>

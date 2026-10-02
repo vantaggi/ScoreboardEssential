@@ -34,6 +34,7 @@ import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.core.GameStat
 import it.vantaggi.scoreboardessential.core.MatchPlayer
 import it.vantaggi.scoreboardessential.core.MatchStats
+import it.vantaggi.scoreboardessential.core.ServeLine
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.sportLabel
@@ -299,9 +300,12 @@ class ChronicleActivity : AppCompatActivity() {
         match: Match,
         lineup: List<MatchPlayer>,
     ) {
-        val serve = s.serve ?: return empty(body, R.string.chronicle_serve_unknown)
-        val names = lineup.associate { it.localId to it.name }
         val order = Match.decodeServeOrder(match.serveOrder)
+        // Nel singolare le rose a due non c'entrano: il servizio si ricava dall'alternanza.
+        val unknown =
+            if (MatchStats.isSingles(match.sportId, order)) R.string.chronicle_serve_unknown_singles else R.string.chronicle_serve_unknown
+        val serve = s.serve ?: return empty(body, unknown)
+        val names = lineup.associate { it.localId to it.name }
         val table = TableLayout(this).apply { setColumnStretchable(0, true) }
         table.addView(
             serveRow(
@@ -310,21 +314,18 @@ class ChronicleActivity : AppCompatActivity() {
                 caption(getString(R.string.chronicle_serve_header_games)),
             ),
         )
+        // Nel singolare non si sa chi serviva come persona: una riga per lato, col nome della squadra.
+        serve.bySide.takeIf { serve.byPlayer.isEmpty() }?.forEachIndexed { i, line ->
+            table.addView(serveLineRow(withBar(text(teams[i]), paints[i]), line))
+        }
         // Per coppia, come nella dashboard; dentro la coppia, nell'ordine di servizio. Il lato e'
         // la posizione nell'ordine, la stessa regola con cui MatchStats sa chi serviva.
         serve.byPlayer
             .sortedBy { order.indexOf(it.playerId) % 2 }
             .forEach { p ->
                 val side = order.indexOf(p.playerId) % 2 + 1
-                val line = p.line
                 val name = names[p.playerId] ?: getString(R.string.chronicle_player_unknown, p.playerId)
-                table.addView(
-                    serveRow(
-                        withBar(text(name), paints[side - 1]),
-                        text("${line.won}/${line.points}  ${percent(line.won, line.points)}").apply { fontFeatureSettings = TABULAR },
-                        text("${line.held}/${line.games}").apply { fontFeatureSettings = TABULAR },
-                    ),
-                )
+                table.addView(serveLineRow(withBar(text(name), paints[side - 1]), p.line))
             }
         body.addView(table)
         for (side in 1..2) {
@@ -336,6 +337,16 @@ class ChronicleActivity : AppCompatActivity() {
             )
         }
     }
+
+    private fun serveLineRow(
+        label: View,
+        line: ServeLine,
+    ): TableRow =
+        serveRow(
+            label,
+            text("${line.won}/${line.points}  ${percent(line.won, line.points)}").apply { fontFeatureSettings = TABULAR },
+            text("${line.held}/${line.games}").apply { fontFeatureSettings = TABULAR },
+        )
 
     private fun serveRow(vararg cells: View): TableRow =
         TableRow(this).apply {
