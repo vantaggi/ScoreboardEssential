@@ -205,6 +205,9 @@ T5→T6 · T6→T9 · T7→T11 · **T10→T14** · T12,T13→T14
   muore con «Gradle build daemon has been stopped: stop command received». Non e' un test fallito:
   si rilancia. Negli agenti in parallelo, per un jar bloccato, meglio chiudere il solo processo che
   lo tiene, o rilanciare con `--no-daemon`.
+- **L'emulatore lanciato come comando in background muore dopo 10 minuti** (limite dei comandi in
+  background della sessione): avviarlo staccato da PowerShell, `Start-Process` su
+  `%LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe -avd Pixel_9a_Test -no-snapshot-load -no-audio`.
 - **Esiste solo `11.json`**: l'export è stato acceso a schema già alla v11, le
   migrazioni storiche non sono validabili a posteriori. Da v12 in poi sì.
 
