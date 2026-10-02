@@ -57,6 +57,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.mockingDetails
 import org.mockito.Mockito.never
 import org.mockito.Mockito.spy
 import org.mockito.Mockito.times
@@ -84,6 +85,11 @@ class MainViewModelTest {
     private lateinit var mockUserPreferencesRepository: UserPreferencesRepository
     private lateinit var mockMatchSettingsRepository: MatchSettingsRepository
     private lateinit var mockMatchTimerService: MatchTimerService
+
+    // I finti che ogni ViewModel del test riceve dal costruttore, mai quelli veri.
+    private lateinit var mockPlayerDao: PlayerDao
+    private lateinit var mockMatchDao: MatchDao
+    private lateinit var mockConnectionManager: OptimizedWearDataSync
 
     // Gli stati del portiere del service finto: i test di L8 li muovono.
     private val portiereInCorso = kotlinx.coroutines.flow.MutableStateFlow(false)
@@ -126,37 +132,16 @@ class MainViewModelTest {
         mockMatchSettingsRepository = mock(MatchSettingsRepository::class.java)
         whenever(mockMatchSettingsRepository.getSettingsFlow()).thenReturn(emptyFlow())
 
-        viewModel = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
-
-        // Use reflection to inject the mock service and set isServiceBound to true
-        // Although bindService in init should now work, we ensure it's set for tests that rely on it immediately
-        val serviceField: Field = MainViewModel::class.java.getDeclaredField("matchTimerService")
-        serviceField.isAccessible = true
-        serviceField.set(viewModel, mockMatchTimerService)
-
-        val isBoundField: Field = MainViewModel::class.java.getDeclaredField("isServiceBound")
-        isBoundField.isAccessible = true
-        isBoundField.set(viewModel, true)
-
-        // Inject mock PlayerDao and MatchDao
-        val playerDaoField = MainViewModel::class.java.getDeclaredField("playerDao")
-        playerDaoField.isAccessible = true
-        val mockPlayerDao =
+        // DAO e connection manager finti vanno al costruttore: sostituirli dopo la costruzione
+        // lascerebbe aprire il database vero e partire il refresh vero su Dispatchers.IO, che a
+        // fine test tornano su Dispatchers.Main mentre tearDown lo azzera.
+        mockPlayerDao =
             mock(PlayerDao::class.java).apply {
                 // Mock getAllPlayers to return empty flow to avoid NPEs if used
                 `when`(getAllPlayers()).thenReturn(kotlinx.coroutines.flow.flowOf(emptyList()))
             }
-        playerDaoField.set(viewModel, mockPlayerDao)
-
-        val matchDaoField = MainViewModel::class.java.getDeclaredField("matchDao")
-        matchDaoField.isAccessible = true
-        val mockMatchDao = mock(MatchDao::class.java)
-        matchDaoField.set(viewModel, mockMatchDao)
-
-        // Mock OptimizedWearDataSync connectionManager to prevent crashes in Robolectric
-        val connectionManagerField = MainViewModel::class.java.getDeclaredField("connectionManager")
-        connectionManagerField.isAccessible = true
-        val mockConnectionManager = mock(OptimizedWearDataSync::class.java)
+        mockMatchDao = mock(MatchDao::class.java)
+        mockConnectionManager = mock(OptimizedWearDataSync::class.java)
         // Stub connectionState flow to return empty or mock state
         whenever(
             mockConnectionManager.connectionState,
@@ -164,7 +149,8 @@ class MainViewModelTest {
             kotlinx.coroutines.flow.MutableStateFlow(it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Disconnected),
         )
 
-        connectionManagerField.set(viewModel, mockConnectionManager)
+        viewModel = creaViewModel()
+        iniettaServizio(viewModel)
 
         // Mock insert to return a valid ID using whenever and runBlocking
         kotlinx.coroutines.runBlocking {
@@ -210,10 +196,84 @@ class MainViewModelTest {
         altriViewModel.clear()
     }
 
+    /**
+     * Un ViewModel con tutto finto: database e connection manager veri non si creano mai, perche'
+     * hanno thread propri (executor di Room, Dispatchers.IO) che sopravvivono al test.
+     */
+    private fun creaViewModel(
+        colorRepository: ColorRepository = ColorRepository(mockApplication),
+        playerDao: PlayerDao = mockPlayerDao,
+        matchDao: MatchDao = mockMatchDao,
+        connectionManager: OptimizedWearDataSync = mockConnectionManager,
+    ): MainViewModel =
+        MainViewModel(
+            mockRepository,
+            mockUserPreferencesRepository,
+            mockMatchSettingsRepository,
+            mockApplication,
+            colorRepository,
+            playerDao,
+            matchDao,
+            connectionManager,
+        )
+
+    /** Il service finto al posto di quello legato, come se onServiceConnected fosse gia' arrivato. */
+    private fun iniettaServizio(vm: MainViewModel) {
+        val serviceField: Field = MainViewModel::class.java.getDeclaredField("matchTimerService")
+        serviceField.isAccessible = true
+        serviceField.set(vm, mockMatchTimerService)
+
+        val isBoundField: Field = MainViewModel::class.java.getDeclaredField("isServiceBound")
+        isBoundField.isAccessible = true
+        isBoundField.set(vm, true)
+    }
+
+    /**
+     * Rifa [viewModel] con questi DAO (di solito quelli di un database in memoria), al posto di
+     * sostituirli per riflessione dopo la costruzione.
+     *
+     * Le coroutine di init girano subito, sul database ancora vuoto: e' quello che succedeva con i
+     * finti prima del corpo del test. Le righe che il test scrive dopo non vengono ripristinate da
+     * init, ma dal ripristino che il test lancia a mano.
+     */
+    private fun usaDao(
+        playerDao: PlayerDao = mockPlayerDao,
+        matchDao: MatchDao = mockMatchDao,
+    ) {
+        viewModel.viewModelScope.cancel()
+        viewModel = creaViewModel(playerDao = playerDao, matchDao = matchDao)
+        iniettaServizio(viewModel)
+        testDispatcher.scheduler.advanceUntilIdle()
+    }
+
     /** Il ViewModel va chiuso PRIMA del database, che altrimenti sparisce sotto le sue scritture. */
     private fun chiudiDatabase(db: AppDatabase) {
         chiudiViewModel()
         db.close()
+    }
+
+    /**
+     * L'instabilita' di MainViewModelTest (MIGRATION_PLAN.md, "Causa probabile"): il costruttore
+     * apriva l'AppDatabase vero e creava un OptimizedWearDataSync vero (refresh su Dispatchers.IO)
+     * PRIMA che il test li sostituisse per riflessione. I loro thread tornavano su Main mentre
+     * tearDown lo azzerava. Con le dipendenze al costruttore non nasce piu' nessuno dei due.
+     */
+    @Test
+    fun `i ViewModel dei test non creano ne' l'AppDatabase vero ne' il connection manager vero`() {
+        val istanza = AppDatabase::class.java.getDeclaredField("instance").apply { isAccessible = true }
+        val precedente = istanza.get(null)
+        istanza.set(null, null)
+        try {
+            val nuovo = creaViewModel()
+            altriViewModel.add(nuovo)
+
+            assertEquals("il singleton del database non e' stato aperto", null, istanza.get(null))
+            assertTrue("il connection manager e' un finto", mockingDetails(nuovo.connectionManager).isMock)
+            assertTrue("e' proprio quello passato", nuovo.connectionManager === mockConnectionManager)
+            assertTrue("anche il ViewModel del setup", mockingDetails(viewModel.connectionManager).isMock)
+        } finally {
+            istanza.set(null, precedente)
+        }
     }
 
     // Passo 10: i valori iniziali erano arancio e lime scritti nel ViewModel, mentre ColorRepository
@@ -227,7 +287,7 @@ class MainViewModelTest {
             }
 
         val conRepositoryFinto =
-            MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication, coloriFinti)
+            creaViewModel(colorRepository = coloriFinti)
         altriViewModel.add(conRepositoryFinto)
 
         assertEquals(0xFF112233.toInt(), conRepositoryFinto.team1Color.value)
@@ -639,8 +699,7 @@ class MainViewModelTest {
             try {
                 val playerDao = db.playerDao()
                 val matchDao = db.matchDao()
-                imposta("playerDao", playerDao)
-                imposta("matchDao", matchDao)
+                usaDao(playerDao = playerDao, matchDao = matchDao)
                 val marioId = playerDao.insert(Player(playerName = "Mario", appearances = 2, goals = 5)).toInt()
                 viewModel.addPlayerToTeam(PlayerWithRoles(Player(marioId, "Mario", 2, 5), emptyList()), 1)
 
@@ -695,8 +754,7 @@ class MainViewModelTest {
             try {
                 val playerDao = db.playerDao()
                 val matchDao = db.matchDao()
-                imposta("playerDao", playerDao)
-                imposta("matchDao", matchDao)
+                usaDao(playerDao = playerDao, matchDao = matchDao)
                 viewModel.selectSport(SportRegistry.PADEL)
                 advanceUntilIdle()
                 val nomi = listOf("Marco", "Anna", "Luca", "Sara")
@@ -747,7 +805,7 @@ class MainViewModelTest {
         runTest {
             val db = databaseInMemoria()
             try {
-                imposta("matchDao", db.matchDao())
+                usaDao(matchDao = db.matchDao())
                 val ore18 = 1_757_000_000_000L
                 val punto = WearConstants.INTENT_POINT
                 val sep = WearConstants.BATCH_FIELD_SEPARATOR
@@ -801,8 +859,7 @@ class MainViewModelTest {
                 ),
             )
 
-            val conPadel =
-                MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
+            val conPadel = creaViewModel()
             altriViewModel.add(conPadel)
 
             assertEquals(SportRegistry.PADEL, conPadel.activeSport.value)
@@ -1711,7 +1768,7 @@ class MainViewModelTest {
     @Test
     fun `alla costruzione il service non c'e' ancora, e alla connessione non si azzera niente`() =
         runTest {
-            val nuovo = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
+            val nuovo = creaViewModel()
             altriViewModel.add(nuovo)
             val servizio = MainViewModel::class.java.getDeclaredField("matchTimerService").apply { isAccessible = true }
             assertEquals("in init il service non e' ancora legato", null, servizio.get(nuovo))
@@ -1734,7 +1791,9 @@ class MainViewModelTest {
     private class DaoCheSospende(
         private val vero: MatchDao,
         val cancelloInsert: CompletableDeferred<Unit> = CompletableDeferred(),
-        val cancelloLettura: CompletableDeferred<Unit> = CompletableDeferred(Unit),
+        // var: la lettura si richiude DOPO la costruzione del ViewModel, perche' le coroutine di init
+        // la attraversano e restarebbero sospese.
+        var cancelloLettura: CompletableDeferred<Unit> = CompletableDeferred(Unit),
     ) : MatchDao by vero {
         // La riga viva nasce da insertLiveMatch: delegato a [vero], chiamerebbe l'insert di
         // [vero] e non passerebbe dal cancello.
@@ -1790,7 +1849,7 @@ class MainViewModelTest {
             val db = databaseInMemoria()
             try {
                 val dao = DaoCheSospende(db.matchDao())
-                imposta("matchDao", dao)
+                usaDao(matchDao = dao)
                 rispondeAgliAck()
 
                 ricevi(
@@ -1815,7 +1874,7 @@ class MainViewModelTest {
             val db = databaseInMemoria()
             try {
                 val dao = DaoCheSospende(db.matchDao())
-                imposta("matchDao", dao)
+                usaDao(matchDao = dao)
 
                 viewModel.addScore(1)
                 viewModel.addScore(1)
@@ -1840,7 +1899,7 @@ class MainViewModelTest {
             val db = databaseInMemoria()
             try {
                 val dao = DaoCheSospende(db.matchDao())
-                imposta("matchDao", dao)
+                usaDao(matchDao = dao)
 
                 viewModel.addScore(1)
                 assertEquals(true, viewModel.endMatch())
@@ -1865,7 +1924,7 @@ class MainViewModelTest {
         runTest {
             val db = databaseInMemoria()
             try {
-                imposta("matchDao", db.matchDao())
+                usaDao(matchDao = db.matchDao())
                 viewModel.addScore(1)
                 advanceUntilIdle()
                 assertEquals(1, righe(db).size)
@@ -1874,7 +1933,7 @@ class MainViewModelTest {
                 assertEquals(emptyList<Riga>(), righe(db))
 
                 val dao = DaoCheSospende(db.matchDao())
-                imposta("matchDao", dao)
+                usaDao(matchDao = dao)
 
                 viewModel.addScore(1)
                 assertEquals(true, viewModel.discardMatch())
@@ -1904,7 +1963,7 @@ class MainViewModelTest {
         runTest {
             val db = databaseInMemoria()
             try {
-                imposta("matchDao", db.matchDao())
+                usaDao(matchDao = db.matchDao())
                 viewModel.addScore(1)
                 viewModel.undoLastGoal()
                 advanceUntilIdle()
@@ -1949,13 +2008,15 @@ class MainViewModelTest {
         whenever(mockMatchSettingsRepository.getSettingsFlow()).thenReturn(
             flowOf(MatchSettings("Team 1", "Team 2", Color.RED, Color.BLUE, 300L, sportSalvato)),
         )
-        val nuovo = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, mockApplication)
+        // Gli stessi DAO e lo stesso connection manager di [viewModel], dal costruttore: le
+        // coroutine di init li usano fin dal primo giro.
+        val nuovo =
+            creaViewModel(
+                playerDao = campo("playerDao") as PlayerDao,
+                matchDao = campo("matchDao") as MatchDao,
+                connectionManager = campo("connectionManager") as OptimizedWearDataSync,
+            )
         altriViewModel.add(nuovo)
-        // Prima che le coroutine di init partano: col dispatcher del setup sono solo accodate.
-        listOf("playerDao", "matchDao", "connectionManager").forEach { nome ->
-            val campo = MainViewModel::class.java.getDeclaredField(nome).apply { isAccessible = true }
-            campo.set(nuovo, campo.get(viewModel))
-        }
         return nuovo
     }
 
@@ -2012,11 +2073,12 @@ class MainViewModelTest {
         runTest {
             val db = databaseInMemoria()
             try {
+                val dao = DaoCheSospende(db.matchDao(), cancelloInsert = CompletableDeferred(Unit))
+                usaDao(matchDao = dao)
+                dao.cancelloLettura = CompletableDeferred()
                 db.matchDao().insert(
                     Match(team1Id = 1, team2Id = 2, team1Score = 2, team2Score = 0, timestamp = 0L, isActive = true, eventLog = "1|1,1"),
                 )
-                val dao = DaoCheSospende(db.matchDao(), cancelloInsert = CompletableDeferred(Unit), cancelloLettura = CompletableDeferred())
-                imposta("matchDao", dao)
                 val ripristino = MainViewModel::class.java.getDeclaredMethod("restoreActiveMatchIfAny")
                 ripristino.isAccessible = true
                 ripristino.invoke(viewModel)
@@ -2048,6 +2110,9 @@ class MainViewModelTest {
         runTest {
             val db = databaseInMemoria()
             try {
+                val dao = DaoCheSospende(db.matchDao())
+                usaDao(matchDao = dao)
+                dao.cancelloLettura = CompletableDeferred()
                 val calcio =
                     Match(
                         team1Id = 1,
@@ -2059,8 +2124,6 @@ class MainViewModelTest {
                         eventLog = "1|1,1",
                     )
                 val ripresa = db.matchDao().insert(calcio)
-                val dao = DaoCheSospende(db.matchDao(), cancelloLettura = CompletableDeferred())
-                imposta("matchDao", dao)
                 val ripristino = MainViewModel::class.java.getDeclaredMethod("restoreActiveMatchIfAny")
                 ripristino.isAccessible = true
                 ripristino.invoke(viewModel)
@@ -2112,8 +2175,7 @@ class MainViewModelTest {
             val db = databaseInMemoria()
             try {
                 val playerDao = db.playerDao()
-                imposta("playerDao", playerDao)
-                imposta("matchDao", db.matchDao())
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
                 viewModel.selectSport(SportRegistry.PADEL)
                 advanceUntilIdle()
                 val (marco, anna, luca, sara) = quattroDelPadel(playerDao)
@@ -2158,8 +2220,7 @@ class MainViewModelTest {
             val db = databaseInMemoria()
             try {
                 val playerDao = db.playerDao()
-                imposta("playerDao", playerDao)
-                imposta("matchDao", db.matchDao())
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
                 val (marco, anna, luca, sara) = quattroDelPadel(playerDao)
                 viewModel.addScore(1)
                 advanceUntilIdle()
@@ -2187,8 +2248,7 @@ class MainViewModelTest {
             val db = databaseInMemoria()
             try {
                 val playerDao = db.playerDao()
-                imposta("playerDao", playerDao)
-                imposta("matchDao", db.matchDao())
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
                 quattroDelPadel(playerDao)
                 viewModel.addScore(1)
                 advanceUntilIdle()
@@ -2216,8 +2276,7 @@ class MainViewModelTest {
             try {
                 val playerDao = db.playerDao()
                 val matchDao = db.matchDao()
-                imposta("playerDao", playerDao)
-                imposta("matchDao", matchDao)
+                usaDao(playerDao = playerDao, matchDao = matchDao)
                 val mario = playerDao.insert(Player(playerName = "Mario", appearances = 0, goals = 0)).toInt()
                 viewModel.addPlayerToTeam(PlayerWithRoles(Player(mario, "Mario", 0, 0), emptyList()), 1)
                 viewModel.addScore(1)
@@ -2265,7 +2324,9 @@ class MainViewModelTest {
             val db = databaseInMemoria()
             try {
                 val playerDao = db.playerDao()
-                imposta("playerDao", playerDao)
+                val dao = DaoCheSospende(db.matchDao())
+                usaDao(playerDao = playerDao, matchDao = dao)
+                dao.cancelloLettura = CompletableDeferred()
                 val marco = playerDao.insert(Player(playerName = "Marco", appearances = 0, goals = 0)).toInt()
                 val anna = playerDao.insert(Player(playerName = "Anna", appearances = 0, goals = 0)).toInt()
                 val viva =
@@ -2280,8 +2341,6 @@ class MainViewModelTest {
                     )
                 val ripresa = db.matchDao().insert(viva).toInt()
                 db.matchDao().replaceLineup(ripresa, listOf(marco), emptyList())
-                val dao = DaoCheSospende(db.matchDao(), cancelloLettura = CompletableDeferred())
-                imposta("matchDao", dao)
                 val ripristino = MainViewModel::class.java.getDeclaredMethod("restoreActiveMatchIfAny")
                 ripristino.isAccessible = true
                 ripristino.invoke(viewModel)
@@ -2310,8 +2369,7 @@ class MainViewModelTest {
             val db = databaseInMemoria()
             try {
                 val playerDao = db.playerDao()
-                imposta("playerDao", playerDao)
-                imposta("matchDao", db.matchDao())
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
                 val (marco, anna, luca, sara) = quattroDelPadel(playerDao)
                 val piero = playerDao.insert(Player(playerName = "Piero", appearances = 0, goals = 0)).toInt()
                 viewModel.addScore(1)

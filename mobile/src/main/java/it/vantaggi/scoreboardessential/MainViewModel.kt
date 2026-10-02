@@ -81,9 +81,15 @@ class MainViewModel(
     private val matchSettingsRepository: MatchSettingsRepository,
     application: Application,
     colorRepository: ColorRepository = ColorRepository(application),
+    // Le dipendenze con un thread proprio si iniettano: i default sono quelli della produzione, ma
+    // un test che le sostituisse DOPO la costruzione avrebbe gia' aperto il database vero e
+    // lanciato il refresh del connection manager vero su Dispatchers.IO, che poi tornano su Main
+    // fuori tempo.
+    private val playerDao: PlayerDao = AppDatabase.getDatabase(application).playerDao(),
+    private val matchDao: MatchDao = AppDatabase.getDatabase(application).matchDao(),
+    /** Component handling efficient data synchronization with Wear OS nodes. */
+    val connectionManager: OptimizedWearDataSync = OptimizedWearDataSync(application),
 ) : AndroidViewModel(application) {
-    private val playerDao: PlayerDao = AppDatabase.getDatabase(application).playerDao()
-    private val matchDao: MatchDao = AppDatabase.getDatabase(application).matchDao()
     private var matchTimerService: MatchTimerService? = null
     private var isServiceBound = false
 
@@ -105,8 +111,6 @@ class MainViewModel(
     /** Vero quando il motore ha qualcosa da annullare. */
     val canUndo: LiveData<Boolean> = _canUndo
 
-    /** Component handling efficient data synchronization with Wear OS nodes. */
-    val connectionManager = OptimizedWearDataSync(application)
     private val _isWearConnected = MutableLiveData(false)
 
     /** LiveData indicating if a Wear OS device is currently connected. */

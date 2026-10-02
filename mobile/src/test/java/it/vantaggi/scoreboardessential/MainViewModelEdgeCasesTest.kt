@@ -63,29 +63,26 @@ class MainViewModelEdgeCasesTest {
                 whenever(getSettingsFlow()).thenReturn(emptyFlow())
             }
 
-        viewModel = MainViewModel(mockRepository, mockUserPreferencesRepository, mockMatchSettingsRepository, application)
-
-        // Inject mock DAOs and ConnectionManager to avoid NPEs
-        val playerDaoField = MainViewModel::class.java.getDeclaredField("playerDao")
-        playerDaoField.isAccessible = true
-        playerDaoField.set(
-            viewModel,
-            mock(PlayerDao::class.java).apply {
-                whenever(getAllPlayers()).thenReturn(emptyFlow())
-            },
-        )
-
-        val matchDaoField = MainViewModel::class.java.getDeclaredField("matchDao")
-        matchDaoField.isAccessible = true
-        matchDaoField.set(viewModel, mock(MatchDao::class.java))
-
-        val connectionManagerField = MainViewModel::class.java.getDeclaredField("connectionManager")
-        connectionManagerField.isAccessible = true
+        // DAO e connection manager finti vanno al costruttore: sostituirli dopo la costruzione
+        // lascerebbe aprire il database vero e partire il refresh vero su Dispatchers.IO.
         val mockConnectionManager = mock(OptimizedWearDataSync::class.java)
         whenever(
             mockConnectionManager.connectionState,
         ).thenReturn(MutableStateFlow(it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Disconnected))
-        connectionManagerField.set(viewModel, mockConnectionManager)
+
+        viewModel =
+            MainViewModel(
+                mockRepository,
+                mockUserPreferencesRepository,
+                mockMatchSettingsRepository,
+                application,
+                playerDao =
+                    mock(PlayerDao::class.java).apply {
+                        whenever(getAllPlayers()).thenReturn(emptyFlow())
+                    },
+                matchDao = mock(MatchDao::class.java),
+                connectionManager = mockConnectionManager,
+            )
     }
 
     @After
