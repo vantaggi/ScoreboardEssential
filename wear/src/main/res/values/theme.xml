@@ -78,6 +78,13 @@
         <item name="android:textColor">@color/sidewalk_gray</item>
         <item name="android:fontFamily">sans-serif-condensed</item>
     </style>
+    <style name="TextAppearance.Face.Who" parent="android:TextAppearance">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/ink_white</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.04</item>
+    </style>
     <style name="TextAppearance.Face.Status" parent="android:TextAppearance">
         <item name="android:textSize">@dimen/wear_hint_text_size</item>
         <item name="android:textColor">@color/sidewalk_gray</item>

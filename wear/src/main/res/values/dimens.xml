@@ -29,8 +29,13 @@
     <dimen name="face_stripe_height">4dp</dimen>
     <dimen name="face_stripe_inset">44dp</dimen>
 
-    <!-- Il bersaglio inferiore: il menu, e piu' avanti CHI?. -->
+    <!-- Il bersaglio inferiore: il menu, e per 8s dopo un gol CHI?. -->
     <dimen name="face_menu_inset">24dp</dimen>
+
+    <!-- La scelta del marcatore: quanto sta sotto il bordo alto del tondo l'intestazione, e quanto
+         rientrano le righe dai lati. Nei quadrati servono meno. -->
+    <dimen name="scorer_top_inset">22dp</dimen>
+    <dimen name="scorer_row_inset">22dp</dimen>
 
     <!-- Testi: le cifre sono a dimensione FISSA, niente autoSize, cosi' "AV" e "40" hanno la stessa
          misura da un lato all'altro e fra uno stato e l'altro. In dp e non in sp: stanno in colonne

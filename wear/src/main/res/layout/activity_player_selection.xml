@@ -1,40 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.wear.widget.BoxInsetLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<!--
+    La scelta del marcatore. Sta su nero perche' e' una schermata di gioco: si apre dal bersaglio
+    CHI? mentre la partita continua, e il nero e' lo sfondo di tutto cio' che si usa a partita in
+    corso. Niente BoxInsetLayout: la lista va a tutta larghezza, e al tondo pensa il centraggio dei
+    bordi della lista. In cima l'intestazione dice QUALE gol e la barra e' nel colore della squadra
+    che ha segnato (MainActivity lo passa, PlayerSelectionActivity lo porta a 3:1 sul nero).
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/asphalt_dark"
-    android:padding="16dp">
+    android:background="@color/ink_black"
+    android:orientation="vertical"
+    android:paddingTop="@dimen/scorer_top_inset">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/goal_header"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        app:layout_boxedEdges="all">
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-condensed"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="@color/stencil_white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:text="GOL · 3–2" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/wear_who_scored"
-            android:textAppearance="?attr/textAppearanceHeadlineMedium"
-            android:gravity="center"
-            android:layout_marginBottom="8dp" />
+    <View
+        android:id="@+id/goal_bar"
+        android:layout_width="28dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:background="@color/team_spray_yellow"
+        android:importantForAccessibility="no" />
 
-        <androidx.wear.widget.WearableRecyclerView
-            android:id="@+id/player_list"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+    <!--
+        Il focus serve alla corona: senza, ruotarla non scorre niente.
+    -->
+    <androidx.wear.widget.WearableRecyclerView
+        android:id="@+id/player_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:scrollbars="none" />
 
-        <TextView
-            android:id="@+id/empty_state_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/wear_no_players"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
-            android:gravity="center"
-            android:visibility="gone" />
+    <TextView
+        android:id="@+id/empty_state_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/wear_no_players"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:visibility="gone" />
 
-    </LinearLayout>
-
-</androidx.wear.widget.BoxInsetLayout>
+</LinearLayout>

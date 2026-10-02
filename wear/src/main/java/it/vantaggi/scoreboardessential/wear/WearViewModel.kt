@@ -170,6 +170,9 @@ class WearViewModel(
 
         /** Quanto aspetta CHIUSURA... un v2 a partita non cominciata, prima di dire NON CONFERMATA. */
         internal const val DURATA_ATTESA_CHIUSURA_MS = 10_000L
+
+        /** Quanto resta offerto CHI? dopo un gol confermato, poi il bersaglio torna al menu. */
+        internal const val DURATA_FINESTRA_CHI_MS = 8_000L
     }
 
     /**
@@ -198,6 +201,8 @@ class WearViewModel(
         var registroBase: Int,
         /** Quando e' suonato il tick di questo tocco, se e' suonato: la conferma non deve toccarlo. */
         val tickAlle: Long? = null,
+        /** Il tocco era un gol di uno sport che attribuisce: alla conferma si offre CHI?. */
+        val chiediMarcatore: Boolean = false,
     ) {
         var scadenza: Job? = null
     }
@@ -478,9 +483,29 @@ class WearViewModel(
         }
     }
 
-    // Player selection events
-    private val _showPlayerSelection = MutableStateFlow<Int?>(null)
-    val showPlayerSelection = _showPlayerSelection.asStateFlow()
+    /**
+     * L'offerta CHI?: il lato che ha segnato e il punteggio dopo quel gol. Il punteggio si fissa
+     * ora e non quando si tocca, perche' l'intestazione della lista deve dire QUALE gol si sta
+     * attribuendo anche se nel frattempo ne e' arrivato un altro dal telefono.
+     */
+    data class FinestraChi(
+        val lato: Int,
+        val risultato: String,
+    )
+
+    private val _finestraChi = MutableStateFlow<FinestraChi?>(null)
+
+    /** Non e' null per [DURATA_FINESTRA_CHI_MS] dopo un gol confermato: la schermata offre CHI?. */
+    val finestraChi = _finestraChi.asStateFlow()
+    private var finestraChiJob: Job? = null
+
+    /**
+     * Il registro dello stato con cui e' nata l'offerta. Il telefono attribuisce all'ultimo punto
+     * del lato senza marcatore, senza limite di eta': se il registro cambia (un annullamento, un
+     * nome dato dal telefono, una partita nuova) il gol offerto non e' piu' quello, e il nome
+     * andrebbe a un gol vecchio.
+     */
+    private var registroDellOfferta: String? = null
 
     // Player data
     private val _allPlayers = MutableStateFlow<List<PlayerData>>(emptyList())
@@ -500,20 +525,33 @@ class WearViewModel(
         // collegamento. Ognuna, cambiando, la rifa'.
         viewModelScope.launch { _scoreState.collect { ricalcolaFiducia() } }
         viewModelScope.launch { _pendingCount.collect { ricalcolaFiducia() } }
-        viewModelScope.launch { connectionState.collect { ricalcolaFiducia() } }
+        viewModelScope.launch {
+            connectionState.collect {
+                ricalcolaFiducia()
+                // La scelta del marcatore parte solo verso un telefono che ascolta: da scollegati
+                // l'offerta non resta in piedi.
+                if (it !is ConnectionState.Connected) chiudiFinestraChi()
+            }
+        }
         // Il ViewModel nasce insieme all'app: fino alla prima risposta sul collegamento non si
         // sa, e non si dice "scollegato". Anche qui per al massimo 2s.
         verificaFinoA = orologio() + StatoFiducia.DURATA_VERIFICA_MS
         ricalcolaFiducia()
     }
 
-    fun clearPlayerSelectionEvent() {
-        _showPlayerSelection.value = null
+    /** CHI? finisce: scaduta, usata, o non piu' vera (un annullamento, il telefono che cade). */
+    fun chiudiFinestraChi() {
+        finestraChiJob?.cancel()
+        finestraChiJob = null
+        registroDellOfferta = null
+        _finestraChi.value = null
     }
 
     /** Replaces the cached roster pushed from the phone. */
     fun setAllPlayers(players: List<PlayerData>) {
         _allPlayers.value = players
+        // Senza nomi la lista avrebbe solo SALTA: l'offerta non ha piu' niente da offrire.
+        if (players.isEmpty()) chiudiFinestraChi()
     }
 
     fun updateScoresFromMobile(
@@ -553,6 +591,9 @@ class WearViewModel(
             // risveglio e' una copia, e chiuderebbe una ricevuta con uno stato vecchio.
             chiudiRicevute(state)
         }
+        // Dopo le ricevute: un gol nuovo ha appena aperto la sua offerta, col registro di questo
+        // stato, e qui non si tocca. Tutto il resto fa decadere quella che c'era.
+        chiudiFinestraChiSeNonVera(state)
         // L'ora sul disco la scrive WearDataLayerService, che c'e' anche ad app chiusa.
         ultimaNota.save(state.sportId, state.eventLog)
         when {
@@ -612,13 +653,24 @@ class WearViewModel(
         if (registro != null && piuVecchia != null && batchInVolo == null) {
             val distanza = abs(registro - piuVecchia.registroBase)
             if (distanza > 0) {
-                var ultima: Ricevuta = piuVecchia
+                // Il registro e' CRESCIUTO: un gol ha allungato la lista. Se si e' accorciato e'
+                // stato un annullamento (del telefono, di solito) e non c'e' un gol da attribuire.
+                val cresciuto = registro > piuVecchia.registroBase
+                val chiuse = mutableListOf<Ricevuta>()
                 repeat(minOf(distanza, ricevute.size)) {
-                    ultima = ricevute.removeFirst().also { it.scadenza?.cancel() }
+                    chiuse += ricevute.removeFirst().also { it.scadenza?.cancel() }
                 }
                 ricevute.forEach { it.registroBase = registro }
+                val ultima = chiuse.last()
                 // Piu' di una insieme: suona l'ultima, la prima verrebbe tagliata subito.
                 suonaDopoIlTick(ultima.tickAlle, patternConferma(ultima))
+                // Il gol e' al telefono: adesso, e non prima, si puo' offrire il nome. Con piu' gol
+                // chiusi insieme vale l'ultimo.
+                if (cresciuto) {
+                    chiuse.lastOrNull { it.kind == WearConstants.INTENT_POINT && it.chiediMarcatore }?.let {
+                        offriMarcatore(it.side, state)
+                    }
+                }
             }
         }
         ricevutaSport?.takeIf { it.sportId == state.sportId }?.let {
@@ -626,6 +678,38 @@ class WearViewModel(
             ricevutaSport = null
             haptics.suona(HapticFeedbackManager.PATTERN_CONFIRM)
         }
+    }
+
+    /**
+     * CHI? vale per il gol con cui e' nata: se lo stato del telefono ha un registro diverso (un
+     * ANNULLA, un marcatore dato dal telefono, una partita nuova) o la partita e' finita, si chiude.
+     */
+    private fun chiudiFinestraChiSeNonVera(state: WearScoreState) {
+        if (_finestraChi.value == null) return
+        if (state.matchOver || state.eventLog != registroDellOfferta) chiudiFinestraChi()
+    }
+
+    /**
+     * Offre CHI? per [DURATA_FINESTRA_CHI_MS]: il bersaglio in basso lo dice e un tocco apre la
+     * lista. Solo se lo sport attribuisce (il padel no), la rosa c'e' e il telefono e' collegato:
+     * da scollegati la scelta si perderebbe in silenzio, e l'attribuzione si fa dopo, dal registro
+     * del telefono. Un'offerta nuova sostituisce la vecchia.
+     */
+    private fun offriMarcatore(
+        lato: Int,
+        state: WearScoreState,
+    ) {
+        if (!state.attributesScorer || state.matchOver) return
+        if (_allPlayers.value.isEmpty()) return
+        if (connectionState.value !is ConnectionState.Connected) return
+        finestraChiJob?.cancel()
+        registroDellOfferta = state.eventLog
+        _finestraChi.value = FinestraChi(lato, "${state.side1Primary}–${state.side2Primary}")
+        finestraChiJob =
+            viewModelScope.launch {
+                delay(DURATA_FINESTRA_CHI_MS)
+                chiudiFinestraChi()
+            }
     }
 
     /**
@@ -767,11 +851,13 @@ class WearViewModel(
         // (DESIGN.md, "Coerenza fra telefono e orologio"). Il colpo lungo vale "NON CONFERMATO", e
         // un tocco che non deve contare non e' un tocco che il telefono non ha confermato.
         if (_scoreState.value?.matchOver == true) return false
-        // Il marcatore si chiede DOPO l'esito dell'invio, non insieme al tocco: senza telefono la
-        // scelta fatta al polso non arrivava a nessuno, e la schermata si chiudeva come se fosse
-        // andato tutto bene. Il punto invece finisce in coda come sempre, e il marcatore si
-        // attribuira' dal registro del telefono. Nel v1 lo sport non lo dice: vale la rosa.
-        val chiediMarcatore = !protocolV2Seen || _scoreState.value?.attributesScorer == true
+        // Il marcatore non si apre piu' da solo: lo offre la finestra CHI?, e solo dopo che il
+        // telefono ha rimandato lo stato col gol dentro (vedi chiudiRicevute). Senza telefono la
+        // scelta fatta al polso non arrivava a nessuno; il punto invece finisce in coda come
+        // sempre, e il marcatore si attribuira' dal registro del telefono. Con un telefono v1 non
+        // ci sono ricevute, quindi nemmeno CHI?: il marcatore si attribuisce dal registro del
+        // telefono (DESIGN.md: l'offerta viene dopo la ricevuta v2).
+        val chiediMarcatore = _scoreState.value?.attributesScorer == true
         val tickAlle = orologio()
         haptics.tick()
         sendScoreIntent(team, WearConstants.INTENT_POINT, chiediMarcatore, tickAlle)
@@ -786,6 +872,8 @@ class WearViewModel(
 
     fun decrementScore(team: Int) {
         if (team != 1 && team != 2) return
+        // Un annullamento o una correzione puo' togliere proprio il gol che CHI? offre.
+        chiudiFinestraChi()
         if (protocolV2Seen) {
             val tipo =
                 if (_scoreState.value?.decrementIsUndo == true) {
@@ -998,7 +1086,7 @@ class WearViewModel(
         // arrivera', e senza un registro leggibile non c'e' niente da confrontare: niente ricevuta.
         val registroAlTocco = if (protocolV2Seen) lunghezzaRegistro(statoDalTelefono) else null
         val ricevuta =
-            registroAlTocco?.let { Ricevuta(side, kind, it, tickAlle).also(ricevute::addLast) }
+            registroAlTocco?.let { Ricevuta(side, kind, it, tickAlle, chiediMarcatore).also(ricevute::addLast) }
         viewModelScope.launch {
             val payload =
                 DataMap().apply {
@@ -1012,10 +1100,6 @@ class WearViewModel(
                 // Consegnato non e' preso: niente vibrazione adesso. La conferma suona quando il
                 // telefono rimanda lo stato, e se non lo rimanda lo dice NON CONFERMATO.
                 ricevuta?.let { avviaScadenza(it) }
-                // Solo qui il telefono ha il punto a cui attaccare il nome.
-                if (chiediMarcatore && _allPlayers.value.isNotEmpty()) {
-                    _showPlayerSelection.value = side
-                }
                 return@launch
             }
             // Non consegnato: la ricevuta si toglie senza suonare, vale la coda qui sotto.
@@ -1169,6 +1253,8 @@ class WearViewModel(
         fromRemote: Boolean = false,
         urgent: Boolean = false,
     ) {
+        // Una partita finita o azzerata non ha piu' il gol che CHI? offriva.
+        chiudiFinestraChi()
         // Update local state without sending data if fromRemote is true
         if (fromRemote) {
             _team1Score.value = 0

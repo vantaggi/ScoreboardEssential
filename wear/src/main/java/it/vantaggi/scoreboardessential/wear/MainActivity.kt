@@ -267,7 +267,36 @@ class MainActivity : ComponentActivity() {
             viewModel.toggleKeeperTimer()
         }
 
-        binding.btnMenu.setOnClickListener { apriMenu() }
+        // Lo stesso bersaglio vale due cose: CHI? per 8s dopo un gol confermato, altrimenti il menu.
+        binding.btnMenu.setOnClickListener {
+            if (viewModel.finestraChi.value != null) apriMarcatore() else apriMenu()
+        }
+    }
+
+    /**
+     * Mentre CHI? e' offerto il glifo del menu lascia il posto alla capsula e il bersaglio cambia
+     * descrizione, cosi' TalkBack dice che cosa fa il tocco. Quando l'offerta finisce torna il menu.
+     */
+    private fun renderFinestraChi(finestra: WearViewModel.FinestraChi?) {
+        val offerta = finestra != null
+        binding.chiCapsule.visibility = if (offerta) View.VISIBLE else View.GONE
+        binding.menuGlyph.visibility = if (offerta) View.INVISIBLE else View.VISIBLE
+        binding.btnMenu.contentDescription = getString(if (offerta) R.string.wear_who_scored else R.string.cd_menu)
+    }
+
+    /**
+     * Apre la lista del marcatore e consuma l'offerta: tornati dalla lista, il bersaglio e' di nuovo
+     * il menu. Il colore e' quello della squadra che ha segnato, il punteggio quello del gol offerto.
+     */
+    private fun apriMarcatore() {
+        val finestra = viewModel.finestraChi.value ?: return
+        val colore =
+            (if (finestra.lato == 1) viewModel.team1Color.value else viewModel.team2Color.value)
+                ?: ContextCompat.getColor(this, if (finestra.lato == 1) R.color.team_spray_yellow else R.color.team_electric_green)
+        viewModel.chiudiFinestraChi()
+        startActivity(
+            PlayerSelectionActivity.intent(this, finestra.lato, viewModel.allPlayers.value, colore, finestra.risultato),
+        )
     }
 
     /**
@@ -658,22 +687,9 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Observe Player Selection Events
-                launch {
-                    viewModel.showPlayerSelection.collect { teamNumber ->
-                        teamNumber?.let { team ->
-                            val intent = Intent(this@MainActivity, PlayerSelectionActivity::class.java)
-                            intent.putExtra(WearConstants.EXTRA_TEAM_NUMBER, team)
-                            intent.putExtra(
-                                WearDataLayerService.EXTRA_PLAYERS,
-                                it.vantaggi.scoreboardessential.shared.PlayerData
-                                    .encodeList(viewModel.allPlayers.value),
-                            )
-                            startActivity(intent)
-                            viewModel.clearPlayerSelectionEvent()
-                        }
-                    }
-                }
+                // CHI? prende il posto del glifo per 8s dopo un gol confermato, e basta: la lista
+                // non si apre piu' da sola. Collect riemette il valore a ogni ritorno in STARTED.
+                launch { viewModel.finestraChi.collect { renderFinestraChi(it) } }
                 // Il telefono e' tornato: cio' che si e' segnato senza di lui parte adesso, da solo.
                 // Cosa dire del collegamento non e' affare di questo collector: lo dice la riga.
                 launch {

@@ -11,4 +11,7 @@
     <dimen name="face_dot_inset">2dp</dimen>
     <dimen name="face_digits_outer">12dp</dimen>
     <dimen name="face_stripe_inset">38dp</dimen>
+
+    <dimen name="scorer_top_inset">6dp</dimen>
+    <dimen name="scorer_row_inset">10dp</dimen>
 </resources>

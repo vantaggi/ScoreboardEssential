@@ -30,10 +30,10 @@
     </plurals>
     <string name="wear_who_scored">CHI HA SEGNATO?</string>
     <string name="wear_no_players">Nessun giocatore</string>
-    <string name="wear_nobody">NESSUNO</string>
-    <string name="wear_no_role">Senza ruolo</string>
-    <string name="wear_player_name">Nome giocatore</string>
-    <string name="wear_player_position">Ruolo</string>
+    <string name="wear_who_short">CHI?</string>
+    <string name="wear_skip">SALTA</string>
+    <string name="wear_goal_header">GOL · %1$s</string>
+    <string name="wear_goal_header_plain">GOL</string>
     <string name="cd_keeper_timer">Conto alla rovescia del portiere</string>
     <string name="wear_sport">SPORT</string>
     <string name="wear_sport_title">SPORT</string>
