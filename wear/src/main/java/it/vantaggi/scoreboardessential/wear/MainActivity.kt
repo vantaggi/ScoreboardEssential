@@ -4,10 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.View
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -15,6 +18,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.SportRegistry
+import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
@@ -238,15 +242,27 @@ class MainActivity : ComponentActivity() {
             true
         }
 
-        // Timer controls
-        binding.matchTimer.setOnClickListener {
-            // Senza cronometro quella riga mostra il periodo ("Set 2"): non e' piu' un comando.
+        // Timer controls: i bersagli sono viste a parte, separate dai testi della fascia A.
+        binding.touchTimer.setOnClickListener {
+            // Senza cronometro quella fascia mostra i game del set: non e' un comando.
             if (viewModel.scoreState.value?.hasClock != false) {
                 viewModel.toggleTimer()
             }
         }
+        // Il tempo nella descrizione si legge quando TalkBack la chiede, non a ogni tick: un
+        // cronometro che cambia la descrizione ogni secondo verrebbe riletto di continuo.
+        binding.touchTimer.accessibilityDelegate =
+            object : View.AccessibilityDelegate() {
+                override fun onInitializeAccessibilityNodeInfo(
+                    host: View,
+                    info: AccessibilityNodeInfo,
+                ) {
+                    super.onInitializeAccessibilityNodeInfo(host, info)
+                    descrizioneContesto()?.let { info.contentDescription = it }
+                }
+            }
 
-        binding.keeperTimer.setOnClickListener {
+        binding.touchKeeper.setOnClickListener {
             viewModel.toggleKeeperTimer()
         }
 
@@ -317,32 +333,27 @@ class MainActivity : ComponentActivity() {
     private fun renderScoreState(state: WearScoreState) {
         binding.team1Score.text = state.side1Primary
         binding.team2Score.text = state.side2Primary
-        bindDetail(binding.team1ScoreDetail, state.side1Secondary)
-        bindDetail(binding.team2ScoreDetail, state.side2Secondary)
+        binding.faceDetail.text = FaceText.split(state).second
         applyGestureLabels(state.decrementIsUndo)
-        applyMatchOver(state.matchOver)
+        applyMatchOver(state)
+        applyServing(state)
 
-        applyClockRole(state)
+        renderContesto()
 
         applyAuxTimerRole(state)
     }
 
-    /**
-     * La riga dei set ha una vista propria, e rimpicciolisce solo se stessa.
-     *
-     * Prima primario e secondario stavano nella STESSA TextView autoSize, separati da uno span al
-     * 40%: per far entrare "6-4 3-6 2-1" su due righe l'autoSize rimpiccioliva tutto, numero
-     * grande compreso. Nel padel il punteggio corrente -- l'unica cosa che si guarda mentre si
-     * gioca -- finiva piccolo quanto la sua cronologia. Ora il numero tiene la sua altezza e a
-     * stringersi e' la riga dei set.
-     */
-    private fun bindDetail(
-        view: android.widget.TextView,
-        text: String,
-    ) {
-        view.text = text
-        view.visibility = if (text.isEmpty()) View.GONE else View.VISIBLE
+    /** Il pallino bianco sul lato esterno della colonna di chi serve; con 0 (calcio, finita) nessuno. */
+    private fun applyServing(state: WearScoreState) {
+        binding.team1ServeDot.visibility = if (state.servingSide == 1) View.VISIBLE else View.GONE
+        binding.team2ServeDot.visibility = if (state.servingSide == 2) View.VISIBLE else View.GONE
     }
+
+    /** Il colore della squadra e' solo grafica: portato a 3:1 sul nero, mai colore di un testo. */
+    private fun coloraStriscia(
+        striscia: View,
+        colore: Int,
+    ) = striscia.setBackgroundColor(TeamInk.graphicOnBlack(colore) or TeamInk.NERO)
 
     /**
      * Dice a parole che cosa fa il tocco lungo, e lo dice in modo diverso nei due casi.
@@ -394,10 +405,17 @@ class MainActivity : ComponentActivity() {
      * dipende da se il conto alla rovescia stia girando, e quello lo sa solo il suo collector.
      */
     private fun applyAuxTimerRole(state: WearScoreState) {
-        binding.keeperTimer.visibility = if (state.hasAuxTimer) View.VISIBLE else View.GONE
+        mostraPortiere(state.hasAuxTimer)
         if (!state.hasAuxTimer) {
             binding.keeperProgressBar.visibility = View.INVISIBLE
         }
+    }
+
+    /** Il testo e il bersaglio del portiere vanno e vengono insieme. */
+    private fun mostraPortiere(visibile: Boolean) {
+        val visibilita = if (visibile) View.VISIBLE else View.GONE
+        binding.keeperTimer.visibility = visibilita
+        binding.touchKeeper.visibility = visibilita
     }
 
     /**
@@ -411,12 +429,19 @@ class MainActivity : ComponentActivity() {
      *
      * Niente piu' opacita': ad alpha 0.4 il giallo scendeva a 3.02:1 sul fondo, e il risultato
      * finale, cioe' la cosa che tutti chiedono a fine partita, era la meno leggibile dello
-     * schermo. Che i lati siano spenti lo dice la riga in basso.
+     * schermo. Lo sconfitto passa invece a #9E9E9E (7.84:1 su nero), come sul telefono: si legge
+     * chi ha perso senza spegnere la cifra. Il vincitore, e chi non ha un vincitore (un pari),
+     * restano bianchi. Che i lati siano spenti lo dice anche la riga in basso.
      */
-    private fun applyMatchOver(finita: Boolean) {
+    private fun applyMatchOver(state: WearScoreState) {
         listOf(binding.team1Container, binding.team2Container).forEach { lato ->
-            lato.isClickable = !finita
+            lato.isClickable = !state.matchOver
         }
+        val vincitore = FaceText.vincitore(state)
+        val bianco = ContextCompat.getColor(this, R.color.ink_white)
+        val grigio = ContextCompat.getColor(this, R.color.sidewalk_gray)
+        binding.team1Score.setTextColor(if (vincitore == 2) grigio else bianco)
+        binding.team2Score.setTextColor(if (vincitore == 1) grigio else bianco)
     }
 
     /**
@@ -433,27 +458,68 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * La stessa riga mostra due cose diverse e va detto quale.
+     * La fascia A mostra due cose diverse e va detto quale.
      *
-     * Con il cronometro e' "12:34" e si tocca per avviare; senza, e' "Set 2" e il tocco era gia'
-     * disattivato -- ma restavano lo stesso stile, lo stesso peso e lo stesso riscontro al tocco,
-     * quindi continuava a sembrare un comando. Ora il periodo e' piu' quieto del cronometro, e
-     * non e' nemmeno piu' cliccabile.
+     * Col cronometro (calcio) e' "12:34": bianco se corre, grigio se e' fermo, e si tocca per
+     * avviarlo o fermarlo. Senza (padel, tennis) sono i game del set in corso, "4 – 3", bianchi, e
+     * non e' un comando: il bersaglio non risponde. I set chiusi e il periodo stanno in fascia D.
+     *
+     * Senza v2 si comporta come il calcio, perche' e' quello che il polso sa fare da solo.
+     * Si ridisegna a ogni cambio dello stato, del tempo e del correre: il tempo si scrive SUBITO e
+     * non al prossimo tick, perche' passando da padel a calcio col cronometro fermo non arriva
+     * nessun tick, e restavano scritti i game del set.
      */
-    private fun applyClockRole(state: WearScoreState) {
-        if (state.hasClock) {
-            // Il tempo si scrive SUBITO, non al prossimo tick: passando da padel a calcio col
-            // cronometro fermo non arriva nessun tick, e restava scritto "Set 1".
-            binding.matchTimer.text = viewModel.matchTimer.value
-            binding.matchTimer.setTextColor(ContextCompat.getColor(this, R.color.stencil_white))
-            binding.matchTimer.setTypeface(binding.matchTimer.typeface, android.graphics.Typeface.BOLD)
-            binding.matchTimer.isClickable = true
+    private fun renderContesto() {
+        val stato = viewModel.scoreState.value
+        if (stato != null && !stato.hasClock) {
+            posizionaContesto(centrato = true)
+            binding.matchTimer.text = FaceText.split(stato).first
+            binding.matchTimer.setTextColor(ContextCompat.getColor(this, R.color.ink_white))
+            binding.touchTimer.isClickable = false
             return
         }
-        binding.matchTimer.text = state.periodLabel
-        binding.matchTimer.setTextColor(ContextCompat.getColor(this, R.color.sidewalk_gray))
-        binding.matchTimer.setTypeface(android.graphics.Typeface.create("sans-serif-condensed", android.graphics.Typeface.NORMAL))
-        binding.matchTimer.isClickable = false
+        posizionaContesto(centrato = false)
+        binding.matchTimer.text = viewModel.matchTimer.value
+        val corre = viewModel.matchTimerRunning.value
+        binding.matchTimer.setTextColor(ContextCompat.getColor(this, if (corre) R.color.ink_white else R.color.sidewalk_gray))
+        binding.touchTimer.isClickable = true
+    }
+
+    /**
+     * Dove sta il testo della fascia A.
+     *
+     * Col cronometro (calcio) e' allineato a destra e finisce 5dp prima del centro, dove comincia
+     * il K: le due posizioni non cambiano col testo. Senza (racchetta) il K non c'e' e i game stanno
+     * al centro dello schermo: restando fermi su x=91 col K nascosto sarebbero fuori centro.
+     */
+    private fun posizionaContesto(centrato: Boolean) {
+        val vista = binding.matchTimer
+        val gravita = if (centrato) Gravity.CENTER else Gravity.END or Gravity.CENTER_VERTICAL
+        if (vista.gravity == gravita) return
+        vista.gravity = gravita
+        val parametri = vista.layoutParams as ConstraintLayout.LayoutParams
+        if (centrato) {
+            parametri.endToStart = ConstraintLayout.LayoutParams.UNSET
+            parametri.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
+            parametri.marginEnd = 0
+        } else {
+            parametri.endToEnd = ConstraintLayout.LayoutParams.UNSET
+            parametri.endToStart = R.id.guide_center
+            parametri.marginEnd = resources.getDimensionPixelSize(R.dimen.face_context_gap)
+        }
+        vista.layoutParams = parametri
+    }
+
+    /** Cosa legge TalkBack sul bersaglio della fascia A, calcolato adesso; niente se non c'e' niente. */
+    private fun descrizioneContesto(): String? {
+        val stato = viewModel.scoreState.value
+        if (stato != null && !stato.hasClock) {
+            val giochi = FaceText.split(stato).first
+            return if (giochi.isEmpty()) null else getString(R.string.cd_current_game, giochi)
+        }
+        val tempo = binding.matchTimer.text.toString()
+        val corre = viewModel.matchTimerRunning.value
+        return getString(if (corre) R.string.cd_match_clock_running else R.string.cd_match_clock_stopped, tempo)
     }
 
     private fun observeViewModel() {
@@ -503,13 +569,13 @@ class MainActivity : ComponentActivity() {
                 // Observe Team Colors
                 launch {
                     viewModel.team1Color.collect { color ->
-                        color?.let { binding.team1Score.setTextColor(it) }
+                        color?.let { coloraStriscia(binding.team1Stripe, it) }
                     }
                 }
 
                 launch {
                     viewModel.team2Color.collect { color ->
-                        color?.let { binding.team2Score.setTextColor(it) }
+                        color?.let { coloraStriscia(binding.team2Stripe, it) }
                     }
                 }
 
@@ -519,19 +585,17 @@ class MainActivity : ComponentActivity() {
                 // Ma solo senza cronometro. Con la sola condizione "v2 mai arrivato", nel calcio
                 // il quadrante restava fermo sul primo valore per tutta la partita: il v2 non porta
                 // il tempo, e il tempo arriva proprio da qui. Col cronometro il flow E' il dato.
-                launch {
-                    viewModel.matchTimer.collect { time ->
-                        val stato = viewModel.scoreState.value
-                        if (stato == null || stato.hasClock) binding.matchTimer.text = time
-                    }
-                }
+                launch { viewModel.matchTimer.collect { renderContesto() } }
+
+                // Bianco se corre, grigio se e' fermo: il colore dice lo stato senza un segno in piu'.
+                launch { viewModel.matchTimerRunning.collect { renderContesto() } }
 
                 // Observe Keeper Timer
                 launch {
                     viewModel.keeperTimer.collect { state ->
                         // SEMPRE VISIBILE, finche' lo sport ha davvero un timer ausiliario.
                         val auxAvailable = viewModel.scoreState.value?.hasAuxTimer != false
-                        binding.keeperTimer.visibility = if (auxAvailable) View.VISIBLE else View.GONE
+                        mostraPortiere(auxAvailable)
                         when (state) {
                             is KeeperTimerState.Hidden -> {
                                 binding.keeperTimer.text = "K"
@@ -567,7 +631,8 @@ class MainActivity : ComponentActivity() {
                             }
 
                             is KeeperTimerState.Finished -> {
-                                binding.keeperTimer.text = "K"
+                                // Scaduto: "K 0:00" in rosso, come "K 4:12" mentre corre.
+                                binding.keeperTimer.text = getString(R.string.wear_keeper_running, 0, 0)
                                 binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.error_red))
                                 binding.keeperProgressBar.visibility =
                                     if (auxAvailable) View.VISIBLE else View.INVISIBLE

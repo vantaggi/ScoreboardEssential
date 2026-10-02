@@ -1,14 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Il quadrante a fasce. Niente BoxInsetLayout: il quadrato inscritto lasciava 128dp su 192, mentre
+    le fasce orizzontali del cerchio ne danno fino a 178. Ogni fascia sta fra due guide in
+    percentuale dell'altezza e ha il suo margine di corda in dimens (a 0 nei quadrati). Misure a
+    192dp, dal design:
+
+        A  18-48    contesto: cronometro a sinistra, portiere a destra (nel calcio), game del set
+        B  50-124   le due cifre, bianche, a dimensione fissa
+        C  126-130  le strisce di squadra
+        D  132-148  dettaglio: periodo e set chiusi
+        E  150-166  riga di stato (StatoFiducia)
+        F  168-188  il glifo del menu
+
+    Il fondo nero lo da' il tema del quadrante (Theme.ScoreboardEssential.Face), non questo layout.
+
+    I bersagli di tocco sono viste a parte, separate dal testo: cronometro e portiere in alto
+    (y 0-46, meta' a testa), i due lati (y 50-124, meta' a testa: il tocco sul vuoto fra le cifre va
+    al lato piu' vicino), il menu in basso (y 132-192, x 24-168). D ed E non si toccano da sole:
+    stanno dentro il bersaglio del menu, che sta sotto di loro.
+-->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/ink_black"
     tools:context=".MainActivity"
     tools:deviceIds="wear">
 
-    <!-- Layer 1: Keeper Progress Ring (Bottom) -->
+    <!-- Layer 1: l'anello del portiere, sul bordo (in basso). -->
     <ProgressBar
         android:id="@+id/keeperProgressBar"
         style="?android:attr/progressBarStyleHorizontal"
@@ -19,168 +38,339 @@
         android:progress="300"
         android:progressDrawable="@drawable/circular_progress_bar" />
 
-    <!-- Layer 2: UI Content (Top) -->
-    <androidx.wear.widget.BoxInsetLayout
+    <!-- Layer 2: le fasce. -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="4dp"
-            app:layout_boxedEdges="all">
-
         <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guideline_top"
+            android:id="@+id/guide_center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.5" />
+
+        <!-- Altezze delle fasce, in frazione di 192dp. -->
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_18"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.20" />
+            app:layout_constraintGuide_percent="0.09375" />
 
-        <!-- Match Timer - Top Center -->
-        <TextView
-            android:id="@+id/matchTimer"
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_46"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="00:00"
-            android:textSize="@dimen/wear_timer_text_size"
-            android:fontFamily="sans-serif-condensed"
-            android:textStyle="bold"
-            android:textColor="@color/stencil_white"
-            app:layout_constraintTop_toTopOf="parent"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.2396" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_48"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.25" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_50"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.2604" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_124"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.6458" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_126"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.6563" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_132"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.6875" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_148"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.7708" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_150"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.7813" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_168"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.875" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_188"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.9792" />
+
+        <!--
+            Bersaglio inferiore: il menu partita. Sta PRIMA dei testi D ed E, che gli passano
+            sopra senza intercettare il tocco. Lo sport e la fine della partita sono azioni da una
+            volta per partita e non devono stare sotto il pollice di chi segna senza guardare. Il
+            glifo e' un'immagine a parte (menuGlyph): il significato lo dice la descrizione.
+        -->
+        <ImageButton
+            android:id="@+id/btnMenu"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_menu"
+            app:layout_constraintTop_toBottomOf="@id/guide_132"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp"/>
+            android:layout_marginStart="@dimen/face_menu_inset"
+            android:layout_marginEnd="@dimen/face_menu_inset" />
 
-        <!-- Team 1 Score - Left Side -->
-        <LinearLayout
-            android:id="@+id/team1Container"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:orientation="vertical"
-            android:gravity="center"
-            app:layout_constraintTop_toBottomOf="@id/guideline_top"
-            app:layout_constraintBottom_toTopOf="@id/gestureHint"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/keeperTimer">
-
-            <TextView
-                android:id="@+id/team1Score"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="0"
-                android:maxLines="1"
-                android:includeFontPadding="false"
-                android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="12sp"
-                android:autoSizeMaxTextSize="100sp"
-                android:autoSizeStepGranularity="2sp"
-                android:fontFamily="sans-serif-condensed"
-                android:textStyle="bold"
-                android:accessibilityLiveRegion="polite"
-                android:textColor="@color/team_spray_yellow"/>
-
-            <TextView
-                android:id="@+id/team1ScoreDetail"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/wear_score_detail_height"
-                android:gravity="center"
-                android:maxLines="1"
-                android:visibility="gone"
-                android:includeFontPadding="false"
-                android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="7sp"
-                android:autoSizeMaxTextSize="11sp"
-                android:autoSizeStepGranularity="1sp"
-                android:fontFamily="sans-serif-condensed"
-                android:textColor="@color/sidewalk_gray"
-                tools:text="6-4 3-6 2-1"
-                tools:visibility="visible"/>
-        </LinearLayout>
-
-        <!-- Team 2 Score - Right Side -->
-        <LinearLayout
-            android:id="@+id/team2Container"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:orientation="vertical"
-            android:gravity="center"
-            app:layout_constraintTop_toBottomOf="@id/guideline_top"
-            app:layout_constraintBottom_toTopOf="@id/gestureHint"
-            app:layout_constraintStart_toEndOf="@id/keeperTimer"
-            app:layout_constraintEnd_toEndOf="parent">
-
-            <TextView
-                android:id="@+id/team2Score"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="0"
-                android:maxLines="1"
-                android:includeFontPadding="false"
-                android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="12sp"
-                android:autoSizeMaxTextSize="100sp"
-                android:autoSizeStepGranularity="2sp"
-                android:fontFamily="sans-serif-condensed"
-                android:textStyle="bold"
-                android:accessibilityLiveRegion="polite"
-                android:textColor="@color/team_electric_green"/>
-
-            <TextView
-                android:id="@+id/team2ScoreDetail"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/wear_score_detail_height"
-                android:gravity="center"
-                android:maxLines="1"
-                android:visibility="gone"
-                android:includeFontPadding="false"
-                android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="7sp"
-                android:autoSizeMaxTextSize="11sp"
-                android:autoSizeStepGranularity="1sp"
-                android:fontFamily="sans-serif-condensed"
-                android:textColor="@color/sidewalk_gray"
-                tools:text="6-4 3-6 2-1"
-                tools:visibility="visible"/>
-        </LinearLayout>
-
-        <!-- Keeper Timer Interaction Target - Center -->
-        <TextView
-            android:id="@+id/keeperTimer"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:gravity="center"
-            android:text="K"
-            android:textSize="@dimen/wear_keeper_timer_text_size"
-            android:fontFamily="sans-serif-condensed"
-            android:textStyle="bold"
-            android:textColor="@color/graffiti_pink"
-            android:contentDescription="@string/cd_keeper_timer"
-            app:layout_constraintTop_toBottomOf="@id/matchTimer"
-            app:layout_constraintBottom_toTopOf="@id/gestureHint"
+        <ImageView
+            android:id="@+id/menuGlyph"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_menu_dots"
+            app:layout_constraintTop_toBottomOf="@id/guide_168"
+            app:layout_constraintBottom_toTopOf="@id/guide_188"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
         <!--
-            La riga di stato: una frase sola, che parla quando qualcosa non va (StatoFiducia). Il
-            nome e' quello di quando diceva solo che cosa fa tenere premuto. Larghezza e altezza
-            fisse perche' l'autoSize non funziona su wrap_content: la frase piu' lunga si stringe
-            da sola fino a 10sp invece di tagliarsi.
+            Fascia A, bersagli: cronometro a sinistra del centro, portiere a destra. Il cronometro e'
+            sempre esposto a TalkBack (importantForAccessibility=yes): nella racchetta non e' un
+            comando, quindi non e' cliccabile, e senza il "yes" la vista non e' importante e la
+            descrizione dei game, che mette il delegato di MainActivity, non verrebbe mai letta.
+        -->
+        <View
+            android:id="@+id/touchTimer"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:importantForAccessibility="yes"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/guide_46"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/guide_center" />
+
+        <View
+            android:id="@+id/touchKeeper"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:contentDescription="@string/cd_keeper_timer"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/guide_46"
+            app:layout_constraintStart_toEndOf="@id/guide_center"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!--
+            Fascia A, testi. Il cronometro (nel calcio) sta a destra, fermo su x=91; il portiere a
+            sinistra, fermo da x=101: le due posizioni non cambiano quando cambia il testo. Il
+            gruppo e' largo circa 92dp contro i 102 utili dentro l'anello a quell'altezza. Nella
+            racchetta il K non c'e' e i game del set in corso stanno al centro dello schermo:
+            MainActivity (posizionaContesto) allarga allora la vista a tutta la fascia e la centra.
+        -->
+        <TextView
+            android:id="@+id/matchTimer"
+            android:textAppearance="@style/TextAppearance.Face.Context"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:gravity="end|center_vertical"
+            android:importantForAccessibility="no"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="00:00"
+            app:layout_constraintTop_toBottomOf="@id/guide_18"
+            app:layout_constraintBottom_toTopOf="@id/guide_48"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/guide_center"
+            android:layout_marginEnd="@dimen/face_context_gap" />
+
+        <TextView
+            android:id="@+id/keeperTimer"
+            android:textAppearance="@style/TextAppearance.Face.Keeper"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:gravity="start|center_vertical"
+            android:importantForAccessibility="no"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="K"
+            app:layout_constraintTop_toBottomOf="@id/guide_18"
+            app:layout_constraintBottom_toTopOf="@id/guide_48"
+            app:layout_constraintStart_toEndOf="@id/guide_center"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="5dp" />
+
+        <!--
+            Fascia B: i due lati. Ogni lato e' un bersaglio solo, e contiene le sue cifre e il suo
+            pallino del servizio, cosi' TalkBack lo legge come un blocco. Le cifre stanno nei 68dp
+            fra la fascia del pallino (esterna) e il vuoto centrale.
+        -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/team1Container"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toBottomOf="@id/guide_50"
+            app:layout_constraintBottom_toTopOf="@id/guide_124"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/guide_center">
+
+            <TextView
+                android:id="@+id/team1Score"
+                android:textAppearance="@style/TextAppearance.Face.Score"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:gravity="center"
+                android:text="0"
+                android:maxLines="1"
+                android:includeFontPadding="false"
+                android:accessibilityLiveRegion="polite"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginStart="@dimen/face_digits_outer"
+                android:layout_marginEnd="@dimen/face_digits_gutter" />
+
+            <View
+                android:id="@+id/team1ServeDot"
+                android:layout_width="@dimen/face_dot_size"
+                android:layout_height="@dimen/face_dot_size"
+                android:background="@drawable/bg_serving_dot"
+                android:importantForAccessibility="no"
+                android:visibility="gone"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintVertical_bias="0.24"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginStart="@dimen/face_dot_inset"
+                tools:visibility="visible" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/team2Container"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toBottomOf="@id/guide_50"
+            app:layout_constraintBottom_toTopOf="@id/guide_124"
+            app:layout_constraintStart_toEndOf="@id/guide_center"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:id="@+id/team2Score"
+                android:textAppearance="@style/TextAppearance.Face.Score"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:gravity="center"
+                android:text="0"
+                android:maxLines="1"
+                android:includeFontPadding="false"
+                android:accessibilityLiveRegion="polite"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginStart="@dimen/face_digits_gutter"
+                android:layout_marginEnd="@dimen/face_digits_outer" />
+
+            <View
+                android:id="@+id/team2ServeDot"
+                android:layout_width="@dimen/face_dot_size"
+                android:layout_height="@dimen/face_dot_size"
+                android:background="@drawable/bg_serving_dot"
+                android:importantForAccessibility="no"
+                android:visibility="gone"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintVertical_bias="0.24"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginEnd="@dimen/face_dot_inset" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!--
+            Fascia C: il colore della squadra, solo come grafica. Mai testo sopra e mai il colore
+            come colore delle cifre: la tinta la sceglie l'utente e puo' sparire sul nero. Il colore
+            vero lo scrive MainActivity (TeamInk.graphicOnBlack); qui i default.
+        -->
+        <View
+            android:id="@+id/team1Stripe"
+            android:layout_width="@dimen/face_stripe_width"
+            android:layout_height="@dimen/face_stripe_height"
+            android:background="@color/team_spray_yellow"
+            android:importantForAccessibility="no"
+            app:layout_constraintTop_toBottomOf="@id/guide_126"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="@dimen/face_stripe_inset" />
+
+        <View
+            android:id="@+id/team2Stripe"
+            android:layout_width="@dimen/face_stripe_width"
+            android:layout_height="@dimen/face_stripe_height"
+            android:background="@color/team_electric_green"
+            android:importantForAccessibility="no"
+            app:layout_constraintTop_toBottomOf="@id/guide_126"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginEnd="@dimen/face_stripe_inset" />
+
+        <!--
+            Fascia D: il dettaglio, "SET 3 · 6-4 · 3-6" o "TIE-BREAK · 6-4". Si stringe da sola fino
+            a 9sp: un 5 set a 13sp non entrerebbe. Vuota nel calcio e nel padel a set unico.
+        -->
+        <TextView
+            android:id="@+id/faceDetail"
+            android:textAppearance="@style/TextAppearance.Face.Detail"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="9sp"
+            android:autoSizeMaxTextSize="@dimen/face_detail_text_size"
+            android:autoSizeStepGranularity="1sp"
+            app:layout_constraintTop_toBottomOf="@id/guide_132"
+            app:layout_constraintBottom_toTopOf="@id/guide_148"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="@dimen/face_margin_d"
+            android:layout_marginEnd="@dimen/face_margin_d"
+            tools:text="SET 2 · 6-4" />
+
+        <!--
+            Fascia E, la riga di stato: una frase sola, che parla quando qualcosa non va
+            (StatoFiducia). Il nome e' quello di quando diceva solo che cosa fa tenere premuto.
+            Larghezza e altezza fisse perche' l'autoSize non funziona su wrap_content: la frase piu'
+            lunga si stringe da sola fino a 10sp invece di tagliarsi.
         -->
         <TextView
             android:id="@+id/gestureHint"
+            android:textAppearance="@style/TextAppearance.Face.Status"
             android:layout_width="0dp"
             android:layout_height="@dimen/wear_hint_height"
             android:gravity="center"
             android:text="@string/wear_hint_minus"
-            android:fontFamily="sans-serif-condensed"
-            android:textStyle="bold"
-            android:textColor="@color/sidewalk_gray"
-            android:letterSpacing="0.04"
             android:maxLines="1"
             android:includeFontPadding="false"
             android:accessibilityLiveRegion="polite"
@@ -188,28 +378,11 @@
             android:autoSizeMinTextSize="10sp"
             android:autoSizeMaxTextSize="@dimen/wear_hint_text_size"
             android:autoSizeStepGranularity="1sp"
-            app:layout_constraintBottom_toTopOf="@id/btn_menu"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <!--
-            In basso un solo bersaglio: il menu partita. Lo sport e la fine della partita sono
-            azioni da una volta per partita e non devono stare sotto il pollice di chi segna senza
-            guardare. Il glifo e' un vettore, non un testo: il significato lo dice la descrizione.
-        -->
-        <ImageButton
-            android:id="@+id/btn_menu"
-            android:layout_width="96dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/cd_menu"
-            android:scaleType="center"
-            android:src="@drawable/ic_menu_dots"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/guide_150"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginStart="@dimen/face_margin_e"
+            android:layout_marginEnd="@dimen/face_margin_e" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.wear.widget.BoxInsetLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>

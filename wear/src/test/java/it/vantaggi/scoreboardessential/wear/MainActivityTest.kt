@@ -83,9 +83,10 @@ class MainActivityTest {
         secondo: String = "0",
         periodo: String = "",
         finita: Boolean = false,
+        giochi: String = "",
     ) = WearScoreState(
         side1Primary = primo,
-        side1Secondary = "",
+        side1Secondary = giochi,
         side2Primary = secondo,
         side2Secondary = "",
         periodLabel = periodo,
@@ -119,25 +120,49 @@ class MainActivityTest {
     }
 
     @Test
-    fun `passando da padel a calcio il periodo lascia il posto al tempo`() {
-        applica(stato(hasClock = false, periodo = "Set 1"))
-        assertEquals("Set 1", binding.matchTimer.text.toString())
+    fun `passando da padel a calcio i game del set lasciano il posto al tempo`() {
+        applica(stato(hasClock = false, periodo = "Set 1", giochi = "2-1"))
+        assertEquals("2 \u2013 1", binding.matchTimer.text.toString())
 
-        // Cronometro fermo: nessun tick in arrivo che possa riscrivere la riga da solo.
+        // Cronometro fermo: nessun tick in arrivo che possa riscrivere la fascia da solo.
         applica(stato(hasClock = true))
 
         assertEquals(viewModel.matchTimer.value, binding.matchTimer.text.toString())
     }
 
     @Test
-    fun `nel padel il tempo non sovrascrive il periodo`() {
-        // Il controllo del rimedio: la condizione del collector non deve aprirsi anche senza cronometro.
-        applica(stato(hasClock = false, periodo = "Set 2"))
+    fun `nel padel il tempo non sovrascrive i game del set`() {
+        // Il controllo del rimedio: il collector del tempo non deve scrivere anche senza cronometro.
+        applica(stato(hasClock = false, periodo = "Set 2", giochi = "3-2"))
 
         viewModel.syncMatchTimer(65_000L, isRunning = false)
         idle()
 
-        assertEquals("Set 2", binding.matchTimer.text.toString())
+        assertEquals("3 \u2013 2", binding.matchTimer.text.toString())
+    }
+
+    @Test
+    fun `la fascia D porta il periodo e i set chiusi`() {
+        applica(stato(hasClock = false, periodo = "Set 2", giochi = "6-4 \u00B7 4-3"))
+
+        assertEquals("4 \u2013 3", binding.matchTimer.text.toString())
+        assertEquals("SET 2 \u00B7 6-4", binding.faceDetail.text.toString())
+    }
+
+    @Test
+    fun `il cronometro e' bianco se corre e grigio se e' fermo`() {
+        applica(stato(hasClock = true))
+
+        viewModel.syncMatchTimer(65_000L, isRunning = false)
+        idle()
+        assertEquals(colore(R.color.sidewalk_gray), binding.matchTimer.currentTextColor)
+
+        viewModel.syncMatchTimer(65_000L, isRunning = true)
+        idle()
+        assertEquals(colore(R.color.ink_white), binding.matchTimer.currentTextColor)
+        // Fermalo: il test non lascia un cronometro vivo nel ViewModel.
+        viewModel.syncMatchTimer(65_000L, isRunning = false)
+        idle()
     }
 
     @Test
@@ -148,6 +173,77 @@ class MainActivityTest {
         assertEquals(1f, binding.team2Container.alpha)
         // I lati restano spenti per il tocco breve: e' la parte che non cambia.
         assertTrue(!binding.team1Container.isClickable)
+    }
+
+    @Test
+    fun `a partita finita lo sconfitto e' grigio e il vincitore bianco`() {
+        applica(stato(hasClock = false, primo = "6", secondo = "4", finita = true))
+        assertEquals(colore(R.color.ink_white), binding.team1Score.currentTextColor)
+        assertEquals(colore(R.color.sidewalk_gray), binding.team2Score.currentTextColor)
+
+        applica(stato(hasClock = false, primo = "1", secondo = "2", finita = true))
+        assertEquals(colore(R.color.sidewalk_gray), binding.team1Score.currentTextColor)
+        assertEquals(colore(R.color.ink_white), binding.team2Score.currentTextColor)
+    }
+
+    @Test
+    fun `senza un vincitore le due cifre restano bianche e riannullando la partita torna tutto bianco`() {
+        applica(stato(hasClock = false, primo = "6", secondo = "6", finita = true))
+        assertEquals(colore(R.color.ink_white), binding.team1Score.currentTextColor)
+        assertEquals(colore(R.color.ink_white), binding.team2Score.currentTextColor)
+
+        // Un annullamento riapre la partita: lo sconfitto di prima non resta grigio.
+        applica(stato(hasClock = false, primo = "6", secondo = "4", finita = true))
+        applica(stato(hasClock = false, primo = "30", secondo = "15"))
+        assertEquals(colore(R.color.ink_white), binding.team1Score.currentTextColor)
+        assertEquals(colore(R.color.ink_white), binding.team2Score.currentTextColor)
+    }
+
+    @Test
+    fun `il colore della squadra e' una striscia portata a 3 a 1 sul nero, le cifre restano bianche`() {
+        // Il blu notte scelto dall'utente sul nero fa 1.31:1: diventa #4F4FA7.
+        viewModel.setTeamColor(1, 0xFF000080.toInt())
+        // Il giallo dei default regge da solo e non si tocca.
+        viewModel.setTeamColor(2, 0xFFFFD600.toInt())
+        idle()
+
+        assertEquals(0xFF4F4FA7.toInt(), (binding.team1Stripe.background as ColorDrawable).color)
+        assertEquals(0xFFFFD600.toInt(), (binding.team2Stripe.background as ColorDrawable).color)
+        assertEquals(colore(R.color.ink_white), binding.team1Score.currentTextColor)
+        assertEquals(colore(R.color.ink_white), binding.team2Score.currentTextColor)
+    }
+
+    @Test
+    fun `il pallino del servizio sta sul lato di chi serve e nel calcio non c'e'`() {
+        applica(stato(hasClock = false, periodo = "Set 1").copy(servingSide = 1))
+        assertEquals(View.VISIBLE, binding.team1ServeDot.visibility)
+        assertEquals(View.GONE, binding.team2ServeDot.visibility)
+
+        applica(stato(hasClock = false, periodo = "Set 1").copy(servingSide = 2))
+        assertEquals(View.GONE, binding.team1ServeDot.visibility)
+        assertEquals(View.VISIBLE, binding.team2ServeDot.visibility)
+
+        applica(stato(hasClock = true))
+        assertEquals(View.GONE, binding.team1ServeDot.visibility)
+        assertEquals(View.GONE, binding.team2ServeDot.visibility)
+    }
+
+    @Test
+    fun `senza un cronometro il bersaglio in alto non risponde`() {
+        applica(stato(hasClock = false, periodo = "Set 1", giochi = "1-0"))
+        assertFalse(binding.touchTimer.isClickable)
+
+        applica(stato(hasClock = true))
+        assertTrue(binding.touchTimer.isClickable)
+    }
+
+    @Test
+    fun `il K scaduto dice K 0 00 in rosso`() {
+        viewModel.setKeeperTimerState(KeeperTimerState.Finished)
+        idle()
+
+        assertEquals("K 0:00", binding.keeperTimer.text.toString())
+        assertEquals(colore(R.color.error_red), binding.keeperTimer.currentTextColor)
     }
 
     @Test
@@ -203,9 +299,12 @@ class MainActivityTest {
     }
 
     @Test
-    fun `il fondo del quadrante e' nero puro`() {
-        val radice = binding.root.background as ColorDrawable
-        assertEquals(0xFF000000.toInt(), radice.color)
+    fun `il fondo del quadrante e' nero puro e lo da' il tema, non il layout`() {
+        // Il layout non dipinge un secondo fondo: sarebbe l'Overdraw di lint.
+        assertEquals(null, binding.root.background)
+        val valore = android.util.TypedValue()
+        assertTrue(controller.get().theme.resolveAttribute(android.R.attr.windowBackground, valore, true))
+        assertEquals(0xFF000000.toInt(), valore.data)
     }
 
     private fun passano(secondi: Long) = shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(secondi))

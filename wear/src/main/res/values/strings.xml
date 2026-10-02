@@ -9,6 +9,10 @@
     <string name="cd_score_side_minus">%1$s, %2$s. Tap to add a point, press and hold to remove one.</string>
     <string name="cd_score_side_undo">%1$s, %2$s. Tap to add a point, press and hold to undo the last action.</string>
     <string name="cd_team_fallback">Team %1$d</string>
+    <!-- Cronometro del calcio e game del set in corso: il bersaglio in alto a sinistra. -->
+    <string name="cd_match_clock_running">Match clock %1$s, running. Tap to stop.</string>
+    <string name="cd_match_clock_stopped">Match clock %1$s, stopped. Tap to start.</string>
+    <string name="cd_current_game">Current set, games %1$s</string>
 
     <!-- Menu partita: frasi corte, perche' il tondo da 192dp lascia circa 100dp di larghezza alla voce. -->
     <string name="cd_menu">Match menu</string>

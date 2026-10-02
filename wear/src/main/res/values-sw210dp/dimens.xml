@@ -4,9 +4,29 @@
     Quadranti grandi. La soglia era sw320dp, che NESSUN orologio raggiunge: i Wear OS reali
     stanno fra 160dp e 240dp, quindi quel file non si e' mai applicato e i valori "grandi"
     non sono mai stati usati da nessuno. 210dp e' la soglia dei template Wear.
+
+    Stesse guide in percentuale, margini di corda per 1,18 (227/192), strisce 33x5, pallino 10:
+    lo spazio in piu' va alla misura dei livelli che ci sono, non a livelli nuovi.
     -->
-    <dimen name="wear_timer_text_size">22sp</dimen>
-    <dimen name="wear_keeper_timer_text_size">18sp</dimen>
+    <dimen name="face_margin_d">19dp</dimen>
+    <dimen name="face_margin_e">35dp</dimen>
+
+    <dimen name="face_dot_size">10dp</dimen>
+    <dimen name="face_dot_inset">16dp</dimen>
+    <dimen name="face_digits_gutter">5dp</dimen>
+    <dimen name="face_digits_outer">28dp</dimen>
+
+    <dimen name="face_stripe_width">33dp</dimen>
+    <dimen name="face_stripe_height">5dp</dimen>
+    <dimen name="face_stripe_inset">52dp</dimen>
+
+    <dimen name="face_menu_inset">28dp</dimen>
+
+    <dimen name="face_score_text_size">68dp</dimen>
+    <dimen name="face_context_text_size">24sp</dimen>
+    <dimen name="face_keeper_text_size">16sp</dimen>
+    <dimen name="face_detail_text_size">15sp</dimen>
+
     <dimen name="wear_hint_text_size">14sp</dimen>
     <dimen name="wear_hint_height">18dp</dimen>
 </resources>

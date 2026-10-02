@@ -408,8 +408,15 @@ class WearViewModel(
     private var matchTimerJob: Job? = null
     private var matchTimeInSeconds = 0L
 
-    // Stato timer partita
+    // Stato timer partita. Il quadrante lo legge (cronometro bianco se corre, grigio se fermo): la
+    // proprieta' resta quella di prima, con un flusso dietro che tiene i due in accordo.
+    private val _matchTimerRunning = MutableStateFlow(false)
+    val matchTimerRunning = _matchTimerRunning.asStateFlow()
     private var isMatchTimerRunning: Boolean = false
+        set(value) {
+            field = value
+            _matchTimerRunning.value = value
+        }
 
     // Keeper Timer
     private val _keeperTimer = MutableStateFlow<KeeperTimerState>(KeeperTimerState.Hidden)
@@ -877,18 +884,6 @@ class WearViewModel(
     }
 
     // --- Match Timer Management ---
-    fun setMatchTimer(time: String) {
-        matchTimerJob?.cancel() // Stop the internal timer
-        _matchTimer.value = time
-    }
-
-    fun setMatchTimerMillis(millis: Long) {
-        matchTimerJob?.cancel() // Stop internal timer if we get an update from mobile
-        val minutes = (millis / 1000) / 60
-        val seconds = (millis / 1000) % 60
-        _matchTimer.value = String.format("%02d:%02d", minutes, seconds)
-    }
-
     fun syncMatchTimer(
         millis: Long,
         isRunning: Boolean,

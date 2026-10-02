@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+    Quadrati: niente cerchio che taglia gli angoli, quindi i margini di fascia sono 0. L'anello del
+    portiere resta, e lo spazio recuperato negli angoli resta vuoto. Le cifre tengono la fascia del
+    pallino (12dp) e la striscia segue il loro centro.
+    -->
+    <dimen name="face_margin_d">0dp</dimen>
+    <dimen name="face_margin_e">0dp</dimen>
+
+    <dimen name="face_dot_inset">2dp</dimen>
+    <dimen name="face_digits_outer">12dp</dimen>
+    <dimen name="face_stripe_inset">38dp</dimen>
+</resources>

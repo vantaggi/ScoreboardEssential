@@ -1,17 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-    Il rotondo lo gestisce BoxInsetLayout, che calcola da solo il rientro sui bordi curvi:
-    qui resta solo il padding aggiuntivo per gli schermi quadrati.
+    Il quadrante di gioco non usa piu' BoxInsetLayout: le fasce stanno in percentuale
+    dell'altezza (guide nel layout) e ogni fascia ha il suo margine di corda, cioe' quanto serve
+    per stare dentro il cerchio all'altezza del suo bordo alto. Misure in dp a 192, dal design:
+    B (cifre) 12, D (dettaglio) 16, E (stato) 30. Nei quadrati (values-notround) i margini sono 0.
     -->
     <dimen name="box_inset_layout_padding">0dp</dimen>
 
-    <!-- Il punteggio non compare qui: si ridimensiona da solo (autoSize nel layout). -->
-    <dimen name="wear_timer_text_size">18sp</dimen>
-    <dimen name="wear_keeper_timer_text_size">16sp</dimen>
-    <!-- Altezza fissa: l'autoSize non funziona su wrap_content, e questa riga deve
-         rimpicciolire il PROPRIO testo invece di far rimpicciolire il numero sopra. -->
-    <dimen name="wear_score_detail_height">14dp</dimen>
+    <dimen name="face_margin_d">16dp</dimen>
+    <dimen name="face_margin_e">30dp</dimen>
+
+    <!-- Il vuoto fra il testo della fascia A e il centro, dal lato del cronometro. -->
+    <dimen name="face_context_gap">5dp</dimen>
+
+    <!-- Il pallino del servizio: una fascia riservata sul lato esterno di ogni colonna, sempre,
+         cosi' il numero non si sposta quando il pallino compare. Il pallino sta al centro della
+         fascia: margine di corda piu' mezzo spazio che avanza. -->
+    <dimen name="face_dot_size">8dp</dimen>
+    <dimen name="face_dot_inset">14dp</dimen>
+    <!-- Dove finiscono le cifre dal lato del centro: il resto del vuoto fra le due colonne. -->
+    <dimen name="face_digits_gutter">4dp</dimen>
+    <!-- Margine delle cifre dal lato esterno: corda piu' fascia del pallino. -->
+    <dimen name="face_digits_outer">24dp</dimen>
+
+    <!-- La striscia di squadra e il suo scarto dal bordo, centrata sotto la colonna delle cifre. -->
+    <dimen name="face_stripe_width">28dp</dimen>
+    <dimen name="face_stripe_height">4dp</dimen>
+    <dimen name="face_stripe_inset">44dp</dimen>
+
+    <!-- Il bersaglio inferiore: il menu, e piu' avanti CHI?. -->
+    <dimen name="face_menu_inset">24dp</dimen>
+
+    <!-- Testi: le cifre sono a dimensione FISSA, niente autoSize, cosi' "AV" e "40" hanno la stessa
+         misura da un lato all'altro e fra uno stato e l'altro. In dp e non in sp: stanno in colonne
+         fisse da 68dp con una riga sola e senza puntini, e col carattere di sistema grande (fino a
+         1,24 sull'orologio) 58sp diventano 72: "AV" andava a capo e "40" restava "4", cioe' un
+         punteggio sbagliato. Non e' un testo da leggere ingrandito: e' gia' la cosa piu' grande
+         dello schermo, e a ingrandirsi sono gli altri livelli. -->
+    <dimen name="face_score_text_size">58dp</dimen>
+    <dimen name="face_context_text_size">20sp</dimen>
+    <dimen name="face_keeper_text_size">14sp</dimen>
+    <dimen name="face_detail_text_size">13sp</dimen>
+
     <!-- La riga di stato: dimensione massima e altezza fissa; sotto, l'autoSize arriva a 10sp. -->
     <dimen name="wear_hint_text_size">12sp</dimen>
     <dimen name="wear_hint_height">16dp</dimen>
