@@ -42,6 +42,10 @@
     <string name="cd_add_goal">Goal for %1$s. %2$s to %3$s</string>
     <string name="cd_add_point">Point for %1$s. %2$s to %3$s</string>
     <string name="cd_correct_team">Remove a goal from %1$s</string>
+    <!-- Chi serve: i pallini accanto al nome sono uno per il primo giocatore, due per il secondo. -->
+    <string name="cd_serving">%1$s serving</string>
+    <string name="cd_serving_first_player">%1$s serving, first player</string>
+    <string name="cd_serving_second_player">%1$s serving, second player</string>
     <string name="cd_score_of_team" translatable="false">%1$s, %2$s</string>
     <string name="caption_game">GAME</string>
     <string name="caption_set">SET</string>

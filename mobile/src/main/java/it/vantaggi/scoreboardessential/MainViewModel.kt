@@ -965,6 +965,7 @@ class MainViewModel(
                     WearConstants.KEY_SIDE2_SECONDARY to (display.side2Secondary ?: ""),
                     WearConstants.KEY_PERIOD_LABEL to (display.periodLabel ?: ""),
                     WearConstants.KEY_SERVING_SIDE to (display.servingSide ?: 0),
+                    WearConstants.KEY_SERVING_SLOT to (display.servingPlayerSlot ?: 0),
                     WearConstants.KEY_CAP_HAS_CLOCK to (capacita.clock != ClockMode.NONE),
                     WearConstants.KEY_CAP_HAS_AUX_TIMER to capacita.hasAuxCountdown,
                     WearConstants.KEY_CAP_ATTRIBUTES_SCORER to capacita.attributesScorer,
