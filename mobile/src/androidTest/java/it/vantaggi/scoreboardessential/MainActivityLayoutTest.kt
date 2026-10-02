@@ -512,8 +512,8 @@ class MainActivityLayoutTest {
             assertNonSiSposta("dopo il tocco sulla zona spenta", iniziale, postiFissi(scenario))
 
             // ANNULLA riapre la partita: la barra torna a dire chi serve e le zone si riaccendono.
+            // Nel padel e' un tocco solo: nessun dialogo da confermare.
             onView(withId(R.id.undo_goal_button)).perform(click())
-            onView(withText(R.string.undo)).inRoot(isDialog()).perform(click())
             assertTrue("ANNULLA non ha riaperto la partita", aspettaCheAttivi(scenario) { modello.scoreDisplay.value?.matchOver == false })
             assertTrue(
                 "la barra non e' tornata a PADEL · SERVE",
@@ -534,6 +534,195 @@ class MainActivityLayoutTest {
                 )
             }
             assertNonSiSposta("dopo aver riaperto la partita", iniziale, postiFissi(scenario))
+        }
+    }
+
+    /** Il testo che la striscia deve mostrare dopo ANNULLA nel padel, nel locale del test. */
+    private fun annullatoDiRossi(scenario: ActivityScenario<MainActivity>): String {
+        lateinit var atteso: String
+        scenario.onActivity {
+            val nome1 = ViewModelProvider(it)[MainViewModel::class.java].team1Name.value.orEmpty()
+            atteso = it.getString(R.string.strip_msg_undone_point, nome1.uppercase(Locale.getDefault()))
+        }
+        return atteso
+    }
+
+    @Test
+    fun nelPadel_ANNULLA_e_un_tocco_solo_senza_dialogo_e_la_striscia_dice_ANNULLATO() {
+        conPadel { scenario, modello ->
+            val iniziale = postiFissi(scenario)
+            lateinit var prima: String
+            scenario.onActivity {
+                prima =
+                    modello.scoreDisplay.value
+                        ?.let { d -> "${d.side1Primary}-${d.side2Primary}" }
+                        .orEmpty()
+            }
+            onView(withId(R.id.team1_add_button_card)).perform(click())
+            assertTrue(
+                "il + non ha acceso ANNULLA: la prova non misurerebbe niente",
+                aspettaCheAttivi(scenario) { it.findViewById<View>(R.id.undo_goal_button).isEnabled },
+            )
+            onView(withId(R.id.undo_goal_button)).perform(click())
+
+            // Niente dialogo: e' il centro della decisione. Un dialogo aperto toglie il fuoco alla
+            // finestra della schermata di gioco.
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            scenario.onActivity { assertTrue("nel padel ANNULLA non deve aprire un dialogo", it.hasWindowFocus()) }
+            val atteso = annullatoDiRossi(scenario)
+            assertTrue(
+                "la striscia non dice \"$atteso\": \"${testoDi(scenario, R.id.last_action_text)}\"",
+                aspettaCheAttivi(scenario) { it.findViewById<TextView>(R.id.last_action_text).text.toString() == atteso },
+            )
+            scenario.onActivity {
+                val dopo =
+                    modello.scoreDisplay.value
+                        ?.let { d -> "${d.side1Primary}-${d.side2Primary}" }
+                        .orEmpty()
+                assertEquals("ANNULLA non ha riportato il punteggio di prima", prima, dopo)
+                assertEquals(
+                    "ANNULLA si spegne: non c'e' piu' niente da annullare",
+                    false,
+                    it.findViewById<View>(R.id.undo_goal_button).isEnabled,
+                )
+            }
+            assertNonSiSposta("dopo ANNULLA con un tocco", iniziale, postiFissi(scenario))
+        }
+    }
+
+    /**
+     * Nel padel ANNULLA e' un tocco solo e senza dialogo: due tocchi rapidi toglievano due punti.
+     * I tocchi sono due performClick nello stesso passo sul thread principale, quindi entro i 500 ms
+     * qualunque sia la velocita' dell'emulatore.
+     */
+    @Test
+    fun nelPadel_due_tocchi_rapidi_su_ANNULLA_tolgono_un_punto_solo_e_uno_piu_tardi_ne_toglie_un_altro() {
+        conPadel { scenario, modello ->
+            fun punteggio(): String {
+                var testo = ""
+                scenario.onActivity {
+                    testo =
+                        modello.scoreDisplay.value
+                            ?.let { d -> "${d.side1Primary}-${d.side2Primary}" }
+                            .orEmpty()
+                }
+                return testo
+            }
+            val zero = punteggio()
+            scenario.onActivity { modello.addScore(1) }
+            val unPunto = punteggio()
+            scenario.onActivity { modello.addScore(1) }
+            assertTrue("i due punti non cambiano il punteggio: la prova non misurerebbe niente", punteggio() != unPunto)
+
+            scenario.onActivity {
+                val annulla = it.findViewById<View>(R.id.undo_goal_button)
+                annulla.performClick()
+                annulla.performClick()
+            }
+            assertEquals("due tocchi rapidi devono togliere un punto solo", unPunto, punteggio())
+
+            Thread.sleep(700)
+            scenario.onActivity { it.findViewById<View>(R.id.undo_goal_button).performClick() }
+            assertEquals("un tocco dopo il rimbalzo e' una scelta e toglie l'altro punto", zero, punteggio())
+        }
+    }
+
+    @Test
+    fun nelCalcio_ANNULLA_apre_ancora_il_dialogo_e_non_toglie_il_gol_finche_non_si_conferma() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            onView(withId(R.id.team1_add_button_card)).perform(click())
+            assertTrue(
+                "il + non ha acceso ANNULLA: la prova non misurerebbe niente",
+                aspettaCheAttivi(scenario) { it.findViewById<View>(R.id.undo_goal_button).isEnabled },
+            )
+            onView(withId(R.id.undo_goal_button)).perform(click())
+
+            onView(withText(R.string.undo_goal_title)).inRoot(isDialog()).check(matches(isDisplayed()))
+            scenario.onActivity {
+                assertEquals(
+                    "il gol non si toglie prima della conferma",
+                    true,
+                    it.findViewById<View>(R.id.undo_goal_button).isEnabled,
+                )
+            }
+            onView(withText(R.string.undo)).inRoot(isDialog()).perform(click())
+            assertTrue(
+                "ANNULLA non si e' spento dopo la conferma",
+                aspettaCheAttivi(scenario) { !it.findViewById<View>(R.id.undo_goal_button).isEnabled },
+            )
+        }
+    }
+
+    @Test
+    fun ilPortiere_toccato_scade_e_lo_slot_diventa_rosso_con_CAMBIO_senza_spostare_niente() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var modello: MainViewModel
+            scenario.onActivity { modello = ViewModelProvider(it)[MainViewModel::class.java] }
+            assertTrue(
+                "il servizio del cronometro non si e' collegato",
+                aspettaCheAttivi(scenario) { it.findViewById<View>(R.id.timer_start_button).isEnabled },
+            )
+            try {
+                // Due secondi: il service conta a passi di un secondo, scade al terzo controllo.
+                scenario.onActivity { modello.setKeeperTimer(2) }
+                val iniziale = postiFissi(scenario)
+                var slotPrima = Posto(0, 0, 0, 0)
+                scenario.onActivity {
+                    val slot = it.findViewById<View>(R.id.keeper_slot)
+                    slotPrima = Posto(0, 0, slot.width, slot.height)
+                    assertTrue("lo slot del portiere deve essere toccabile", slot.isClickable)
+                    assertTrue("lo slot e' alto ${slot.height}px, sotto i 48dp", slot.height >= dp(it, 48))
+                }
+                onView(withId(R.id.keeper_slot)).perform(click())
+                assertTrue(
+                    "il tocco non ha avviato il conto",
+                    aspettaCheAttivi(scenario) {
+                        it.findViewById<TextView>(R.id.keeper_timer_textview).currentTextColor ==
+                            it.getColor(R.color.graffiti_pink)
+                    },
+                )
+                // Il conto scade: dopo la scadenza lo slot e' pieno #FF1744 con CAMBIO in #000000.
+                assertTrue(
+                    "dopo la scadenza lo slot non e' diventato rosso",
+                    aspettaCheAttivi(scenario) { modello.isKeeperTimerExpired.value == true },
+                )
+                InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+                scenario.onActivity {
+                    val slot = it.findViewById<com.google.android.material.card.MaterialCardView>(R.id.keeper_slot)
+                    val valore = it.findViewById<TextView>(R.id.keeper_timer_textview)
+                    assertEquals("lo slot scaduto e' pieno #FF1744", it.getColor(R.color.error_red), slot.cardBackgroundColor.defaultColor)
+                    assertEquals("CAMBIO e' in #000000", it.getColor(R.color.asphalt_black), valore.currentTextColor)
+                    assertEquals("lo slot scaduto dice CAMBIO", it.getString(R.string.label_keeper_change), valore.text.toString())
+                    assertEquals(
+                        "TalkBack dice lo stato e l'azione",
+                        it.getString(R.string.cd_keeper_expired),
+                        slot.contentDescription?.toString(),
+                    )
+                    assertEquals("lo slot scaduto non cambia larghezza", slotPrima.larghezza, slot.width)
+                    assertEquals("lo slot scaduto non cambia altezza", slotPrima.altezza, slot.height)
+                }
+                assertNonSiSposta("quando il portiere scade", iniziale, postiFissi(scenario))
+
+                // Un tocco lo toglie: riparte dalla durata piena e torna il conto. performClick e non un
+                // tocco vero: alla scadenza la notifica del service compare in alto (heads-up) proprio
+                // sopra la barra, e il tocco di Espresso cadrebbe su di lei.
+                scenario.onActivity { it.findViewById<View>(R.id.keeper_slot).performClick() }
+                assertTrue(
+                    "il tocco non ha tolto SCADUTO",
+                    aspettaCheAttivi(scenario) { modello.isKeeperTimerExpired.value == false },
+                )
+                scenario.onActivity {
+                    val valore = it.findViewById<TextView>(R.id.keeper_timer_textview)
+                    assertTrue("il conto non e' tornato: \"${valore.text}\"", valore.text.toString().matches(Regex("\\d\\d:\\d\\d")))
+                }
+                assertNonSiSposta("dopo il tocco che toglie SCADUTO", iniziale, postiFissi(scenario))
+            } finally {
+                // Il service del cronometro sopravvive al test: lo si lascia fermo e con la durata di prima.
+                scenario.onActivity {
+                    modello.resetKeeperTimer()
+                    modello.setKeeperTimer(300)
+                }
+            }
         }
     }
 

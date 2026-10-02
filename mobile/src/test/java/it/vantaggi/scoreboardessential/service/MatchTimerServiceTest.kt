@@ -1,5 +1,7 @@
 package it.vantaggi.scoreboardessential.service
 
+import android.Manifest
+import android.app.NotificationManager
 import android.content.Context
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
@@ -14,6 +16,8 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -204,7 +208,107 @@ class MatchTimerServiceTest {
         service.resetKeeperTimer()
     }
 
+    /**
+     * Passo 13: lo stato SCADUTO dello slot nasce solo dall'evento di scadenza, quindi dopo un
+     * riavvio non ne deve nascere uno finto. Un conto che era in corso e la cui fine e' passata mentre
+     * il processo non c'era riparte FERMO a zero: nessun conto da riprendere, nessun wake lock
+     * (e quindi nessuna scadenza da annunciare, ne' al registro ne' allo slot).
+     */
+    @Test
+    fun `dopo un riavvio con la fine del conto gia' passata il service riparte fermo e senza scadenza`() {
+        prefs()
+            .edit()
+            .putBoolean("keeper_running", true)
+            .putLong("keeper_end_time", System.currentTimeMillis() - 10_000L)
+            .commit()
+
+        val riavviato = Robolectric.buildService(MatchTimerService::class.java).create().get()
+        val scadenze = mutableListOf<Unit>()
+        // Unconfined: l'iscrizione avviene subito, prima di ogni emissione.
+        val ascolto = CoroutineScope(Dispatchers.Unconfined)
+        ascolto.launch { riavviato.keeperTimerExpired.collect { scadenze.add(it) } }
+        try {
+            assertFalse("non c'e' un conto da riprendere", riavviato.isKeeperTimerRunning.value)
+            assertEquals(0L, riavviato.keeperTimerValue.value)
+            val wakeLock = ShadowPowerManager.getLatestWakeLock()
+            assertTrue("il riavvio non deve tenere acceso un wake lock per un conto finito", wakeLock == null || !wakeLock.isHeld)
+            assertEquals("il riavvio non annuncia nessuna scadenza", 0, scadenze.size)
+        } finally {
+            ascolto.cancel()
+            riavviato.scope.cancel()
+        }
+    }
+
+    /**
+     * Il cambio dal telefono riparte da capo con un solo messaggio. Con azzeramento e avvio come due
+     * operazioni i due invii partivano da due coroutine sullo stesso path e l'ultimo a scrivere vinceva:
+     * l'orologio poteva restare con l'azzeramento. Parte da un conto fermo a meta' (pausa), perche' e'
+     * il caso in cui un avvio semplice riprenderebbe dal residuo.
+     */
+    @Test
+    fun `restartKeeperTimer riparte dalla durata piena con un solo messaggio e senza scadenze`() {
+        val scadenze = mutableListOf<Unit>()
+        val ascolto = CoroutineScope(Dispatchers.Unconfined)
+        ascolto.launch { service.keeperTimerExpired.collect { scadenze.add(it) } }
+        try {
+            service.startKeeperTimer(300_000L)
+            passa(1_200)
+            service.pauseKeeperTimer()
+            scheduler.runCurrent()
+            org.mockito.Mockito.clearInvocations(mockConnectionManager)
+
+            service.restartKeeperTimer(300_000L)
+            scheduler.runCurrent()
+
+            val messaggi = argumentCaptor<Map<String, Any>>()
+            verifyBlocking(mockConnectionManager, times(1)) {
+                sendData(eq(WearConstants.PATH_KEEPER_TIMER), messaggi.capture(), any())
+            }
+            val messaggio = messaggi.firstValue
+            assertEquals("riparte dalla durata piena, non dal residuo", 300_000L, messaggio[WearConstants.KEY_KEEPER_MILLIS])
+            assertEquals(true, messaggio[WearConstants.KEY_KEEPER_RUNNING])
+            assertEquals(300_000L, messaggio[WearConstants.KEY_KEEPER_DURATION])
+            assertTrue("il conto e' in corso", service.isKeeperTimerRunning.value)
+
+            passa(2_000)
+            assertEquals("il conto scende dalla durata piena", 298_000L, service.keeperTimerValue.value)
+            assertEquals("nessuna scadenza dal riavvio", 0, scadenze.size)
+            service.resetKeeperTimer()
+        } finally {
+            ascolto.cancel()
+        }
+    }
+
+    private fun notificaDiScadenza() =
+        shadowOf(service.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+            .getNotification(null, KEEPER_TIMER_EXPIRED_NOTIFICATION_ID)
+
+    /**
+     * L'avviso di scadenza resta in vista finche' qualcuno non lo chiude: il tocco su CAMBIO (un
+     * nuovo avvio) e l'azzeramento tolgono lo SCADUTO dallo slot e devono togliere anche lui.
+     */
+    @Test
+    fun `l'avvio e l'azzeramento del portiere tolgono l'avviso di scadenza`() {
+        shadowOf(service.application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+
+        service.startKeeperTimer(50L)
+        passa(1_500)
+        assertNotNull("la scadenza deve mostrare l'avviso", notificaDiScadenza())
+        service.restartKeeperTimer(300_000L)
+        assertNull("il tocco su CAMBIO deve togliere l'avviso", notificaDiScadenza())
+        service.resetKeeperTimer()
+
+        service.startKeeperTimer(50L)
+        passa(1_500)
+        assertNotNull("la scadenza deve mostrare l'avviso", notificaDiScadenza())
+        service.resetKeeperTimer()
+        assertNull("l'azzeramento deve togliere l'avviso", notificaDiScadenza())
+    }
+
     private companion object {
         const val ORA_DI_PARTENZA = 1_700_000_000_000L
+
+        // Lo stesso numero di KEEPER_TIMER_EXPIRED_NOTIFICATION_ID, che e' privato nel service.
+        const val KEEPER_TIMER_EXPIRED_NOTIFICATION_ID = 2
     }
 }

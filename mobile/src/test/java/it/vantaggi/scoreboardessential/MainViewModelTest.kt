@@ -94,6 +94,7 @@ class MainViewModelTest {
     // Gli stati del portiere del service finto: i test di L8 li muovono.
     private val portiereInCorso = kotlinx.coroutines.flow.MutableStateFlow(false)
     private val portiereScaduto = kotlinx.coroutines.flow.MutableSharedFlow<Unit>()
+    private val portiereValore = kotlinx.coroutines.flow.MutableStateFlow(0L)
 
     @Before
     fun setup() {
@@ -110,7 +111,7 @@ class MainViewModelTest {
         // Mock StateFlows to avoid NPE in onServiceConnected
         whenever(mockMatchTimerService.matchTimerValue).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(0L))
         whenever(mockMatchTimerService.isMatchTimerRunning).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(false))
-        whenever(mockMatchTimerService.keeperTimerValue).thenReturn(kotlinx.coroutines.flow.MutableStateFlow(0L))
+        whenever(mockMatchTimerService.keeperTimerValue).thenReturn(portiereValore)
         whenever(mockMatchTimerService.isKeeperTimerRunning).thenReturn(portiereInCorso)
         whenever(mockMatchTimerService.keeperTimerExpired).thenReturn(portiereScaduto)
 
@@ -1603,6 +1604,19 @@ class MainViewModelTest {
             advanceUntilIdle()
         }
 
+    /** La striscia scrive «ANNULLATO: PUNTO ROSSI»: serve sapere di che lato era l'evento tolto. */
+    @Test
+    fun `annullaUltimaAzione restituisce l'evento tolto e il suo lato`() =
+        runTest {
+            assertEquals("niente da annullare", null, viewModel.annullaUltimaAzione())
+
+            viewModel.addScore(2)
+            val tolto = viewModel.annullaUltimaAzione()
+            assertEquals(ScoringEvent.Point(side = 2), tolto)
+            assertEquals("e adesso non c'e' piu' niente", null, viewModel.annullaUltimaAzione())
+            advanceUntilIdle()
+        }
+
     @Test
     fun `undoLastGoal durante il ripristino non dice di aver tolto niente`() =
         runTest {
@@ -1615,6 +1629,30 @@ class MainViewModelTest {
             assertEquals("il tocco e' solo rimandato", false, viewModel.undoLastGoal())
             assertEquals("e il punto e' ancora li'", 1, viewModel.team1Score.value)
             imposta("ripristinoInCorso", false)
+            viewModel.team1Score.removeObserver(scoreObserver)
+        }
+
+    /**
+     * Il telefono non rimanda ANNULLA: a fine ripristino toglierebbe un punto che chi tocca non ha mai
+     * visto, e la striscia non ha modo di dirlo. Si scarta, e finito il ripristino non succede niente.
+     */
+    @Test
+    fun `annullaUltimaAzione non rimandabile durante il ripristino viene scartata`() =
+        runTest {
+            val scoreObserver = Observer<Int> {}
+            viewModel.team1Score.observeForever(scoreObserver)
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            imposta("ripristinoInCorso", true)
+
+            assertEquals("scartato, non rimandato", null, viewModel.annullaUltimaAzione(rimandabile = false))
+            // Chiude la finestra del ripristino e applica i tocchi tenuti da parte (privato: via reflection).
+            MainViewModel::class.java
+                .getDeclaredMethod("fineRipristino")
+                .apply { isAccessible = true }
+                .invoke(viewModel)
+
+            assertEquals("a ripristino finito il punto e' ancora li'", 1, viewModel.team1Score.value)
             viewModel.team1Score.removeObserver(scoreObserver)
         }
 
@@ -1711,6 +1749,121 @@ class MainViewModelTest {
             advanceUntilIdle()
             assertEquals(1, righeScadenza().size)
             viewModel.matchEvents.removeObserver(eventiObserver)
+        }
+
+    /** Lascia arrivare onServiceConnected, che fa partire i collector del service finto. */
+    private fun collegaIlService() {
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    /** Passo 13: da fermo il tocco avvia dalla durata piena, senza azzerare niente prima. */
+    @Test
+    fun `il tocco sul portiere fermo avvia dalla durata piena`() =
+        runTest {
+            collegaIlService()
+            advanceUntilIdle()
+            viewModel.setKeeperTimer(300)
+
+            viewModel.toccaIlPortiere()
+
+            verify(mockMatchTimerService).restartKeeperTimer(300_000L)
+            verify(mockMatchTimerService, never()).startKeeperTimer(any(), any())
+            verify(mockMatchTimerService, never()).resetKeeperTimer(any())
+        }
+
+    /**
+     * Passo 13: in corso il tocco riparte da capo con l'operazione unica del service, non con un
+     * azzeramento e un avvio separati: due invii all'orologio sullo stesso path, e vinceva l'ultimo.
+     */
+    @Test
+    fun `il tocco sul portiere in corso riparte da capo con una operazione sola`() =
+        runTest {
+            collegaIlService()
+            advanceUntilIdle()
+            viewModel.setKeeperTimer(300)
+            portiereInCorso.value = true
+            advanceUntilIdle()
+
+            viewModel.toccaIlPortiere()
+
+            verify(mockMatchTimerService).restartKeeperTimer(300_000L)
+            verify(mockMatchTimerService, never()).resetKeeperTimer(any())
+            verify(mockMatchTimerService, never()).startKeeperTimer(any(), any())
+        }
+
+    /**
+     * Pausa dall'orologio con un residuo, poi il cambio di durata nelle impostazioni: la copia nel
+     * ViewModel dice "fermo a durata piena" (setKeeperTimer la sovrascrive) mentre il service ha
+     * ancora il residuo. Il tocco deve partire dalla durata piena lo stesso, senza dedurre dalla copia.
+     */
+    @Test
+    fun `il tocco dopo una pausa dall'orologio e un cambio di durata riparte dalla durata piena`() =
+        runTest {
+            collegaIlService()
+            advanceUntilIdle()
+            viewModel.setKeeperTimer(300)
+            portiereInCorso.value = true
+            advanceUntilIdle()
+            portiereValore.value = 120_000L
+            portiereInCorso.value = false
+            advanceUntilIdle()
+            viewModel.setKeeperTimer(300)
+
+            viewModel.toccaIlPortiere()
+
+            verify(mockMatchTimerService).restartKeeperTimer(300_000L)
+            verify(mockMatchTimerService, never()).startKeeperTimer(any(), any())
+        }
+
+    /**
+     * Passo 13: lo stato SCADUTO nasce dall'evento di scadenza (non da pausa o azzeramento) e dura
+     * finche' non si tocca. Il tocco avvia dalla durata piena e lo toglie.
+     */
+    @Test
+    fun `il portiere e scaduto solo dopo l'evento e il tocco lo toglie`() =
+        runTest {
+            collegaIlService()
+            advanceUntilIdle()
+            viewModel.setKeeperTimer(300)
+            assertEquals(false, viewModel.isKeeperTimerExpired.value)
+
+            portiereInCorso.value = true
+            advanceUntilIdle()
+            portiereInCorso.value = false
+            advanceUntilIdle()
+            assertEquals("una pausa non e' una scadenza", false, viewModel.isKeeperTimerExpired.value)
+
+            portiereScaduto.emit(Unit)
+            advanceUntilIdle()
+            assertEquals(true, viewModel.isKeeperTimerExpired.value)
+
+            viewModel.toccaIlPortiere()
+
+            verify(mockMatchTimerService).restartKeeperTimer(300_000L)
+            verify(mockMatchTimerService, never()).resetKeeperTimer(any())
+            assertEquals("il tocco toglie SCADUTO", false, viewModel.isKeeperTimerExpired.value)
+        }
+
+    @Test
+    fun `l'azzeramento e la partita nuova tolgono lo stato scaduto`() =
+        runTest {
+            collegaIlService()
+            advanceUntilIdle()
+
+            portiereScaduto.emit(Unit)
+            advanceUntilIdle()
+            assertEquals(true, viewModel.isKeeperTimerExpired.value)
+            viewModel.resetKeeperTimer(fromRemote = true)
+            assertEquals("l'azzeramento (anche dall'orologio) toglie SCADUTO", false, viewModel.isKeeperTimerExpired.value)
+
+            portiereScaduto.emit(Unit)
+            advanceUntilIdle()
+            assertEquals(true, viewModel.isKeeperTimerExpired.value)
+            // Scartare una partita iniziata la riporta a quella nuova (startNewMatch).
+            viewModel.addScore(1)
+            assertEquals(true, viewModel.discardMatch())
+            advanceUntilIdle()
+            assertEquals("la partita nuova toglie SCADUTO", false, viewModel.isKeeperTimerExpired.value)
         }
 
     /**

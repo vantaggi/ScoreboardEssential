@@ -5,9 +5,11 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.Paint
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -154,6 +156,11 @@ class MainActivity :
     private lateinit var team1Zone: MaterialCardView
     private lateinit var team2Zone: MaterialCardView
     private lateinit var keeperTimerTextView: TextView
+    private lateinit var keeperSlot: MaterialCardView
+    private lateinit var keeperTimerLabel: TextView
+
+    // La dimensione del conto del portiere com'e' nel layout: CAMBIO la riduce, il conto la ripristina.
+    private var dimensioneDelConto = 0f
     private lateinit var timerStartButton: MaterialButton
     private lateinit var undoGoalButton: Button
     private lateinit var lastActionStrip: View
@@ -199,6 +206,9 @@ class MainActivity :
     private lateinit var team2FormationLabel: TextView
 
     private var vibrator: Vibrator? = null
+
+    // L'istante dell'ultimo tocco su ANNULLA accettato, per ignorare il rimbalzo del dito.
+    private var ultimoToccoAnnulla: Long? = null
 
     private val requestPermissionLauncher =
         registerForActivityResult(
@@ -322,6 +332,10 @@ class MainActivity :
         team1Zone = findViewById(R.id.team1_add_button_card)
         team2Zone = findViewById(R.id.team2_add_button_card)
         keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
+        keeperSlot = findViewById(R.id.keeper_slot)
+        keeperTimerLabel = findViewById(R.id.keeper_timer_label)
+        dimensioneDelConto = keeperTimerTextView.textSize
+        keeperTimerTextView.minWidth = kotlin.math.ceil(larghezzaDelContoPiuLargo()).toInt()
         timerStartButton = findViewById(R.id.timer_start_button)
         timerStartButton.minWidth = larghezzaMinimaDelTempo(timerStartButton)
         undoGoalButton = findViewById(R.id.undo_goal_button)
@@ -431,6 +445,11 @@ class MainActivity :
 
         // Il colore del conto dipende anche dal fatto che corra: si riscrive al cambio di stato.
         viewModel.isKeeperTimerRunning.observe(this) {
+            updateKeeperTimerTextView(viewModel.keeperTimerValue.value ?: 0L)
+        }
+
+        // SCADUTO viene dall'evento di scadenza e dura fino al tocco o all'azzeramento.
+        viewModel.isKeeperTimerExpired.observe(this) {
             updateKeeperTimerTextView(viewModel.keeperTimerValue.value ?: 0L)
         }
 
@@ -834,6 +853,13 @@ class MainActivity :
     }
 
     private fun setupScoreButtons() {
+        // Lo slot del portiere: da fermo o scaduto avvia dalla durata piena, in corso riparte da
+        // capo. Un tocco breve come quello di un punto; lo stato lo dicono il colore e il conto.
+        keeperSlot.setOnClickListener {
+            vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+            viewModel.toccaIlPortiere()
+        }
+
         // I due contenitori del nome avevano il ripple e una contentDescription che prometteva
         // "tocca per cambiare il nome", ma nessun listener: il commento qui diceva "no longer
         // clickable" mentre la card continuava ad accendersi sotto il dito. TeamNameDialogFragment
@@ -948,18 +974,45 @@ class MainActivity :
         }
 
         undoGoalButton.setOnClickListener {
-            // Finche' le capacita' non sono arrivate vale il calcio, come per la visibilita'.
-            val gol = capabilities?.attributesScorer != false
-            MaterialAlertDialogBuilder(this)
-                .setTitle(getString(if (gol) R.string.undo_goal_title else R.string.undo_point_title))
-                .setMessage(getString(if (gol) R.string.undo_goal_message else R.string.undo_point_message))
-                .setPositiveButton(getString(R.string.undo)) { _, _ ->
-                    // «ANNULLATO» solo se ha tolto qualcosa: il tocco puo' essere rimandato dal
-                    // ripristino, o non trovare che eventi inerti.
-                    if (viewModel.undoLastGoal()) mostraMessaggioInStriscia(getString(R.string.strip_msg_undone))
-                }.setNegativeButton(getString(R.string.cancel), null)
-                .show()
+            // Nel padel e nel tennis un punto si rimette con un altro tocco: ANNULLA e' un tocco
+            // solo. Il calcio tiene il dialogo, perche' un gol puo' portare un marcatore.
+            if (annullaChiedeConferma(capabilities)) {
+                MaterialAlertDialogBuilder(this)
+                    .setTitle(getString(R.string.undo_goal_title))
+                    .setMessage(getString(R.string.undo_goal_message))
+                    .setPositiveButton(getString(R.string.undo)) { _, _ -> annullaEMostra() }
+                    .setNegativeButton(getString(R.string.cancel), null)
+                    .show()
+            } else {
+                annullaEMostra()
+            }
         }
+    }
+
+    /**
+     * Annulla l'ultima azione e ne da' il segno: il doppio tick dell'annullamento (lo stesso
+     * schema condiviso con l'orologio, HapticFeedbackManager.PATTERN_UNDO) e «ANNULLATO: PUNTO
+     * ROSSI» per 3 secondi nella striscia. Tutti e due solo se il motore ha tolto davvero
+     * qualcosa: il tocco puo' cadere durante il ripristino (e si scarta), o non trovare che eventi
+     * inerti. Un tocco entro mezzo secondo dal precedente si ignora ([toccoAnnullaRipetuto]).
+     */
+    private fun annullaEMostra() {
+        val adesso = SystemClock.elapsedRealtime()
+        if (toccoAnnullaRipetuto(adesso, ultimoToccoAnnulla)) return
+        ultimoToccoAnnulla = adesso
+        // Rimandarlo non serve: durante il ripristino a schermo non c'e' ancora niente da annullare,
+        // e a ripristino finito toglierebbe un punto che chi tocca non ha mai visto, senza segnale.
+        val tolto = viewModel.annullaUltimaAzione(rimandabile = false) ?: return
+        vibrator?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_UNDO, NON_RIPETERE))
+        mostraMessaggioInStriscia(
+            testoDellAnnullamento(
+                this,
+                tolto,
+                capabilities,
+                viewModel.team1Name.value ?: "Team 1",
+                viewModel.team2Name.value ?: "Team 2",
+            ),
+        )
     }
 
     private fun setupPlayerManagementButtons() {
@@ -1338,9 +1391,53 @@ class MainActivity :
      * (DESIGN.md, Coerenza fra telefono e orologio), lo stesso segno del polso.
      */
     private fun updateKeeperTimerTextView(timeInMillis: Long) {
-        keeperTimerTextView.text = TimeUtils.formatTime(timeInMillis)
+        val conto = TimeUtils.formatTime(timeInMillis)
         val inCorso = timeInMillis > 0 && viewModel.isKeeperTimerRunning.value == true
-        keeperTimerTextView.setTextColor(ContextCompat.getColor(this, if (inCorso) R.color.graffiti_pink else R.color.sidewalk_gray))
+        val stato = statoDelPortiere(inCorso, viewModel.isKeeperTimerExpired.value == true)
+        val scaduto = stato == StatoPortiere.SCADUTO
+        // SCADUTO: slot pieno #FF1744 con «CAMBIO» in #000000 (5,46:1). Il rosso e' un riempimento e
+        // il nero l'inchiostro, come nelle zone +; il rosa resta solo del conto in corso.
+        val nero = ContextCompat.getColor(this, R.color.asphalt_black)
+        val rosso = ContextCompat.getColor(this, R.color.error_red)
+        keeperSlot.setCardBackgroundColor(if (scaduto) rosso else Color.TRANSPARENT)
+        keeperSlot.strokeColor = if (scaduto) rosso else ContextCompat.getColor(this, R.color.outline_gray)
+        keeperTimerLabel.setTextColor(if (scaduto) nero else ContextCompat.getColor(this, R.color.sidewalk_gray))
+        keeperTimerTextView.text = if (scaduto) getString(R.string.label_keeper_change) else conto
+        keeperTimerTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, if (scaduto) dimensioneDelCambio() else dimensioneDelConto)
+        keeperTimerTextView.setTextColor(
+            when {
+                scaduto -> nero
+                inCorso -> ContextCompat.getColor(this, R.color.graffiti_pink)
+                else -> ContextCompat.getColor(this, R.color.sidewalk_gray)
+            },
+        )
+        keeperSlot.contentDescription = descrizioneDelPortiere(this, stato, conto)
+    }
+
+    /**
+     * La dimensione di «CAMBIO»: quella del conto, ridotta quanto basta perche' la parola non sia
+     * piu' larga di «00:00». Lo slot e' largo quanto il suo testo piu' largo, e per tutta la partita
+     * non deve cambiare misura: se la parola fosse piu' larga del conto, alla scadenza la barra si
+     * stringerebbe e lo spazio lasciato libero sposterebbe i comandi accanto (laZonaPiuNonSiSposta).
+     */
+    private fun dimensioneDelCambio(): Float {
+        val larghezzaDelConto = larghezzaDelContoPiuLargo()
+        val larghezzaDellaParola = misuraDelConto().measureText(getString(R.string.label_keeper_change))
+        if (larghezzaDellaParola <= larghezzaDelConto) return dimensioneDelConto
+        return dimensioneDelConto * larghezzaDelConto / larghezzaDellaParola
+    }
+
+    private fun misuraDelConto() = Paint(keeperTimerTextView.paint).apply { textSize = dimensioneDelConto }
+
+    /**
+     * Il conto piu' largo, «88:88» fra le coppie di cifre uguali: le cifre del carattere non sono
+     * tutte larghe uguale (due pixel di differenza fra «02:00» e «00:00» sono bastati a far muovere
+     * lo slot). Il valore ha questa come larghezza minima, cosi' lo slot misura sempre lo stesso,
+     * qualunque sia il conto o CAMBIO.
+     */
+    private fun larghezzaDelContoPiuLargo(): Float {
+        val misura = misuraDelConto()
+        return ('0'..'9').maxOf { cifra -> misura.measureText("$cifra$cifra:$cifra$cifra") }
     }
 
     private fun requestNotificationPermission() {

@@ -72,8 +72,6 @@
     <string name="share_match_results">Share Match Results</string>
     <string name="undo_goal_title">Undo Last Goal?</string>
     <string name="undo_goal_message">This will revert the score and remove the goal from the log.</string>
-    <string name="undo_point_title">Undo Last Point?</string>
-    <string name="undo_point_message">This will revert the score to before the last point.</string>
     <string name="undo">Undo</string>
     <string name="no_available_players">No available players. Create new players in Player Management.</string>
     <string name="manage">MANAGE</string>
@@ -94,7 +92,9 @@
     <!-- Messaggi di 3 secondi nella striscia, al posto delle Snackbar che coprivano le zone. -->
     <string name="strip_msg_goal_by">GOAL BY %1$s</string>
     <string name="strip_msg_correction">CORRECTION −1 %1$s</string>
-    <string name="strip_msg_undone">UNDONE</string>
+    <string name="strip_msg_undone_point">UNDONE: POINT %1$s</string>
+    <string name="strip_msg_undone_goal">UNDONE: GOAL %1$s</string>
+    <string name="strip_msg_undone_correction">UNDONE: CORRECTION %1$s</string>
     <string name="strip_msg_match_over">MATCH OVER</string>
     <string name="strip_match_over_end">MATCH OVER · END ›</string>
     <plurals name="strip_msg_from_watch">
@@ -120,6 +120,10 @@
     <string name="reset">Reset</string>
 
     <string name="label_keeper_timer">KEEPER</string>
+    <string name="label_keeper_change">CHANGE</string>
+    <string name="cd_keeper_stopped">Keeper, stopped, %1$s. Tap to start</string>
+    <string name="cd_keeper_running">Keeper, running, %1$s. Tap to restart, change done</string>
+    <string name="cd_keeper_expired">Keeper, time is up, change. Tap to start again</string>
 
 
     <string name="share_match_report">Share</string>

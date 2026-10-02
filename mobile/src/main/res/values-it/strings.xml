@@ -69,8 +69,6 @@
     <string name="share_match_results">Condividi Risultati Partita</string>
     <string name="undo_goal_title">Annulla Ultimo Gol?</string>
     <string name="undo_goal_message">Questo annullerà il punteggio e rimuoverà il gol dal registro.</string>
-    <string name="undo_point_title">Annulla Ultimo Punto?</string>
-    <string name="undo_point_message">Il punteggio torna a prima dell\'ultimo punto.</string>
     <string name="undo">Annulla</string>
     <string name="no_available_players">Nessun giocatore disponibile. Crea nuovi giocatori in Gestione Giocatori.</string>
     <string name="manage">GESTISCI</string>
@@ -91,7 +89,9 @@
     <!-- Messaggi di 3 secondi nella striscia, al posto delle Snackbar che coprivano le zone. -->
     <string name="strip_msg_goal_by">GOL DI %1$s</string>
     <string name="strip_msg_correction">CORREZIONE −1 %1$s</string>
-    <string name="strip_msg_undone">ANNULLATO</string>
+    <string name="strip_msg_undone_point">ANNULLATO: PUNTO %1$s</string>
+    <string name="strip_msg_undone_goal">ANNULLATO: GOL %1$s</string>
+    <string name="strip_msg_undone_correction">ANNULLATO: CORREZIONE %1$s</string>
     <string name="strip_msg_match_over">PARTITA FINITA</string>
     <string name="strip_match_over_end">PARTITA FINITA · TERMINA ›</string>
     <plurals name="strip_msg_from_watch">
@@ -118,6 +118,10 @@
     <string name="reset">Resetta</string>
 
     <string name="label_keeper_timer">PORTIERE</string>
+    <string name="label_keeper_change">CAMBIO</string>
+    <string name="cd_keeper_stopped">Portiere, fermo, %1$s. Tocca per avviare</string>
+    <string name="cd_keeper_running">Portiere, in corso, %1$s. Tocca per ripartire da capo, cambio avvenuto</string>
+    <string name="cd_keeper_expired">Portiere, tempo scaduto, cambio. Tocca per ripartire</string>
 
 
     <string name="share_match_report">Condividi</string>

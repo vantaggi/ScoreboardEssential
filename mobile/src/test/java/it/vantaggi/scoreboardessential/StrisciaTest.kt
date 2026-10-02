@@ -231,4 +231,41 @@ class StrisciaTest {
         assertEquals("GOAL ROSSI · WHO SCORED? ›", striscia(listOf(gol(1, 0))).testo)
         assertEquals("NO GOALS YET", striscia(emptyList()).testo)
     }
+
+    private val tennis = SportRegistry.byId(SportRegistry.TENNIS).capabilities
+
+    @Test
+    fun `ANNULLA chiede conferma solo nel calcio`() {
+        assertTrue("il calcio tiene il dialogo", annullaChiedeConferma(calcio))
+        assertEquals("il padel e' un tocco solo", false, annullaChiedeConferma(padel))
+        assertEquals("il tennis e' un tocco solo", false, annullaChiedeConferma(tennis))
+        assertTrue("finche' le capacita' non arrivano vale il calcio", annullaChiedeConferma(null))
+    }
+
+    @Test
+    fun `un secondo tocco su ANNULLA entro mezzo secondo e un rimbalzo`() {
+        assertEquals("il primo tocco passa", false, toccoAnnullaRipetuto(adesso = 10_000L, precedente = null))
+        assertTrue("100 ms dopo e' un rimbalzo", toccoAnnullaRipetuto(adesso = 10_100L, precedente = 10_000L))
+        assertTrue("499 ms dopo e' ancora un rimbalzo", toccoAnnullaRipetuto(adesso = 10_499L, precedente = 10_000L))
+        assertEquals("a 500 ms e' una scelta", false, toccoAnnullaRipetuto(adesso = 10_500L, precedente = 10_000L))
+    }
+
+    @Test
+    fun `il messaggio di annullamento dice cosa e' stato tolto e a chi`() {
+        fun testo(
+            tolto: ScoringEvent,
+            capacita: it.vantaggi.scoreboardessential.core.SportCapabilities?,
+        ) = testoDellAnnullamento(context, tolto, capacita, "Rossi", "Blu")
+
+        assertEquals("ANNULLATO: PUNTO ROSSI", testo(ScoringEvent.Point(side = 1), padel))
+        assertEquals("ANNULLATO: PUNTO BLU", testo(ScoringEvent.Point(side = 2), tennis))
+        assertEquals("ANNULLATO: GOL BLU", testo(ScoringEvent.Point(side = 2), calcio))
+        assertEquals("ANNULLATO: CORREZIONE ROSSI", testo(ScoringEvent.Correction(side = 1), calcio))
+    }
+
+    @Test
+    @Config(qualifiers = "en")
+    fun `in inglese il messaggio di annullamento segue la lingua`() {
+        assertEquals("UNDONE: POINT ROSSI", testoDellAnnullamento(context, ScoringEvent.Point(side = 1), padel, "Rossi", "Blu"))
+    }
 }

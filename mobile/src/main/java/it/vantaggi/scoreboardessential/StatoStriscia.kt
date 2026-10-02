@@ -2,6 +2,7 @@ package it.vantaggi.scoreboardessential
 
 import android.content.Context
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
+import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportCapabilities
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
@@ -128,3 +129,45 @@ private fun ultimoGameChiuso(display: ScoreDisplay): String? {
 internal const val SEPARATORE_DEI_SET = " · "
 
 private fun String.maiuscolo(): String = uppercase(Locale.getDefault())
+
+/**
+ * ANNULLA chiede conferma solo dove l'azione da annullare puo' essere un gol con un marcatore da
+ * perdere: nel calcio. Nel padel e nel tennis e' un tocco solo (DESIGN.md, Decisioni prese,
+ * Telefono 3): un punto si rimette con un altro tocco. Le capacita' non ancora arrivate valgono il
+ * calcio, come per ANNULLA.
+ */
+internal fun annullaChiedeConferma(capacita: SportCapabilities?): Boolean = capacita?.attributesScorer != false
+
+/** Il tempo entro cui un secondo tocco su ANNULLA e' un rimbalzo del dito e non una scelta. */
+internal const val FINESTRA_TOCCHI_ANNULLA_MS = 500L
+
+/**
+ * Nel padel e nel tennis ANNULLA e' un tocco solo, senza il dialogo che faceva da filtro: due tocchi
+ * rapidi toglievano due punti. Il secondo entro [FINESTRA_TOCCHI_ANNULLA_MS] dal precedente si ignora.
+ * [precedente] e' l'istante dell'ultimo tocco accettato, null se non ce ne sono stati.
+ */
+internal fun toccoAnnullaRipetuto(
+    adesso: Long,
+    precedente: Long?,
+): Boolean = precedente != null && adesso - precedente < FINESTRA_TOCCHI_ANNULLA_MS
+
+/**
+ * Il messaggio di 3 secondi dopo ANNULLA: cosa e' stato tolto e a chi, «ANNULLATO: PUNTO ROSSI».
+ * Una correzione tolta (il -1 del calcio) e' una «CORREZIONE», non un gol.
+ */
+internal fun testoDellAnnullamento(
+    context: Context,
+    tolto: ScoringEvent,
+    capacita: SportCapabilities?,
+    nomeSquadra1: String,
+    nomeSquadra2: String,
+): String {
+    val squadra = (if (tolto.side == 2) nomeSquadra2 else nomeSquadra1).maiuscolo()
+    val formato =
+        when {
+            tolto is ScoringEvent.Correction -> R.string.strip_msg_undone_correction
+            capacita?.attributesScorer != false -> R.string.strip_msg_undone_goal
+            else -> R.string.strip_msg_undone_point
+        }
+    return context.getString(formato, squadra)
+}

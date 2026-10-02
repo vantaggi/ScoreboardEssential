@@ -186,10 +186,11 @@ class MainViewModel(
                 // passaggio da "in corso" a "fermo" la scriveva anche su pausa e azzeramento.
                 // Nessun dialogo: quello che c'era non aveva osservatori ed e' stato tolto, perche'
                 // un dialogo bloccante a partita in corso e' dannoso (DESIGN.md, pista Telefono).
-                // Avvisano la notifica e la vibrazione del service; lo stato SCADUTO nello slot del
-                // portiere e' il passo 13 e partira' da questo evento.
+                // Avvisano la notifica e la vibrazione del service; e lo slot del portiere diventa
+                // rosso (SCADUTO) da questo stesso evento, finche' non si tocca o si azzera.
                 viewModelScope.launch {
                     binder.getService().keeperTimerExpired.collect {
+                        _isKeeperTimerExpired.postValue(true)
                         addMatchEvent("Keeper timer expired!")
                     }
                 }
@@ -377,6 +378,11 @@ class MainViewModel(
     val keeperTimerValue: LiveData<Long> = _keeperTimerValue
     private val _isKeeperTimerRunning = MutableLiveData(false)
     val isKeeperTimerRunning: LiveData<Boolean> = _isKeeperTimerRunning
+
+    // Vero dalla scadenza vera (l'evento del service) finche' il conto non riparte o si azzera. E'
+    // solo in memoria: dopo un riavvio del processo non c'e' nessuna scadenza da mostrare.
+    private val _isKeeperTimerExpired = MutableLiveData(false)
+    val isKeeperTimerExpired: LiveData<Boolean> = _isKeeperTimerExpired
     private var keeperTimerDuration = 300000L // 5 minutes default
 
     // All Players (for selection)
@@ -792,6 +798,7 @@ class MainViewModel(
             _matchEvents.postValue(emptyList())
         }
         matchTimerService?.resetTimer()
+        _isKeeperTimerExpired.value = false
         if (isServiceBound) {
             matchTimerService?.resetKeeperTimer()
         }
@@ -1491,13 +1498,19 @@ class MainViewModel(
      * Gli eventi senza effetto in coda si saltano: i registri scritti dalle versioni precedenti li
      * contengono ancora, non hanno una riga, e toglierli non si vede.
      *
-     * Vero solo se ha tolto davvero un evento: false se non c'era niente da annullare, se ha
-     * trovato solo eventi inerti o se il tocco e' stato rimandato dal ripristino.
+     * Restituisce l'evento tolto, cosi' la striscia puo' dire COSA e' stato annullato («ANNULLATO:
+     * PUNTO ROSSI»). Null se non ha tolto niente: non c'era niente da annullare, ha trovato solo
+     * eventi inerti o il tocco e' stato rimandato dal ripristino.
+     *
+     * Durante il ripristino il tocco si rimanda, a meno che [rimandabile] sia falso: allora si scarta.
+     * Il telefono scarta, perche' rifarlo dopo toglierebbe un punto che chi tocca non ha visto, senza
+     * poterlo dire nella striscia; l'orologio e il "-" rimandano come sempre.
      */
-    fun undoLastGoal(): Boolean {
+    fun annullaUltimaAzione(rimandabile: Boolean = true): ScoringEvent? {
+        if (ripristinoInCorso && !rimandabile) return null
         // Rimandato non vuol dire tolto: il tocco verra' rifatto a fine ripristino.
-        if (rimandataDalRipristino { undoLastGoal() }) return false
-        if (!engine.canUndo()) return false
+        if (rimandataDalRipristino { annullaUltimaAzione() }) return null
+        if (!engine.canUndo()) return null
         var tolto: Pair<Int, ScoringEvent>? = null
         while (tolto == null && engine.canUndo()) {
             val indice = engine.log.lastIndex
@@ -1510,7 +1523,7 @@ class MainViewModel(
             if (engine.state != prima) tolto = indice to evento
         }
         publishEngineState()
-        val (indice, evento) = tolto ?: return false
+        val (indice, evento) = tolto ?: return null
 
         // Decremento atomico: non dipende dal fatto che _allPlayers contenga gia' il giocatore
         // ne' che la sua copia sia aggiornata.
@@ -1533,8 +1546,11 @@ class MainViewModel(
                 else -> "Point"
             }
         addMatchEvent("Undo: $cosa removed", team = evento.side)
-        return true
+        return evento
     }
+
+    /** Vero solo se ha tolto davvero un evento (vedi [annullaUltimaAzione]). */
+    fun undoLastGoal(): Boolean = annullaUltimaAzione() != null
 
     // --- Match Timer Management ---
     fun startStopMatchTimer() {
@@ -1571,7 +1587,24 @@ class MainViewModel(
 
     fun startKeeperTimer(fromRemote: Boolean = false) {
         if (!isServiceBound) return
+        _isKeeperTimerExpired.value = false
         matchTimerService?.startKeeperTimer(keeperTimerDuration, fromRemote)
+        addMatchEvent("Keeper timer started (${keeperTimerDuration / 1000}s)")
+    }
+
+    /**
+     * Il tocco sullo slot del portiere sul telefono. Parte sempre dalla durata piena, qualunque
+     * cosa dica la copia del conto qui: da fermo, scaduto, in corso (il cambio e' avvenuto) o fermo
+     * a meta' (pausa dall'orologio) il service azzera e riavvia in un'operazione sola
+     * ([MatchTimerService.restartKeeperTimer]). La copia nel ViewModel la possono sovrascrivere
+     * [setKeeperTimer] e l'orologio, e dedurre da lei se azzerare lasciava il residuo nel service.
+     * Nel registro resta solo «Keeper timer started», senza una riga di azzeramento che nessuno
+     * ha chiesto.
+     */
+    fun toccaIlPortiere() {
+        if (!isServiceBound) return
+        _isKeeperTimerExpired.value = false
+        matchTimerService?.restartKeeperTimer(keeperTimerDuration)
         addMatchEvent("Keeper timer started (${keeperTimerDuration / 1000}s)")
     }
 
@@ -1582,6 +1615,7 @@ class MainViewModel(
 
     fun resetKeeperTimer(fromRemote: Boolean = false) {
         if (!isServiceBound) return
+        _isKeeperTimerExpired.value = false
         matchTimerService?.resetKeeperTimer(fromRemote)
         addMatchEvent("Keeper timer reset")
     }
