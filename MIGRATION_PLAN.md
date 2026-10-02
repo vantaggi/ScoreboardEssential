@@ -2109,3 +2109,22 @@ Tolto anche `hs_err_pid26040.log`, committato per sbaglio con L11, e ignorati i 
 da rigenerare, la cache della riga dei set nella cronologia. Fuori coda come prima: L4, L5, L6 (servono
 le prove con telefono e orologio accoppiati), I4 e I5 su Padel Elite. Decisioni aperte: SPORT bloccato
 da scollegati nel menu dell'orologio; servizio e palle break nella Cronaca del tennis singolare.
+
+### Chi batte: 1 o 2 pallini - 2 ottobre 2026
+
+Richiesta del proprietario: nel padel e nel tennis doppio si deve capire anche QUALE giocatore della
+squadra batte. Decisione sua: «1 pallino o 2 pallini, no numeri o nomi», su telefono e orologio.
+Implementato (Sonnet) su `wf12/pallini`, cinque commit da `8da8f1d`, worktree `wf_0f6519c1-69a-1`
+(backup su origin): `ScoreDisplay.servingPlayerSlot` in :core (rotazione A1, B1, A2, B2, tie-break e
+dopo-tie-break gia' giusti), slot da 28dp con due pallini sul telefono (barra invariata), due pallini sul
+quadrante, chiave additiva `serving_slot` nello stato v2 (golden test aggiornato aggiungendo),
+TalkBack «ROSSI al servizio, secondo giocatore». Revisione (Opus): core corretto, protocollo additivo,
+**1 media** (l'orologio che riparte da freddo offline ricalcola un tennis in doppio come singolare:
+LastKnownMatch non salva se la partita e' in coppia), 1 bassa (padel con un telefono vecchio: telefono
+1 pallino, ricalcolo al polso 2). **Da fare:** correzione della media (salvare in LastKnownMatch se la
+partita e' in coppia), unione, verifica completa e strumentati (laZonaPiuNonSiSposta: lo slot del
+telefono si allarga a 28dp e il nome si sposta di circa 8dp), occhio al quadrante (il primo pallino
+sale di circa 13dp), push.
+
+Fermo il 2 ottobre alle 15:00: limite delle 5 ore al 98% (si azzera alle 16:20), settimanale all'83%
+(si azzera domenica 4 ottobre alle 20:00).
