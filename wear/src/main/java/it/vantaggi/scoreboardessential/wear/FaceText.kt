@@ -57,6 +57,16 @@ internal object FaceText {
         return trattinoLungo(corrente) to dettaglio.joinToString(SET_SEPARATOR)
     }
 
+    /**
+     * Il cronometro in ambient: solo i minuti, "34:12" diventa "34'", perche' a polso abbassato i
+     * secondi non si aggiornano. I minuti non si fermano a 59 ("95:03" e' "95'"). Un testo che non
+     * e' "minuti:secondi" resta com'e': meglio un tempo intero che uno inventato.
+     */
+    fun minuti(tempo: String): String {
+        val minuti = tempo.substringBefore(':', "").toIntOrNull() ?: return tempo
+        return "$minuti'"
+    }
+
     /** "4-3" diventa "4 – 3"; una stringa che non e' una coppia di game resta com'e'. */
     private fun trattinoLungo(segmento: String): String {
         val coppia = GAME.matchEntire(segmento) ?: return segmento

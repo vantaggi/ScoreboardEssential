@@ -2,7 +2,9 @@ package it.vantaggi.scoreboardessential.wear
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Typeface
 import android.os.Bundle
+import android.os.SystemClock
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -15,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.wear.ambient.AmbientLifecycleObserver
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.SportRegistry
@@ -34,7 +37,35 @@ class MainActivity : ComponentActivity() {
 
         /** Ogni quanto si richiede il collegamento a partita in corso e schermo acceso. */
         internal const val INTERVALLO_VERIFICA_MS = 15_000L
+
+        /**
+         * Dopo il risveglio (onResume e uscita dall'ambient) i tocchi sui lati non contano: il primo
+         * tocco serve quasi sempre a svegliare lo schermo, non a segnare.
+         */
+        internal const val GUARDIA_RISVEGLIO_MS = 500L
+
+        /** Quanto si sposta il quadrante in ambient se lo schermo chiede la protezione anti burn-in. */
+        private const val SPOSTAMENTO_BURN_IN_DP = 4
     }
+
+    /**
+     * L'orologio della guardia al risveglio, iniettabile come quello del ViewModel: il test sposta
+     * il tempo invece di aspettarlo. Di default e' il tempo di sistema che non torna indietro.
+     */
+    internal var orologio: () -> Long = SystemClock::elapsedRealtime
+
+    /** Fino a quando i tocchi sui lati sono ignorati in silenzio; 0 se nessuna guardia e' aperta. */
+    private var guardiaFinoA = 0L
+
+    /** Il quadrante e' in ambient: polso abbassato, solo bianco e grigio su nero. */
+    private var ambient = false
+    private var ambientBurnIn = false
+    private var ambientBitBassi = false
+    private var passoBurnIn = 0
+
+    /** Le cifre in ambient sono light; fuori dall'ambient tornano le condensed bold del tema. */
+    private val carattereLeggero: Typeface by lazy { Typeface.create("sans-serif-condensed-light", Typeface.NORMAL) }
+    private val carattereGrasso: Typeface by lazy { Typeface.create("sans-serif-condensed", Typeface.BOLD) }
 
     private lateinit var binding: ActivityMainBinding
 
@@ -154,6 +185,8 @@ class MainActivity : ComponentActivity() {
         viewModel.refreshPendingCount()
         observeViewModel()
 
+        osservaAmbient()
+
         val filter =
             android.content.IntentFilter().apply {
                 addAction(WearDataLayerService.ACTION_STATE_V2_UPDATE)
@@ -171,8 +204,40 @@ class MainActivity : ComponentActivity() {
             .registerReceiver(broadcastReceiver, filter)
     }
 
+    /**
+     * Abbassando il polso il quadrante resta in ambient invece di cedere il posto a quello di
+     * sistema: il punteggio c'e' quando si rialza il braccio. Lo schermo sempre acceso no (DESIGN.md,
+     * Decisioni prese, Orologio 2): con l'always-on spento nel sistema l'ambient non costa niente.
+     *
+     * L'observer parla con la libreria condivisa com.google.android.wearable, che l'orologio ha e
+     * che il manifest richiede (uses-library required): sull'orologio la creazione non fallisce.
+     * Sulla JVM dei test quella classe non esiste e l'observer lancia NoClassDefFoundError subito:
+     * li' l'ambient resta spento e i test lo pilotano da applyAmbient, che e' la stessa funzione
+     * che i callback chiamano.
+     */
+    private fun osservaAmbient() {
+        try {
+            lifecycle.addObserver(
+                AmbientLifecycleObserver(
+                    this,
+                    object : AmbientLifecycleObserver.AmbientLifecycleCallback {
+                        override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) =
+                            applyAmbient(true, ambientDetails.burnInProtectionRequired, ambientDetails.deviceHasLowBitAmbient)
+
+                        override fun onUpdateAmbient() = aggiornaAmbient()
+
+                        override fun onExitAmbient() = applyAmbient(false)
+                    },
+                ),
+            )
+        } catch (e: NoClassDefFoundError) {
+            Log.w(TAG, "Libreria wearable assente: niente ambient", e)
+        }
+    }
+
     override fun onResume() {
         super.onResume()
+        apriGuardia()
         restoreStateFromDataItems()
         // Al risveglio la riga di stato deve dire com'e' il collegamento ADESSO, non com'era
         // all'avvio.
@@ -234,16 +299,19 @@ class MainActivity : ComponentActivity() {
         // premuto per sbaglio un po' piu' in basso vedeva sparire un punto e non sapeva perche'.
         // Ora la divisione non esiste piu', e cosa fa il tocco lungo lo dice gestureHint.
         // Il tick lo suona il ViewModel (WearHaptics), non performHapticFeedback.
-        binding.team1Container.setOnClickListener { viewModel.incrementScore(1) }
-        binding.team2Container.setOnClickListener { viewModel.incrementScore(2) }
+        //
+        // Nei 500ms dopo il risveglio i due lati non rispondono, ne' al tocco ne' al tocco lungo:
+        // un punto segnato per svegliare lo schermo sarebbe un punto falso (vedi guardiaAttiva).
+        binding.team1Container.setOnClickListener { if (!guardiaAttiva()) viewModel.incrementScore(1) }
+        binding.team2Container.setOnClickListener { if (!guardiaAttiva()) viewModel.incrementScore(2) }
 
         binding.team1Container.setOnLongClickListener {
-            viewModel.decrementScore(1)
+            if (!guardiaAttiva()) viewModel.decrementScore(1)
             true
         }
 
         binding.team2Container.setOnLongClickListener {
-            viewModel.decrementScore(2)
+            if (!guardiaAttiva()) viewModel.decrementScore(2)
             true
         }
 
@@ -286,6 +354,7 @@ class MainActivity : ComponentActivity() {
         binding.chiCapsule.visibility = if (offerta) View.VISIBLE else View.GONE
         binding.menuGlyph.visibility = if (offerta) View.INVISIBLE else View.VISIBLE
         binding.btnMenu.contentDescription = getString(if (offerta) R.string.wear_who_scored else R.string.cd_menu)
+        sovrapponiAmbient()
     }
 
     /**
@@ -375,6 +444,7 @@ class MainActivity : ComponentActivity() {
         renderContesto()
 
         applyAuxTimerRole(state)
+        sovrapponiAmbient()
     }
 
     /**
@@ -509,6 +579,126 @@ class MainActivity : ComponentActivity() {
         binding.team2Score.setTextColor(if (vincitore == 1) grigio else bianco)
     }
 
+    /** I due lati ignorano i tocchi finche' la guardia al risveglio e' aperta. */
+    private fun guardiaAttiva(): Boolean = orologio() < guardiaFinoA
+
+    private fun apriGuardia() {
+        guardiaFinoA = orologio() + GUARDIA_RISVEGLIO_MS
+    }
+
+    /**
+     * Polso abbassato (on) o rialzato (off).
+     *
+     * In ambient il quadrante e' solo bianco e grigio su nero, con le cifre light: via le strisce, il
+     * portiere con il suo anello, il dettaglio, il glifo del menu e CHI?; la riga in basso parla
+     * solo se c'e' qualcosa che non va o la partita e' finita, in grigio chiaro. Nel calcio il
+     * tempo e' in minuti, "34'". Le cifre restano dove sono e della stessa misura: l'unica cosa che
+     * si muove e' lo spostamento anti burn-in, se lo schermo lo chiede ([burnIn]).
+     *
+     * All'uscita si ridisegna tutto dallo stato di adesso e si apre la guardia: il tocco che sveglia
+     * lo schermo non deve segnare un punto.
+     */
+    internal fun applyAmbient(
+        on: Boolean,
+        burnIn: Boolean = false,
+        bitBassi: Boolean = false,
+    ) {
+        val eraAmbient = ambient
+        ambient = on
+        ambientBurnIn = on && burnIn
+        ambientBitBassi = on && bitBassi
+        if (on) {
+            passoBurnIn = 0
+            spostaBurnIn()
+            renderContesto()
+            sovrapponiAmbient()
+        } else if (eraAmbient) {
+            ripristinaDaAmbient()
+            apriGuardia()
+        }
+    }
+
+    /** Il sistema aggiorna il quadrante ogni minuto: il tempo e lo spostamento anti burn-in. */
+    internal fun aggiornaAmbient() {
+        if (!ambient) return
+        renderContesto()
+        spostaBurnIn()
+    }
+
+    /**
+     * Con la protezione anti burn-in la radice si sposta di 4dp a ogni aggiornamento, su un
+     * giro di quattro angoli: gli stessi pixel non restano accesi uguali per ore.
+     */
+    private fun spostaBurnIn() {
+        if (!ambientBurnIn) {
+            binding.root.translationX = 0f
+            binding.root.translationY = 0f
+            return
+        }
+        val passo = SPOSTAMENTO_BURN_IN_DP * resources.displayMetrics.density
+        val (segnoX, segnoY) =
+            when (passoBurnIn++ % 4) {
+                0 -> 1 to 1
+                1 -> -1 to 1
+                2 -> -1 to -1
+                else -> 1 to -1
+            }
+        binding.root.translationX = segnoX * passo
+        binding.root.translationY = segnoY * passo
+    }
+
+    /**
+     * Cio' che l'ambient toglie o cambia SOPRA al disegno normale. Dopo ogni render che potrebbe
+     * rimettere in vista un elemento colorato si richiama: non fa niente fuori dall'ambient.
+     */
+    private fun sovrapponiAmbient() {
+        if (!ambient) return
+        listOf(binding.team1Score, binding.team2Score, binding.matchTimer).forEach { vista ->
+            if (vista.typeface !== carattereLeggero) vista.typeface = carattereLeggero
+            vista.paint.isAntiAlias = !ambientBitBassi
+        }
+        binding.gestureHint.paint.isAntiAlias = !ambientBitBassi
+        listOf(
+            binding.team1Stripe,
+            binding.team2Stripe,
+            binding.keeperProgressBar,
+            binding.keeperTimer,
+            binding.faceDetail,
+            binding.menuGlyph,
+        ).forEach { it.visibility = View.INVISIBLE }
+        binding.chiCapsule.visibility = View.GONE
+        // Il suggerimento (TIENI: -1) non e' un'anomalia: a polso abbassato si tace.
+        val frase = viewModel.statoFiducia.value
+        if (frase == Frase.TieniMeno || frase == Frase.TieniAnnulla) {
+            binding.gestureHint.text = ""
+        }
+        binding.gestureHint.setTextColor(ContextCompat.getColor(this, R.color.ambient_gray))
+    }
+
+    /** Fuori dall'ambient: caratteri, strisce e dettaglio tornano, il resto lo ridisegna lo stato. */
+    private fun ripristinaDaAmbient() {
+        binding.root.translationX = 0f
+        binding.root.translationY = 0f
+        listOf(binding.team1Score, binding.team2Score, binding.matchTimer).forEach { vista ->
+            vista.typeface = carattereGrasso
+            vista.paint.isAntiAlias = true
+        }
+        binding.gestureHint.paint.isAntiAlias = true
+        listOf(binding.team1Stripe, binding.team2Stripe, binding.faceDetail).forEach { it.visibility = View.VISIBLE }
+        val stato = viewModel.scoreState.value
+        if (stato != null) {
+            renderScoreState(stato)
+        } else {
+            binding.team1Score.text = viewModel.team1Score.value.toString()
+            binding.team2Score.text = viewModel.team2Score.value.toString()
+            describeSides()
+            renderContesto()
+        }
+        renderPortiere(viewModel.keeperTimer.value)
+        renderFinestraChi(viewModel.finestraChi.value)
+        renderStatus(viewModel.statoFiducia.value)
+    }
+
     /**
      * La riga in basso ha una cosa sola da dire, e quale sia l'ha gia' deciso StatoFiducia.
      *
@@ -520,6 +710,7 @@ class MainActivity : ComponentActivity() {
     private fun renderStatus(frase: Frase) {
         binding.gestureHint.text = frase.testo(this)
         binding.gestureHint.setTextColor(ContextCompat.getColor(this, frase.tono.colore()))
+        sovrapponiAmbient()
     }
 
     /**
@@ -544,7 +735,10 @@ class MainActivity : ComponentActivity() {
             return
         }
         posizionaContesto(centrato = false)
-        binding.matchTimer.text = viewModel.matchTimer.value
+        // In ambient solo i minuti ("34'"): i secondi non si aggiornano a polso abbassato. Il testo si
+        // riscrive solo se cambia, perche' il cronometro del ViewModel batte ogni secondo.
+        val tempo = viewModel.matchTimer.value.let { if (ambient) FaceText.minuti(it) else it }
+        if (binding.matchTimer.text.toString() != tempo) binding.matchTimer.text = tempo
         val corre = viewModel.matchTimerRunning.value
         binding.matchTimer.setTextColor(ContextCompat.getColor(this, if (corre) R.color.ink_white else R.color.sidewalk_gray))
         binding.touchTimer.isClickable = true
@@ -585,6 +779,59 @@ class MainActivity : ComponentActivity() {
         val tempo = binding.matchTimer.text.toString()
         val corre = viewModel.matchTimerRunning.value
         return getString(if (corre) R.string.cd_match_clock_running else R.string.cd_match_clock_stopped, tempo)
+    }
+
+    /**
+     * Il portiere (solo calcio): testo e anello. Sta qui e non nel collector perche' all'uscita
+     * dall'ambient va ridisegnato con lo stato di adesso.
+     */
+    private fun renderPortiere(state: KeeperTimerState) {
+        // SEMPRE VISIBILE, finche' lo sport ha davvero un timer ausiliario.
+        val auxAvailable = viewModel.scoreState.value?.hasAuxTimer != false
+        mostraPortiere(auxAvailable)
+        when (state) {
+            is KeeperTimerState.Hidden -> {
+                binding.keeperTimer.text = "K"
+                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.sidewalk_gray))
+                binding.keeperProgressBar.visibility = View.INVISIBLE
+            }
+
+            is KeeperTimerState.Running -> {
+                // Il tempo in cifre: dall'anello si poteva solo stimarlo, e
+                // l'anello ha un massimo fisso che con durate diverse mente (L8).
+                binding.keeperTimer.text =
+                    getString(
+                        R.string.wear_keeper_running,
+                        state.secondsRemaining / 60,
+                        state.secondsRemaining % 60,
+                    )
+                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.graffiti_pink))
+                binding.keeperProgressBar.visibility =
+                    if (auxAvailable) View.VISIBLE else View.INVISIBLE
+            }
+
+            is KeeperTimerState.Paused -> {
+                // Il residuo resta leggibile, in grigio: fermo, non scaduto.
+                binding.keeperTimer.text =
+                    getString(
+                        R.string.wear_keeper_running,
+                        state.secondsRemaining / 60,
+                        state.secondsRemaining % 60,
+                    )
+                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.sidewalk_gray))
+                binding.keeperProgressBar.visibility =
+                    if (auxAvailable) View.VISIBLE else View.INVISIBLE
+            }
+
+            is KeeperTimerState.Finished -> {
+                // Scaduto: "K 0:00" in rosso, come "K 4:12" mentre corre.
+                binding.keeperTimer.text = getString(R.string.wear_keeper_running, 0, 0)
+                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.error_red))
+                binding.keeperProgressBar.visibility =
+                    if (auxAvailable) View.VISIBLE else View.INVISIBLE
+            }
+        }
+        sovrapponiAmbient()
     }
 
     private fun observeViewModel() {
@@ -656,55 +903,8 @@ class MainActivity : ComponentActivity() {
                 launch { viewModel.matchTimerRunning.collect { renderContesto() } }
 
                 // Observe Keeper Timer
-                launch {
-                    viewModel.keeperTimer.collect { state ->
-                        // SEMPRE VISIBILE, finche' lo sport ha davvero un timer ausiliario.
-                        val auxAvailable = viewModel.scoreState.value?.hasAuxTimer != false
-                        mostraPortiere(auxAvailable)
-                        when (state) {
-                            is KeeperTimerState.Hidden -> {
-                                binding.keeperTimer.text = "K"
-                                binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.sidewalk_gray))
-                                binding.keeperProgressBar.visibility = View.INVISIBLE
-                            }
-
-                            is KeeperTimerState.Running -> {
-                                // Il tempo in cifre: dall'anello si poteva solo stimarlo, e
-                                // l'anello ha un massimo fisso che con durate diverse mente (L8).
-                                binding.keeperTimer.text =
-                                    getString(
-                                        R.string.wear_keeper_running,
-                                        state.secondsRemaining / 60,
-                                        state.secondsRemaining % 60,
-                                    )
-                                binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.graffiti_pink))
-                                binding.keeperProgressBar.visibility =
-                                    if (auxAvailable) View.VISIBLE else View.INVISIBLE
-                            }
-
-                            is KeeperTimerState.Paused -> {
-                                // Il residuo resta leggibile, in grigio: fermo, non scaduto.
-                                binding.keeperTimer.text =
-                                    getString(
-                                        R.string.wear_keeper_running,
-                                        state.secondsRemaining / 60,
-                                        state.secondsRemaining % 60,
-                                    )
-                                binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.sidewalk_gray))
-                                binding.keeperProgressBar.visibility =
-                                    if (auxAvailable) View.VISIBLE else View.INVISIBLE
-                            }
-
-                            is KeeperTimerState.Finished -> {
-                                // Scaduto: "K 0:00" in rosso, come "K 4:12" mentre corre.
-                                binding.keeperTimer.text = getString(R.string.wear_keeper_running, 0, 0)
-                                binding.keeperTimer.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.error_red))
-                                binding.keeperProgressBar.visibility =
-                                    if (auxAvailable) View.VISIBLE else View.INVISIBLE
-                            }
-                        }
-                    }
-                }
+                // Il portiere si ridisegna anche all'uscita dall'ambient: vedi renderPortiere.
+                launch { viewModel.keeperTimer.collect { renderPortiere(it) } }
 
                 // Observe Keeper Progress
                 launch {
