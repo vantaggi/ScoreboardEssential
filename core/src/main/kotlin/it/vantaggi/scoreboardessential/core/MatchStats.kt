@@ -348,7 +348,8 @@ data class MatchStats(
                     val closedSet = if (setWon) next.closedSets.last() else null
                     val gamesAfter = closedSet?.games ?: next.gamesInSet
                     // Il servitore del game e' quello del suo PRIMO punto: nel tie-break ruota.
-                    val hold = if (inTieBreak || first.servingSide == null) null else first.servingSide == side
+                    // Col punteggio a game un tocco e' un game intero: niente "tenuto" ne' break.
+                    val hold = if (!pointsMode || inTieBreak || first.servingSide == null) null else first.servingSide == side
                     val startMs = first.atMillis
                     val endMs = entry.atMillis
                     val game =

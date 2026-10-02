@@ -444,6 +444,21 @@ class MatchStatsTest {
         assertNull(s.games[12].hold)
     }
 
+    /**
+     * Col punteggio a game un tocco e' un game intero: non c'e' un "game tenuto" ne' un break da
+     * mostrare, e la schermata dice gia' che il servizio non si conosce. La B della griglia seguiva
+     * invece il solo lato al servizio e la contraddiceva.
+     */
+    @Test
+    fun singolare_aGameNessunGameTenutoNeBreak() {
+        val engine = MatchEngine(RacketRules(id = SportRegistry.TENNIS, config = SportConfig(sets = 3, mode = ScoringMode.GAMES)))
+        listOf(1, 2, 2, 1, 2, 1, 1, 1, 2, 1).forEach { engine.apply(ScoringEvent.Point(it)) }
+        val s = checkNotNull(MatchStats.of(engine))
+        assertTrue(s.games.isNotEmpty())
+        assertTrue(s.games.all { it.hold == null })
+        assertNull(s.serve)
+    }
+
     @Test
     fun singolare_servizioPerLatoSenzaGiocatori() {
         val s = checkNotNull(MatchStats.of(singolare()))
