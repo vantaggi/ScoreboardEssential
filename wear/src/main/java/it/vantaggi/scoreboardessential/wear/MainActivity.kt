@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
-import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.ComponentActivity
@@ -230,8 +229,9 @@ class MainActivity : ComponentActivity() {
         // etichetta. Un gesto che toglie punti non puo' stare nascosto meta' schermo: chi teneva
         // premuto per sbaglio un po' piu' in basso vedeva sparire un punto e non sapeva perche'.
         // Ora la divisione non esiste piu', e cosa fa il tocco lungo lo dice gestureHint.
-        binding.team1Container.setOnClickListener { segna(it, 1) }
-        binding.team2Container.setOnClickListener { segna(it, 2) }
+        // Il tick lo suona il ViewModel (WearHaptics), non performHapticFeedback.
+        binding.team1Container.setOnClickListener { viewModel.incrementScore(1) }
+        binding.team2Container.setOnClickListener { viewModel.incrementScore(2) }
 
         binding.team1Container.setOnLongClickListener {
             viewModel.decrementScore(1)
@@ -268,23 +268,6 @@ class MainActivity : ComponentActivity() {
         }
 
         binding.btnMenu.setOnClickListener { apriMenu() }
-    }
-
-    /**
-     * Il tocco breve su un lato: un tick di sistema subito, solo se il tocco e' stato accettato.
-     *
-     * Dice "il polso ti ha sentito" prima di ogni risposta del telefono, che arriva dopo decimi di
-     * secondo: senza, chi segna senza guardare tocca una seconda volta perche' "non ha vibrato".
-     * La conferma vera, per lato, suona piu' tardi e la decide il ViewModel. Il tocco lungo non ne
-     * ha bisogno: il sistema vibra gia' da solo quando scatta.
-     */
-    private fun segna(
-        vista: View,
-        lato: Int,
-    ) {
-        if (viewModel.incrementScore(lato)) {
-            vista.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-        }
     }
 
     /**

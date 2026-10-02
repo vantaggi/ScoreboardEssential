@@ -158,6 +158,13 @@ class WearViewModel(
          */
         internal const val SCADENZA_RICEVUTA_MS = 2_500L
 
+        /**
+         * Quanto deve passare fra il tick del tocco e la conferma di lato dello stesso tocco. Il
+         * vocabolario conta gli impulsi: un tick subito seguito dall'impulso della conferma
+         * sinistra si sente come due colpi, cioe' "destra".
+         */
+        internal const val DISTANZA_DAL_TICK_MS = 250L
+
         /** Poco sopra la verifica di 2s: oltre, la richiesta al Data Layer si da' per persa. */
         internal const val TIMEOUT_RICHIESTA_MS = StatoFiducia.DURATA_VERIFICA_MS + 500L
 
@@ -189,6 +196,8 @@ class WearViewModel(
         val kind: String,
         /** Lunghezza del registro quando il tocco e' partito: quella con cui confrontare gli stati. */
         var registroBase: Int,
+        /** Quando e' suonato il tick di questo tocco, se e' suonato: la conferma non deve toccarlo. */
+        val tickAlle: Long? = null,
     ) {
         var scadenza: Job? = null
     }
@@ -562,8 +571,14 @@ class WearViewModel(
         ricalcolaFiducia()
     }
 
-    /** Quanti eventi ha il registro; illeggibile vale come vuoto, e il confronto resta fra numeri. */
-    private fun lunghezzaRegistro(stato: WearScoreState?): Int = stato?.let { MatchLogCodec.decode(it.eventLog)?.size } ?: 0
+    /**
+     * Quanti eventi ha il registro; null se non c'e' o non si legge. Il telefono v2 il registro lo
+     * scrive sempre (anche vuoto e' una stringa col suo prefisso, non ""), quindi una stringa vuota
+     * e' un registro che manca. Senza non c'e' niente da confrontare: una ricevuta non si
+     * chiuderebbe mai e ogni tocco, anche preso, direbbe NON CONFERMATO.
+     */
+    private fun lunghezzaRegistro(stato: WearScoreState?): Int? =
+        stato?.eventLog?.takeIf { it.isNotEmpty() }?.let { MatchLogCodec.decode(it)?.size }
 
     private fun patternConferma(ricevuta: Ricevuta): LongArray =
         if (ricevuta.kind == WearConstants.INTENT_POINT) {
@@ -584,11 +599,17 @@ class WearViewModel(
      *
      * Limite noto: un punto segnato dal telefono nello stesso istante chiude per errore la ricevuta
      * del polso. Sara' esatto quando L5 mettera' nello stato la sequenza dell'ultimo intento.
+     *
+     * Mentre un arretrato e' in volo non si chiude niente: il suo stato allunga il registro di
+     * tutte le voci insieme, e passerebbe per la conferma del tocco dal vivo. Un tocco consegnato
+     * in quella finestra resta aperto e, se dopo l'ack nessuno stato lo chiude, dice NON
+     * CONFERMATO: l'errore dalla parte sicura, fino a L5. Un registro che non c'e' o non si legge
+     * non chiude nessuna ricevuta.
      */
     private fun chiudiRicevute(state: WearScoreState) {
         val registro = lunghezzaRegistro(state)
         val piuVecchia = ricevute.firstOrNull()
-        if (piuVecchia != null) {
+        if (registro != null && piuVecchia != null && batchInVolo == null) {
             val distanza = abs(registro - piuVecchia.registroBase)
             if (distanza > 0) {
                 var ultima: Ricevuta = piuVecchia
@@ -597,7 +618,7 @@ class WearViewModel(
                 }
                 ricevute.forEach { it.registroBase = registro }
                 // Piu' di una insieme: suona l'ultima, la prima verrebbe tagliata subito.
-                haptics.suona(patternConferma(ultima))
+                suonaDopoIlTick(ultima.tickAlle, patternConferma(ultima))
             }
         }
         ricevutaSport?.takeIf { it.sportId == state.sportId }?.let {
@@ -608,23 +629,35 @@ class WearViewModel(
     }
 
     /**
-     * Il messaggio e' consegnato: da qui si aspetta lo stato, per [SCADENZA_RICEVUTA_MS].
-     *
-     * [registroAlTocco] e' la lunghezza di quando il tocco e' partito, non di adesso: se lo stato
-     * del telefono e' gia' arrivato mentre sendMessage tornava, la ricevuta e' chiusa in partenza
-     * invece di aspettare uno stato che non verra'.
+     * Suona un pattern di lato non prima di [DISTANZA_DAL_TICK_MS] dal tick dello stesso tocco
+     * ([tickAlle]; null se quel tocco non ne ha avuto uno: suona subito). Il vibratore cancella
+     * quello in corso e il vocabolario conta gli impulsi: i due non devono fondersi.
      */
-    private fun apriRicevuta(
-        side: Int,
-        kind: String,
-        registroAlTocco: Int,
+    private fun suonaDopoIlTick(
+        tickAlle: Long?,
+        pattern: LongArray,
     ) {
-        val ricevuta = Ricevuta(side, kind, registroAlTocco)
-        if (lunghezzaRegistro(statoDalTelefono) != registroAlTocco) {
-            haptics.suona(patternConferma(ricevuta))
-            return
+        val attesa = if (tickAlle == null) 0L else tickAlle + DISTANZA_DAL_TICK_MS - orologio()
+        if (attesa <= 0L) {
+            haptics.suona(pattern)
+        } else {
+            viewModelScope.launch {
+                delay(attesa)
+                haptics.suona(pattern)
+            }
         }
-        ricevute.addLast(ricevuta)
+    }
+
+    /**
+     * Il messaggio del tocco e' consegnato: da qui si aspetta lo stato, per [SCADENZA_RICEVUTA_MS].
+     *
+     * La ricevuta e' nella coda gia' dal tocco, con la lunghezza del registro di ALLORA (vedi
+     * sendScoreIntent): lo stato che conferma puo' arrivare mentre sendMessage e' ancora in volo, e
+     * se la ricevuta nascesse solo alla consegna confronterebbe questo tocco con lo stato di un
+     * altro. Se quello stato l'ha gia' chiusa, non c'e' piu' niente da aspettare.
+     */
+    private fun avviaScadenza(ricevuta: Ricevuta) {
+        if (ricevuta !in ricevute) return
         ricevuta.scadenza =
             viewModelScope.launch {
                 delay(SCADENZA_RICEVUTA_MS)
@@ -636,9 +669,12 @@ class WearViewModel(
      * Nessuno stato in tempo: un colpo lungo e la scritta. Il tocco NON si rimette in coda, e non
      * si rimanda: potrebbe essere gia' stato contato, e senza id idempotente conterebbe due volte.
      * La coda offline resta com'e'.
+     *
+     * CHIUSURA... non si sostituisce: e' un'attesa piu' grossa, e per un tocco basta la vibrazione.
      */
     private fun nonConfermato() {
         haptics.suona(WearPatterns.NON_CONFERMATO)
+        if (transitorio is Transitorio.Chiusura && orologio() < transitorioFinoA) return
         mostraTransitorio(Transitorio.NonConfermato)
     }
 
@@ -711,9 +747,13 @@ class WearViewModel(
     }
 
     /**
-     * Il tocco breve su un lato. Ritorna se il tocco e' stato accettato: la schermata da' il tick
-     * di sistema solo in quel caso, cosi' non si tocca una seconda volta perche' "non ha vibrato",
-     * ma un tocco scartato (partita finita) non finge di essere stato preso.
+     * Il tocco breve su un lato. Ritorna se il tocco e' stato accettato: solo allora suona il tick,
+     * subito, prima di ogni risposta del telefono (che arriva dopo decimi di secondo): senza, chi
+     * segna senza guardare tocca una seconda volta perche' "non ha vibrato". Un tocco scartato
+     * (partita finita) non finge di essere stato preso.
+     *
+     * Il tick lo suona il ViewModel e non la schermata perche' la conferma di lato deve stare
+     * almeno [DISTANZA_DAL_TICK_MS] dopo, e il tempo lo sa chi le suona tutte e due.
      */
     fun incrementScore(team: Int): Boolean {
         if (team != 1 && team != 2) return false
@@ -723,21 +763,18 @@ class WearViewModel(
         // "1 IN ATTESA". isClickable=false sul lato non basta a fermarlo: la guardia sta qui,
         // dove passano tutti i tocchi, TalkBack compreso.
         //
-        // Scartato si', ma non in silenzio: senza telefono la riga in basso dice "NIENTE
-        // TELEFONO" e non "PARTITA FINITA", e dopo un AZZERA dal polso il quadrante v2 resta sul
-        // risultato finale finche' il telefono non risponde con la partita nuova. Il doppio colpo
-        // di errore dice al polso "questo tocco non e' stato preso", invece di lasciarlo a
-        // chiedersi se il punto sia partito.
-        if (_scoreState.value?.matchOver == true) {
-            triggerFailureVibration()
-            return false
-        }
+        // Scartato in silenzio al polso: a dirlo e' la parola PARTITA FINITA, non una vibrazione
+        // (DESIGN.md, "Coerenza fra telefono e orologio"). Il colpo lungo vale "NON CONFERMATO", e
+        // un tocco che non deve contare non e' un tocco che il telefono non ha confermato.
+        if (_scoreState.value?.matchOver == true) return false
         // Il marcatore si chiede DOPO l'esito dell'invio, non insieme al tocco: senza telefono la
         // scelta fatta al polso non arrivava a nessuno, e la schermata si chiudeva come se fosse
         // andato tutto bene. Il punto invece finisce in coda come sempre, e il marcatore si
         // attribuira' dal registro del telefono. Nel v1 lo sport non lo dice: vale la rosa.
         val chiediMarcatore = !protocolV2Seen || _scoreState.value?.attributesScorer == true
-        sendScoreIntent(team, WearConstants.INTENT_POINT, chiediMarcatore)
+        val tickAlle = orologio()
+        haptics.tick()
+        sendScoreIntent(team, WearConstants.INTENT_POINT, chiediMarcatore, tickAlle)
         if (protocolV2Seen) {
             // Nessuna vibrazione qui: la conferma arriva con lo stato che il telefono rimanda
             // (vedi chiudiRicevute), non alla consegna.
@@ -949,14 +986,19 @@ class WearViewModel(
         side: Int,
         kind: String,
         chiediMarcatore: Boolean = false,
+        tickAlle: Long? = null,
     ) {
         val seq = ++intentSequence
         // L'orario si prende ORA, non quando il messaggio partira': un tocco messo in coda e
         // consegnato due ore dopo deve restare il tocco delle 18.
         val quando = System.currentTimeMillis()
-        // Anche il registro si guarda ORA: lo stato che conferma puo' arrivare prima che
-        // sendMessage torni, e allora il confronto si farebbe con un registro gia' cresciuto.
-        val registroAlTocco = lunghezzaRegistro(statoDalTelefono)
+        // Anche la ricevuta si apre ORA, prima di sendMessage, col registro di adesso: lo stato che
+        // conferma puo' arrivare mentre sendMessage e' in volo, e allora deve trovarla (e trovare
+        // prima quelle dei tocchi precedenti, nell'ordine). Senza un v2 mai visto nessuno stato
+        // arrivera', e senza un registro leggibile non c'e' niente da confrontare: niente ricevuta.
+        val registroAlTocco = if (protocolV2Seen) lunghezzaRegistro(statoDalTelefono) else null
+        val ricevuta =
+            registroAlTocco?.let { Ricevuta(side, kind, it, tickAlle).also(ricevute::addLast) }
         viewModelScope.launch {
             val payload =
                 DataMap().apply {
@@ -968,15 +1010,16 @@ class WearViewModel(
             val consegnato = connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
             if (consegnato) {
                 // Consegnato non e' preso: niente vibrazione adesso. La conferma suona quando il
-                // telefono rimanda lo stato, e se non lo rimanda lo dice NON CONFERMATO. Senza un
-                // v2 mai visto (telefono vecchio) nessuno stato arrivera': non si apre la ricevuta.
-                if (protocolV2Seen) apriRicevuta(side, kind, registroAlTocco)
+                // telefono rimanda lo stato, e se non lo rimanda lo dice NON CONFERMATO.
+                ricevuta?.let { avviaScadenza(it) }
                 // Solo qui il telefono ha il punto a cui attaccare il nome.
                 if (chiediMarcatore && _allPlayers.value.isNotEmpty()) {
                     _showPlayerSelection.value = side
                 }
                 return@launch
             }
+            // Non consegnato: la ricevuta si toglie senza suonare, vale la coda qui sotto.
+            ricevuta?.let { ricevute.remove(it) }
             // Non arrivato: si REGISTRA invece di sparire. Il gesto e' cieco -- sullo schermo non
             // cambia niente -- quindi il polso deve comunque distinguere "preso dal telefono" da
             // "tenuto da parte", e il conteggio in attesa lo dice a schermo.
@@ -988,7 +1031,7 @@ class WearViewModel(
             // Tenuto da parte non e' un fallimento -- il punto e' salvo, arrivera' al telefono da
             // solo -- ma non e' nemmeno la conferma: il tabellone del telefono non si sta muovendo.
             // Per questo suona la conferma del lato con in fondo un colpo lungo.
-            if (accodato) haptics.suona(WearPatterns.inCoda(side)) else triggerFailureVibration()
+            suonaDopoIlTick(tickAlle, if (accodato) WearPatterns.inCoda(side) else WearPatterns.NON_CONFERMATO)
         }
     }
 

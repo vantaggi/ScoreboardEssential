@@ -55,6 +55,12 @@ interface WearHaptics {
     fun suona(pattern: LongArray)
 
     fun annulla()
+
+    /**
+     * Il tocco e' stato sentito: il colpo piu' leggero e distinto che il vibratore sa dare. Non e'
+     * uno dei pattern: il vocabolario conta gli impulsi, e un tick non deve potersi contare.
+     */
+    fun tick()
 }
 
 /** L'aptica vera: il vibratore di sistema, se c'e'. Senza, tace. */
@@ -67,6 +73,12 @@ class VibratoreWearHaptics(
 
     override fun annulla() {
         vibrator?.cancel()
+    }
+
+    // Suonato dal vibratore e non da performHapticFeedback: cosi' non dipende dall'impostazione di
+    // sistema "vibrazione al tocco", e vale lo stesso effetto in ogni schermata.
+    override fun tick() {
+        vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
     }
 
     companion object {

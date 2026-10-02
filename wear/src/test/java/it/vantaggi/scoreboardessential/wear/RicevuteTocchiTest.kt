@@ -3,6 +3,7 @@ package it.vantaggi.scoreboardessential.wear
 import android.app.Application
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.google.android.gms.wearable.DataMap
 import it.vantaggi.scoreboardessential.core.LoggedEvent
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.core.ScoringEvent
@@ -33,14 +34,32 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
 /** Il vibratore finto: registra i pattern, cosi' "la conferma destra" e' una cosa che si verifica. */
-private class VibratoreFinto : WearHaptics {
+private class VibratoreFinto(
+    private val ora: () -> Long,
+) : WearHaptics {
     val suonati = mutableListOf<LongArray>()
+
+    /** Gli istanti dei pattern in [suonati], uno per uno. */
+    val suonatiAlle = mutableListOf<Long>()
+
+    /** Gli istanti dei tick. */
+    val ticks = mutableListOf<Long>()
+
+    /** L'ordine di tutto cio' che e' suonato: "tick" oppure "pattern". */
+    val ordine = mutableListOf<String>()
 
     override fun suona(pattern: LongArray) {
         suonati += pattern
+        suonatiAlle += ora()
+        ordine += "pattern"
     }
 
     override fun annulla() = Unit
+
+    override fun tick() {
+        ticks += ora()
+        ordine += "tick"
+    }
 }
 
 /**
@@ -68,7 +87,7 @@ class RicevuteTocchiTest {
     private lateinit var telefono: OptimizedWearDataSync
     private lateinit var coda: PendingIntents
     private lateinit var viewModel: WearViewModel
-    private val vibratore = VibratoreFinto()
+    private val vibratore = VibratoreFinto { inizio + testDispatcher.scheduler.currentTime }
 
     /** Come risponde sendMessage: true e' "consegnato al telefono", false "nessun nodo". */
     private var consegnato = true
@@ -166,6 +185,9 @@ class RicevuteTocchiTest {
 
     private fun assestati() = testDispatcher.scheduler.runCurrent()
 
+    /** La conferma di lato lascia al tick del tocco i suoi 250ms: i test che la cercano li aspettano. */
+    private fun dopoIlTick() = avanza(WearViewModel.DISTANZA_DAL_TICK_MS)
+
     private fun vibrazioni(): List<List<Long>> = vibratore.suonati.map { it.toList() }
 
     private fun invii(path: String) =
@@ -181,13 +203,14 @@ class RicevuteTocchiTest {
         viewModel.incrementScore(2)
         assestati()
 
-        // Consegnato non e' preso: il polso sta zitto, e il tick lo da' la schermata.
+        // Consegnato non e' preso: il polso sta zitto (il tick e' un altro canale, non un pattern).
         assertEquals(1, invii(WearConstants.MSG_SCORE_INTENT))
         assertTrue("vibrazioni prima dello stato: ${vibrazioni()}", vibratore.suonati.isEmpty())
 
         // Il telefono ha applicato: il registro e' cresciuto di uno.
         viewModel.applyStateV2(stato(registro(1)))
         assestati()
+        dopoIlTick()
 
         assertEquals(listOf(WearPatterns.CONFERMA_DESTRA.toList()), vibrazioni())
     }
@@ -198,10 +221,12 @@ class RicevuteTocchiTest {
         assestati()
         viewModel.applyStateV2(stato(registro(1)))
         assestati()
+        dopoIlTick()
         viewModel.incrementScore(2)
         assestati()
         viewModel.applyStateV2(stato(registro(2)))
         assestati()
+        dopoIlTick()
 
         assertEquals(listOf(WearPatterns.CONFERMA_SINISTRA.toList(), WearPatterns.CONFERMA_DESTRA.toList()), vibrazioni())
         assertFalse(WearPatterns.CONFERMA_SINISTRA.contentEquals(WearPatterns.CONFERMA_DESTRA))
@@ -308,11 +333,13 @@ class RicevuteTocchiTest {
 
         viewModel.incrementScore(2)
         assestati()
+        dopoIlTick()
         assertEquals(listOf(WearPatterns.IN_CODA_DESTRA.toList()), vibrazioni())
         assertEquals(1, coda.size)
 
         viewModel.incrementScore(1)
         assestati()
+        dopoIlTick()
         assertEquals(WearPatterns.IN_CODA_SINISTRA.toList(), vibrazioni().last())
         assertEquals(2, coda.size)
 
@@ -331,10 +358,12 @@ class RicevuteTocchiTest {
 
         viewModel.applyStateV2(stato(registro(1)))
         assestati()
+        dopoIlTick()
         assertEquals(listOf(WearPatterns.CONFERMA_SINISTRA.toList()), vibrazioni())
 
         viewModel.applyStateV2(stato(registro(2)))
         assestati()
+        dopoIlTick()
         assertEquals(listOf(WearPatterns.CONFERMA_SINISTRA.toList(), WearPatterns.CONFERMA_DESTRA.toList()), vibrazioni())
 
         avanza(10_000)
@@ -350,6 +379,7 @@ class RicevuteTocchiTest {
         // Il Data Layer puo' coalescere: un solo DataItem, registro cresciuto di due.
         viewModel.applyStateV2(stato(registro(2)))
         assestati()
+        dopoIlTick()
         assertEquals(listOf(WearPatterns.CONFERMA_DESTRA.toList()), vibrazioni())
 
         avanza(10_000)
@@ -363,6 +393,7 @@ class RicevuteTocchiTest {
 
         viewModel.incrementScore(2)
         assestati()
+        dopoIlTick()
 
         assertEquals(listOf(WearPatterns.CONFERMA_DESTRA.toList()), vibrazioni())
         avanza(10_000)
@@ -372,20 +403,213 @@ class RicevuteTocchiTest {
     // --- Il tick e la partita finita ---
 
     @Test
-    fun `il tocco accettato lo dice alla schermata, quello scartato a partita finita vibra il colpo lungo`() {
+    fun `il tocco accettato suona il tick, quello scartato a partita finita sta in silenzio`() {
         assertTrue(viewModel.incrementScore(1))
         assestati()
+        assertEquals(1, vibratore.ticks.size)
         assertTrue(vibratore.suonati.isEmpty())
 
         viewModel.applyStateV2(stato(registro(0), finita = true))
         val invia = invii(WearConstants.MSG_SCORE_INTENT)
+        val giaSuonato = vibratore.ordine.size
 
         assertFalse(viewModel.incrementScore(1))
         assestati()
+        dopoIlTick()
 
-        // Scartato ma sentito: un colpo solo, non la conferma di un lato. E non parte niente.
-        assertEquals(listOf(WearPatterns.NON_CONFERMATO.toList()), vibrazioni())
+        // Silenzio al polso piu' la parola PARTITA FINITA (DESIGN.md): ne' tick, ne' colpo lungo.
+        // E non parte niente.
+        assertEquals(giaSuonato, vibratore.ordine.size)
         assertEquals(invia, invii(WearConstants.MSG_SCORE_INTENT))
+    }
+
+    // --- Il tick e la conferma non si fondono ---
+
+    @Test
+    fun `il tick suona subito e la conferma di lato non prima di 250ms dallo stesso tocco`() {
+        viewModel.incrementScore(1)
+        assestati()
+        // Il telefono e' velocissimo: lo stato arriva nell'istante del tocco.
+        viewModel.applyStateV2(stato(registro(1)))
+        assestati()
+
+        assertEquals(listOf(inizio), vibratore.ticks)
+        assertTrue("la conferma aspetta il tick: ${vibrazioni()}", vibratore.suonati.isEmpty())
+
+        avanza(WearViewModel.DISTANZA_DAL_TICK_MS - 1)
+        assertTrue(vibratore.suonati.isEmpty())
+
+        avanza(1)
+        assertEquals(listOf(WearPatterns.CONFERMA_SINISTRA.toList()), vibrazioni())
+        assertEquals(listOf("tick", "pattern"), vibratore.ordine)
+        assertTrue(vibratore.suonatiAlle.single() - vibratore.ticks.single() >= WearViewModel.DISTANZA_DAL_TICK_MS)
+    }
+
+    @Test
+    fun `una conferma che arriva dopo i 250ms suona subito, senza altra attesa`() {
+        viewModel.incrementScore(2)
+        assestati()
+        avanza(400)
+
+        viewModel.applyStateV2(stato(registro(1)))
+        assestati()
+
+        assertEquals(listOf(WearPatterns.CONFERMA_DESTRA.toList()), vibrazioni())
+        assertEquals(inizio + 400, vibratore.suonatiAlle.single())
+    }
+
+    @Test
+    fun `il pattern in coda aspetta il tick come la conferma`() {
+        consegnato = false
+
+        viewModel.incrementScore(1)
+        assestati()
+        assertTrue(vibratore.suonati.isEmpty())
+
+        avanza(WearViewModel.DISTANZA_DAL_TICK_MS)
+        assertEquals(listOf(WearPatterns.IN_CODA_SINISTRA.toList()), vibrazioni())
+        assertEquals(listOf("tick", "pattern"), vibratore.ordine)
+    }
+
+    // --- Un tocco non confermato con uno stato che e' di un altro ---
+
+    @Test
+    fun `lo stato del primo tocco arrivato durante l'invio del secondo non conferma il secondo`() {
+        viewModel.incrementScore(1)
+        assestati()
+        dopoIlTick()
+        assertTrue(vibratore.suonati.isEmpty())
+
+        // Lo stato che conferma il PRIMO entra mentre sendMessage del SECONDO e' ancora in volo.
+        durantInvio = {
+            durantInvio = null
+            viewModel.applyStateV2(stato(registro(1)))
+        }
+        viewModel.incrementScore(2)
+        assestati()
+        dopoIlTick()
+
+        // Suona il primo, e basta: il secondo aspetta il suo stato, non gli sta addosso quello di un altro.
+        assertEquals(listOf(WearPatterns.CONFERMA_SINISTRA.toList()), vibrazioni())
+
+        viewModel.applyStateV2(stato(registro(2)))
+        assestati()
+        dopoIlTick()
+        assertEquals(listOf(WearPatterns.CONFERMA_SINISTRA.toList(), WearPatterns.CONFERMA_DESTRA.toList()), vibrazioni())
+
+        avanza(10_000)
+        assertEquals(2, vibrazioni().size)
+    }
+
+    @Test
+    fun `il secondo tocco senza il suo stato scade da solo anche se un altro stato e' passato durante l'invio`() {
+        viewModel.incrementScore(1)
+        assestati()
+        durantInvio = {
+            durantInvio = null
+            viewModel.applyStateV2(stato(registro(1)))
+        }
+        viewModel.incrementScore(2)
+        assestati()
+        dopoIlTick()
+        assertEquals(1, vibrazioni().size)
+
+        avanza(WearViewModel.SCADENZA_RICEVUTA_MS)
+
+        assertEquals(WearPatterns.NON_CONFERMATO.toList(), vibrazioni().last())
+        assertEquals(2, vibrazioni().size)
+    }
+
+    // --- Un arretrato in volo non e' la conferma di un tocco dal vivo ---
+
+    @Test
+    fun `lo stato dell'arretrato non chiude la ricevuta di un tocco dal vivo consegnato intanto`() {
+        // Tre punti offline, poi il telefono torna: l'arretrato parte in UN messaggio e resta in volo.
+        consegnato = false
+        repeat(3) { viewModel.incrementScore(1) }
+        assestati()
+        consegnato = true
+        viewModel.flushPending()
+        assestati()
+        val seqBatch = sequenzaDelBatch()
+        dopoIlTick()
+        vibratore.suonati.clear()
+
+        // Un tocco dal vivo, consegnato mentre l'arretrato e' ancora in volo.
+        viewModel.incrementScore(2)
+        assestati()
+        dopoIlTick()
+
+        // Lo stato dell'arretrato (L+3): e' il suo, non quello del tocco.
+        viewModel.applyStateV2(stato(registro(3)))
+        assestati()
+        dopoIlTick()
+        assertTrue("l'arretrato non e' una conferma: ${vibrazioni()}", vibratore.suonati.isEmpty())
+
+        // L'ack chiude l'arretrato, e lo stato col tocco dal vivo (L+4) chiude la ricevuta.
+        viewModel.onBatchAck(seqBatch)
+        viewModel.applyStateV2(stato(registro(4)))
+        assestati()
+        dopoIlTick()
+        assertEquals(listOf(WearPatterns.CONFERMA_DESTRA.toList()), vibrazioni())
+    }
+
+    /** La sequenza del messaggio dell'arretrato, letta da quello che il telefono ha ricevuto. */
+    private fun sequenzaDelBatch(): Long {
+        val invio =
+            Mockito
+                .mockingDetails(telefono)
+                .invocations
+                .last { it.method.name == "sendMessage" && it.arguments[0] == WearConstants.MSG_INTENT_BATCH }
+        return DataMap.fromByteArray(invio.arguments[1] as ByteArray).getLong(WearConstants.KEY_SEQ)
+    }
+
+    // --- Un registro che manca non fa dire NON CONFERMATO ---
+
+    @Test
+    fun `un telefono v2 senza registro non apre ricevute, il tocco non dice NON CONFERMATO`() {
+        viewModel.applyStateV2(stato(""))
+        assestati()
+
+        viewModel.incrementScore(2)
+        assestati()
+        avanza(10_000)
+
+        // Come con un telefono v1: nessuna ricevuta, quindi nessuna conferma e nessuna smentita.
+        assertTrue("vibrazioni: ${vibrazioni()}", vibratore.suonati.isEmpty())
+        assertFalse(viewModel.statoFiducia.value is Transitorio)
+        assertEquals(1, invii(WearConstants.MSG_SCORE_INTENT))
+    }
+
+    @Test
+    fun `un registro illeggibile non apre ricevute`() {
+        viewModel.applyStateV2(stato("9:zz"))
+        assestati()
+
+        viewModel.incrementScore(1)
+        assestati()
+        avanza(10_000)
+
+        assertTrue("vibrazioni: ${vibrazioni()}", vibratore.suonati.isEmpty())
+        assertFalse(viewModel.statoFiducia.value is Transitorio)
+    }
+
+    // --- CHIUSURA... non si cancella ---
+
+    @Test
+    fun `un tocco non confermato durante la chiusura vibra ma non sostituisce CHIUSURA`() {
+        viewModel.incrementScore(2)
+        assestati()
+        viewModel.chiudiPartita()
+        assestati()
+        assertEquals(Transitorio.Chiusura, viewModel.statoFiducia.value)
+        val giaSuonato = vibratore.suonati.size
+
+        avanza(WearViewModel.SCADENZA_RICEVUTA_MS)
+
+        // Il colpo lungo c'e' (il tocco non e' confermato), la scritta no: resta CHIUSURA...
+        assertEquals(listOf(WearPatterns.NON_CONFERMATO.toList()), vibrazioni().drop(giaSuonato))
+        assertEquals(Transitorio.Chiusura, viewModel.statoFiducia.value)
     }
 
     // --- Il cambio sport ---
