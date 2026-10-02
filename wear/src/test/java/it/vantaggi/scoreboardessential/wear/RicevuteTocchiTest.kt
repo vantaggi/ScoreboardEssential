@@ -110,7 +110,9 @@ class RicevuteTocchiTest {
                             consegnato
                         }
 
-                        else -> Mockito.RETURNS_DEFAULTS.answer(invocazione)
+                        else -> {
+                            Mockito.RETURNS_DEFAULTS.answer(invocazione)
+                        }
                     }
                 },
             )
@@ -166,7 +168,11 @@ class RicevuteTocchiTest {
 
     private fun vibrazioni(): List<List<Long>> = vibratore.suonati.map { it.toList() }
 
-    private fun invii(path: String) = Mockito.mockingDetails(telefono).invocations.count { it.method.name == "sendMessage" && it.arguments[0] == path }
+    private fun invii(path: String) =
+        Mockito.mockingDetails(telefono).invocations.count {
+            it.method.name == "sendMessage" &&
+                it.arguments[0] == path
+        }
 
     // --- La conferma suona quando torna lo stato, e dice il lato ---
 

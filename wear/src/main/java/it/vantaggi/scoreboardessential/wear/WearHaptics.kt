@@ -70,7 +70,6 @@ class VibratoreWearHaptics(
     }
 
     companion object {
-        fun di(context: Context): VibratoreWearHaptics =
-            VibratoreWearHaptics(ContextCompat.getSystemService(context, Vibrator::class.java))
+        fun di(context: Context): VibratoreWearHaptics = VibratoreWearHaptics(ContextCompat.getSystemService(context, Vibrator::class.java))
     }
 }
