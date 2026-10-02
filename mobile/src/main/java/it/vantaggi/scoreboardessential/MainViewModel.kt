@@ -1491,13 +1491,14 @@ class MainViewModel(
      * Gli eventi senza effetto in coda si saltano: i registri scritti dalle versioni precedenti li
      * contengono ancora, non hanno una riga, e toglierli non si vede.
      *
-     * Vero solo se ha tolto davvero un evento: false se non c'era niente da annullare, se ha
-     * trovato solo eventi inerti o se il tocco e' stato rimandato dal ripristino.
+     * Restituisce l'evento tolto, cosi' la striscia puo' dire COSA e' stato annullato («ANNULLATO:
+     * PUNTO ROSSI»). Null se non ha tolto niente: non c'era niente da annullare, ha trovato solo
+     * eventi inerti o il tocco e' stato rimandato dal ripristino.
      */
-    fun undoLastGoal(): Boolean {
+    fun annullaUltimaAzione(): ScoringEvent? {
         // Rimandato non vuol dire tolto: il tocco verra' rifatto a fine ripristino.
-        if (rimandataDalRipristino { undoLastGoal() }) return false
-        if (!engine.canUndo()) return false
+        if (rimandataDalRipristino { annullaUltimaAzione() }) return null
+        if (!engine.canUndo()) return null
         var tolto: Pair<Int, ScoringEvent>? = null
         while (tolto == null && engine.canUndo()) {
             val indice = engine.log.lastIndex
@@ -1510,7 +1511,7 @@ class MainViewModel(
             if (engine.state != prima) tolto = indice to evento
         }
         publishEngineState()
-        val (indice, evento) = tolto ?: return false
+        val (indice, evento) = tolto ?: return null
 
         // Decremento atomico: non dipende dal fatto che _allPlayers contenga gia' il giocatore
         // ne' che la sua copia sia aggiornata.
@@ -1533,8 +1534,11 @@ class MainViewModel(
                 else -> "Point"
             }
         addMatchEvent("Undo: $cosa removed", team = evento.side)
-        return true
+        return evento
     }
+
+    /** Vero solo se ha tolto davvero un evento (vedi [annullaUltimaAzione]). */
+    fun undoLastGoal(): Boolean = annullaUltimaAzione() != null
 
     // --- Match Timer Management ---
     fun startStopMatchTimer() {

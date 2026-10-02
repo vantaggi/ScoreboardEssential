@@ -512,8 +512,8 @@ class MainActivityLayoutTest {
             assertNonSiSposta("dopo il tocco sulla zona spenta", iniziale, postiFissi(scenario))
 
             // ANNULLA riapre la partita: la barra torna a dire chi serve e le zone si riaccendono.
+            // Nel padel e' un tocco solo: nessun dialogo da confermare.
             onView(withId(R.id.undo_goal_button)).perform(click())
-            onView(withText(R.string.undo)).inRoot(isDialog()).perform(click())
             assertTrue("ANNULLA non ha riaperto la partita", aspettaCheAttivi(scenario) { modello.scoreDisplay.value?.matchOver == false })
             assertTrue(
                 "la barra non e' tornata a PADEL · SERVE",
@@ -534,6 +534,75 @@ class MainActivityLayoutTest {
                 )
             }
             assertNonSiSposta("dopo aver riaperto la partita", iniziale, postiFissi(scenario))
+        }
+    }
+
+    /** Il testo che la striscia deve mostrare dopo ANNULLA nel padel, nel locale del test. */
+    private fun annullatoDiRossi(scenario: ActivityScenario<MainActivity>): String {
+        lateinit var atteso: String
+        scenario.onActivity {
+            val nome1 = ViewModelProvider(it)[MainViewModel::class.java].team1Name.value.orEmpty()
+            atteso = it.getString(R.string.strip_msg_undone_point, nome1.uppercase(Locale.getDefault()))
+        }
+        return atteso
+    }
+
+    @Test
+    fun nelPadel_ANNULLA_e_un_tocco_solo_senza_dialogo_e_la_striscia_dice_ANNULLATO() {
+        conPadel { scenario, modello ->
+            val iniziale = postiFissi(scenario)
+            lateinit var prima: String
+            scenario.onActivity {
+                prima = modello.scoreDisplay.value?.let { d -> "${d.side1Primary}-${d.side2Primary}" }.orEmpty()
+            }
+            onView(withId(R.id.team1_add_button_card)).perform(click())
+            assertTrue(
+                "il + non ha acceso ANNULLA: la prova non misurerebbe niente",
+                aspettaCheAttivi(scenario) { it.findViewById<View>(R.id.undo_goal_button).isEnabled },
+            )
+            onView(withId(R.id.undo_goal_button)).perform(click())
+
+            // Niente dialogo: e' il centro della decisione. Un dialogo aperto toglie il fuoco alla
+            // finestra della schermata di gioco.
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            scenario.onActivity { assertTrue("nel padel ANNULLA non deve aprire un dialogo", it.hasWindowFocus()) }
+            val atteso = annullatoDiRossi(scenario)
+            assertTrue(
+                "la striscia non dice \"$atteso\": \"${testoDi(scenario, R.id.last_action_text)}\"",
+                aspettaCheAttivi(scenario) { it.findViewById<TextView>(R.id.last_action_text).text.toString() == atteso },
+            )
+            scenario.onActivity {
+                val dopo = modello.scoreDisplay.value?.let { d -> "${d.side1Primary}-${d.side2Primary}" }.orEmpty()
+                assertEquals("ANNULLA non ha riportato il punteggio di prima", prima, dopo)
+                assertEquals("ANNULLA si spegne: non c'e' piu' niente da annullare", false, it.findViewById<View>(R.id.undo_goal_button).isEnabled)
+            }
+            assertNonSiSposta("dopo ANNULLA con un tocco", iniziale, postiFissi(scenario))
+        }
+    }
+
+    @Test
+    fun nelCalcio_ANNULLA_apre_ancora_il_dialogo_e_non_toglie_il_gol_finche_non_si_conferma() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            onView(withId(R.id.team1_add_button_card)).perform(click())
+            assertTrue(
+                "il + non ha acceso ANNULLA: la prova non misurerebbe niente",
+                aspettaCheAttivi(scenario) { it.findViewById<View>(R.id.undo_goal_button).isEnabled },
+            )
+            onView(withId(R.id.undo_goal_button)).perform(click())
+
+            onView(withText(R.string.undo_goal_title)).inRoot(isDialog()).check(matches(isDisplayed()))
+            scenario.onActivity {
+                assertEquals(
+                    "il gol non si toglie prima della conferma",
+                    true,
+                    it.findViewById<View>(R.id.undo_goal_button).isEnabled,
+                )
+            }
+            onView(withText(R.string.undo)).inRoot(isDialog()).perform(click())
+            assertTrue(
+                "ANNULLA non si e' spento dopo la conferma",
+                aspettaCheAttivi(scenario) { !it.findViewById<View>(R.id.undo_goal_button).isEnabled },
+            )
         }
     }
 

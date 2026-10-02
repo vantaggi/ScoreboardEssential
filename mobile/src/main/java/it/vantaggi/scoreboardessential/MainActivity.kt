@@ -948,18 +948,39 @@ class MainActivity :
         }
 
         undoGoalButton.setOnClickListener {
-            // Finche' le capacita' non sono arrivate vale il calcio, come per la visibilita'.
-            val gol = capabilities?.attributesScorer != false
-            MaterialAlertDialogBuilder(this)
-                .setTitle(getString(if (gol) R.string.undo_goal_title else R.string.undo_point_title))
-                .setMessage(getString(if (gol) R.string.undo_goal_message else R.string.undo_point_message))
-                .setPositiveButton(getString(R.string.undo)) { _, _ ->
-                    // «ANNULLATO» solo se ha tolto qualcosa: il tocco puo' essere rimandato dal
-                    // ripristino, o non trovare che eventi inerti.
-                    if (viewModel.undoLastGoal()) mostraMessaggioInStriscia(getString(R.string.strip_msg_undone))
-                }.setNegativeButton(getString(R.string.cancel), null)
-                .show()
+            // Nel padel e nel tennis un punto si rimette con un altro tocco: ANNULLA e' un tocco
+            // solo. Il calcio tiene il dialogo, perche' un gol puo' portare un marcatore.
+            if (annullaChiedeConferma(capabilities)) {
+                MaterialAlertDialogBuilder(this)
+                    .setTitle(getString(R.string.undo_goal_title))
+                    .setMessage(getString(R.string.undo_goal_message))
+                    .setPositiveButton(getString(R.string.undo)) { _, _ -> annullaEMostra() }
+                    .setNegativeButton(getString(R.string.cancel), null)
+                    .show()
+            } else {
+                annullaEMostra()
+            }
         }
+    }
+
+    /**
+     * Annulla l'ultima azione e ne da' il segno: il doppio tick dell'annullamento (lo stesso
+     * schema condiviso con l'orologio, HapticFeedbackManager.PATTERN_UNDO) e «ANNULLATO: PUNTO
+     * ROSSI» per 3 secondi nella striscia. Tutti e due solo se il motore ha tolto davvero
+     * qualcosa: il tocco puo' essere rimandato dal ripristino, o non trovare che eventi inerti.
+     */
+    private fun annullaEMostra() {
+        val tolto = viewModel.annullaUltimaAzione() ?: return
+        vibrator?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_UNDO, NON_RIPETERE))
+        mostraMessaggioInStriscia(
+            testoDellAnnullamento(
+                this,
+                tolto,
+                capabilities,
+                viewModel.team1Name.value ?: "Team 1",
+                viewModel.team2Name.value ?: "Team 2",
+            ),
+        )
     }
 
     private fun setupPlayerManagementButtons() {

@@ -1603,6 +1603,19 @@ class MainViewModelTest {
             advanceUntilIdle()
         }
 
+    /** La striscia scrive «ANNULLATO: PUNTO ROSSI»: serve sapere di che lato era l'evento tolto. */
+    @Test
+    fun `annullaUltimaAzione restituisce l'evento tolto e il suo lato`() =
+        runTest {
+            assertEquals("niente da annullare", null, viewModel.annullaUltimaAzione())
+
+            viewModel.addScore(2)
+            val tolto = viewModel.annullaUltimaAzione()
+            assertEquals(ScoringEvent.Point(side = 2), tolto)
+            assertEquals("e adesso non c'e' piu' niente", null, viewModel.annullaUltimaAzione())
+            advanceUntilIdle()
+        }
+
     @Test
     fun `undoLastGoal durante il ripristino non dice di aver tolto niente`() =
         runTest {
