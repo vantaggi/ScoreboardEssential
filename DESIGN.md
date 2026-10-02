@@ -935,6 +935,17 @@ Se sendMessage restituisce true, il ViewModel registra una ricevuta attesa: lato
 - **File:** `wear/src/main/java/it/vantaggi/scoreboardessential/wear/WearHaptics.kt (nuovo)`, `wear/src/main/java/it/vantaggi/scoreboardessential/wear/WearViewModel.kt (sendScoreIntent, applyStateV2, ricevute)`, `wear/src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt (tick al tocco)`, `wear/src/test/java/it/vantaggi/scoreboardessential/wear/WearViewModelTest.kt`
 - **Difetti della validazione:** L5 [alta] Un tocco singolo consegnato quando il ViewModel del telefono non esiste va perso, dopo la vibrazione di conferma (reso visibile: NON CONFERMATO invece di una conferma bugiarda); L5 [media] Due intenzioni ravvicinate partono in parallelo (la seconda ricevuta scade e lo dice); L7 [media] A partita finita il punto inerte vibrava la conferma
 
+**Come e' stato fatto (passo 7, 2 ottobre 2026).** La ricevuta si apre al tocco, con la lunghezza del
+registro di quel momento, e si toglie senza suonare se l'invio fallisce (vale la coda). Il tick e'
+EFFECT_TICK suonato da WearHaptics, non performHapticFeedback: non dipende dall'impostazione di sistema
+e non si somma agli impulsi; la conferma di lato parte non prima di 250ms dal tick dello stesso tocco.
+Mentre un arretrato e' in volo nessuna ricevuta si chiude; senza un registro leggibile nello stato v2
+le ricevute non si aprono. NON CONFERMATO non copre CHIUSURA…; a partita finita i lati stanno in
+silenzio. Limite noto finche' L5 non mette nello stato v2 la sequenza dell'ultimo intento applicato: una
+ricevuta si puo' chiudere per un punto, un ANNULLA o una correzione fatti dal telefono nello stesso
+momento, oppure scadere su un tocco preso (errore dalla parte sicura). Un tocco ravvicinato tronca la
+vibrazione precedente.
+
 #### Quadrante di gioco: TalkBack
 
 - **Ora:** contentDescription fissa dei lati ("Squadra 1. Tocca per segnare…"), senza il punteggio; le cifre non hanno una live region. Sul 30-15 il focus non legge nessun numero. Il pallino dice solo collegato o no.
