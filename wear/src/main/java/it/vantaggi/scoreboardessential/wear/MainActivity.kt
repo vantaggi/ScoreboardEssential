@@ -615,6 +615,8 @@ class MainActivity : ComponentActivity() {
         } else if (eraAmbient) {
             ripristinaDaAmbient()
             apriGuardia()
+            // Il ciclo dei 15s taceva in ambient: il collegamento si rilegge subito.
+            viewModel.refreshConnection()
         }
     }
 
@@ -667,9 +669,11 @@ class MainActivity : ComponentActivity() {
             binding.menuGlyph,
         ).forEach { it.visibility = View.INVISIBLE }
         binding.chiCapsule.visibility = View.GONE
-        // Il suggerimento (TIENI: -1) non e' un'anomalia: a polso abbassato si tace.
+        // A polso abbassato la riga parla solo di anomalie (rosso e ambra) e della partita finita:
+        // il suggerimento (TIENI: -1) e i transitori positivi (n CONSEGNATI, INVIO n..., CAMBIO
+        // SPORT...) si tacciono.
         val frase = viewModel.statoFiducia.value
-        if (frase == Frase.TieniMeno || frase == Frase.TieniAnnulla) {
+        if (frase.tono != Tono.ROSSO && frase.tono != Tono.AMBRA && frase != Frase.PartitaFinita) {
             binding.gestureHint.text = ""
         }
         binding.gestureHint.setTextColor(ContextCompat.getColor(this, R.color.ambient_gray))
@@ -786,6 +790,10 @@ class MainActivity : ComponentActivity() {
      * dall'ambient va ridisegnato con lo stato di adesso.
      */
     private fun renderPortiere(state: KeeperTimerState) {
+        // In ambient il portiere e' spento e il collector gira ogni secondo: non si tocca la
+        // visibilita' (K e anello passerebbero VISIBLE e poi INVISIBLE a ogni giro). L'uscita
+        // dall'ambient lo ridisegna con lo stato di adesso.
+        if (ambient) return
         // SEMPRE VISIBILE, finche' lo sport ha davvero un timer ausiliario.
         val auxAvailable = viewModel.scoreState.value?.hasAuxTimer != false
         mostraPortiere(auxAvailable)
@@ -941,12 +949,13 @@ class MainActivity : ComponentActivity() {
         // collegamento si richiede da soli ogni 15 secondi. Legato a RESUMED e non a STARTED: a
         // schermo spento, o col quadrante di sistema in primo piano, l'activity puo' restare STARTED
         // ma nessuno guarda la riga, e le richieste sarebbero solo batteria. Fuori da RESUMED il
-        // ciclo si ferma, e riparte dal primo onResume (che gia' chiede una volta).
+        // ciclo si ferma, e riparte dal primo onResume (che gia' chiede una volta). Stesso risparmio in
+        // ambient: il ciclo gira ma non chiede, e il collegamento si richiede all'uscita dall'ambient.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 while (true) {
                     delay(INTERVALLO_VERIFICA_MS)
-                    viewModel.refreshConnectionSePartitaInCorso()
+                    if (!ambient) viewModel.refreshConnectionSePartitaInCorso()
                 }
             }
         }

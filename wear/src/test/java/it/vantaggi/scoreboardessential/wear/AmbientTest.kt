@@ -56,6 +56,7 @@ private class VibratoreAmbient : WearHaptics {
 class AmbientTest {
     private var ora = 10_000L
     private val vibratore = VibratoreAmbient()
+    private lateinit var telefono: OptimizedWearDataSync
     private lateinit var controller: ActivityController<MainActivity>
     private lateinit var viewModel: WearViewModel
     private lateinit var binding: ActivityMainBinding
@@ -70,7 +71,7 @@ class AmbientTest {
                 .clear()
                 .commit()
         }
-        val telefono = Mockito.mock(OptimizedWearDataSync::class.java)
+        telefono = Mockito.mock(OptimizedWearDataSync::class.java)
         Mockito.`when`(telefono.connectionState).thenReturn(MutableStateFlow(ConnectionState.Disconnected))
         viewModel =
             WearViewModel(
@@ -230,6 +231,65 @@ class AmbientTest {
         assertEquals(attivita().getString(R.string.wear_match_over), binding.gestureHint.text.toString())
         assertEquals(colore(R.color.ambient_gray), binding.gestureHint.currentTextColor)
     }
+
+    @Test
+    fun `in ambient i transitori positivi tacciono e le anomalie parlano`() {
+        applica(stato(hasClock = true))
+        attivita().applyAmbient(true)
+        idle()
+
+        listOf(Transitorio.Consegnati(3), Transitorio.CambioSport, Transitorio.Chiusura).forEach {
+            viewModel.mostraTransitorio(it)
+            idle()
+            assertEquals("${it::class.simpleName} in ambient", "", binding.gestureHint.text.toString())
+        }
+
+        viewModel.mostraTransitorio(Transitorio.SportNonCambiato)
+        idle()
+        assertEquals(attivita().getString(R.string.wear_status_sport_unchanged), binding.gestureHint.text.toString())
+        assertEquals(colore(R.color.ambient_gray), binding.gestureHint.currentTextColor)
+    }
+
+    @Test
+    fun `in ambient il portiere non cambia visibilita' ai tick`() {
+        applica(stato(hasClock = true))
+        attivita().applyAmbient(true)
+        idle()
+        // Una visibilita' che il render non produce mai: se dopo il tick e' cambiata, ha toccato il K.
+        binding.keeperTimer.visibility = View.GONE
+
+        viewModel.setKeeperTimerState(KeeperTimerState.Running(119))
+        idle()
+
+        assertEquals(View.GONE, binding.keeperTimer.visibility)
+
+        // All'uscita il portiere si ridisegna con lo stato di adesso.
+        attivita().applyAmbient(false)
+        idle()
+        assertEquals(View.VISIBLE, binding.keeperTimer.visibility)
+    }
+
+    @Test
+    fun `in ambient il ciclo dei 15s non chiede il collegamento`() {
+        controller.resume()
+        idle()
+        applica(stato(hasClock = true))
+
+        attivita().applyAmbient(true)
+        idle()
+        val inAmbient = richiesteDiCollegamento()
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(MainActivity.INTERVALLO_VERIFICA_MS * 3))
+        assertEquals("in ambient niente richieste", inAmbient, richiesteDiCollegamento())
+
+        attivita().applyAmbient(false)
+        idle()
+        val allUscita = richiesteDiCollegamento()
+        assertTrue("l'uscita dall'ambient la richiede", allUscita > inAmbient)
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(MainActivity.INTERVALLO_VERIFICA_MS))
+        assertTrue("fuori dall'ambient il ciclo chiede", richiesteDiCollegamento() > allUscita)
+    }
+
+    private fun richiesteDiCollegamento() = Mockito.mockingDetails(telefono).invocations.count { it.method.name == "refreshConnection" }
 
     @Test
     fun `nella racchetta in ambient la fascia A e il pallino del servizio restano`() {
