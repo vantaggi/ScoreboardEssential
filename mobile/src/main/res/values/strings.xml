@@ -120,6 +120,10 @@
     <string name="reset">Reset</string>
 
     <string name="label_keeper_timer">KEEPER</string>
+    <string name="label_keeper_change">CHANGE</string>
+    <string name="cd_keeper_stopped">Keeper, stopped, %1$s. Tap to start</string>
+    <string name="cd_keeper_running">Keeper, running, %1$s. Tap to restart, change done</string>
+    <string name="cd_keeper_expired">Keeper, time is up, change. Tap to start again</string>
 
 
     <string name="share_match_report">Share</string>

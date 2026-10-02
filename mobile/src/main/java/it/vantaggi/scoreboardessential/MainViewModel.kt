@@ -186,10 +186,11 @@ class MainViewModel(
                 // passaggio da "in corso" a "fermo" la scriveva anche su pausa e azzeramento.
                 // Nessun dialogo: quello che c'era non aveva osservatori ed e' stato tolto, perche'
                 // un dialogo bloccante a partita in corso e' dannoso (DESIGN.md, pista Telefono).
-                // Avvisano la notifica e la vibrazione del service; lo stato SCADUTO nello slot del
-                // portiere e' il passo 13 e partira' da questo evento.
+                // Avvisano la notifica e la vibrazione del service; e lo slot del portiere diventa
+                // rosso (SCADUTO) da questo stesso evento, finche' non si tocca o si azzera.
                 viewModelScope.launch {
                     binder.getService().keeperTimerExpired.collect {
+                        _isKeeperTimerExpired.postValue(true)
                         addMatchEvent("Keeper timer expired!")
                     }
                 }
@@ -377,6 +378,11 @@ class MainViewModel(
     val keeperTimerValue: LiveData<Long> = _keeperTimerValue
     private val _isKeeperTimerRunning = MutableLiveData(false)
     val isKeeperTimerRunning: LiveData<Boolean> = _isKeeperTimerRunning
+
+    // Vero dalla scadenza vera (l'evento del service) finche' il conto non riparte o si azzera. E'
+    // solo in memoria: dopo un riavvio del processo non c'e' nessuna scadenza da mostrare.
+    private val _isKeeperTimerExpired = MutableLiveData(false)
+    val isKeeperTimerExpired: LiveData<Boolean> = _isKeeperTimerExpired
     private var keeperTimerDuration = 300000L // 5 minutes default
 
     // All Players (for selection)
@@ -792,6 +798,7 @@ class MainViewModel(
             _matchEvents.postValue(emptyList())
         }
         matchTimerService?.resetTimer()
+        _isKeeperTimerExpired.value = false
         if (isServiceBound) {
             matchTimerService?.resetKeeperTimer()
         }
@@ -1575,8 +1582,28 @@ class MainViewModel(
 
     fun startKeeperTimer(fromRemote: Boolean = false) {
         if (!isServiceBound) return
+        _isKeeperTimerExpired.value = false
         matchTimerService?.startKeeperTimer(keeperTimerDuration, fromRemote)
         addMatchEvent("Keeper timer started (${keeperTimerDuration / 1000}s)")
+    }
+
+    /**
+     * Il tocco sullo slot del portiere sul telefono. Parte sempre dalla durata piena: da fermo o
+     * scaduto avvia, in corso riparte da capo (il cambio e' avvenuto). Un conto in corso o fermo a
+     * meta' (pausa dall'orologio) si azzera prima, altrimenti il service riprenderebbe dal residuo.
+     * L'azzeramento va al service e non a [resetKeeperTimer]: nel registro resta solo
+     * «Keeper timer started», senza una riga di azzeramento che nessuno ha chiesto.
+     */
+    fun toccaIlPortiere() {
+        if (!isServiceBound) return
+        val azzera =
+            toccoDelPortiereAzzera(
+                inCorso = _isKeeperTimerRunning.value ?: false,
+                residuo = _keeperTimerValue.value ?: 0L,
+                durata = keeperTimerDuration,
+            )
+        if (azzera) matchTimerService?.resetKeeperTimer()
+        startKeeperTimer()
     }
 
     fun pauseKeeperTimer(fromRemote: Boolean = false) {
@@ -1586,6 +1613,7 @@ class MainViewModel(
 
     fun resetKeeperTimer(fromRemote: Boolean = false) {
         if (!isServiceBound) return
+        _isKeeperTimerExpired.value = false
         matchTimerService?.resetKeeperTimer(fromRemote)
         addMatchEvent("Keeper timer reset")
     }

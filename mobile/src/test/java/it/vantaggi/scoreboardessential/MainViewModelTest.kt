@@ -1726,6 +1726,93 @@ class MainViewModelTest {
             viewModel.matchEvents.removeObserver(eventiObserver)
         }
 
+    /** Lascia arrivare onServiceConnected, che fa partire i collector del service finto. */
+    private fun collegaIlService() {
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    /** Passo 13: da fermo il tocco avvia dalla durata piena, senza azzerare niente prima. */
+    @Test
+    fun `il tocco sul portiere fermo avvia dalla durata piena`() =
+        runTest {
+            collegaIlService()
+            advanceUntilIdle()
+            viewModel.setKeeperTimer(300)
+
+            viewModel.toccaIlPortiere()
+
+            verify(mockMatchTimerService).startKeeperTimer(300_000L, false)
+            verify(mockMatchTimerService, never()).resetKeeperTimer(any())
+        }
+
+    /** Passo 13: in corso il tocco riparte da capo, cioe' azzera e poi avvia dalla durata piena. */
+    @Test
+    fun `il tocco sul portiere in corso riparte da capo`() =
+        runTest {
+            collegaIlService()
+            advanceUntilIdle()
+            viewModel.setKeeperTimer(300)
+            portiereInCorso.value = true
+            advanceUntilIdle()
+
+            viewModel.toccaIlPortiere()
+
+            val inOrdine = org.mockito.Mockito.inOrder(mockMatchTimerService)
+            inOrdine.verify(mockMatchTimerService).resetKeeperTimer(false)
+            inOrdine.verify(mockMatchTimerService).startKeeperTimer(300_000L, false)
+        }
+
+    /**
+     * Passo 13: lo stato SCADUTO nasce dall'evento di scadenza (non da pausa o azzeramento) e dura
+     * finche' non si tocca. Il tocco avvia dalla durata piena e lo toglie.
+     */
+    @Test
+    fun `il portiere e scaduto solo dopo l'evento e il tocco lo toglie`() =
+        runTest {
+            collegaIlService()
+            advanceUntilIdle()
+            viewModel.setKeeperTimer(300)
+            assertEquals(false, viewModel.isKeeperTimerExpired.value)
+
+            portiereInCorso.value = true
+            advanceUntilIdle()
+            portiereInCorso.value = false
+            advanceUntilIdle()
+            assertEquals("una pausa non e' una scadenza", false, viewModel.isKeeperTimerExpired.value)
+
+            portiereScaduto.emit(Unit)
+            advanceUntilIdle()
+            assertEquals(true, viewModel.isKeeperTimerExpired.value)
+
+            viewModel.toccaIlPortiere()
+
+            verify(mockMatchTimerService).startKeeperTimer(300_000L, false)
+            verify(mockMatchTimerService, never()).resetKeeperTimer(any())
+            assertEquals("il tocco toglie SCADUTO", false, viewModel.isKeeperTimerExpired.value)
+        }
+
+    @Test
+    fun `l'azzeramento e la partita nuova tolgono lo stato scaduto`() =
+        runTest {
+            collegaIlService()
+            advanceUntilIdle()
+
+            portiereScaduto.emit(Unit)
+            advanceUntilIdle()
+            assertEquals(true, viewModel.isKeeperTimerExpired.value)
+            viewModel.resetKeeperTimer(fromRemote = true)
+            assertEquals("l'azzeramento (anche dall'orologio) toglie SCADUTO", false, viewModel.isKeeperTimerExpired.value)
+
+            portiereScaduto.emit(Unit)
+            advanceUntilIdle()
+            assertEquals(true, viewModel.isKeeperTimerExpired.value)
+            // Scartare una partita iniziata la riporta a quella nuova (startNewMatch).
+            viewModel.addScore(1)
+            assertEquals(true, viewModel.discardMatch())
+            advanceUntilIdle()
+            assertEquals("la partita nuova toglie SCADUTO", false, viewModel.isKeeperTimerExpired.value)
+        }
+
     /**
      * L8: il telefono manda il residuo alla ripresa, e l'orologio lo rimanda indietro quando
      * riparte da una pausa. Salvato come durata, dopo una pausa a 2:00 ogni conto successivo

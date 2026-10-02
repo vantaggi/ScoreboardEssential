@@ -204,6 +204,27 @@ class MatchTimerServiceTest {
         service.resetKeeperTimer()
     }
 
+    /**
+     * Passo 13: lo stato SCADUTO dello slot nasce solo dall'evento di scadenza, quindi dopo un
+     * riavvio non ne deve nascere uno finto. Un conto che era in corso e la cui fine e' passata mentre
+     * il processo non c'era riparte FERMO a zero: nessun conto da riprendere, nessun wake lock
+     * (e quindi nessuna scadenza da annunciare, ne' al registro ne' allo slot).
+     */
+    @Test
+    fun `dopo un riavvio con la fine del conto gia' passata il service riparte fermo e senza scadenza`() {
+        prefs().edit().putBoolean("keeper_running", true).putLong("keeper_end_time", System.currentTimeMillis() - 10_000L).commit()
+
+        val riavviato = Robolectric.buildService(MatchTimerService::class.java).create().get()
+        try {
+            assertFalse("non c'e' un conto da riprendere", riavviato.isKeeperTimerRunning.value)
+            assertEquals(0L, riavviato.keeperTimerValue.value)
+            val wakeLock = ShadowPowerManager.getLatestWakeLock()
+            assertTrue("il riavvio non deve tenere acceso un wake lock per un conto finito", wakeLock == null || !wakeLock.isHeld)
+        } finally {
+            riavviato.scope.cancel()
+        }
+    }
+
     private companion object {
         const val ORA_DI_PARTENZA = 1_700_000_000_000L
     }

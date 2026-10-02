@@ -5,6 +5,7 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.Paint
 import android.os.Build
 import android.os.Bundle
@@ -154,6 +155,11 @@ class MainActivity :
     private lateinit var team1Zone: MaterialCardView
     private lateinit var team2Zone: MaterialCardView
     private lateinit var keeperTimerTextView: TextView
+    private lateinit var keeperSlot: MaterialCardView
+    private lateinit var keeperTimerLabel: TextView
+
+    // La dimensione del conto del portiere com'e' nel layout: CAMBIO la riduce, il conto la ripristina.
+    private var dimensioneDelConto = 0f
     private lateinit var timerStartButton: MaterialButton
     private lateinit var undoGoalButton: Button
     private lateinit var lastActionStrip: View
@@ -322,6 +328,9 @@ class MainActivity :
         team1Zone = findViewById(R.id.team1_add_button_card)
         team2Zone = findViewById(R.id.team2_add_button_card)
         keeperTimerTextView = findViewById(R.id.keeper_timer_textview)
+        keeperSlot = findViewById(R.id.keeper_slot)
+        keeperTimerLabel = findViewById(R.id.keeper_timer_label)
+        dimensioneDelConto = keeperTimerTextView.textSize
         timerStartButton = findViewById(R.id.timer_start_button)
         timerStartButton.minWidth = larghezzaMinimaDelTempo(timerStartButton)
         undoGoalButton = findViewById(R.id.undo_goal_button)
@@ -431,6 +440,11 @@ class MainActivity :
 
         // Il colore del conto dipende anche dal fatto che corra: si riscrive al cambio di stato.
         viewModel.isKeeperTimerRunning.observe(this) {
+            updateKeeperTimerTextView(viewModel.keeperTimerValue.value ?: 0L)
+        }
+
+        // SCADUTO viene dall'evento di scadenza e dura fino al tocco o all'azzeramento.
+        viewModel.isKeeperTimerExpired.observe(this) {
             updateKeeperTimerTextView(viewModel.keeperTimerValue.value ?: 0L)
         }
 
@@ -834,6 +848,13 @@ class MainActivity :
     }
 
     private fun setupScoreButtons() {
+        // Lo slot del portiere: da fermo o scaduto avvia dalla durata piena, in corso riparte da
+        // capo. Un tocco breve come quello di un punto; lo stato lo dicono il colore e il conto.
+        keeperSlot.setOnClickListener {
+            vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+            viewModel.toccaIlPortiere()
+        }
+
         // I due contenitori del nome avevano il ripple e una contentDescription che prometteva
         // "tocca per cambiare il nome", ma nessun listener: il commento qui diceva "no longer
         // clickable" mentre la card continuava ad accendersi sotto il dito. TeamNameDialogFragment
@@ -1359,9 +1380,41 @@ class MainActivity :
      * (DESIGN.md, Coerenza fra telefono e orologio), lo stesso segno del polso.
      */
     private fun updateKeeperTimerTextView(timeInMillis: Long) {
-        keeperTimerTextView.text = TimeUtils.formatTime(timeInMillis)
+        val conto = TimeUtils.formatTime(timeInMillis)
         val inCorso = timeInMillis > 0 && viewModel.isKeeperTimerRunning.value == true
-        keeperTimerTextView.setTextColor(ContextCompat.getColor(this, if (inCorso) R.color.graffiti_pink else R.color.sidewalk_gray))
+        val stato = statoDelPortiere(inCorso, viewModel.isKeeperTimerExpired.value == true)
+        val scaduto = stato == StatoPortiere.SCADUTO
+        // SCADUTO: slot pieno #FF1744 con «CAMBIO» in #000000 (5,46:1). Il rosso e' un riempimento e
+        // il nero l'inchiostro, come nelle zone +; il rosa resta solo del conto in corso.
+        val nero = ContextCompat.getColor(this, R.color.asphalt_black)
+        val rosso = ContextCompat.getColor(this, R.color.error_red)
+        keeperSlot.setCardBackgroundColor(if (scaduto) rosso else Color.TRANSPARENT)
+        keeperSlot.strokeColor = if (scaduto) rosso else ContextCompat.getColor(this, R.color.outline_gray)
+        keeperTimerLabel.setTextColor(if (scaduto) nero else ContextCompat.getColor(this, R.color.sidewalk_gray))
+        keeperTimerTextView.text = if (scaduto) getString(R.string.label_keeper_change) else conto
+        keeperTimerTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, if (scaduto) dimensioneDelCambio() else dimensioneDelConto)
+        keeperTimerTextView.setTextColor(
+            when {
+                scaduto -> nero
+                inCorso -> ContextCompat.getColor(this, R.color.graffiti_pink)
+                else -> ContextCompat.getColor(this, R.color.sidewalk_gray)
+            },
+        )
+        keeperSlot.contentDescription = descrizioneDelPortiere(this, stato, conto)
+    }
+
+    /**
+     * La dimensione di «CAMBIO»: quella del conto, ridotta quanto basta perche' la parola non sia
+     * piu' larga di «00:00». Lo slot e' largo quanto il suo testo piu' largo, e per tutta la partita
+     * non deve cambiare misura: se la parola fosse piu' larga del conto, alla scadenza la barra si
+     * stringerebbe e lo spazio lasciato libero sposterebbe i comandi accanto (laZonaPiuNonSiSposta).
+     */
+    private fun dimensioneDelCambio(): Float {
+        val misura = Paint(keeperTimerTextView.paint).apply { textSize = dimensioneDelConto }
+        val larghezzaDelConto = misura.measureText("00:00")
+        val larghezzaDellaParola = misura.measureText(getString(R.string.label_keeper_change))
+        if (larghezzaDellaParola <= larghezzaDelConto) return dimensioneDelConto
+        return dimensioneDelConto * larghezzaDelConto / larghezzaDellaParola
     }
 
     private fun requestNotificationPermission() {
