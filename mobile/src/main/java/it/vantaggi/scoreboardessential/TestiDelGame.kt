@@ -47,16 +47,26 @@ internal fun testiDelGame(
             else -> null
         }
 
-    // Il game di un tie-break si dice col punteggio del tie-break: «7-5» e' quello che si e' giocato,
-    // il 7-6 e' gia' nel set.
+    // Per il tie-break TalkBack dice anche il punteggio giocato («7 a 5»), oltre al 7-6 del set.
     val frasi =
         buildList {
             add(context.getString(R.string.cd_log_game, nomeVincitore, lato1, lato2))
             when (game.outcome) {
-                GameOutcome.HELD -> add(context.getString(R.string.cd_log_game_held))
-                GameOutcome.BROKEN -> add(context.getString(R.string.cd_log_game_break))
-                GameOutcome.TIE_BREAK -> tieBreak?.let { add(context.getString(R.string.cd_log_game_tiebreak, nomeVincitore, it.second, it.third)) }
-                GameOutcome.UNKNOWN -> Unit
+                GameOutcome.HELD -> {
+                    add(context.getString(R.string.cd_log_game_held))
+                }
+
+                GameOutcome.BROKEN -> {
+                    add(context.getString(R.string.cd_log_game_break))
+                }
+
+                GameOutcome.TIE_BREAK -> {
+                    tieBreak?.let { (_, a, b) -> add(context.getString(R.string.cd_log_game_tiebreak, nomeVincitore, a, b)) }
+                }
+
+                GameOutcome.UNKNOWN -> {
+                    Unit
+                }
             }
             if (game.closesSet) add(context.getString(R.string.cd_log_game_set, nomeVincitore, lato1, lato2))
             if (game.closesMatch) add(context.getString(R.string.cd_log_game_match, nomeVincitore))

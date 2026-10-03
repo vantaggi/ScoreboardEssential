@@ -45,7 +45,9 @@ internal fun registroAGame(
                 if (riga.type != MatchEventType.SCORE) dellaPartita.add(indice.toDouble() to riga)
             }
 
-            else -> dellaPartita.add(ultimoIndice + MEZZO to riga)
+            else -> {
+                dellaPartita.add(ultimoIndice + MEZZO to riga)
+            }
         }
     }
     for (game in narrativa.games) {

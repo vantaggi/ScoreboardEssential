@@ -32,8 +32,7 @@ class RegistroAGameTest {
     private fun fusione(
         registroCronologico: List<MatchEvent>,
         engine: MatchEngine,
-    ): List<MatchEvent> =
-        registroAGame(registroCronologico.asReversed(), MatchNarrative.of(engine), "Rossi", "Bianchi").asReversed()
+    ): List<MatchEvent> = registroAGame(registroCronologico.asReversed(), MatchNarrative.of(engine), "Rossi", "Bianchi").asReversed()
 
     private fun quattro(
         da: Int,

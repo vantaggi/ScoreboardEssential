@@ -235,7 +235,10 @@ class MatchLogAdapterTest {
         adapter.onBindViewHolder(holder, 1)
         assertEquals(
             context.getString(R.string.log_goal_unattributed, "Rossi"),
-            holder.itemView.findViewById<TextView>(R.id.event_description).text.toString(),
+            holder.itemView
+                .findViewById<TextView>(R.id.event_description)
+                .text
+                .toString(),
         )
     }
 }

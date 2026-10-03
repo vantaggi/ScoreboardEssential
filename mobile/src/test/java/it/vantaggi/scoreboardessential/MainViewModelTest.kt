@@ -2903,7 +2903,13 @@ class MainViewModelTest {
             ripreso.registroDelFoglio.observeForever(ripresoObserver)
             advanceUntilIdle()
 
-            assertEquals(dalVivo, ripreso.registroDelFoglio.value.orEmpty().filter { it.type == MatchEventType.GAME }.map { it.game })
+            assertEquals(
+                dalVivo,
+                ripreso.registroDelFoglio.value
+                    .orEmpty()
+                    .filter { it.type == MatchEventType.GAME }
+                    .map { it.game },
+            )
 
             ripreso.registroDelFoglio.removeObserver(ripresoObserver)
             viewModel.registroDelFoglio.removeObserver(foglioObserver)
