@@ -1663,7 +1663,10 @@ class MainViewModelTest {
         mockingDetails(mockConnectionManager)
             .invocations
             .filter { it.method.name == "sendMessage" && it.arguments[0] == path }
-            .map { com.google.android.gms.wearable.DataMap.fromByteArray(it.arguments[1] as ByteArray) }
+            .map {
+                com.google.android.gms.wearable.DataMap
+                    .fromByteArray(it.arguments[1] as ByteArray)
+            }
 
     private fun improntaDelMotore() = MatchLogCodec.impronta(MatchLogCodec.encode(motore().log))
 
@@ -1810,14 +1813,27 @@ class MainViewModelTest {
             val nuovo = creaViewModel()
             altriViewModel.add(nuovo)
             advanceUntilIdle()
-            val log = (MainViewModel::class.java.getDeclaredField("engine").also { it.isAccessible = true }.get(nuovo) as MatchEngine).log
+            val log =
+                (
+                    MainViewModel::class.java
+                        .getDeclaredField("engine")
+                        .also { it.isAccessible = true }
+                        .get(nuovo) as MatchEngine
+                ).log
             assertEquals("due punti, nell'ordine in cui sono arrivati", listOf(1, 2), log.map { (it.event as ScoringEvent.Point).side })
 
             // Un terzo ViewModel non li ritrova: sono stati consumati.
             val ancora = creaViewModel()
             altriViewModel.add(ancora)
             advanceUntilIdle()
-            val logAncora = (MainViewModel::class.java.getDeclaredField("engine").also { it.isAccessible = true }.get(ancora) as MatchEngine).log
+            val logAncora =
+                (
+                    MainViewModel::class.java
+                        .getDeclaredField(
+                            "engine",
+                        ).also { it.isAccessible = true }
+                        .get(ancora) as MatchEngine
+                ).log
             assertEquals(0, logAncora.size)
         }
 

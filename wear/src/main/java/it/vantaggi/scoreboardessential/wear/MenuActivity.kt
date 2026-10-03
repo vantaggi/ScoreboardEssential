@@ -232,13 +232,16 @@ class MenuActivity : ComponentActivity() {
                 colore(
                     when {
                         armata -> R.color.ink_black
-                        voce.sottotitolo is SottotitoloVoce.PrimaConsegna || voce.sottotitolo is SottotitoloVoce.CodaRifiutata -> R.color.signal_amber
+                        voce.sottotitolo.eDaConsegnare() -> R.color.signal_amber
                         else -> R.color.sidewalk_gray
                     },
                 ),
             )
         }
     }
+
+    /** I due sottotitoli che parlano di tocchi non consegnati, in ambra. */
+    private fun SottotitoloVoce.eDaConsegnare() = this is SottotitoloVoce.PrimaConsegna || this is SottotitoloVoce.CodaRifiutata
 
     private fun titoloDi(
         voce: Voce,

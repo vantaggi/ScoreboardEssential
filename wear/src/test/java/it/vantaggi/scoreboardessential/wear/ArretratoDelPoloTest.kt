@@ -235,10 +235,11 @@ class ArretratoDelPoloTest {
         assertEquals("in volo il quadrante resta com'e'", "15", viewModel.scoreState.value?.side1Primary)
 
         avanza(WearViewModel.TIMEOUT_BATCH_MS)
-        viewModel.applyStateV2(stato(registro(2)))
+        // Scaduto: un punto del telefono e uno in coda, 30. Prima lo schermo restava com'era finche'
+        // il ViewModel viveva, qualunque stato arrivasse.
+        viewModel.applyStateV2(stato(registro(1)))
 
-        // Scaduto: due punti del telefono e uno in coda, 40. Prima restava "15" finche' il ViewModel viveva.
-        assertEquals("40", viewModel.scoreState.value?.side1Primary)
+        assertEquals("30", viewModel.scoreState.value?.side1Primary)
     }
 
     @Test
@@ -256,7 +257,11 @@ class ArretratoDelPoloTest {
         val inviati = batchSpediti()
         assertEquals(2, inviati.size)
         assertEquals("stesso blocco, stessa identita'", idDi(inviati[0]), idDi(inviati[1]))
-        assertNotEquals("la sequenza e' nuova, o il servizio lo scarterebbe", inviati[0].getLong(WearConstants.KEY_SEQ), inviati[1].getLong(WearConstants.KEY_SEQ))
+        assertNotEquals(
+            "la sequenza e' nuova, o il servizio lo scarterebbe",
+            inviati[0].getLong(WearConstants.KEY_SEQ),
+            inviati[1].getLong(WearConstants.KEY_SEQ),
+        )
     }
 
     @Test
@@ -277,7 +282,11 @@ class ArretratoDelPoloTest {
         assertEquals(
             "il rinvio porta le prime due voci, non la terza",
             2,
-            secondo.getString(WearConstants.KEY_INTENT_BATCH).orEmpty().split(WearConstants.BATCH_SEPARATOR).size,
+            secondo
+                .getString(WearConstants.KEY_INTENT_BATCH)
+                .orEmpty()
+                .split(WearConstants.BATCH_SEPARATOR)
+                .size,
         )
         assertFalse("un NACK passeggero non e' un rifiuto", viewModel.rifiutati.value > 0)
     }

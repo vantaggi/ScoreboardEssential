@@ -240,7 +240,9 @@ class WearDataLayerService : WearableListenerService() {
     private fun gestisciAck(data: ByteArray?) {
         // Il telefono dice di AVER APPLICATO l'arretrato. Finche' questo non arriva, la coda
         // sull'orologio non si tocca: e' l'unica differenza fra "consegnato" e "salvo".
-        val dataMap = com.google.android.gms.wearable.DataMap.fromByteArray(data ?: return)
+        val dataMap =
+            com.google.android.gms.wearable.DataMap
+                .fromByteArray(data ?: return)
         val seq = dataMap.getLong(WearConstants.KEY_SEQ, 0L)
         // Zero da un telefono non aggiornato: l'ack porta solo la sequenza.
         val batchId = dataMap.getLong(WearConstants.KEY_BATCH_ID, 0L)
@@ -259,7 +261,9 @@ class WearDataLayerService : WearableListenerService() {
     }
 
     private fun gestisciNack(data: ByteArray?) {
-        val dataMap = com.google.android.gms.wearable.DataMap.fromByteArray(data ?: return)
+        val dataMap =
+            com.google.android.gms.wearable.DataMap
+                .fromByteArray(data ?: return)
         // Senza Activity il NACK non fa niente: il blocco resta in coda con il suo id, e al primo avvio
         // il polso lo rimanda e riceve la risposta con chi sa leggerla.
         LocalBroadcastManager.getInstance(this).sendBroadcast(
