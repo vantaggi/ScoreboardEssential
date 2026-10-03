@@ -250,6 +250,20 @@ class WearViewModel(
     private var protocolV2Seen = false
 
     /**
+     * Dal telefono e' arrivato un punteggio v1 e nessun v2: e' un telefono non aggiornato, il solo
+     * caso in cui il tocco va come punteggio assoluto invece che come intenzione.
+     */
+    private var v1DalTelefono = false
+
+    /**
+     * Almeno uno stato v2 e' arrivato DAL VIVO, da quando il ViewModel c'e'. Lo stato letto dal disco
+     * (o dai DataItem al risveglio) e' una copia che puo' essere vecchia: la lunghezza del suo
+     * registro non e' una base per le ricevute, e il tocco a freddo non ne apre una finche' il
+     * telefono non ha parlato davvero (altrimenti un NON CONFERMATO o una conferma sbagliata).
+     */
+    private var statoVivoVisto = false
+
+    /**
      * Seminato con l'orologio di sistema, non da zero.
      *
      * Il telefono ricorda l'ultima sequenza vista per nodo e scarta cio' che non la supera.
@@ -388,13 +402,16 @@ class WearViewModel(
      * parte urgente: un DataItem non urgente puo' arrivare al telefono minuti dopo i 10 secondi, e
      * chiuderebbe la partita a gioco ripreso o quella successiva.
      *
-     * Con punti in coda non si chiude e ritorna falso: il telefono non li ha, e la chiusura (o il
-     * reset, nel v1) separerebbe la partita giocata al polso da quella del telefono solo a meta':
-     * due partite si fonderebbero. E' la stessa regola del menu ("Prima consegna n punti"), qui
-     * perche' il ViewModel non deve dipendere da chi lo chiama.
+     * Con punti in coda, un arretrato in volo o ricevute aperte non si chiude e ritorna falso: il
+     * telefono non li ha (o non ha confermato di averli), e la chiusura (o il reset, nel v1)
+     * separerebbe la partita giocata al polso da quella del telefono solo a meta': due partite si
+     * fonderebbero. Le ricevute aperte sono punti consegnati e non ancora confermati:
+     * MessageClient non garantisce l'ordine, e un end_match che superasse l'ultimo gol lo farebbe
+     * perdere. E' la stessa regola del menu ("Prima consegna n punti"), qui perche' il ViewModel
+     * non deve dipendere da chi lo chiama.
      */
     fun chiudiPartita(): Boolean {
-        if (_pendingCount.value > 0 || batchInVolo != null) return false
+        if (_pendingCount.value > 0 || batchInVolo != null || ricevute.isNotEmpty()) return false
         registroPienoAlComando = statoDalTelefono?.matchInProgress == true
         chiusuraInAttesa = true
         mostraTransitorio(Transitorio.Chiusura, DURATA_ATTESA_CHIUSURA_MS)
@@ -617,6 +634,7 @@ class WearViewModel(
         team2Score: Int,
     ) {
         if (protocolV2Seen) return
+        v1DalTelefono = true
         _team1Score.value = team1Score
         _team2Score.value = team2Score
     }
@@ -649,6 +667,7 @@ class WearViewModel(
         }
         statoDalTelefono = state
         if (dalVivo) {
+            statoVivoVisto = true
             ultimoStatoVivoAlle = orologio()
             // Solo un telefono che parla adesso puo' dire "preso": una rilettura dei DataItem al
             // risveglio e' una copia, e chiuderebbe una ricevuta con uno stato vecchio.
@@ -933,9 +952,12 @@ class WearViewModel(
         haptics.tick()
         // UN canale solo. Prima del primo v2 il tocco partiva come intenzione E come punteggio
         // assoluto v1, e un telefono v2 lo contava due volte (nel calcio N+2, o il registro
-        // appiattito): ora, finche' non si sa di un telefono v2, e' il v1 di sempre.
+        // appiattito). Il v1 vale SOLO se dal telefono e' arrivato davvero un v1 (un telefono non
+        // aggiornato): in ogni altro caso, anche con un orologio nuovo o senza disco, il tocco va
+        // come intenzione e, se non consegnato, in coda. Un v1 mandato a un telefono v2 tornato
+        // in padel o tennis sarebbe scartato, e il punto perso.
         riconosciV2DalDisco()
-        if (protocolV2Seen) {
+        if (protocolV2Seen || !v1DalTelefono) {
             sendScoreIntent(team, WearConstants.INTENT_POINT, chiediMarcatore, tickAlle)
             // Nessuna vibrazione qui: la conferma arriva con lo stato che il telefono rimanda
             // (vedi chiudiRicevute), non alla consegna.
@@ -1189,7 +1211,7 @@ class WearViewModel(
         // conferma puo' arrivare mentre sendMessage e' in volo, e allora deve trovarla (e trovare
         // prima quelle dei tocchi precedenti, nell'ordine). Senza un v2 mai visto nessuno stato
         // arrivera', e senza un registro leggibile non c'e' niente da confrontare: niente ricevuta.
-        val registroAlTocco = if (protocolV2Seen) lunghezzaRegistro(statoDalTelefono) else null
+        val registroAlTocco = if (protocolV2Seen && statoVivoVisto) lunghezzaRegistro(statoDalTelefono) else null
         val ricevuta =
             registroAlTocco?.let { Ricevuta(side, kind, it, tickAlle, chiediMarcatore).also(ricevute::addLast) }
         viewModelScope.launch {

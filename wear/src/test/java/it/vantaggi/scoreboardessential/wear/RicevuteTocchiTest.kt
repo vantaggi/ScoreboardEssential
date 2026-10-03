@@ -598,11 +598,13 @@ class RicevuteTocchiTest {
 
     @Test
     fun `un tocco non confermato durante la chiusura vibra ma non sostituisce CHIUSURA`() {
-        viewModel.incrementScore(2)
-        assestati()
-        viewModel.chiudiPartita()
+        // Prima la chiusura: con una ricevuta aperta il polso non chiude (L4), quindi il tocco
+        // non confermato e' uno dato DOPO, mentre CHIUSURA... aspetta.
+        assertTrue(viewModel.chiudiPartita())
         assestati()
         assertEquals(Transitorio.Chiusura, viewModel.statoFiducia.value)
+        viewModel.incrementScore(2)
+        assestati()
         val giaSuonato = vibratore.suonati.size
 
         avanza(WearViewModel.SCADENZA_RICEVUTA_MS)

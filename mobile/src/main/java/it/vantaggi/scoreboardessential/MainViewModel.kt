@@ -234,11 +234,13 @@ class MainViewModel(
 
                         val team1 = intent.getIntExtra(WearConstants.KEY_TEAM1_SCORE, 0)
                         val team2 = intent.getIntExtra(WearConstants.KEY_TEAM2_SCORE, 0)
-                        // Uno 0-0 a registro pieno non e' un tocco: e' l'azzeramento v1 di un
-                        // orologio che sta chiudendo (AZZERA, poi MATCH_STATE). Applicarlo svuotava
+                        // Uno 0-0 che non puo' essere un singolo decremento non e' un tocco: e' l'azzeramento
+                        // v1 di un orologio che sta chiudendo (AZZERA, poi MATCH_STATE). Applicarlo svuotava
                         // il motore PRIMA di endMatch, e la partita andava persa o salvata 0-0 (L4).
-                        // Il MATCH_STATE che segue chiude la partita vera, col suo registro.
-                        if (team1 == 0 && team2 == 0 && engine.log.isNotEmpty()) return
+                        // Il MATCH_STATE che segue chiude la partita vera, col suo registro. Un decremento
+                        // v1 cambia un solo lato di 1: da 1-0 a 0-0 e' la correzione legittima e passa,
+                        // quindi si ignora solo se il punteggio di testata ha somma maggiore di 1.
+                        if (team1 == 0 && team2 == 0 && engine.state.headline().let { it.first + it.second } > 1) return
                         Log.d("VM", "📥 Score update received from Wear")
                         // Anche il motore va riallineato, non solo le LiveData: altrimenti il
                         // primo tocco locale ripartirebbe dal punteggio che il motore aveva
@@ -621,6 +623,9 @@ class MainViewModel(
     // momento leggevano currentMatchId ancora null, e nascevano due righe attive o ne restava una
     // orfana. Il Mutex e' equo, quindi la fila rispetta l'ordine delle richieste.
     private val rigaViva = Mutex()
+
+    // Una chiusura (endMatch) e' presa e non ancora finita: sincrono, a differenza della fila.
+    private var chiusuraInCorso = false
 
     // Il ripristino e' stato chiesto e non e' finito: lo sport arrivato dalle impostazioni aspetta
     // la sua fine, perche' il registro e' vuoto solo in quanto la partita non e' ancora tornata.
@@ -1744,54 +1749,65 @@ class MainViewModel(
         if (engine.log.isEmpty() && matchTimerValue.value == 0L) {
             return false // Match not started, do not save
         }
+        // La guardia sopra si legge subito, ma il motore si svuota solo dentro la fila: due
+        // chiusure nello stesso tick (END MATCH sul telefono e end_match dal polso, o end_match e
+        // MATCH_STATE=false) la passavano entrambe, e la seconda inseriva una partita 0-0 con le
+        // presenze contate due volte. Il flag e' sincrono: la seconda trova la chiusura gia' presa
+        // e dice si', perche' la partita si sta salvando davvero (lo snackbar del telefono).
+        if (chiusuraInCorso) return true
+        chiusuraInCorso = true
 
         // In fila con le scritture della riga viva: END MATCH subito dopo il primo punto trovava
         // l'insert ancora sospeso e currentMatchId null, e closeMatch inseriva una seconda riga.
         inFilaSullaRigaViva {
-            if (isServiceBound) {
-                matchTimerService?.stopTimer()
+            try {
+                if (isServiceBound) {
+                    matchTimerService?.stopTimer()
+                }
+
+                val uno = team1Score.value ?: 0
+                val due = team2Score.value ?: 0
+                val log = MatchLogCodec.encode(engine.log)
+                val adesso = System.currentTimeMillis()
+
+                // Se una riga viva esiste gia' la si CHIUDE, invece di inserirne una seconda: la
+                // partita e' la stessa, e duplicarla falserebbe presenze e statistiche. Chiusura,
+                // presenze e formazioni vanno in una sola transazione: se il processo muore a meta',
+                // non resta una partita nello storico senza giocatori.
+                val team1Roster = team1Players.value ?: emptyList()
+                val team2Roster = team2Players.value ?: emptyList()
+                matchDao.closeMatch(
+                    Match(
+                        matchId = currentMatchId?.toInt() ?: 0,
+                        team1Id = 1, // Default team 1 ID
+                        team2Id = 2, // Default team 2 ID
+                        team1Score = uno,
+                        team2Score = due,
+                        timestamp = adesso,
+                        sportId = sportRules.id,
+                        eventLog = log,
+                        // Contano solo se la riga viva non c'era e si inserisce: chiudendo una riga
+                        // viva, finalizeMatch non tocca i valori scritti al primo punto.
+                        serveOrder = Match.encodeServeOrder(sportRules.config.serveOrder),
+                        startedAt = matchStartedAt,
+                        matchUuid = matchUuid,
+                    ),
+                    // Solo gli id: le presenze si incrementano nel database. Le copie dei giocatori
+                    // tenute nelle rose sono ferme a quando sono state aggiunte, e riscriverle con
+                    // un @Update di riga intera riportava indietro i gol segnati in questa partita.
+                    team1PlayerIds = team1Roster.map { it.player.playerId },
+                    team2PlayerIds = team2Roster.map { it.player.playerId },
+                )
+                currentMatchId = null
+
+                addMatchEvent("Match ended - Final Score: ${team1Score.value} - ${team2Score.value}")
+
+                sendMatchStateUpdate(false)
+                startNewMatch()
+                sendResetUpdate()
+            } finally {
+                chiusuraInCorso = false
             }
-
-            val uno = team1Score.value ?: 0
-            val due = team2Score.value ?: 0
-            val log = MatchLogCodec.encode(engine.log)
-            val adesso = System.currentTimeMillis()
-
-            // Se una riga viva esiste gia' la si CHIUDE, invece di inserirne una seconda: la
-            // partita e' la stessa, e duplicarla falserebbe presenze e statistiche. Chiusura,
-            // presenze e formazioni vanno in una sola transazione: se il processo muore a meta',
-            // non resta una partita nello storico senza giocatori.
-            val team1Roster = team1Players.value ?: emptyList()
-            val team2Roster = team2Players.value ?: emptyList()
-            matchDao.closeMatch(
-                Match(
-                    matchId = currentMatchId?.toInt() ?: 0,
-                    team1Id = 1, // Default team 1 ID
-                    team2Id = 2, // Default team 2 ID
-                    team1Score = uno,
-                    team2Score = due,
-                    timestamp = adesso,
-                    sportId = sportRules.id,
-                    eventLog = log,
-                    // Contano solo se la riga viva non c'era e si inserisce: chiudendo una riga
-                    // viva, finalizeMatch non tocca i valori scritti al primo punto.
-                    serveOrder = Match.encodeServeOrder(sportRules.config.serveOrder),
-                    startedAt = matchStartedAt,
-                    matchUuid = matchUuid,
-                ),
-                // Solo gli id: le presenze si incrementano nel database. Le copie dei giocatori
-                // tenute nelle rose sono ferme a quando sono state aggiunte, e riscriverle con
-                // un @Update di riga intera riportava indietro i gol segnati in questa partita.
-                team1PlayerIds = team1Roster.map { it.player.playerId },
-                team2PlayerIds = team2Roster.map { it.player.playerId },
-            )
-            currentMatchId = null
-
-            addMatchEvent("Match ended - Final Score: ${team1Score.value} - ${team2Score.value}")
-
-            sendMatchStateUpdate(false)
-            startNewMatch()
-            sendResetUpdate()
         }
         return true
     }

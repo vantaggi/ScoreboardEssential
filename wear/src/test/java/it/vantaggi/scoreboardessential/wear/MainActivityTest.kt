@@ -11,6 +11,9 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import it.vantaggi.scoreboardessential.core.LoggedEvent
+import it.vantaggi.scoreboardessential.core.MatchLogCodec
+import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
@@ -394,6 +397,27 @@ class MainActivityTest {
 
         assertFalse(viewModel.statoFiducia.value is Transitorio.Chiusura)
         // Il menu si riapre: la voce spenta ha il suo motivo scritto nel sottotitolo.
+        val riaperto = shadowOf(controller.get()).nextStartedActivityForResult.intent
+        assertEquals(MenuActivity::class.java.name, riaperto.component?.className)
+    }
+
+    /**
+     * La voce FINE PARTITA e' accesa nel menu (nessun punto in coda), ma chiudiPartita() rifiuta:
+     * un punto appena dato e consegnato aspetta ancora lo stato del telefono (ricevuta aperta), cosa
+     * che il menu non sa. Il comando non parte e il menu si riapre invece di restare muto.
+     */
+    @Test
+    fun `con la voce accesa ma chiudiPartita che rifiuta il menu si riapre`() {
+        collegati()
+        val registroConUnPunto = MatchLogCodec.encode(listOf(LoggedEvent(ScoringEvent.Point(side = 1))))
+        applica(statoSport("padel").copy(eventLog = registroConUnPunto))
+        val richiesta = apriMenu()
+
+        // Un tocco dato mentre il menu era aperto e consegnato: ricevuta aperta, coda vuota.
+        viewModel.incrementScore(1)
+        sceglieFine(richiesta)
+
+        assertFalse(viewModel.statoFiducia.value is Transitorio.Chiusura)
         val riaperto = shadowOf(controller.get()).nextStartedActivityForResult.intent
         assertEquals(MenuActivity::class.java.name, riaperto.component?.className)
     }

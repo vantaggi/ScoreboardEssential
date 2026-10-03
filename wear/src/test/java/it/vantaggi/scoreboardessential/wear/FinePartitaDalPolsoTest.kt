@@ -223,6 +223,41 @@ class FinePartitaDalPolsoTest {
         assertEquals(0, dataItem(WearConstants.PATH_SCORE).size)
     }
 
+    /**
+     * Rilievo della revisione L4 (bassa): un punto consegnato e non ancora confermato e' una
+     * ricevuta aperta. MessageClient non garantisce l'ordine: un end_match che supera l'ultimo gol
+     * lo farebbe perdere. Come con la coda e l'arretrato in volo, la chiusura si rifiuta.
+     */
+    @Test
+    fun `con una ricevuta aperta il polso non chiude`() {
+        viewModel.applyStateV2(calcio3a2())
+        viewModel.incrementScore(1)
+        assestati()
+        assertEquals("il punto e' partito, in attesa dello stato del telefono", 1, messaggi(WearConstants.MSG_SCORE_INTENT).size)
+
+        val accettata = viewModel.chiudiPartita()
+        assestati()
+
+        assertFalse("la chiusura e' rifiutata", accettata)
+        assertEquals("nessun end_match oltre al punto", 1, messaggi(WearConstants.MSG_SCORE_INTENT).size)
+        assertEquals(0, dataItem(WearConstants.PATH_MATCH_STATE).size)
+    }
+
+    @Test
+    fun `con un arretrato in volo il polso non chiude`() {
+        viewModel.applyStateV2(calcio3a2())
+        // Coda vuota (le voci sono state consegnate e tolte), ma l'ack dell'arretrato non e' arrivato.
+        val campo = WearViewModel::class.java.getDeclaredField("batchInVolo")
+        campo.isAccessible = true
+        campo.set(viewModel, 7L to 2)
+
+        val accettata = viewModel.chiudiPartita()
+        assestati()
+
+        assertFalse("la chiusura e' rifiutata", accettata)
+        assertEquals(0, messaggi(WearConstants.MSG_SCORE_INTENT).size)
+    }
+
     @Test
     fun `con la coda vuota la chiusura e' accettata`() {
         viewModel.applyStateV2(calcio3a2())
@@ -233,7 +268,10 @@ class FinePartitaDalPolsoTest {
     // --- Rilievo 3: un solo canale prima del primo v2 ---
 
     @Test
-    fun `senza nessun v2 un tocco va solo come punteggio v1, non anche come intenzione`() {
+    fun `con un v1 dal telefono e nessun v2 un tocco va solo come punteggio v1, non anche come intenzione`() {
+        // Un telefono non aggiornato: ha mandato un punteggio v1 e nessuno stato v2.
+        viewModel.updateScoresFromMobile(0, 0)
+
         viewModel.incrementScore(1)
         assestati()
 
@@ -262,6 +300,59 @@ class FinePartitaDalPolsoTest {
 
         assertEquals(1, messaggi(WearConstants.MSG_SCORE_INTENT).size)
         assertEquals("niente PATH_SCORE a freddo", 0, dataItem(WearConstants.PATH_SCORE).size)
+    }
+
+    /**
+     * Rilievo della revisione L4 (bassa): lo stato letto dal disco e' una copia, forse vecchia, e
+     * la lunghezza del suo registro non e' una base per le ricevute. Disco a 4 eventi, telefono
+     * che in realta' ne aveva 3: il tocco a freddo porta il registro a 4 e, con la base dal disco,
+     * lo stato vero (4) sembrerebbe "nessun cambiamento", e la ricevuta direbbe NON CONFERMATO a
+     * un punto preso. Senza stato dal vivo il tocco a freddo non apre una ricevuta.
+     */
+    @Test
+    fun `un tocco a freddo non prende la base delle ricevute dal registro su disco`() {
+        LastKnownMatch(RuntimeEnvironment.getApplication()).save(SportRegistry.FOOTBALL, registro(4), 0)
+
+        viewModel.incrementScore(1)
+        assestati()
+        // Il telefono risponde con lo stato vero: 4 eventi, quelli del disco erano di una partita vecchia.
+        viewModel.applyStateV2(calcio3a2().copy(eventLog = registro(4)))
+        assestati()
+        testDispatcher.scheduler.advanceTimeBy(WearViewModel.SCADENZA_RICEVUTA_MS + 1)
+        assestati()
+
+        assertFalse(
+            "nessun NON CONFERMATO a un punto preso: ${viewModel.statoFiducia.value}",
+            viewModel.statoFiducia.value == Transitorio.NonConfermato,
+        )
+        // Da quando il telefono ha parlato dal vivo la base e' la sua: il tocco dopo apre la ricevuta
+        // (lo si vede dal fatto che la chiusura e' rifiutata finche' lo stato non la chiude).
+        viewModel.incrementScore(1)
+        assestati()
+        assertFalse(viewModel.chiudiPartita())
+        viewModel.applyStateV2(calcio3a2().copy(eventLog = registro(5)))
+        assestati()
+        assertTrue(viewModel.chiudiPartita())
+    }
+
+    /**
+     * Buco trovato dalla falsificazione: con un v2 il reset del polso non scrive niente sul filo
+     * (ne' lo 0-0 v1, ne' i timer, ne' il MATCH_STATE): svuoterebbe il motore del telefono prima
+     * di qualunque chiusura. Nessun test proteggeva `senzaInvii = fromRemote || protocolV2Seen`.
+     */
+    @Test
+    fun `con un v2 il reset dal polso non scrive niente sul filo`() {
+        viewModel.applyStateV2(calcio3a2())
+        viewModel.syncMatchTimer(40 * 60_000L, true)
+
+        viewModel.resetMatch()
+        assestati()
+
+        assertEquals("niente 0-0 v1", 0, dataItem(WearConstants.PATH_SCORE).size)
+        assertEquals("niente timer azzerato", 0, dataItem(WearConstants.PATH_TIMER_STATE).size)
+        assertEquals("niente portiere azzerato", 0, dataItem(WearConstants.PATH_KEEPER_TIMER).size)
+        assertEquals("niente MATCH_STATE", 0, dataItem(WearConstants.PATH_MATCH_STATE).size)
+        assertEquals("niente intenzione", 0, messaggi(WearConstants.MSG_SCORE_INTENT).size)
     }
 
     // --- Rilievo 4: i comandi sono DataItem urgenti ---

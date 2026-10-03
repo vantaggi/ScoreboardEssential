@@ -3197,4 +3197,120 @@ class MainViewModelTest {
             assertEquals(3, motore().log.size)
             assertEquals(2, viewModel.team1Score.value)
         }
+
+    /**
+     * Rilievo della revisione L4 (media): la guardia di endMatch si legge subito, il motore si
+     * svuota dentro la fila. Due chiusure nello stesso tick (END MATCH sul telefono e end_match
+     * dal polso, o end_match e MATCH_STATE=false) passavano entrambe, e la seconda inseriva una
+     * partita 0-0 con le presenze contate due volte. Qui NIENTE advanceUntilIdle fra le due.
+     */
+    @Test
+    fun `due chiusure nello stesso tick salvano una partita sola, 3-2`() =
+        runTest {
+            calcio3a2()
+            advanceUntilIdle()
+
+            ricevi(fineDalPolso())
+            ricevi(fineDalPolso())
+            advanceUntilIdle()
+
+            val salvate = partiteSalvate()
+            assertEquals("una sola partita salvata: $salvate", 1, salvate.size)
+            assertEquals(3, salvate.single().team1Score)
+            assertEquals(2, salvate.single().team2Score)
+        }
+
+    @Test
+    fun `fine dal polso e MATCH_STATE falso nello stesso tick salvano una partita sola, 3-2`() =
+        runTest {
+            calcio3a2()
+            advanceUntilIdle()
+
+            ricevi(fineDalPolso())
+            ricevi(
+                Intent(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
+                    .putExtra(WearConstants.KEY_MATCH_ACTIVE, false),
+            )
+            advanceUntilIdle()
+
+            val salvate = partiteSalvate()
+            assertEquals("una sola partita salvata: $salvate", 1, salvate.size)
+            assertEquals(3, salvate.single().team1Score)
+            assertEquals(2, salvate.single().team2Score)
+        }
+
+    /** END MATCH sul telefono e fine dal polso insieme: la seconda dice si, la partita si sta salvando. */
+    @Test
+    fun `la seconda chiusura nello stesso tick dice si per lo snackbar e non salva due volte`() =
+        runTest {
+            calcio3a2()
+            advanceUntilIdle()
+
+            assertEquals(true, viewModel.endMatch())
+            assertEquals("si sta gia' salvando", true, viewModel.endMatch())
+            advanceUntilIdle()
+
+            assertEquals(1, partiteSalvate().size)
+            assertEquals("a chiusura finita e partita nuova, non c'e' niente da salvare", false, viewModel.endMatch())
+        }
+
+    private fun punteggioV1(
+        uno: Int,
+        due: Int,
+    ) = Intent(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE)
+        .putExtra(WearConstants.KEY_TEAM1_SCORE, uno)
+        .putExtra(WearConstants.KEY_TEAM2_SCORE, due)
+
+    /**
+     * Rilievo della revisione L4 (media): un orologio v1 che corregge 1-0 in 0-0 (col '-') mandava
+     * uno 0-0 legittimo, e la guardia a registro pieno lo scartava. Un decremento v1 cambia un
+     * solo lato di 1: lo 0-0 si ignora solo se la somma di testata e' maggiore di 1.
+     */
+    @Test
+    fun `da 1-0 uno 0-0 v1 e' la correzione di un orologio vecchio e si applica`() =
+        runTest {
+            val punteggio = Observer<Int> {}
+            viewModel.team1Score.observeForever(punteggio)
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            assertEquals(1, motore().log.size)
+
+            ricevi(punteggioV1(0, 0))
+            advanceUntilIdle()
+
+            assertEquals(0, viewModel.team1Score.value)
+            assertEquals("il registro e' stato riallineato", 0, motore().log.size)
+        }
+
+    @Test
+    fun `da 3-2 uno 0-0 v1 si ignora, non puo' essere un decremento`() =
+        runTest {
+            calcio3a2()
+            advanceUntilIdle()
+
+            ricevi(punteggioV1(0, 0))
+            advanceUntilIdle()
+
+            assertEquals(3, viewModel.team1Score.value)
+            assertEquals(5, motore().log.size)
+        }
+
+    /** Buco trovato dalla falsificazione: senza questo, "registro pieno => ignora tutto" passava ogni test. */
+    @Test
+    fun `un v1 non 0-0 a registro pieno si applica ancora`() =
+        runTest {
+            val punteggio = Observer<Int> {}
+            viewModel.team1Score.observeForever(punteggio)
+            viewModel.team2Score.observeForever(punteggio)
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            assertEquals(1, motore().log.size)
+
+            ricevi(punteggioV1(2, 1))
+            advanceUntilIdle()
+
+            assertEquals(2, viewModel.team1Score.value)
+            assertEquals(1, viewModel.team2Score.value)
+            assertEquals(3, motore().log.size)
+        }
 }

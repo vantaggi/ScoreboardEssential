@@ -88,10 +88,13 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         }
         val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
 
-        // Un orologio che ha gia' parlato v2 non ha piu' un v1 da ascoltare: il suo punteggio e'
-        // nelle intenzioni, e uno 0-0 o un MATCH_STATE arrivato in ritardo (un DataItem puo' tardare
-        // minuti) svuoterebbe il motore o chiuderebbe una partita nuova (L4).
-        if ((path == WearConstants.PATH_SCORE || path == WearConstants.PATH_MATCH_STATE) && haGiaParlatoV2(event)) return
+        // Un orologio che ha gia' parlato v2 non ha piu' un punteggio v1 da ascoltare: il suo
+        // punteggio e' nelle intenzioni, e uno 0-0 arrivato in ritardo (un DataItem puo' tardare
+        // minuti) svuoterebbe il motore (L4). MATCH_STATE invece passa sempre: e' l'unico modo di
+        // chiudere per un orologio v2 precedente a L4, che non conosce end_match, e filtrarlo
+        // dipenderebbe dalla memoria del processo. Quelli con L4 non lo mandano piu' con un v2, e
+        // una doppia chiusura la assorbe endMatch.
+        if (path == WearConstants.PATH_SCORE && haGiaParlatoV2(event)) return
 
         when (path) {
             WearConstants.PATH_SCORE -> {
