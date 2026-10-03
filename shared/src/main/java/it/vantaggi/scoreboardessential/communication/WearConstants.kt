@@ -174,6 +174,14 @@ object WearConstants {
     const val INTENT_CORRECTION = "correction"
     const val INTENT_UNDO = "undo"
 
+    /**
+     * Chiudere la partita: il telefono esegue endMatch sul PROPRIO stato, una volta sola per
+     * sequenza ([KEY_SEQ], la stessa dei punti). Non porta [KEY_SIDE]: non riguarda un lato, e un
+     * telefono che non la conosce scarta il messaggio per lato mancante invece di contarlo come
+     * un punto. Non entra mai nell'arretrato: con punti in coda il polso non chiude.
+     */
+    const val INTENT_END_MATCH = "end_match"
+
     // Message Paths (MessageClient, fire-and-forget triggers)
     const val MSG_SCORER_SELECTED = "/scoreboard/scorer_selected"
     const val MSG_REQUEST_SYNC = "/scoreboard/request_sync"

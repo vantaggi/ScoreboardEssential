@@ -112,6 +112,7 @@ class WearProtocolGoldenTest {
         assertEquals("point", WearConstants.INTENT_POINT)
         assertEquals("correction", WearConstants.INTENT_CORRECTION)
         assertEquals("undo", WearConstants.INTENT_UNDO)
+        assertEquals("end_match", WearConstants.INTENT_END_MATCH)
     }
 
     /**
@@ -270,6 +271,7 @@ class WearProtocolGoldenTest {
                 "INTENT_POINT" to "point",
                 "INTENT_CORRECTION" to "correction",
                 "INTENT_UNDO" to "undo",
+                "INTENT_END_MATCH" to "end_match",
                 // Messaggi v1
                 "MSG_SCORER_SELECTED" to "/scoreboard/scorer_selected",
                 "MSG_REQUEST_SYNC" to "/scoreboard/request_sync",

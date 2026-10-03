@@ -42,7 +42,6 @@ class MenuActivity : ComponentActivity() {
         private const val EXTRA_IN_CODA = "menu_in_coda"
         private const val EXTRA_COLLEGATO = "menu_collegato"
         private const val EXTRA_PARTITA_INIZIATA = "menu_partita_iniziata"
-        internal const val EXTRA_CALCIO_V2 = "menu_calcio_v2"
         private const val EXTRA_ELENCO_SPORT = "menu_elenco_sport"
         private const val EXTRA_SPORT = "menu_sport"
         private const val EXTRA_RISULTATO = "menu_risultato"
@@ -63,7 +62,6 @@ class MenuActivity : ComponentActivity() {
                 .putExtra(EXTRA_IN_CODA, input.inCoda)
                 .putExtra(EXTRA_COLLEGATO, input.collegato)
                 .putExtra(EXTRA_PARTITA_INIZIATA, input.partitaIniziata)
-                .putExtra(EXTRA_CALCIO_V2, input.calcioConV2)
                 .putExtra(EXTRA_ELENCO_SPORT, input.haElencoSport)
                 .putExtra(EXTRA_SPORT, input.sport)
                 .putExtra(EXTRA_RISULTATO, input.risultato)
@@ -104,7 +102,6 @@ class MenuActivity : ComponentActivity() {
                 inCoda = intent.getIntExtra(EXTRA_IN_CODA, 0),
                 collegato = intent.getBooleanExtra(EXTRA_COLLEGATO, false),
                 partitaIniziata = intent.getBooleanExtra(EXTRA_PARTITA_INIZIATA, false),
-                calcioConV2 = intent.getBooleanExtra(EXTRA_CALCIO_V2, false),
                 haElencoSport = intent.getBooleanExtra(EXTRA_ELENCO_SPORT, false),
                 sport = intent.getStringExtra(EXTRA_SPORT).orEmpty(),
                 risultato = intent.getStringExtra(EXTRA_RISULTATO).orEmpty(),
@@ -268,10 +265,6 @@ internal fun SottotitoloVoce.testo(context: Context): String =
 
         SottotitoloVoce.NienteDaSalvare -> {
             context.getString(R.string.wear_menu_nothing_to_save)
-        }
-
-        SottotitoloVoce.ChiudiDalTelefono -> {
-            context.getString(R.string.wear_menu_football_on_phone)
         }
 
         is SottotitoloVoce.SalvaRisultato -> {

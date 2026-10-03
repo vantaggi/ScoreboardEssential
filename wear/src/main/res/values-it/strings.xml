@@ -26,7 +26,6 @@
     <string name="wear_menu_end_confirm">CHIUDERE %1$s?</string>
     <string name="wear_menu_tap_again">Tocca di nuovo</string>
     <string name="wear_menu_phone_needed">Serve il telefono</string>
-    <string name="wear_menu_football_on_phone">Chiudi dal telefono</string>
     <string name="wear_menu_nothing_to_save">Niente da salvare</string>
     <plurals name="wear_menu_deliver_first">
         <item quantity="one">Prima consegna %1$d punto</item>

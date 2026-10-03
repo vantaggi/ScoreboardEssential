@@ -28,9 +28,6 @@ sealed class SottotitoloVoce {
     /** Registro vuoto: il telefono non salverebbe niente, e la chiusura non avrebbe cosa confermare. */
     data object NienteDaSalvare : SottotitoloVoce()
 
-    /** Nel calcio la chiusura dal polso e' bloccata finche' VALIDAZIONE L4 non e' corretta. */
-    data object ChiudiDalTelefono : SottotitoloVoce()
-
     /** Voce attiva: il risultato che verra' salvato, gia' impaginato ("3–2"). */
     data class SalvaRisultato(
         val risultato: String,
@@ -52,8 +49,6 @@ data class InputMenu(
     val collegato: Boolean,
     /** Il telefono dice che il registro non e' vuoto: il cambio sport verrebbe rifiutato. */
     val partitaIniziata: Boolean,
-    /** Sport a calcio e stato v2 gia' arrivato: la chiusura dal polso perderebbe la partita (L4). */
-    val calcioConV2: Boolean,
     /** Il telefono ha mandato un elenco fra cui scegliere. Senza, la voce SPORT non compare. */
     val haElencoSport: Boolean,
     /** Lo sport in uso, gia' tradotto dal telefono. */
@@ -94,14 +89,14 @@ object MenuVoci {
     private fun voceFine(input: InputMenu): Voce {
         // L'ordine e' quello del design. Con la coda piena si fonderebbero due partite (L4 alta);
         // a partita non cominciata non c'e' niente da salvare (il telefono non salva un 0-0 e il
-        // polso aspetterebbe invano la conferma); da scollegati la chiusura non arriverebbe; nel
-        // calcio perderebbe la partita (L4 alta).
+        // polso aspetterebbe invano la conferma); da scollegati la chiusura non arriverebbe. Nel
+        // calcio la voce e' accesa come negli altri sport: la chiusura e' un'intenzione con
+        // sequenza e il telefono salva col proprio registro (L4).
         val blocco =
             when {
                 input.inCoda > 0 -> SottotitoloVoce.PrimaConsegna(input.inCoda)
                 !input.partitaIniziata -> SottotitoloVoce.NienteDaSalvare
                 !input.collegato -> SottotitoloVoce.ServeIlTelefono
-                input.calcioConV2 -> SottotitoloVoce.ChiudiDalTelefono
                 else -> null
             }
         return Voce(IdVoce.FINE_PARTITA, blocco == null, blocco ?: SottotitoloVoce.SalvaRisultato(input.risultato))

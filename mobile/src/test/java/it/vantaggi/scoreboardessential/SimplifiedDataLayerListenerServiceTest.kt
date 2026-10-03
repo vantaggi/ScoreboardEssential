@@ -121,4 +121,88 @@ class SimplifiedDataLayerListenerServiceTest {
                 .filter { it.msg.contains("T1=10") || it.msg.contains("T2=5") }
         assertTrue("Dati di punteggio nel log: ${fughe.map { it.msg }}", fughe.isEmpty())
     }
+
+    /**
+     * L4: un orologio che ha gia' parlato v2 non ha piu' un v1 da ascoltare. Il suo 0-0 o il suo
+     * MATCH_STATE=false arrivati in ritardo (un DataItem puo' tardare minuti) svuoterebbero il
+     * motore o chiuderebbero una partita nuova. Un orologio che non ha mai parlato v2 resta
+     * ascoltato: e' la compatibilita' con gli orologi non aggiornati.
+     */
+    @Test
+    fun `il v1 di un nodo che ha gia' parlato v2 non arriva, quello di un nodo vecchio si`() {
+        service =
+            org.robolectric.Robolectric
+                .buildService(SimplifiedDataLayerListenerService::class.java)
+                .get()
+        val ricevuti = mutableListOf<String>()
+        val receiver =
+            object : BroadcastReceiver() {
+                override fun onReceive(
+                    context: Context,
+                    intent: Intent,
+                ) {
+                    intent.action?.let { ricevuti.add(it) }
+                }
+            }
+        val manager = LocalBroadcastManager.getInstance(ApplicationProvider.getApplicationContext())
+        manager.registerReceiver(
+            receiver,
+            IntentFilter().apply {
+                addAction(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE)
+                addAction(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
+            },
+        )
+        val nodoV2 = "orologio-v2-${java.util.UUID.randomUUID()}"
+        val nodoVecchio = "orologio-v1-${java.util.UUID.randomUUID()}"
+
+        // Il nodo v2 manda una sequenza: da qui e' un orologio che parla v2.
+        val messaggio = mock(com.google.android.gms.wearable.MessageEvent::class.java)
+        `when`(messaggio.path).thenReturn(WearConstants.MSG_SCORE_INTENT)
+        `when`(messaggio.sourceNodeId).thenReturn(nodoV2)
+        `when`(messaggio.data)
+            .thenReturn(
+                DataMap()
+                    .apply {
+                        putString(WearConstants.KEY_INTENT_KIND, WearConstants.INTENT_END_MATCH)
+                        putLong(WearConstants.KEY_SEQ, 1L)
+                    }.toByteArray(),
+            )
+        service.onMessageReceived(messaggio)
+
+        `when`(mockDataEventBuffer.iterator()).thenAnswer { mutableListOf(mockDataEvent).iterator() }
+        `when`(mockDataEvent.type).thenReturn(DataEvent.TYPE_CHANGED)
+        `when`(mockDataEvent.dataItem).thenReturn(mockDataItem)
+        `when`(mockDataItem.uri).thenReturn(mockUri)
+        dataMapItemStatic.`when`<DataMapItem> { DataMapItem.fromDataItem(mockDataItem) }.thenReturn(mockDataMapItem)
+        `when`(mockDataMapItem.dataMap).thenReturn(mockDataMap)
+        `when`(mockDataMap.getInt(WearConstants.KEY_TEAM1_SCORE, 0)).thenReturn(0)
+        `when`(mockDataMap.getInt(WearConstants.KEY_TEAM2_SCORE, 0)).thenReturn(0)
+        `when`(mockDataMap.getBoolean(WearConstants.KEY_MATCH_ACTIVE, true)).thenReturn(false)
+
+        try {
+            listOf(WearConstants.PATH_SCORE, WearConstants.PATH_MATCH_STATE).forEach { path ->
+                `when`(mockUri.path).thenReturn(path)
+                `when`(mockUri.host).thenReturn(nodoV2)
+                service.onDataChanged(mockDataEventBuffer)
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            assertEquals("niente v1 dal nodo che parla v2: $ricevuti", emptyList<String>(), ricevuti)
+
+            listOf(WearConstants.PATH_SCORE, WearConstants.PATH_MATCH_STATE).forEach { path ->
+                `when`(mockUri.path).thenReturn(path)
+                `when`(mockUri.host).thenReturn(nodoVecchio)
+                service.onDataChanged(mockDataEventBuffer)
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            assertEquals(
+                listOf(
+                    SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE,
+                    SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE,
+                ),
+                ricevuti,
+            )
+        } finally {
+            manager.unregisterReceiver(receiver)
+        }
+    }
 }
