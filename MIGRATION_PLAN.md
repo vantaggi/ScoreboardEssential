@@ -2284,6 +2284,13 @@ di companion) a `Wear_OS_Small_Round_Prova`. Prova di fumo: un tocco sul polso a
   soglia di spazio riservato. Senza disinstallare (si perderebbero i dati): `settings put global
   sys_storage_threshold_percentage 1`, install, poi `settings delete global
   sys_storage_threshold_percentage` (era null).
+- **La caduta del collegamento non si simula con gli emulatori abbinati.** Il collegamento passa da
+  un tunnel TCP di adb senza keepalive: togliere il `reverse` (Android Studio lo ricrea subito),
+  `adb -s <orologio> reconnect`, o mettere in pausa il telefono con `adb emu avd stop` per 80s
+  lasciano l'orologio su «1 connected». Le prove offline (coda, arretrato, IN CODA) restano ai test
+  JVM e a un dispositivo vero; sugli emulatori si prova l'app del telefono chiusa (`am force-stop`).
+- Non usare `adb kill-server` mentre gli emulatori sono abbinati: cadono i tunnel (Android Studio li
+  ricrea in qualche secondo, su porte nuove).
 
 ### L4, fine partita dal polso come intenzione v2 - 3 ottobre 2026 (chiuso)
 
