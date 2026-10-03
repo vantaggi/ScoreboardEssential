@@ -2184,3 +2184,11 @@ proprietario quando sara' il momento), I4 e I5 su Padel Elite.
 Metodo che funziona: implementazione Sonnet, revisione Opus effort medio, correzione Sonnet in worktree
 isolato, unione, verifica, push; un agente non scrive nel worktree di un altro; niente
 `./gradlew --stop` con build in parallelo.
+
+**Telefono passo 14 chiuso** (3 ottobre, `3fbbf35`): COPPIE nel foglio, hasRoles diviso in hasFormations
+e playersPerSide, isSingles unificato con le regole, due posti numerati per lato e scambio da 48dp con
+lucchetto dopo il primo punto, rose e ordine scritti in una transazione sulla riga viva, ordine
+riallineato al cambio di sport, un solo nodo TalkBack per posto; il nome di chi serve non va nella barra
+(decisione del proprietario). Revisione Opus: 1 media e 2 basse, corrette. Suite verde, **840 test JVM**
+(core 157, mobile 377, shared 33, wear 273), strumentati 37 su 37. **Prossimo:** telefono passo 15
+(registro per game, MatchNarrative in :core).
