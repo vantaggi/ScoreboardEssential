@@ -110,6 +110,22 @@ interface MatchDao {
     }
 
     /**
+     * Riscrive formazioni e ordine di servizio della riga viva insieme, tutto o niente: due
+     * scritture separate potevano fermarsi a meta' e lasciare rose nuove con l'ordine vecchio,
+     * cioe' un primo servente che le rose non contengono.
+     */
+    @Transaction
+    suspend fun replaceLineupAndServeOrder(
+        matchId: Int,
+        team1PlayerIds: List<Int>,
+        team2PlayerIds: List<Int>,
+        serveOrder: String,
+    ) {
+        replaceLineup(matchId, team1PlayerIds, team2PlayerIds)
+        updateLiveServeOrder(matchId, serveOrder)
+    }
+
+    /**
      * Fa nascere la riga viva con le sue formazioni, tutto o niente; restituisce l'id della riga.
      *
      * Erano due scritture separate: se il processo moriva tra le due, la partita tornava col
@@ -151,6 +167,13 @@ interface MatchDao {
         team1: Int,
         team2: Int,
         eventLog: String,
+    )
+
+    /** L'ordine di servizio della riga viva, quando cambia con le rose a registro vuoto. */
+    @Query("UPDATE matches SET serveOrder = :serveOrder WHERE matchId = :matchId")
+    suspend fun updateLiveServeOrder(
+        matchId: Int,
+        serveOrder: String,
     )
 
     /** Chiude la partita viva: smette di essere attiva e fissa il risultato finale. */

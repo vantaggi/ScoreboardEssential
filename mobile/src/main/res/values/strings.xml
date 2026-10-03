@@ -133,6 +133,14 @@
     <string name="label_end_match">END MATCH</string>
     <string name="label_team_rosters">TEAM ROSTERS</string>
     <string name="label_match_log">MATCH LOG</string>
+    <string name="label_pairs">PAIRS</string>
+    <string name="label_pair_swap">SWAP</string>
+    <string name="pair_place_1" translatable="false">1</string>
+    <string name="pair_place_2" translatable="false">2</string>
+    <string name="pair_slot_empty">free</string>
+    <string name="pair_slot_description">%1$s, place %2$d: %3$s</string>
+    <string name="pair_swap_description">Swap the two players of %1$s, the first one serves first</string>
+    <string name="pair_swap_locked">Swap locked, the match has started</string>
     <string name="label_formations">FORMATIONS</string>
     <!-- Foglio PARTITA: cio che si consulta, a un tocco dalla schermata di gioco. -->
     <string name="label_match_sheet">MATCH</string>

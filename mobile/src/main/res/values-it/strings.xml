@@ -131,6 +131,12 @@
     <string name="label_end_match">FINE PARTITA</string>
     <string name="label_team_rosters">ROSE</string>
     <string name="label_match_log">REGISTRO</string>
+    <string name="label_pairs">COPPIE</string>
+    <string name="label_pair_swap">SCAMBIA</string>
+    <string name="pair_slot_empty">libero</string>
+    <string name="pair_slot_description">%1$s, posto %2$d: %3$s</string>
+    <string name="pair_swap_description">Scambia i due giocatori di %1$s, il primo batte per primo</string>
+    <string name="pair_swap_locked">Scambio bloccato a partita iniziata</string>
     <string name="label_formations">FORMAZIONI</string>
     <!-- Foglio PARTITA: cio che si consulta, a un tocco dalla schermata di gioco. -->
     <string name="label_match_sheet">PARTITA</string>

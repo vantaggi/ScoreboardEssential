@@ -129,4 +129,35 @@ class ChiusuraPartitaTest {
             assertThat(esito.isFailure).isTrue()
             assertThat(matchDao.getActiveMatchOnce()).isNull()
         }
+
+    /**
+     * Rose e ordine di servizio della riga viva si riscrivono insieme: se la seconda scrittura
+     * fallisce le formazioni non cambiano. Senza la transazione restavano rose nuove con l'ordine
+     * vecchio, cioe' un primo servente che le rose non contengono.
+     */
+    @Test
+    fun `se l'ordine di servizio non si scrive le formazioni restano quelle di prima`() =
+        runTest {
+            val marco = playerDao.insert(Player(playerName = "Marco", appearances = 0, goals = 0)).toInt()
+            val luca = playerDao.insert(Player(playerName = "Luca", appearances = 0, goals = 0)).toInt()
+            val vivaId =
+                matchDao
+                    .insert(Match(team1Id = 1, team2Id = 2, team1Score = 0, team2Score = 0, timestamp = 0L, isActive = true))
+                    .toInt()
+            matchDao.replaceLineup(vivaId, listOf(marco, luca), emptyList())
+            db.openHelper.writableDatabase.execSQL(
+                """
+                CREATE TRIGGER blocca_ordine BEFORE UPDATE OF serveOrder ON matches
+                BEGIN SELECT RAISE(ABORT, 'interrotta'); END
+                """,
+            )
+
+            val esito =
+                runCatching {
+                    matchDao.replaceLineupAndServeOrder(vivaId, listOf(luca, marco), emptyList(), "$luca,$marco")
+                }
+
+            assertThat(esito.isFailure).isTrue()
+            assertThat(formazioni(vivaId)).containsExactly(marco to 1, luca to 1).inOrder()
+        }
 }

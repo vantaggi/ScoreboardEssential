@@ -1126,6 +1126,67 @@ class MainActivityLayoutTest {
         }
     }
 
+    /**
+     * Passo 14: nel padel il foglio ha la card COPPIE con due posti numerati per lato. Toccare
+     * SCAMBIA li inverte (e con loro chi serve per primo); dopo il primo punto il comando si
+     * spegne. Senza il collegamento fra il comando e il ViewModel i posti non si muovono.
+     */
+    @Test
+    fun nelPadel_lo_scambio_delle_coppie_inverte_i_posti_e_dopo_il_primo_punto_si_spegne() {
+        val giocatori =
+            AppDatabase
+                .getDatabase(InstrumentationRegistry.getInstrumentation().targetContext)
+                .playerDao()
+        val inseriti = mutableListOf<Player>()
+        try {
+            // Scritti davvero nel database: la riga viva del primo punto ne riscrive le formazioni.
+            val nomi = listOf("Marco C.", "Anna C.", "Luca C.", "Sara C.")
+            nomi.forEach { nome ->
+                val nuovo = Player(playerName = nome, appearances = 0, goals = 0)
+                inseriti.add(nuovo.copy(playerId = runBlocking { giocatori.insert(nuovo) }.toInt()))
+            }
+            conPadel { scenario, modello ->
+                scenario.onActivity {
+                    modello.addPlayerToTeam(PlayerWithRoles(inseriti[0], emptyList()), 1)
+                    modello.addPlayerToTeam(PlayerWithRoles(inseriti[1], emptyList()), 2)
+                    modello.addPlayerToTeam(PlayerWithRoles(inseriti[2], emptyList()), 1)
+                    modello.addPlayerToTeam(PlayerWithRoles(inseriti[3], emptyList()), 2)
+                }
+                onView(withId(R.id.match_sheet_button)).perform(click())
+                assertEquals(BottomSheetBehavior.STATE_EXPANDED, aspettaStato(scenario, BottomSheetBehavior.STATE_EXPANDED))
+                assertTrue(
+                    "la card COPPIE deve comparire nel padel",
+                    aspettaCheAttivi(scenario) { it.findViewById<View>(R.id.pairs_card).visibility == View.VISIBLE },
+                )
+                assertEquals("Marco C.", testoDi(scenario, R.id.team1_slot1_name))
+                assertEquals("Luca C.", testoDi(scenario, R.id.team1_slot2_name))
+
+                // Un tocco sul comando di scambio della prima squadra.
+                scenario.onActivity { it.findViewById<View>(R.id.team1_swap_button).performClick() }
+                assertTrue(
+                    "dopo lo scambio il primo posto e' di Luca",
+                    aspettaCheAttivi(scenario) {
+                        it.findViewById<TextView>(R.id.team1_slot1_name).text.toString() == "Luca C."
+                    },
+                )
+                assertEquals("Marco C.", testoDi(scenario, R.id.team1_slot2_name))
+                assertEquals("l'altra squadra non si muove", "Anna C.", testoDi(scenario, R.id.team2_slot1_name))
+
+                // Dal primo punto lo scambio e' spento, e un tocco non muove niente.
+                tocca(scenario, 1, 1)
+                assertTrue(
+                    "dopo il primo punto lo scambio deve spegnersi",
+                    aspettaCheAttivi(scenario) { !it.findViewById<View>(R.id.team1_swap_button).isEnabled },
+                )
+                scenario.onActivity { it.findViewById<View>(R.id.team1_swap_button).performClick() }
+                InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+                assertEquals("Luca C.", testoDi(scenario, R.id.team1_slot1_name))
+            }
+        } finally {
+            inseriti.forEach { runBlocking { giocatori.delete(it) } }
+        }
+    }
+
     /** Porta in fondo il foglio aperto, dove stanno gli ultimi pulsanti. */
     private fun scorriInFondo(scenario: ActivityScenario<MainActivity>) {
         scenario.onActivity { it.findViewById<NestedScrollView>(R.id.match_sheet).fullScroll(View.FOCUS_DOWN) }

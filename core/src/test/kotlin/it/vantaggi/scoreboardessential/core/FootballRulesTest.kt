@@ -89,7 +89,8 @@ class FootballRulesTest {
         assertEquals("goal", capabilities.scoreEventKey)
         assertFalse(capabilities.decrementIsUndo)
         assertTrue(capabilities.hasAuxCountdown)
-        assertTrue(capabilities.hasRoles)
+        assertTrue(capabilities.hasFormations)
+        assertNull(capabilities.playersPerSide)
         assertTrue(capabilities.attributesScorer)
     }
 }

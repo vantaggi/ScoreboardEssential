@@ -32,7 +32,8 @@ class RacketRules(
         SportCapabilities(
             clock = ClockMode.NONE,
             hasAuxCountdown = false,
-            hasRoles = false,
+            hasFormations = false,
+            playersPerSide = if (inCoppia) 2 else 1,
             attributesScorer = false,
             decrementIsUndo = true,
             scoreEventKey = "point",
