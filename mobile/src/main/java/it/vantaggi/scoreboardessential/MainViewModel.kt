@@ -1277,14 +1277,18 @@ class MainViewModel(
                         type = MatchEventType.SCORE,
                         engineIndex = indice,
                         playerId = evento.playerId,
+                        pubblica = false,
                     )
                 }
 
                 is ScoringEvent.Correction -> {
-                    addMatchEvent("Score correction for $nomeSquadra", team = squadra, engineIndex = indice)
+                    addMatchEvent("Score correction for $nomeSquadra", team = squadra, engineIndex = indice, pubblica = false)
                 }
             }
         }
+        // Una sola pubblicazione a righe finite: una per riga rifaceva ogni volta registroAGame e
+        // MatchNarrative.of sull'intero registro, O(n^2) sul main thread in una partita lunga.
+        pubblicaRegistro()
         aggiornaAnnullamento()
     }
 
@@ -1694,6 +1698,7 @@ class MainViewModel(
         type: MatchEventType = MatchEventType.INFO,
         engineIndex: Int? = null,
         playerId: Int? = null,
+        pubblica: Boolean = true,
     ) {
         // Il minuto viene dai millisecondi, non da una Date: vedi TimeUtils.matchMinute. Senza
         // cronometro (padel, tennis) un minuto sarebbe sempre 1' e non direbbe niente.
@@ -1710,7 +1715,7 @@ class MainViewModel(
                 0,
                 MatchEvent(timestamp, event, team, player, playerRole, type, engineIndex, playerId),
             )
-            pubblicaRegistro()
+            if (pubblica) pubblicaRegistro()
         }
     }
 
