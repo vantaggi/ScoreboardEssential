@@ -384,7 +384,10 @@ class WearViewModelTest {
     fun `senza telefono niente scelta del marcatore neanche prima del primo stato v2`() {
         // Un orologio riacceso senza telefono non ha ancora visto un v2, ma la rosa puo' esserci
         // (i DataItem restano sul polso): il vecchio percorso apriva la scelta insieme al tocco.
+        // Il disco ricorda un telefono v2 (L4): e' il segno che basta perche' il tocco vada come
+        // intenzione, e quindi in coda, invece che come punteggio v1.
         viewModel = viewModelConTelefono(collegato = false)
+        LastKnownMatch(org.robolectric.RuntimeEnvironment.getApplication()).save("soccer", "", 0)
         viewModel.setAllPlayers(listOf(PlayerData(id = 1, name = "Rossi", roles = emptyList())))
 
         viewModel.incrementScore(1)

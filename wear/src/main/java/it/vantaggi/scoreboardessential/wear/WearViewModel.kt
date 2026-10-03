@@ -373,19 +373,29 @@ class WearViewModel(
     private var chiusuraJob: Job? = null
 
     /**
-     * La fine partita scelta dal menu. Usa il comando che esiste gia' ([resetMatch]); qui si
-     * aggiunge solo cio' che il polso DICE mentre aspetta: CHIUSURA... finche' il telefono non
+     * La fine partita scelta dal menu. Oltre al comando (sotto) c'e' cio' che il polso DICE mentre
+     * aspetta: CHIUSURA... finche' il telefono non
      * risponde con un v2 a partita non cominciata ([applyStateV2]), e dopo
      * [DURATA_ATTESA_CHIUSURA_MS] senza risposta NON CONFERMATA, in ambra. Non dice "non chiusa":
      * il comando e' partito e non si ritira, puo' ancora arrivare. Non si riprova da soli: un
      * nuovo tentativo senza id idempotente e' proprio cio' che VALIDAZIONE L5 sconsiglia.
      *
-     * Il MATCH_STATE parte urgente: un DataItem non urgente puo' arrivare al telefono minuti dopo
-     * i 10 secondi, e chiuderebbe la partita a gioco ripreso o quella successiva.
+     * Con un v2 la chiusura e' un'INTENZIONE con sequenza ([WearConstants.INTENT_END_MATCH]): il
+     * telefono esegue endMatch sul PROPRIO stato, una volta sola per sequenza. Il polso non scrive
+     * piu' lo 0-0 v1 ne' i timer azzerati, che svuotavano il motore del telefono PRIMA di
+     * endMatch (nel calcio la partita andava persa o salvata 0-0) e arrivavano in ordine
+     * qualunque. Senza un v2 (telefono non aggiornato) resta il v1 di sempre, e il MATCH_STATE
+     * parte urgente: un DataItem non urgente puo' arrivare al telefono minuti dopo i 10 secondi, e
+     * chiuderebbe la partita a gioco ripreso o quella successiva.
+     *
+     * Con punti in coda non si chiude e ritorna falso: il telefono non li ha, e la chiusura (o il
+     * reset, nel v1) separerebbe la partita giocata al polso da quella del telefono solo a meta':
+     * due partite si fonderebbero. E' la stessa regola del menu ("Prima consegna n punti"), qui
+     * perche' il ViewModel non deve dipendere da chi lo chiama.
      */
-    fun chiudiPartita() {
+    fun chiudiPartita(): Boolean {
+        if (_pendingCount.value > 0 || batchInVolo != null) return false
         registroPienoAlComando = statoDalTelefono?.matchInProgress == true
-        resetMatch(urgent = true)
         chiusuraInAttesa = true
         mostraTransitorio(Transitorio.Chiusura, DURATA_ATTESA_CHIUSURA_MS)
         chiusuraJob?.cancel()
@@ -395,6 +405,40 @@ class WearViewModel(
                 chiusuraInAttesa = false
                 mostraTransitorio(Transitorio.ChiusuraNonConfermata)
             }
+        if (protocolV2Seen) {
+            // Il gol offerto da CHI? non esiste piu'.
+            chiudiFinestraChi()
+            inviaFinePartita()
+        } else {
+            resetMatch(urgent = true)
+        }
+        return true
+    }
+
+    /**
+     * L'intenzione di chiusura: una sequenza nuova (la stessa dei punti, una per nodo) e nessun
+     * lato. Non passa da [sendScoreIntent]: la chiusura non ha ricevuta di punto, non va mai in
+     * coda (con la coda piena non parte) e non si rimette in coda se non arriva: chi chiude dice
+     * subito che non e' partita, invece di far credere per 10 secondi che il telefono ci stia
+     * pensando.
+     */
+    private fun inviaFinePartita() {
+        val seq = ++intentSequence
+        val quando = System.currentTimeMillis()
+        viewModelScope.launch {
+            val payload =
+                DataMap().apply {
+                    putString(WearConstants.KEY_INTENT_KIND, WearConstants.INTENT_END_MATCH)
+                    putLong(WearConstants.KEY_SEQ, seq)
+                    putLong(WearConstants.KEY_AT_MILLIS, quando)
+                }
+            if (!connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())) {
+                chiusuraInAttesa = false
+                chiusuraJob?.cancel()
+                triggerFailureVibration()
+                mostraTransitorio(Transitorio.ChiusuraNonConfermata)
+            }
+        }
     }
 
     /**
@@ -887,8 +931,12 @@ class WearViewModel(
         val chiediMarcatore = _scoreState.value?.attributesScorer == true
         val tickAlle = orologio()
         haptics.tick()
-        sendScoreIntent(team, WearConstants.INTENT_POINT, chiediMarcatore, tickAlle)
+        // UN canale solo. Prima del primo v2 il tocco partiva come intenzione E come punteggio
+        // assoluto v1, e un telefono v2 lo contava due volte (nel calcio N+2, o il registro
+        // appiattito): ora, finche' non si sa di un telefono v2, e' il v1 di sempre.
+        riconosciV2DalDisco()
         if (protocolV2Seen) {
+            sendScoreIntent(team, WearConstants.INTENT_POINT, chiediMarcatore, tickAlle)
             // Nessuna vibrazione qui: la conferma arriva con lo stato che il telefono rimanda
             // (vedi chiudiRicevute), non alla consegna.
             return true
@@ -897,10 +945,23 @@ class WearViewModel(
         return true
     }
 
+    /**
+     * Un orologio riavviato non ha ancora riletto i DataItem, ma il disco ricorda l'ultimo stato
+     * v2: vuol dire che il telefono parla v2, e un tocco dato nella finestra dell'avvio a freddo va
+     * come intenzione e non come punteggio assoluto dal contatore locale, che riparte da 0-0.
+     */
+    private fun riconosciV2DalDisco() {
+        if (protocolV2Seen) return
+        val disco = statoDaDisco() ?: return
+        protocolV2Seen = true
+        if (statoDalTelefono == null) statoDalTelefono = disco
+    }
+
     fun decrementScore(team: Int) {
         if (team != 1 && team != 2) return
         // Un annullamento o una correzione puo' togliere proprio il gol che CHI? offre.
         chiudiFinestraChi()
+        riconosciV2DalDisco()
         if (protocolV2Seen) {
             val tipo =
                 if (_scoreState.value?.decrementIsUndo == true) {
@@ -1020,7 +1081,8 @@ class WearViewModel(
         // Un orologio riacceso a meta' partita, col telefono in borsa, deve ritrovare il
         // punteggio che aveva: non basta sapere quanti tocchi sono in coda.
         if (pending.size == 0) return
-        if (statoDalTelefono == null) statoDalTelefono = statoDaDisco()
+        // Uno stato sul disco e' un telefono v2 gia' visto: da qui un solo canale, il v2.
+        riconosciV2DalDisco()
         rebuildLocalState()
     }
 
@@ -1298,18 +1360,22 @@ class WearViewModel(
     ) {
         // Una partita finita o azzerata non ha piu' il gol che CHI? offriva.
         chiudiFinestraChi()
+        // Con un v2 il polso non scrive il v1: lo 0-0 svuoterebbe il motore del telefono prima di
+        // endMatch (L4), e la chiusura e' un'intenzione ([chiudiPartita]). Il v1 resta solo per
+        // un telefono che non parla v2.
+        val senzaInvii = fromRemote || protocolV2Seen
         // Update local state without sending data if fromRemote is true
-        if (fromRemote) {
+        if (senzaInvii) {
             _team1Score.value = 0
             _team2Score.value = 0
         } else {
             updateScore(0, 0)
         }
 
-        resetMatchTimer(fromRemote)
-        resetKeeperTimer(fromRemote)
+        resetMatchTimer(senzaInvii)
+        resetKeeperTimer(senzaInvii)
 
-        if (!fromRemote) {
+        if (!senzaInvii) {
             // Also signal match reset to mobile
             viewModelScope.launch {
                 val data = mapOf(it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_MATCH_ACTIVE to false)
@@ -1349,6 +1415,8 @@ class WearViewModel(
             connectionManager.sendData(
                 path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
                 data = data,
+                // Un comando, non uno stato di sfondo: START non deve arrivare minuti dopo (L4).
+                urgent = true,
             )
         }
     }
@@ -1395,6 +1463,7 @@ class WearViewModel(
                 connectionManager.sendData(
                     path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_TIMER_STATE,
                     data = data,
+                    urgent = true,
                 )
             }
         }
@@ -1435,6 +1504,7 @@ class WearViewModel(
             connectionManager.sendData(
                 path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
                 data = data,
+                urgent = true,
             )
         }
     }
@@ -1458,6 +1528,7 @@ class WearViewModel(
                 connectionManager.sendData(
                     path = it.vantaggi.scoreboardessential.shared.communication.WearConstants.PATH_KEEPER_TIMER,
                     data = data,
+                    urgent = true,
                 )
             }
         }

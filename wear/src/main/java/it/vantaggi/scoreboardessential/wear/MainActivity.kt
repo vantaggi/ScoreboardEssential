@@ -20,7 +20,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.wear.ambient.AmbientLifecycleObserver
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
-import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
@@ -388,7 +387,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun chiudiSeAncoraPossibile() {
         val fine = MenuVoci.calcola(inputMenu()).first { it.id == IdVoce.FINE_PARTITA }
-        if (fine.attiva) viewModel.chiudiPartita() else apriMenu()
+        if (!fine.attiva || !viewModel.chiudiPartita()) apriMenu()
     }
 
     /** I fatti su cui [MenuVoci] decide, letti adesso. */
@@ -408,7 +407,6 @@ class MainActivity : ComponentActivity() {
             partitaIniziata =
                 stato?.matchInProgress
                     ?: (viewModel.pendingCount.value > 0 || viewModel.team1Score.value + viewModel.team2Score.value > 0),
-            calcioConV2 = stato?.sportId == SportRegistry.FOOTBALL,
             haElencoSport = stato != null && stato.sportIds.size > 1,
             sport = stato?.sportLabel.orEmpty(),
             risultato = risultato,

@@ -34,7 +34,6 @@ class TitoliIntegriTest {
             inCoda = 0,
             collegato = true,
             partitaIniziata = true,
-            calcioConV2 = false,
             haElencoSport = true,
             sport = "Padel",
             risultato = "6–4",

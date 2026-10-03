@@ -87,6 +87,8 @@ class RigaStatoViewModelTest {
         collegamento = MutableStateFlow(ConnectionState.Disconnected)
         telefono = Mockito.mock(OptimizedWearDataSync::class.java)
         Mockito.`when`(telefono.connectionState).thenReturn(collegamento)
+        // La chiusura dal polso e' un messaggio: il finto lo consegna, senza un nullo da spacchettare.
+        runBlocking { Mockito.`when`(telefono.sendMessage(Mockito.anyString(), Mockito.any())).thenReturn(true) }
         viewModel = nuovoViewModel()
     }
 
@@ -352,9 +354,10 @@ class RigaStatoViewModelTest {
         .count { it.method.name == "sendData" && it.arguments[0] == path && it.arguments[2] == urgente }
 
     @Test
-    fun `chiudere dal polso manda il MATCH_STATE urgente, il reset normale no`() {
+    fun `senza v2 chiudere dal polso manda il MATCH_STATE urgente, il reset normale no`() {
+        // Un telefono che non parla v2: resta il v1 di sempre. Col v2 la chiusura e' un'intenzione
+        // e nessun MATCH_STATE parte (FinePartitaDalPolsoTest).
         collegati()
-        viewModel.applyStateV2(stato())
 
         viewModel.resetMatch()
         assestati()

@@ -61,6 +61,8 @@ class MainActivityTest {
         collegamento = MutableStateFlow(ConnectionState.Disconnected)
         telefono = Mockito.mock(OptimizedWearDataSync::class.java)
         Mockito.`when`(telefono.connectionState).thenReturn(collegamento)
+        // La chiusura dal polso e' un messaggio: il finto lo consegna, senza un nullo da spacchettare.
+        runBlocking { Mockito.`when`(telefono.sendMessage(Mockito.anyString(), Mockito.any())).thenReturn(true) }
         viewModel = WearViewModel(app, telefono, orologio = { SystemClock.uptimeMillis() + 1_000_000L })
         controller = Robolectric.buildActivity(MainActivity::class.java)
         val fabbrica =
@@ -359,15 +361,6 @@ class MainActivityTest {
     }
 
     @Test
-    fun `con un v2 di calcio il menu parte con calcioConV2 acceso, con un v2 di padel spento`() {
-        applica(statoSport("football"))
-        assertTrue(apriMenu().getBooleanExtra(MenuActivity.EXTRA_CALCIO_V2, false))
-
-        applica(statoSport("padel"))
-        assertFalse(apriMenu().getBooleanExtra(MenuActivity.EXTRA_CALCIO_V2, true))
-    }
-
-    @Test
     fun `la fine partita scelta nel menu porta il ViewModel a CHIUSURA`() {
         collegati()
         applica(statoSport("padel"))
@@ -377,20 +370,32 @@ class MainActivityTest {
         assertEquals(Transitorio.Chiusura, viewModel.statoFiducia.value)
     }
 
+    /** L4: nel calcio la voce e' accesa come negli altri sport, e la chiusura parte (era spenta). */
     @Test
-    fun `se dopo l'apertura del menu arriva un v2 di calcio la chiusura non parte e il menu dice perche'`() {
+    fun `nel calcio la fine partita scelta nel menu porta il ViewModel a CHIUSURA`() {
+        collegati()
+        applica(statoSport("football"))
+
+        sceglieFine(apriMenu())
+
+        assertEquals(Transitorio.Chiusura, viewModel.statoFiducia.value)
+    }
+
+    @Test
+    fun `se dopo l'apertura del menu arrivano punti in coda la chiusura non parte e il menu dice perche'`() {
         collegati()
         applica(statoSport("padel"))
         val richiesta = apriMenu()
 
-        applica(statoSport("football"))
+        // Un tocco dato al polso mentre il menu era aperto e non consegnato: la coda non e' vuota.
+        PendingIntents(RuntimeEnvironment.getApplication()).add(PendingIntent("point", 1, 1_000L))
+        viewModel.refreshPendingCount()
         sceglieFine(richiesta)
 
         assertFalse(viewModel.statoFiducia.value is Transitorio.Chiusura)
         // Il menu si riapre: la voce spenta ha il suo motivo scritto nel sottotitolo.
         val riaperto = shadowOf(controller.get()).nextStartedActivityForResult.intent
         assertEquals(MenuActivity::class.java.name, riaperto.component?.className)
-        assertTrue(riaperto.getBooleanExtra(MenuActivity.EXTRA_CALCIO_V2, false))
     }
 
     @Test

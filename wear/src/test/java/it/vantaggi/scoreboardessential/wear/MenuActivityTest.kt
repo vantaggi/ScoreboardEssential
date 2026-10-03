@@ -42,7 +42,6 @@ class MenuActivityTest {
             inCoda = 0,
             collegato = true,
             partitaIniziata = true,
-            calcioConV2 = false,
             haElencoSport = true,
             sport = "Padel",
             risultato = "6–4",
@@ -280,7 +279,6 @@ class MenuActivityTest {
             listOf(
                 SottotitoloVoce.PartitaInCorso,
                 SottotitoloVoce.ServeIlTelefono,
-                SottotitoloVoce.ChiudiDalTelefono,
                 SottotitoloVoce.NienteDaSalvare,
                 SottotitoloVoce.SalvaRisultato("40–AV"),
             ) + listOf(1, 2, 99, 999).map { SottotitoloVoce.PrimaConsegna(it) }
