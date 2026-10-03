@@ -335,6 +335,26 @@ class FinePartitaDalPolsoTest {
         assertTrue(viewModel.chiudiPartita())
     }
 
+    /**
+     * Buco trovato dalla falsificazione: con un v2 il reset del polso non scrive niente sul filo
+     * (ne' lo 0-0 v1, ne' i timer, ne' il MATCH_STATE): svuoterebbe il motore del telefono prima
+     * di qualunque chiusura. Nessun test proteggeva `senzaInvii = fromRemote || protocolV2Seen`.
+     */
+    @Test
+    fun `con un v2 il reset dal polso non scrive niente sul filo`() {
+        viewModel.applyStateV2(calcio3a2())
+        viewModel.syncMatchTimer(40 * 60_000L, true)
+
+        viewModel.resetMatch()
+        assestati()
+
+        assertEquals("niente 0-0 v1", 0, dataItem(WearConstants.PATH_SCORE).size)
+        assertEquals("niente timer azzerato", 0, dataItem(WearConstants.PATH_TIMER_STATE).size)
+        assertEquals("niente portiere azzerato", 0, dataItem(WearConstants.PATH_KEEPER_TIMER).size)
+        assertEquals("niente MATCH_STATE", 0, dataItem(WearConstants.PATH_MATCH_STATE).size)
+        assertEquals("niente intenzione", 0, messaggi(WearConstants.MSG_SCORE_INTENT).size)
+    }
+
     // --- Rilievo 4: i comandi sono DataItem urgenti ---
 
     @Test
