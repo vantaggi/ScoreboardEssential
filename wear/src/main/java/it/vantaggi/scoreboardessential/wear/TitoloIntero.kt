@@ -4,7 +4,7 @@ import android.content.Context
 import android.text.TextPaint
 import android.util.AttributeSet
 import android.util.TypedValue
-import com.google.android.material.textview.MaterialTextView
+import androidx.appcompat.widget.AppCompatTextView
 
 /**
  * Un titolo in cui una parola non si spezza mai: se la parola piu' lunga non entra nella larghezza
@@ -19,13 +19,16 @@ import com.google.android.material.textview.MaterialTextView
  *
  * La dimensione dichiarata (20sp) resta quella di tutti i casi in cui la parola entra: il quadrato
  * da 180dp e il tondo da 227dp non cambiano.
+ *
+ * AppCompatTextView e non MaterialTextView: quella applica la lineHeight di HeadlineSmall (32sp),
+ * che il TextView di prima ignorava, e allargava le righe del titolo di un terzo.
  */
 class TitoloIntero
     @JvmOverloads
     constructor(
         context: Context,
         attrs: AttributeSet? = null,
-    ) : MaterialTextView(context, attrs) {
+    ) : AppCompatTextView(context, attrs) {
         // Il carattere dichiarato nel layout: da qui si riparte a ogni misura.
         private val dimensioneDichiarata = textSize
         private val dimensioneMinima = minOf(dimensioneDichiarata, sp(MINIMO_SP))
