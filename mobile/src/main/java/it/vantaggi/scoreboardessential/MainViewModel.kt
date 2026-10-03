@@ -552,7 +552,7 @@ class MainViewModel(
             val righe = matchEventLog.toList()
             _matchEvents.postValue(righe)
             _registroDelFoglio.postValue(
-                righeDelRegistro(righe, MatchNarrative.of(engine), _team1Name.value.orEmpty(), _team2Name.value.orEmpty()),
+                registroAGame(righe, MatchNarrative.of(engine), _team1Name.value.orEmpty(), _team2Name.value.orEmpty()),
             )
         }
     }

@@ -2762,4 +2762,193 @@ class MainViewModelTest {
                 chiudiDatabase(db)
             }
         }
+
+    // --- registro a game del padel e del tennis (passo 15) -------------------------------------------
+
+    private fun righeDelFoglio(): List<MatchEvent> = viewModel.registroDelFoglio.value.orEmpty()
+
+    private fun righeDeiGame(): List<MatchEvent> = righeDelFoglio().filter { it.type == MatchEventType.GAME }
+
+    /** Un game da zero: il punto secco a 40-40 lo chiude in quattro punti. */
+    private fun giocaUnGame(lato: Int) = repeat(4) { viewModel.addScore(lato) }
+
+    @Test
+    fun `nel padel il registro del foglio ha una riga per game e nessuna per punto`() =
+        runTest {
+            val foglioObserver = Observer<List<MatchEvent>> {}
+            viewModel.registroDelFoglio.observeForever(foglioObserver)
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+
+            viewModel.addScore(1)
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            assertEquals("un game aperto non e' una riga", 0, righeDeiGame().size)
+            assertEquals("i punti non sono piu' nel foglio", 0, righeDelFoglio().count { it.type == MatchEventType.SCORE })
+
+            viewModel.addScore(1)
+            viewModel.addScore(1)
+            giocaUnGame(2)
+            advanceUntilIdle()
+
+            // In testa il piu' recente.
+            val game = righeDeiGame()
+            assertEquals(listOf(2, 1), game.map { it.team })
+            assertEquals(listOf(listOf(1, 1), listOf(1, 0)), game.map { it.game!!.gamesAfter })
+            assertEquals(listOf(7, 3), game.map { it.engineIndex })
+            // La striscia e il report leggono ancora una riga per punto.
+            assertEquals(8, righeDiPunto().size)
+
+            viewModel.registroDelFoglio.removeObserver(foglioObserver)
+        }
+
+    @Test
+    fun `annullare il punto che chiude un game toglie la riga del game riaperto`() =
+        runTest {
+            val foglioObserver = Observer<List<MatchEvent>> {}
+            viewModel.registroDelFoglio.observeForever(foglioObserver)
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            giocaUnGame(1)
+            advanceUntilIdle()
+            assertEquals(1, righeDeiGame().size)
+
+            viewModel.undoLastGoal()
+            advanceUntilIdle()
+
+            assertEquals("il game e' riaperto: la riga non c'e' piu'", 0, righeDeiGame().size)
+            assertEquals("40", viewModel.scoreDisplay.value?.side1Primary)
+
+            // Rigiocando il punto la riga torna, e con lo stesso contenuto.
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            assertEquals(listOf(listOf(1, 0)), righeDeiGame().map { it.game!!.gamesAfter })
+
+            viewModel.registroDelFoglio.removeObserver(foglioObserver)
+        }
+
+    @Test
+    fun `le righe informative restano al loro posto fra le righe dei game`() =
+        runTest {
+            val foglioObserver = Observer<List<MatchEvent>> {}
+            viewModel.registroDelFoglio.observeForever(foglioObserver)
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            giocaUnGame(1)
+            viewModel.addScore(2)
+            viewModel.undoLastGoal()
+            giocaUnGame(2)
+            advanceUntilIdle()
+
+            val tipi = righeDelFoglio().map { it.type }
+            // Dal piu' recente: game 2, ANNULLATO (dopo il game 1 e prima del game 2), game 1, "partita pronta".
+            assertEquals(listOf(MatchEventType.GAME, MatchEventType.INFO, MatchEventType.GAME), tipi.take(3))
+            assertTrue(righeDelFoglio()[1].event.startsWith("Undo"))
+
+            viewModel.registroDelFoglio.removeObserver(foglioObserver)
+        }
+
+    @Test
+    fun `nel calcio il registro del foglio e' quello dei punti, com'era`() =
+        runTest {
+            val foglioObserver = Observer<List<MatchEvent>> {}
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            viewModel.registroDelFoglio.observeForever(foglioObserver)
+            viewModel.matchEvents.observeForever(eventiObserver)
+
+            viewModel.addScore(1)
+            viewModel.addScore(2)
+            advanceUntilIdle()
+
+            assertEquals(viewModel.matchEvents.value, righeDelFoglio())
+            assertEquals(2, righeDiPunto().size)
+            assertEquals(0, righeDeiGame().size)
+
+            viewModel.registroDelFoglio.removeObserver(foglioObserver)
+            viewModel.matchEvents.removeObserver(eventiObserver)
+        }
+
+    @Test
+    fun `dopo il ripristino le righe dei game sono quelle del percorso dal vivo`() =
+        runTest {
+            val foglioObserver = Observer<List<MatchEvent>> {}
+            viewModel.registroDelFoglio.observeForever(foglioObserver)
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            giocaUnGame(1)
+            giocaUnGame(2)
+            giocaUnGame(1)
+            viewModel.addScore(2)
+            advanceUntilIdle()
+            val dalVivo = righeDeiGame().map { it.game }
+            assertEquals(3, dalVivo.size)
+
+            // La stessa partita come arriva dal database: stesso registro, righe da ricostruire.
+            val registro = MatchLogCodec.encode(motore().log)
+            val matchDao = campo("matchDao") as MatchDao
+            kotlinx.coroutines.runBlocking {
+                whenever(matchDao.getActiveMatchOnce()).thenReturn(
+                    Match(
+                        matchId = 5,
+                        team1Id = 1,
+                        team2Id = 2,
+                        team1Score = 0,
+                        team2Score = 0,
+                        timestamp = 0L,
+                        isActive = true,
+                        eventLog = registro,
+                        sportId = SportRegistry.PADEL,
+                    ),
+                )
+            }
+            // Il ripristino parte da solo nell'init del ViewModel nuovo, come all'apertura dell'app.
+            val ripreso = nuovoViewModel(SportRegistry.PADEL)
+            val ripresoObserver = Observer<List<MatchEvent>> {}
+            ripreso.registroDelFoglio.observeForever(ripresoObserver)
+            advanceUntilIdle()
+
+            assertEquals(dalVivo, ripreso.registroDelFoglio.value.orEmpty().filter { it.type == MatchEventType.GAME }.map { it.game })
+
+            ripreso.registroDelFoglio.removeObserver(ripresoObserver)
+            viewModel.registroDelFoglio.removeObserver(foglioObserver)
+        }
+
+    @Test
+    fun `la partita consegnata dall'orologio ha le righe dei game`() =
+        runTest {
+            val foglioObserver = Observer<List<MatchEvent>> {}
+            viewModel.registroDelFoglio.observeForever(foglioObserver)
+            val connessione = campo("connectionManager") as OptimizedWearDataSync
+            kotlinx.coroutines.runBlocking { whenever(connessione.sendMessage(any(), any())).thenReturn(true) }
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            advanceUntilIdle()
+
+            // Un game al lato 1 (quattro punti) e uno al lato 2, piu' un punto del lato 2.
+            ricevi(
+                Intent(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
+                    .putExtra(
+                        WearConstants.KEY_INTENT_BATCH,
+                        "point,1,1000;point,1,2000;point,1,3000;point,1,4000;point,2,5000;point,2,6000;point,2,7000;point,2,8000;point,2,9000",
+                    ).putExtra(WearConstants.KEY_SEQ, 4L),
+            )
+            advanceUntilIdle()
+
+            assertEquals(listOf(2, 1), righeDeiGame().map { it.team })
+            assertEquals(listOf(7, 3), righeDeiGame().map { it.engineIndex })
+
+            viewModel.registroDelFoglio.removeObserver(foglioObserver)
+        }
+
+    @Test
+    fun `rinominare una squadra rinomina le righe dei game`() =
+        runTest {
+            val foglioObserver = Observer<List<MatchEvent>> {}
+            viewModel.registroDelFoglio.observeForever(foglioObserver)
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            giocaUnGame(1)
+            advanceUntilIdle()
+
+            viewModel.setTeam1Name("Rossi")
+            advanceUntilIdle()
+
+            assertEquals("Rossi", righeDeiGame().single().player)
+
+            viewModel.registroDelFoglio.removeObserver(foglioObserver)
+        }
 }

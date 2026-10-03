@@ -22,7 +22,7 @@ import it.vantaggi.scoreboardessential.domain.models.MatchEventType
  * Il game ancora aperto non ha riga: il tabellone e la striscia dicono gia' il punto in corso.
  * Sta fuori dal ViewModel perche' e' una funzione pura, e si prova da sola.
  */
-internal fun righeDelRegistro(
+internal fun registroAGame(
     registro: List<MatchEvent>,
     narrativa: MatchNarrative?,
     nomeSquadra1: String,
