@@ -2167,3 +2167,20 @@ durante il ripristino scartato; portiere comandabile dal telefono con riavvio da
 messaggio e stato SCADUTO rosso con CAMBIO), cache della riga dei set nella cronologia. Ogni passo con
 revisione Opus e correzione. Suite verde, **822 test JVM distinti** (core 154, mobile 362, shared 33,
 wear 273), strumentati 36 su 36.
+
+## RIPRESA - 3 ottobre 2026, mattina
+
+Su `main`: tutto fino a `b883cd8` (orologio 4-10, telefono 5-13, L2, L11, L12, pallini, Cronaca del
+singolare, cache dei set). **In corso:** telefono passo 14, COPPIE nel foglio, branch `wf17/coppie`
+(sette commit da `926bafe`, worktree `wf_b8cd519a-b23-1`, backup su origin): l'implementazione e'
+finita, l'agente si e' fermato per il limite di sessione prima di riportare la verifica; revisione Opus
+lanciata (verifica la build e cerca difetti). Poi: correzione se serve (agente Sonnet con
+`isolation: 'worktree'` e `git switch wf17/coppie`, dopo aver tolto il worktree), unione, verifica
+completa con strumentati (emulatore da avviare staccato con Start-Process), push. **Dopo:** telefono
+passo 15 (registro del padel e del tennis con una riga per game, MatchNarrative in :core, grande);
+orologio passo 11 (verifica su tre AVD: serve creare l'AVD tondo da 227dp e quello quadrato).
+**Fuori coda:** L4, L5, L6 (prove con telefono e orologio accoppiati: l'accoppiamento lo fa il
+proprietario quando sara' il momento), I4 e I5 su Padel Elite.
+Metodo che funziona: implementazione Sonnet, revisione Opus effort medio, correzione Sonnet in worktree
+isolato, unione, verifica, push; un agente non scrive nel worktree di un altro; niente
+`./gradlew --stop` con build in parallelo.
