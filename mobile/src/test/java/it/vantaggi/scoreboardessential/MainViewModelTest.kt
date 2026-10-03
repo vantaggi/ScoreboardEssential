@@ -3197,4 +3197,60 @@ class MainViewModelTest {
             assertEquals(3, motore().log.size)
             assertEquals(2, viewModel.team1Score.value)
         }
+
+    /**
+     * Rilievo della revisione L4 (media): la guardia di endMatch si legge subito, il motore si
+     * svuota dentro la fila. Due chiusure nello stesso tick (END MATCH sul telefono e end_match
+     * dal polso, o end_match e MATCH_STATE=false) passavano entrambe, e la seconda inseriva una
+     * partita 0-0 con le presenze contate due volte. Qui NIENTE advanceUntilIdle fra le due.
+     */
+    @Test
+    fun `due chiusure nello stesso tick salvano una partita sola, 3-2`() =
+        runTest {
+            calcio3a2()
+            advanceUntilIdle()
+
+            ricevi(fineDalPolso())
+            ricevi(fineDalPolso())
+            advanceUntilIdle()
+
+            val salvate = partiteSalvate()
+            assertEquals("una sola partita salvata: $salvate", 1, salvate.size)
+            assertEquals(3, salvate.single().team1Score)
+            assertEquals(2, salvate.single().team2Score)
+        }
+
+    @Test
+    fun `fine dal polso e MATCH_STATE falso nello stesso tick salvano una partita sola, 3-2`() =
+        runTest {
+            calcio3a2()
+            advanceUntilIdle()
+
+            ricevi(fineDalPolso())
+            ricevi(
+                Intent(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
+                    .putExtra(WearConstants.KEY_MATCH_ACTIVE, false),
+            )
+            advanceUntilIdle()
+
+            val salvate = partiteSalvate()
+            assertEquals("una sola partita salvata: $salvate", 1, salvate.size)
+            assertEquals(3, salvate.single().team1Score)
+            assertEquals(2, salvate.single().team2Score)
+        }
+
+    /** END MATCH sul telefono e fine dal polso insieme: la seconda dice si, la partita si sta salvando. */
+    @Test
+    fun `la seconda chiusura nello stesso tick dice si per lo snackbar e non salva due volte`() =
+        runTest {
+            calcio3a2()
+            advanceUntilIdle()
+
+            assertEquals(true, viewModel.endMatch())
+            assertEquals("si sta gia' salvando", true, viewModel.endMatch())
+            advanceUntilIdle()
+
+            assertEquals(1, partiteSalvate().size)
+            assertEquals("a chiusura finita e partita nuova, non c'e' niente da salvare", false, viewModel.endMatch())
+        }
 }
