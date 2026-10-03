@@ -1,5 +1,6 @@
 package it.vantaggi.scoreboardessential
 
+import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -8,6 +9,7 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
@@ -46,12 +48,33 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
          * scriveva nel log una ClassCastException. Qui si guarda il valore e basta: Long com'e',
          * Int allargato, assente o altro 0 (che la guardia sulla sequenza scarta).
          */
-        internal fun leggiSeq(dataMap: DataMap): Long =
-            when (val valore = dataMap.get<Any>(WearConstants.KEY_SEQ)) {
+        internal fun leggiSeq(dataMap: DataMap): Long = leggiLong(dataMap, WearConstants.KEY_SEQ)
+
+        /** Come [leggiSeq] per ogni chiave numerica del filo (l'id del batch): Long, Int allargato, o 0. */
+        internal fun leggiLong(
+            dataMap: DataMap,
+            chiave: String,
+        ): Long =
+            when (val valore = dataMap.get<Any>(chiave)) {
                 is Long -> valore
                 is Int -> valore.toLong()
                 else -> 0L
             }
+
+        /** Il nodo che ha mandato l'arretrato: il ViewModel ci tiene l'ultimo id applicato (L5). */
+        const val EXTRA_NODE_ID = "node_id"
+
+        /**
+         * Come si risponde a un nodo. Iniettabile: sotto test non c'e' Play Services, e il punto e'
+         * COSA si risponde, non il trasporto. In produzione e' un MessageClient verso quel nodo.
+         */
+        internal var rispondi: (Context, String, String, ByteArray) -> Unit = { context, nodo, path, dati ->
+            try {
+                Wearable.getMessageClient(context).sendMessage(nodo, path, dati)
+            } catch (e: Exception) {
+                Log.w(TAG, "Risposta a $nodo non inviata: $path", e)
+            }
+        }
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -259,16 +282,25 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         }
         lastSeqByNode[sourceNodeId] = seq
 
+        // Zero da un orologio che non lo manda: il ViewModel usera' l'ora di arrivo.
+        val quando = dataMap.getLong(WearConstants.KEY_AT_MILLIS, 0L)
         val intent =
             Intent(ACTION_SCORE_INTENT).apply {
                 putExtra(WearConstants.KEY_SIDE, side)
                 putExtra(WearConstants.KEY_INTENT_KIND, kind)
-                // Zero da un orologio che non lo manda: il ViewModel usera' l'ora di arrivo.
-                putExtra(WearConstants.KEY_AT_MILLIS, dataMap.getLong(WearConstants.KEY_AT_MILLIS, 0L))
+                putExtra(WearConstants.KEY_AT_MILLIS, quando)
             }
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+        val preso = LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+        // Nessun ricevitore: il ViewModel non c'e' (app chiusa con indietro, uno swipe, processo ucciso)
+        // e il broadcast e' andato nel vuoto. L'orologio non ha vibrato la conferma (aspetta lo stato) ma
+        // non rimanda il tocco, quindi il punto si metteva da parte qui e lo applica il ViewModel alla
+        // creazione (L5). Solo i gesti di punteggio: una chiusura o un cambio sport arrivati ore dopo
+        // agirebbero su un'altra partita, e al polso hanno gia' detto NON CONFERMATA.
+        if (!preso && kind != WearConstants.INTENT_END_MATCH) {
+            IntentiInAttesa(this).aggiungi(kind, side, quando.takeIf { it > 0L } ?: System.currentTimeMillis())
+        }
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "Broadcasted score intent $kind for side $side (seq=$seq)")
+            Log.d(TAG, "Broadcasted score intent $kind for side $side (seq=$seq, preso=$preso)")
         }
     }
 
@@ -290,6 +322,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         val dataMap = DataMap.fromByteArray(data)
         val batch = dataMap.getString(WearConstants.KEY_INTENT_BATCH, "")
         val seq = leggiSeq(dataMap)
+        val batchId = leggiLong(dataMap, WearConstants.KEY_BATCH_ID)
         if (batch.isBlank() || seq <= 0L) {
             Log.w(TAG, "Invalid intent-batch fields (seq=$seq). Ignoring.")
             return
@@ -304,12 +337,36 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         }
         lastSeqByNode[sourceNodeId] = seq
 
-        LocalBroadcastManager.getInstance(this).sendBroadcast(
-            Intent(ACTION_INTENT_BATCH).apply {
-                putExtra(WearConstants.KEY_INTENT_BATCH, batch)
-                putExtra(WearConstants.KEY_SEQ, seq)
-            },
-        )
+        val preso =
+            LocalBroadcastManager.getInstance(this).sendBroadcast(
+                Intent(ACTION_INTENT_BATCH).apply {
+                    putExtra(WearConstants.KEY_INTENT_BATCH, batch)
+                    putExtra(WearConstants.KEY_SEQ, seq)
+                    putExtra(WearConstants.KEY_BATCH_ID, batchId)
+                    // Assente da un orologio non aggiornato: il ViewModel applica come prima.
+                    if (dataMap.containsKey(WearConstants.KEY_BATCH_BASE)) {
+                        putExtra(WearConstants.KEY_BATCH_BASE, dataMap.getString(WearConstants.KEY_BATCH_BASE, ""))
+                    }
+                    putExtra(EXTRA_NODE_ID, sourceNodeId)
+                },
+            )
+        if (!preso) {
+            // Nessun ViewModel l'ha applicato: la sequenza NON si consuma, o il rinvio dello stesso
+            // arretrato verrebbe scartato come "gia' visto" proprio quando l'app e' tornata, e
+            // l'orologio non avrebbe nessuna risposta. Si dice all'orologio di riprovare (L5).
+            if (ultima > 0L) lastSeqByNode[sourceNodeId] = ultima else lastSeqByNode.remove(sourceNodeId)
+            rispondi(
+                this,
+                sourceNodeId,
+                WearConstants.MSG_BATCH_NACK,
+                DataMap()
+                    .apply {
+                        putLong(WearConstants.KEY_SEQ, seq)
+                        putLong(WearConstants.KEY_BATCH_ID, batchId)
+                        putString(WearConstants.KEY_BATCH_NACK_REASON, WearConstants.NACK_RETRY)
+                    }.toByteArray(),
+            )
+        }
     }
 
     /**

@@ -11,6 +11,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -64,6 +65,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.ZoneId
 import java.util.UUID
+
+// Chiavi in app_prefs: l'ultimo arretrato dell'orologio applicato (per nodo, e l'ultimo di tutti).
+private const val PREF_BATCH_APPLICATO = "batch_applicato_"
+private const val PREF_BATCH_APPLICATO_ULTIMO = "batch_applicato_ultimo"
 
 /**
  * The primary ViewModel for the application's main scoring screen.
@@ -338,6 +343,10 @@ class MainViewModel(
                         applyWatchBatch(
                             intent.getStringExtra(WearConstants.KEY_INTENT_BATCH).orEmpty(),
                             intent.getLongExtra(WearConstants.KEY_SEQ, 0L),
+                            batchId = intent.getLongExtra(WearConstants.KEY_BATCH_ID, 0L),
+                            // Assente (null) = orologio non aggiornato: vale la regola di prima, registro vuoto.
+                            base = intent.getStringExtra(WearConstants.KEY_BATCH_BASE),
+                            nodo = intent.getStringExtra(SimplifiedDataLayerListenerService.EXTRA_NODE_ID),
                         )
                     }
 
@@ -751,6 +760,9 @@ class MainViewModel(
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(application)
             .registerReceiver(broadcastReceiver, filter)
+        // Dopo il ricevitore, e dopo restoreActiveMatchIfAny: i tocchi arrivati ad app chiusa
+        // aspettano il ripristino e si applicano alla partita ripresa (L5).
+        applicaIntentiInAttesa()
     }
 
     private fun checkIfOnboardingIsNeeded() {
@@ -1077,6 +1089,9 @@ class MainViewModel(
                     // stesso calcolo con lo stesso codice quando resta senza telefono.
                     WearConstants.KEY_EVENT_LOG to registro,
                     WearConstants.KEY_MATCH_OVER to display.matchOver,
+                    // L'ultimo arretrato applicato: se l'ack si perde, il polso toglie le voci dalla
+                    // coda da qui. 0 se non ne e' mai entrato uno.
+                    WearConstants.KEY_LAST_BATCH_ID to sharedPreferences.getLong(PREF_BATCH_APPLICATO_ULTIMO, 0L),
                 )
             connectionManager.sendData(
                 path = WearConstants.PATH_STATE_V2,
@@ -1362,18 +1377,44 @@ class MainViewModel(
      * quegli orari: una partita giocata alle 18 e consegnata alle 20 resta una partita delle 18,
      * quindi durata, serie e tempi esportati restano quelli veri.
      *
-     * SI APPLICA SOLO SU UNA PARTITA VUOTA. Se il telefono ha gia' eventi suoi, fondere due
-     * registri sarebbe una scelta arbitraria fatta al posto dell'utente: non si applica, non si
-     * conferma, e l'arretrato resta sull'orologio -- che riprovera' al collegamento successivo.
-     * Nessuna perdita, e la decisione resta a chi sa quale delle due partite conta.
+     * SI APPLICA SOLO SULLA PARTITA SU CUI L'OROLOGIO HA CALCOLATO ([base]: l'impronta del registro
+     * che il polso vedeva). Prima era "solo a registro vuoto", e una partita cominciata col telefono
+     * -- il caso per cui il calcolo offline esiste -- veniva sempre rifiutata (L5). Con la base, un
+     * registro uguale accoda; uno diverso e' un'altra partita, e fondere due registri sarebbe una
+     * scelta arbitraria fatta al posto dell'utente: non si applica e lo si dice all'orologio con un
+     * NACK definitivo, che l'arretrato non lo rimandi in silenzio alla partita dopo.
+     *
+     * Si risponde SEMPRE: ack se applicato, o gia' applicato (stesso [batchId] per nodo: l'ack si era
+     * perso e il polso ha rinviato), NACK altrimenti. [batchId] vale 0 da un orologio non aggiornato,
+     * e allora niente idempotenza ne' id nello stato.
      */
     private fun applyWatchBatch(
         batch: String,
         seq: Long,
+        batchId: Long = 0L,
+        base: String? = null,
+        nodo: String? = null,
     ) {
         if (batch.isBlank() || seq <= 0L) return
-        if (engine.log.isNotEmpty()) {
+        // Gia' dentro: l'ack si e' perso e il polso ha rinviato lo stesso blocco. Riapplicarlo
+        // raddoppierebbe i punti, rifiutarlo lo lascerebbe fermo con le voci gia' contate.
+        if (batchId > 0L && batchId == ultimoBatchApplicato(nodo)) {
+            rispondiAlBatch(WearConstants.MSG_BATCH_ACK, seq, batchId)
+            return
+        }
+        // La base e' il registro su cui il polso ha calcolato (impronta): uguale al mio, e' la stessa
+        // partita e l'arretrato si accoda; diversa, e' un'altra e si rifiuta con un NACK definitivo,
+        // perche' il polso non la rimandi in silenzio alla partita dopo (L5). Senza base (orologio
+        // non aggiornato) vale la regola di prima: solo a registro vuoto.
+        val baseCoincide =
+            if (base != null) {
+                base == MatchLogCodec.impronta(MatchLogCodec.encode(engine.log))
+            } else {
+                engine.log.isEmpty()
+            }
+        if (!baseCoincide) {
             setWatchNotice(WatchNotice.Rejected)
+            rispondiAlBatch(WearConstants.MSG_BATCH_NACK, seq, batchId, WearConstants.NACK_REJECTED)
             return
         }
 
@@ -1395,8 +1436,16 @@ class MainViewModel(
             applicati++
             if (campi[0] == WearConstants.INTENT_POINT) punti++
         }
-        if (applicati == 0) return
+        if (applicati == 0) {
+            // Niente di applicabile: una risposta anche cosi', o l'orologio resterebbe ad aspettare
+            // per sempre (L5). Definitivo: lo stesso blocco non diventera' applicabile da solo.
+            rispondiAlBatch(WearConstants.MSG_BATCH_NACK, seq, batchId, WearConstants.NACK_REJECTED)
+            return
+        }
 
+        // L'id si registra PRIMA di pubblicare: lo stato v2 lo porta, e un ack perso non lascia
+        // l'orologio senza modo di sapere che le voci sono entrate.
+        registraBatchApplicato(nodo, batchId)
         // publishEngineState scrive gia' la riga viva: una seconda persistLiveMatch qui creava a
         // ogni consegna una seconda riga attiva.
         publishEngineState()
@@ -1413,10 +1462,63 @@ class MainViewModel(
         }
 
         // La conferma parte SOLO ora: e' il ViewModel ad averlo applicato, e solo lui puo' dirlo.
+        rispondiAlBatch(WearConstants.MSG_BATCH_ACK, seq, batchId)
+    }
+
+    /**
+     * Ack o NACK a un arretrato. Il NACK sta su un path a parte (vedi [WearConstants.MSG_BATCH_NACK]);
+     * l'id viaggia solo se c'e', e un orologio non aggiornato legge la sola sequenza.
+     */
+    private fun rispondiAlBatch(
+        path: String,
+        seq: Long,
+        batchId: Long,
+        motivo: String? = null,
+    ) {
         viewModelScope.launch {
             connectionManager.sendMessage(
-                WearConstants.MSG_BATCH_ACK,
-                DataMap().apply { putLong(WearConstants.KEY_SEQ, seq) }.toByteArray(),
+                path,
+                DataMap()
+                    .apply {
+                        putLong(WearConstants.KEY_SEQ, seq)
+                        if (batchId > 0L) putLong(WearConstants.KEY_BATCH_ID, batchId)
+                        if (motivo != null) putString(WearConstants.KEY_BATCH_NACK_REASON, motivo)
+                    }.toByteArray(),
+            )
+        }
+    }
+
+    // L'ultimo arretrato applicato, per nodo, su disco: sopravvive alla morte del processo, e un ack
+    // perso non riapplica niente nemmeno dopo un riavvio dell'app. In piu' l'ultimo di tutti, che
+    // viaggia nello stato v2.
+    private fun ultimoBatchApplicato(nodo: String?): Long =
+        if (nodo == null) 0L else sharedPreferences.getLong("$PREF_BATCH_APPLICATO$nodo", 0L)
+
+    private fun registraBatchApplicato(
+        nodo: String?,
+        batchId: Long,
+    ) {
+        if (batchId <= 0L) return
+        sharedPreferences.edit {
+            if (nodo != null) putLong("$PREF_BATCH_APPLICATO$nodo", batchId)
+            putLong(PREF_BATCH_APPLICATO_ULTIMO, batchId)
+        }
+    }
+
+    /**
+     * I tocchi dell'orologio che il servizio ha messo da parte perche' qui non c'era nessuno (L5).
+     * Passano dal ricevitore, come se fossero arrivati ora: durante un ripristino aspettano la fine,
+     * nell'ordine in cui sono arrivati. Dopo la registrazione del ricevitore: quelli che arrivano da
+     * qui in poi li prende lui, e il servizio non ne mette piu' da parte.
+     */
+    private fun applicaIntentiInAttesa() {
+        IntentiInAttesa(getApplication()).prendiTutte().forEach { voce ->
+            broadcastReceiver.onReceive(
+                getApplication(),
+                Intent(SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT)
+                    .putExtra(WearConstants.KEY_SIDE, voce.side)
+                    .putExtra(WearConstants.KEY_INTENT_KIND, voce.kind)
+                    .putExtra(WearConstants.KEY_AT_MILLIS, voce.atMillis),
             )
         }
     }

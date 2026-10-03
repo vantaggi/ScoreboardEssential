@@ -31,6 +31,12 @@
         <item quantity="one">Deliver %1$d point first</item>
         <item quantity="other">Deliver %1$d points first</item>
     </plurals>
+    <string name="wear_menu_discard">DISCARD QUEUE</string>
+    <string name="wear_menu_discard_confirm">DISCARD?</string>
+    <plurals name="wear_menu_rejected_points">
+        <item quantity="one">The phone rejected %1$d point</item>
+        <item quantity="other">The phone rejected %1$d points</item>
+    </plurals>
     <string name="wear_who_scored">WHO SCORED?</string>
     <string name="wear_no_players">No players</string>
     <!-- Il marcatore: la finestra in basso dice CHI?, la lista si apre con SALTA in cima. Frasi
