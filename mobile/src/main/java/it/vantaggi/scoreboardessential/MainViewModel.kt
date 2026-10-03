@@ -760,9 +760,9 @@ class MainViewModel(
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(application)
             .registerReceiver(broadcastReceiver, filter)
-        // Dopo il ricevitore, e dopo restoreActiveMatchIfAny: i tocchi arrivati ad app chiusa
-        // aspettano il ripristino e si applicano alla partita ripresa (L5).
-        applicaIntentiInAttesa()
+        // Dopo il ricevitore, e in coda al ripristino (stessa fila del looper): i tocchi arrivati ad
+        // app chiusa aspettano che la partita sia tornata e si applicano a lei (L5).
+        viewModelScope.launch { applicaIntentiInAttesa() }
     }
 
     private fun checkIfOnboardingIsNeeded() {

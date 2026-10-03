@@ -178,6 +178,24 @@ class MenuVociTest {
         assertEquals(ConfermaSulPosto.Esito.IGNORATO, conferma.tocca(15_100))
     }
 
+    /** L5: la coda che il telefono ha rifiutato si scarta dal menu, e finche' non lo si fa le altre voci dicono perche' sono spente. */
+    @Test
+    fun `con la coda rifiutata compare SCARTA e le altre voci dicono perche' sono spente`() {
+        val voci = MenuVoci.calcola(input(inCoda = 2, partitaIniziata = true).copy(rifiutati = 2))
+
+        assertEquals(listOf(IdVoce.SPORT, IdVoce.FINE_PARTITA, IdVoce.SCARTA_CODA), voci.map { it.id })
+        assertTrue(voci.last().attiva)
+        assertEquals(SottotitoloVoce.CodaRifiutata(2), voci.last().sottotitolo)
+        assertFalse(voci[0].attiva)
+        assertFalse(voci[1].attiva)
+        assertEquals("non \"prima consegna\": la coda non partira' piu'", SottotitoloVoce.CodaRifiutata(2), voci[1].sottotitolo)
+    }
+
+    @Test
+    fun `senza coda rifiutata SCARTA non compare`() {
+        assertFalse(MenuVoci.calcola(input(inCoda = 2, partitaIniziata = true)).any { it.id == IdVoce.SCARTA_CODA })
+    }
+
     @Test
     fun `disarma riporta al primo tocco`() {
         val conferma = ConfermaSulPosto()

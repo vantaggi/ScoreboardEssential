@@ -376,9 +376,15 @@ class RigaStatoViewModelTest {
         mettiInCoda(2)
         viewModel.applyStateV2(stato())
         // Come dopo flushPending: l'arretrato e' in viaggio con la sua sequenza.
+        // Dal lotto L5 il blocco in volo ha un'identita' e sta anche su disco, con la coda.
+        val inVolo = PendingIntents.BatchInVolo(id = 11L, quante = 2)
+        coda.segnaBatchInVolo(inVolo)
         val campo = WearViewModel::class.java.getDeclaredField("batchInVolo")
         campo.isAccessible = true
-        campo.set(viewModel, 7L to 2)
+        campo.set(viewModel, inVolo)
+        val campoSeq = WearViewModel::class.java.getDeclaredField("seqUltimoBatch")
+        campoSeq.isAccessible = true
+        campoSeq.setLong(viewModel, 7L)
 
         viewModel.onBatchAck(7L)
         assestati()
