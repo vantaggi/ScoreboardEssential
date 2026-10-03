@@ -1019,6 +1019,53 @@ class MainViewModelTest {
         }
 
     /**
+     * Un registro scritto da una versione precedente contiene ancora tocchi inerti: qui un '-' a
+     * 0 (la correzione 'c2' sul lato 2 a zero, che non cambia lo stato). La ricostruzione lo salta,
+     * e le righe devono portare l'indice della voce nel registro del MOTORE e non la loro
+     * posizione nella lista, altrimenti ANNULLA su una riga toglie la voce sbagliata.
+     */
+    @Test
+    fun `dopo la ripresa con un evento inerte in mezzo le righe hanno l'indice del motore e ANNULLA toglie la voce giusta`() =
+        runTest {
+            val luigi = PlayerWithRoles(Player(8, "Luigi", 2, 0), emptyList())
+            // Indici del motore: 0 punto di Mario, 1 correzione inerte, 2 punto di Luigi, 3 punto senza marcatore.
+            val playerDao = partitaSalvata("1|1:7,c2,2:8,1", rosa = listOf(mario, luigi))
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            val scoreObserver = Observer<Int> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            viewModel.team1Score.observeForever(scoreObserver)
+            advanceUntilIdle()
+
+            // In testa il piu' recente; l'indice 1 non ha riga e la posizione 1 non e' l'indice 1.
+            assertEquals(listOf(3, 2, 0), righeDiPunto().map { it.engineIndex })
+            assertEquals(listOf(null, 8, 7), righeDiPunto().map { it.playerId })
+
+            // Primo ANNULLA: il punto senza marcatore, nessun gol da togliere.
+            assertEquals(true, viewModel.undoLastGoal())
+            advanceUntilIdle()
+            assertEquals(listOf(2, 0), righeDiPunto().map { it.engineIndex })
+            assertEquals(1, viewModel.team1Score.value)
+            verify(playerDao, times(0)).decrementGoals(any())
+
+            // Secondo: il punto di Luigi (indice 2), non quello di Mario.
+            assertEquals(true, viewModel.undoLastGoal())
+            advanceUntilIdle()
+            assertEquals(listOf(0), righeDiPunto().map { it.engineIndex })
+            verify(playerDao).decrementGoals(8)
+            verify(playerDao, times(0)).decrementGoals(7)
+
+            // Terzo: salta la correzione inerte in coda e toglie il punto di Mario.
+            assertEquals(true, viewModel.undoLastGoal())
+            advanceUntilIdle()
+            assertEquals(emptyList<Int?>(), righeDiPunto().map { it.engineIndex })
+            assertEquals(0, viewModel.team1Score.value)
+            verify(playerDao).decrementGoals(7)
+
+            viewModel.matchEvents.removeObserver(eventiObserver)
+            viewModel.team1Score.removeObserver(scoreObserver)
+        }
+
+    /**
      * Il registro trattava il tempo trascorso come una data: SimpleDateFormat("mm:ss") su
      * Date(ms). Un gol al 65:10 diventava "05:10", e in India (+5:30) "35:10". Il fuso qui e'
      * quello che rompeva di piu': senza il rimedio questa riga non dice mai 66'.
