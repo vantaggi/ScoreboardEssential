@@ -488,8 +488,13 @@ class MainActivity :
             snackbarSopraLaStriscia(getString(R.string.sport_change_blocked), Snackbar.LENGTH_LONG).show()
         }
 
-        viewModel.matchEvents.observe(this) { events ->
-            matchLogAdapter.submitList(events)
+        // Il registro a schermo ha una riga per game nel padel e nel tennis: la striscia e lo schermo
+        // acceso leggono invece le righe dei punti, che stanno in matchEvents.
+        viewModel.registroDelFoglio.observe(this) { righe ->
+            matchLogAdapter.submitList(righe)
+        }
+
+        viewModel.matchEvents.observe(this) {
             aggiornaSchermoAcceso()
             aggiornaStriscia()
         }

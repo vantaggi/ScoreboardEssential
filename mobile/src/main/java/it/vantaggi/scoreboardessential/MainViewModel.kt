@@ -27,6 +27,7 @@ import it.vantaggi.scoreboardessential.core.MatchClock
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
+import it.vantaggi.scoreboardessential.core.MatchNarrative
 import it.vantaggi.scoreboardessential.core.MatchPlayer
 import it.vantaggi.scoreboardessential.core.MatchSummarizer
 import it.vantaggi.scoreboardessential.core.MatchSummary
@@ -529,6 +530,33 @@ class MainViewModel(
     private val _matchEvents = MutableLiveData<List<MatchEvent>>(emptyList())
     val matchEvents: LiveData<List<MatchEvent>> = _matchEvents
 
+    private val _registroDelFoglio = MutableLiveData<List<MatchEvent>>(emptyList())
+
+    /**
+     * Il registro come lo mostra il foglio PARTITA. Nel calcio e' [matchEvents]. Nel padel e nel
+     * tennis i punti sono sostituiti da una riga per game, ricavata ogni volta dal registro del
+     * motore ([MatchNarrative]) e non tenuta accanto: annullamento, ripristino e arretrato
+     * dell'orologio cambiano il motore, e le righe dei game lo seguono da sole.
+     *
+     * [matchEvents] resta com'e', una riga per punto: la striscia dell'ultima azione e il report
+     * leggono da li'.
+     */
+    val registroDelFoglio: LiveData<List<MatchEvent>> = _registroDelFoglio
+
+    /**
+     * Pubblica le due viste del registro. Da chiamare dopo ogni cambio di [matchEventLog] e di
+     * [engine], e con il lock di [matchEventLog] preso (si puo' riprendere: e' rientrante).
+     */
+    private fun pubblicaRegistro() {
+        synchronized(matchEventLog) {
+            val righe = matchEventLog.toList()
+            _matchEvents.postValue(righe)
+            _registroDelFoglio.postValue(
+                righeDelRegistro(righe, MatchNarrative.of(engine), _team1Name.value.orEmpty(), _team2Name.value.orEmpty()),
+            )
+        }
+    }
+
     // UI Events
 
     /** L'orologio ha chiesto un cambio sport a partita gia' cominciata. */
@@ -806,7 +834,7 @@ class MainViewModel(
         updateScore(0, 0)
         synchronized(matchEventLog) {
             matchEventLog.clear()
-            _matchEvents.postValue(emptyList())
+            pubblicaRegistro()
         }
         matchTimerService?.resetTimer()
         _isKeeperTimerExpired.value = false
@@ -826,11 +854,13 @@ class MainViewModel(
     // --- Team Management ---
     fun setTeam1Name(name: String) {
         _team1Name.value = name
+        pubblicaRegistro()
         sendTeamNamesUpdate()
     }
 
     fun setTeam2Name(name: String) {
         _team2Name.value = name
+        pubblicaRegistro()
         sendTeamNamesUpdate()
     }
 
@@ -1514,7 +1544,7 @@ class MainViewModel(
                         playerRole = ruoli,
                         playerId = playerWithRoles.player.playerId,
                     )
-                _matchEvents.postValue(matchEventLog.toList())
+                pubblicaRegistro()
             }
         }
         return true
@@ -1569,7 +1599,7 @@ class MainViewModel(
             val riga = matchEventLog.indexOfFirst { it.engineIndex == indice }
             if (riga != -1) {
                 matchEventLog.removeAt(riga)
-                _matchEvents.postValue(matchEventLog.toList())
+                pubblicaRegistro()
             }
         }
 
@@ -1680,7 +1710,7 @@ class MainViewModel(
                 0,
                 MatchEvent(timestamp, event, team, player, playerRole, type, engineIndex, playerId),
             )
-            _matchEvents.postValue(matchEventLog.toList())
+            pubblicaRegistro()
         }
     }
 

@@ -1,5 +1,7 @@
 package it.vantaggi.scoreboardessential.domain.models
 
+import it.vantaggi.scoreboardessential.core.GameLine
+
 /**
  * Natura dell'evento, separata dal testo mostrato.
  *
@@ -11,6 +13,13 @@ package it.vantaggi.scoreboardessential.domain.models
 enum class MatchEventType {
     /** Una marcatura attribuibile a un giocatore. */
     SCORE,
+
+    /**
+     * Un game chiuso, nel registro del padel e del tennis. Non sta mai in `matchEvents` (la
+     * striscia e il report leggono da li'): nasce da `MatchNarrative` per la sola vista del foglio
+     * PARTITA, con il game in [MatchEvent.game].
+     */
+    GAME,
 
     /** Tutto il resto: inizio partita, timer, correzioni, annullamenti. */
     INFO,
@@ -39,4 +48,6 @@ data class MatchEvent(
      * contiene comunque il nome della SQUADRA, quindi non e' mai nullo e non distingue i due casi.
      */
     val playerId: Int? = null,
+    /** Il game, quando la riga e' di tipo [MatchEventType.GAME]; [team] e [player] sono chi l'ha vinto. */
+    val game: GameLine? = null,
 )
