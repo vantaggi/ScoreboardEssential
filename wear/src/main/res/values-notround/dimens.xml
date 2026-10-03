@@ -3,12 +3,13 @@
     <!--
     Quadrati: niente cerchio che taglia gli angoli, quindi i margini di fascia sono 0. L'anello del
     portiere resta, e lo spazio recuperato negli angoli resta vuoto. Le cifre tengono la fascia del
-    pallino (12dp) e la striscia segue il loro centro.
+    pallino (12dp) e la striscia segue il loro centro. Il pallino sta a 6dp dal bordo dello schermo:
+    a 2dp, sul quadrato, quasi toccava la cornice.
     -->
     <dimen name="face_margin_d">0dp</dimen>
     <dimen name="face_margin_e">0dp</dimen>
 
-    <dimen name="face_dot_inset">2dp</dimen>
+    <dimen name="face_dot_inset">6dp</dimen>
     <dimen name="face_digits_outer">12dp</dimen>
     <dimen name="face_stripe_inset">38dp</dimen>
 
