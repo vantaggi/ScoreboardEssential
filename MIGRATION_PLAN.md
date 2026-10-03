@@ -2264,3 +2264,23 @@ da rivedere con L4. Con questo i passi 4-11 dell'orologio sono chiusi.
 **Trappola:** se `clean` non riesce a cancellare `mobile/build/.../classes.jar` e non ci sono altre
 build in corso, il jar lo tiene il daemon di Gradle (non quello di Kotlin): si chiude quel processo
 con taskkill sul suo PID, mai `./gradlew --stop`.
+
+### Emulatori abbinati - 3 ottobre 2026
+
+Il proprietario ha abbinato `Pixel_9a` (l'unico telefono col Play Store attivo, che serve all'app
+di companion) a `Wear_OS_Small_Round_Prova`. Prova di fumo: un tocco sul polso arriva al telefono
+(1-0, «chi ha segnato?»), il quadrante mostra il gesto. L4, L5 e L6 escono dall'attesa.
+
+**Trappole dell'abbinamento.**
+- Dopo l'abbinamento la nostra Activity sull'orologio poteva restare nera (finestra HAS_DRAWN ma
+  `shown=false`: la transizione di apertura della shell inceppata). Non e' l'app: si risolve con
+  `adb -s <orologio> reboot`.
+- Dopo il riavvio dell'orologio l'abbinamento resta ma il collegamento no («0 connected out of 1»
+  in `dumpsys activity service WearableService`): sparisce il `reverse` del polso. Android Studio
+  ricrea solo il forward del telefono, su una porta nuova. Si rimette a mano:
+  `adb forward --list` (riga `<telefono> tcp:PORTA tcp:5601`), poi
+  `adb -s <orologio> reverse tcp:5601 tcp:PORTA`; in 10-20s torna «1 connected».
+- `Pixel_9a` ha `/data` pieno al 95%: `adb install -r` fallisce con INSUFFICIENT_STORAGE per la
+  soglia di spazio riservato. Senza disinstallare (si perderebbero i dati): `settings put global
+  sys_storage_threshold_percentage 1`, install, poi `settings delete global
+  sys_storage_threshold_percentage` (era null).
