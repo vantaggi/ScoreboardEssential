@@ -2284,3 +2284,11 @@ di companion) a `Wear_OS_Small_Round_Prova`. Prova di fumo: un tocco sul polso a
   soglia di spazio riservato. Senza disinstallare (si perderebbero i dati): `settings put global
   sys_storage_threshold_percentage 1`, install, poi `settings delete global
   sys_storage_threshold_percentage` (era null).
+
+### L4, fine partita dal polso come intenzione v2 - 3 ottobre 2026 (in corso)
+
+| passo | esito |
+|---|---|
+| implementazione (Sonnet) | `wf21/l4-fine-partita`: INTENT_END_MATCH = "end_match" (riga aggiunta al golden), chiusura dal polso come intenzione con seq, telefono che esegue endMatch sul proprio stato una volta per seq; con v2 niente 0-0 v1 ne' timer alla chiusura; chiudiPartita rifiutata con coda; un solo canale prima/dopo il v2; comandi urgenti; FINE PARTITA accesa nel calcio; `leggiSeq` contro il ClassCastException nel log visto dal proprietario. L'agente non ha potuto compilare (jar bloccato nel suo worktree): compilato e unito da me (`831f2aa`, due nomi di test coi due punti), 900 JVM verdi |
+| prova sugli emulatori abbinati | calcio 3-2 dal polso, START dal polso arrivato subito, FINE PARTITA col doppio tocco: una sola partita salvata, 3-2 col registro, polso a 0-0. **Difetto:** il telefono restava a 3-2 a cifre grandi sopra «nessun gol» (startNewMatch non ripubblicava scoreDisplay; vale anche chiudendo dal telefono). Corretto `252a3b3`, test falsificato |
+| revisione (Opus) e falsificazione (Sonnet) | 4 medie: due endMatch nello stesso tick salvano una seconda partita 0-0; il filtro del v1 per i nodi v2 blocca la chiusura degli orologi v2 pre-L4; la guardia 0-0 scarta il decremento v1 1-0 -> 0-0; un orologio senza v2 e senza disco non accoda piu' (punti persi offline nel padel). Basse: chiusura con ricevute aperte, base delle ricevute presa dal disco. Falsificazione: 15 mutazioni rosse, buchi su guardia v1 non 0-0, resetMatch con v2, batch in volo, Activity con chiusura rifiutata. Correzione in corso su `wf22/l4-correzioni` |
