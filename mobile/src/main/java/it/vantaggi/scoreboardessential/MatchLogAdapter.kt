@@ -18,7 +18,7 @@ import it.vantaggi.scoreboardessential.domain.models.MatchEventType
  */
 class MatchLogAdapter(
     private val onAttribuisci: (MatchEvent) -> Unit = {},
-) : ListAdapter<MatchEvent, MatchLogAdapter.MatchEventViewHolder>(MatchEventDiffCallback()) {
+) : ListAdapter<MatchEvent, RecyclerView.ViewHolder>(MatchEventDiffCallback()) {
     var team1Color: Int = 0
     var team2Color: Int = 0
 
@@ -29,22 +29,74 @@ class MatchLogAdapter(
      */
     var attribuisceMarcatore: Boolean = true
 
+    private companion object {
+        const val TIPO_EVENTO = 0
+        const val TIPO_GAME = 1
+    }
+
+    /** Un game chiuso ha il suo layout; ogni altra riga, punti e avvisi, quello di sempre. */
+    override fun getItemViewType(position: Int): Int = if (getItem(position).type == MatchEventType.GAME) TIPO_GAME else TIPO_EVENTO
+
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int,
-    ): MatchEventViewHolder {
-        val view =
-            LayoutInflater
-                .from(parent.context)
-                .inflate(R.layout.match_event_item, parent, false)
-        return MatchEventViewHolder(view)
+    ): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return if (viewType == TIPO_GAME) {
+            GameViewHolder(inflater.inflate(R.layout.match_game_item, parent, false))
+        } else {
+            MatchEventViewHolder(inflater.inflate(R.layout.match_event_item, parent, false))
+        }
     }
 
     override fun onBindViewHolder(
-        holder: MatchEventViewHolder,
+        holder: RecyclerView.ViewHolder,
         position: Int,
     ) {
-        holder.bind(getItem(position), team1Color, team2Color, attribuisceMarcatore, onAttribuisci)
+        val event = getItem(position)
+        when (holder) {
+            is GameViewHolder -> holder.bind(event, team1Color, team2Color)
+            is MatchEventViewHolder -> holder.bind(event, team1Color, team2Color, attribuisceMarcatore, onAttribuisci)
+        }
+    }
+
+    /**
+     * La riga di un game: tre testi e la barretta del vincitore, e una frase sola per TalkBack
+     * ([testiDelGame]). Non si tocca: nel padel e nel tennis non c'e' niente da scegliere.
+     */
+    class GameViewHolder(
+        itemView: View,
+    ) : RecyclerView.ViewHolder(itemView) {
+        private val titolo: TextView = itemView.findViewById(R.id.game_title)
+        private val dettaglio: TextView = itemView.findViewById(R.id.game_detail)
+        private val chiusura: TextView = itemView.findViewById(R.id.game_closing)
+        private val teamIndicator: View = itemView.findViewById(R.id.team_indicator)
+
+        fun bind(
+            event: MatchEvent,
+            team1Color: Int,
+            team2Color: Int,
+        ) {
+            val game = event.game ?: return
+            val testi = testiDelGame(itemView.context, game, event.player.orEmpty())
+            titolo.text = testi.titolo
+            dettaglio.text = testi.dettaglio
+            dettaglio.visibility = if (testi.dettaglio == null) View.GONE else View.VISIBLE
+            chiusura.text = testi.chiusura
+            chiusura.visibility = if (testi.chiusura == null) View.GONE else View.VISIBLE
+            itemView.contentDescription = testi.descrizione
+            itemView.setOnClickListener(null)
+            itemView.isClickable = false
+
+            // Come le altre righe: il testo e' colorOnSurface (il layout lo eredita dal tema), il
+            // colore della squadra sta solo sulla barretta.
+            val colore = if (event.team == 2) team2Color else team1Color
+            teamIndicator.visibility = View.VISIBLE
+            teamIndicator.setBackgroundColor(colore)
+            val onSurface = MaterialColors.getColor(itemView.context, com.google.android.material.R.attr.colorOnSurface, "Error")
+            titolo.setTextColor(onSurface)
+            chiusura.setTextColor(onSurface)
+        }
     }
 
     class MatchEventViewHolder(

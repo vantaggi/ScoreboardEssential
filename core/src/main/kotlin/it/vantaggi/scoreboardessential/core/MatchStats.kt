@@ -9,6 +9,13 @@ package it.vantaggi.scoreboardessential.core
 data class PointStat(
     /** Il lato che ha vinto il punto: 1 o 2. */
     val side: Int,
+    /**
+     * Posizione del punto nel registro del motore ([MatchEngine.log]). Differisce dall'indice in
+     * [MatchStats.points] quando il registro contiene eventi senza effetto (quelli scritti dalle
+     * versioni vecchie), che qui si saltano: e' l'indice che le righe del telefono portano come
+     * `engineIndex`.
+     */
+    val logIndex: Int,
     /** Id di chi serviva; null senza ordine di servizio. */
     val server: Int?,
     /** Lato al servizio; null senza ordine di servizio, salvo nel tennis singolare ([MatchStats.isSingles]). */
@@ -267,7 +274,7 @@ data class MatchStats(
             val gamePoints = intArrayOf(0, 0)
 
             // `log` restituisce una copia difensiva a ogni accesso: si legge una volta sola.
-            for (entry in engine.log) {
+            for ((logIndex, entry) in engine.log.withIndex()) {
                 val next = rules.apply(state, entry.event) as RacketScore
                 // Correzioni, lati fuori range, tocchi a partita finita: non sono punti giocati.
                 if (next == state) continue
@@ -326,6 +333,7 @@ data class MatchStats(
                 points.add(
                     PointStat(
                         side = side,
+                        logIndex = logIndex,
                         server = server,
                         servingSide = servingSide,
                         atMillis = entry.atMillis,

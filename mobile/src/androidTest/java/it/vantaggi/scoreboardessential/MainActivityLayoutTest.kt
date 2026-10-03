@@ -14,6 +14,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
@@ -35,6 +36,8 @@ import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.domain.models.MatchEvent
+import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -1495,6 +1498,43 @@ class MainActivityLayoutTest {
             assertTrue("collegato l'icona deve essere #E0E0E0", aspettaCheAttivi(scenario) { tinta(it) == stencil })
             imposta(false)
             assertTrue("scollegato l'icona deve essere #9E9E9E", aspettaCheAttivi(scenario) { tinta(it) == grigio })
+        }
+    }
+
+    /** Le righe di game del registro a schermo, lette dall'adapter: non dipendono dal foglio aperto o chiuso. */
+    private fun righeDeiGame(activity: MainActivity): List<MatchEvent> =
+        (activity.findViewById<RecyclerView>(R.id.match_log_recyclerview).adapter as MatchLogAdapter)
+            .currentList
+            .filter { it.type == MatchEventType.GAME }
+
+    /**
+     * Passo 15: nel padel il registro mostra una riga per game, e ANNULLA sul punto che lo chiude
+     * toglie quella riga (il game si riapre). Quattro tocchi della zona + chiudono un game.
+     */
+    @Test
+    fun nelPadel_il_registro_ha_una_riga_per_game_e_ANNULLA_la_toglie() {
+        conPadel { scenario, _ ->
+            tocca(scenario, 1, 3)
+            var righe = -1
+            scenario.onActivity { righe = righeDeiGame(it).size }
+            assertEquals("un game ancora aperto non ha riga", 0, righe)
+
+            tocca(scenario, 1, 1)
+            assertTrue(
+                "il quarto punto non ha chiuso il game nel registro",
+                aspettaCheAttivi(scenario) { righeDeiGame(it).size == 1 },
+            )
+            scenario.onActivity {
+                val riga = righeDeiGame(it).single()
+                assertEquals(1, riga.team)
+                assertEquals(listOf(1, 0), riga.game!!.gamesAfter)
+            }
+
+            onView(withId(R.id.undo_goal_button)).perform(click())
+            assertTrue(
+                "ANNULLA ha riaperto il game ma la sua riga e' rimasta",
+                aspettaCheAttivi(scenario) { righeDeiGame(it).isEmpty() },
+            )
         }
     }
 }
