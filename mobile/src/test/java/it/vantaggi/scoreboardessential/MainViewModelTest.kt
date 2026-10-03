@@ -3031,7 +3031,10 @@ class MainViewModelTest {
 
         ripreso.registroDelFoglio.removeObserver(foglioObserver)
         ripreso.matchEvents.removeObserver(puntiObserver)
-        val righeDeiGame = ripreso.registroDelFoglio.value.orEmpty().count { it.type == MatchEventType.GAME }
+        val righeDeiGame =
+            ripreso.registroDelFoglio.value
+                .orEmpty()
+                .count { it.type == MatchEventType.GAME }
         return Triple(cambiDelFoglio, cambiDeiPunti, righeDeiGame)
     }
 
