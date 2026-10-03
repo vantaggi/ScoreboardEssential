@@ -509,6 +509,10 @@ class MainViewModel(
         // azzeramento v1 che oggi non parte), ma cambia le CAPACITA'. Senza questo invio
         // l'orologio continuerebbe a mostrare i comandi del calcio fino al primo punto.
         sendStateV2()
+        // Le regole base nascono con l'ordine vuoto, ma le rose restano in memoria: con due contro
+        // due il tennis e' un doppio e il padel torna con il suo primo servente. Il registro qui
+        // e' vuoto per costruzione, quindi refreshServeOrder non si ferma alla guardia.
+        refreshServeOrder()
     }
 
     /**
@@ -909,14 +913,15 @@ class MainViewModel(
 
     /** Le rose di adesso sulla riga [id], nel loro ordine. Solo dentro la fila di [rigaViva]. */
     private suspend fun scriviRose(id: Long) {
-        matchDao.replaceLineup(
+        // L'ordine di servizio segue le rose finche' il registro e' vuoto: dopo un punto annullato
+        // a zero la riga c'e' gia', e senza questo tornava con le rose nuove e l'ordine vecchio.
+        // Una transazione sola: a meta' strada le rose non devono cambiare senza l'ordine.
+        matchDao.replaceLineupAndServeOrder(
             id.toInt(),
             _team1Players.value.orEmpty().map { it.player.playerId },
             _team2Players.value.orEmpty().map { it.player.playerId },
+            Match.encodeServeOrder(sportRules.config.serveOrder),
         )
-        // L'ordine di servizio segue le rose finche' il registro e' vuoto: dopo un punto annullato
-        // a zero la riga c'e' gia', e senza questo tornava con le rose nuove e l'ordine vecchio.
-        matchDao.updateLiveServeOrder(id.toInt(), Match.encodeServeOrder(sportRules.config.serveOrder))
     }
 
     fun createNewPlayer(

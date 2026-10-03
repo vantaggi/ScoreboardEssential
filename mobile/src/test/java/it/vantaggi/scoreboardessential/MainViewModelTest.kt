@@ -2581,6 +2581,38 @@ class MainViewModelTest {
             }
         }
 
+    /**
+     * Rilievo della revisione (media): applySport rimetteva le regole base, con l'ordine di
+     * servizio vuoto, mentre le rose restavano in memoria. Con 2+2 e cambio a tennis i giocatori
+     * per lato restavano 1 (un singolare), e tornando al padel la card COPPIE prometteva un primo
+     * servente che l'ordine non conteneva.
+     */
+    @Test
+    fun `il cambio di sport con le rose a due per lato riallinea l'ordine di servizio`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (marco, anna, luca, sara) = quattroDelPadel(playerDao)
+                val ordine = listOf(marco, anna, luca, sara)
+
+                viewModel.selectSport(SportRegistry.TENNIS)
+                advanceUntilIdle()
+                assertEquals("con 2+2 il tennis e' un doppio", 2, viewModel.sportCapabilities.value?.playersPerSide)
+                assertEquals(ordine, motore().rules.config.serveOrder)
+
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                assertEquals(2, viewModel.sportCapabilities.value?.playersPerSide)
+                assertEquals("il primo servente promesso dalla card c'e'", ordine, motore().rules.config.serveOrder)
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
     /** Non ci sono FK in cascata: scartare la riga viva lasciava orfane le sue formazioni. */
     @Test
     fun `scartare la riga viva cancella anche le sue formazioni`() =
