@@ -223,6 +223,41 @@ class FinePartitaDalPolsoTest {
         assertEquals(0, dataItem(WearConstants.PATH_SCORE).size)
     }
 
+    /**
+     * Rilievo della revisione L4 (bassa): un punto consegnato e non ancora confermato e' una
+     * ricevuta aperta. MessageClient non garantisce l'ordine: un end_match che supera l'ultimo gol
+     * lo farebbe perdere. Come con la coda e l'arretrato in volo, la chiusura si rifiuta.
+     */
+    @Test
+    fun `con una ricevuta aperta il polso non chiude`() {
+        viewModel.applyStateV2(calcio3a2())
+        viewModel.incrementScore(1)
+        assestati()
+        assertEquals("il punto e' partito, in attesa dello stato del telefono", 1, messaggi(WearConstants.MSG_SCORE_INTENT).size)
+
+        val accettata = viewModel.chiudiPartita()
+        assestati()
+
+        assertFalse("la chiusura e' rifiutata", accettata)
+        assertEquals("nessun end_match oltre al punto", 1, messaggi(WearConstants.MSG_SCORE_INTENT).size)
+        assertEquals(0, dataItem(WearConstants.PATH_MATCH_STATE).size)
+    }
+
+    @Test
+    fun `con un arretrato in volo il polso non chiude`() {
+        viewModel.applyStateV2(calcio3a2())
+        // Coda vuota (le voci sono state consegnate e tolte), ma l'ack dell'arretrato non e' arrivato.
+        val campo = WearViewModel::class.java.getDeclaredField("batchInVolo")
+        campo.isAccessible = true
+        campo.set(viewModel, 7L to 2)
+
+        val accettata = viewModel.chiudiPartita()
+        assestati()
+
+        assertFalse("la chiusura e' rifiutata", accettata)
+        assertEquals(0, messaggi(WearConstants.MSG_SCORE_INTENT).size)
+    }
+
     @Test
     fun `con la coda vuota la chiusura e' accettata`() {
         viewModel.applyStateV2(calcio3a2())
@@ -233,7 +268,10 @@ class FinePartitaDalPolsoTest {
     // --- Rilievo 3: un solo canale prima del primo v2 ---
 
     @Test
-    fun `senza nessun v2 un tocco va solo come punteggio v1, non anche come intenzione`() {
+    fun `con un v1 dal telefono e nessun v2 un tocco va solo come punteggio v1, non anche come intenzione`() {
+        // Un telefono non aggiornato: ha mandato un punteggio v1 e nessuno stato v2.
+        viewModel.updateScoresFromMobile(0, 0)
+
         viewModel.incrementScore(1)
         assestati()
 

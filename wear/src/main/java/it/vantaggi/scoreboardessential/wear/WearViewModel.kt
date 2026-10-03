@@ -394,13 +394,16 @@ class WearViewModel(
      * parte urgente: un DataItem non urgente puo' arrivare al telefono minuti dopo i 10 secondi, e
      * chiuderebbe la partita a gioco ripreso o quella successiva.
      *
-     * Con punti in coda non si chiude e ritorna falso: il telefono non li ha, e la chiusura (o il
-     * reset, nel v1) separerebbe la partita giocata al polso da quella del telefono solo a meta':
-     * due partite si fonderebbero. E' la stessa regola del menu ("Prima consegna n punti"), qui
-     * perche' il ViewModel non deve dipendere da chi lo chiama.
+     * Con punti in coda, un arretrato in volo o ricevute aperte non si chiude e ritorna falso: il
+     * telefono non li ha (o non ha confermato di averli), e la chiusura (o il reset, nel v1)
+     * separerebbe la partita giocata al polso da quella del telefono solo a meta': due partite si
+     * fonderebbero. Le ricevute aperte sono punti consegnati e non ancora confermati:
+     * MessageClient non garantisce l'ordine, e un end_match che superasse l'ultimo gol lo farebbe
+     * perdere. E' la stessa regola del menu ("Prima consegna n punti"), qui perche' il ViewModel
+     * non deve dipendere da chi lo chiama.
      */
     fun chiudiPartita(): Boolean {
-        if (_pendingCount.value > 0 || batchInVolo != null) return false
+        if (_pendingCount.value > 0 || batchInVolo != null || ricevute.isNotEmpty()) return false
         registroPienoAlComando = statoDalTelefono?.matchInProgress == true
         chiusuraInAttesa = true
         mostraTransitorio(Transitorio.Chiusura, DURATA_ATTESA_CHIUSURA_MS)
