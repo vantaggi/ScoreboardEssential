@@ -234,6 +234,11 @@ class MainViewModel(
 
                         val team1 = intent.getIntExtra(WearConstants.KEY_TEAM1_SCORE, 0)
                         val team2 = intent.getIntExtra(WearConstants.KEY_TEAM2_SCORE, 0)
+                        // Uno 0-0 a registro pieno non e' un tocco: e' l'azzeramento v1 di un
+                        // orologio che sta chiudendo (AZZERA, poi MATCH_STATE). Applicarlo svuotava
+                        // il motore PRIMA di endMatch, e la partita andava persa o salvata 0-0 (L4).
+                        // Il MATCH_STATE che segue chiude la partita vera, col suo registro.
+                        if (team1 == 0 && team2 == 0 && engine.log.isNotEmpty()) return
                         Log.d("VM", "📥 Score update received from Wear")
                         // Anche il motore va riallineato, non solo le LiveData: altrimenti il
                         // primo tocco locale ripartirebbe dal punteggio che il motore aveva
@@ -307,6 +312,13 @@ class MainViewModel(
                     }
 
                     SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT -> {
+                        // La chiusura non riguarda un lato: endMatch sul MIO stato, e il servizio ha gia'
+                        // lasciato passare questa sequenza una volta sola. Su una partita non
+                        // cominciata endMatch dice no da solo, quindi una riconsegna non chiude due partite.
+                        if (intent.getStringExtra(WearConstants.KEY_INTENT_KIND) == WearConstants.INTENT_END_MATCH) {
+                            endMatch()
+                            return
+                        }
                         val side = intent.getIntExtra(WearConstants.KEY_SIDE, 0)
                         if (side != 1 && side != 2) return
                         // Il lato dice DOVE, il tipo dice COSA. Tenerli separati e' cio' che evita

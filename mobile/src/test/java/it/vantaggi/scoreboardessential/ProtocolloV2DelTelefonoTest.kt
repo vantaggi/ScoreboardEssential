@@ -245,4 +245,32 @@ class ProtocolloV2DelTelefonoTest {
         consegna(tocco(nodoA, 1, lato = 1))
         assertEquals(1, ricevuti.size)
     }
+
+    private fun chiusura(
+        nodo: String,
+        seq: Long,
+    ): MessageEvent =
+        messaggio(
+            nodo,
+            WearConstants.MSG_SCORE_INTENT,
+            DataMap().apply {
+                // Nessun lato: la chiusura non riguarda una squadra.
+                putString(WearConstants.KEY_INTENT_KIND, WearConstants.INTENT_END_MATCH)
+                putLong(WearConstants.KEY_SEQ, seq)
+            },
+        )
+
+    /** L4: la chiusura passa senza lato, una volta sola per sequenza, e con la sequenza dei punti. */
+    @Test
+    fun `la chiusura della partita passa senza lato e una sola volta per sequenza`() {
+        consegna(tocco(nodoA, 1), chiusura(nodoA, 2), chiusura(nodoA, 2), tocco(nodoA, 2))
+
+        assertEquals(
+            listOf(WearConstants.INTENT_POINT, WearConstants.INTENT_END_MATCH),
+            ricevuti.map { it.getStringExtra(WearConstants.KEY_INTENT_KIND) },
+        )
+        // Una sequenza gia' vista non si riapplica nemmeno da un messaggio di altro tipo.
+        consegna(chiusura(nodoA, 1))
+        assertEquals(2, ricevuti.size)
+    }
 }

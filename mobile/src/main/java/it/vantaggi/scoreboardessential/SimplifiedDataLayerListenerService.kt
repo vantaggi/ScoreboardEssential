@@ -69,6 +69,16 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         }
     }
 
+    /**
+     * Il nodo che ha scritto il DataItem ha gia' mandato una sequenza (intenzione, arretrato o
+     * cambio sport): parla v2. L'id del nodo e' l'host dell'URI del DataItem; un URI senza host
+     * (un test, o un item locale) non appartiene a nessuno.
+     */
+    private fun haGiaParlatoV2(event: DataEvent): Boolean {
+        val nodo = event.dataItem.uri.host ?: return false
+        return lastSeqByNode.containsKey(nodo)
+    }
+
     private fun handleDataEvent(event: DataEvent) {
         if (event.type != DataEvent.TYPE_CHANGED) return
 
@@ -77,6 +87,11 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
             Log.d(TAG, "Event path=$path")
         }
         val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
+
+        // Un orologio che ha gia' parlato v2 non ha piu' un v1 da ascoltare: il suo punteggio e'
+        // nelle intenzioni, e uno 0-0 o un MATCH_STATE arrivato in ritardo (un DataItem puo' tardare
+        // minuti) svuoterebbe il motore o chiuderebbe una partita nuova (L4).
+        if ((path == WearConstants.PATH_SCORE || path == WearConstants.PATH_MATCH_STATE) && haGiaParlatoV2(event)) return
 
         when (path) {
             WearConstants.PATH_SCORE -> {
@@ -224,7 +239,10 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         // che e' di gran lunga il gesto piu' frequente.
         val kind = dataMap.getString(WearConstants.KEY_INTENT_KIND, WearConstants.INTENT_POINT)
 
-        if (!WearDataValidator.isValidTeamNumber(side) || seq <= 0L) {
+        // La chiusura della partita non riguarda un lato: senza lato valido gli altri gesti si
+        // scartano, lei no. Un telefono non aggiornato la scarterebbe per lato mancante.
+        val riguardaUnLato = kind != WearConstants.INTENT_END_MATCH
+        if ((riguardaUnLato && !WearDataValidator.isValidTeamNumber(side)) || seq <= 0L) {
             Log.w(TAG, "Invalid score-intent fields (side=$side, seq=$seq). Ignoring.")
             return
         }

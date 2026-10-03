@@ -3081,4 +3081,101 @@ class MainViewModelTest {
 
             viewModel.registroDelFoglio.removeObserver(foglioObserver)
         }
+
+    // --- L4: la fine partita dal polso e' un'intenzione, e lo 0-0 v1 non svuota il motore ---
+
+    private fun fineDalPolso() =
+        Intent(SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT)
+            .putExtra(WearConstants.KEY_INTENT_KIND, WearConstants.INTENT_END_MATCH)
+
+    /** Le partite scritte dal telefono con closeMatch, nell'ordine. */
+    private fun partiteSalvate(): List<Match> =
+        mockingDetails(campo("matchDao") as MatchDao)
+            .invocations
+            .filter { it.method.name == "closeMatch" }
+            .map { it.arguments[0] as Match }
+
+    /** Calcio sul 3-2 con i punti segnati al telefono: cinque eventi nel registro. */
+    private fun calcio3a2() {
+        val punteggio = Observer<Int> {}
+        viewModel.team1Score.observeForever(punteggio)
+        viewModel.team2Score.observeForever(punteggio)
+        repeat(3) { viewModel.addScore(1) }
+        repeat(2) { viewModel.addScore(2) }
+    }
+
+    /**
+     * Rilievo L4 (alta): calcio 3-2, FINE PARTITA dal polso. L'intenzione fa eseguire endMatch al
+     * telefono sul PROPRIO stato: salva 3-2 col suo registro. E una riconsegna (la stessa
+     * intenzione due volte) non chiude due partite: la seconda trova la partita nuova, vuota.
+     */
+    @Test
+    fun `la fine partita dal polso salva 3-2 col registro, una volta sola anche se arriva due volte`() =
+        runTest {
+            calcio3a2()
+            advanceUntilIdle()
+            assertEquals(5, motore().log.size)
+
+            ricevi(fineDalPolso())
+            advanceUntilIdle()
+            // La riconsegna: il servizio la scarta per sequenza (ProtocolloV2DelTelefonoTest); se
+            // arrivasse comunque, trova la partita nuova e vuota e endMatch dice no.
+            ricevi(fineDalPolso())
+            advanceUntilIdle()
+
+            val salvate = partiteSalvate()
+            assertEquals("una sola partita salvata", 1, salvate.size)
+            assertEquals(3, salvate.single().team1Score)
+            assertEquals(2, salvate.single().team2Score)
+            assertEquals("il registro e' quello del telefono", 5, MatchLogCodec.decode(salvate.single().eventLog)?.size)
+            assertEquals("partita nuova: motore vuoto", 0, motore().log.size)
+        }
+
+    /**
+     * Rilievo L4: il v1 di un orologio vecchio in chiusura manda lo 0-0 e POI il MATCH_STATE. Lo
+     * 0-0 a registro pieno non e' un tocco: se svuotava il motore, endMatch trovava la partita
+     * vuota e il 3-2 andava perso.
+     */
+    @Test
+    fun `uno 0-0 v1 a registro pieno non svuota il motore e la chiusura salva ancora 3-2`() =
+        runTest {
+            calcio3a2()
+            advanceUntilIdle()
+
+            ricevi(
+                Intent(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE)
+                    .putExtra(WearConstants.KEY_TEAM1_SCORE, 0)
+                    .putExtra(WearConstants.KEY_TEAM2_SCORE, 0),
+            )
+            advanceUntilIdle()
+            assertEquals("il motore e' intatto", 5, motore().log.size)
+
+            ricevi(
+                Intent(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE)
+                    .putExtra(WearConstants.KEY_MATCH_ACTIVE, false),
+            )
+            advanceUntilIdle()
+
+            val salvate = partiteSalvate()
+            assertEquals(1, salvate.size)
+            assertEquals(3, salvate.single().team1Score)
+            assertEquals(2, salvate.single().team2Score)
+        }
+
+    @Test
+    fun `un punteggio v1 a registro vuoto si applica ancora, e' l'orologio senza v2`() =
+        runTest {
+            val punteggio = Observer<Int> {}
+            viewModel.team1Score.observeForever(punteggio)
+
+            ricevi(
+                Intent(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE)
+                    .putExtra(WearConstants.KEY_TEAM1_SCORE, 2)
+                    .putExtra(WearConstants.KEY_TEAM2_SCORE, 1),
+            )
+            advanceUntilIdle()
+
+            assertEquals(3, motore().log.size)
+            assertEquals(2, viewModel.team1Score.value)
+        }
 }
