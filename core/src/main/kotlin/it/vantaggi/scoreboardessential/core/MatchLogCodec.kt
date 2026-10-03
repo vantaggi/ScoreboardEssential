@@ -97,6 +97,20 @@ object MatchLogCodec {
         return out
     }
 
+    /**
+     * L'impronta di un registro, per dire "questo e' il registro su cui ho calcolato" in un campo
+     * solo (L5, la base dell'arretrato dell'orologio). "0" per il registro vuoto, comunque scritto
+     * (assente, `''` o l'intestazione senza token), altrimenti "<numero eventi>:<hash>" sulla forma
+     * CANONICA ([encode] del decodificato): orologio e telefono la calcolano da stringhe che
+     * possono differire solo nella forma, mai nel contenuto. "?" per cio' che non si legge: il
+     * registro del telefono si legge sempre, quindi un "?" non coincide mai con la sua impronta.
+     */
+    fun impronta(raw: String): String {
+        val eventi = decode(raw) ?: return "?"
+        if (eventi.isEmpty()) return "0"
+        return "${eventi.size}:${encode(eventi).hashCode()}"
+    }
+
     private fun encodeToken(entry: LoggedEvent): String {
         val sb = StringBuilder(4)
         when (val event = entry.event) {

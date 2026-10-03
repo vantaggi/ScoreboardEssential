@@ -814,9 +814,11 @@ class MainViewModelTest {
                 val batch =
                     listOf("$punto${sep}1$sep$ore18", "$punto${sep}2$sep${ore18 + 30_000L}")
                         .joinToString(WearConstants.BATCH_SEPARATOR)
-                val applica = MainViewModel::class.java.getDeclaredMethod("applyWatchBatch", String::class.java, Long::class.java)
-                applica.isAccessible = true
-                applica.invoke(viewModel, batch, 1L)
+                ricevi(
+                    Intent(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
+                        .putExtra(WearConstants.KEY_INTENT_BATCH, batch)
+                        .putExtra(WearConstants.KEY_SEQ, 1L),
+                )
                 advanceUntilIdle()
 
                 assertEquals(ore18, db.matchDao().getActiveMatchOnce()?.startedAt)
@@ -1639,6 +1641,201 @@ class MainViewModelTest {
         lato: Int,
         quando: Long,
     ) = listOf(intento, lato, quando).joinToString(WearConstants.BATCH_FIELD_SEPARATOR)
+
+    // --- L5: arretrato con base, id e risposta sempre ---
+
+    /** Un arretrato come lo manda un orologio aggiornato: con id, base e nodo. */
+    private fun arretratoConBase(
+        voci: String,
+        seq: Long,
+        batchId: Long,
+        base: String?,
+        nodo: String = "polso-1",
+    ) = Intent(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
+        .putExtra(WearConstants.KEY_INTENT_BATCH, voci)
+        .putExtra(WearConstants.KEY_SEQ, seq)
+        .putExtra(WearConstants.KEY_BATCH_ID, batchId)
+        .putExtra(SimplifiedDataLayerListenerService.EXTRA_NODE_ID, nodo)
+        .apply { if (base != null) putExtra(WearConstants.KEY_BATCH_BASE, base) }
+
+    /** Cio' che il telefono ha risposto sul path dato, un DataMap per messaggio, nell'ordine. */
+    private fun risposte(path: String): List<com.google.android.gms.wearable.DataMap> =
+        mockingDetails(mockConnectionManager)
+            .invocations
+            .filter { it.method.name == "sendMessage" && it.arguments[0] == path }
+            .map {
+                com.google.android.gms.wearable.DataMap
+                    .fromByteArray(it.arguments[1] as ByteArray)
+            }
+
+    private fun improntaDelMotore() = MatchLogCodec.impronta(MatchLogCodec.encode(motore().log))
+
+    private fun cominciaUnPadelConTrePunti() {
+        kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+        assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+        repeat(3) { viewModel.addScore(1) }
+    }
+
+    /** Rilievo 1: la partita cominciata col telefono e' il caso per cui il calcolo offline esiste. */
+    @Test
+    fun `un arretrato calcolato sul registro del telefono entra anche a partita cominciata`() =
+        runTest {
+            cominciaUnPadelConTrePunti()
+            advanceUntilIdle()
+            val base = improntaDelMotore()
+
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 4L, 77L, base))
+            advanceUntilIdle()
+
+            assertEquals("tre del telefono e uno del polso", 4, motore().log.size)
+            assertEquals(WatchNotice.Applied(1), viewModel.watchNotice.value)
+            assertEquals("e l'orologio lo sa", 77L, risposte(WearConstants.MSG_BATCH_ACK).single().getLong(WearConstants.KEY_BATCH_ID))
+            assertTrue(risposte(WearConstants.MSG_BATCH_NACK).isEmpty())
+        }
+
+    @Test
+    fun `un arretrato calcolato su un'altra partita viene rifiutato con un NACK definitivo`() =
+        runTest {
+            cominciaUnPadelConTrePunti()
+            advanceUntilIdle()
+
+            // La base e' quella di una partita vuota (o di un'altra): il telefono ha tre punti suoi.
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 4L, 78L, "0"))
+            advanceUntilIdle()
+
+            assertEquals("non si fonde", 3, motore().log.size)
+            assertEquals(WatchNotice.Rejected, viewModel.watchNotice.value)
+            val nack = risposte(WearConstants.MSG_BATCH_NACK).single()
+            assertEquals(WearConstants.NACK_REJECTED, nack.getString(WearConstants.KEY_BATCH_NACK_REASON))
+            assertEquals(78L, nack.getLong(WearConstants.KEY_BATCH_ID))
+            assertTrue("e nessun ack", risposte(WearConstants.MSG_BATCH_ACK).isEmpty())
+        }
+
+    @Test
+    fun `senza base un orologio non aggiornato vale ancora la regola del registro vuoto e anche li si risponde`() =
+        runTest {
+            cominciaUnPadelConTrePunti()
+            advanceUntilIdle()
+
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 4L, 0L, base = null))
+            advanceUntilIdle()
+
+            assertEquals(3, motore().log.size)
+            assertEquals(1, risposte(WearConstants.MSG_BATCH_NACK).size)
+        }
+
+    /** Rilievo 2: il telefono risponde SEMPRE, anche quando il blocco non ha voci applicabili. */
+    @Test
+    fun `un arretrato senza voci applicabili riceve un NACK invece del silenzio`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+
+            ricevi(arretratoConBase("illeggibile,x,y", 4L, 79L, base = "0"))
+            advanceUntilIdle()
+
+            assertEquals(0, motore().log.size)
+            assertEquals(
+                WearConstants.NACK_REJECTED,
+                risposte(WearConstants.MSG_BATCH_NACK).single().getString(WearConstants.KEY_BATCH_NACK_REASON),
+            )
+        }
+
+    /** Rilievo 3: l'ack si e' perso, il polso rinvia lo stesso blocco: si riconferma, non si riapplica. */
+    @Test
+    fun `lo stesso blocco rinviato non si conta due volte e si riconferma`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+            val voci = voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000)
+
+            ricevi(arretratoConBase(voci, 4L, 80L, base = "0"))
+            advanceUntilIdle()
+            assertEquals(1, motore().log.size)
+
+            // Il rinvio: sequenza nuova, stesso id, e la base e' ancora quella di prima (registro vuoto).
+            ricevi(arretratoConBase(voci, 5L, 80L, base = "0"))
+            advanceUntilIdle()
+
+            assertEquals("non raddoppia", 1, motore().log.size)
+            assertEquals("due ack, uno per tentativo", 2, risposte(WearConstants.MSG_BATCH_ACK).size)
+            assertTrue(risposte(WearConstants.MSG_BATCH_NACK).isEmpty())
+        }
+
+    @Test
+    fun `l'ultimo id applicato sopravvive alla morte del processo e ogni nodo ha il suo`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+            val voci = voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000)
+            ricevi(arretratoConBase(voci, 4L, 81L, base = "0"))
+            advanceUntilIdle()
+
+            // Il processo muore: il ViewModel nuovo non conosce il blocco, il disco si'.
+            viewModel.viewModelScope.cancel()
+            viewModel = creaViewModel()
+            iniettaServizio(viewModel)
+            advanceUntilIdle()
+            assertEquals(0, motore().log.size)
+            ricevi(arretratoConBase(voci, 5L, 81L, base = "0"))
+            advanceUntilIdle()
+
+            assertEquals("gia' applicato: non rientra", 0, motore().log.size)
+            // Lo stesso id da un ALTRO orologio e' un altro blocco.
+            ricevi(arretratoConBase(voci, 1L, 81L, base = "0", nodo = "polso-2"))
+            advanceUntilIdle()
+            assertEquals(1, motore().log.size)
+        }
+
+    @Test
+    fun `lo stato v2 porta l'id dell'ultimo arretrato applicato`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000), 4L, 82L, base = "0"))
+            advanceUntilIdle()
+
+            val ultimoStato =
+                mockingDetails(mockConnectionManager)
+                    .invocations
+                    .filter { it.method.name == "sendData" && it.arguments[0] == WearConstants.PATH_STATE_V2 }
+                    .last()
+                    .arguments[1] as Map<*, *>
+            assertEquals(82L, ultimoStato[WearConstants.KEY_LAST_BATCH_ID])
+        }
+
+    /** Rilievo 5: i tocchi arrivati quando il ViewModel non c'era li applica il ViewModel che nasce. */
+    @Test
+    fun `i tocchi messi da parte dal servizio si applicano alla creazione, una volta sola`() =
+        runTest {
+            val app = ApplicationProvider.getApplicationContext<Application>()
+            val quando = System.currentTimeMillis()
+            IntentiInAttesa(app).aggiungi(WearConstants.INTENT_POINT, 1, quando - 2000)
+            IntentiInAttesa(app).aggiungi(WearConstants.INTENT_POINT, 2, quando - 1000)
+
+            val nuovo = creaViewModel()
+            altriViewModel.add(nuovo)
+            advanceUntilIdle()
+            val log =
+                (
+                    MainViewModel::class.java
+                        .getDeclaredField("engine")
+                        .also { it.isAccessible = true }
+                        .get(nuovo) as MatchEngine
+                ).log
+            assertEquals("due punti, nell'ordine in cui sono arrivati", listOf(1, 2), log.map { (it.event as ScoringEvent.Point).side })
+
+            // Un terzo ViewModel non li ritrova: sono stati consumati.
+            val ancora = creaViewModel()
+            altriViewModel.add(ancora)
+            advanceUntilIdle()
+            val logAncora =
+                (
+                    MainViewModel::class.java
+                        .getDeclaredField(
+                            "engine",
+                        ).also { it.isAccessible = true }
+                        .get(ancora) as MatchEngine
+                ).log
+            assertEquals(0, logAncora.size)
+        }
 
     /** Il messaggio «ANNULLATO» dipende da questo esito: vero solo se e' stato tolto qualcosa. */
     @Test

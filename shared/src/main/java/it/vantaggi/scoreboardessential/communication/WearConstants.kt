@@ -182,6 +182,50 @@ object WearConstants {
      */
     const val INTENT_END_MATCH = "end_match"
 
+    // --- L5: arretrato con identita' e base ------------------------------------------------
+    //
+    // Tutte ADDITIVE. Un telefono che non le conosce le ignora (applica come prima: solo a registro
+    // vuoto, ack senza id); un orologio che non le conosce ignora il NACK, che sta su un path a
+    // parte proprio perche' un orologio vecchio lo scambierebbe per un ack e butterebbe la coda.
+
+    /**
+     * L'identita' dell'arretrato, STABILE fra i tentativi: si assegna al primo invio e si salva con
+     * la coda, e un rinvio dello stesso blocco la porta identica (con una [KEY_SEQ] nuova, che e'
+     * la soglia del servizio e non l'identita'). Il telefono ricorda l'ultima applicata per nodo e
+     * RICONFERMA un duplicato invece di rifiutarlo o riapplicarlo.
+     */
+    const val KEY_BATCH_ID = "batch_id"
+
+    /**
+     * Il registro del telefono su cui il polso ha calcolato quello che mostra, come impronta
+     * (`MatchLogCodec.impronta`: "0" se vuoto, altrimenti "<numero eventi>:<hash>"). Il telefono
+     * accoda l'arretrato solo se il proprio registro ha la stessa impronta; altrimenti lo rifiuta
+     * con un NACK. Assente da un orologio non aggiornato: vale la regola di prima, registro vuoto.
+     */
+    const val KEY_BATCH_BASE = "batch_base"
+
+    /**
+     * Il telefono NON ha applicato l'arretrato. Path a parte da [MSG_BATCH_ACK]: se il NACK
+     * viaggiasse sul path dell'ack, un orologio non aggiornato leggerebbe la sola [KEY_SEQ] e
+     * cancellerebbe la coda come per un ack. Porta [KEY_SEQ], [KEY_BATCH_ID] e il motivo.
+     */
+    const val MSG_BATCH_NACK = "/scoreboard/v2/batch_nack"
+
+    const val KEY_BATCH_NACK_REASON = "batch_nack_reason"
+
+    /** Definitivo: la partita del telefono non e' quella su cui la coda e' stata calcolata. */
+    const val NACK_REJECTED = "rejected"
+
+    /** Passeggero: nessuno ha applicato (app chiusa). Si puo' riprovare, con lo stesso id. */
+    const val NACK_RETRY = "retry"
+
+    /**
+     * L'id dell'ultimo arretrato che il telefono ha APPLICATO, nello stato v2: se l'ack si perde, e'
+     * da qui che il polso capisce di poter togliere le voci dalla coda. Assente (0) da un telefono
+     * non aggiornato.
+     */
+    const val KEY_LAST_BATCH_ID = "last_batch_id"
+
     // Message Paths (MessageClient, fire-and-forget triggers)
     const val MSG_SCORER_SELECTED = "/scoreboard/scorer_selected"
     const val MSG_REQUEST_SYNC = "/scoreboard/request_sync"

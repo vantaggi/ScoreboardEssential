@@ -249,7 +249,7 @@ class FinePartitaDalPolsoTest {
         // Coda vuota (le voci sono state consegnate e tolte), ma l'ack dell'arretrato non e' arrivato.
         val campo = WearViewModel::class.java.getDeclaredField("batchInVolo")
         campo.isAccessible = true
-        campo.set(viewModel, 7L to 2)
+        campo.set(viewModel, PendingIntents.BatchInVolo(id = 7L, quante = 2))
 
         val accettata = viewModel.chiudiPartita()
         assestati()

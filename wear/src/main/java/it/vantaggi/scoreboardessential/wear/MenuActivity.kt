@@ -35,6 +35,7 @@ class MenuActivity : ComponentActivity() {
         const val EXTRA_AZIONE = "menu_azione"
         const val AZIONE_SPORT = "sport"
         const val AZIONE_FINE = "fine"
+        const val AZIONE_SCARTA = "scarta"
 
         /** Senza nessun tocco ne' scorrimento la schermata torna al quadrante da sola. */
         const val CHIUSURA_AUTOMATICA_MS = 10_000L
@@ -45,6 +46,7 @@ class MenuActivity : ComponentActivity() {
         private const val EXTRA_ELENCO_SPORT = "menu_elenco_sport"
         private const val EXTRA_SPORT = "menu_sport"
         private const val EXTRA_RISULTATO = "menu_risultato"
+        private const val EXTRA_RIFIUTATI = "menu_rifiutati"
 
         /**
          * L'istante con cui si misura la finestra della conferma. Iniettabile come
@@ -65,10 +67,14 @@ class MenuActivity : ComponentActivity() {
                 .putExtra(EXTRA_ELENCO_SPORT, input.haElencoSport)
                 .putExtra(EXTRA_SPORT, input.sport)
                 .putExtra(EXTRA_RISULTATO, input.risultato)
+                .putExtra(EXTRA_RIFIUTATI, input.rifiutati)
     }
 
     private val handler = Handler(Looper.getMainLooper())
     private val conferma = ConfermaSulPosto()
+
+    /** Quale voce e' armata: la conferma e' una sola, e armarne un'altra disarma questa. */
+    private var armataId: IdVoce? = null
     private lateinit var input: InputMenu
     private val righe = mutableListOf<Riga>()
 
@@ -84,6 +90,7 @@ class MenuActivity : ComponentActivity() {
     private val rientro =
         Runnable {
             conferma.disarma()
+            armataId = null
             disegna()
         }
 
@@ -105,6 +112,7 @@ class MenuActivity : ComponentActivity() {
                 haElencoSport = intent.getBooleanExtra(EXTRA_ELENCO_SPORT, false),
                 sport = intent.getStringExtra(EXTRA_SPORT).orEmpty(),
                 risultato = intent.getStringExtra(EXTRA_RISULTATO).orEmpty(),
+                rifiutati = intent.getIntExtra(EXTRA_RIFIUTATI, 0),
             )
 
         val contenitore = findViewById<LinearLayout>(R.id.menu_voci)
@@ -113,7 +121,7 @@ class MenuActivity : ComponentActivity() {
             card.setOnClickListener { alTocco(voce) }
             // Armarsi e rientrare cambia titolo e sottotitolo: TalkBack deve dirlo, perche' chi non
             // vede la card rossa non saprebbe che il tocco e' gia' armato.
-            if (voce.id == IdVoce.FINE_PARTITA) card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+            if (voce.id != IdVoce.SPORT) card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
             contenitore.addView(card)
             righe += Riga(voce, card)
         }
@@ -154,9 +162,14 @@ class MenuActivity : ComponentActivity() {
                 chiudiConAzione(AZIONE_SPORT)
             }
 
-            IdVoce.FINE_PARTITA -> {
+            // Le due voci che distruggono qualcosa (chiudere la partita, scartare la coda) si armano
+            // allo stesso modo: il primo tocco arma, il secondo conferma dentro la finestra.
+            IdVoce.FINE_PARTITA, IdVoce.SCARTA_CODA -> {
+                // Armare l'altra voce disarma questa: un secondo tocco su una voce diversa e' un primo tocco.
+                if (armataId != voce.id) conferma.disarma()
                 when (conferma.tocca(orologio())) {
                     ConfermaSulPosto.Esito.ARMATA -> {
+                        armataId = voce.id
                         handler.removeCallbacks(rientro)
                         handler.postDelayed(rientro, ConfermaSulPosto.SCADENZA_MS)
                         disegna()
@@ -167,7 +180,8 @@ class MenuActivity : ComponentActivity() {
                     }
 
                     ConfermaSulPosto.Esito.CONFERMATA -> {
-                        chiudiConAzione(AZIONE_FINE)
+                        armataId = null
+                        chiudiConAzione(if (voce.id == IdVoce.FINE_PARTITA) AZIONE_FINE else AZIONE_SCARTA)
                     }
                 }
             }
@@ -189,7 +203,7 @@ class MenuActivity : ComponentActivity() {
     private fun disegna() {
         righe.forEach { riga ->
             val voce = riga.voce
-            val armata = voce.id == IdVoce.FINE_PARTITA && conferma.armata
+            val armata = conferma.armata && armataId == voce.id
             val fondo =
                 when {
                     armata -> colore(R.color.error_red)
@@ -205,7 +219,7 @@ class MenuActivity : ComponentActivity() {
                     when {
                         armata -> R.color.ink_black
                         !voce.attiva -> R.color.sidewalk_gray
-                        voce.id == IdVoce.FINE_PARTITA -> R.color.error_text
+                        voce.id == IdVoce.FINE_PARTITA || voce.id == IdVoce.SCARTA_CODA -> R.color.error_text
                         else -> R.color.stencil_white
                     },
                 ),
@@ -218,13 +232,16 @@ class MenuActivity : ComponentActivity() {
                 colore(
                     when {
                         armata -> R.color.ink_black
-                        voce.sottotitolo is SottotitoloVoce.PrimaConsegna -> R.color.signal_amber
+                        voce.sottotitolo.eDaConsegnare() -> R.color.signal_amber
                         else -> R.color.sidewalk_gray
                     },
                 ),
             )
         }
     }
+
+    /** I due sottotitoli che parlano di tocchi non consegnati, in ambra. */
+    private fun SottotitoloVoce.eDaConsegnare() = this is SottotitoloVoce.PrimaConsegna || this is SottotitoloVoce.CodaRifiutata
 
     private fun titoloDi(
         voce: Voce,
@@ -237,6 +254,10 @@ class MenuActivity : ComponentActivity() {
 
             IdVoce.FINE_PARTITA -> {
                 if (armata) getString(R.string.wear_menu_end_confirm, input.risultato) else getString(R.string.wear_menu_end)
+            }
+
+            IdVoce.SCARTA_CODA -> {
+                getString(if (armata) R.string.wear_menu_discard_confirm else R.string.wear_menu_discard)
             }
         }
 }
@@ -257,6 +278,10 @@ internal fun SottotitoloVoce.testo(context: Context): String =
 
         is SottotitoloVoce.PrimaConsegna -> {
             context.resources.getQuantityString(R.plurals.wear_menu_deliver_first, punti, punti)
+        }
+
+        is SottotitoloVoce.CodaRifiutata -> {
+            context.resources.getQuantityString(R.plurals.wear_menu_rejected_points, punti, punti)
         }
 
         SottotitoloVoce.ServeIlTelefono -> {

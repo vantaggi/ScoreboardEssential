@@ -61,6 +61,11 @@ class ProtocolloV2DelTelefonoTest {
         nodoB = "orologio-B-${UUID.randomUUID()}"
         service = Robolectric.buildService(SimplifiedDataLayerListenerService::class.java).get()
         manager = LocalBroadcastManager.getInstance(ApplicationProvider.getApplicationContext())
+        // Singleton di processo: i ricevitori che altri test hanno lasciato (i MainViewModel non
+        // passano da onCleared) farebbero credere al servizio che qualcuno ascolti anche qui.
+        val azioniRegistrate = LocalBroadcastManager::class.java.getDeclaredField("mActions")
+        azioniRegistrate.isAccessible = true
+        (azioniRegistrate.get(manager) as MutableMap<*, *>).clear()
         val filtro = IntentFilter().apply { azioni.forEach { addAction(it) } }
         manager.registerReceiver(receiver, filtro)
     }
@@ -244,6 +249,150 @@ class ProtocolloV2DelTelefonoTest {
         // Gli scarti non hanno consumato la sequenza 1.
         consegna(tocco(nodoA, 1, lato = 1))
         assertEquals(1, ricevuti.size)
+    }
+
+    // --- L5: senza ricevitori, il servizio non consuma e non perde ---
+
+    private class Risposta(
+        val nodo: String,
+        val path: String,
+        val dati: DataMap,
+    )
+
+    private val risposte = mutableListOf<Risposta>()
+    private val rispondiDiProduzione = SimplifiedDataLayerListenerService.rispondi
+
+    private fun catturaLeRisposte() {
+        SimplifiedDataLayerListenerService.rispondi = { _, nodo, path, dati ->
+            risposte += Risposta(nodo, path, DataMap.fromByteArray(dati))
+        }
+    }
+
+    private fun arretratoConId(
+        nodo: String,
+        seq: Long,
+        batchId: Long,
+        base: String? = "0",
+    ): MessageEvent =
+        messaggio(
+            nodo,
+            WearConstants.MSG_INTENT_BATCH,
+            DataMap().apply {
+                putString(WearConstants.KEY_INTENT_BATCH, "point,1,1")
+                putLong(WearConstants.KEY_SEQ, seq)
+                putLong(WearConstants.KEY_BATCH_ID, batchId)
+                if (base != null) putString(WearConstants.KEY_BATCH_BASE, base)
+            },
+        )
+
+    @Test
+    fun `il batch inoltrato porta id, base e nodo`() {
+        consegna(arretratoConId(nodoA, 3, 900L, base = "2:123"))
+
+        with(ricevuti.single()) {
+            assertEquals(900L, getLongExtra(WearConstants.KEY_BATCH_ID, 0L))
+            assertEquals("2:123", getStringExtra(WearConstants.KEY_BATCH_BASE))
+            assertEquals(nodoA, getStringExtra(SimplifiedDataLayerListenerService.EXTRA_NODE_ID))
+        }
+    }
+
+    @Test
+    fun `un batch senza id ne' base (orologio non aggiornato) passa senza base`() {
+        consegna(arretrato(nodoA, 3))
+
+        with(ricevuti.single()) {
+            assertEquals(0L, getLongExtra(WearConstants.KEY_BATCH_ID, 0L))
+            assertEquals(null, getStringExtra(WearConstants.KEY_BATCH_BASE))
+        }
+    }
+
+    /** Rilievo 2: l'app chiusa non deve consumare la sequenza, o il rinvio verrebbe scartato come "gia' visto". */
+    @Test
+    fun `un batch senza ricevitori non consuma la sequenza e il telefono dice di riprovare`() {
+        catturaLeRisposte()
+        try {
+            manager.unregisterReceiver(receiver)
+            consegna(arretratoConId(nodoA, 5, 901L))
+            assertEquals("nessuno l'ha applicato", 0, ricevuti.size)
+            val nack = risposte.single()
+            assertEquals(WearConstants.MSG_BATCH_NACK, nack.path)
+            assertEquals(nodoA, nack.nodo)
+            assertEquals(WearConstants.NACK_RETRY, nack.dati.getString(WearConstants.KEY_BATCH_NACK_REASON))
+            assertEquals(901L, nack.dati.getLong(WearConstants.KEY_BATCH_ID))
+
+            // L'app torna: lo stesso arretrato, rinviato con la STESSA sequenza, passa.
+            manager.registerReceiver(receiver, IntentFilter().apply { azioni.forEach { addAction(it) } })
+            consegna(arretratoConId(nodoA, 5, 901L))
+            assertEquals(1, ricevuti.size)
+        } finally {
+            SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
+        }
+    }
+
+    @Test
+    fun `un batch preso da un ricevitore non riceve nessun NACK dal servizio`() {
+        catturaLeRisposte()
+        try {
+            consegna(arretratoConId(nodoA, 5, 902L))
+
+            assertEquals(1, ricevuti.size)
+            assertEquals("a rispondere e' il ViewModel, quando ha applicato", 0, risposte.size)
+        } finally {
+            SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
+        }
+    }
+
+    /** Rilievo 5: un tocco arrivato senza ViewModel non si perde, si mette da parte per quando nasce. */
+    @Test
+    fun `un tocco senza ricevitori viene messo da parte per il ViewModel`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        IntentiInAttesa(app).prendiTutte()
+        manager.unregisterReceiver(receiver)
+
+        consegna(tocco(nodoA, 1, lato = 2))
+
+        val messe = IntentiInAttesa(app).prendiTutte()
+        assertEquals(1, messe.size)
+        assertEquals(2, messe[0].side)
+        assertEquals(WearConstants.INTENT_POINT, messe[0].kind)
+    }
+
+    @Test
+    fun `con un ricevitore il tocco non si mette da parte, ci pensa il ViewModel`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        IntentiInAttesa(app).prendiTutte()
+
+        consegna(tocco(nodoA, 1, lato = 2))
+
+        assertEquals(1, ricevuti.size)
+        assertEquals(emptyList<IntentiInAttesa.Voce>(), IntentiInAttesa(app).prendiTutte())
+    }
+
+    @Test
+    fun `una chiusura senza ricevitori non si mette da parte, arrivata ore dopo chiuderebbe un'altra partita`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        IntentiInAttesa(app).prendiTutte()
+        manager.unregisterReceiver(receiver)
+
+        consegna(chiusura(nodoA, 1))
+
+        assertEquals(emptyList<IntentiInAttesa.Voce>(), IntentiInAttesa(app).prendiTutte())
+    }
+
+    @Test
+    fun `i tocchi messi da parte hanno un tetto e una validita'`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        val coda = IntentiInAttesa(app)
+        coda.prendiTutte()
+        val adesso = 1_700_000_000_000L
+        coda.aggiungi(WearConstants.INTENT_POINT, 1, adesso - IntentiInAttesa.VALIDITA_MS - 1)
+        coda.aggiungi(WearConstants.INTENT_POINT, 2, adesso - 1000)
+
+        // Il tocco di ieri non cade nella partita di oggi.
+        assertEquals(listOf(2), coda.prendiTutte(adesso).map { it.side })
+
+        repeat(IntentiInAttesa.MASSIMO + 10) { coda.aggiungi(WearConstants.INTENT_POINT, 1, adesso) }
+        assertEquals(IntentiInAttesa.MASSIMO, coda.prendiTutte(adesso).size)
     }
 
     private fun chiusura(

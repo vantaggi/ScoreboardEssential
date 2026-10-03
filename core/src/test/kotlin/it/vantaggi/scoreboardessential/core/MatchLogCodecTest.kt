@@ -115,6 +115,30 @@ class MatchLogCodecTest {
         assertNull(MatchLogCodec.decode("1|1,2,"))
     }
 
+    /** L5: il registro vuoto ha un'impronta sola, comunque sia scritto. */
+    @Test
+    fun improntaDelRegistroVuotoEUnaSola() {
+        assertEquals("0", MatchLogCodec.impronta(""))
+        assertEquals("0", MatchLogCodec.impronta(MatchLogCodec.encode(emptyList())))
+    }
+
+    /** L5: stessi eventi, stessa impronta; un evento in piu', o un altro lato, la cambia. */
+    @Test
+    fun improntaUgualeSoloPerRegistriUguali() {
+        val a = listOf(LoggedEvent(ScoringEvent.Point(side = 1)), LoggedEvent(ScoringEvent.Point(side = 2)))
+        val stessi = listOf(LoggedEvent(ScoringEvent.Point(side = 1)), LoggedEvent(ScoringEvent.Point(side = 2)))
+        val unoInPiu = a + LoggedEvent(ScoringEvent.Point(side = 2))
+        val lati = listOf(LoggedEvent(ScoringEvent.Point(side = 2)), LoggedEvent(ScoringEvent.Point(side = 1)))
+        assertEquals(MatchLogCodec.impronta(MatchLogCodec.encode(a)), MatchLogCodec.impronta(MatchLogCodec.encode(stessi)))
+        assertTrue(MatchLogCodec.impronta(MatchLogCodec.encode(a)) != MatchLogCodec.impronta(MatchLogCodec.encode(unoInPiu)))
+        assertTrue(MatchLogCodec.impronta(MatchLogCodec.encode(a)) != MatchLogCodec.impronta(MatchLogCodec.encode(lati)))
+    }
+
+    @Test
+    fun improntaDiUnRegistroIllegibileEUnPuntoDiDomanda() {
+        assertEquals("?", MatchLogCodec.impronta("9:zz"))
+    }
+
     @Test
     fun trecentoPuntiSenzaTempiStannoSottoIlKilobyte() {
         val events = List(300) { LoggedEvent(ScoringEvent.Point(side = if (it % 2 == 0) 1 else 2)) }

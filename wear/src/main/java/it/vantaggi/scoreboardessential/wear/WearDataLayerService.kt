@@ -28,6 +28,7 @@ class WearDataLayerService : WearableListenerService() {
         const val ACTION_PLAYERS_UPDATE = "it.vantaggi.scoreboardessential.wear.PLAYERS_UPDATE"
         const val ACTION_STATE_V2_UPDATE = "it.vantaggi.scoreboardessential.wear.STATE_V2_UPDATE"
         const val ACTION_BATCH_ACK = "it.vantaggi.scoreboardessential.wear.BATCH_ACK"
+        const val ACTION_BATCH_NACK = "it.vantaggi.scoreboardessential.wear.BATCH_NACK"
 
         // Extras
         const val EXTRA_TEAM1_SCORE = "team1_score"
@@ -75,7 +76,20 @@ class WearDataLayerService : WearableListenerService() {
                             putExtra(EXTRA_V2_PAYLOAD, dataMap.toByteArray())
                             putExtra(EXTRA_V2_DAL_VIVO, dalVivo)
                         }
-                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
+                    val preso = LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
+                    // Nessuna Activity: lo stato col suo id e' la conferma che l'ack avrebbe portato.
+                    // Le voci escono dalla coda sul disco, e con loro lo stato che le contiene
+                    // (sport e registro): il calcolo a freddo riparte da li' e non le conta due volte.
+                    if (!preso) {
+                        val idApplicato = WearScoreState.idDelBatch(dataMap)
+                        if (idApplicato > 0L && PendingIntents(context).confermaBatch(idApplicato) != null) {
+                            LastKnownMatch(context).save(
+                                dataMap.getString(WearConstants.KEY_SPORT_ID, ""),
+                                dataMap.getString(WearConstants.KEY_EVENT_LOG, ""),
+                                dataMap.getInt(WearConstants.KEY_SERVING_SLOT, 0),
+                            )
+                        }
+                    }
                     if (BuildConfig.DEBUG) {
                         Log.d(TAG, "Broadcasted v2 state")
                     }
@@ -217,16 +231,49 @@ class WearDataLayerService : WearableListenerService() {
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Message received: ${messageEvent.path}")
         }
-        if (messageEvent.path != WearConstants.MSG_BATCH_ACK) return
+        when (messageEvent.path) {
+            WearConstants.MSG_BATCH_ACK -> gestisciAck(messageEvent.data)
+            WearConstants.MSG_BATCH_NACK -> gestisciNack(messageEvent.data)
+        }
+    }
+
+    private fun gestisciAck(data: ByteArray?) {
         // Il telefono dice di AVER APPLICATO l'arretrato. Finche' questo non arriva, la coda
         // sull'orologio non si tocca: e' l'unica differenza fra "consegnato" e "salvo".
-        val seq =
+        val dataMap =
             com.google.android.gms.wearable.DataMap
-                .fromByteArray(messageEvent.data)
-                .getLong(WearConstants.KEY_SEQ, 0L)
+                .fromByteArray(data ?: return)
+        val seq = dataMap.getLong(WearConstants.KEY_SEQ, 0L)
+        // Zero da un telefono non aggiornato: l'ack porta solo la sequenza.
+        val batchId = dataMap.getLong(WearConstants.KEY_BATCH_ID, 0L)
         if (seq <= 0L) return
+        val preso =
+            LocalBroadcastManager.getInstance(this).sendBroadcast(
+                Intent(ACTION_BATCH_ACK).apply {
+                    putExtra(WearConstants.KEY_SEQ, seq)
+                    putExtra(WearConstants.KEY_BATCH_ID, batchId)
+                },
+            )
+        // Nessuna Activity (uno swipe, il processo vivo senza schermata): l'ack si perdeva e la coda
+        // restava, e alla riapertura il polso contava due volte l'arretrato gia' applicato (L5). Le
+        // voci escono dal disco da qui; chi non e' un ricevitore non ha altro da fare.
+        if (!preso && batchId > 0L) PendingIntents(this).confermaBatch(batchId)
+    }
+
+    private fun gestisciNack(data: ByteArray?) {
+        val dataMap =
+            com.google.android.gms.wearable.DataMap
+                .fromByteArray(data ?: return)
+        // Senza Activity il NACK non fa niente: il blocco resta in coda con il suo id, e al primo avvio
+        // il polso lo rimanda e riceve la risposta con chi sa leggerla.
         LocalBroadcastManager.getInstance(this).sendBroadcast(
-            Intent(ACTION_BATCH_ACK).apply { putExtra(WearConstants.KEY_SEQ, seq) },
+            Intent(ACTION_BATCH_NACK).apply {
+                putExtra(WearConstants.KEY_BATCH_ID, dataMap.getLong(WearConstants.KEY_BATCH_ID, 0L))
+                putExtra(
+                    WearConstants.KEY_BATCH_NACK_REASON,
+                    dataMap.getString(WearConstants.KEY_BATCH_NACK_REASON, WearConstants.NACK_RETRY),
+                )
+            },
         )
     }
 }

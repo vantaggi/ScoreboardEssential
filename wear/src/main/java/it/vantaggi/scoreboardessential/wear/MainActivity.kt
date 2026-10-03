@@ -90,6 +90,7 @@ class MainActivity : ComponentActivity() {
             when (esito.data?.getStringExtra(MenuActivity.EXTRA_AZIONE)) {
                 MenuActivity.AZIONE_SPORT -> apriSceltaSport()
                 MenuActivity.AZIONE_FINE -> chiudiSeAncoraPossibile()
+                MenuActivity.AZIONE_SCARTA -> viewModel.scartaCoda()
             }
         }
 
@@ -120,7 +121,17 @@ class MainActivity : ComponentActivity() {
                     }
 
                     WearDataLayerService.ACTION_BATCH_ACK -> {
-                        viewModel.onBatchAck(intent.getLongExtra(WearConstants.KEY_SEQ, 0L))
+                        viewModel.onBatchAck(
+                            intent.getLongExtra(WearConstants.KEY_SEQ, 0L),
+                            intent.getLongExtra(WearConstants.KEY_BATCH_ID, 0L),
+                        )
+                    }
+
+                    WearDataLayerService.ACTION_BATCH_NACK -> {
+                        viewModel.onBatchNack(
+                            intent.getLongExtra(WearConstants.KEY_BATCH_ID, 0L),
+                            intent.getStringExtra(WearConstants.KEY_BATCH_NACK_REASON) ?: WearConstants.NACK_RETRY,
+                        )
                     }
 
                     WearDataLayerService.ACTION_SCORE_UPDATE -> {
@@ -190,6 +201,7 @@ class MainActivity : ComponentActivity() {
             android.content.IntentFilter().apply {
                 addAction(WearDataLayerService.ACTION_STATE_V2_UPDATE)
                 addAction(WearDataLayerService.ACTION_BATCH_ACK)
+                addAction(WearDataLayerService.ACTION_BATCH_NACK)
                 addAction(WearDataLayerService.ACTION_SCORE_UPDATE)
                 addAction(WearDataLayerService.ACTION_TEAM_NAMES_UPDATE)
                 addAction(WearDataLayerService.ACTION_TEAM_COLOR_UPDATE)
@@ -402,6 +414,7 @@ class MainActivity : ComponentActivity() {
             }
         return InputMenu(
             inCoda = viewModel.pendingCount.value,
+            rifiutati = viewModel.rifiutati.value,
             collegato = viewModel.connectionState.value is ConnectionState.Connected,
             // Senza v2, un tocco in coda o un punto a schermo sono gli unici segni che si sta giocando.
             partitaIniziata =
@@ -936,7 +949,7 @@ class MainActivity : ComponentActivity() {
                 launch {
                     viewModel.connectionState.collect { state ->
                         if (state is it.vantaggi.scoreboardessential.shared.communication.ConnectionState.Connected) {
-                            viewModel.flushPending()
+                            viewModel.flushPending(collegatoDiNuovo = true)
                         }
                     }
                 }

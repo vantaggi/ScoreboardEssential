@@ -31,6 +31,12 @@
         <item quantity="one">Prima consegna %1$d punto</item>
         <item quantity="other">Prima consegna %1$d punti</item>
     </plurals>
+    <string name="wear_menu_discard">SCARTA LA CODA</string>
+    <string name="wear_menu_discard_confirm">SCARTARE?</string>
+    <plurals name="wear_menu_rejected_points">
+        <item quantity="one">Il telefono ha rifiutato %1$d punto</item>
+        <item quantity="other">Il telefono ha rifiutato %1$d punti</item>
+    </plurals>
     <string name="wear_who_scored">CHI HA SEGNATO?</string>
     <string name="wear_no_players">Nessun giocatore</string>
     <string name="wear_who_short">CHI?</string>

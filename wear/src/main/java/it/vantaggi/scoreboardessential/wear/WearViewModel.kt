@@ -69,6 +69,11 @@ data class WearScoreState(
      * manda la chiave: in quel caso, con un servizio in corso, il pallino resta uno.
      */
     val servingSlot: Int = 0,
+    /**
+     * L'id dell'ultimo arretrato che il telefono ha applicato (L5): se l'ack si perde, e' da qui che
+     * il polso capisce di poter togliere le voci dalla coda. 0 da un telefono che non lo manda.
+     */
+    val lastBatchId: Long = 0L,
 ) {
     companion object {
         private const val TAG = "WearScoreState"
@@ -109,8 +114,17 @@ data class WearScoreState(
                 eventLog = dataMap.getString(WearConstants.KEY_EVENT_LOG, ""),
                 servingSide = dataMap.getInt(WearConstants.KEY_SERVING_SIDE, 0),
                 servingSlot = dataMap.getInt(WearConstants.KEY_SERVING_SLOT, 0),
+                lastBatchId = idDelBatch(dataMap),
             )
         }
+
+        /** Long come lo scrive il telefono; un Int (o altro) non deve far lanciare la lettura dello stato. */
+        internal fun idDelBatch(dataMap: DataMap): Long =
+            when (val valore = dataMap.get<Any>(WearConstants.KEY_LAST_BATCH_ID)) {
+                is Long -> valore
+                is Int -> valore.toLong()
+                else -> 0L
+            }
     }
 }
 
@@ -167,6 +181,14 @@ class WearViewModel(
         internal const val SCADENZA_RICEVUTA_MS = 2_500L
 
         /**
+         * Quanto aspetta il polso una risposta all'arretrato. Oltre, il tentativo e' scaduto: lo
+         * schermo si ridisegna e il blocco si puo' rimandare (con lo stesso id) alla prossima
+         * occasione. Senza, un ack e un NACK persi lasciavano il quadrante fermo finche' il
+         * ViewModel non veniva distrutto (L5).
+         */
+        internal const val TIMEOUT_BATCH_MS = 15_000L
+
+        /**
          * Quanto deve passare fra il tick del tocco e la conferma di lato dello stesso tocco. Il
          * vocabolario conta gli impulsi: un tick subito seguito dall'impulso della conferma
          * sinistra si sente come due colpi, cioe' "destra".
@@ -200,8 +222,36 @@ class WearViewModel(
     private val _pendingCount = MutableStateFlow(0)
     val pendingCount = _pendingCount.asStateFlow()
 
-    /** Sequenza dell'arretrato spedito e in attesa di conferma, e quante voci comprendeva. */
-    private var batchInVolo: Pair<Long, Int>? = null
+    /**
+     * L'arretrato spedito e in attesa di risposta (id e quante voci), la copia in memoria di quello
+     * sul disco ([PendingIntents.batchInVolo]): resta finche' non arriva ack, NACK o lo stato col
+     * suo id, ANCHE oltre [TIMEOUT_BATCH_MS]. Scaduto non vuol dire dimenticato: l'id resta lo
+     * stesso, e il rinvio dice al telefono "questo l'hai gia' applicato?" invece di contarlo due volte.
+     */
+    private var batchInVolo: PendingIntents.BatchInVolo? = null
+
+    /** Quando e' partito l'ultimo tentativo; null se e' scaduto, o se viene da una vita precedente del processo. */
+    private var batchInVoloDal: Long? = null
+
+    /** La sequenza dell'ultimo tentativo: un ack di un telefono non aggiornato porta solo questa. */
+    private var seqUltimoBatch = 0L
+
+    private var timeoutBatchJob: Job? = null
+
+    /** Un arretrato in volo che non e' scaduto: finche' c'e', non se ne spedisce un altro e lo schermo non si ridisegna. */
+    private fun batchAttivo(): Boolean = batchInVolo != null && batchInVoloDal != null
+
+    /**
+     * Il telefono ha rifiutato la coda (NACK definitivo): non si rimanda piu' da sola, e la riga dice
+     * "n RIFIUTATI" finche' l'utente non la scarta dal menu ([scartaCoda]). Anche la copia su disco,
+     * perche' un ViewModel nuovo non deve rimandarla alla partita dopo.
+     */
+    private var codaRifiutata = false
+
+    private val _rifiutati = MutableStateFlow(0)
+
+    /** Quanti tocchi in coda il telefono ha rifiutato; 0 se la coda non e' rifiutata. */
+    val rifiutati = _rifiutati.asStateFlow()
 
     /**
      * Un tocco consegnato al telefono e non ancora confermato. Consegnato non vuol dire preso: con
@@ -503,6 +553,7 @@ class WearViewModel(
                     decrementIsUndo = stato?.decrementIsUndo == true,
                     ultimoStatoVivoAlle = ultimoStatoVivoAlle,
                     transitorio = transitorioAttivo,
+                    rifiutati = _rifiutati.value,
                 ),
             )
         return listOfNotNull(
@@ -600,6 +651,7 @@ class WearViewModel(
         // collegamento. Ognuna, cambiando, la rifa'.
         viewModelScope.launch { _scoreState.collect { ricalcolaFiducia() } }
         viewModelScope.launch { _pendingCount.collect { ricalcolaFiducia() } }
+        viewModelScope.launch { _rifiutati.collect { ricalcolaFiducia() } }
         viewModelScope.launch {
             connectionState.collect {
                 ricalcolaFiducia()
@@ -678,8 +730,12 @@ class WearViewModel(
         chiudiFinestraChiSeNonVera(state)
         // L'ora sul disco la scrive WearDataLayerService, che c'e' anche ad app chiusa.
         ultimaNota.save(state.sportId, state.eventLog, state.servingSlot)
+        // Lo stato porta l'id dell'ultimo arretrato applicato: se e' quello in volo, e' un ack che non
+        // ha avuto bisogno di arrivare (L5, ack perso). Dopo chiudiRicevute: lo stato dell'arretrato
+        // non e' la conferma di un tocco dal vivo, e finche' batchInVolo c'e' non la chiude.
+        batchInVolo?.takeIf { state.lastBatchId > 0L && state.lastBatchId == it.id }?.let { batchApplicato(it) }
         when {
-            batchInVolo != null -> Unit
+            batchAttivo() -> Unit
             pending.size > 0 && rebuildLocalState() -> Unit
             else -> _scoreState.value = state
         }
@@ -732,7 +788,7 @@ class WearViewModel(
     private fun chiudiRicevute(state: WearScoreState) {
         val registro = lunghezzaRegistro(state)
         val piuVecchia = ricevute.firstOrNull()
-        if (registro != null && piuVecchia != null && batchInVolo == null) {
+        if (registro != null && piuVecchia != null && !batchAttivo()) {
             val distanza = abs(registro - piuVecchia.registroBase)
             if (distanza > 0) {
                 // Il registro e' CRESCIUTO: un gol ha allungato la lista. Se si e' accorciato e'
@@ -1047,6 +1103,9 @@ class WearViewModel(
      * orologio di partita al polso per un valore che qui nessuno legge.
      */
     private fun rebuildLocalState(): Boolean {
+        // Una coda che il telefono ha rifiutato non e' piu' un conto da mostrare: e' di un'altra
+        // partita, e sommarla a quella del telefono mescolerebbe i due punteggi.
+        if (codaRifiutata) return false
         val base = statoDalTelefono ?: return false
         // Senza sport non si puo' calcolare niente: succede con un telefono che parla una bozza
         // precedente del v2. Si dice di no, e chi ha chiesto mostrera' l'ultimo dato vero invece
@@ -1100,6 +1159,12 @@ class WearViewModel(
             ricalcolaFiducia()
         }
         _pendingCount.value = pending.size
+        // L'identita' dell'arretrato e il rifiuto stanno su disco con la coda (L5): un ViewModel
+        // nuovo li ritrova. Un tentativo di una vita precedente non ha un orario: e' scaduto, e il
+        // prossimo flush lo rimanda con lo stesso id.
+        if (batchInVolo == null) batchInVolo = pending.batchInVolo()
+        codaRifiutata = pending.rifiutata && pending.size > 0
+        _rifiutati.value = if (codaRifiutata) pending.size else 0
         // Un orologio riacceso a meta' partita, col telefono in borsa, deve ritrovare il
         // punteggio che aveva: non basta sapere quanti tocchi sono in coda.
         if (pending.size == 0) return
@@ -1115,46 +1180,176 @@ class WearViewModel(
      * farebbero scartare il piu' vecchio dalla guardia sulla sequenza del telefono, cioe'
      * perdere un punto proprio mentre si recupera una partita intera.
      *
-     * La coda si svuota su [onBatchAck], non sulla consegna: il messaggio raggiunge il servizio
-     * del telefono anche ad app chiusa, e quel servizio non sa applicare niente.
+     * La coda si svuota su [onBatchAck] (o sullo stato col suo id), non sulla consegna: il messaggio
+     * raggiunge il servizio del telefono anche ad app chiusa, e quel servizio non sa applicare niente.
+     *
+     * L5. Il blocco ha un id che si assegna al primo invio e si salva con la coda: un RINVIO (ack o
+     * NACK persi, tentativo scaduto, nuovo collegamento) porta lo stesso id e le stesse prime
+     * `quante` voci, e il telefono lo riconosce se l'ha gia' applicato. Porta anche la base, cioe'
+     * il registro del telefono su cui il polso ha calcolato quello che mostra: su un'altra partita
+     * il telefono rifiuta con un NACK, e la coda non si applica mai in silenzio a una partita nuova.
+     * Una coda rifiutata non riparte da sola: la scarta l'utente.
      */
-    fun flushPending() {
+    fun flushPending(collegatoDiNuovo: Boolean = false) {
+        if (codaRifiutata) return
+        // Il disco e' la verita': ad app chiusa il servizio puo' aver tolto il blocco da solo, e un
+        // id vecchio sulle voci segnate dopo le farebbe passare per gia' applicate.
+        batchInVolo = pending.batchInVolo()
+        // Il passaggio a Connected chiude il tentativo di prima: da collegati, un arretrato che non ha
+        // risposto non ha piu' niente da aspettare, e il flush usciva subito (L5). Si rimanda con lo
+        // stesso id: se il telefono l'aveva applicato, lo riconosce.
+        if (collegatoDiNuovo) batchInVoloDal = null
+        if (batchAttivo()) return
         val voci = pending.all()
-        if (voci.isEmpty() || batchInVolo != null) return
+        if (voci.isEmpty()) return
+        val blocco =
+            batchInVolo ?: PendingIntents.BatchInVolo(id = ++intentSequence, quante = voci.size).also { pending.segnaBatchInVolo(it) }
+        // Un rinvio manda lo STESSO blocco: le voci segnate dopo il primo invio vanno nel prossimo.
+        val daSpedire = voci.take(blocco.quante)
+        if (daSpedire.isEmpty()) {
+            pending.confermaBatch(blocco.id)
+            batchInVolo = null
+            return
+        }
         val seq = ++intentSequence
-        batchInVolo = seq to voci.size
+        batchInVolo = blocco
+        batchInVoloDal = orologio()
+        seqUltimoBatch = seq
+        // La base e' quella su cui la coda e' NATA (salvata con lei), non quella di adesso: se nel
+        // frattempo il telefono e' passato a un'altra partita, i tocchi non le appartengono, e il
+        // rinvio deve dirlo invece di prendere la base nuova e applicarli in silenzio.
+        val base = pending.base ?: improntaDelRegistroVisto().also { pending.base = it }
+        armaTimeoutBatch(blocco)
         viewModelScope.launch {
             val payload =
                 DataMap().apply {
                     putString(
                         WearConstants.KEY_INTENT_BATCH,
-                        voci.joinToString(WearConstants.BATCH_SEPARATOR) {
+                        daSpedire.joinToString(WearConstants.BATCH_SEPARATOR) {
                             listOf(it.kind, it.side.toString(), it.atMillis.toString())
                                 .joinToString(WearConstants.BATCH_FIELD_SEPARATOR)
                         },
                     )
                     putLong(WearConstants.KEY_SEQ, seq)
+                    putLong(WearConstants.KEY_BATCH_ID, blocco.id)
+                    putString(WearConstants.KEY_BATCH_BASE, base)
                 }
             if (!connectionManager.sendMessage(WearConstants.MSG_INTENT_BATCH, payload.toByteArray())) {
-                // Non e' partito: si riprova al prossimo collegamento, con una sequenza nuova.
-                batchInVolo = null
+                // Non e' partito: il tentativo e' scaduto subito, si riprova al prossimo collegamento
+                // con una sequenza nuova e lo stesso id.
+                scadeBatch(blocco)
             }
         }
     }
 
-    /** Il telefono ha applicato: solo ora le voci consegnate escono dalla coda. */
-    fun onBatchAck(seq: Long) {
-        val inVolo = batchInVolo ?: return
-        if (seq != inVolo.first) return
-        pending.removeFirst(inVolo.second)
+    /** L'impronta del registro del telefono che il polso ha sotto gli occhi: "0" se non ne ha visto uno. */
+    private fun improntaDelRegistroVisto(): String =
+        statoDalTelefono?.eventLog?.takeIf { it.isNotEmpty() }?.let { MatchLogCodec.impronta(it) } ?: "0"
+
+    private fun armaTimeoutBatch(blocco: PendingIntents.BatchInVolo) {
+        timeoutBatchJob?.cancel()
+        timeoutBatchJob =
+            viewModelScope.launch {
+                delay(TIMEOUT_BATCH_MS)
+                scadeBatch(blocco)
+            }
+    }
+
+    /**
+     * Il tentativo e' finito senza risposta: lo schermo torna a ridisegnarsi e il flush puo'
+     * ripartire. L'id e le voci restano: e' il rinvio a dire al telefono se le ha gia' contate.
+     */
+    private fun scadeBatch(blocco: PendingIntents.BatchInVolo) {
+        if (batchInVolo?.id != blocco.id || batchInVoloDal == null) return
+        batchInVoloDal = null
+        timeoutBatchJob?.cancel()
+        statoDalTelefono?.let { ridisegna(it) }
+        ricalcolaFiducia()
+    }
+
+    /** Come [applyStateV2] disegna lo stato quando nessun arretrato e' in volo. */
+    private fun ridisegna(state: WearScoreState) {
+        if (pending.size > 0 && rebuildLocalState()) return
+        _scoreState.value = state
+    }
+
+    /**
+     * Il telefono ha applicato l'arretrato [blocco], lo dica l'ack o lo stato col suo id: le sue voci
+     * escono dalla coda (la copia su disco, idempotente: se ha gia' provveduto il servizio ad app
+     * chiusa, non c'e' piu' niente da togliere), e il rifiuto, se c'era, non vale piu'.
+     */
+    private fun batchApplicato(blocco: PendingIntents.BatchInVolo) {
+        pending.confermaBatch(blocco.id)
         batchInVolo = null
+        batchInVoloDal = null
+        timeoutBatchJob?.cancel()
+        codaRifiutata = false
+        _rifiutati.value = 0
         _pendingCount.value = pending.size
+        mostraTransitorio(Transitorio.Consegnati(blocco.quante))
+    }
+
+    /**
+     * Il telefono ha applicato: solo ora le voci consegnate escono dalla coda. [batchId] e' l'id
+     * dell'arretrato (0 da un telefono non aggiornato, che porta la sola [seq] del tentativo).
+     */
+    fun onBatchAck(
+        seq: Long,
+        batchId: Long = 0L,
+    ) {
+        val inVolo = batchInVolo ?: return
+        // Con l'id si riconosce anche l'ack di un tentativo precedente (stesso blocco, altra seq).
+        if (if (batchId > 0L) batchId != inVolo.id else seq != seqUltimoBatch) return
+        batchApplicato(inVolo)
         // Coda vuota: l'autorita' torna al telefono, e a schermo va cio' che ha mandato per ultimo.
         if (pending.size == 0 || !rebuildLocalState()) {
             statoDalTelefono?.let { _scoreState.value = it }
         }
-        // Il polso dice per qualche secondo che le voci sono arrivate, poi la riga torna sola.
-        mostraTransitorio(Transitorio.Consegnati(inVolo.second))
+    }
+
+    /**
+     * Il telefono NON ha applicato l'arretrato ([WearConstants.NACK_REJECTED] o [WearConstants.NACK_RETRY]).
+     *
+     * Passeggero: nessuno ha applicato (app chiusa sul telefono), il tentativo scade e il blocco si
+     * rimanda al prossimo collegamento con lo stesso id. Definitivo: la partita del telefono non e'
+     * quella su cui la coda e' nata (la base e' salvata con lei e non cambia). La coda si ferma e la
+     * riga dice "n RIFIUTATI" finche' l'utente non la scarta dal menu: mai applicata in silenzio
+     * alla partita dopo, ne' rimandata da un ViewModel nuovo.
+     */
+    fun onBatchNack(
+        batchId: Long,
+        motivo: String,
+    ) {
+        val inVolo = batchInVolo ?: return
+        if (batchId > 0L && batchId != inVolo.id) return
+        scadeBatch(inVolo)
+        if (motivo != WearConstants.NACK_REJECTED) return
+        pending.rifiutata = true
+        codaRifiutata = true
+        _rifiutati.value = pending.size
+        triggerFailureVibration()
+        // La coda non si mostra piu' come conto locale: a schermo torna quello del telefono.
+        statoDalTelefono?.let { _scoreState.value = it }
+        ricalcolaFiducia()
+    }
+
+    /**
+     * L'utente scarta la coda rifiutata dal telefono (voce SCARTA del menu): le voci, l'identita'
+     * dell'arretrato e il rifiuto escono insieme, e il quadrante torna a mostrare il telefono.
+     * Non fa niente se la coda non e' rifiutata: scartare punti che il telefono potrebbe ancora
+     * accettare sarebbe la perdita che tutto il resto si sforza di evitare.
+     */
+    fun scartaCoda() {
+        if (!codaRifiutata) return
+        pending.scarta()
+        batchInVolo = null
+        batchInVoloDal = null
+        timeoutBatchJob?.cancel()
+        codaRifiutata = false
+        _rifiutati.value = 0
+        _pendingCount.value = 0
+        statoDalTelefono?.let { _scoreState.value = it }
+        ricalcolaFiducia()
     }
 
     /**
@@ -1234,8 +1429,10 @@ class WearViewModel(
             // Non arrivato: si REGISTRA invece di sparire. Il gesto e' cieco -- sullo schermo non
             // cambia niente -- quindi il polso deve comunque distinguere "preso dal telefono" da
             // "tenuto da parte", e il conteggio in attesa lo dice a schermo.
-            val accodato = pending.add(PendingIntent(kind, side, quando))
+            // La base della coda e' il registro che il polso vede ORA, se la coda nasce con questo tocco.
+            val accodato = pending.add(PendingIntent(kind, side, quando), improntaDelRegistroVisto())
             _pendingCount.value = pending.size
+            if (codaRifiutata) _rifiutati.value = pending.size
             // Il gesto smette di essere cieco: il punteggio a schermo si aggiorna subito, calcolato
             // qui, e sara' identico a quello che il telefono calcolera' ricevendo la coda.
             if (accodato) rebuildLocalState()

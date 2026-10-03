@@ -1,9 +1,12 @@
 package it.vantaggi.scoreboardessential.wear
 
-/** Le due voci del menu partita, nell'ordine in cui compaiono. */
+/** Le voci del menu partita, nell'ordine in cui compaiono. */
 enum class IdVoce {
     SPORT,
     FINE_PARTITA,
+
+    /** Compare solo quando il telefono ha rifiutato la coda (L5): e' il modo di scartarla. */
+    SCARTA_CODA,
 }
 
 /**
@@ -20,6 +23,11 @@ sealed class SottotitoloVoce {
 
     /** Il polso ha punti che il telefono non ha: prima si consegnano, poi si decide. */
     data class PrimaConsegna(
+        val punti: Int,
+    ) : SottotitoloVoce()
+
+    /** Il telefono ha rifiutato questi tocchi: non sono della sua partita, e fino a che non si scartano il resto e' bloccato. */
+    data class CodaRifiutata(
         val punti: Int,
     ) : SottotitoloVoce()
 
@@ -55,6 +63,8 @@ data class InputMenu(
     val sport: String,
     /** Il risultato a schermo, gia' impaginato. */
     val risultato: String,
+    /** Quanti tocchi in coda il telefono ha rifiutato (L5); 0 se la coda non e' rifiutata. */
+    val rifiutati: Int = 0,
 )
 
 /**
@@ -69,6 +79,13 @@ object MenuVoci {
         listOfNotNull(
             if (input.haElencoSport) voceSport(input) else null,
             voceFine(input),
+            // Una coda rifiutata non si rimanda e non si applica: si scarta, e finche' non lo si fa le
+            // altre voci dicono perche' sono spente.
+            if (input.rifiutati > 0) {
+                Voce(IdVoce.SCARTA_CODA, true, SottotitoloVoce.CodaRifiutata(input.rifiutati))
+            } else {
+                null
+            },
         )
 
     private fun voceSport(input: InputMenu): Voce {
@@ -78,6 +95,7 @@ object MenuVoci {
         // telefono assente (la richiesta non arriverebbe).
         val blocco =
             when {
+                input.rifiutati > 0 -> SottotitoloVoce.CodaRifiutata(input.rifiutati)
                 input.inCoda > 0 -> SottotitoloVoce.PrimaConsegna(input.inCoda)
                 input.partitaIniziata -> SottotitoloVoce.PartitaInCorso
                 !input.collegato -> SottotitoloVoce.ServeIlTelefono
@@ -94,6 +112,7 @@ object MenuVoci {
         // sequenza e il telefono salva col proprio registro (L4).
         val blocco =
             when {
+                input.rifiutati > 0 -> SottotitoloVoce.CodaRifiutata(input.rifiutati)
                 input.inCoda > 0 -> SottotitoloVoce.PrimaConsegna(input.inCoda)
                 !input.partitaIniziata -> SottotitoloVoce.NienteDaSalvare
                 !input.collegato -> SottotitoloVoce.ServeIlTelefono
