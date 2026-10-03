@@ -16,12 +16,18 @@
         android:orientation="vertical"
         android:gravity="center_vertical"
         android:minHeight="52dp"
-        android:paddingHorizontal="12dp"
+        android:paddingHorizontal="8dp"
         android:paddingVertical="8dp"
         android:layout_margin="2dp">
 
-        <!-- Titolo a 20sp bold: e' testo grande WCAG, serve a FINE PARTITA rosso su #1E1E1E. -->
-        <TextView
+        <!-- Titolo a 20sp bold: e' testo grande WCAG, serve a FINE PARTITA rosso su #1E1E1E.
+             TitoloIntero e' un TextView che, se la parola piu' lunga non entra nella card (sul tondo
+             da 192dp le card sono strette), scende di dimensione fino a 14sp invece di spezzarla.
+             Scelto al posto di un rientro piu' stretto del BoxInsetLayout: quel rientro tiene le card
+             dentro il cerchio. Il rientro interno della card e' sceso da 12dp a 8dp, che da' 8dp in
+             piu' al testo (sul tondo da 192dp "CHIUDERE" a 14sp ne vuole 66, e ne aveva 64). Lo stesso layout
+             serve il menu e la selezione dello sport. -->
+        <it.vantaggi.scoreboardessential.wear.TitoloIntero
             android:id="@+id/sport_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
