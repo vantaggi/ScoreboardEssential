@@ -2192,3 +2192,13 @@ riallineato al cambio di sport, un solo nodo TalkBack per posto; il nome di chi 
 (decisione del proprietario). Revisione Opus: 1 media e 2 basse, corrette. Suite verde, **840 test JVM**
 (core 157, mobile 377, shared 33, wear 273), strumentati 37 su 37. **Prossimo:** telefono passo 15
 (registro per game, MatchNarrative in :core).
+
+**Telefono passo 15 chiuso** (3 ottobre, `bac5ebf`): registro del padel e del tennis con una riga per
+game, letta da MatchNarrative in :core (ANNULLA, ripristino e arretrato coerenti con il motore). Revisione
+Opus: nessuna alta o media, 3 basse lasciate aperte: pubblicaRegistro ricostruito per intero a ogni evento
+durante rebuildEventsAndUndo, O(n^2) sul main thread su partite lunghissime; la frase TalkBack della riga
+legge il punteggio sempre col lato 1 per primo; manca un test del ViewModel per eventi inerti e logIndex.
+Suite verde, **877 test JVM** (core 173, mobile 398, shared 33, wear 273), strumentati 38 su 38. Con
+questo i passi 5-15 del telefono sono chiusi. **Prossimo:** basse del passo 15, poi orologio passo 11
+(verifica su tre AVD); L4-L6 aspettano l'abbinamento degli emulatori del proprietario, I4/I5
+l'autorizzazione su Padel Elite.
