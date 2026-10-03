@@ -3132,6 +3132,25 @@ class MainViewModelTest {
         }
 
     /**
+     * Visto sugli emulatori abbinati: dopo la chiusura il telefono mostrava ancora 3-2 a cifre
+     * grandi con "nessun gol" sotto, mentre l'orologio era gia' a 0-0. Le cifre leggono
+     * scoreDisplay, e la partita nuova azzerava il motore senza ripubblicarlo.
+     */
+    @Test
+    fun `dopo la fine partita le cifre del telefono tornano a 0-0`() =
+        runTest {
+            calcio3a2()
+            advanceUntilIdle()
+            assertEquals("3", viewModel.scoreDisplay.value?.side1Primary)
+
+            assertEquals(true, viewModel.endMatch())
+            advanceUntilIdle()
+
+            assertEquals("0", viewModel.scoreDisplay.value?.side1Primary)
+            assertEquals("0", viewModel.scoreDisplay.value?.side2Primary)
+        }
+
+    /**
      * Rilievo L4: il v1 di un orologio vecchio in chiusura manda lo 0-0 e POI il MATCH_STATE. Lo
      * 0-0 a registro pieno non e' un tocco: se svuotava il motore, endMatch trovava la partita
      * vuota e il 3-2 andava perso.

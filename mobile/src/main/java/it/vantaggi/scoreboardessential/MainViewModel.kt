@@ -843,6 +843,9 @@ class MainViewModel(
         // sospeso lo riscriveva dopo, oppure SCARTA non trovava piu' la riga da cancellare.
         matchUuid = null
         matchStartedAt = null
+        // Le cifre del telefono leggono scoreDisplay, non i due punteggi di testata: senza questa
+        // riga, dopo la chiusura restava il risultato vecchio sopra "nessun gol".
+        _scoreDisplay.value = sportRules.display(engine.state)
         updateScore(0, 0)
         synchronized(matchEventLog) {
             matchEventLog.clear()
