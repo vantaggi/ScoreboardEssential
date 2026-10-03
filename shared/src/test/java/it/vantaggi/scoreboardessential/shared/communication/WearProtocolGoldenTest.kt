@@ -128,6 +128,19 @@ class WearProtocolGoldenTest {
     }
 
     /**
+     * L5: il NACK sta su un path SUO. Un orologio non aggiornato ignora i path che non conosce, e
+     * sul path dell'ack leggerebbe la sola sequenza e cancellerebbe la coda come per una conferma.
+     */
+    @Test
+    fun `il NACK dell'arretrato non viaggia sul path dell'ack`() {
+        assertEquals("/scoreboard/v2/batch_nack", WearConstants.MSG_BATCH_NACK)
+        assertEquals("/scoreboard/v2/batch_ack", WearConstants.MSG_BATCH_ACK)
+        assertEquals("batch_id", WearConstants.KEY_BATCH_ID)
+        assertEquals("batch_base", WearConstants.KEY_BATCH_BASE)
+        assertEquals("last_batch_id", WearConstants.KEY_LAST_BATCH_ID)
+    }
+
+    /**
      * Nessun path deve stare SOTTO un altro, per segmenti: `a` e `a/b` sono in conflitto, `a` e
      * `ab` no. Il dispatch e' su uguaglianza, ma una sovrapposizione renderebbe ambiguo qualunque
      * futuro passaggio a un dispatch per prefisso di segmento. (Il `pathPrefix="/scoreboard"` del
@@ -272,6 +285,14 @@ class WearProtocolGoldenTest {
                 "INTENT_CORRECTION" to "correction",
                 "INTENT_UNDO" to "undo",
                 "INTENT_END_MATCH" to "end_match",
+                // L5: arretrato con id e base (solo righe AGGIUNTE)
+                "KEY_BATCH_ID" to "batch_id",
+                "KEY_BATCH_BASE" to "batch_base",
+                "MSG_BATCH_NACK" to "/scoreboard/v2/batch_nack",
+                "KEY_BATCH_NACK_REASON" to "batch_nack_reason",
+                "NACK_REJECTED" to "rejected",
+                "NACK_RETRY" to "retry",
+                "KEY_LAST_BATCH_ID" to "last_batch_id",
                 // Messaggi v1
                 "MSG_SCORER_SELECTED" to "/scoreboard/scorer_selected",
                 "MSG_REQUEST_SYNC" to "/scoreboard/request_sync",
