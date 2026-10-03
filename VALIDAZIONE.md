@@ -231,6 +231,17 @@ riga di stato dice "NON CONFERMATA" se in 10s non arriva un v2 col registro pass
 Il resto di questo lotto resta aperto: nel calcio la voce e' spenta finche' L4 non e' corretto, e un
 MATCH_STATE arrivato in ritardo puo' ancora chiudere una partita (manca l'intenzione con id idempotente).
 
+**Corretto (3 ottobre 2026, `7b7307d`).** La fine partita dal polso e' l'intenzione `end_match`
+(MSG_SCORE_INTENT senza lato, stessa seq per nodo dei punti): il telefono esegue endMatch sul proprio
+stato una volta per seq, e endMatch e' atomico (due chiusure nello stesso tick salvano una partita).
+Con il v2 il polso non scrive piu' lo 0-0 v1, il timer ne' MATCH_STATE alla chiusura; il telefono
+scarta il PATH_SCORE dei nodi che parlano v2 (MATCH_STATE passa, per gli orologi v2 precedenti) e
+ignora uno 0-0 v1 solo quando non puo' essere un singolo decremento. Il polso rifiuta la chiusura con
+punti in coda, arretrato in volo o ricevute aperte. Un solo canale: v1 solo se dal telefono e' arrivato
+un v1, altrimenti intenzione (in coda se non consegnata). Comandi del polso urgenti. FINE PARTITA
+accesa anche nel calcio. Provato sugli emulatori abbinati (3-2 salvato una volta, polso e telefono a
+0-0). Resta da provare in L5 la coda di un orologio appena installato senza telefono.
+
 ### [alta] AZZERA/Finisci sull'orologio nel calcio: lo 0-0 v1 urgente svuota il motore del telefono prima di endMatch, e la partita va persa o viene salvata 0-0
 
 `wear/src/main/java/it/vantaggi/scoreboardessential/wear/WearViewModel.kt` - aree: persistenza, protocollo, ui-wear, concorrenza
