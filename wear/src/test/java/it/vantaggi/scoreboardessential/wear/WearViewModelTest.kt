@@ -384,16 +384,43 @@ class WearViewModelTest {
     fun `senza telefono niente scelta del marcatore neanche prima del primo stato v2`() {
         // Un orologio riacceso senza telefono non ha ancora visto un v2, ma la rosa puo' esserci
         // (i DataItem restano sul polso): il vecchio percorso apriva la scelta insieme al tocco.
-        // Il disco ricorda un telefono v2 (L4): e' il segno che basta perche' il tocco vada come
-        // intenzione, e quindi in coda, invece che come punteggio v1.
         viewModel = viewModelConTelefono(collegato = false)
-        LastKnownMatch(org.robolectric.RuntimeEnvironment.getApplication()).save("soccer", "", 0)
         viewModel.setAllPlayers(listOf(PlayerData(id = 1, name = "Rossi", roles = emptyList())))
 
         viewModel.incrementScore(1)
         aspettaChe { viewModel.pendingCount.value == 1 }
 
         assertNull(viewModel.finestraChi.value)
+    }
+
+    /**
+     * Rilievo della revisione L4 (media): un orologio che non ha mai visto un v2 e non ha disco
+     * (prima installazione, dati cancellati) usava solo il v1, e al ritorno del telefono nel padel
+     * o nel tennis quel v1 e' scartato: punti persi. Prima di L4 finivano in coda.
+     */
+    @Test
+    fun `senza disco e senza telefono il tocco va in coda`() {
+        viewModel = viewModelConTelefono(collegato = false)
+        val prima = sequenza()
+
+        viewModel.incrementScore(1)
+        aspettaChe { viewModel.pendingCount.value == 1 }
+
+        assertEquals("e' partita un'intenzione, non un punteggio v1", prima + 1, sequenza())
+        assertEquals("niente punteggio v1 locale", 0, viewModel.team1Score.value)
+    }
+
+    @Test
+    fun `con un v1 ricevuto dal telefono il tocco va solo come v1`() {
+        viewModel = viewModelConTelefono(collegato = true)
+        viewModel.updateScoresFromMobile(0, 0)
+        val prima = sequenza()
+
+        viewModel.incrementScore(1)
+
+        assertEquals("nessuna intenzione: un canale solo", prima, sequenza())
+        assertEquals("il v1 di sempre", 1, viewModel.team1Score.value)
+        assertEquals(0, viewModel.pendingCount.value)
     }
 
     @Test

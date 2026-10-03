@@ -250,6 +250,12 @@ class WearViewModel(
     private var protocolV2Seen = false
 
     /**
+     * Dal telefono e' arrivato un punteggio v1 e nessun v2: e' un telefono non aggiornato, il solo
+     * caso in cui il tocco va come punteggio assoluto invece che come intenzione.
+     */
+    private var v1DalTelefono = false
+
+    /**
      * Seminato con l'orologio di sistema, non da zero.
      *
      * Il telefono ricorda l'ultima sequenza vista per nodo e scarta cio' che non la supera.
@@ -617,6 +623,7 @@ class WearViewModel(
         team2Score: Int,
     ) {
         if (protocolV2Seen) return
+        v1DalTelefono = true
         _team1Score.value = team1Score
         _team2Score.value = team2Score
     }
@@ -933,9 +940,12 @@ class WearViewModel(
         haptics.tick()
         // UN canale solo. Prima del primo v2 il tocco partiva come intenzione E come punteggio
         // assoluto v1, e un telefono v2 lo contava due volte (nel calcio N+2, o il registro
-        // appiattito): ora, finche' non si sa di un telefono v2, e' il v1 di sempre.
+        // appiattito). Il v1 vale SOLO se dal telefono e' arrivato davvero un v1 (un telefono non
+        // aggiornato): in ogni altro caso, anche con un orologio nuovo o senza disco, il tocco va
+        // come intenzione e, se non consegnato, in coda. Un v1 mandato a un telefono v2 tornato
+        // in padel o tennis sarebbe scartato, e il punto perso.
         riconosciV2DalDisco()
-        if (protocolV2Seen) {
+        if (protocolV2Seen || !v1DalTelefono) {
             sendScoreIntent(team, WearConstants.INTENT_POINT, chiediMarcatore, tickAlle)
             // Nessuna vibrazione qui: la conferma arriva con lo stato che il telefono rimanda
             // (vedi chiudiRicevute), non alla consegna.
