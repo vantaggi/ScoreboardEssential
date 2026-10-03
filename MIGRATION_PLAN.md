@@ -2202,3 +2202,10 @@ Suite verde, **877 test JVM** (core 173, mobile 398, shared 33, wear 273), strum
 questo i passi 5-15 del telefono sono chiusi. **Prossimo:** basse del passo 15, poi orologio passo 11
 (verifica su tre AVD); L4-L6 aspettano l'abbinamento degli emulatori del proprietario, I4/I5
 l'autorizzazione su Padel Elite.
+
+**Basse del passo 15 chiuse** (3 ottobre, `b2925d0`): il ripristino pubblica il registro una volta sola
+invece che una per riga; la frase TalkBack di una riga a game legge il punteggio partendo dal vincitore
+(lo schermo resta col lato 1 per primo, come il tabellone); prova del ViewModel su eventi inerti ed
+engineIndex dopo il ripristino. Tre test, tutti falsificati. Suite verde, **881 test JVM** (core 173,
+mobile 402, shared 33, wear 273), strumentati 38 su 38. **Prossimo:** orologio passo 11; creati gli AVD
+`Wear_OS_Large_Round` (454px a 320dpi, 227dp) e `Wear_OS_Square` (360px, 180dp).
