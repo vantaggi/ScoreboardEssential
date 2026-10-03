@@ -32,6 +32,8 @@ internal fun testiDelGame(
     val (lato1, lato2) = game.gamesAfter
     val inGame = "$lato1-$lato2"
     val tieBreak = game.tieBreakScore?.let { (a, b) -> Triple("$a-$b", a, b) }
+    // Il punteggio del tie-break e' lato 1 per primo anche lui: a voce parte dal vincitore.
+    val tieBreakAVoce = tieBreak?.let { (_, a, b) -> if (game.winner == 1) a to b else b to a }
 
     val dettaglio =
         when (game.outcome) {
@@ -47,10 +49,13 @@ internal fun testiDelGame(
             else -> null
         }
 
-    // Per il tie-break TalkBack dice anche il punteggio giocato («7 a 5»), oltre al 7-6 del set.
+    // A voce il punteggio parte da chi e' nominato nella frase, cioe' dal vincitore («Game vinto da
+    // Bianchi, 3 a 2»): col lato 1 per primo Bianchi sentirebbe «2 a 3». Sullo schermo resta il
+    // lato 1 per primo, come il tabellone.
+    val (primo, secondo) = if (game.winner == 1) lato1 to lato2 else lato2 to lato1
     val frasi =
         buildList {
-            add(context.getString(R.string.cd_log_game, nomeVincitore, lato1, lato2))
+            add(context.getString(R.string.cd_log_game, nomeVincitore, primo, secondo))
             when (game.outcome) {
                 GameOutcome.HELD -> {
                     add(context.getString(R.string.cd_log_game_held))
@@ -61,14 +66,14 @@ internal fun testiDelGame(
                 }
 
                 GameOutcome.TIE_BREAK -> {
-                    tieBreak?.let { (_, a, b) -> add(context.getString(R.string.cd_log_game_tiebreak, nomeVincitore, a, b)) }
+                    tieBreakAVoce?.let { (a, b) -> add(context.getString(R.string.cd_log_game_tiebreak, nomeVincitore, a, b)) }
                 }
 
                 GameOutcome.UNKNOWN -> {
                     Unit
                 }
             }
-            if (game.closesSet) add(context.getString(R.string.cd_log_game_set, nomeVincitore, lato1, lato2))
+            if (game.closesSet) add(context.getString(R.string.cd_log_game_set, nomeVincitore, primo, secondo))
             if (game.closesMatch) add(context.getString(R.string.cd_log_game_match, nomeVincitore))
         }
 

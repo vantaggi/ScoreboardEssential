@@ -208,6 +208,38 @@ class MatchLogAdapterTest {
         assertFalse("nel padel non c'e' niente da scegliere", riga.isClickable)
     }
 
+    // Il titolo a schermo ha il lato 1 per primo come il tabellone; la frase di TalkBack parte da chi
+    // e' nominato: «Game won by Bianchi, 2 to 3» fa pensare che Bianchi sia indietro.
+    @Test
+    fun `TalkBack legge il punteggio partendo dal vincitore anche quando e' il lato 2`() {
+        val game = game(winner = 2, gamesAfter = listOf(4, 6), outcome = GameOutcome.BROKEN, closesSet = true)
+        val riga = rigaDelGame(game, nome = "Bianchi")
+
+        assertEquals(
+            "Game won by Bianchi, 6 to 4 in the set. Break of serve. Set won by Bianchi, 6 to 4",
+            riga.contentDescription.toString(),
+        )
+        assertEquals("GAME BIANCHI · 4-6", testo(riga, R.id.game_title).text.toString())
+    }
+
+    @Test
+    fun `TalkBack legge il tie-break del lato 2 partendo dal vincitore`() {
+        val game =
+            game(
+                winner = 2,
+                gamesAfter = listOf(6, 7),
+                outcome = GameOutcome.TIE_BREAK,
+                tieBreakScore = listOf(5, 7),
+                closesSet = true,
+            )
+        val riga = rigaDelGame(game, nome = "Bianchi")
+
+        assertEquals(
+            "Game won by Bianchi, 7 to 6 in the set. Tie-break won by Bianchi, 7 to 5. Set won by Bianchi, 7 to 6",
+            riga.contentDescription.toString(),
+        )
+    }
+
     @Test
     fun `la barretta della riga di un game ha il colore di chi l'ha vinto`() {
         val verde = 0xFF00AA00.toInt()

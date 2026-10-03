@@ -45,6 +45,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -1011,6 +1012,53 @@ class MainViewModelTest {
             val punti = righeDiPunto()
             assertEquals(1, punti.size)
             assertEquals(0, punti[0].engineIndex)
+            verify(playerDao).decrementGoals(7)
+
+            viewModel.matchEvents.removeObserver(eventiObserver)
+            viewModel.team1Score.removeObserver(scoreObserver)
+        }
+
+    /**
+     * Un registro scritto da una versione precedente contiene ancora tocchi inerti: qui un '-' a
+     * 0 (la correzione 'c2' sul lato 2 a zero, che non cambia lo stato). La ricostruzione lo salta,
+     * e le righe devono portare l'indice della voce nel registro del MOTORE e non la loro
+     * posizione nella lista, altrimenti ANNULLA su una riga toglie la voce sbagliata.
+     */
+    @Test
+    fun `dopo la ripresa con un evento inerte in mezzo le righe hanno l'indice del motore e ANNULLA toglie la voce giusta`() =
+        runTest {
+            val luigi = PlayerWithRoles(Player(8, "Luigi", 2, 0), emptyList())
+            // Indici del motore: 0 punto di Mario, 1 correzione inerte, 2 punto di Luigi, 3 punto senza marcatore.
+            val playerDao = partitaSalvata("1|1:7,c2,2:8,1", rosa = listOf(mario, luigi))
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            val scoreObserver = Observer<Int> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            viewModel.team1Score.observeForever(scoreObserver)
+            advanceUntilIdle()
+
+            // In testa il piu' recente; l'indice 1 non ha riga e la posizione 1 non e' l'indice 1.
+            assertEquals(listOf(3, 2, 0), righeDiPunto().map { it.engineIndex })
+            assertEquals(listOf(null, 8, 7), righeDiPunto().map { it.playerId })
+
+            // Primo ANNULLA: il punto senza marcatore, nessun gol da togliere.
+            assertEquals(true, viewModel.undoLastGoal())
+            advanceUntilIdle()
+            assertEquals(listOf(2, 0), righeDiPunto().map { it.engineIndex })
+            assertEquals(1, viewModel.team1Score.value)
+            verify(playerDao, times(0)).decrementGoals(any())
+
+            // Secondo: il punto di Luigi (indice 2), non quello di Mario.
+            assertEquals(true, viewModel.undoLastGoal())
+            advanceUntilIdle()
+            assertEquals(listOf(0), righeDiPunto().map { it.engineIndex })
+            verify(playerDao).decrementGoals(8)
+            verify(playerDao, times(0)).decrementGoals(7)
+
+            // Terzo: salta la correzione inerte in coda e toglie il punto di Mario.
+            assertEquals(true, viewModel.undoLastGoal())
+            advanceUntilIdle()
+            assertEquals(emptyList<Int?>(), righeDiPunto().map { it.engineIndex })
+            assertEquals(0, viewModel.team1Score.value)
             verify(playerDao).decrementGoals(7)
 
             viewModel.matchEvents.removeObserver(eventiObserver)
@@ -2939,6 +2987,82 @@ class MainViewModelTest {
             assertEquals(listOf(7, 3), righeDeiGame().map { it.engineIndex })
 
             viewModel.registroDelFoglio.removeObserver(foglioObserver)
+        }
+
+    /** Il ViewModel di [viewModel] rifatto da capo e fatto ripartire dalla partita che [registro] racconta. */
+    private fun ripristinaDa(registro: String): MainViewModel {
+        val matchDao = campo("matchDao") as MatchDao
+        kotlinx.coroutines.runBlocking {
+            whenever(matchDao.getActiveMatchOnce()).thenReturn(
+                Match(
+                    matchId = 5,
+                    team1Id = 1,
+                    team2Id = 2,
+                    team1Score = 0,
+                    team2Score = 0,
+                    timestamp = 0L,
+                    isActive = true,
+                    eventLog = registro,
+                    sportId = SportRegistry.PADEL,
+                ),
+            )
+        }
+        // Il ripristino parte da solo nell'init del ViewModel nuovo, come all'apertura dell'app.
+        return nuovoViewModel(SportRegistry.PADEL)
+    }
+
+    /**
+     * Quante volte cambia il registro del foglio, e quello dei punti, mentre un ViewModel nuovo
+     * ripristina [registro]: il conto parte dopo la costruzione e arriva a coroutine smaltite.
+     */
+    private fun TestScope.pubblicazioniDelRipristino(registro: String): Triple<Int, Int, Int> {
+        val ripreso = ripristinaDa(registro)
+        var cambiDelFoglio = 0
+        var cambiDeiPunti = 0
+        val foglioObserver = Observer<List<MatchEvent>> { cambiDelFoglio++ }
+        val puntiObserver = Observer<List<MatchEvent>> { cambiDeiPunti++ }
+        ripreso.registroDelFoglio.observeForever(foglioObserver)
+        ripreso.matchEvents.observeForever(puntiObserver)
+        // L'osservatore riceve subito il valore corrente: si conta da qui in poi.
+        cambiDelFoglio = 0
+        cambiDeiPunti = 0
+
+        advanceUntilIdle()
+
+        ripreso.registroDelFoglio.removeObserver(foglioObserver)
+        ripreso.matchEvents.removeObserver(puntiObserver)
+        val righeDeiGame =
+            ripreso.registroDelFoglio.value
+                .orEmpty()
+                .count { it.type == MatchEventType.GAME }
+        return Triple(cambiDelFoglio, cambiDeiPunti, righeDeiGame)
+    }
+
+    /**
+     * Rilievo basso del passo 15: rebuildEventsAndUndo aggiungeva una riga alla volta e ognuna
+     * ripubblicava l'intero registro (registroAGame piu' MatchNarrative.of): O(n^2) sul main thread
+     * su una partita lunga. Si pubblica una volta sola, a ricostruzione finita: il numero di
+     * pubblicazioni non dipende da quanti punti ha la partita.
+     */
+    @Test
+    fun `il ripristino pubblica il registro un numero fisso di volte, non una per riga`() =
+        runTest {
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            giocaUnGame(1)
+            advanceUntilIdle()
+            val corto = pubblicazioniDelRipristino(MatchLogCodec.encode(motore().log))
+
+            // A game alternati il set unico non si chiude: tutti i 40 punti entrano nel registro.
+            giocaUnGame(2)
+            repeat(8) { giocaUnGame(if (it % 2 == 0) 1 else 2) }
+            advanceUntilIdle()
+            assertEquals(40, motore().log.size)
+            val lungo = pubblicazioniDelRipristino(MatchLogCodec.encode(motore().log))
+
+            assertEquals("pubblicazioni del foglio", corto.first, lungo.first)
+            assertEquals("pubblicazioni dei punti", corto.second, lungo.second)
+            // La ricostruzione non e' saltata: il registro ripreso ha tutti i game.
+            assertEquals(listOf(1, 10), listOf(corto.third, lungo.third))
         }
 
     @Test
