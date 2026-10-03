@@ -302,6 +302,39 @@ class FinePartitaDalPolsoTest {
         assertEquals("niente PATH_SCORE a freddo", 0, dataItem(WearConstants.PATH_SCORE).size)
     }
 
+    /**
+     * Rilievo della revisione L4 (bassa): lo stato letto dal disco e' una copia, forse vecchia, e
+     * la lunghezza del suo registro non e' una base per le ricevute. Disco a 4 eventi, telefono
+     * che in realta' ne aveva 3: il tocco a freddo porta il registro a 4 e, con la base dal disco,
+     * lo stato vero (4) sembrerebbe "nessun cambiamento", e la ricevuta direbbe NON CONFERMATO a
+     * un punto preso. Senza stato dal vivo il tocco a freddo non apre una ricevuta.
+     */
+    @Test
+    fun `un tocco a freddo non prende la base delle ricevute dal registro su disco`() {
+        LastKnownMatch(RuntimeEnvironment.getApplication()).save(SportRegistry.FOOTBALL, registro(4), 0)
+
+        viewModel.incrementScore(1)
+        assestati()
+        // Il telefono risponde con lo stato vero: 4 eventi, quelli del disco erano di una partita vecchia.
+        viewModel.applyStateV2(calcio3a2().copy(eventLog = registro(4)))
+        assestati()
+        testDispatcher.scheduler.advanceTimeBy(WearViewModel.SCADENZA_RICEVUTA_MS + 1)
+        assestati()
+
+        assertFalse(
+            "nessun NON CONFERMATO a un punto preso: ${viewModel.statoFiducia.value}",
+            viewModel.statoFiducia.value == Transitorio.NonConfermato,
+        )
+        // Da quando il telefono ha parlato dal vivo la base e' la sua: il tocco dopo apre la ricevuta
+        // (lo si vede dal fatto che la chiusura e' rifiutata finche' lo stato non la chiude).
+        viewModel.incrementScore(1)
+        assestati()
+        assertFalse(viewModel.chiudiPartita())
+        viewModel.applyStateV2(calcio3a2().copy(eventLog = registro(5)))
+        assestati()
+        assertTrue(viewModel.chiudiPartita())
+    }
+
     // --- Rilievo 4: i comandi sono DataItem urgenti ---
 
     @Test

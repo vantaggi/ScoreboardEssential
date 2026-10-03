@@ -256,6 +256,14 @@ class WearViewModel(
     private var v1DalTelefono = false
 
     /**
+     * Almeno uno stato v2 e' arrivato DAL VIVO, da quando il ViewModel c'e'. Lo stato letto dal disco
+     * (o dai DataItem al risveglio) e' una copia che puo' essere vecchia: la lunghezza del suo
+     * registro non e' una base per le ricevute, e il tocco a freddo non ne apre una finche' il
+     * telefono non ha parlato davvero (altrimenti un NON CONFERMATO o una conferma sbagliata).
+     */
+    private var statoVivoVisto = false
+
+    /**
      * Seminato con l'orologio di sistema, non da zero.
      *
      * Il telefono ricorda l'ultima sequenza vista per nodo e scarta cio' che non la supera.
@@ -659,6 +667,7 @@ class WearViewModel(
         }
         statoDalTelefono = state
         if (dalVivo) {
+            statoVivoVisto = true
             ultimoStatoVivoAlle = orologio()
             // Solo un telefono che parla adesso puo' dire "preso": una rilettura dei DataItem al
             // risveglio e' una copia, e chiuderebbe una ricevuta con uno stato vecchio.
@@ -1202,7 +1211,7 @@ class WearViewModel(
         // conferma puo' arrivare mentre sendMessage e' in volo, e allora deve trovarla (e trovare
         // prima quelle dei tocchi precedenti, nell'ordine). Senza un v2 mai visto nessuno stato
         // arrivera', e senza un registro leggibile non c'e' niente da confrontare: niente ricevuta.
-        val registroAlTocco = if (protocolV2Seen) lunghezzaRegistro(statoDalTelefono) else null
+        val registroAlTocco = if (protocolV2Seen && statoVivoVisto) lunghezzaRegistro(statoDalTelefono) else null
         val ricevuta =
             registroAlTocco?.let { Ricevuta(side, kind, it, tickAlle, chiediMarcatore).also(ricevute::addLast) }
         viewModelScope.launch {
