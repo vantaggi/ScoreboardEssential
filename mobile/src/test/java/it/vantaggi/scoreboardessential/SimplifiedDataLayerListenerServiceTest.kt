@@ -123,13 +123,14 @@ class SimplifiedDataLayerListenerServiceTest {
     }
 
     /**
-     * L4: un orologio che ha gia' parlato v2 non ha piu' un v1 da ascoltare. Il suo 0-0 o il suo
-     * MATCH_STATE=false arrivati in ritardo (un DataItem puo' tardare minuti) svuoterebbero il
-     * motore o chiuderebbero una partita nuova. Un orologio che non ha mai parlato v2 resta
-     * ascoltato: e' la compatibilita' con gli orologi non aggiornati.
+     * L4: un orologio che ha gia' parlato v2 non ha piu' un punteggio v1 da ascoltare: il suo 0-0
+     * arrivato in ritardo (un DataItem puo' tardare minuti) svuoterebbe il motore. Il MATCH_STATE
+     * invece passa sempre, anche da un nodo v2: e' l'unico modo di chiudere per gli orologi v2
+     * precedenti a L4, che non conoscono end_match. Un orologio che non ha mai parlato v2 resta
+     * ascoltato su entrambi: e' la compatibilita' con gli orologi non aggiornati.
      */
     @Test
-    fun `il v1 di un nodo che ha gia' parlato v2 non arriva, quello di un nodo vecchio si`() {
+    fun `del nodo che ha gia' parlato v2 non arriva il punteggio v1 ma arriva MATCH_STATE`() {
         service =
             org.robolectric.Robolectric
                 .buildService(SimplifiedDataLayerListenerService::class.java)
@@ -186,7 +187,12 @@ class SimplifiedDataLayerListenerServiceTest {
                 service.onDataChanged(mockDataEventBuffer)
             }
             shadowOf(Looper.getMainLooper()).idle()
-            assertEquals("niente v1 dal nodo che parla v2: $ricevuti", emptyList<String>(), ricevuti)
+            assertEquals(
+                "dal nodo v2 solo la chiusura, mai il punteggio: $ricevuti",
+                listOf(SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE),
+                ricevuti,
+            )
+            ricevuti.clear()
 
             listOf(WearConstants.PATH_SCORE, WearConstants.PATH_MATCH_STATE).forEach { path ->
                 `when`(mockUri.path).thenReturn(path)
