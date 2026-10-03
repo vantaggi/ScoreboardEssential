@@ -234,11 +234,13 @@ class MainViewModel(
 
                         val team1 = intent.getIntExtra(WearConstants.KEY_TEAM1_SCORE, 0)
                         val team2 = intent.getIntExtra(WearConstants.KEY_TEAM2_SCORE, 0)
-                        // Uno 0-0 a registro pieno non e' un tocco: e' l'azzeramento v1 di un
-                        // orologio che sta chiudendo (AZZERA, poi MATCH_STATE). Applicarlo svuotava
+                        // Uno 0-0 che non puo' essere un singolo decremento non e' un tocco: e' l'azzeramento
+                        // v1 di un orologio che sta chiudendo (AZZERA, poi MATCH_STATE). Applicarlo svuotava
                         // il motore PRIMA di endMatch, e la partita andava persa o salvata 0-0 (L4).
-                        // Il MATCH_STATE che segue chiude la partita vera, col suo registro.
-                        if (team1 == 0 && team2 == 0 && engine.log.isNotEmpty()) return
+                        // Il MATCH_STATE che segue chiude la partita vera, col suo registro. Un decremento
+                        // v1 cambia un solo lato di 1: da 1-0 a 0-0 e' la correzione legittima e passa,
+                        // quindi si ignora solo se il punteggio di testata ha somma maggiore di 1.
+                        if (team1 == 0 && team2 == 0 && engine.state.headline().let { it.first + it.second } > 1) return
                         Log.d("VM", "📥 Score update received from Wear")
                         // Anche il motore va riallineato, non solo le LiveData: altrimenti il
                         // primo tocco locale ripartirebbe dal punteggio che il motore aveva
