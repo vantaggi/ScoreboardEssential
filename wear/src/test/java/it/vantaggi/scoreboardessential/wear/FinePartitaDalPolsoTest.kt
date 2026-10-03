@@ -208,7 +208,7 @@ class FinePartitaDalPolsoTest {
     // --- Rilievo 2: con la coda piena la partita non si chiude, due partite non si fondono ---
 
     @Test
-    fun `con punti in coda il polso non chiude: ne' intenzione ne' v1`() {
+    fun `con punti in coda il polso non chiude, ne' intenzione ne' v1`() {
         viewModel.applyStateV2(calcio3a2())
         coda.add(PendingIntent("point", 1, inizio))
         viewModel.refreshPendingCount()
@@ -253,7 +253,7 @@ class FinePartitaDalPolsoTest {
     }
 
     @Test
-    fun `un v2 che c'e' solo sul disco basta: il tocco a freddo va solo come intenzione`() {
+    fun `un v2 che c'e' solo sul disco basta, il tocco a freddo va solo come intenzione`() {
         // L'orologio e' stato riavviato: nessun stato riletto ancora, ma il disco ricorda il telefono v2.
         LastKnownMatch(RuntimeEnvironment.getApplication()).save(SportRegistry.FOOTBALL, registro(5), 0)
 
