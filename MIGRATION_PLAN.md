@@ -2209,3 +2209,43 @@ invece che una per riga; la frase TalkBack di una riga a game legge il punteggio
 engineIndex dopo il ripristino. Tre test, tutti falsificati. Suite verde, **881 test JVM** (core 173,
 mobile 402, shared 33, wear 273), strumentati 38 su 38. **Prossimo:** orologio passo 11; creati gli AVD
 `Wear_OS_Large_Round` (454px a 320dpi, 227dp) e `Wear_OS_Square` (360px, 180dp).
+
+### Orologio passo 11, verifica su tre AVD - 3 ottobre 2026
+
+AVD: `Wear_OS_Small_Round_Prova` (tondo 192dp, clone pulito), `Wear_OS_Large_Round` (tondo 227dp),
+`Wear_OS_Square` (quadrato 180dp), tutti Wear OS 6.0, app di debug da `0087b80`. Tavole in
+`docs/verifica-orologio/` (`stati-it.png`, `stati-en.png`, `menu-prima.png`), ottenute con
+`stati.sh` e `seed.sh` (stessa cartella).
+
+**Come si arriva agli stati senza telefono.** Da scollegati SPORT e' spenta, quindi padel e tennis
+si raggiungono solo scrivendo con `run-as` l'ultima partita nota (`wear_last_known_match`) e un
+tocco in coda (`wear_pending_intents`): il ViewModel riparte dal disco solo se la coda non e'
+vuota. Per questo la riga E dice «1 IN CODA» anche nel padel e nel tennis, dove le bozze mostrano
+il gesto e PARTITA FINITA: quelle due frasi vanno riviste col telefono abbinato (L4).
+
+**Trappola dell'AVD vecchio.** `Wear_OS_Small_Round` carica le risorse da schermo NON tondo:
+faceDetail e gestureHint sono larghe 192dp, mentre sul clone pulito sono rientrate a 16..176 e
+30..162 come vuole il layout tondo. In piu' tiene in GMS DataItem di vecchie prove di abbinamento
+(un v2 di calcio) che `pm clear` non toglie e che sovrascrivono l'ultima partita nota. Le prove
+visive dei passi 4-10 sono quindi state fatte sulla variante notround: d'ora in poi si usa il
+clone `Wear_OS_Small_Round_Prova`.
+
+Misure dalla gerarchia (uiautomator, in dp) al posto del Layout Inspector; il passo 0 non era mai
+stato fatto, quindi non c'e' un «prima» da confrontare:
+
+| | tondo 192 | tondo 227 | quadrato 180 |
+|---|---|---|---|
+| fascia dei punteggi (lato) | 96x74 | 114x88 | 90x69 |
+| altezza della cifra | 42,0 (58sp) | 49,5 (68sp) | 42,0 (58sp) |
+| bersaglio del menu | 144x60 | 171x71 | 132x56 |
+| riga E (gestureHint) | 132x16 | 157x18 | 180x16 |
+| pallini del servizio | 8dp, a 14dp dal bordo | 10dp, a 16dp | 8dp, a **2dp** dal bordo |
+
+Esito: le fasce hanno lo stesso ordine sui tre schermi, sul quadrato gli angoli restano vuoti, le
+cifre sono a 58sp sotto sw210dp e a 68sp sul 227 (rapporto delle altezze 1,18 = 68/58).
+L'ambient corrisponde alla bozza (cifre light, minuti senza secondi, strisce, anello, K e menu
+nascosti, riga E grigia). Nel padel i due pallini stanno sul lato 2 (game 8: B2 al servizio).
+Testi del quadrante interi in italiano e in inglese. **Difetti:** (1, media) sul tondo da 192dp il
+menu con la sola FINE PARTITA spezza la parola («FINE PA» / «RTITA») e taglia la riga sotto; (2,
+bassa) sul quadrato i pallini del servizio arrivano a 2dp dal bordo. Correzione in corso su
+`wf20/menu-tondo`.

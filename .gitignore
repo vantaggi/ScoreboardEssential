@@ -33,3 +33,5 @@ keystore.properties
 # Resoconti di crash della JVM (daemon di Gradle)
 hs_err_pid*.log
 replay_pid*.log
+docs/verifica-orologio/out/
+docs/verifica-orologio/lkm.xml
