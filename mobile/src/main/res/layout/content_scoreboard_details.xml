@@ -68,18 +68,18 @@
 
                         <TextView android:id="@+id/team1_pair_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_team_1" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:paddingHorizontal="8dp" android:paddingVertical="2dp" android:layout_marginBottom="8dp"/>
 
-                        <LinearLayout android:id="@+id/team1_slot1" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="40dp" android:gravity="center_vertical" android:orientation="horizontal">
+                        <LinearLayout android:id="@+id/team1_slot1" android:screenReaderFocusable="true" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="40dp" android:gravity="center_vertical" android:orientation="horizontal">
 
                             <TextView android:layout_width="24dp" android:layout_height="wrap_content" android:text="@string/pair_place_1" android:textColor="@color/sidewalk_gray" android:textSize="18sp" android:textStyle="bold" android:importantForAccessibility="no"/>
 
-                            <TextView android:id="@+id/team1_slot1_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="@color/stencil_white" android:textSize="16sp" android:maxLines="1" android:ellipsize="end"/>
+                            <TextView android:id="@+id/team1_slot1_name" android:importantForAccessibility="no" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="@color/stencil_white" android:textSize="16sp" android:maxLines="1" android:ellipsize="end"/>
                         </LinearLayout>
 
-                        <LinearLayout android:id="@+id/team1_slot2" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="40dp" android:gravity="center_vertical" android:orientation="horizontal">
+                        <LinearLayout android:id="@+id/team1_slot2" android:screenReaderFocusable="true" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="40dp" android:gravity="center_vertical" android:orientation="horizontal">
 
                             <TextView android:layout_width="24dp" android:layout_height="wrap_content" android:text="@string/pair_place_2" android:textColor="@color/sidewalk_gray" android:textSize="18sp" android:textStyle="bold" android:importantForAccessibility="no"/>
 
-                            <TextView android:id="@+id/team1_slot2_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="@color/stencil_white" android:textSize="16sp" android:maxLines="1" android:ellipsize="end"/>
+                            <TextView android:id="@+id/team1_slot2_name" android:importantForAccessibility="no" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="@color/stencil_white" android:textSize="16sp" android:maxLines="1" android:ellipsize="end"/>
                         </LinearLayout>
 
                         <!-- Scambio da 48dp: inverte i due, e quindi chi serve per primo. Dopo il primo punto si spegne col lucchetto. -->
@@ -90,18 +90,18 @@
 
                         <TextView android:id="@+id/team2_pair_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_team_2" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:paddingHorizontal="8dp" android:paddingVertical="2dp" android:layout_marginBottom="8dp"/>
 
-                        <LinearLayout android:id="@+id/team2_slot1" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="40dp" android:gravity="center_vertical" android:orientation="horizontal">
+                        <LinearLayout android:id="@+id/team2_slot1" android:screenReaderFocusable="true" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="40dp" android:gravity="center_vertical" android:orientation="horizontal">
 
                             <TextView android:layout_width="24dp" android:layout_height="wrap_content" android:text="@string/pair_place_1" android:textColor="@color/sidewalk_gray" android:textSize="18sp" android:textStyle="bold" android:importantForAccessibility="no"/>
 
-                            <TextView android:id="@+id/team2_slot1_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="@color/stencil_white" android:textSize="16sp" android:maxLines="1" android:ellipsize="end"/>
+                            <TextView android:id="@+id/team2_slot1_name" android:importantForAccessibility="no" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="@color/stencil_white" android:textSize="16sp" android:maxLines="1" android:ellipsize="end"/>
                         </LinearLayout>
 
-                        <LinearLayout android:id="@+id/team2_slot2" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="40dp" android:gravity="center_vertical" android:orientation="horizontal">
+                        <LinearLayout android:id="@+id/team2_slot2" android:screenReaderFocusable="true" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="40dp" android:gravity="center_vertical" android:orientation="horizontal">
 
                             <TextView android:layout_width="24dp" android:layout_height="wrap_content" android:text="@string/pair_place_2" android:textColor="@color/sidewalk_gray" android:textSize="18sp" android:textStyle="bold" android:importantForAccessibility="no"/>
 
-                            <TextView android:id="@+id/team2_slot2_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="@color/stencil_white" android:textSize="16sp" android:maxLines="1" android:ellipsize="end"/>
+                            <TextView android:id="@+id/team2_slot2_name" android:importantForAccessibility="no" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="@color/stencil_white" android:textSize="16sp" android:maxLines="1" android:ellipsize="end"/>
                         </LinearLayout>
 
                         <!-- Scambio da 48dp: inverte i due, e quindi chi serve per primo. Dopo il primo punto si spegne col lucchetto. -->

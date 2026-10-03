@@ -108,6 +108,30 @@ class CoppieNelFoglioTest {
         assertEquals("i posti restano leggibili", "Marco", testo(foglio, R.id.team1_slot1_name))
     }
 
+    /**
+     * Rilievo della revisione: la descrizione stava sulla riga, che non era un nodo a se', e il
+     * nome dentro restava importante: TalkBack leggeva il nome due volte. Ora la riga e' un solo
+     * nodo con la descrizione completa, e il nome dentro non conta per l'accessibilita'.
+     */
+    @Test
+    fun `ogni posto e un solo nodo di accessibilita e il nome dentro non si legge due volte`() {
+        val foglio = gonfiaIlFoglio()
+        mostra(foglio, SportRegistry.PADEL, listOf(listOf("Marco", "Luca"), listOf("Anna", "Sara")))
+        val righe = listOf(R.id.team1_slot1, R.id.team1_slot2, R.id.team2_slot1, R.id.team2_slot2)
+        val nomi = listOf(R.id.team1_slot1_name, R.id.team1_slot2_name, R.id.team2_slot1_name, R.id.team2_slot2_name)
+
+        righe.zip(nomi).forEachIndexed { i, (rigaId, nomeId) ->
+            val riga = foglio.findViewById<View>(rigaId)
+            // Sulla vista e non sul nodo: Robolectric non riporta flag e descrizione sul nodo, che
+            // sul dispositivo li copia dalla vista.
+            assertTrue("posto $i: la riga e' un nodo letto dallo screen reader", riga.isScreenReaderFocusable)
+            assertTrue("posto $i: la riga porta la descrizione", riga.contentDescription.toString().isNotEmpty())
+            val nome = foglio.findViewById<TextView>(nomeId)
+            assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO, nome.importantForAccessibility)
+            assertFalse("posto $i: il nome non e' un secondo nodo", nome.isImportantForAccessibility)
+        }
+    }
+
     @Test
     fun `il comando di scambio e alto almeno 48dp`() {
         val foglio = gonfiaIlFoglio()
