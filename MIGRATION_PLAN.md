@@ -2247,5 +2247,20 @@ L'ambient corrisponde alla bozza (cifre light, minuti senza secondi, strisce, an
 nascosti, riga E grigia). Nel padel i due pallini stanno sul lato 2 (game 8: B2 al servizio).
 Testi del quadrante interi in italiano e in inglese. **Difetti:** (1, media) sul tondo da 192dp il
 menu con la sola FINE PARTITA spezza la parola («FINE PA» / «RTITA») e taglia la riga sotto; (2,
-bassa) sul quadrato i pallini del servizio arrivano a 2dp dal bordo. Correzione in corso su
-`wf20/menu-tondo`.
+bassa) sul quadrato i pallini del servizio arrivano a 2dp dal bordo.
+
+**Passo 11 chiuso** (3 ottobre, `wf20/menu-tondo` + `9f36c76`): `TitoloIntero` (AppCompatTextView)
+scende da 20 a 14sp solo quando la parola piu' lunga non entra nella card, e va a capo solo sugli
+spazi; rientro interno della card da 12 a 8dp. Era MaterialTextView, che applicava la lineHeight di
+HeadlineSmall (32sp) e allargava le righe di un terzo: visto sull'emulatore, corretto. Pallini del
+quadrato a 6dp dal bordo (`face_dot_inset` notround). TitoliIntegriTest (Robolectric, tondo 192dp,
+italiano e inglese, menu e selezione sport) falsificato. Tavola `menu-dopo.png`. Suite verde, **885
+test JVM** (core 173, mobile 402, shared 33, wear 277); strumentati non rifatti, il telefono non e'
+cambiato. Aperti (bassi): sul tondo da 192dp la riga del perche' sotto FINE PARTITA resta sotto la
+piega e si legge scorrendo con la corona; la card armata e la selezione dello sport non si
+raggiungono senza telefono e sono coperte solo dal test; padel col gesto e tennis con PARTITA FINITA
+da rivedere con L4. Con questo i passi 4-11 dell'orologio sono chiusi.
+
+**Trappola:** se `clean` non riesce a cancellare `mobile/build/.../classes.jar` e non ci sono altre
+build in corso, il jar lo tiene il daemon di Gradle (non quello di Kotlin): si chiude quel processo
+con taskkill sul suo PID, mai `./gradlew --stop`.
