@@ -36,6 +36,22 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
          * e a ogni ricreazione la memoria dell'ultima sequenza si azzererebbe.
          */
         private val lastSeqByNode = ConcurrentHashMap<String, Long>()
+
+        /**
+         * La sequenza, letta UNA volta e convertita secondo il tipo che c'e'.
+         *
+         * Il telefono e l'orologio sono due APK aggiornati in momenti diversi: la sequenza puo'
+         * arrivare come Long o come Int. La lettura di prima, `getLong(k, getInt(k, 0).toLong())`,
+         * valutava il default subito, quindi `getInt` girava su un Long a ogni messaggio e GMS
+         * scriveva nel log una ClassCastException. Qui si guarda il valore e basta: Long com'e',
+         * Int allargato, assente o altro 0 (che la guardia sulla sequenza scarta).
+         */
+        internal fun leggiSeq(dataMap: DataMap): Long =
+            when (val valore = dataMap.get<Any>(WearConstants.KEY_SEQ)) {
+                is Long -> valore
+                is Int -> valore.toLong()
+                else -> 0L
+            }
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -202,7 +218,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         // Il telefono e l'orologio sono due APK aggiornati in momenti diversi: si accetta anche un
         // seq scritto come Int, perche' una sequenza letta come 0 verrebbe scartata in silenzio e
         // il difetto si vedrebbe solo su un dispositivo reale.
-        val seq = dataMap.getLong(WearConstants.KEY_SEQ, dataMap.getInt(WearConstants.KEY_SEQ, 0).toLong())
+        val seq = leggiSeq(dataMap)
 
         // Assente su un orologio che parlasse una bozza precedente del v2: si assume il punto,
         // che e' di gran lunga il gesto piu' frequente.
@@ -252,7 +268,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         }
         val dataMap = DataMap.fromByteArray(data)
         val batch = dataMap.getString(WearConstants.KEY_INTENT_BATCH, "")
-        val seq = dataMap.getLong(WearConstants.KEY_SEQ, dataMap.getInt(WearConstants.KEY_SEQ, 0).toLong())
+        val seq = leggiSeq(dataMap)
         if (batch.isBlank() || seq <= 0L) {
             Log.w(TAG, "Invalid intent-batch fields (seq=$seq). Ignoring.")
             return
@@ -296,7 +312,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         }
         val dataMap = DataMap.fromByteArray(data)
         val sportId = dataMap.getString(WearConstants.KEY_SPORT_ID, "")
-        val seq = dataMap.getLong(WearConstants.KEY_SEQ, dataMap.getInt(WearConstants.KEY_SEQ, 0).toLong())
+        val seq = leggiSeq(dataMap)
         if (sportId.isBlank() || seq <= 0L) {
             Log.w(TAG, "Invalid sport-intent fields (sportId=$sportId, seq=$seq). Ignoring.")
             return
