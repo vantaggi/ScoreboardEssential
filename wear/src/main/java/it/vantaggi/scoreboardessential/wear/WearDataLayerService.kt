@@ -73,6 +73,13 @@ class WearDataLayerService : WearableListenerService() {
                     // L'ora del dato vivo si scrive qui e non nel ViewModel: il servizio riceve i v2
                     // anche ad app chiusa, e "SCOLLEGATO · 18:42" deve poterli contare.
                     if (dalVivo) LastKnownMatch(context).segnaStatoVivo(System.currentTimeMillis())
+                    // Uno stato superato (versione minore dell'ultima vista) non si inoltra ne' si salva:
+                    // il Data Layer puo' consegnare due stati ravvicinati invertiti, e il vecchio arrivato
+                    // per ultimo riporterebbe il polso indietro, anche a freddo (L5).
+                    if (!LastKnownMatch(context).accettaVersione(WearScoreState.versioneDelloStato(dataMap))) {
+                        Log.i(TAG, "Stato v2 superato: ignorato")
+                        return
+                    }
                     val intent =
                         Intent(ACTION_STATE_V2_UPDATE).apply {
                             putExtra(EXTRA_V2_PAYLOAD, dataMap.toByteArray())

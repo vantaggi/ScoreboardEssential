@@ -44,6 +44,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -68,6 +69,7 @@ import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doSuspendableAnswer
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
@@ -4046,5 +4048,67 @@ class MainViewModelTest {
             assertEquals(2, viewModel.team1Score.value)
             assertEquals(1, viewModel.team2Score.value)
             assertEquals(3, motore().log.size)
+        }
+
+    /**
+     * L5, ordine degli stati (prova della custodia): quattro aggiornamenti ravvicinati con un
+     * sendData che completa in ordine INVERSO lasciavano nel Data Layer il primo stato (registro di 1
+     * evento) invece dell'ultimo: telefono 3-1, orologio fermo a 2-0. Con un pubblicatore solo
+     * l'invio dopo parte quando quello prima e' tornato, e uno stato superato prima di partire non si
+     * manda: l'ultimo a completare e' sempre il piu' recente.
+     */
+    @Test
+    fun `quattro aggiornamenti ravvicinati lasciano per ultimo lo stato con quattro eventi`() =
+        runTest {
+            advanceUntilIdle()
+            val statiCompletati = mutableListOf<Map<*, *>>()
+            val punteggiCompletati = mutableListOf<Map<*, *>>()
+            whenever(mockConnectionManager.sendData(any(), any(), any())).doSuspendableAnswer { invocazione ->
+                val path = invocazione.getArgument<String>(0)
+                val dati = invocazione.getArgument<Map<*, *>>(1)
+                if (path == WearConstants.PATH_STATE_V2) {
+                    val eventi = MatchLogCodec.decode(dati[WearConstants.KEY_EVENT_LOG] as String)?.size ?: 0
+                    // Piu' e' vecchio lo stato, piu' e' lento a finire: se partissero in parallelo
+                    // finirebbe per ultimo il primo.
+                    delay(if (eventi == 0) 0L else (5 - eventi) * 100L)
+                    statiCompletati += dati
+                } else if (path == WearConstants.PATH_SCORE) {
+                    punteggiCompletati += dati
+                }
+                Unit
+            }
+
+            // Il primo parte e resta in volo; gli altri tre arrivano mentre non e' ancora tornato.
+            viewModel.addScore(1)
+            testDispatcher.scheduler.runCurrent()
+            repeat(3) { viewModel.addScore(1) }
+            advanceUntilIdle()
+
+            val eventiDiOgni = statiCompletati.map { MatchLogCodec.decode(it[WearConstants.KEY_EVENT_LOG] as String)?.size ?: 0 }
+            assertEquals("l'ultimo stato a completare e' quello con 4 eventi: $eventiDiOgni", 4, eventiDiOgni.last())
+            assertEquals("nessuno stato piu' vecchio completa dopo uno piu' recente: $eventiDiOgni", eventiDiOgni.sorted(), eventiDiOgni)
+            val versioni = statiCompletati.map { it[WearConstants.KEY_STATE_VERSION] as Long }
+            assertEquals("le versioni crescono nell'ordine di completamento", versioni.sorted(), versioni)
+            // Lo stesso per il v1, che esce dallo stesso imbuto.
+            assertEquals(viewModel.team1Score.value, punteggiCompletati.last()[WearConstants.KEY_TEAM1_SCORE])
+        }
+
+    /**
+     * L5: ogni stato v2 porta una versione Long che cresce a ogni cattura, anche quando il registro
+     * torna indietro (un annullamento): e' la versione del canale, non della partita.
+     */
+    @Test
+    fun `ogni stato v2 porta una versione che cresce anche quando il registro torna indietro`() =
+        runTest {
+            viewModel.addScore(1)
+            viewModel.addScore(1)
+            viewModel.undoLastGoal()
+            viewModel.addScore(2)
+            advanceUntilIdle()
+
+            val versioni = statiV2().map { it[WearConstants.KEY_STATE_VERSION] }
+            assertTrue("versioni Long: $versioni", versioni.isNotEmpty() && versioni.all { it is Long })
+            val lunghe = versioni.map { it as Long }
+            assertEquals("strettamente crescenti: $lunghe", lunghe.sorted().distinct(), lunghe)
         }
 }

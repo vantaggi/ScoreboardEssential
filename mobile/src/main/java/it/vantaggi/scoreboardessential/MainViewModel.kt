@@ -59,6 +59,7 @@ import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import it.vantaggi.scoreboardessential.utils.TimeUtils
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -636,6 +637,20 @@ class MainViewModel(
     // orfana. Il Mutex e' equo, quindi la fila rispetta l'ordine delle richieste.
     private val rigaViva = Mutex()
 
+    // Le pubblicazioni verso l'orologio, UNA alla volta per path e CONFLATE. Prima ogni aggiornamento
+    // lanciava la propria coroutine, e sendData scrive su Dispatchers.IO: quattro punti ravvicinati
+    // facevano quattro putDataItem in parallelo, e nel Data Layer restava quello che finiva per ULTIMO,
+    // non il piu' recente (L5, prova della custodia: telefono 3-1, orologio fermo a 2-0). Con un
+    // consumatore solo l'invio dopo parte quando quello prima e' tornato, e uno stato superato prima di
+    // partire non si manda: nel canale resta sempre l'ultimo catturato. Sopra init, che li usa.
+    private val statoV2Da = pubblicatore(WearConstants.PATH_STATE_V2)
+    private val punteggioV1Da = pubblicatore(WearConstants.PATH_SCORE)
+
+    // La versione dello stato v2 (WearConstants.KEY_STATE_VERSION): assegnata alla cattura, seminata
+    // dall'orologio di sistema come la seq dell'orologio cosi' cresce anche fra due vite del processo.
+    // Mai azzerata da una partita nuova o da un ripristino: e' la versione del CANALE, non della partita.
+    private var versioneStato = System.currentTimeMillis()
+
     // Una chiusura (endMatch) e' presa e non ancora finita: sincrono, a differenza della fila.
     private var chiusuraInCorso = false
 
@@ -1027,18 +1042,12 @@ class MainViewModel(
         _team1Score.value = team1
         _team2Score.value = team2
 
-        viewModelScope.launch {
-            val data =
-                mapOf(
-                    WearConstants.KEY_TEAM1_SCORE to team1,
-                    WearConstants.KEY_TEAM2_SCORE to team2,
-                )
-            connectionManager.sendData(
-                path = WearConstants.PATH_SCORE,
-                data = data,
-                urgent = true,
-            )
-        }
+        punteggioV1Da.trySend(
+            mapOf(
+                WearConstants.KEY_TEAM1_SCORE to team1,
+                WearConstants.KEY_TEAM2_SCORE to team2,
+            ),
+        )
 
         // Il v2 esce dallo stesso imbuto del v1, cosi' i due non possono mai divergere: ogni
         // chiamante che aggiorna il punteggio (publishEngineState, syncAllDataToWear,
@@ -1079,51 +1088,65 @@ class MainViewModel(
         // stato col registro di prima (un cambio sport nel batch, uno stato intermedio) portava l'id del
         // blocco appena applicato. Il polso lo prende come base delle voci rimaste e lo salva su disco (L5).
         val ultimoBatch = sharedPreferences.getLong(PREF_BATCH_APPLICATO_ULTIMO, 0L)
+        // La versione si prende QUI, insieme al resto, e non quando parte l'invio: e' l'ordine in cui
+        // gli stati sono stati catturati, e per l'orologio uno stato con versione minore e' superato.
+        versioneStato = maxOf(versioneStato + 1, System.currentTimeMillis())
+        statoV2Da.trySend(
+            mapOf(
+                WearConstants.KEY_PROTO_VERSION to WearConstants.PROTO_VERSION,
+                WearConstants.KEY_SPORT_ID to sportRules.id,
+                WearConstants.KEY_SIDE1_PRIMARY to display.side1Primary,
+                WearConstants.KEY_SIDE1_SECONDARY to (display.side1Secondary ?: ""),
+                WearConstants.KEY_SIDE2_PRIMARY to display.side2Primary,
+                WearConstants.KEY_SIDE2_SECONDARY to (display.side2Secondary ?: ""),
+                WearConstants.KEY_PERIOD_LABEL to (display.periodLabel ?: ""),
+                WearConstants.KEY_SERVING_SIDE to (display.servingSide ?: 0),
+                WearConstants.KEY_SERVING_SLOT to (display.servingPlayerSlot ?: 0),
+                WearConstants.KEY_CAP_HAS_CLOCK to (capacita.clock != ClockMode.NONE),
+                WearConstants.KEY_CAP_HAS_AUX_TIMER to capacita.hasAuxCountdown,
+                WearConstants.KEY_CAP_ATTRIBUTES_SCORER to capacita.attributesScorer,
+                WearConstants.KEY_CAP_DECREMENT_IS_UNDO to capacita.decrementIsUndo,
+                // Lo sport corrente e quelli fra cui si puo' scegliere, gia' tradotti: e'
+                // l'unico modo perche' l'orologio offra il cambio sport senza conoscere :core.
+                WearConstants.KEY_SPORT_LABEL to sportLabel(getApplication(), sportRules.id),
+                WearConstants.KEY_SPORT_IDS to scegliibili.joinToString(WearConstants.SPORT_SEPARATOR) { it.id },
+                WearConstants.KEY_SPORT_LABELS to
+                    scegliibili.joinToString(WearConstants.SPORT_SEPARATOR) {
+                        sportLabel(getApplication(), it.id)
+                    },
+                // Con una partita gia' cominciata il cambio sport viene rifiutato: l'orologio
+                // lo sa PRIMA di chiederlo, e puo' dirlo invece di far partire una richiesta
+                // che sa gia' come finisce.
+                WearConstants.KEY_MATCH_IN_PROGRESS to partitaIniziata,
+                // Il registro, non il punteggio: e' cio' che permette al polso di rifare lo
+                // stesso calcolo con lo stesso codice quando resta senza telefono.
+                WearConstants.KEY_EVENT_LOG to registro,
+                WearConstants.KEY_MATCH_OVER to display.matchOver,
+                // L'ultimo arretrato applicato: se l'ack si perde, il polso toglie le voci dalla
+                // coda da qui. 0 se non ne e' mai entrato uno.
+                WearConstants.KEY_LAST_BATCH_ID to ultimoBatch,
+                // L'identita' della partita: il polso la porta nel batch, e il telefono accoda
+                // solo se e' la stessa. Vuota finche' la partita non ha il suo uuid (col primo punto).
+                WearConstants.KEY_MATCH_UUID to uuidDellaPartita,
+                // Additiva: chi non la conosce la ignora, e un telefono che non la manda e' un telefono
+                // vecchio, il cui stato l'orologio applica come prima.
+                WearConstants.KEY_STATE_VERSION to versioneStato,
+            ),
+        )
+    }
+
+    /**
+     * Un canale CONFLATED con un solo consumatore che manda su [path]: un invio alla volta, nell'ordine,
+     * e sempre l'ULTIMO valore messo (uno sostituito prima di partire non si manda).
+     */
+    private fun pubblicatore(path: String): Channel<Map<String, Any>> {
+        val canale = Channel<Map<String, Any>>(Channel.CONFLATED)
         viewModelScope.launch {
-            val data =
-                mapOf(
-                    WearConstants.KEY_PROTO_VERSION to WearConstants.PROTO_VERSION,
-                    WearConstants.KEY_SPORT_ID to sportRules.id,
-                    WearConstants.KEY_SIDE1_PRIMARY to display.side1Primary,
-                    WearConstants.KEY_SIDE1_SECONDARY to (display.side1Secondary ?: ""),
-                    WearConstants.KEY_SIDE2_PRIMARY to display.side2Primary,
-                    WearConstants.KEY_SIDE2_SECONDARY to (display.side2Secondary ?: ""),
-                    WearConstants.KEY_PERIOD_LABEL to (display.periodLabel ?: ""),
-                    WearConstants.KEY_SERVING_SIDE to (display.servingSide ?: 0),
-                    WearConstants.KEY_SERVING_SLOT to (display.servingPlayerSlot ?: 0),
-                    WearConstants.KEY_CAP_HAS_CLOCK to (capacita.clock != ClockMode.NONE),
-                    WearConstants.KEY_CAP_HAS_AUX_TIMER to capacita.hasAuxCountdown,
-                    WearConstants.KEY_CAP_ATTRIBUTES_SCORER to capacita.attributesScorer,
-                    WearConstants.KEY_CAP_DECREMENT_IS_UNDO to capacita.decrementIsUndo,
-                    // Lo sport corrente e quelli fra cui si puo' scegliere, gia' tradotti: e'
-                    // l'unico modo perche' l'orologio offra il cambio sport senza conoscere :core.
-                    WearConstants.KEY_SPORT_LABEL to sportLabel(getApplication(), sportRules.id),
-                    WearConstants.KEY_SPORT_IDS to scegliibili.joinToString(WearConstants.SPORT_SEPARATOR) { it.id },
-                    WearConstants.KEY_SPORT_LABELS to
-                        scegliibili.joinToString(WearConstants.SPORT_SEPARATOR) {
-                            sportLabel(getApplication(), it.id)
-                        },
-                    // Con una partita gia' cominciata il cambio sport viene rifiutato: l'orologio
-                    // lo sa PRIMA di chiederlo, e puo' dirlo invece di far partire una richiesta
-                    // che sa gia' come finisce.
-                    WearConstants.KEY_MATCH_IN_PROGRESS to partitaIniziata,
-                    // Il registro, non il punteggio: e' cio' che permette al polso di rifare lo
-                    // stesso calcolo con lo stesso codice quando resta senza telefono.
-                    WearConstants.KEY_EVENT_LOG to registro,
-                    WearConstants.KEY_MATCH_OVER to display.matchOver,
-                    // L'ultimo arretrato applicato: se l'ack si perde, il polso toglie le voci dalla
-                    // coda da qui. 0 se non ne e' mai entrato uno.
-                    WearConstants.KEY_LAST_BATCH_ID to ultimoBatch,
-                    // L'identita' della partita: il polso la porta nel batch, e il telefono accoda
-                    // solo se e' la stessa. Vuota finche' la partita non ha il suo uuid (col primo punto).
-                    WearConstants.KEY_MATCH_UUID to uuidDellaPartita,
-                )
-            connectionManager.sendData(
-                path = WearConstants.PATH_STATE_V2,
-                data = data,
-                urgent = true,
-            )
+            for (dati in canale) {
+                connectionManager.sendData(path = path, data = dati, urgent = true)
+            }
         }
+        return canale
     }
 
     /** Proietta lo stato del motore sulle LiveData e lo propaga all'orologio. */
