@@ -197,6 +197,14 @@ class WearViewModel(
         internal const val TIMEOUT_BATCH_MS = 15_000L
 
         /**
+         * Quanto puo' durare UN invio dentro il turno degli invii ([invii]). Un await del Data Layer che
+         * non torna teneva il lock per sempre, e con lui tutti gli invii dopo (L5). Scaduto, l'invio vale
+         * come non consegnato e il tocco va in coda: se in realta' era partito, il telefono lo conta come
+         * tocco dal vivo e la coda lo rimanda, ma e' un rischio raro contro un polso che non segna piu'.
+         */
+        internal const val TIMEOUT_INVIO_MS = 8_000L
+
+        /**
          * Quanto deve passare fra il tick del tocco e la conferma di lato dello stesso tocco. Il
          * vocabolario conta gli impulsi: un tick subito seguito dall'impulso della conferma
          * sinistra si sente come due colpi, cioe' "destra".
@@ -263,6 +271,12 @@ class WearViewModel(
      * arrivato) e copre tutta la sendMessage, non solo l'avvio.
      */
     private val invii = Mutex()
+
+    /** Una sendMessage dentro il turno degli invii, con un tetto di [TIMEOUT_INVIO_MS]: scaduto vale `false`. */
+    private suspend fun inviaMessaggio(
+        path: String,
+        payload: ByteArray,
+    ): Boolean = withTimeoutOrNull(TIMEOUT_INVIO_MS) { connectionManager.sendMessage(path, payload) } ?: false
 
     /** Un arretrato in volo che non e' scaduto: finche' c'e', non se ne spedisce un altro e lo schermo non si ridisegna. */
     private fun batchAttivo(): Boolean = batchInVolo != null && batchInVoloDal != null
@@ -526,7 +540,7 @@ class WearViewModel(
                     putLong(WearConstants.KEY_SEQ, seq)
                     putLong(WearConstants.KEY_AT_MILLIS, quando)
                 }
-            if (!invii.withLock { connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray()) }) {
+            if (!invii.withLock { inviaMessaggio(WearConstants.MSG_SCORE_INTENT, payload.toByteArray()) }) {
                 chiusuraInAttesa = false
                 chiusuraJob?.cancel()
                 triggerFailureVibration()
@@ -1312,7 +1326,7 @@ class WearViewModel(
                     // sa, e il telefono applica con le regole di oggi.
                     sportDelCalcolo?.let { putString(WearConstants.KEY_SPORT_ID, it) }
                 }
-            if (!invii.withLock { connectionManager.sendMessage(WearConstants.MSG_INTENT_BATCH, payload.toByteArray()) }) {
+            if (!invii.withLock { inviaMessaggio(WearConstants.MSG_INTENT_BATCH, payload.toByteArray()) }) {
                 // Non e' partito: il tentativo e' scaduto subito, si riprova al prossimo collegamento
                 // con una sequenza nuova e lo stesso id.
                 scadeBatch(blocco)
@@ -1479,7 +1493,7 @@ class WearViewModel(
                     putString(WearConstants.KEY_SPORT_ID, sportId)
                     putLong(WearConstants.KEY_SEQ, seq)
                 }
-            val consegnato = invii.withLock { connectionManager.sendMessage(WearConstants.MSG_SPORT_INTENT, payload.toByteArray()) }
+            val consegnato = invii.withLock { inviaMessaggio(WearConstants.MSG_SPORT_INTENT, payload.toByteArray()) }
             // Consegnato non e' cambiato: la conferma e' lo stato con lo sport chiesto.
             if (consegnato) {
                 apriRicevutaSport(sportId)
@@ -1535,7 +1549,7 @@ class WearViewModel(
                 // ordine rispetto a quello che il polso mostra.
                 val consegnato =
                     !(pending.size > 0 || batchAttivo()) &&
-                        connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
+                        inviaMessaggio(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
                 if (consegnato) {
                     // Consegnato non e' preso: niente vibrazione adesso. La conferma suona quando il
                     // telefono rimanda lo stato, e se non lo rimanda lo dice NON CONFERMATO.

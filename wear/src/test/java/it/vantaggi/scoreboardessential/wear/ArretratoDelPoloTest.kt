@@ -16,6 +16,7 @@ import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSyn
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -38,6 +39,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.intrinsics.startCoroutineUninterceptedOrReturn
 import kotlin.coroutines.resume
 
 /** Il vibratore che non fa niente: qui interessa la coda, non cio' che si sente al polso. */
@@ -86,6 +88,7 @@ class ArretratoDelPoloTest {
     }
 
     private var sospendiInvii = false
+    private var invioInfinito = false
     private val invii = mutableListOf<InvioSospeso>()
 
     @Before
@@ -114,6 +117,14 @@ class ArretratoDelPoloTest {
                     when {
                         invocazione.method.name != "sendMessage" -> {
                             Mockito.RETURNS_DEFAULTS.answer(invocazione)
+                        }
+
+                        // Un await del Data Layer che non torna mai, ma che si lascia cancellare come quello vero:
+                        // e' il timeout dell'invio a dover liberare il turno.
+                        invioInfinito -> {
+                            val senzaFine: suspend () -> Boolean = { awaitCancellation() }
+                            @Suppress("UNCHECKED_CAST")
+                            senzaFine.startCoroutineUninterceptedOrReturn(invocazione.rawArguments.last() as Continuation<Boolean>)
                         }
 
                         // Un invio che non finisce finche' il test non lo dice: e' cosi' che si vede se due partono insieme.
@@ -598,6 +609,41 @@ class ArretratoDelPoloTest {
         assertTrue("la sequenza del primo precede quella del secondo", invii[0].sequenza < invii[1].sequenza)
         invii[1].continuazione.resume(true)
         assestati()
+    }
+
+    /**
+     * L5, lock degli invii (bassa): un await del Data Layer che non torna teneva il Mutex per sempre e
+     * con lui ogni invio dopo. Dentro il turno ogni invio ha un tetto: scaduto vale come non consegnato,
+     * il tocco va in coda e il turno passa al successivo.
+     */
+    @Test
+    fun `un invio che non torna mai lascia il turno dopo il timeout e il tocco va in coda`() {
+        invioInfinito = true
+
+        viewModel.incrementScore(1)
+        viewModel.incrementScore(2)
+        assestati()
+        assertEquals("il primo e' in volo, il secondo aspetta il turno", 0, coda.size)
+
+        avanza(WearViewModel.TIMEOUT_INVIO_MS)
+
+        assertEquals("il primo e' scaduto e il secondo ha preso il turno: due in coda", 2, coda.size)
+        assertEquals("il secondo non ha tentato l'invio, la coda non e' vuota", 1, intentiDalVivoSpediti())
+    }
+
+    @Test
+    fun `un arretrato che non torna mai lascia il turno e il blocco si rimanda`() {
+        segnaOffline(1)
+        invioInfinito = true
+        viewModel.flushPending()
+        assestati()
+        avanza(WearViewModel.TIMEOUT_INVIO_MS)
+
+        invioInfinito = false
+        viewModel.flushPending(collegatoDiNuovo = true)
+        assestati()
+
+        assertEquals("il rinvio e' partito", 2, batchSpediti().size)
     }
 
     @Test
