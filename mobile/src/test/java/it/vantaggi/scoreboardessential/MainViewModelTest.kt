@@ -2296,6 +2296,54 @@ class MainViewModelTest {
             }
         }
 
+    /**
+     * L5, tempi dell'arretrato (bassa): applyWatchBatch leggeva gli istanti con matchClock.relative, che
+     * dopo la ripresa dal DB e' spostato apposta. Un batch con istanti PRIMA della ripresa usciva con
+     * tempi a zero, sotto l'ultimo evento del registro. Ora vale la regola dei tocchi in custodia.
+     */
+    @Test
+    fun `un arretrato su una partita ripresa dal database entra con i suoi istanti, mai sotto l'ultimo evento`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+                val inizio = System.currentTimeMillis() - 3_600_000L
+                db.matchDao().insert(
+                    Match(
+                        team1Id = 1,
+                        team2Id = 2,
+                        team1Score = 3,
+                        team2Score = 0,
+                        timestamp = 0L,
+                        isActive = true,
+                        startedAt = inizio,
+                        eventLog =
+                            MatchLogCodec.encode(
+                                listOf(0L, 2_000L, 4_000L).map { LoggedEvent(ScoringEvent.Point(side = 1), it) },
+                            ),
+                    ),
+                )
+                usaDao(matchDao = db.matchDao())
+                assertEquals(3, motore().log.size)
+                val base = improntaDelMotore()
+
+                // Il polso ha segnato a 60s e a 75s dall'inizio, e consegna ora.
+                val voci =
+                    listOf(60_000L, 75_000L)
+                        .joinToString(WearConstants.BATCH_SEPARATOR) { voceDiArretrato(WearConstants.INTENT_POINT, 2, inizio + it) }
+                ricevi(arretratoConBase(voci, 4L, 97L, base))
+                advanceUntilIdle()
+
+                assertEquals(
+                    "i tempi veri, non zero",
+                    listOf(0L, 2_000L, 4_000L, 60_000L, 75_000L),
+                    motore().log.map { it.atMillis },
+                )
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
     /** Senza una partita da riprendere i tocchi messi da parte aprono la partita, una riga sola. */
     @Test
     fun `senza partita attiva i tocchi messi da parte aprono una riga sola`() =

@@ -1496,8 +1496,10 @@ class MainViewModel(
         voci.forEach { (tipo, side, quando) ->
             when (tipo) {
                 WearConstants.INTENT_UNDO -> engine.undo()
-                WearConstants.INTENT_CORRECTION -> engine.apply(ScoringEvent.Correction(side = side), matchClock.relative(quando))
-                else -> engine.apply(ScoringEvent.Point(side = side), matchClock.relative(quando))
+                // Come i tocchi messi da parte: dopo una ripresa dal DB l'istante e' relativo all'inizio VERO
+                // della partita, e un tempo mai sotto l'ultimo evento del registro (L5).
+                WearConstants.INTENT_CORRECTION -> engine.apply(ScoringEvent.Correction(side = side), tempoDiPartita(quando))
+                else -> engine.apply(ScoringEvent.Point(side = side), tempoDiPartita(quando))
             }
         }
 
