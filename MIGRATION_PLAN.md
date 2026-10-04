@@ -2293,6 +2293,10 @@ di companion) a `Wear_OS_Small_Round_Prova`. Prova di fumo: un tocco sul polso a
   mano `adb -s <telefono> forward tcp:5601 tcp:5601` e `adb -s <orologio> reverse tcp:5601 tcp:5601`,
   poi si apre l'app di companion sul telefono (`monkey -p com.google.android.apps.wear.companion
   -c android.intent.category.LAUNCHER 1`): in 30-40s torna «1 connected».
+- **Gli strumentati non si fanno sul `Pixel_9a` abbinato**: 23 su 38 falliscono (l'Activity non
+  prende il focus della finestra, e gli stati dell'orologio rendono la partita "non vuota", quindi il
+  cambio sport dei test viene rifiutato). Si fanno su `Pixel_9a_Test` con gli abbinati spenti (tre
+  emulatori insieme portano il telefono all'ANR per memoria).
 - Non usare `adb kill-server` mentre gli emulatori sono abbinati: cadono i tunnel (Android Studio li
   ricrea in qualche secondo, su porte nuove).
 
