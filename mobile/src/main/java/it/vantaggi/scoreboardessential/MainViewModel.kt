@@ -1493,11 +1493,11 @@ class MainViewModel(
         // Il riepilogo dice quanti PUNTI sono entrati: annullamenti e correzioni nell'arretrato
         // cambiano il motore, ma non sono punti.
         val punti = voci.count { it.first == WearConstants.INTENT_POINT }
+        // Gli istanti come per i tocchi messi da parte: dopo una ripresa dal DB sono relativi all'inizio VERO
+        // della partita, e un tempo non scende mai sotto l'ultimo evento del registro (L5).
         voci.forEach { (tipo, side, quando) ->
             when (tipo) {
                 WearConstants.INTENT_UNDO -> engine.undo()
-                // Come i tocchi messi da parte: dopo una ripresa dal DB l'istante e' relativo all'inizio VERO
-                // della partita, e un tempo mai sotto l'ultimo evento del registro (L5).
                 WearConstants.INTENT_CORRECTION -> engine.apply(ScoringEvent.Correction(side = side), tempoDiPartita(quando))
                 else -> engine.apply(ScoringEvent.Point(side = side), tempoDiPartita(quando))
             }
