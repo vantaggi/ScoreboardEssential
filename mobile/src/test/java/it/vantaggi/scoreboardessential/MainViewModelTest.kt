@@ -1712,7 +1712,8 @@ class MainViewModelTest {
 
             assertEquals("la partita di padel non e' toccata", 3, motore().log.size)
             assertEquals(SportRegistry.PADEL, viewModel.activeSport.value)
-            assertEquals(WearConstants.NACK_REJECTED, risposte(WearConstants.MSG_BATCH_NACK).single().getString(WearConstants.KEY_BATCH_NACK_REASON))
+            val nack = risposte(WearConstants.MSG_BATCH_NACK).single()
+            assertEquals(WearConstants.NACK_REJECTED, nack.getString(WearConstants.KEY_BATCH_NACK_REASON))
             assertTrue(risposte(WearConstants.MSG_BATCH_ACK).isEmpty())
         }
 
