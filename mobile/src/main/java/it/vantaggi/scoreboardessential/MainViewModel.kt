@@ -1226,7 +1226,10 @@ class MainViewModel(
             // Il tempo in cui l'app e' rimasta chiusa non e' tempo di gioco.
             eventi.lastOrNull()?.atMillis?.let { matchClock.resume(it, System.currentTimeMillis()) }
             val (uno, due) = engine.state.headline()
-            _scoreDisplay.postValue(sportRules.display(engine.state))
+            // Con value e non postValue: il ripristino gira sul main, e un postValue arriva in un
+            // messaggio successivo, DOPO le cifre dei tocchi messi da parte applicati qui sotto da
+            // fineRipristino. Lo schermo restava al 3-0 del ripristino mentre il motore era a 3-2.
+            _scoreDisplay.value = sportRules.display(engine.state)
             updateScore(uno, due)
         } else {
             // Cronologia illeggibile (formato piu' recente, riga corrotta): si recupera
@@ -1343,7 +1346,9 @@ class MainViewModel(
             List(team1.coerceAtLeast(0)) { ScoringEvent.Point(side = 1) } +
                 List(team2.coerceAtLeast(0)) { ScoringEvent.Point(side = 2) }
         engine.restore(eventi)
-        _scoreDisplay.postValue(sportRules.display(engine.state))
+        // Dal main (ricevitore e ripristino): value, perche' un postValue in ritardo scavalcherebbe
+        // le cifre scritte subito dopo con value.
+        _scoreDisplay.value = sportRules.display(engine.state)
         aggiornaAnnullamento()
     }
 

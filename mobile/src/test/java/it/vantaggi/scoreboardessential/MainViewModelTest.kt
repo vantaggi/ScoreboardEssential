@@ -6,6 +6,8 @@ import android.content.ComponentName
 import android.content.Intent
 import android.graphics.Color
 import android.os.Looper
+import androidx.arch.core.executor.ArchTaskExecutor
+import androidx.arch.core.executor.TaskExecutor
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
@@ -1835,6 +1837,101 @@ class MainViewModelTest {
                         .get(ancora) as MatchEngine
                 ).log
             assertEquals(0, logAncora.size)
+        }
+
+    /**
+     * Come in produzione postValue NON e' immediato: arriva in un messaggio successivo del looper
+     * principale. InstantTaskExecutorRule lo esegue subito e nasconde chi scrive una cifra con
+     * postValue e poi, nello stesso messaggio, con setValue: la prima, in ritardo, vince. Qui i
+     * post si accodano e si svuotano a mano, con la funzione restituita.
+     */
+    private fun codaDelMain(): () -> Unit {
+        val coda = mutableListOf<Runnable>()
+        ArchTaskExecutor.getInstance().setDelegate(
+            object : TaskExecutor() {
+                override fun executeOnDiskIO(runnable: Runnable) = runnable.run()
+
+                override fun postToMainThread(runnable: Runnable) {
+                    coda.add(runnable)
+                }
+
+                override fun isMainThread() = true
+            },
+        )
+        return {
+            while (coda.isNotEmpty()) coda.removeAt(0).run()
+        }
+    }
+
+    /**
+     * Visto sugli emulatori: app chiusa, due tocchi dal polso, app riaperta. Con la lettura della
+     * riga attiva sospesa (il ritardo del database vero, che con i finti non si apre mai) la riga
+     * ripresa deve restare una sola con i due punti sopra, e lo schermo deve dire 3-2: il
+     * ripristino pubblicava il 3-0 con postValue, che arrivava dopo il 3-2 del primo tocco.
+     */
+    @Test
+    fun `i tocchi messi da parte vanno sulla riga ripresa e le cifre dicono 3-2`() =
+        runTest {
+            val db = databaseInMemoria()
+            val svuota = codaDelMain()
+            try {
+                val dao = DaoCheSospende(db.matchDao(), cancelloInsert = CompletableDeferred(Unit), cancelloLettura = CompletableDeferred())
+                db.matchDao().insert(
+                    Match(team1Id = 1, team2Id = 2, team1Score = 3, team2Score = 0, timestamp = 0L, isActive = true, eventLog = "1|1,1,1"),
+                )
+                val app = ApplicationProvider.getApplicationContext<Application>()
+                val quando = System.currentTimeMillis()
+                IntentiInAttesa(app).aggiungi(WearConstants.INTENT_POINT, 2, quando - 2000)
+                IntentiInAttesa(app).aggiungi(WearConstants.INTENT_POINT, 2, quando - 1000)
+
+                viewModel.viewModelScope.cancel()
+                viewModel = creaViewModel(matchDao = dao)
+                iniettaServizio(viewModel)
+                advanceUntilIdle()
+                dao.cancelloLettura.complete(Unit)
+                advanceUntilIdle()
+                svuota()
+
+                assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 3, 2, 5)), righe(db))
+                assertEquals(5, motore().log.size)
+                assertEquals("3", viewModel.scoreDisplay.value?.side1Primary)
+                assertEquals("2", viewModel.scoreDisplay.value?.side2Primary)
+                assertEquals(3, viewModel.team1Score.value)
+                assertEquals(2, viewModel.team2Score.value)
+            } finally {
+                ArchTaskExecutor.getInstance().setDelegate(null)
+                chiudiDatabase(db)
+            }
+        }
+
+    /** Senza una partita da riprendere i tocchi messi da parte aprono la partita, una riga sola. */
+    @Test
+    fun `senza partita attiva i tocchi messi da parte aprono una riga sola`() =
+        runTest {
+            val db = databaseInMemoria()
+            val svuota = codaDelMain()
+            try {
+                val dao = DaoCheSospende(db.matchDao(), cancelloInsert = CompletableDeferred(Unit), cancelloLettura = CompletableDeferred())
+                val app = ApplicationProvider.getApplicationContext<Application>()
+                val quando = System.currentTimeMillis()
+                IntentiInAttesa(app).aggiungi(WearConstants.INTENT_POINT, 2, quando - 2000)
+                IntentiInAttesa(app).aggiungi(WearConstants.INTENT_POINT, 2, quando - 1000)
+
+                viewModel.viewModelScope.cancel()
+                viewModel = creaViewModel(matchDao = dao)
+                iniettaServizio(viewModel)
+                advanceUntilIdle()
+                dao.cancelloLettura.complete(Unit)
+                advanceUntilIdle()
+                svuota()
+
+                assertEquals(listOf(Riga(true, SportRegistry.FOOTBALL, 0, 2, 2)), righe(db))
+                assertEquals("0", viewModel.scoreDisplay.value?.side1Primary)
+                assertEquals("2", viewModel.scoreDisplay.value?.side2Primary)
+            } finally {
+                ArchTaskExecutor.getInstance().setDelegate(null)
+                chiudiDatabase(db)
+            }
         }
 
     /** Il messaggio «ANNULLATO» dipende da questo esito: vero solo se e' stato tolto qualcosa. */
