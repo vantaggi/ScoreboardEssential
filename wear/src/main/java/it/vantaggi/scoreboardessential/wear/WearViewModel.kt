@@ -756,7 +756,7 @@ class WearViewModel(
         // stato, e qui non si tocca. Tutto il resto fa decadere quella che c'era.
         chiudiFinestraChiSeNonVera(state)
         // L'ora sul disco la scrive WearDataLayerService, che c'e' anche ad app chiusa.
-        ultimaNota.save(state.sportId, state.eventLog, state.servingSlot)
+        ultimaNota.save(state.sportId, state.eventLog, state.servingSlot, state.matchUuid)
         // Lo stato porta l'id dell'ultimo arretrato applicato: se e' quello in volo, e' un ack che non
         // ha avuto bisogno di arrivare (L5, ack perso). Dopo chiudiRicevute: lo stato dell'arretrato
         // non e' la conferma di un tocco dal vivo, e finche' batchInVolo c'e' non la chiude.
@@ -1149,6 +1149,8 @@ class WearViewModel(
             eventLog = ultimaNota.eventLog,
             // Senza questo il ricalcolo tratterebbe un tennis in doppio come un singolare.
             servingSlot = if (ultimaNota.inCoppia) 1 else 0,
+            // La partita del registro: la coda che nasce a freddo la rimanda nel batch (L5).
+            matchUuid = ultimaNota.matchUuid,
         )
     }
 

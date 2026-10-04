@@ -23,6 +23,7 @@ class LastKnownMatch(
         const val CHIAVE_LOG = "event_log"
         const val CHIAVE_IN_COPPIA = "in_coppia"
         const val CHIAVE_RICEVUTO_ALLE = "received_at"
+        const val CHIAVE_UUID = "match_uuid"
     }
 
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -30,6 +31,14 @@ class LastKnownMatch(
     val sportId: String get() = prefs.getString(CHIAVE_SPORT, "").orEmpty()
 
     val eventLog: String get() = prefs.getString(CHIAVE_LOG, "").orEmpty()
+
+    /**
+     * L'identita' della partita a cui appartiene [eventLog] (il `matchUuid` del telefono), vuota se il
+     * telefono non l'aveva ancora o se i dati sono di prima di questa chiave. Senza, un orologio
+     * riavviato rifaceva la coda sul registro giusto ma con l'uuid vuoto, e il telefono non poteva
+     * distinguere la sua partita da un'altra che comincia allo stesso modo (L5).
+     */
+    val matchUuid: String get() = prefs.getString(CHIAVE_UUID, "").orEmpty()
 
     /**
      * La partita si gioca in coppia: il telefono manda il giocatore al servizio (1 o 2) solo
@@ -50,6 +59,7 @@ class LastKnownMatch(
         sportId: String,
         eventLog: String,
         servingSlot: Int = 0,
+        matchUuid: String = "",
     ) {
         // Uno sport vuoto arriva da un telefono che parla una bozza precedente del v2: non si
         // sovrascrive quello che si sa gia' con un vuoto, perche' quel vuoto non e' informazione.
@@ -63,6 +73,7 @@ class LastKnownMatch(
             putString(CHIAVE_SPORT, sportId)
             putString(CHIAVE_LOG, eventLog)
             putBoolean(CHIAVE_IN_COPPIA, inCoppia)
+            putString(CHIAVE_UUID, matchUuid)
         }
     }
 

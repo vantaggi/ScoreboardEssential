@@ -302,6 +302,27 @@ class ArretratoDelPoloTest {
         assertEquals("partita-A", batchSpediti().single().getString(WearConstants.KEY_MATCH_UUID))
     }
 
+    /**
+     * L5, identita' (media): l'uuid arrivava vuoto anche dopo un riavvio, perche' LastKnownMatch non lo
+     * salvava e statoDaDisco non lo riempiva. La coda nata a freddo sul registro del disco portava
+     * l'impronta giusta e un'identita' vuota, e il telefono non sapeva di che partita fosse.
+     */
+    @Test
+    fun `dopo un riavvio la coda nata a freddo porta l'identita' dell'ultimo stato del telefono`() {
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        assestati()
+        // Il processo muore: il ViewModel nuovo non ha visto nessuno stato dal vivo, solo il disco.
+        viewModel = nuovoViewModel()
+        segnaOffline(1)
+
+        viewModel.flushPending()
+        assestati()
+
+        val batch = batchSpediti().single()
+        assertEquals(MatchLogCodec.impronta(registro(3)), batch.getString(WearConstants.KEY_BATCH_BASE))
+        assertEquals("partita-A", batch.getString(WearConstants.KEY_MATCH_UUID))
+    }
+
     @Test
     fun `lo stato del telefono porta l'identita' della partita e un telefono vecchio la lascia vuota`() {
         val nuovo = DataMap().apply { putString(WearConstants.KEY_MATCH_UUID, "partita-A") }
@@ -953,6 +974,7 @@ class ArretratoDelPoloTest {
         val nota = LastKnownMatch(app)
         assertEquals("padel", nota.sportId)
         assertEquals("il calcolo a freddo riparte dal registro che le contiene", registro(3), nota.eventLog)
+        assertEquals("e dalla partita a cui appartiene", "partita-A", nota.matchUuid)
     }
 
     @Test

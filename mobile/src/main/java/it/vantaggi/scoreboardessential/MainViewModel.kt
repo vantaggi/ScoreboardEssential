@@ -1069,6 +1069,11 @@ class MainViewModel(
         val scegliibili = SportRegistry.selectable()
         val partitaIniziata = engine.log.isNotEmpty()
         val registro = MatchLogCodec.encode(engine.log)
+        // L'identita' nasce QUI, sincrona, col primo evento: persistLiveMatch la scriveva dentro una
+        // coroutine accodata, dopo questo stato, e il polso si portava dietro un uuid vuoto (L5): un
+        // arretrato calcolato su una partita poteva allora entrare in un'altra che cominciasse allo
+        // stesso modo. Un registro vuoto non ha ancora una partita da identificare.
+        if (partitaIniziata && matchUuid == null) matchUuid = UUID.randomUUID().toString()
         val uuidDellaPartita = matchUuid.orEmpty()
         viewModelScope.launch {
             val data =
@@ -1440,7 +1445,7 @@ class MainViewModel(
         // cominciata, o orologio che non lo manda) l'identita' non si controlla.
         val baseCoincide =
             if (base != null) {
-                (uuidPartita.isNullOrEmpty() || uuidPartita == matchUuid) && MatchLogCodec.iniziaCon(engine.log, base)
+                stessaPartita(uuidPartita, base) && MatchLogCodec.iniziaCon(engine.log, base)
             } else {
                 engine.log.isEmpty()
             }
@@ -1505,6 +1510,26 @@ class MainViewModel(
         // La conferma parte SOLO ora: e' il ViewModel ad averlo applicato, e solo lui puo' dirlo.
         rispondiAlBatch(WearConstants.MSG_BATCH_ACK, seq, batchId)
     }
+
+    /**
+     * Il batch riguarda la partita che il telefono ha adesso? Tre casi:
+     * - [uuidPartita] assente (null): orologio che non manda l'identita', non si controlla;
+     * - presente e non vuoto: deve essere quello del telefono;
+     * - presente ma VUOTO: il polso non ha mai visto l'uuid della partita. Con una [base] vuota ("0",
+     *   partita avviata dal polso) e' il caso normale, e il prefisso vuoto vale per qualunque registro.
+     *   Con una base di n > 0 eventi, invece, l'impronta ignora orario e marcatore e una base corta
+     *   ("1:h") coincide con qualunque partita che cominci con gli stessi lati: se il telefono ha una
+     *   partita identificata non si puo' dire che sia quella del polso, e si rifiuta.
+     */
+    private fun stessaPartita(
+        uuidPartita: String?,
+        base: String,
+    ): Boolean =
+        when {
+            uuidPartita == null -> true
+            uuidPartita.isNotEmpty() -> uuidPartita == matchUuid
+            else -> base == "0" || matchUuid == null
+        }
 
     /**
      * Ack o NACK a un arretrato. Il NACK sta su un path a parte (vedi [WearConstants.MSG_BATCH_NACK]);
