@@ -513,6 +513,62 @@ class ArretratoDelPoloTest {
         assertEquals("partita-A", secondo.getString(WearConstants.KEY_MATCH_UUID))
     }
 
+    /** Dopo l'ack di un blocco e una voce rimasta: la coda aspetta lo stato col suo id, che qui non arriva mai. */
+    private fun ackSenzaMaiLoStatoDelBlocco(): DataMap {
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        segnaOffline(1)
+        viewModel.onBatchAck(primo.getLong(WearConstants.KEY_SEQ), idDi(primo))
+        assestati()
+        assertEquals("non parte con una base che non si sa", 1, batchSpediti().size)
+        return primo
+    }
+
+    /**
+     * L5 (bassa): lo stato col suo id puo' non arrivare mai (due orologi, dati del telefono azzerati) e la
+     * coda restava ferma per sempre, con ogni tocco dal vivo in coda dietro. Passato il tempo, le voci
+     * rimaste ripartono dallo stato vivo che c'e', col suo registro e il suo uuid.
+     */
+    @Test
+    fun `se lo stato col suo id non arriva le voci rimaste ripartono dallo stato vivo dopo l'attesa`() {
+        val primo = ackSenzaMaiLoStatoDelBlocco()
+
+        avanza(WearViewModel.ATTESA_STATO_DOPO_BLOCCO_MS)
+
+        val secondo = batchSpediti().last()
+        assertEquals("il blocco nuovo e' partito", 2, batchSpediti().size)
+        assertNotEquals(idDi(primo), idDi(secondo))
+        assertEquals(MatchLogCodec.impronta(registro(3)), secondo.getString(WearConstants.KEY_BATCH_BASE))
+        assertEquals("partita-A", secondo.getString(WearConstants.KEY_MATCH_UUID))
+    }
+
+    /** Uno stato vivo con un id che non e' piu' quello di prima dell'ack dice che il blocco non sara' mai nello stato. */
+    @Test
+    fun `uno stato vivo con un altro id risolve subito la base delle voci rimaste`() {
+        ackSenzaMaiLoStatoDelBlocco()
+
+        // Un altro orologio ha consegnato il suo arretrato: l'ultimo id applicato del telefono e' un altro.
+        viewModel.applyStateV2(stato(registro(4), lastBatchId = 7L, matchUuid = "partita-A"))
+        assestati()
+
+        assertEquals("ripartono senza aspettare", 2, batchSpediti().size)
+        assertEquals(MatchLogCodec.impronta(registro(4)), batchSpediti().last().getString(WearConstants.KEY_BATCH_BASE))
+    }
+
+    /** Lo stato di prima del blocco, arrivato in ritardo, non e' la base: si aspetta il suo, o la scadenza. */
+    @Test
+    fun `uno stato vivo ancora di prima del blocco non risolve la base prima dell'attesa`() {
+        ackSenzaMaiLoStatoDelBlocco()
+
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        assestati()
+
+        assertEquals("aspetta ancora", 1, batchSpediti().size)
+    }
+
     @Test
     fun `se lo stato dopo il blocco e' arrivato prima dell'ack la base delle voci rimaste e' quella`() {
         viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
