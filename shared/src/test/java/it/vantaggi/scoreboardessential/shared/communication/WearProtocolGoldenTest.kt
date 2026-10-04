@@ -294,6 +294,8 @@ class WearProtocolGoldenTest {
                 "NACK_RETRY" to "retry",
                 "KEY_LAST_BATCH_ID" to "last_batch_id",
                 "KEY_MATCH_UUID" to "match_uuid",
+                // L5: custodia degli intenti (solo righe AGGIUNTE)
+                "MSG_INTENT_CUSTODIA" to "/scoreboard/v2/intent_custody",
                 // Messaggi v1
                 "MSG_SCORER_SELECTED" to "/scoreboard/scorer_selected",
                 "MSG_REQUEST_SYNC" to "/scoreboard/request_sync",

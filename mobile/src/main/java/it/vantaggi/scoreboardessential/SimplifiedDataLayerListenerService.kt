@@ -297,7 +297,18 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         // creazione (L5). Solo i gesti di punteggio: una chiusura o un cambio sport arrivati ore dopo
         // agirebbero su un'altra partita, e al polso hanno gia' detto NON CONFERMATA.
         if (!preso && kind != WearConstants.INTENT_END_MATCH) {
-            IntentiInAttesa(this).aggiungi(kind, side, quando.takeIf { it > 0L } ?: System.currentTimeMillis())
+            val tenuto = IntentiInAttesa(this).aggiungi(kind, side, quando.takeIf { it > 0L } ?: System.currentTimeMillis())
+            // Il polso non vede crescere il registro e direbbe NON CONFERMATO: l'utente ripeterebbe il
+            // tocco, e alla riapertura i due si applicherebbero. Si dice "preso in custodia" SOLO se la
+            // voce e' davvero da parte: oltre il tetto no, e NON CONFERMATO e' la verita'.
+            if (tenuto) {
+                rispondi(
+                    this,
+                    sourceNodeId,
+                    WearConstants.MSG_INTENT_CUSTODIA,
+                    DataMap().apply { putLong(WearConstants.KEY_SEQ, seq) }.toByteArray(),
+                )
+            }
         }
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Broadcasted score intent $kind for side $side (seq=$seq, preso=$preso)")

@@ -134,6 +134,10 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    WearDataLayerService.ACTION_INTENT_CUSTODIA -> {
+                        viewModel.onCustodia(intent.getLongExtra(WearConstants.KEY_SEQ, 0L))
+                    }
+
                     WearDataLayerService.ACTION_SCORE_UPDATE -> {
                         val team1 = intent.getIntExtra(WearDataLayerService.EXTRA_TEAM1_SCORE, 0)
                         val team2 = intent.getIntExtra(WearDataLayerService.EXTRA_TEAM2_SCORE, 0)
@@ -202,6 +206,7 @@ class MainActivity : ComponentActivity() {
                 addAction(WearDataLayerService.ACTION_STATE_V2_UPDATE)
                 addAction(WearDataLayerService.ACTION_BATCH_ACK)
                 addAction(WearDataLayerService.ACTION_BATCH_NACK)
+                addAction(WearDataLayerService.ACTION_INTENT_CUSTODIA)
                 addAction(WearDataLayerService.ACTION_SCORE_UPDATE)
                 addAction(WearDataLayerService.ACTION_TEAM_NAMES_UPDATE)
                 addAction(WearDataLayerService.ACTION_TEAM_COLOR_UPDATE)
@@ -996,6 +1001,7 @@ internal fun Frase.testo(context: Context): String =
         Transitorio.ChiusuraNonConfermata -> context.getString(R.string.wear_status_close_unconfirmed)
         Transitorio.CambioSport -> context.getString(R.string.wear_status_changing_sport)
         Transitorio.SportNonCambiato -> context.getString(R.string.wear_status_sport_unchanged)
+        Transitorio.InAttesaDelTelefono -> context.getString(R.string.wear_status_phone_waiting)
     }
 
 /** L'ora e' fissa a 24 ore, "18:42": la stessa larghezza in ogni lingua, dentro i 18 caratteri. */

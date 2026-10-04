@@ -215,6 +215,9 @@ class WearViewModel(
          */
         internal const val DURATA_CAMBIO_SPORT_MS = 10_000L
 
+        /** Quanto resta IN ATTESA TELEFONO: un po' piu' di un transitorio, perche' dice di NON ripetere il tocco. */
+        internal const val DURATA_CUSTODIA_MS = 5_000L
+
         /** Quanto resta offerto CHI? dopo un gol confermato, poi il bersaglio torna al menu. */
         internal const val DURATA_FINESTRA_CHI_MS = 8_000L
     }
@@ -281,6 +284,8 @@ class WearViewModel(
      * L5). La conferma e' uno stato v2 che arriva con un registro di lunghezza diversa.
      */
     private class Ricevuta(
+        /** La sequenza del tocco: e' con lei che il telefono dice "preso in custodia" ([onCustodia]). */
+        val seq: Long,
         val side: Int,
         val kind: String,
         /** Lunghezza del registro quando il tocco e' partito: quella con cui confrontare gli stati. */
@@ -937,6 +942,29 @@ class WearViewModel(
         mostraTransitorio(messaggio)
     }
 
+    /**
+     * Il telefono ha messo da parte il tocco [seq] (la sua app e' chiusa) e lo applichera' alla
+     * riapertura. Non e' una conferma (il suo tabellone non si muove) ne' un errore: la ricevuta si
+     * chiude "in custodia", senza la vibrazione di NON CONFERMATO, e la riga lo dice per qualche
+     * secondo. Il colpo lungo in coda al pattern e' lo stesso del tocco tenuto in coda qui: "al
+     * sicuro, ma il telefono non l'ha ancora". Il tocco non va ripetuto: entrerebbe due volte.
+     *
+     * Se la ricevuta e' gia' scaduta (la risposta e' arrivata dopo i 2,5s) la riga si corregge lo
+     * stesso: NON CONFERMATO non e' piu' vero.
+     */
+    fun onCustodia(seq: Long) {
+        val ricevuta = ricevute.firstOrNull { it.seq == seq }
+        if (ricevuta != null) {
+            ricevute.remove(ricevuta)
+            ricevuta.scadenza?.cancel()
+            suonaDopoIlTick(
+                ricevuta.tickAlle,
+                if (ricevuta.kind == WearConstants.INTENT_POINT) WearPatterns.inCoda(ricevuta.side) else patternConferma(ricevuta),
+            )
+        }
+        mostraTransitorio(Transitorio.InAttesaDelTelefono, DURATA_CUSTODIA_MS)
+    }
+
     /** Lo sport chiesto e' arrivato: CAMBIO SPORT... ha detto quel che doveva, e la riga torna sola. */
     private fun finisciCambioSport() {
         if (transitorio == Transitorio.CambioSport) transitorio = null
@@ -1481,7 +1509,7 @@ class WearViewModel(
         // arrivera', e senza un registro leggibile non c'e' niente da confrontare: niente ricevuta.
         val registroAlTocco = if (protocolV2Seen && statoVivoVisto) lunghezzaRegistro(statoDalTelefono) else null
         val ricevuta =
-            registroAlTocco?.let { Ricevuta(side, kind, it, tickAlle, chiediMarcatore).also(ricevute::addLast) }
+            registroAlTocco?.let { Ricevuta(seq, side, kind, it, tickAlle, chiediMarcatore).also(ricevute::addLast) }
         viewModelScope.launch {
             val payload =
                 DataMap().apply {

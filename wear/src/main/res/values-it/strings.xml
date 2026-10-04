@@ -59,6 +59,7 @@
     <string name="wear_status_close_unconfirmed">NON CONFERMATA</string>
     <string name="wear_status_changing_sport">CAMBIO SPORT…</string>
     <string name="wear_status_sport_unchanged">SPORT NON CAMBIATO</string>
+    <string name="wear_status_phone_waiting">IN ATTESA TELEFONO</string>
     <string name="wear_status_not_delivered">%1$d NON CONSEGNATI</string>
     <string name="wear_status_sending">INVIO %1$d…</string>
     <string name="wear_status_queued">%1$d IN CODA</string>

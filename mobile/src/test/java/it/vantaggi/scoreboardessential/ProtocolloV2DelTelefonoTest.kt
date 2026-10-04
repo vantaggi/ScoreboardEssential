@@ -380,6 +380,75 @@ class ProtocolloV2DelTelefonoTest {
         assertEquals(WearConstants.INTENT_POINT, messe[0].kind)
     }
 
+    /** L5 custodia: il polso deve sapere che il tocco e' da parte, o dice NON CONFERMATO e l'utente lo ripete. */
+    @Test
+    fun `un tocco messo da parte viene detto all'orologio con la sua sequenza`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        IntentiInAttesa(app).prendiTutte()
+        catturaLeRisposte()
+        try {
+            manager.unregisterReceiver(receiver)
+
+            consegna(tocco(nodoA, 41, lato = 2))
+
+            val custodia = risposte.single()
+            assertEquals(WearConstants.MSG_INTENT_CUSTODIA, custodia.path)
+            assertEquals(nodoA, custodia.nodo)
+            assertEquals(41L, custodia.dati.getLong(WearConstants.KEY_SEQ))
+        } finally {
+            SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
+            IntentiInAttesa(app).prendiTutte()
+        }
+    }
+
+    @Test
+    fun `un tocco preso da un ricevitore non riceve la custodia, risponde lo stato`() {
+        catturaLeRisposte()
+        try {
+            consegna(tocco(nodoA, 42))
+
+            assertEquals(1, ricevuti.size)
+            assertEquals(0, risposte.size)
+        } finally {
+            SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
+        }
+    }
+
+    @Test
+    fun `una chiusura senza ricevitori non e' in custodia, perche' non e' stata messa da parte`() {
+        catturaLeRisposte()
+        try {
+            manager.unregisterReceiver(receiver)
+
+            consegna(chiusura(nodoA, 43))
+
+            assertEquals(0, risposte.size)
+        } finally {
+            SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
+        }
+    }
+
+    /** Oltre il tetto il tocco non e' da parte: dire "in custodia" sarebbe una bugia, il polso dice NON CONFERMATO. */
+    @Test
+    fun `oltre il tetto il tocco non e' in custodia e l'orologio non riceve risposta`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        val coda = IntentiInAttesa(app)
+        coda.prendiTutte()
+        repeat(IntentiInAttesa.MASSIMO) { coda.aggiungi(WearConstants.INTENT_POINT, 1, System.currentTimeMillis()) }
+        catturaLeRisposte()
+        try {
+            manager.unregisterReceiver(receiver)
+
+            consegna(tocco(nodoA, 44))
+
+            assertEquals(0, risposte.size)
+            assertEquals(IntentiInAttesa.MASSIMO, coda.prendiTutte().size)
+        } finally {
+            SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
+            coda.prendiTutte()
+        }
+    }
+
     @Test
     fun `con un ricevitore il tocco non si mette da parte, ci pensa il ViewModel`() {
         val app = ApplicationProvider.getApplicationContext<android.app.Application>()
