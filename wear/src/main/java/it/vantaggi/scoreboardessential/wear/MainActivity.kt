@@ -22,6 +22,7 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
+import it.vantaggi.scoreboardessential.shared.communication.NodoLocale
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
 import kotlinx.coroutines.delay
@@ -272,16 +273,26 @@ class MainActivity : ComponentActivity() {
      * Una volta sola per istanza: da quel momento il service consegna gli aggiornamenti vivi, e
      * rigiocare un DataItem vecchio riporterebbe il cronometro indietro all'ultimo valore scritto
      * dal telefono invece di lasciarlo correre.
+     *
+     * Si tengono solo i DataItem del telefono: quelli scritti dall'orologio stesso (match_state)
+     * non sono notizie, e rigiocarli in ordine arbitrario puo' azzerare il cronometro (L6).
      */
     private fun restoreStateFromDataItems() {
         if (stateRestored) return
         stateRestored = true
+        // Prima l'id del nodo locale, poi i DataItem: se il Data Layer non lo da', si rigioca tutto
+        // come prima.
+        NodoLocale.leggi(this) { rilettura() }
+    }
+
+    private fun rilettura() {
         Wearable
             .getDataClient(this)
             .dataItems
             .addOnSuccessListener { buffer ->
                 try {
                     buffer
+                        .filter { !NodoLocale.eLocale(it.uri.host) }
                         // Prima il v2: da li' in poi il ViewModel scarta da solo il punteggio v1.
                         .sortedBy { if (it.uri.path == WearConstants.PATH_STATE_V2) 0 else 1 }
                         // Il countdown del portiere non porta con se' l'istante di partenza:

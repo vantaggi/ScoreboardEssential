@@ -1,9 +1,12 @@
 package it.vantaggi.scoreboardessential.wear
 
 import android.app.Activity
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.drawable.ColorDrawable
+import android.net.Uri
 import android.os.Looper
 import android.os.SystemClock
 import android.view.View
@@ -11,11 +14,22 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.google.android.gms.tasks.Tasks
+import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.DataItem
+import com.google.android.gms.wearable.DataItemBuffer
+import com.google.android.gms.wearable.DataMap
+import com.google.android.gms.wearable.Node
+import com.google.android.gms.wearable.NodeClient
+import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.LoggedEvent
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
+import it.vantaggi.scoreboardessential.shared.communication.NodoLocale
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -25,6 +39,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
@@ -505,6 +520,94 @@ class MainActivityTest {
         passano(60)
 
         runBlocking { Mockito.verify(telefono, Mockito.never()).refreshConnection() }
+    }
+
+    /**
+     * L6: al risveglio l'orologio rilegge i DataItem presenti, e fra questi ci sono anche quelli che
+     * ha scritto lui (match_state): rigiocarli in ordine arbitrario puo' azzerare il cronometro. Si
+     * rigioca solo cio' che ha scritto il telefono.
+     */
+    @Test
+    fun `al risveglio non si rigioca un DataItem scritto dall'orologio, uno del telefono si`() {
+        fun dataItem(
+            host: String,
+            path: String,
+            mappa: DataMap,
+        ): DataItem {
+            val item = Mockito.mock(DataItem::class.java)
+            Mockito.`when`(item.uri).thenReturn(Uri.parse("wear://$host$path"))
+            Mockito.`when`(item.data).thenReturn(mappa.toByteArray())
+            // DataMapItem rilegge l'item congelato: il finto ritorna se stesso.
+            Mockito.`when`(item.freeze()).thenReturn(item)
+            return item
+        }
+        val propri =
+            dataItem(
+                "orologio-locale",
+                WearConstants.PATH_MATCH_STATE,
+                DataMap().apply { putBoolean(WearConstants.KEY_MATCH_ACTIVE, false) },
+            )
+        val delTelefono =
+            dataItem(
+                "telefono",
+                WearConstants.PATH_TIMER_STATE,
+                DataMap().apply {
+                    putLong(WearConstants.KEY_TIMER_MILLIS, 5_000L)
+                    putBoolean(WearConstants.KEY_TIMER_RUNNING, false)
+                },
+            )
+        val buffer = Mockito.mock(DataItemBuffer::class.java)
+        Mockito.`when`(buffer.iterator()).thenAnswer { mutableListOf(propri, delTelefono).iterator() }
+        val dataClient = Mockito.mock(DataClient::class.java)
+        Mockito.`when`(dataClient.dataItems).thenReturn(Tasks.forResult(buffer))
+        val nodo = Mockito.mock(Node::class.java)
+        Mockito.`when`(nodo.id).thenReturn("orologio-locale")
+        val nodeClient = Mockito.mock(NodeClient::class.java)
+        Mockito.`when`(nodeClient.localNode).thenReturn(Tasks.forResult(nodo))
+
+        val ricevute = mutableListOf<String>()
+        val receiver =
+            object : BroadcastReceiver() {
+                override fun onReceive(
+                    context: Context,
+                    intent: Intent,
+                ) {
+                    intent.action?.let { ricevute.add(it) }
+                }
+            }
+        val manager = LocalBroadcastManager.getInstance(RuntimeEnvironment.getApplication())
+        manager.registerReceiver(
+            receiver,
+            IntentFilter().apply {
+                addAction(WearDataLayerService.ACTION_MATCH_STATE_UPDATE)
+                addAction(WearDataLayerService.ACTION_TIMER_UPDATE)
+            },
+        )
+        NodoLocale.azzera()
+        try {
+            Mockito.mockStatic(Wearable::class.java).use { wearable ->
+                wearable
+                    .`when`<DataClient> { Wearable.getDataClient(ArgumentMatchers.any(Activity::class.java)) }
+                    .thenReturn(dataClient)
+                wearable
+                    .`when`<NodeClient> { Wearable.getNodeClient(ArgumentMatchers.any(Context::class.java)) }
+                    .thenReturn(nodeClient)
+
+                controller.resume()
+                // L'id del nodo e poi i DataItem arrivano su listener del thread principale.
+                idle()
+                idle()
+            }
+        } finally {
+            manager.unregisterReceiver(receiver)
+            NodoLocale.azzera()
+        }
+
+        assertEquals(
+            "rigiocato solo il timer del telefono, non il match_state dell'orologio: $ricevute",
+            listOf(WearDataLayerService.ACTION_TIMER_UPDATE),
+            ricevute,
+        )
     }
 
     private fun mettiInCoda(quanti: Int) {
