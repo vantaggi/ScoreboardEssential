@@ -104,4 +104,40 @@ class PendingIntentsTest {
         assertFalse(coda.add(PendingIntent(WearConstants.INTENT_POINT, 1, 9_999L)))
         assertEquals(2000, coda.size)
     }
+
+    /**
+     * L5 (bassa): le rifiutate si accumulavano senza tetto a ogni rifiuto. Hanno lo stesso tetto della
+     * coda, e oltre si tengono le piu' recenti.
+     */
+    @Test
+    fun `le rifiutate hanno il tetto della coda e si tengono le piu' recenti`() {
+        // 2000 rifiutate gia' da parte (i tocchi con istante 0..1999), scritte direttamente: e' lo stato
+        // dopo molti rifiuti, senza rifare duemila aggiunte.
+        RuntimeEnvironment
+            .getApplication()
+            .getSharedPreferences("wear_pending_intents", android.content.Context.MODE_PRIVATE)
+            .edit()
+            .putString("rifiutate", (0 until 2000).joinToString(";") { "${WearConstants.INTENT_POINT},1,$it" })
+            .commit()
+        assertEquals(2000, coda.rifiutateSize)
+        listOf(10_000L, 10_001L, 10_002L).forEach { coda.add(PendingIntent(WearConstants.INTENT_POINT, 2, it)) }
+
+        coda.rifiutaCoda()
+
+        assertEquals("il tetto vale anche per le rifiutate", 2000, coda.rifiutateSize)
+        val tenute = coda.rifiutate()
+        assertEquals("le tre piu' vecchie sono uscite", 3L, tenute.first().atMillis)
+        assertEquals("le piu' recenti restano, in ordine", listOf(10_000L, 10_001L, 10_002L), tenute.takeLast(3).map { it.atMillis })
+        assertEquals("la coda riparte vuota", 0, coda.size)
+    }
+
+    @Test
+    fun `sotto il tetto un secondo rifiuto non cancella il primo`() {
+        coda.add(PendingIntent(WearConstants.INTENT_POINT, 1, 1_000L))
+        coda.rifiutaCoda()
+        coda.add(PendingIntent(WearConstants.INTENT_POINT, 2, 2_000L))
+        coda.rifiutaCoda()
+
+        assertEquals(listOf(1_000L, 2_000L), coda.rifiutate().map { it.atMillis })
+    }
 }

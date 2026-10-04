@@ -236,9 +236,16 @@ class PendingIntents(
      * Il telefono ha detto di no: l'intera coda (le voci del blocco e quelle segnate mentre era in
      * volo, tutte sulla stessa base) passa fra le rifiutate, e la coda riparte vuota, senza id, base
      * ne' partita. Si aggiunge a quelle gia' messe da parte: un secondo rifiuto non cancella il primo.
+     *
+     * Anche le rifiutate hanno il tetto della coda ([MASSIMO]): rifiuti ripetuti non devono far crescere
+     * la preferenza all'infinito. Oltre il tetto si tengono le piu' recenti, e si dice quante se ne perdono.
      */
     fun rifiutaCoda() {
-        val daParte = rifiutate() + all()
+        val tutte = rifiutate() + all()
+        val daParte = tutte.takeLast(MASSIMO)
+        if (daParte.size < tutte.size) {
+            Log.w(TAG, "Rifiutate oltre il tetto ($MASSIMO): ${tutte.size - daParte.size} piu' vecchie scartate")
+        }
         prefs.edit {
             putString(CHIAVE_RIFIUTATE, serializza(daParte))
             remove(CHIAVE)

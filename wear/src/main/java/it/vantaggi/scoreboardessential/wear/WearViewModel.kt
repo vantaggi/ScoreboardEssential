@@ -197,6 +197,20 @@ class WearViewModel(
         internal const val TIMEOUT_BATCH_MS = 15_000L
 
         /**
+         * Quanto puo' durare UN invio dentro il turno degli invii ([invii]). Un await del Data Layer che
+         * non torna teneva il lock per sempre, e con lui tutti gli invii dopo (L5). Scaduto, l'invio vale
+         * come non consegnato e il tocco va in coda: se in realta' era partito, il telefono lo conta come
+         * tocco dal vivo e la coda lo rimanda, ma e' un rischio raro contro un polso che non segna piu'.
+         */
+        internal const val TIMEOUT_INVIO_MS = 8_000L
+
+        /**
+         * Quanto aspetta il polso, dopo l'ack di un blocco, lo stato del telefono che lo contiene prima di
+         * riprendere le voci rimaste con lo stato vivo che ha (L5). Oltre, quello stato non arrivera'.
+         */
+        internal const val ATTESA_STATO_DOPO_BLOCCO_MS = 10_000L
+
+        /**
          * Quanto deve passare fra il tick del tocco e la conferma di lato dello stesso tocco. Il
          * vocabolario conta gli impulsi: un tick subito seguito dall'impulso della conferma
          * sinistra si sente come due colpi, cioe' "destra".
@@ -263,6 +277,12 @@ class WearViewModel(
      * arrivato) e copre tutta la sendMessage, non solo l'avvio.
      */
     private val invii = Mutex()
+
+    /** Una sendMessage dentro il turno degli invii, con un tetto di [TIMEOUT_INVIO_MS]: scaduto vale `false`. */
+    private suspend fun inviaMessaggio(
+        path: String,
+        payload: ByteArray,
+    ): Boolean = withTimeoutOrNull(TIMEOUT_INVIO_MS) { connectionManager.sendMessage(path, payload) } ?: false
 
     /** Un arretrato in volo che non e' scaduto: finche' c'e', non se ne spedisce un altro e lo schermo non si ridisegna. */
     private fun batchAttivo(): Boolean = batchInVolo != null && batchInVoloDal != null
@@ -526,7 +546,7 @@ class WearViewModel(
                     putLong(WearConstants.KEY_SEQ, seq)
                     putLong(WearConstants.KEY_AT_MILLIS, quando)
                 }
-            if (!invii.withLock { connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray()) }) {
+            if (!invii.withLock { inviaMessaggio(WearConstants.MSG_SCORE_INTENT, payload.toByteArray()) }) {
                 chiusuraInAttesa = false
                 chiusuraJob?.cancel()
                 triggerFailureVibration()
@@ -756,13 +776,13 @@ class WearViewModel(
         // stato, e qui non si tocca. Tutto il resto fa decadere quella che c'era.
         chiudiFinestraChiSeNonVera(state)
         // L'ora sul disco la scrive WearDataLayerService, che c'e' anche ad app chiusa.
-        ultimaNota.save(state.sportId, state.eventLog, state.servingSlot)
+        ultimaNota.save(state.sportId, state.eventLog, state.servingSlot, state.matchUuid)
         // Lo stato porta l'id dell'ultimo arretrato applicato: se e' quello in volo, e' un ack che non
         // ha avuto bisogno di arrivare (L5, ack perso). Dopo chiudiRicevute: lo stato dell'arretrato
         // non e' la conferma di un tocco dal vivo, e finche' batchInVolo c'e' non la chiude.
         batchInVolo?.takeIf { state.lastBatchId > 0L && state.lastBatchId == it.id }?.let { batchApplicato(it) }
         // L'ack e' arrivato prima di questo stato: ora si sa il registro dopo il blocco (D4).
-        risolviBaseDopo(state)
+        risolviBaseDopo(state, dalVivo)
         when {
             batchAttivo() -> Unit
             pending.size > 0 && rebuildLocalState() -> Unit
@@ -1149,6 +1169,8 @@ class WearViewModel(
             eventLog = ultimaNota.eventLog,
             // Senza questo il ricalcolo tratterebbe un tennis in doppio come un singolare.
             servingSlot = if (ultimaNota.inCoppia) 1 else 0,
+            // La partita del registro: la coda che nasce a freddo la rimanda nel batch (L5).
+            matchUuid = ultimaNota.matchUuid,
         )
     }
 
@@ -1266,7 +1288,7 @@ class WearViewModel(
         if (voci.isEmpty()) return
         // Le voci rimaste dopo un blocco aspettano di sapere il registro dopo di lui (D4): senza,
         // la base sarebbe quella di adesso, e un telefono passato a un'altra partita le applicherebbe.
-        if (!risolviBaseDopo(statoDalTelefono)) return
+        if (!risolviBaseDopo(statoDalTelefono, statoVivoVisto)) return
         val blocco =
             batchInVolo ?: PendingIntents.BatchInVolo(id = ++intentSequence, quante = voci.size).also { pending.segnaBatchInVolo(it) }
         // Un rinvio manda lo STESSO blocco: le voci segnate dopo il primo invio vanno nel prossimo.
@@ -1310,7 +1332,7 @@ class WearViewModel(
                     // sa, e il telefono applica con le regole di oggi.
                     sportDelCalcolo?.let { putString(WearConstants.KEY_SPORT_ID, it) }
                 }
-            if (!invii.withLock { connectionManager.sendMessage(WearConstants.MSG_INTENT_BATCH, payload.toByteArray()) }) {
+            if (!invii.withLock { inviaMessaggio(WearConstants.MSG_INTENT_BATCH, payload.toByteArray()) }) {
                 // Non e' partito: il tentativo e' scaduto subito, si riprova al prossimo collegamento
                 // con una sequenza nuova e lo stesso id.
                 scadeBatch(blocco)
@@ -1330,13 +1352,41 @@ class WearViewModel(
      * non ne entra un altro). Uno stato precedente non va bene: e' il registro di prima del blocco.
      * Ritorna `true` se non c'e' piu' niente da risolvere.
      */
-    private fun risolviBaseDopo(stato: WearScoreState?): Boolean {
+    private fun risolviBaseDopo(
+        stato: WearScoreState?,
+        vivo: Boolean,
+    ): Boolean {
         val attesa = pending.baseDopoDi()
         if (attesa == 0L) return true
-        if (stato == null || stato.lastBatchId != attesa) return false
+        if (stato == null) return false
+        // Lo stato che porta l'id del blocco puo' non arrivare mai (L5): due orologi, perche' l'ultimo id
+        // applicato e' uno solo per telefono; o i dati del telefono azzerati. Senza una via d'uscita la
+        // coda restava ferma e ogni tocco dal vivo ci finiva dietro per sempre. Un telefono che parla
+        // adesso, e lo fa con un id diverso da quello che aveva all'ack (non e' piu' lo stato "di prima
+        // del blocco" in ritardo) o dopo [ATTESA_STATO_DOPO_BLOCCO_MS], e' lo stato su cui riprendere:
+        // la base e' il suo registro e il suo uuid, e se la partita non e' piu' quella il telefono rifiuta.
+        val suo = stato.lastBatchId == attesa
+        val ferma =
+            attesaStatoDopo?.let {
+                stato.lastBatchId != it.idVisto || orologio() - it.dal >= ATTESA_STATO_DOPO_BLOCCO_MS
+            } ?: true
+        if (!suo && !(vivo && ferma)) return false
         pending.risolviBaseDopo(improntaDi(stato), stato.matchUuid)
+        attesaStatoDopo = null
+        baseDopoJob?.cancel()
         return true
     }
+
+    /** Dall'ack di un blocco ([dal], sull'orologio del ViewModel) e l'ultimo id applicato che il polso conosceva ([idVisto]). */
+    private class AttesaStatoDopo(
+        val dal: Long,
+        val idVisto: Long,
+    )
+
+    /** Chi aspetta lo stato che contiene l'ultimo blocco confermato, se c'e' qualcuno che aspetta; null altrimenti. */
+    private var attesaStatoDopo: AttesaStatoDopo? = null
+
+    private var baseDopoJob: Job? = null
 
     private fun armaTimeoutBatch(blocco: PendingIntents.BatchInVolo) {
         timeoutBatchJob?.cancel()
@@ -1387,6 +1437,20 @@ class WearViewModel(
             dopo != null -> pending.confermaBatch(blocco.id, improntaDi(dopo), dopo.matchUuid)
             !telefonoConId -> pending.confermaBatch(blocco.id, pending.base, pending.partita)
             else -> pending.confermaBatch(blocco.id)
+        }
+        // Le voci rimaste aspettano lo stato dopo il blocco: se non arriva (L5), allo scadere ci si rimette
+        // in moto con lo stato vivo che c'e' (risolviBaseDopo), senza aspettare un altro stato o un collegamento.
+        if (pending.baseDopoDi() != 0L) {
+            attesaStatoDopo = AttesaStatoDopo(orologio(), statoDalTelefono?.lastBatchId ?: 0L)
+            baseDopoJob?.cancel()
+            baseDopoJob =
+                viewModelScope.launch {
+                    delay(ATTESA_STATO_DOPO_BLOCCO_MS)
+                    flushPending()
+                }
+        } else {
+            attesaStatoDopo = null
+            baseDopoJob?.cancel()
         }
         batchInVolo = null
         batchInVoloDal = null
@@ -1477,7 +1541,7 @@ class WearViewModel(
                     putString(WearConstants.KEY_SPORT_ID, sportId)
                     putLong(WearConstants.KEY_SEQ, seq)
                 }
-            val consegnato = invii.withLock { connectionManager.sendMessage(WearConstants.MSG_SPORT_INTENT, payload.toByteArray()) }
+            val consegnato = invii.withLock { inviaMessaggio(WearConstants.MSG_SPORT_INTENT, payload.toByteArray()) }
             // Consegnato non e' cambiato: la conferma e' lo stato con lo sport chiesto.
             if (consegnato) {
                 apriRicevutaSport(sportId)
@@ -1533,7 +1597,7 @@ class WearViewModel(
                 // ordine rispetto a quello che il polso mostra.
                 val consegnato =
                     !(pending.size > 0 || batchAttivo()) &&
-                        connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
+                        inviaMessaggio(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
                 if (consegnato) {
                     // Consegnato non e' preso: niente vibrazione adesso. La conferma suona quando il
                     // telefono rimanda lo stato, e se non lo rimanda lo dice NON CONFERMATO.

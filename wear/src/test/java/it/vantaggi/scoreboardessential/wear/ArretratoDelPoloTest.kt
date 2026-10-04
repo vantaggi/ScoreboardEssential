@@ -16,6 +16,7 @@ import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSyn
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -38,6 +39,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.intrinsics.startCoroutineUninterceptedOrReturn
 import kotlin.coroutines.resume
 
 /** Il vibratore che non fa niente: qui interessa la coda, non cio' che si sente al polso. */
@@ -86,6 +88,7 @@ class ArretratoDelPoloTest {
     }
 
     private var sospendiInvii = false
+    private var invioInfinito = false
     private val invii = mutableListOf<InvioSospeso>()
 
     @Before
@@ -114,6 +117,14 @@ class ArretratoDelPoloTest {
                     when {
                         invocazione.method.name != "sendMessage" -> {
                             Mockito.RETURNS_DEFAULTS.answer(invocazione)
+                        }
+
+                        // Un await del Data Layer che non torna mai, ma che si lascia cancellare come quello vero:
+                        // e' il timeout dell'invio a dover liberare il turno.
+                        invioInfinito -> {
+                            val senzaFine: suspend () -> Boolean = { awaitCancellation() }
+                            @Suppress("UNCHECKED_CAST")
+                            senzaFine.startCoroutineUninterceptedOrReturn(invocazione.rawArguments.last() as Continuation<Boolean>)
                         }
 
                         // Un invio che non finisce finche' il test non lo dice: e' cosi' che si vede se due partono insieme.
@@ -302,6 +313,27 @@ class ArretratoDelPoloTest {
         assertEquals("partita-A", batchSpediti().single().getString(WearConstants.KEY_MATCH_UUID))
     }
 
+    /**
+     * L5, identita' (media): l'uuid arrivava vuoto anche dopo un riavvio, perche' LastKnownMatch non lo
+     * salvava e statoDaDisco non lo riempiva. La coda nata a freddo sul registro del disco portava
+     * l'impronta giusta e un'identita' vuota, e il telefono non sapeva di che partita fosse.
+     */
+    @Test
+    fun `dopo un riavvio la coda nata a freddo porta l'identita' dell'ultimo stato del telefono`() {
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        assestati()
+        // Il processo muore: il ViewModel nuovo non ha visto nessuno stato dal vivo, solo il disco.
+        viewModel = nuovoViewModel()
+        segnaOffline(1)
+
+        viewModel.flushPending()
+        assestati()
+
+        val batch = batchSpediti().single()
+        assertEquals(MatchLogCodec.impronta(registro(3)), batch.getString(WearConstants.KEY_BATCH_BASE))
+        assertEquals("partita-A", batch.getString(WearConstants.KEY_MATCH_UUID))
+    }
+
     @Test
     fun `lo stato del telefono porta l'identita' della partita e un telefono vecchio la lascia vuota`() {
         val nuovo = DataMap().apply { putString(WearConstants.KEY_MATCH_UUID, "partita-A") }
@@ -481,6 +513,62 @@ class ArretratoDelPoloTest {
         assertEquals("partita-A", secondo.getString(WearConstants.KEY_MATCH_UUID))
     }
 
+    /** Dopo l'ack di un blocco e una voce rimasta: la coda aspetta lo stato col suo id, che qui non arriva mai. */
+    private fun ackSenzaMaiLoStatoDelBlocco(): DataMap {
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        segnaOffline(1)
+        viewModel.onBatchAck(primo.getLong(WearConstants.KEY_SEQ), idDi(primo))
+        assestati()
+        assertEquals("non parte con una base che non si sa", 1, batchSpediti().size)
+        return primo
+    }
+
+    /**
+     * L5 (bassa): lo stato col suo id puo' non arrivare mai (due orologi, dati del telefono azzerati) e la
+     * coda restava ferma per sempre, con ogni tocco dal vivo in coda dietro. Passato il tempo, le voci
+     * rimaste ripartono dallo stato vivo che c'e', col suo registro e il suo uuid.
+     */
+    @Test
+    fun `se lo stato col suo id non arriva le voci rimaste ripartono dallo stato vivo dopo l'attesa`() {
+        val primo = ackSenzaMaiLoStatoDelBlocco()
+
+        avanza(WearViewModel.ATTESA_STATO_DOPO_BLOCCO_MS)
+
+        val secondo = batchSpediti().last()
+        assertEquals("il blocco nuovo e' partito", 2, batchSpediti().size)
+        assertNotEquals(idDi(primo), idDi(secondo))
+        assertEquals(MatchLogCodec.impronta(registro(3)), secondo.getString(WearConstants.KEY_BATCH_BASE))
+        assertEquals("partita-A", secondo.getString(WearConstants.KEY_MATCH_UUID))
+    }
+
+    /** Uno stato vivo con un id che non e' piu' quello di prima dell'ack dice che il blocco non sara' mai nello stato. */
+    @Test
+    fun `uno stato vivo con un altro id risolve subito la base delle voci rimaste`() {
+        ackSenzaMaiLoStatoDelBlocco()
+
+        // Un altro orologio ha consegnato il suo arretrato: l'ultimo id applicato del telefono e' un altro.
+        viewModel.applyStateV2(stato(registro(4), lastBatchId = 7L, matchUuid = "partita-A"))
+        assestati()
+
+        assertEquals("ripartono senza aspettare", 2, batchSpediti().size)
+        assertEquals(MatchLogCodec.impronta(registro(4)), batchSpediti().last().getString(WearConstants.KEY_BATCH_BASE))
+    }
+
+    /** Lo stato di prima del blocco, arrivato in ritardo, non e' la base: si aspetta il suo, o la scadenza. */
+    @Test
+    fun `uno stato vivo ancora di prima del blocco non risolve la base prima dell'attesa`() {
+        ackSenzaMaiLoStatoDelBlocco()
+
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        assestati()
+
+        assertEquals("aspetta ancora", 1, batchSpediti().size)
+    }
+
     @Test
     fun `se lo stato dopo il blocco e' arrivato prima dell'ack la base delle voci rimaste e' quella`() {
         viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
@@ -577,6 +665,41 @@ class ArretratoDelPoloTest {
         assertTrue("la sequenza del primo precede quella del secondo", invii[0].sequenza < invii[1].sequenza)
         invii[1].continuazione.resume(true)
         assestati()
+    }
+
+    /**
+     * L5, lock degli invii (bassa): un await del Data Layer che non torna teneva il Mutex per sempre e
+     * con lui ogni invio dopo. Dentro il turno ogni invio ha un tetto: scaduto vale come non consegnato,
+     * il tocco va in coda e il turno passa al successivo.
+     */
+    @Test
+    fun `un invio che non torna mai lascia il turno dopo il timeout e il tocco va in coda`() {
+        invioInfinito = true
+
+        viewModel.incrementScore(1)
+        viewModel.incrementScore(2)
+        assestati()
+        assertEquals("il primo e' in volo, il secondo aspetta il turno", 0, coda.size)
+
+        avanza(WearViewModel.TIMEOUT_INVIO_MS)
+
+        assertEquals("il primo e' scaduto e il secondo ha preso il turno: due in coda", 2, coda.size)
+        assertEquals("il secondo non ha tentato l'invio, la coda non e' vuota", 1, intentiDalVivoSpediti())
+    }
+
+    @Test
+    fun `un arretrato che non torna mai lascia il turno e il blocco si rimanda`() {
+        segnaOffline(1)
+        invioInfinito = true
+        viewModel.flushPending()
+        assestati()
+        avanza(WearViewModel.TIMEOUT_INVIO_MS)
+
+        invioInfinito = false
+        viewModel.flushPending(collegatoDiNuovo = true)
+        assestati()
+
+        assertEquals("il rinvio e' partito", 2, batchSpediti().size)
     }
 
     @Test
@@ -953,6 +1076,7 @@ class ArretratoDelPoloTest {
         val nota = LastKnownMatch(app)
         assertEquals("padel", nota.sportId)
         assertEquals("il calcolo a freddo riparte dal registro che le contiene", registro(3), nota.eventLog)
+        assertEquals("e dalla partita a cui appartiene", "partita-A", nota.matchUuid)
     }
 
     @Test

@@ -1739,6 +1739,60 @@ class MainViewModelTest {
             assertEquals(83L, risposte(WearConstants.MSG_BATCH_ACK).single().getLong(WearConstants.KEY_BATCH_ID))
         }
 
+    /**
+     * L5, sport nel batch (media): il cambio sport passava da sendStateV2, che catturava il registro
+     * vuoto in modo sincrono ma leggeva l'ultimo id applicato dentro la coroutine, dopo
+     * registraBatchApplicato. Usciva uno stato col registro vuoto e l'id del blocco: il polso lo prende
+     * come base delle voci rimaste e lo salva su disco, senza Activity.
+     */
+    @Test
+    fun `durante un batch con cambio sport nessuno stato porta l'id del blocco col registro vuoto`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+            advanceUntilIdle()
+
+            ricevi(
+                arretratoConBase(
+                    voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000),
+                    4L,
+                    95L,
+                    "0",
+                    sportId = SportRegistry.PADEL,
+                ),
+            )
+            advanceUntilIdle()
+
+            val stati = statiV2().filter { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL }
+            assertTrue("almeno lo stato del cambio e quello dopo il blocco", stati.size >= 2)
+            stati.forEach { stato ->
+                val vuoto = MatchLogCodec.decode(registroDelloStato(stato)).orEmpty().isEmpty()
+                val conIdDelBlocco = stato[WearConstants.KEY_LAST_BATCH_ID] == 95L
+                assertTrue("uno stato col registro vuoto non porta l'id del blocco", !(vuoto && conIdDelBlocco))
+            }
+            assertEquals("l'ultimo stato e' quello dopo il blocco", 95L, stati.last()[WearConstants.KEY_LAST_BATCH_ID])
+            assertEquals(1, MatchLogCodec.decode(registroDelloStato(stati.last()))?.size)
+        }
+
+    /** L5, sport nel batch (media): un blocco senza voci applicabili non cambia lo sport, risponde NACK. */
+    @Test
+    fun `un arretrato inapplicabile di un altro sport riceve un NACK e lo sport resta com'e'`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+            advanceUntilIdle()
+
+            ricevi(arretratoConBase("illeggibile,x,y", 4L, 96L, "0", sportId = SportRegistry.PADEL))
+            advanceUntilIdle()
+
+            assertEquals("lo sport e' quello di prima", SportRegistry.FOOTBALL, viewModel.activeSport.value)
+            verify(mockMatchSettingsRepository, never()).setActiveSport(any())
+            assertTrue("nessuno stato col padel", statiV2().none { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL })
+            assertEquals(
+                WearConstants.NACK_REJECTED,
+                risposte(WearConstants.MSG_BATCH_NACK).single().getString(WearConstants.KEY_BATCH_NACK_REASON),
+            )
+            assertTrue(risposte(WearConstants.MSG_BATCH_ACK).isEmpty())
+        }
+
     @Test
     fun `un arretrato senza sport (orologio non aggiornato) non cambia lo sport del telefono`() =
         runTest {
@@ -1886,6 +1940,113 @@ class MainViewModelTest {
                     .last()
                     .arguments[1] as Map<*, *>
             assertEquals("partita-C", ultimoStato[WearConstants.KEY_MATCH_UUID])
+        }
+
+    /** Gli stati v2 che il telefono ha spedito, nell'ordine. */
+    private fun statiV2(): List<Map<*, *>> =
+        mockingDetails(mockConnectionManager)
+            .invocations
+            .filter { it.method.name == "sendData" && it.arguments[0] == WearConstants.PATH_STATE_V2 }
+            .map { it.arguments[1] as Map<*, *> }
+
+    private fun registroDelloStato(stato: Map<*, *>) = stato[WearConstants.KEY_EVENT_LOG] as String
+
+    /** L5, identita': il primo stato di una partita che ha un evento porta gia' il suo uuid, lo stesso della riga. */
+    @Test
+    fun `lo stato del primo punto porta gia' l'identita' della partita, la stessa della riga`() =
+        runTest {
+            viewModel.addScore(1)
+            advanceUntilIdle()
+
+            val primoConPunto = statiV2().first { MatchLogCodec.decode(registroDelloStato(it))?.isNotEmpty() == true }
+            val uuid = primoConPunto[WearConstants.KEY_MATCH_UUID] as String
+            assertTrue("l'uuid non e' vuoto col primo punto", uuid.isNotEmpty())
+            val riga =
+                mockingDetails(campo("matchDao") as MatchDao)
+                    .invocations
+                    .filter { it.method.name == "insertLiveMatch" }
+                    .map { it.arguments[0] as Match }
+                    .single()
+            assertEquals("la riga porta lo stesso id", uuid, riga.matchUuid)
+        }
+
+    /** Prima del primo punto non c'e' una partita da identificare: l'uuid resta vuoto. */
+    @Test
+    fun `lo stato di una partita senza eventi non ha ancora un'identita'`() =
+        runTest {
+            advanceUntilIdle()
+            assertTrue(statiV2().all { (it[WearConstants.KEY_MATCH_UUID] as String).isEmpty() })
+        }
+
+    /**
+     * L5, identita' (media). Telefono: primo punto al lato 1. Polso offline: tre punti, con la base "1:..." e
+     * l'uuid di QUELLA partita, presi dallo stato come fa il polso. Sul telefono la partita si salva e se ne
+     * apre una nuova che comincia allo stesso modo (primo punto al lato 1): l'impronta ignora orario e
+     * marcatore e le due basi coincidono. Al ritorno l'arretrato va RIFIUTATO, non applicato in silenzio.
+     */
+    @Test
+    fun `un arretrato di una partita salvata non entra in quella nuova che comincia allo stesso modo`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            val statoDelPolso = statiV2().last()
+            val uuidDelPolso = statoDelPolso[WearConstants.KEY_MATCH_UUID] as String
+            val base = MatchLogCodec.impronta(registroDelloStato(statoDelPolso))
+
+            assertTrue("la partita si salva", viewModel.endMatch())
+            advanceUntilIdle()
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            assertEquals("la partita nuova ha la stessa base", base, improntaDelMotore())
+
+            val tre = List(3) { voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000L + it) }.joinToString(WearConstants.BATCH_SEPARATOR)
+            ricevi(arretratoConBase(tre, 4L, 90L, base, uuidPartita = uuidDelPolso))
+            advanceUntilIdle()
+
+            assertEquals("nessun punto del polso nella partita nuova", 1, motore().log.size)
+            assertEquals(WatchNotice.Rejected, viewModel.watchNotice.value)
+            val nack = risposte(WearConstants.MSG_BATCH_NACK).single()
+            assertEquals(WearConstants.NACK_REJECTED, nack.getString(WearConstants.KEY_BATCH_NACK_REASON))
+            assertTrue("e nessun ack", risposte(WearConstants.MSG_BATCH_ACK).isEmpty())
+        }
+
+    /**
+     * L5, identita': una base di n > 0 eventi con uuid VUOTO (il polso non ha mai visto l'identita') su un
+     * telefono con una partita identificata non si puo' dire della stessa partita: rifiuto. E' la regola
+     * che resta quando l'uuid manca per un motivo che oggi non si prevede.
+     */
+    @Test
+    fun `un arretrato con base non vuota e uuid vuoto non entra in una partita identificata`() =
+        runTest {
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            val base = improntaDelMotore()
+
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000), 4L, 91L, base, uuidPartita = ""))
+            advanceUntilIdle()
+
+            assertEquals(1, motore().log.size)
+            assertEquals(1, risposte(WearConstants.MSG_BATCH_NACK).size)
+            assertTrue(risposte(WearConstants.MSG_BATCH_ACK).isEmpty())
+        }
+
+    /** L5, identita': il caso normale della partita avviata dal polso, base "0" e uuid vuoto, non si rifiuta. */
+    @Test
+    fun `un arretrato con base vuota e uuid vuoto entra su un telefono a registro vuoto`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+            advanceUntilIdle()
+
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000), 4L, 92L, "0", uuidPartita = ""))
+            advanceUntilIdle()
+
+            assertEquals(1, motore().log.size)
+            assertEquals(92L, risposte(WearConstants.MSG_BATCH_ACK).single().getLong(WearConstants.KEY_BATCH_ID))
+            assertTrue(risposte(WearConstants.MSG_BATCH_NACK).isEmpty())
+            // E lo stato dopo il blocco porta gia' l'identita': le voci rimaste ereditano un uuid, non "".
+            val dopo = statiV2().last()
+            assertTrue("lo stato dopo il blocco ha un uuid", (dopo[WearConstants.KEY_MATCH_UUID] as String).isNotEmpty())
         }
 
     @Test
@@ -2131,6 +2292,54 @@ class MainViewModelTest {
                 )
             } finally {
                 ArchTaskExecutor.getInstance().setDelegate(null)
+                chiudiDatabase(db)
+            }
+        }
+
+    /**
+     * L5, tempi dell'arretrato (bassa): applyWatchBatch leggeva gli istanti con matchClock.relative, che
+     * dopo la ripresa dal DB e' spostato apposta. Un batch con istanti PRIMA della ripresa usciva con
+     * tempi a zero, sotto l'ultimo evento del registro. Ora vale la regola dei tocchi in custodia.
+     */
+    @Test
+    fun `un arretrato su una partita ripresa dal database entra con i suoi istanti, mai sotto l'ultimo evento`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+                val inizio = System.currentTimeMillis() - 3_600_000L
+                db.matchDao().insert(
+                    Match(
+                        team1Id = 1,
+                        team2Id = 2,
+                        team1Score = 3,
+                        team2Score = 0,
+                        timestamp = 0L,
+                        isActive = true,
+                        startedAt = inizio,
+                        eventLog =
+                            MatchLogCodec.encode(
+                                listOf(0L, 2_000L, 4_000L).map { LoggedEvent(ScoringEvent.Point(side = 1), it) },
+                            ),
+                    ),
+                )
+                usaDao(matchDao = db.matchDao())
+                assertEquals(3, motore().log.size)
+                val base = improntaDelMotore()
+
+                // Il polso ha segnato a 60s e a 75s dall'inizio, e consegna ora.
+                val voci =
+                    listOf(60_000L, 75_000L)
+                        .joinToString(WearConstants.BATCH_SEPARATOR) { voceDiArretrato(WearConstants.INTENT_POINT, 2, inizio + it) }
+                ricevi(arretratoConBase(voci, 4L, 97L, base))
+                advanceUntilIdle()
+
+                assertEquals(
+                    "i tempi veri, non zero",
+                    listOf(0L, 2_000L, 4_000L, 60_000L, 75_000L),
+                    motore().log.map { it.atMillis },
+                )
+            } finally {
                 chiudiDatabase(db)
             }
         }
