@@ -870,6 +870,48 @@ class ArretratoDelPoloTest {
         assertNotEquals(idDi(batchSpediti()[0]), idDi(batchSpediti()[1]))
     }
 
+    // --- L5 basso: a telefono raggiungibile la riga dice i punti non consegnati o rifiutati ---
+
+    @Test
+    fun `da collegati una coda bloccata da un NACK passeggero dice NON CONSEGNATI`() {
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        viewModel.onBatchNack(idDi(batchSpediti().single()), WearConstants.NACK_RETRY)
+        assestati()
+
+        avanza(StatoFiducia.SOGLIA_NON_CONSEGNATI_MS)
+
+        assertEquals("il telefono e' raggiungibile e la coda non parte", Frase.NonConsegnati(2), viewModel.statoFiducia.value)
+    }
+
+    @Test
+    fun `da collegati un arretrato scaduto senza risposta dice NON CONSEGNATI`() {
+        segnaOffline(3)
+        viewModel.flushPending()
+        assestati()
+
+        avanza(WearViewModel.TIMEOUT_BATCH_MS)
+
+        assertEquals(Frase.NonConsegnati(3), viewModel.statoFiducia.value)
+    }
+
+    @Test
+    fun `da collegati una coda rifiutata dice RIFIUTATI anche dopo la riapertura`() {
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        viewModel.onBatchNack(idDi(batchSpediti().single()), WearConstants.NACK_REJECTED)
+        assestati()
+
+        // Il processo muore e rinasce: le rifiutate stanno su disco, e la riga le dice senza altri eventi.
+        viewModel = nuovoViewModel()
+        viewModel.refreshPendingCount()
+        assestati()
+
+        assertEquals(Frase.Rifiutati(2), viewModel.statoFiducia.value)
+    }
+
     /** Lo stato v2 del telefono come lo riceve il servizio: un DataItem col suo DataMap. */
     private fun statoV2Item(dati: DataMap): com.google.android.gms.wearable.DataItem {
         val item = Mockito.mock(com.google.android.gms.wearable.DataItem::class.java)
