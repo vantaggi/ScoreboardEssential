@@ -190,12 +190,18 @@ class PendingIntents(
             remove(CHIAVE_PARTITA)
             remove(CHIAVE_BASE_DOPO)
             when {
-                !rimaste -> Unit
+                !rimaste -> {
+                    Unit
+                }
+
                 baseDopo != null -> {
                     putString(CHIAVE_BASE, baseDopo)
                     putString(CHIAVE_PARTITA, partitaDopo.orEmpty())
                 }
-                else -> putLong(CHIAVE_BASE_DOPO, id)
+
+                else -> {
+                    putLong(CHIAVE_BASE_DOPO, id)
+                }
             }
         }
         return inVolo.quante

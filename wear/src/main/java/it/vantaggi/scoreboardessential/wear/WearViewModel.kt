@@ -821,9 +821,9 @@ class WearViewModel(
         val delBlocco = bloccoSenzaStato?.takeIf { state.lastBatchId == it.id }?.quante ?: 0
         if (delBlocco > 0) bloccoSenzaStato = null
         val reale = lunghezzaRegistro(state)
-        val registro = reale?.minus(delBlocco)
         val piuVecchia = ricevute.firstOrNull()
-        if (registro != null && reale != null && piuVecchia != null && !batchAttivo()) {
+        if (reale != null && piuVecchia != null && !batchAttivo()) {
+            val registro = reale - delBlocco
             val distanza = abs(registro - piuVecchia.registroBase)
             if (distanza == 0 && delBlocco > 0) ricevute.forEach { it.registroBase = reale }
             if (distanza > 0) {

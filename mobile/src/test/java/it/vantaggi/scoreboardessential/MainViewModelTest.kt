@@ -1654,12 +1654,16 @@ class MainViewModelTest {
         batchId: Long,
         base: String?,
         nodo: String = "polso-1",
+        uuidPartita: String? = null,
     ) = Intent(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
         .putExtra(WearConstants.KEY_INTENT_BATCH, voci)
         .putExtra(WearConstants.KEY_SEQ, seq)
         .putExtra(WearConstants.KEY_BATCH_ID, batchId)
         .putExtra(SimplifiedDataLayerListenerService.EXTRA_NODE_ID, nodo)
-        .apply { if (base != null) putExtra(WearConstants.KEY_BATCH_BASE, base) }
+        .apply {
+            if (base != null) putExtra(WearConstants.KEY_BATCH_BASE, base)
+            if (uuidPartita != null) putExtra(WearConstants.KEY_MATCH_UUID, uuidPartita)
+        }
 
     /** Cio' che il telefono ha risposto sul path dato, un DataMap per messaggio, nell'ordine. */
     private fun risposte(path: String): List<com.google.android.gms.wearable.DataMap> =
@@ -1745,7 +1749,7 @@ class MainViewModelTest {
             imposta("matchUuid", "partita-A")
             val base = improntaDelMotore()
 
-            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 4L, 84L, base).putExtra(WearConstants.KEY_MATCH_UUID, "partita-B"))
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 4L, 84L, base, uuidPartita = "partita-B"))
             advanceUntilIdle()
 
             assertEquals(3, motore().log.size)
@@ -1754,7 +1758,7 @@ class MainViewModelTest {
                 risposte(WearConstants.MSG_BATCH_NACK).single().getString(WearConstants.KEY_BATCH_NACK_REASON),
             )
             // La stessa partita, con la stessa base, entra.
-            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 5L, 85L, base).putExtra(WearConstants.KEY_MATCH_UUID, "partita-A"))
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 5L, 85L, base, uuidPartita = "partita-A"))
             advanceUntilIdle()
             assertEquals(4, motore().log.size)
         }

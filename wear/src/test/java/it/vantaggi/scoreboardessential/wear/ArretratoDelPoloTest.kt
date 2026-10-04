@@ -112,16 +112,24 @@ class ArretratoDelPoloTest {
                 OptimizedWearDataSync::class.java,
                 Answer { invocazione ->
                     when {
-                        invocazione.method.name != "sendMessage" -> Mockito.RETURNS_DEFAULTS.answer(invocazione)
+                        invocazione.method.name != "sendMessage" -> {
+                            Mockito.RETURNS_DEFAULTS.answer(invocazione)
+                        }
 
                         // Un invio che non finisce finche' il test non lo dice: e' cosi' che si vede se due partono insieme.
                         sospendiInvii -> {
                             @Suppress("UNCHECKED_CAST")
-                            invii += InvioSospeso(invocazione.arguments[1] as ByteArray, invocazione.rawArguments.last() as Continuation<Boolean>)
+                            invii +=
+                                InvioSospeso(
+                                    invocazione.arguments[1] as ByteArray,
+                                    invocazione.rawArguments.last() as Continuation<Boolean>,
+                                )
                             COROUTINE_SUSPENDED
                         }
 
-                        else -> consegnato
+                        else -> {
+                            consegnato
+                        }
                     }
                 },
             )
@@ -404,7 +412,15 @@ class ArretratoDelPoloTest {
         val inviati = batchSpediti()
         assertEquals(2, inviati.size)
         assertNotEquals("un blocco nuovo", idDi(primo), idDi(inviati[1]))
-        assertEquals("solo la voce rimasta", 1, inviati[1].getString(WearConstants.KEY_INTENT_BATCH).orEmpty().split(WearConstants.BATCH_SEPARATOR).size)
+        assertEquals(
+            "solo la voce rimasta",
+            1,
+            inviati[1]
+                .getString(WearConstants.KEY_INTENT_BATCH)
+                .orEmpty()
+                .split(WearConstants.BATCH_SEPARATOR)
+                .size,
+        )
     }
 
     /**
@@ -542,7 +558,15 @@ class ArretratoDelPoloTest {
         assestati()
 
         assertEquals("parte il solo arretrato", 1, invii.size)
-        assertEquals(WearConstants.MSG_INTENT_BATCH, Mockito.mockingDetails(telefono).invocations.last { it.method.name == "sendMessage" }.arguments[0])
+        assertEquals(
+            WearConstants.MSG_INTENT_BATCH,
+            Mockito
+                .mockingDetails(telefono)
+                .invocations
+                .last {
+                    it.method.name == "sendMessage"
+                }.arguments[0],
+        )
         invii[0].continuazione.resume(true)
         assestati()
         assertEquals("il tocco e' in coda, non partito", 1, invii.size)
