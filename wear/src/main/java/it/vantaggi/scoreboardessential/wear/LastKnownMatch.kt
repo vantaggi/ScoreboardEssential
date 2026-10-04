@@ -24,6 +24,7 @@ class LastKnownMatch(
         const val CHIAVE_IN_COPPIA = "in_coppia"
         const val CHIAVE_RICEVUTO_ALLE = "received_at"
         const val CHIAVE_UUID = "match_uuid"
+        const val CHIAVE_VERSIONE_STATO = "state_version"
     }
 
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -75,6 +76,29 @@ class LastKnownMatch(
             putBoolean(CHIAVE_IN_COPPIA, inCoppia)
             putString(CHIAVE_UUID, matchUuid)
         }
+    }
+
+    /**
+     * La versione piu' alta dello stato v2 che il telefono ha mandato e che l'orologio ha accettato
+     * (0 se non ne ha mai vista una). Sta su disco: il servizio riceve gli stati anche ad app chiusa, e
+     * dopo un riavvio dell'orologio uno stato vecchio non deve poter prendere il posto di uno recente.
+     */
+    val versioneStato: Long get() = prefs.getLong(CHIAVE_VERSIONE_STATO, 0L)
+
+    /**
+     * Vero se lo stato con questa versione va applicato, e in quel caso la ricorda; falso se e' piu'
+     * vecchio dell'ultimo visto. Il Data Layer non garantisce l'ordine: due stati ravvicinati possono
+     * arrivare invertiti, e quello superato che arriva per ultimo riporterebbe il polso indietro (L5).
+     *
+     * Una versione uguale passa: lo stesso stato arriva dal servizio e poi dal ViewModel, e si
+     * rilegge anche al risveglio. Zero e' lo stato di un telefono che non la manda: si applica come
+     * prima e non tocca quella ricordata.
+     */
+    fun accettaVersione(versione: Long): Boolean {
+        if (versione <= 0L) return true
+        if (versione < versioneStato) return false
+        prefs.edit { putLong(CHIAVE_VERSIONE_STATO, versione) }
+        return true
     }
 
     /**

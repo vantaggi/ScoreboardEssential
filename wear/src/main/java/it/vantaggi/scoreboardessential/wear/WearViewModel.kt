@@ -81,6 +81,11 @@ data class WearScoreState(
      * la manda. La coda la ricorda quando nasce, e il batch la rimanda.
      */
     val matchUuid: String = "",
+    /**
+     * La versione monotona dello stato (L5): il telefono la assegna quando lo cattura, e uno stato con
+     * versione minore dell'ultima vista e' superato. 0 da un telefono che non la manda.
+     */
+    val stateVersion: Long = 0L,
 ) {
     companion object {
         private const val TAG = "WearScoreState"
@@ -123,12 +128,21 @@ data class WearScoreState(
                 servingSlot = dataMap.getInt(WearConstants.KEY_SERVING_SLOT, 0),
                 lastBatchId = idDelBatch(dataMap),
                 matchUuid = dataMap.getString(WearConstants.KEY_MATCH_UUID, ""),
+                stateVersion = versioneDelloStato(dataMap),
             )
         }
 
         /** Long come lo scrive il telefono; un Int (o altro) non deve far lanciare la lettura dello stato. */
-        internal fun idDelBatch(dataMap: DataMap): Long =
-            when (val valore = dataMap.get<Any>(WearConstants.KEY_LAST_BATCH_ID)) {
+        internal fun idDelBatch(dataMap: DataMap): Long = lungo(dataMap, WearConstants.KEY_LAST_BATCH_ID)
+
+        /** La versione dello stato: 0 se manca (telefono non aggiornato) o non e' un numero. */
+        internal fun versioneDelloStato(dataMap: DataMap): Long = lungo(dataMap, WearConstants.KEY_STATE_VERSION)
+
+        private fun lungo(
+            dataMap: DataMap,
+            chiave: String,
+        ): Long =
+            when (val valore = dataMap.get<Any>(chiave)) {
                 is Long -> valore
                 is Int -> valore.toLong()
                 else -> 0L
@@ -758,6 +772,13 @@ class WearViewModel(
         state: WearScoreState,
         dalVivo: Boolean = true,
     ) {
+        // Uno stato piu' vecchio dell'ultimo visto non si applica: il Data Layer puo' consegnarli
+        // invertiti, e quello superato arrivato per ultimo riporterebbe il polso indietro (L5). Prima di
+        // tutto il resto, anche di protocolV2Seen: non e' un momento in cui il telefono ha parlato.
+        if (!ultimaNota.accettaVersione(state.stateVersion)) {
+            Log.i(TAG, "Stato v2 con versione ${state.stateVersion} superato: ignorato")
+            return
+        }
         protocolV2Seen = true
         // Lo sport e' cambiato: SPORT NON CAMBIATO, a ricevuta scaduta, non e' piu' vero.
         val sportPrima = statoDalTelefono?.sportId
