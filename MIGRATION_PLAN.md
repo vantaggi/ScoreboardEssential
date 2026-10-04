@@ -2336,10 +2336,22 @@ di companion) a `Wear_OS_Small_Round_Prova`. Prova di fumo: un tocco sul polso a
 | ordine degli stati (Sonnet) | causa della discrepanza 2-0 contro 3-1: le pubblicazioni dello stato v2 correvano in parallelo e in GMS restava quella finita per ultima. `wf28/l5-ordine-stato`: canale conflato a consumatore unico per PATH_STATE_V2 e PATH_SCORE, `KEY_STATE_VERSION` monotona (da currentTimeMillis), l'orologio ignora versioni minori (ViewModel e servizio). Test falsificati |
 | chiusura | `a5e68d8`: **1024 test JVM** (core 178, mobile 461, shared 34, wear 351), strumentati 38 su 38 su `Pixel_9a_Test`. Sugli abbinati: 3 tocchi in custodia applicati una volta, con i tempi veri, telefono e orologio entrambi a 3-4. Limiti noti: due orologi (ultimo id applicato globale, via d'uscita dopo 10s), orologio del telefono che va indietro (versioni ignorate finche' non le supera), telefono e orologio di versioni diverse (scritto in VALIDAZIONE), caduta del Bluetooth da vedere su dispositivi veri. Le due partite attive del 3 ottobre non si sono piu' riprodotte |
 
-### L6, origine e ordine dei DataItem - 4 ottobre 2026 (in corso)
+### L6, origine e ordine dei DataItem - 4 ottobre 2026 (chiuso)
 
 | passo | esito |
 |---|---|
 | premessa dell'alta | verificata FALSA sugli emulatori abbinati: il telefono scrive `/scoreboard/score` e il suo servizio non riceve l'eco. Si mette comunque il filtro difensivo sul nodo locale |
 | bassa (stati v2 in parallelo) | gia' chiusa da L5 (canale conflato e `KEY_STATE_VERSION`) |
 | correzione (Sonnet) | `wf29/l6-nodo-locale`: filtro sul nodo locale nei due servizi e nella rilettura dei DataItem al risveglio dell'orologio |
+| chiusura | `3d11210`: **1027 test JVM** (core 178, mobile 462, shared 34, wear 353), strumentati 38 su 38 su `Pixel_9a_Test`; sugli abbinati un punto dal telefono arriva al polso e uno dal polso al telefono (5-4 da tutte e due le parti) |
+
+## RIPRESA - dopo il 4 ottobre 2026
+
+Chiusi e pubblicati su main: L2, L4, L5, L6, L11, L12, design del telefono passi 5-15, design
+dell'orologio passi 4-11. Resta in coda solo cio' che aspetta il proprietario:
+- **I4/I5 su Padel Elite**: serve un'autorizzazione esplicita (Padel Elite e' produzione).
+- Prove che chiedono dispositivi veri: caduta del Bluetooth (coda, arretrato, IN CODA), vibrazioni,
+  corona, TalkBack, quadrante con carattere grande.
+Emulatori: `Pixel_9a` abbinato a `Wear_OS_Small_Round_Prova` (vedi "Emulatori abbinati" e le sue
+trappole: tunnel a mano, seriali dal nome, strumentati solo su `Pixel_9a_Test`). Restano worktree di
+agenti bloccati da file aperti (`agent-*`, `wf_*`) da togliere a PC riavviato con `git worktree remove`.

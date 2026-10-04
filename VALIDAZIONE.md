@@ -390,6 +390,13 @@ caduta del Bluetooth non si simula con gli emulatori: resta da vedere su disposi
 
 ## L6 Origine e ordine dei DataItem
 
+**Corretto (4 ottobre 2026, `3d11210`).** La premessa dell'alta e' stata verificata FALSA sugli
+emulatori abbinati (il telefono non riceve l'eco dei propri DataItem); il filtro difensivo c'e'
+comunque: i due servizi scartano gli eventi del nodo locale (`NodoLocale` in :shared, id letto in modo
+asincrono e in cache; finche' non e' noto passa tutto, come prima). Al risveglio l'orologio rigioca solo
+i DataItem del telefono. Gli stati v2 in parallelo sono chiusi da L5 (canale conflato e
+`KEY_STATE_VERSION`).
+
 ### [alta] Se il Data Layer consegna al servizio del telefono i DataItem scritti dal telefono stesso, ogni punto nel calcio riscrive il registro del motore (premessa da verificare)
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/SimplifiedDataLayerListenerService.kt` - aree: protocollo, concorrenza, persistenza, viewmodel
