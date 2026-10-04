@@ -284,6 +284,22 @@ processo) resta visibile a lungo e dice che i punti non sono entrati quando sono
 punteggio; e lo stato vive solo in memoria, quindi alla morte del processo il badge sparisce
 finche' l'orologio non rimanda l'arretrato.
 
+**Corretto (4 ottobre 2026, `a5e68d8`).** L'arretrato porta la base su cui il polso l'ha calcolato:
+id della partita (`KEY_MATCH_UUID`, generato col primo evento e salvato anche al polso) e prefisso del
+registro (impronta dei primi n eventi, senza orari ne' marcatori). Il telefono lo accoda se e' la
+stessa partita e il suo registro comincia con quel prefisso (i tocchi dal vivo arrivati prima non lo
+fanno piu' rifiutare); altrimenti risponde con un NACK (`MSG_BATCH_NACK`, `rejected` o `retry`). Il
+telefono risponde sempre; la sequenza non si consuma senza un ViewModel; id di batch stabile su disco e
+ultimo id applicato per nodo (i duplicati si riconfermano), `KEY_LAST_BATCH_ID` nello stato v2 vale
+come ack anche senza Activity. Il batch in volo scade (15s) e la coda riparte allo stato dal vivo e dopo
+l'ack; invii del polso serializzati con timeout. Una coda rifiutata va da parte («n RIFIUTATI», voce
+SCARTA LA CODA) e i tocchi nuovi ne aprono una normale. Sport nel batch. Tocchi arrivati ad app del
+telefono chiusa messi in custodia dal servizio (`IntentiInAttesa`) e applicati una volta alla riapertura,
+col loro tempo; il polso dice IN ATTESA TELEFONO invece di NON CONFERMATO. Stato v2 pubblicato in
+ordine (canale conflato) e con versione (`KEY_STATE_VERSION`): l'orologio ignora uno stato piu' vecchio.
+Provato sugli emulatori abbinati (custodia, tempi, allineamento dopo aggiornamenti ravvicinati). La
+caduta del Bluetooth non si simula con gli emulatori: resta da vedere su dispositivi veri.
+
 ### [alta] Il telefono rifiuta sempre l'arretrato di una partita cominciata col telefono, cioè il caso per cui il calcolo offline è stato costruito
 
 `mobile/src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt` - aree: offline, protocollo
