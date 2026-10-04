@@ -840,27 +840,102 @@ class ArretratoDelPoloTest {
         assertNotEquals(idDi(batchSpediti()[0]), idDi(batchSpediti()[1]))
     }
 
+    /** Lo stato v2 del telefono come lo riceve il servizio: un DataItem col suo DataMap. */
+    private fun statoV2Item(dati: DataMap): com.google.android.gms.wearable.DataItem {
+        val item = Mockito.mock(com.google.android.gms.wearable.DataItem::class.java)
+        Mockito.`when`(item.uri).thenReturn(android.net.Uri.parse("wear://nodo" + WearConstants.PATH_STATE_V2))
+        Mockito.`when`(item.data).thenReturn(dati.toByteArray())
+        Mockito.`when`(item.freeze()).thenReturn(item)
+        return item
+    }
+
+    private fun statoConBatchApplicato(
+        id: Long,
+        eventi: Int,
+    ) = DataMap().apply {
+        putLong(WearConstants.KEY_LAST_BATCH_ID, id)
+        putString(WearConstants.KEY_EVENT_LOG, registro(eventi))
+        putString(WearConstants.KEY_SPORT_ID, "padel")
+        putString(WearConstants.KEY_MATCH_UUID, "partita-A")
+    }
+
+    /**
+     * L5 custodia, ramo del servizio: senza Activity (nessuno riceve lo stato v2) l'ack perso non
+     * lascia la coda al suo posto. Lo stato col suo id toglie le voci dal disco e ci salva sopra sport
+     * e registro, da cui il calcolo a freddo riparte senza contarle due volte.
+     */
     @Test
-    fun `un arretrato calcolato su un'altra partita non parte con la base della partita nuova`() {
-        viewModel.applyStateV2(stato(registro(3)))
-        segnaOffline(2)
-        // Il telefono chiude e ne comincia un'altra: lo stato arriva a registro vuoto.
-        viewModel.applyStateV2(stato(registro(0)))
+    fun `senza Activity il servizio toglie dalla coda con lo stato v2 che porta l'id e salva lo stato`() {
+        segnaOffline(3)
+        viewModel.flushPending()
         assestati()
+        val id = idDi(batchSpediti().single())
+        assertEquals(3, coda.size)
+        senzaRicevitori()
+        val app = RuntimeEnvironment.getApplication()
 
-        viewModel.flushPending(collegatoDiNuovo = true)
+        WearDataLayerService.dispatchDataItem(app, statoV2Item(statoConBatchApplicato(id, eventi = 3)))
+
+        assertEquals("le voci sono fuori dalla coda sul disco", 0, coda.size)
+        assertEquals(null, coda.batchInVolo())
+        val nota = LastKnownMatch(app)
+        assertEquals("padel", nota.sportId)
+        assertEquals("il calcolo a freddo riparte dal registro che le contiene", registro(3), nota.eventLog)
+    }
+
+    @Test
+    fun `con una Activity in ascolto lo stato v2 non toglie niente dalla coda, ci pensa il ViewModel`() {
+        segnaOffline(3)
+        viewModel.flushPending()
         assestati()
-
-        // Lo stato dal vivo ha gia' rimandato la coda (D3) e il collegamento di nuovo la rimanda ancora:
-        // in ogni tentativo la base e' quella della partita in cui la coda e' nata.
-        val inviati = batchSpediti()
-        assertTrue("almeno un invio", inviati.isNotEmpty())
-        inviati.forEach {
-            assertNotEquals(
-                "con la base nuova il telefono applicherebbe a una partita che non e' la sua",
-                "0",
-                it.getString(WearConstants.KEY_BATCH_BASE),
-            )
+        val id = idDi(batchSpediti().single())
+        senzaRicevitori()
+        val manager = LocalBroadcastManager.getInstance(RuntimeEnvironment.getApplication())
+        val ricevitore =
+            object : android.content.BroadcastReceiver() {
+                override fun onReceive(
+                    context: Context,
+                    intent: Intent,
+                ) = Unit
+            }
+        manager.registerReceiver(ricevitore, IntentFilter(WearDataLayerService.ACTION_STATE_V2_UPDATE))
+        try {
+            WearDataLayerService.dispatchDataItem(RuntimeEnvironment.getApplication(), statoV2Item(statoConBatchApplicato(id, eventi = 3)))
+        } finally {
+            manager.unregisterReceiver(ricevitore)
         }
+
+        assertEquals("a toglierle e' chi ascolta", 3, coda.size)
+    }
+
+    /** L5 custodia: il servizio gira il messaggio del telefono alla schermata, con la sequenza del tocco. */
+    @Test
+    fun `il servizio dell'orologio inoltra la custodia del telefono con la sequenza`() {
+        senzaRicevitori()
+        val ricevuti = mutableListOf<Intent>()
+        val manager = LocalBroadcastManager.getInstance(RuntimeEnvironment.getApplication())
+        val ricevitore =
+            object : android.content.BroadcastReceiver() {
+                override fun onReceive(
+                    context: Context,
+                    intent: Intent,
+                ) {
+                    ricevuti += intent
+                }
+            }
+        manager.registerReceiver(ricevitore, IntentFilter(WearDataLayerService.ACTION_INTENT_CUSTODIA))
+        try {
+            val servizio = Robolectric.buildService(WearDataLayerService::class.java).get()
+            servizio.onMessageReceived(
+                messaggio(WearConstants.MSG_INTENT_CUSTODIA, DataMap().apply { putLong(WearConstants.KEY_SEQ, 77L) }),
+            )
+            org.robolectric.Shadows
+                .shadowOf(android.os.Looper.getMainLooper())
+                .idle()
+        } finally {
+            manager.unregisterReceiver(ricevitore)
+        }
+
+        assertEquals(77L, ricevuti.single().getLongExtra(WearConstants.KEY_SEQ, 0L))
     }
 }
