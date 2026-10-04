@@ -348,6 +348,7 @@ class MainViewModel(
                             base = intent.getStringExtra(WearConstants.KEY_BATCH_BASE),
                             nodo = intent.getStringExtra(SimplifiedDataLayerListenerService.EXTRA_NODE_ID),
                             uuidPartita = intent.getStringExtra(WearConstants.KEY_MATCH_UUID),
+                            sportId = intent.getStringExtra(WearConstants.KEY_SPORT_ID),
                         )
                     }
 
@@ -1406,6 +1407,7 @@ class MainViewModel(
         batchId: Long = 0L,
         base: String? = null,
         nodo: String? = null,
+        sportId: String? = null,
         uuidPartita: String? = null,
     ) {
         if (batch.isBlank() || seq <= 0L) return
@@ -1428,7 +1430,16 @@ class MainViewModel(
             } else {
                 engine.log.isEmpty()
             }
-        if (!baseCoincide) {
+        // Lo sport su cui il polso ha calcolato: i punti di un padel letti col regolamento del calcio sono
+        // gol, e il polso ricalcola la coda con le regole dello sport che vede. A registro vuoto il telefono
+        // passa a quello sport prima di applicare (lo stesso percorso del cambio sport dall'orologio); con una
+        // partita in corso di un altro sport rifiuta. Assente da un orologio non aggiornato: regola di prima.
+        var accettato = baseCoincide
+        if (accettato && !sportId.isNullOrBlank()) {
+            val sport = SportRegistry.byId(sportId).id
+            if (sport != _activeSport.value && !selectSport(sport)) accettato = false
+        }
+        if (!accettato) {
             setWatchNotice(WatchNotice.Rejected)
             rispondiAlBatch(WearConstants.MSG_BATCH_NACK, seq, batchId, WearConstants.NACK_REJECTED)
             return

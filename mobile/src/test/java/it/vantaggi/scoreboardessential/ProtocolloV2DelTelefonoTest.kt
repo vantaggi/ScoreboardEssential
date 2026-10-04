@@ -329,6 +329,26 @@ class ProtocolloV2DelTelefonoTest {
         assertEquals("partita-A", ricevuti.single().getStringExtra(WearConstants.KEY_MATCH_UUID))
     }
 
+    /** L5 sport: lo sport del batch arriva al ViewModel; assente da un orologio non aggiornato. */
+    @Test
+    fun `il batch inoltrato porta lo sport e senza sport non ne inventa uno`() {
+        consegna(
+            messaggio(
+                nodoA,
+                WearConstants.MSG_INTENT_BATCH,
+                DataMap().apply {
+                    putString(WearConstants.KEY_INTENT_BATCH, "point,1,1")
+                    putLong(WearConstants.KEY_SEQ, 3L)
+                    putString(WearConstants.KEY_SPORT_ID, "padel")
+                },
+            ),
+        )
+        consegna(arretrato(nodoB, 1))
+
+        assertEquals("padel", ricevuti[0].getStringExtra(WearConstants.KEY_SPORT_ID))
+        assertEquals(null, ricevuti[1].getStringExtra(WearConstants.KEY_SPORT_ID))
+    }
+
     /** Rilievo 2: l'app chiusa non deve consumare la sequenza, o il rinvio verrebbe scartato come "gia' visto". */
     @Test
     fun `un batch senza ricevitori non consuma la sequenza e il telefono dice di riprovare`() {

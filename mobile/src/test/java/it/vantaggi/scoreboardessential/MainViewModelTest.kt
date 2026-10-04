@@ -1655,6 +1655,7 @@ class MainViewModelTest {
         base: String?,
         nodo: String = "polso-1",
         uuidPartita: String? = null,
+        sportId: String? = null,
     ) = Intent(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
         .putExtra(WearConstants.KEY_INTENT_BATCH, voci)
         .putExtra(WearConstants.KEY_SEQ, seq)
@@ -1663,6 +1664,91 @@ class MainViewModelTest {
         .apply {
             if (base != null) putExtra(WearConstants.KEY_BATCH_BASE, base)
             if (uuidPartita != null) putExtra(WearConstants.KEY_MATCH_UUID, uuidPartita)
+            if (sportId != null) putExtra(WearConstants.KEY_SPORT_ID, sportId)
+        }
+
+    /** L5 sport nel batch: a registro vuoto il telefono passa allo sport del polso prima di applicare. */
+    @Test
+    fun `un arretrato di un altro sport a registro vuoto porta il telefono a quello sport`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+            assertEquals("si parte dal calcio", SportRegistry.FOOTBALL, viewModel.activeSport.value)
+
+            ricevi(
+                arretratoConBase(
+                    voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000),
+                    4L,
+                    81L,
+                    "0",
+                    sportId = SportRegistry.PADEL,
+                ),
+            )
+            advanceUntilIdle()
+
+            assertEquals("passato al padel", SportRegistry.PADEL, viewModel.activeSport.value)
+            assertEquals(1, motore().log.size)
+            assertEquals("il primo punto di padel e' 15, non un gol", "15", viewModel.scoreDisplay.value?.side1Primary)
+            assertEquals(81L, risposte(WearConstants.MSG_BATCH_ACK).single().getLong(WearConstants.KEY_BATCH_ID))
+            assertTrue(risposte(WearConstants.MSG_BATCH_NACK).isEmpty())
+        }
+
+    @Test
+    fun `un arretrato di un altro sport con una partita in corso viene rifiutato`() =
+        runTest {
+            cominciaUnPadelConTrePunti()
+            advanceUntilIdle()
+            val base = improntaDelMotore()
+
+            ricevi(
+                arretratoConBase(
+                    voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000),
+                    4L,
+                    82L,
+                    base,
+                    sportId = SportRegistry.FOOTBALL,
+                ),
+            )
+            advanceUntilIdle()
+
+            assertEquals("la partita di padel non e' toccata", 3, motore().log.size)
+            assertEquals(SportRegistry.PADEL, viewModel.activeSport.value)
+            assertEquals(WearConstants.NACK_REJECTED, risposte(WearConstants.MSG_BATCH_NACK).single().getString(WearConstants.KEY_BATCH_NACK_REASON))
+            assertTrue(risposte(WearConstants.MSG_BATCH_ACK).isEmpty())
+        }
+
+    @Test
+    fun `un arretrato dello stesso sport a partita cominciata entra come prima`() =
+        runTest {
+            cominciaUnPadelConTrePunti()
+            advanceUntilIdle()
+            val base = improntaDelMotore()
+
+            ricevi(
+                arretratoConBase(
+                    voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000),
+                    4L,
+                    83L,
+                    base,
+                    sportId = SportRegistry.PADEL,
+                ),
+            )
+            advanceUntilIdle()
+
+            assertEquals(4, motore().log.size)
+            assertEquals(83L, risposte(WearConstants.MSG_BATCH_ACK).single().getLong(WearConstants.KEY_BATCH_ID))
+        }
+
+    @Test
+    fun `un arretrato senza sport (orologio non aggiornato) non cambia lo sport del telefono`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000), 4L, 84L, "0"))
+            advanceUntilIdle()
+
+            assertEquals(SportRegistry.FOOTBALL, viewModel.activeSport.value)
+            assertEquals(1, motore().log.size)
+            assertEquals(84L, risposte(WearConstants.MSG_BATCH_ACK).single().getLong(WearConstants.KEY_BATCH_ID))
         }
 
     /** Cio' che il telefono ha risposto sul path dato, un DataMap per messaggio, nell'ordine. */

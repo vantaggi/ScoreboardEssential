@@ -1289,6 +1289,7 @@ class WearViewModel(
                 pending.partita = statoDalTelefono?.matchUuid.orEmpty()
             }
         val partita = pending.partita.orEmpty()
+        val sportDelCalcolo = statoDalTelefono?.sportId?.takeIf { it.isNotBlank() }
         armaTimeoutBatch(blocco)
         viewModelScope.launch {
             val payload =
@@ -1304,6 +1305,10 @@ class WearViewModel(
                     putLong(WearConstants.KEY_BATCH_ID, blocco.id)
                     putString(WearConstants.KEY_BATCH_BASE, base)
                     putString(WearConstants.KEY_MATCH_UUID, partita)
+                    // Lo sport su cui il polso calcola (e' quello dello stato che mostra): il telefono lo
+                    // allinea a registro vuoto e rifiuta se ha un'altra partita in corso. Senza stato non si
+                    // sa, e il telefono applica con le regole di oggi.
+                    sportDelCalcolo?.let { putString(WearConstants.KEY_SPORT_ID, it) }
                 }
             if (!invii.withLock { connectionManager.sendMessage(WearConstants.MSG_INTENT_BATCH, payload.toByteArray()) }) {
                 // Non e' partito: il tentativo e' scaduto subito, si riprova al prossimo collegamento

@@ -358,6 +358,10 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                     if (dataMap.containsKey(WearConstants.KEY_BATCH_BASE)) {
                         putExtra(WearConstants.KEY_BATCH_BASE, dataMap.getString(WearConstants.KEY_BATCH_BASE, ""))
                     }
+                    // Assente da un orologio non aggiornato: il ViewModel non controlla lo sport.
+                    if (dataMap.containsKey(WearConstants.KEY_SPORT_ID)) {
+                        putExtra(WearConstants.KEY_SPORT_ID, dataMap.getString(WearConstants.KEY_SPORT_ID, ""))
+                    }
                     if (dataMap.containsKey(WearConstants.KEY_MATCH_UUID)) {
                         putExtra(WearConstants.KEY_MATCH_UUID, dataMap.getString(WearConstants.KEY_MATCH_UUID, ""))
                     }

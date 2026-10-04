@@ -257,6 +257,36 @@ class ArretratoDelPoloTest {
         assertEquals(MatchLogCodec.impronta(registro(3)), batchSpediti().single().getString(WearConstants.KEY_BATCH_BASE))
     }
 
+    /** L5 sport: l'arretrato dice di che sport e', quello su cui il polso ha calcolato quello che mostra. */
+    @Test
+    fun `il batch porta lo sport su cui il polso calcola`() {
+        viewModel.applyStateV2(stato(registro(0)))
+        segnaOffline(2)
+
+        viewModel.flushPending()
+        assestati()
+
+        assertEquals("padel", batchSpediti().single().getString(WearConstants.KEY_SPORT_ID))
+    }
+
+    @Test
+    fun `senza uno stato del telefono il batch non dice nessuno sport`() {
+        // Ne' dal vivo ne' dal disco: l'orologio non ha mai sentito il telefono.
+        RuntimeEnvironment
+            .getApplication()
+            .getSharedPreferences("wear_last_known_match", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .commit()
+        viewModel = nuovoViewModel()
+        segnaOffline(1)
+
+        viewModel.flushPending()
+        assestati()
+
+        assertFalse("nessuno sport da dichiarare", batchSpediti().single().containsKey(WearConstants.KEY_SPORT_ID))
+    }
+
     /** D1: la base e' anche l'identita' della partita, quella che il polso vedeva quando la coda e' nata. */
     @Test
     fun `il batch porta l'identita' della partita su cui la coda e' nata`() {
