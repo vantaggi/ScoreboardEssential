@@ -1386,10 +1386,20 @@ class MainActivityLayoutTest {
                 assertEquals("senza notizie la card non c'e'", View.GONE, cardDellOrologio(activity))
                 // Una partita gia' cominciata sul telefono: l'arretrato dell'orologio non puo' entrare.
                 modello!!.addScore(1)
-                val applica = MainViewModel::class.java.getDeclaredMethod("applyWatchBatch", String::class.java, Long::class.java)
+                val applica =
+                    MainViewModel::class.java.getDeclaredMethod(
+                        "applyWatchBatch",
+                        String::class.java,
+                        Long::class.java,
+                        Long::class.java,
+                        String::class.java,
+                        String::class.java,
+                        String::class.java,
+                        String::class.java,
+                    )
                 applica.isAccessible = true
                 val voce = listOf(WearConstants.INTENT_POINT, 1, 1000L).joinToString(WearConstants.BATCH_FIELD_SEPARATOR)
-                applica.invoke(modello, voce, 7L)
+                applica.invoke(modello, voce, 7L, 0L, null, null, null, null)
             }
             try {
                 assertTrue(
@@ -1453,10 +1463,20 @@ class MainActivityLayoutTest {
                 scenario.onActivity { activity ->
                     val modello = ViewModelProvider(activity)[MainViewModel::class.java]
                     modello.addScore(1)
-                    val applica = MainViewModel::class.java.getDeclaredMethod("applyWatchBatch", String::class.java, Long::class.java)
+                    val applica =
+                        MainViewModel::class.java.getDeclaredMethod(
+                            "applyWatchBatch",
+                            String::class.java,
+                            Long::class.java,
+                            Long::class.java,
+                            String::class.java,
+                            String::class.java,
+                            String::class.java,
+                            String::class.java,
+                        )
                     applica.isAccessible = true
                     val voce = listOf(WearConstants.INTENT_POINT, 1, 1000L).joinToString(WearConstants.BATCH_FIELD_SEPARATOR)
-                    applica.invoke(modello, voce, 7L)
+                    applica.invoke(modello, voce, 7L, 0L, null, null, null, null)
                 }
                 assertTrue("la card non si e' accesa", aspettaCheAttivi(scenario) { cardDellOrologio(it) == View.VISIBLE })
 
