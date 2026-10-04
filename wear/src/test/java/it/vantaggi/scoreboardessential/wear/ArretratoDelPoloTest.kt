@@ -315,6 +315,72 @@ class ArretratoDelPoloTest {
         assertFalse("un NACK passeggero non e' un rifiuto", viewModel.rifiutati.value > 0)
     }
 
+    /** D3: connectionState non rimette Connected se lo era gia': il rinvio parte con lo stato dal vivo. */
+    @Test
+    fun `dopo un NACK passeggero uno stato dal vivo rimanda la coda senza aspettare un nuovo collegamento`() {
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        viewModel.onBatchNack(idDi(primo), WearConstants.NACK_RETRY)
+        assestati()
+        assertEquals("da solo non riparte", 1, batchSpediti().size)
+
+        // L'app del telefono e' tornata: manda il suo stato.
+        viewModel.applyStateV2(stato(registro(0)))
+        assestati()
+
+        val inviati = batchSpediti()
+        assertEquals(2, inviati.size)
+        assertEquals("stesso blocco, stessa identita'", idDi(primo), idDi(inviati[1]))
+    }
+
+    @Test
+    fun `scaduto il tentativo uno stato dal vivo rimanda la coda, uno rilevato dal disco no`() {
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        avanza(WearViewModel.TIMEOUT_BATCH_MS)
+
+        // Una copia riletta dai DataItem al risveglio non e' un telefono che parla adesso.
+        viewModel.applyStateV2(stato(registro(0)), dalVivo = false)
+        assestati()
+        assertEquals(1, batchSpediti().size)
+
+        viewModel.applyStateV2(stato(registro(0)))
+        assestati()
+        assertEquals(2, batchSpediti().size)
+    }
+
+    @Test
+    fun `con un tentativo vivo uno stato dal vivo non ne lancia un secondo`() {
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+
+        viewModel.applyStateV2(stato(registro(0)))
+        assestati()
+
+        assertEquals(1, batchSpediti().size)
+    }
+
+    @Test
+    fun `dopo un ack le voci rimaste mentre il blocco era in volo partono subito`() {
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        segnaOffline(1)
+
+        viewModel.onBatchAck(primo.getLong(WearConstants.KEY_SEQ), idDi(primo))
+        assestati()
+
+        val inviati = batchSpediti()
+        assertEquals(2, inviati.size)
+        assertNotEquals("un blocco nuovo", idDi(primo), idDi(inviati[1]))
+        assertEquals("solo la voce rimasta", 1, inviati[1].getString(WearConstants.KEY_INTENT_BATCH).orEmpty().split(WearConstants.BATCH_SEPARATOR).size)
+    }
+
     // --- Rilievo 3: ack perso ---
 
     @Test
@@ -593,10 +659,16 @@ class ArretratoDelPoloTest {
         viewModel.flushPending(collegatoDiNuovo = true)
         assestati()
 
-        assertNotEquals(
-            "con la base nuova il telefono applicherebbe a una partita che non e' la sua",
-            "0",
-            batchSpediti().single().getString(WearConstants.KEY_BATCH_BASE),
-        )
+        // Lo stato dal vivo ha gia' rimandato la coda (D3) e il collegamento di nuovo la rimanda ancora:
+        // in ogni tentativo la base e' quella della partita in cui la coda e' nata.
+        val inviati = batchSpediti()
+        assertTrue("almeno un invio", inviati.isNotEmpty())
+        inviati.forEach {
+            assertNotEquals(
+                "con la base nuova il telefono applicherebbe a una partita che non e' la sua",
+                "0",
+                it.getString(WearConstants.KEY_BATCH_BASE),
+            )
+        }
     }
 }

@@ -753,6 +753,10 @@ class WearViewModel(
         }
         // Lo stato puo' restare identico mentre l'ora cambia: il collector non se ne accorgerebbe.
         ricalcolaFiducia()
+        // Un telefono che parla adesso e' raggiungibile, e una coda senza un tentativo vivo (un NACK
+        // passeggero, un tentativo scaduto, voci rimaste dopo un blocco) non ha altro da aspettare:
+        // connectionState e' uno StateFlow e non rimette Connected se lo era gia' (L5, D3).
+if (dalVivo && pending.size > 0 && !batchAttivo()) flushPending()
     }
 
     /**
@@ -1313,6 +1317,8 @@ class WearViewModel(
         if (pending.size == 0 || !rebuildLocalState()) {
             statoDalTelefono?.let { _scoreState.value = it }
         }
+        // Le voci segnate mentre il blocco era in volo non hanno altro da aspettare: partono ora (D3).
+if (pending.size > 0) flushPending()
     }
 
     /**
