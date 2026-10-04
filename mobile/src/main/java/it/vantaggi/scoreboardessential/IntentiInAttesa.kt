@@ -1,6 +1,7 @@
 package it.vantaggi.scoreboardessential
 
 import android.content.Context
+import android.util.Log
 import androidx.core.content.edit
 
 /**
@@ -29,6 +30,7 @@ class IntentiInAttesa(
     )
 
     companion object {
+        private const val TAG = "IntentiInAttesa"
         private const val PREFS = "intenti_dal_polso_in_attesa"
         private const val CHIAVE = "voci"
         private const val SEP_VOCE = ";"
@@ -39,29 +41,50 @@ class IntentiInAttesa(
 
         /** Dodici ore: oltre, il tocco non appartiene piu' alla partita che sta per ripartire. */
         const val VALIDITA_MS = 12L * 60L * 60L * 1000L
+
+        /**
+         * Uno solo per processo, non per istanza: il servizio e il ViewModel del telefono creano ognuno
+         * la propria [IntentiInAttesa] sulle stesse preferenze, e un `@Synchronized` di metodo vale per
+         * l'istanza. Con due istanze, leggi-modifica-scrivi dell'una e dell'altra si intrecciavano, e una
+         * voce aggiunta dal servizio mentre il ViewModel le prendeva poteva sparire.
+         */
+        internal val lock = Any()
     }
 
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    @Synchronized
+    /**
+     * Mette da parte una voce; ritorna `false` se non l'ha tenuta (oltre [MASSIMO]). Chi la chiama non
+     * deve dire all'orologio "preso in custodia" per una voce che non c'e': il polso dira' NON
+     * CONFERMATO, e l'utente sa che il punto non e' entrato.
+     */
     fun aggiungi(
         kind: String,
         side: Int,
         atMillis: Long,
-    ) {
-        val voci = leggi()
-        if (voci.size >= MASSIMO) return
-        scrivi(voci + Voce(kind, side, atMillis))
-    }
+    ): Boolean =
+        synchronized(lock) {
+            val voci = leggi()
+            if (voci.size >= MASSIMO) {
+                Log.w(TAG, "Oltre $MASSIMO voci in attesa: tocco non tenuto")
+                false
+            } else {
+                scrivi(voci + Voce(kind, side, atMillis))
+                true
+            }
+        }
 
     /** Toglie e restituisce le voci ancora valide, nell'ordine di arrivo. Una chiamata sola le consuma. */
-    @Synchronized
-    fun prendiTutte(adesso: Long = System.currentTimeMillis()): List<Voce> {
-        val voci = leggi()
-        if (voci.isEmpty()) return emptyList()
-        prefs.edit { remove(CHIAVE) }
-        return voci.filter { adesso - it.atMillis <= VALIDITA_MS }
-    }
+    fun prendiTutte(adesso: Long = System.currentTimeMillis()): List<Voce> =
+        synchronized(lock) {
+            val voci = leggi()
+            if (voci.isEmpty()) {
+                emptyList()
+            } else {
+                prefs.edit { remove(CHIAVE) }
+                voci.filter { adesso - it.atMillis <= VALIDITA_MS }
+            }
+        }
 
     private fun leggi(): List<Voce> =
         prefs

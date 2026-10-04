@@ -12,6 +12,8 @@ import com.google.android.gms.wearable.MessageEvent
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -414,6 +416,47 @@ class ProtocolloV2DelTelefonoTest {
 
         repeat(IntentiInAttesa.MASSIMO + 10) { coda.aggiungi(WearConstants.INTENT_POINT, 1, adesso) }
         assertEquals(IntentiInAttesa.MASSIMO, coda.prendiTutte(adesso).size)
+    }
+
+    /** L5 L4: oltre il tetto la voce non entra e chi chiama lo sa, invece di scartarla in silenzio. */
+    @Test
+    fun `oltre il tetto aggiungi dice di no e non scrive`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        val coda = IntentiInAttesa(app)
+        coda.prendiTutte()
+        val adesso = 1_700_000_000_000L
+        repeat(IntentiInAttesa.MASSIMO) { assertTrue(coda.aggiungi(WearConstants.INTENT_POINT, 1, adesso)) }
+
+        assertFalse("la 201esima non entra", coda.aggiungi(WearConstants.INTENT_POINT, 2, adesso))
+
+        val prese = coda.prendiTutte(adesso)
+        assertEquals(IntentiInAttesa.MASSIMO, prese.size)
+        assertTrue("nessuna voce del lato 2", prese.all { it.side == 1 })
+    }
+
+    /**
+     * L5 L4: servizio e ViewModel hanno ognuno la propria istanza sulle stesse preferenze, quindi il
+     * lock deve valere per processo. Un thread che tiene il lock condiviso blocca un'ALTRA istanza:
+     * con `@Synchronized` di metodo (per istanza) la seconda passerebbe e i due leggi-modifica-scrivi
+     * si intreccerebbero.
+     */
+    @Test
+    fun `due istanze di IntentiInAttesa si escludono a vicenda con un lock condiviso`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        IntentiInAttesa(app).prendiTutte()
+        val finito = java.util.concurrent.CountDownLatch(1)
+        val altra =
+            Thread {
+                IntentiInAttesa(app).aggiungi(WearConstants.INTENT_POINT, 1, System.currentTimeMillis())
+                finito.countDown()
+            }
+
+        synchronized(IntentiInAttesa.lock) {
+            altra.start()
+            assertFalse("l'altra istanza deve aspettare il lock", finito.await(300, java.util.concurrent.TimeUnit.MILLISECONDS))
+        }
+        assertTrue("rilasciato il lock, l'altra finisce", finito.await(5, java.util.concurrent.TimeUnit.SECONDS))
+        assertEquals(1, IntentiInAttesa(app).prendiTutte().size)
     }
 
     private fun chiusura(
