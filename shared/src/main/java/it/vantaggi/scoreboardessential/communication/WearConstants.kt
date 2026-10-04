@@ -246,6 +246,18 @@ object WearConstants {
      */
     const val MSG_INTENT_CUSTODIA = "/scoreboard/v2/intent_custody"
 
+    // --- L5: ordine degli stati --------------------------------------------------------------
+
+    /**
+     * La versione MONOTONA dello stato v2, Long. Il telefono la assegna quando CATTURA lo stato (non
+     * quando lo pubblica) e la semina da `System.currentTimeMillis()` come la [KEY_SEQ] dell'orologio,
+     * cosi' cresce anche fra due vite del processo del telefono. Il Data Layer non garantisce che
+     * l'ultimo `putDataItem` a finire sia l'ultimo chiamato, e gli `onDataChanged` possono arrivare
+     * invertiti: l'orologio IGNORA uno stato con versione minore dell'ultima vista. Additiva: assente
+     * da un telefono non aggiornato (0), e allora lo stato si applica come prima.
+     */
+    const val KEY_STATE_VERSION = "state_version"
+
     // Message Paths (MessageClient, fire-and-forget triggers)
     const val MSG_SCORER_SELECTED = "/scoreboard/scorer_selected"
     const val MSG_REQUEST_SYNC = "/scoreboard/request_sync"
