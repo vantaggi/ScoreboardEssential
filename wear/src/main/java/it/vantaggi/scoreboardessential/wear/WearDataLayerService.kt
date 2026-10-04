@@ -11,6 +11,7 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
+import it.vantaggi.scoreboardessential.shared.communication.NodoLocale
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 
@@ -225,11 +226,22 @@ class WearDataLayerService : WearableListenerService() {
         }
     }
 
+    override fun onCreate() {
+        super.onCreate()
+        // L'id del nodo locale serve a onDataChanged, che non puo' aspettarlo: lo si chiede subito.
+        NodoLocale.richiedi(this)
+    }
+
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Data received, count: ${dataEvents.count}")
         }
+        NodoLocale.richiedi(this)
         dataEvents.forEach { event ->
+            // L'orologio scrive match_state e altri path che ascolta: un DataItem scritto da lui non
+            // e' una notizia del telefono, e rigiocarlo potrebbe azzerare il cronometro (L6). Se l'id
+            // del nodo locale non e' ancora noto passa, come prima.
+            if (NodoLocale.eLocale(event.dataItem.uri.host)) return@forEach
             if (event.type == DataEvent.TYPE_CHANGED) {
                 try {
                     dispatchDataItem(this, event.dataItem)

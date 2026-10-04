@@ -11,6 +11,7 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
+import it.vantaggi.scoreboardessential.shared.communication.NodoLocale
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 import java.util.concurrent.ConcurrentHashMap
@@ -77,8 +78,15 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         }
     }
 
+    override fun onCreate() {
+        super.onCreate()
+        // L'id del nodo locale serve a handleDataEvent, che non puo' aspettarlo: lo si chiede subito.
+        NodoLocale.richiedi(this)
+    }
+
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         super.onDataChanged(dataEvents)
+        NodoLocale.richiedi(this)
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Data received, count: ${dataEvents.count}")
         }
@@ -104,6 +112,11 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
 
     private fun handleDataEvent(event: DataEvent) {
         if (event.type != DataEvent.TYPE_CHANGED) return
+
+        // Il telefono scrive gli stessi path che ascolta (punteggio, timer, stato): un DataItem
+        // scritto da lui non e' una notizia dall'orologio, e rigiocarlo sporcherebbe il motore (L6).
+        // Se l'id del nodo locale non e' ancora noto passa, come prima.
+        if (NodoLocale.eLocale(event.dataItem.uri.host)) return
 
         val path = event.dataItem.uri.path
         if (BuildConfig.DEBUG) {

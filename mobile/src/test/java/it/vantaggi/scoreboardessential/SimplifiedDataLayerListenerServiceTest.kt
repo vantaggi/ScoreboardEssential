@@ -8,11 +8,16 @@ import android.net.Uri
 import android.os.Looper
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.test.core.app.ApplicationProvider
+import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataItem
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.Node
+import com.google.android.gms.wearable.NodeClient
+import com.google.android.gms.wearable.Wearable
+import it.vantaggi.scoreboardessential.shared.communication.NodoLocale
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -54,11 +59,13 @@ class SimplifiedDataLayerListenerServiceTest {
         mockUri = mock(Uri::class.java)
 
         dataMapItemStatic = mockStatic(DataMapItem::class.java)
+        NodoLocale.azzera()
     }
 
     @After
     fun tearDown() {
         dataMapItemStatic.close()
+        NodoLocale.azzera()
     }
 
     /**
@@ -209,6 +216,71 @@ class SimplifiedDataLayerListenerServiceTest {
             )
         } finally {
             manager.unregisterReceiver(receiver)
+        }
+    }
+
+    /**
+     * L6: il telefono scrive gli stessi path che ascolta. Se il Data Layer gli riconsegna i propri
+     * DataItem, un punteggio scritto da lui tornerebbe come punteggio dell'orologio e riscriverebbe
+     * il registro del motore. Un DataItem col suo stesso host e' scartato; uno di un altro nodo passa.
+     */
+    @Test
+    fun `un DataItem scritto dal nodo locale e' scartato e uno dell'orologio passa`() {
+        val nodoLocale = mock(Node::class.java)
+        `when`(nodoLocale.id).thenReturn("telefono-locale")
+        val nodeClient = mock(NodeClient::class.java)
+        `when`(nodeClient.localNode).thenReturn(Tasks.forResult(nodoLocale))
+
+        mockStatic(Wearable::class.java).use { wearableStatic ->
+            wearableStatic
+                .`when`<NodeClient> { Wearable.getNodeClient(org.mockito.ArgumentMatchers.any(Context::class.java)) }
+                .thenReturn(nodeClient)
+
+            service =
+                org.robolectric.Robolectric
+                    .buildService(SimplifiedDataLayerListenerService::class.java)
+                    .create()
+                    .get()
+            // L'id del nodo locale arriva su un listener del thread principale.
+            shadowOf(Looper.getMainLooper()).idle()
+
+            val ricevuti = mutableListOf<Intent>()
+            val receiver =
+                object : BroadcastReceiver() {
+                    override fun onReceive(
+                        context: Context,
+                        intent: Intent,
+                    ) {
+                        ricevuti.add(intent)
+                    }
+                }
+            val manager = LocalBroadcastManager.getInstance(ApplicationProvider.getApplicationContext())
+            manager.registerReceiver(receiver, IntentFilter(SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE))
+
+            `when`(mockDataEventBuffer.iterator()).thenAnswer { mutableListOf(mockDataEvent).iterator() }
+            `when`(mockDataEvent.type).thenReturn(DataEvent.TYPE_CHANGED)
+            `when`(mockDataEvent.dataItem).thenReturn(mockDataItem)
+            `when`(mockDataItem.uri).thenReturn(mockUri)
+            `when`(mockUri.path).thenReturn(WearConstants.PATH_SCORE)
+            dataMapItemStatic.`when`<DataMapItem> { DataMapItem.fromDataItem(mockDataItem) }.thenReturn(mockDataMapItem)
+            `when`(mockDataMapItem.dataMap).thenReturn(mockDataMap)
+            `when`(mockDataMap.getInt(WearConstants.KEY_TEAM1_SCORE, 0)).thenReturn(3)
+            `when`(mockDataMap.getInt(WearConstants.KEY_TEAM2_SCORE, 0)).thenReturn(2)
+
+            try {
+                `when`(mockUri.host).thenReturn("telefono-locale")
+                service.onDataChanged(mockDataEventBuffer)
+                shadowOf(Looper.getMainLooper()).idle()
+                assertTrue("un DataItem del nodo locale non va inoltrato: ${ricevuti.size}", ricevuti.isEmpty())
+
+                `when`(mockUri.host).thenReturn("orologio-remoto")
+                service.onDataChanged(mockDataEventBuffer)
+                shadowOf(Looper.getMainLooper()).idle()
+                assertEquals("quello dell'orologio si", 1, ricevuti.size)
+                assertEquals(3, ricevuti[0].getIntExtra(WearConstants.KEY_TEAM1_SCORE, -1))
+            } finally {
+                manager.unregisterReceiver(receiver)
+            }
         }
     }
 }
