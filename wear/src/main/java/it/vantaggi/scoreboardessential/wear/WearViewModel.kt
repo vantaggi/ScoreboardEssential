@@ -22,6 +22,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.abs
 
@@ -243,6 +245,21 @@ class WearViewModel(
     private var seqUltimoBatch = 0L
 
     private var timeoutBatchJob: Job? = null
+
+    /**
+     * Il blocco confermato dall'ack il cui stato (quello che porta il suo id) non e' ancora arrivato:
+     * quando arriva, le sue voci non sono la conferma di un tocco dal vivo (D6).
+     */
+    private var bloccoSenzaStato: PendingIntents.BatchInVolo? = null
+
+    /**
+     * Un invio alla volta (L5, D5): intenzioni, chiusura, cambio sport e arretrato. Ogni invio prende
+     * la sequenza al momento del gesto, ma parte in una coroutine sua: senza un turno, due tocchi
+     * ravvicinati andavano in parallelo e potevano arrivare invertiti, e il telefono scarta cio' che
+     * non supera l'ultima sequenza vista. Il Mutex e' equo (chi aspetta parte nell'ordine in cui e'
+     * arrivato) e copre tutta la sendMessage, non solo l'avvio.
+     */
+    private val invii = Mutex()
 
     /** Un arretrato in volo che non e' scaduto: finche' c'e', non se ne spedisce un altro e lo schermo non si ridisegna. */
     private fun batchAttivo(): Boolean = batchInVolo != null && batchInVoloDal != null
@@ -504,7 +521,7 @@ class WearViewModel(
                     putLong(WearConstants.KEY_SEQ, seq)
                     putLong(WearConstants.KEY_AT_MILLIS, quando)
                 }
-            if (!connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())) {
+            if (!invii.withLock { connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray()) }) {
                 chiusuraInAttesa = false
                 chiusuraJob?.cancel()
                 triggerFailureVibration()
@@ -797,10 +814,18 @@ class WearViewModel(
      * non chiude nessuna ricevuta.
      */
     private fun chiudiRicevute(state: WearScoreState) {
-        val registro = lunghezzaRegistro(state)
+        // D6: lo stato che porta l'arretrato applicato, arrivato DOPO la sua conferma (l'ack e lo stato
+        // viaggiano separati, e uno stato in ritardo e' normale), allunga il registro delle voci del
+        // blocco: non e' la conferma di un tocco dal vivo segnato nel frattempo. Le voci del blocco si
+        // tolgono dalla distanza, una volta sola, e le ricevute aperte ripartono dal registro vero.
+        val delBlocco = bloccoSenzaStato?.takeIf { state.lastBatchId == it.id }?.quante ?: 0
+        if (delBlocco > 0) bloccoSenzaStato = null
+        val reale = lunghezzaRegistro(state)
+        val registro = reale?.minus(delBlocco)
         val piuVecchia = ricevute.firstOrNull()
-        if (registro != null && piuVecchia != null && !batchAttivo()) {
+        if (registro != null && reale != null && piuVecchia != null && !batchAttivo()) {
             val distanza = abs(registro - piuVecchia.registroBase)
+            if (distanza == 0 && delBlocco > 0) ricevute.forEach { it.registroBase = reale }
             if (distanza > 0) {
                 // Il registro e' CRESCIUTO: un gol ha allungato la lista. Se si e' accorciato e'
                 // stato un annullamento (del telefono, di solito) e non c'e' un gol da attribuire.
@@ -809,7 +834,7 @@ class WearViewModel(
                 repeat(minOf(distanza, ricevute.size)) {
                     chiuse += ricevute.removeFirst().also { it.scadenza?.cancel() }
                 }
-                ricevute.forEach { it.registroBase = registro }
+                ricevute.forEach { it.registroBase = reale }
                 val ultima = chiuse.last()
                 // Piu' di una insieme: suona l'ultima, la prima verrebbe tagliata subito.
                 suonaDopoIlTick(ultima.tickAlle, patternConferma(ultima))
@@ -1252,7 +1277,7 @@ class WearViewModel(
                     putString(WearConstants.KEY_BATCH_BASE, base)
                     putString(WearConstants.KEY_MATCH_UUID, partita)
                 }
-            if (!connectionManager.sendMessage(WearConstants.MSG_INTENT_BATCH, payload.toByteArray())) {
+            if (!invii.withLock { connectionManager.sendMessage(WearConstants.MSG_INTENT_BATCH, payload.toByteArray()) }) {
                 // Non e' partito: il tentativo e' scaduto subito, si riprova al prossimo collegamento
                 // con una sequenza nuova e lo stesso id.
                 scadeBatch(blocco)
@@ -1322,6 +1347,9 @@ class WearViewModel(
         // Un telefono che l'id non lo manda non ha uno stato che lo dica, e la sua base non la controlla:
         // le voci tengono quella della coda, e non aspettano uno stato che non arrivera'.
         val dopo = statoDalTelefono?.takeIf { it.lastBatchId == blocco.id }
+        // Il suo stato non e' ancora arrivato: quando arrivera' non dovra' passare per la conferma di un
+        // tocco dal vivo (D6, vedi chiudiRicevute).
+        bloccoSenzaStato = blocco.takeIf { dopo == null && telefonoConId }
         when {
             dopo != null -> pending.confermaBatch(blocco.id, improntaDi(dopo), dopo.matchUuid)
             !telefonoConId -> pending.confermaBatch(blocco.id, pending.base, pending.partita)
@@ -1416,7 +1444,7 @@ class WearViewModel(
                     putString(WearConstants.KEY_SPORT_ID, sportId)
                     putLong(WearConstants.KEY_SEQ, seq)
                 }
-            val consegnato = connectionManager.sendMessage(WearConstants.MSG_SPORT_INTENT, payload.toByteArray())
+            val consegnato = invii.withLock { connectionManager.sendMessage(WearConstants.MSG_SPORT_INTENT, payload.toByteArray()) }
             // Consegnato non e' cambiato: la conferma e' lo stato con lo sport chiesto.
             if (consegnato) {
                 apriRicevutaSport(sportId)
@@ -1462,29 +1490,40 @@ class WearViewModel(
                     putLong(WearConstants.KEY_SEQ, seq)
                     putLong(WearConstants.KEY_AT_MILLIS, quando)
                 }
-            val consegnato = connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
-            if (consegnato) {
-                // Consegnato non e' preso: niente vibrazione adesso. La conferma suona quando il
-                // telefono rimanda lo stato, e se non lo rimanda lo dice NON CONFERMATO.
-                ricevuta?.let { avviaScadenza(it) }
-                return@launch
+            // Un invio alla volta, dal controllo della coda alla risposta di sendMessage (L5, D5): due
+            // tocchi ravvicinati partirebbero in parallelo e potrebbero arrivare invertiti, e il
+            // telefono scarta cio' che non supera l'ultima sequenza vista. Il controllo sta DENTRO il
+            // turno: un tocco finito in coda mentre il precedente era in volo lo deve trovare.
+            invii.withLock {
+                // Con una coda non vuota o un arretrato in volo i tocchi nuovi vanno in coda, dietro di
+                // loro: dal vivo arriverebbero PRIMA dell'arretrato e il telefono li applicherebbe fuori
+                // ordine rispetto a quello che il polso mostra.
+                val consegnato =
+                    !(pending.size > 0 || batchAttivo()) &&
+                        connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
+                if (consegnato) {
+                    // Consegnato non e' preso: niente vibrazione adesso. La conferma suona quando il
+                    // telefono rimanda lo stato, e se non lo rimanda lo dice NON CONFERMATO.
+                    ricevuta?.let { avviaScadenza(it) }
+                    return@withLock
+                }
+                // Non consegnato: la ricevuta si toglie senza suonare, vale la coda qui sotto.
+                ricevuta?.let { ricevute.remove(it) }
+                // Non arrivato: si REGISTRA invece di sparire. Il gesto e' cieco -- sullo schermo non
+                // cambia niente -- quindi il polso deve comunque distinguere "preso dal telefono" da
+                // "tenuto da parte", e il conteggio in attesa lo dice a schermo.
+                // La base della coda e' il registro che il polso vede ORA, se la coda nasce con questo tocco.
+                val accodato =
+                    pending.add(PendingIntent(kind, side, quando), improntaDelRegistroVisto(), statoDalTelefono?.matchUuid.orEmpty())
+                _pendingCount.value = pending.size
+                // Il gesto smette di essere cieco: il punteggio a schermo si aggiorna subito, calcolato
+                // qui, e sara' identico a quello che il telefono calcolera' ricevendo la coda.
+                if (accodato) rebuildLocalState()
+                // Tenuto da parte non e' un fallimento -- il punto e' salvo, arrivera' al telefono da
+                // solo -- ma non e' nemmeno la conferma: il tabellone del telefono non si sta muovendo.
+                // Per questo suona la conferma del lato con in fondo un colpo lungo.
+                suonaDopoIlTick(tickAlle, if (accodato) WearPatterns.inCoda(side) else WearPatterns.NON_CONFERMATO)
             }
-            // Non consegnato: la ricevuta si toglie senza suonare, vale la coda qui sotto.
-            ricevuta?.let { ricevute.remove(it) }
-            // Non arrivato: si REGISTRA invece di sparire. Il gesto e' cieco -- sullo schermo non
-            // cambia niente -- quindi il polso deve comunque distinguere "preso dal telefono" da
-            // "tenuto da parte", e il conteggio in attesa lo dice a schermo.
-            // La base della coda e' il registro che il polso vede ORA, se la coda nasce con questo tocco.
-            val accodato =
-                pending.add(PendingIntent(kind, side, quando), improntaDelRegistroVisto(), statoDalTelefono?.matchUuid.orEmpty())
-            _pendingCount.value = pending.size
-            // Il gesto smette di essere cieco: il punteggio a schermo si aggiorna subito, calcolato
-            // qui, e sara' identico a quello che il telefono calcolera' ricevendo la coda.
-            if (accodato) rebuildLocalState()
-            // Tenuto da parte non e' un fallimento -- il punto e' salvo, arrivera' al telefono da
-            // solo -- ma non e' nemmeno la conferma: il tabellone del telefono non si sta muovendo.
-            // Per questo suona la conferma del lato con in fondo un colpo lungo.
-            suonaDopoIlTick(tickAlle, if (accodato) WearPatterns.inCoda(side) else WearPatterns.NON_CONFERMATO)
         }
     }
 

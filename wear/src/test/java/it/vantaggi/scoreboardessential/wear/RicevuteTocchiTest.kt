@@ -159,6 +159,7 @@ class RicevuteTocchiTest {
         registro: String,
         sportId: String = "padel",
         finita: Boolean = false,
+        lastBatchId: Long = 0L,
     ) = WearScoreState(
         side1Primary = "0",
         side1Secondary = "",
@@ -176,6 +177,7 @@ class RicevuteTocchiTest {
         matchInProgress = true,
         matchOver = finita,
         eventLog = registro,
+        lastBatchId = lastBatchId,
     )
 
     private fun avanza(millisecondi: Long) {
@@ -522,9 +524,13 @@ class RicevuteTocchiTest {
 
     // --- Un arretrato in volo non e' la conferma di un tocco dal vivo ---
 
+    /**
+     * D6: l'ack e lo stato dell'arretrato viaggiano separati. Se l'ack arriva per primo la coda e'
+     * vuota, il tocco dal vivo parte e apre la sua ricevuta, e poi arriva lo stato col blocco (L+3):
+     * allunga il registro di tre voci, ma non e' la conferma del tocco.
+     */
     @Test
-    fun `lo stato dell'arretrato non chiude la ricevuta di un tocco dal vivo consegnato intanto`() {
-        // Tre punti offline, poi il telefono torna: l'arretrato parte in UN messaggio e resta in volo.
+    fun `lo stato dell'arretrato arrivato dopo l'ack non chiude la ricevuta di un tocco dal vivo segnato intanto`() {
         consegnato = false
         repeat(3) { viewModel.incrementScore(1) }
         assestati()
@@ -532,36 +538,42 @@ class RicevuteTocchiTest {
         viewModel.flushPending()
         assestati()
         val seqBatch = sequenzaDelBatch()
+        val idBatch = idDelBatch()
         dopoIlTick()
         vibratore.suonati.clear()
 
-        // Un tocco dal vivo, consegnato mentre l'arretrato e' ancora in volo.
+        // L'ack per primo: l'arretrato e' confermato e la coda e' vuota.
+        viewModel.onBatchAck(seqBatch, idBatch)
+        // Un tocco dal vivo, ora che la coda e' vuota: parte e apre la sua ricevuta.
         viewModel.incrementScore(2)
         assestati()
         dopoIlTick()
 
         // Lo stato dell'arretrato (L+3): e' il suo, non quello del tocco.
-        viewModel.applyStateV2(stato(registro(3)))
+        viewModel.applyStateV2(stato(registro(3), lastBatchId = idBatch))
         assestati()
         dopoIlTick()
         assertTrue("l'arretrato non e' una conferma: ${vibrazioni()}", vibratore.suonati.isEmpty())
 
-        // L'ack chiude l'arretrato, e lo stato col tocco dal vivo (L+4) chiude la ricevuta.
-        viewModel.onBatchAck(seqBatch)
-        viewModel.applyStateV2(stato(registro(4)))
+        // Lo stato col tocco dal vivo (L+4) chiude la ricevuta.
+        viewModel.applyStateV2(stato(registro(4), lastBatchId = idBatch))
         assestati()
         dopoIlTick()
         assertEquals(listOf(WearPatterns.CONFERMA_DESTRA.toList()), vibrazioni())
     }
 
     /** La sequenza del messaggio dell'arretrato, letta da quello che il telefono ha ricevuto. */
-    private fun sequenzaDelBatch(): Long {
+    private fun sequenzaDelBatch(): Long = ultimoBatch().getLong(WearConstants.KEY_SEQ)
+
+    private fun idDelBatch(): Long = ultimoBatch().getLong(WearConstants.KEY_BATCH_ID)
+
+    private fun ultimoBatch(): DataMap {
         val invio =
             Mockito
                 .mockingDetails(telefono)
                 .invocations
                 .last { it.method.name == "sendMessage" && it.arguments[0] == WearConstants.MSG_INTENT_BATCH }
-        return DataMap.fromByteArray(invio.arguments[1] as ByteArray).getLong(WearConstants.KEY_SEQ)
+        return DataMap.fromByteArray(invio.arguments[1] as ByteArray)
     }
 
     // --- Un registro che manca non fa dire NON CONFERMATO ---
