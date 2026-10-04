@@ -45,6 +45,7 @@ class StringheStatoTest {
             Transitorio.ChiusuraNonConfermata,
             Transitorio.CambioSport,
             Transitorio.SportNonCambiato,
+            Transitorio.InAttesaDelTelefono,
         )
 
     private fun verificaLunghezze(lingua: String) {
@@ -86,6 +87,9 @@ class StringheStatoTest {
         assertEquals("CHANGING SPORT…", Transitorio.CambioSport.testo(contesto("en")))
         assertEquals("SPORT NON CAMBIATO", Transitorio.SportNonCambiato.testo(contesto("it")))
         assertEquals("SPORT NOT CHANGED", Transitorio.SportNonCambiato.testo(contesto("en")))
+        // La custodia (L5): il telefono ha messo da parte il tocco, l'italiano e' di nuovo al limite, 18 su 18.
+        assertEquals("IN ATTESA TELEFONO", Transitorio.InAttesaDelTelefono.testo(contesto("it")))
+        assertEquals("WAITING FOR PHONE", Transitorio.InAttesaDelTelefono.testo(contesto("en")))
     }
 
     @Test

@@ -1655,6 +1655,7 @@ class MainViewModelTest {
         base: String?,
         nodo: String = "polso-1",
         uuidPartita: String? = null,
+        sportId: String? = null,
     ) = Intent(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
         .putExtra(WearConstants.KEY_INTENT_BATCH, voci)
         .putExtra(WearConstants.KEY_SEQ, seq)
@@ -1663,6 +1664,92 @@ class MainViewModelTest {
         .apply {
             if (base != null) putExtra(WearConstants.KEY_BATCH_BASE, base)
             if (uuidPartita != null) putExtra(WearConstants.KEY_MATCH_UUID, uuidPartita)
+            if (sportId != null) putExtra(WearConstants.KEY_SPORT_ID, sportId)
+        }
+
+    /** L5 sport nel batch: a registro vuoto il telefono passa allo sport del polso prima di applicare. */
+    @Test
+    fun `un arretrato di un altro sport a registro vuoto porta il telefono a quello sport`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+            assertEquals("si parte dal calcio", SportRegistry.FOOTBALL, viewModel.activeSport.value)
+
+            ricevi(
+                arretratoConBase(
+                    voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000),
+                    4L,
+                    81L,
+                    "0",
+                    sportId = SportRegistry.PADEL,
+                ),
+            )
+            advanceUntilIdle()
+
+            assertEquals("passato al padel", SportRegistry.PADEL, viewModel.activeSport.value)
+            assertEquals(1, motore().log.size)
+            assertEquals("il primo punto di padel e' 15, non un gol", "15", viewModel.scoreDisplay.value?.side1Primary)
+            assertEquals(81L, risposte(WearConstants.MSG_BATCH_ACK).single().getLong(WearConstants.KEY_BATCH_ID))
+            assertTrue(risposte(WearConstants.MSG_BATCH_NACK).isEmpty())
+        }
+
+    @Test
+    fun `un arretrato di un altro sport con una partita in corso viene rifiutato`() =
+        runTest {
+            cominciaUnPadelConTrePunti()
+            advanceUntilIdle()
+            val base = improntaDelMotore()
+
+            ricevi(
+                arretratoConBase(
+                    voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000),
+                    4L,
+                    82L,
+                    base,
+                    sportId = SportRegistry.FOOTBALL,
+                ),
+            )
+            advanceUntilIdle()
+
+            assertEquals("la partita di padel non e' toccata", 3, motore().log.size)
+            assertEquals(SportRegistry.PADEL, viewModel.activeSport.value)
+            val nack = risposte(WearConstants.MSG_BATCH_NACK).single()
+            assertEquals(WearConstants.NACK_REJECTED, nack.getString(WearConstants.KEY_BATCH_NACK_REASON))
+            assertTrue(risposte(WearConstants.MSG_BATCH_ACK).isEmpty())
+        }
+
+    @Test
+    fun `un arretrato dello stesso sport a partita cominciata entra come prima`() =
+        runTest {
+            cominciaUnPadelConTrePunti()
+            advanceUntilIdle()
+            val base = improntaDelMotore()
+
+            ricevi(
+                arretratoConBase(
+                    voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000),
+                    4L,
+                    83L,
+                    base,
+                    sportId = SportRegistry.PADEL,
+                ),
+            )
+            advanceUntilIdle()
+
+            assertEquals(4, motore().log.size)
+            assertEquals(83L, risposte(WearConstants.MSG_BATCH_ACK).single().getLong(WearConstants.KEY_BATCH_ID))
+        }
+
+    @Test
+    fun `un arretrato senza sport (orologio non aggiornato) non cambia lo sport del telefono`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000), 4L, 84L, "0"))
+            advanceUntilIdle()
+
+            assertEquals(SportRegistry.FOOTBALL, viewModel.activeSport.value)
+            assertEquals(1, motore().log.size)
+            assertEquals(84L, risposte(WearConstants.MSG_BATCH_ACK).single().getLong(WearConstants.KEY_BATCH_ID))
         }
 
     /** Cio' che il telefono ha risposto sul path dato, un DataMap per messaggio, nell'ordine. */
@@ -1986,6 +2073,62 @@ class MainViewModelTest {
                 assertEquals("2", viewModel.scoreDisplay.value?.side2Primary)
                 assertEquals(3, viewModel.team1Score.value)
                 assertEquals(2, viewModel.team2Score.value)
+            } finally {
+                ArchTaskExecutor.getInstance().setDelegate(null)
+                chiudiDatabase(db)
+            }
+        }
+
+    /**
+     * Visto sugli emulatori: i tocchi messi da parte entravano nel registro col tempo @0 invece del
+     * loro istante ("1|1@0,1@2567,1@5133,2@0,2@0"). Dopo il ripristino l'orologio della partita e'
+     * spostato apposta (il tempo ad app chiusa non e' di gioco), e un tocco di PRIMA del ripristino
+     * veniva letto con un tempo negativo, schiacciato a zero. Ora si calcola dall'inizio vero della
+     * partita (la riga ripresa), e l'orologio riparte da li' per i tocchi dal vivo.
+     */
+    @Test
+    fun `i tocchi messi da parte entrano nel registro col loro istante e non a zero`() =
+        runTest {
+            val db = databaseInMemoria()
+            val svuota = codaDelMain()
+            try {
+                val dao = DaoCheSospende(db.matchDao(), cancelloInsert = CompletableDeferred(Unit), cancelloLettura = CompletableDeferred())
+                val adesso = System.currentTimeMillis()
+                // Una partita cominciata un'ora fa: tre punti, a 0, 2s e 4s dall'inizio.
+                val inizio = adesso - 3_600_000L
+                db.matchDao().insert(
+                    Match(
+                        team1Id = 1,
+                        team2Id = 2,
+                        team1Score = 3,
+                        team2Score = 0,
+                        timestamp = 0L,
+                        isActive = true,
+                        startedAt = inizio,
+                        eventLog =
+                            MatchLogCodec.encode(
+                                listOf(0L, 2_000L, 4_000L).map { LoggedEvent(ScoringEvent.Point(side = 1), it) },
+                            ),
+                    ),
+                )
+                val app = ApplicationProvider.getApplicationContext<Application>()
+                // Due tocchi dati a 60s e a 75s dall'inizio, mentre l'app era chiusa.
+                IntentiInAttesa(app).aggiungi(WearConstants.INTENT_POINT, 2, inizio + 60_000L)
+                IntentiInAttesa(app).aggiungi(WearConstants.INTENT_POINT, 2, inizio + 75_000L)
+
+                viewModel.viewModelScope.cancel()
+                viewModel = creaViewModel(matchDao = dao)
+                iniettaServizio(viewModel)
+                advanceUntilIdle()
+                dao.cancelloLettura.complete(Unit)
+                advanceUntilIdle()
+                svuota()
+
+                assertEquals(
+                    "i tempi veri, non zero",
+                    listOf(0L, 2_000L, 4_000L, 60_000L, 75_000L),
+                    motore().log.map { it.atMillis },
+                )
             } finally {
                 ArchTaskExecutor.getInstance().setDelegate(null)
                 chiudiDatabase(db)

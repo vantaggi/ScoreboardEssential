@@ -30,6 +30,7 @@ class WearDataLayerService : WearableListenerService() {
         const val ACTION_STATE_V2_UPDATE = "it.vantaggi.scoreboardessential.wear.STATE_V2_UPDATE"
         const val ACTION_BATCH_ACK = "it.vantaggi.scoreboardessential.wear.BATCH_ACK"
         const val ACTION_BATCH_NACK = "it.vantaggi.scoreboardessential.wear.BATCH_NACK"
+        const val ACTION_INTENT_CUSTODIA = "it.vantaggi.scoreboardessential.wear.INTENT_CUSTODIA"
 
         // Extras
         const val EXTRA_TEAM1_SCORE = "team1_score"
@@ -239,7 +240,23 @@ class WearDataLayerService : WearableListenerService() {
         when (messageEvent.path) {
             WearConstants.MSG_BATCH_ACK -> gestisciAck(messageEvent.data)
             WearConstants.MSG_BATCH_NACK -> gestisciNack(messageEvent.data)
+            WearConstants.MSG_INTENT_CUSTODIA -> gestisciCustodia(messageEvent.data)
         }
+    }
+
+    /**
+     * Il telefono ha messo da parte un tocco: la sua app e' chiusa e lo applichera' alla riapertura.
+     * Senza Activity non c'e' una ricevuta da chiudere ne' una riga da aggiornare: non c'e' altro da fare.
+     */
+    private fun gestisciCustodia(data: ByteArray?) {
+        val dataMap =
+            com.google.android.gms.wearable.DataMap
+                .fromByteArray(data ?: return)
+        val seq = dataMap.getLong(WearConstants.KEY_SEQ, 0L)
+        if (seq <= 0L) return
+        LocalBroadcastManager.getInstance(this).sendBroadcast(
+            Intent(ACTION_INTENT_CUSTODIA).apply { putExtra(WearConstants.KEY_SEQ, seq) },
+        )
     }
 
     private fun gestisciAck(data: ByteArray?) {

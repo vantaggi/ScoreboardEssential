@@ -285,6 +285,85 @@ class RicevuteTocchiTest {
         assertFalse(viewModel.statoFiducia.value is Transitorio)
     }
 
+    // --- L5 custodia: il telefono ha messo da parte il tocco (la sua app e' chiusa) ---
+
+    /** La sequenza dell'ultimo tocco spedito, letta da quello che il telefono ha ricevuto. */
+    private fun sequenzaDelTocco(): Long {
+        val invio =
+            Mockito
+                .mockingDetails(telefono)
+                .invocations
+                .last { it.method.name == "sendMessage" && it.arguments[0] == WearConstants.MSG_SCORE_INTENT }
+        return DataMap.fromByteArray(invio.arguments[1] as ByteArray).getLong(WearConstants.KEY_SEQ)
+    }
+
+    @Test
+    fun `la custodia del telefono chiude la ricevuta senza NON CONFERMATO e la riga dice IN ATTESA`() {
+        viewModel.incrementScore(1)
+        assestati()
+        val seq = sequenzaDelTocco()
+
+        viewModel.onCustodia(seq)
+        assestati()
+        dopoIlTick()
+
+        assertEquals(Transitorio.InAttesaDelTelefono, viewModel.statoFiducia.value)
+        // Niente colpo di errore: il tocco e' al sicuro, col colpo lungo di "il telefono non l'ha ancora".
+        assertEquals(listOf(WearPatterns.IN_CODA_SINISTRA.toList()), vibrazioni())
+
+        // Ne' alla scadenza di prima ne' dopo: la ricevuta e' chiusa, e il tocco non si rimanda.
+        avanza(WearViewModel.SCADENZA_RICEVUTA_MS)
+        assertEquals(listOf(WearPatterns.IN_CODA_SINISTRA.toList()), vibrazioni())
+        assertFalse(viewModel.statoFiducia.value == Transitorio.NonConfermato)
+        assertEquals(1, invii(WearConstants.MSG_SCORE_INTENT))
+        assertEquals("non e' un tocco in coda locale", 0, coda.size)
+    }
+
+    @Test
+    fun `la custodia vale solo per il tocco con la sua sequenza, gli altri restano in attesa dello stato`() {
+        viewModel.incrementScore(1)
+        assestati()
+        val primo = sequenzaDelTocco()
+        viewModel.incrementScore(2)
+        assestati()
+
+        viewModel.onCustodia(primo)
+        assestati()
+
+        // Il secondo tocco non e' in custodia: allo scadere dice NON CONFERMATO come sempre.
+        avanza(WearViewModel.SCADENZA_RICEVUTA_MS)
+        assertEquals(Transitorio.NonConfermato, viewModel.statoFiducia.value)
+    }
+
+    @Test
+    fun `la frase IN ATTESA TELEFONO dura qualche secondo e poi la riga torna sola`() {
+        viewModel.incrementScore(1)
+        assestati()
+        viewModel.onCustodia(sequenzaDelTocco())
+        assestati()
+        assertEquals(Transitorio.InAttesaDelTelefono, viewModel.statoFiducia.value)
+
+        avanza(WearViewModel.DURATA_CUSTODIA_MS - 1)
+        assertEquals(Transitorio.InAttesaDelTelefono, viewModel.statoFiducia.value)
+
+        avanza(1)
+        assertFalse(viewModel.statoFiducia.value is Transitorio)
+    }
+
+    @Test
+    fun `una custodia arrivata dopo la scadenza corregge il NON CONFERMATO`() {
+        viewModel.incrementScore(1)
+        assestati()
+        val seq = sequenzaDelTocco()
+        avanza(WearViewModel.SCADENZA_RICEVUTA_MS)
+        assertEquals(Transitorio.NonConfermato, viewModel.statoFiducia.value)
+
+        viewModel.onCustodia(seq)
+        assestati()
+
+        assertEquals(Transitorio.InAttesaDelTelefono, viewModel.statoFiducia.value)
+    }
+
     @Test
     fun `uno stato che arriva dopo la scadenza non suona una conferma tardiva`() {
         viewModel.incrementScore(2)

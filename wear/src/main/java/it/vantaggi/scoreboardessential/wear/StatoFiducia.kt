@@ -82,6 +82,13 @@ sealed class Transitorio(
 
     /** Lo stato col nuovo sport non e' arrivato: il quadrante e' rimasto com'era. */
     data object SportNonCambiato : Transitorio(Tono.AMBRA)
+
+    /**
+     * Il telefono ha messo da parte il tocco (la sua app e' chiusa) e lo applichera' alla riapertura:
+     * non e' un errore, e non va ripetuto, o alla riapertura entrerebbe due volte. Ambra come
+     * IN CODA: il punto e' salvo, ma il tabellone del telefono non si sta muovendo.
+     */
+    data object InAttesaDelTelefono : Transitorio(Tono.AMBRA)
 }
 
 /**

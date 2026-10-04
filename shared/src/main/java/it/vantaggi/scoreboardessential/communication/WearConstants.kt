@@ -234,6 +234,18 @@ object WearConstants {
      */
     const val KEY_MATCH_UUID = "match_uuid"
 
+    // --- L5: custodia degli intenti ---------------------------------------------------------
+
+    /**
+     * Il telefono ha MESSO DA PARTE il tocco perche' la sua app non e' aperta: lo applichera' alla
+     * riapertura. Porta [KEY_SEQ], quella del tocco. Additivo: un orologio che non lo conosce
+     * ignora il path (nessun ramo `else`) e dice NON CONFERMATO come prima; un telefono che non lo
+     * manda lascia all'orologio la regola di prima. Senza, il polso non vedeva crescere il registro,
+     * dopo 2,5s diceva NON CONFERMATO e l'utente ripeteva il tocco: alla riapertura i due si
+     * applicavano entrambi.
+     */
+    const val MSG_INTENT_CUSTODIA = "/scoreboard/v2/intent_custody"
+
     // Message Paths (MessageClient, fire-and-forget triggers)
     const val MSG_SCORER_SELECTED = "/scoreboard/scorer_selected"
     const val MSG_REQUEST_SYNC = "/scoreboard/request_sync"

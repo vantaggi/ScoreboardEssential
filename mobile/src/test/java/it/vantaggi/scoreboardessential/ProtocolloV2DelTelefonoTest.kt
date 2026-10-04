@@ -12,6 +12,8 @@ import com.google.android.gms.wearable.MessageEvent
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -327,6 +329,26 @@ class ProtocolloV2DelTelefonoTest {
         assertEquals("partita-A", ricevuti.single().getStringExtra(WearConstants.KEY_MATCH_UUID))
     }
 
+    /** L5 sport: lo sport del batch arriva al ViewModel; assente da un orologio non aggiornato. */
+    @Test
+    fun `il batch inoltrato porta lo sport e senza sport non ne inventa uno`() {
+        consegna(
+            messaggio(
+                nodoA,
+                WearConstants.MSG_INTENT_BATCH,
+                DataMap().apply {
+                    putString(WearConstants.KEY_INTENT_BATCH, "point,1,1")
+                    putLong(WearConstants.KEY_SEQ, 3L)
+                    putString(WearConstants.KEY_SPORT_ID, "padel")
+                },
+            ),
+        )
+        consegna(arretrato(nodoB, 1))
+
+        assertEquals("padel", ricevuti[0].getStringExtra(WearConstants.KEY_SPORT_ID))
+        assertEquals(null, ricevuti[1].getStringExtra(WearConstants.KEY_SPORT_ID))
+    }
+
     /** Rilievo 2: l'app chiusa non deve consumare la sequenza, o il rinvio verrebbe scartato come "gia' visto". */
     @Test
     fun `un batch senza ricevitori non consuma la sequenza e il telefono dice di riprovare`() {
@@ -378,6 +400,75 @@ class ProtocolloV2DelTelefonoTest {
         assertEquals(WearConstants.INTENT_POINT, messe[0].kind)
     }
 
+    /** L5 custodia: il polso deve sapere che il tocco e' da parte, o dice NON CONFERMATO e l'utente lo ripete. */
+    @Test
+    fun `un tocco messo da parte viene detto all'orologio con la sua sequenza`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        IntentiInAttesa(app).prendiTutte()
+        catturaLeRisposte()
+        try {
+            manager.unregisterReceiver(receiver)
+
+            consegna(tocco(nodoA, 41, lato = 2))
+
+            val custodia = risposte.single()
+            assertEquals(WearConstants.MSG_INTENT_CUSTODIA, custodia.path)
+            assertEquals(nodoA, custodia.nodo)
+            assertEquals(41L, custodia.dati.getLong(WearConstants.KEY_SEQ))
+        } finally {
+            SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
+            IntentiInAttesa(app).prendiTutte()
+        }
+    }
+
+    @Test
+    fun `un tocco preso da un ricevitore non riceve la custodia, risponde lo stato`() {
+        catturaLeRisposte()
+        try {
+            consegna(tocco(nodoA, 42))
+
+            assertEquals(1, ricevuti.size)
+            assertEquals(0, risposte.size)
+        } finally {
+            SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
+        }
+    }
+
+    @Test
+    fun `una chiusura senza ricevitori non e' in custodia, perche' non e' stata messa da parte`() {
+        catturaLeRisposte()
+        try {
+            manager.unregisterReceiver(receiver)
+
+            consegna(chiusura(nodoA, 43))
+
+            assertEquals(0, risposte.size)
+        } finally {
+            SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
+        }
+    }
+
+    /** Oltre il tetto il tocco non e' da parte: dire "in custodia" sarebbe una bugia, il polso dice NON CONFERMATO. */
+    @Test
+    fun `oltre il tetto il tocco non e' in custodia e l'orologio non riceve risposta`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        val coda = IntentiInAttesa(app)
+        coda.prendiTutte()
+        repeat(IntentiInAttesa.MASSIMO) { coda.aggiungi(WearConstants.INTENT_POINT, 1, System.currentTimeMillis()) }
+        catturaLeRisposte()
+        try {
+            manager.unregisterReceiver(receiver)
+
+            consegna(tocco(nodoA, 44))
+
+            assertEquals(0, risposte.size)
+            assertEquals(IntentiInAttesa.MASSIMO, coda.prendiTutte().size)
+        } finally {
+            SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
+            coda.prendiTutte()
+        }
+    }
+
     @Test
     fun `con un ricevitore il tocco non si mette da parte, ci pensa il ViewModel`() {
         val app = ApplicationProvider.getApplicationContext<android.app.Application>()
@@ -414,6 +505,47 @@ class ProtocolloV2DelTelefonoTest {
 
         repeat(IntentiInAttesa.MASSIMO + 10) { coda.aggiungi(WearConstants.INTENT_POINT, 1, adesso) }
         assertEquals(IntentiInAttesa.MASSIMO, coda.prendiTutte(adesso).size)
+    }
+
+    /** L5 L4: oltre il tetto la voce non entra e chi chiama lo sa, invece di scartarla in silenzio. */
+    @Test
+    fun `oltre il tetto aggiungi dice di no e non scrive`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        val coda = IntentiInAttesa(app)
+        coda.prendiTutte()
+        val adesso = 1_700_000_000_000L
+        repeat(IntentiInAttesa.MASSIMO) { assertTrue(coda.aggiungi(WearConstants.INTENT_POINT, 1, adesso)) }
+
+        assertFalse("la 201esima non entra", coda.aggiungi(WearConstants.INTENT_POINT, 2, adesso))
+
+        val prese = coda.prendiTutte(adesso)
+        assertEquals(IntentiInAttesa.MASSIMO, prese.size)
+        assertTrue("nessuna voce del lato 2", prese.all { it.side == 1 })
+    }
+
+    /**
+     * L5 L4: servizio e ViewModel hanno ognuno la propria istanza sulle stesse preferenze, quindi il
+     * lock deve valere per processo. Un thread che tiene il lock condiviso blocca un'ALTRA istanza:
+     * con `@Synchronized` di metodo (per istanza) la seconda passerebbe e i due leggi-modifica-scrivi
+     * si intreccerebbero.
+     */
+    @Test
+    fun `due istanze di IntentiInAttesa si escludono a vicenda con un lock condiviso`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        IntentiInAttesa(app).prendiTutte()
+        val finito = java.util.concurrent.CountDownLatch(1)
+        val altra =
+            Thread {
+                IntentiInAttesa(app).aggiungi(WearConstants.INTENT_POINT, 1, System.currentTimeMillis())
+                finito.countDown()
+            }
+
+        synchronized(IntentiInAttesa.lock) {
+            altra.start()
+            assertFalse("l'altra istanza deve aspettare il lock", finito.await(300, java.util.concurrent.TimeUnit.MILLISECONDS))
+        }
+        assertTrue("rilasciato il lock, l'altra finisce", finito.await(5, java.util.concurrent.TimeUnit.SECONDS))
+        assertEquals(1, IntentiInAttesa(app).prendiTutte().size)
     }
 
     private fun chiusura(
