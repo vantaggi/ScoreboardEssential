@@ -1075,6 +1075,10 @@ class MainViewModel(
         // stesso modo. Un registro vuoto non ha ancora una partita da identificare.
         if (partitaIniziata && matchUuid == null) matchUuid = UUID.randomUUID().toString()
         val uuidDellaPartita = matchUuid.orEmpty()
+        // Letto QUI, insieme al registro: dentro la coroutine arrivava dopo registraBatchApplicato, e uno
+        // stato col registro di prima (un cambio sport nel batch, uno stato intermedio) portava l'id del
+        // blocco appena applicato. Il polso lo prende come base delle voci rimaste e lo salva su disco (L5).
+        val ultimoBatch = sharedPreferences.getLong(PREF_BATCH_APPLICATO_ULTIMO, 0L)
         viewModelScope.launch {
             val data =
                 mapOf(
@@ -1109,7 +1113,7 @@ class MainViewModel(
                     WearConstants.KEY_MATCH_OVER to display.matchOver,
                     // L'ultimo arretrato applicato: se l'ack si perde, il polso toglie le voci dalla
                     // coda da qui. 0 se non ne e' mai entrato uno.
-                    WearConstants.KEY_LAST_BATCH_ID to sharedPreferences.getLong(PREF_BATCH_APPLICATO_ULTIMO, 0L),
+                    WearConstants.KEY_LAST_BATCH_ID to ultimoBatch,
                     // L'identita' della partita: il polso la porta nel batch, e il telefono accoda
                     // solo se e' la stessa. Vuota finche' la partita non ha il suo uuid (col primo punto).
                     WearConstants.KEY_MATCH_UUID to uuidDellaPartita,
@@ -1449,44 +1453,52 @@ class MainViewModel(
             } else {
                 engine.log.isEmpty()
             }
-        // Lo sport su cui il polso ha calcolato: i punti di un padel letti col regolamento del calcio sono
-        // gol, e il polso ricalcola la coda con le regole dello sport che vede. A registro vuoto il telefono
-        // passa a quello sport prima di applicare (lo stesso percorso del cambio sport dall'orologio); con una
-        // partita in corso di un altro sport rifiuta. Assente da un orologio non aggiornato: regola di prima.
-        var accettato = baseCoincide
-        if (accettato && !sportId.isNullOrBlank()) {
-            val sport = SportRegistry.byId(sportId).id
-            if (sport != _activeSport.value && !selectSport(sport)) accettato = false
-        }
-        if (!accettato) {
+        if (!baseCoincide) {
             setWatchNotice(WatchNotice.Rejected)
             rispondiAlBatch(WearConstants.MSG_BATCH_NACK, seq, batchId, WearConstants.NACK_REJECTED)
             return
         }
 
-        var applicati = 0
-        // Il riepilogo dice quanti PUNTI sono entrati: annullamenti e correzioni nell'arretrato
-        // cambiano il motore, ma non sono punti.
-        var punti = 0
-        batch.split(WearConstants.BATCH_SEPARATOR).forEach { voce ->
-            val campi = voce.split(WearConstants.BATCH_FIELD_SEPARATOR)
-            val side = campi.getOrNull(1)?.toIntOrNull() ?: return@forEach
-            val quando = campi.getOrNull(2)?.toLongOrNull() ?: return@forEach
-            if (side != 1 && side != 2) return@forEach
-            when (campi[0]) {
-                WearConstants.INTENT_UNDO -> engine.undo()
-                WearConstants.INTENT_CORRECTION -> engine.apply(ScoringEvent.Correction(side = side), matchClock.relative(quando))
-                WearConstants.INTENT_POINT -> engine.apply(ScoringEvent.Point(side = side), matchClock.relative(quando))
-                else -> return@forEach
+        // Le voci applicabili si leggono PRIMA di cambiare qualunque cosa: un cambio sport fatto per
+        // un blocco che poi non applica niente lasciava il telefono sullo sport nuovo (L5).
+        val voci =
+            batch.split(WearConstants.BATCH_SEPARATOR).mapNotNull { voce ->
+                val campi = voce.split(WearConstants.BATCH_FIELD_SEPARATOR)
+                val side = campi.getOrNull(1)?.toIntOrNull()
+                val quando = campi.getOrNull(2)?.toLongOrNull()
+                val tipo = campi[0]
+                val noto = tipo == WearConstants.INTENT_UNDO || tipo == WearConstants.INTENT_CORRECTION || tipo == WearConstants.INTENT_POINT
+                if (!noto || side == null || quando == null || (side != 1 && side != 2)) null else Triple(tipo, side, quando)
             }
-            applicati++
-            if (campi[0] == WearConstants.INTENT_POINT) punti++
-        }
-        if (applicati == 0) {
+        if (voci.isEmpty()) {
             // Niente di applicabile: una risposta anche cosi', o l'orologio resterebbe ad aspettare
             // per sempre (L5). Definitivo: lo stesso blocco non diventera' applicabile da solo.
             rispondiAlBatch(WearConstants.MSG_BATCH_NACK, seq, batchId, WearConstants.NACK_REJECTED)
             return
+        }
+
+        // Lo sport su cui il polso ha calcolato: i punti di un padel letti col regolamento del calcio sono
+        // gol, e il polso ricalcola la coda con le regole dello sport che vede. A registro vuoto il telefono
+        // passa a quello sport prima di applicare (lo stesso percorso del cambio sport dall'orologio); con una
+        // partita in corso di un altro sport rifiuta. Assente da un orologio non aggiornato: regola di prima.
+        if (!sportId.isNullOrBlank()) {
+            val sport = SportRegistry.byId(sportId).id
+            if (sport != _activeSport.value && !selectSport(sport)) {
+                setWatchNotice(WatchNotice.Rejected)
+                rispondiAlBatch(WearConstants.MSG_BATCH_NACK, seq, batchId, WearConstants.NACK_REJECTED)
+                return
+            }
+        }
+
+        // Il riepilogo dice quanti PUNTI sono entrati: annullamenti e correzioni nell'arretrato
+        // cambiano il motore, ma non sono punti.
+        val punti = voci.count { it.first == WearConstants.INTENT_POINT }
+        voci.forEach { (tipo, side, quando) ->
+            when (tipo) {
+                WearConstants.INTENT_UNDO -> engine.undo()
+                WearConstants.INTENT_CORRECTION -> engine.apply(ScoringEvent.Correction(side = side), matchClock.relative(quando))
+                else -> engine.apply(ScoringEvent.Point(side = side), matchClock.relative(quando))
+            }
         }
 
         // L'id si registra PRIMA di pubblicare: lo stato v2 lo porta, e un ack perso non lascia

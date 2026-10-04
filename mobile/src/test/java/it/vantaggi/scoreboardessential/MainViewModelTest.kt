@@ -1739,6 +1739,60 @@ class MainViewModelTest {
             assertEquals(83L, risposte(WearConstants.MSG_BATCH_ACK).single().getLong(WearConstants.KEY_BATCH_ID))
         }
 
+    /**
+     * L5, sport nel batch (media): il cambio sport passava da sendStateV2, che catturava il registro
+     * vuoto in modo sincrono ma leggeva l'ultimo id applicato dentro la coroutine, dopo
+     * registraBatchApplicato. Usciva uno stato col registro vuoto e l'id del blocco: il polso lo prende
+     * come base delle voci rimaste e lo salva su disco, senza Activity.
+     */
+    @Test
+    fun `durante un batch con cambio sport nessuno stato porta l'id del blocco col registro vuoto`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+            advanceUntilIdle()
+
+            ricevi(
+                arretratoConBase(
+                    voceDiArretrato(WearConstants.INTENT_POINT, 1, 1000),
+                    4L,
+                    95L,
+                    "0",
+                    sportId = SportRegistry.PADEL,
+                ),
+            )
+            advanceUntilIdle()
+
+            val stati = statiV2().filter { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL }
+            assertTrue("almeno lo stato del cambio e quello dopo il blocco", stati.size >= 2)
+            stati.forEach { stato ->
+                val vuoto = MatchLogCodec.decode(registroDelloStato(stato)).orEmpty().isEmpty()
+                val conIdDelBlocco = stato[WearConstants.KEY_LAST_BATCH_ID] == 95L
+                assertTrue("uno stato col registro vuoto non porta l'id del blocco", !(vuoto && conIdDelBlocco))
+            }
+            assertEquals("l'ultimo stato e' quello dopo il blocco", 95L, stati.last()[WearConstants.KEY_LAST_BATCH_ID])
+            assertEquals(1, MatchLogCodec.decode(registroDelloStato(stati.last()))?.size)
+        }
+
+    /** L5, sport nel batch (media): un blocco senza voci applicabili non cambia lo sport, risponde NACK. */
+    @Test
+    fun `un arretrato inapplicabile di un altro sport riceve un NACK e lo sport resta com'e'`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+            advanceUntilIdle()
+
+            ricevi(arretratoConBase("illeggibile,x,y", 4L, 96L, "0", sportId = SportRegistry.PADEL))
+            advanceUntilIdle()
+
+            assertEquals("lo sport e' quello di prima", SportRegistry.FOOTBALL, viewModel.activeSport.value)
+            verify(mockMatchSettingsRepository, never()).setActiveSport(any())
+            assertTrue("nessuno stato col padel", statiV2().none { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL })
+            assertEquals(
+                WearConstants.NACK_REJECTED,
+                risposte(WearConstants.MSG_BATCH_NACK).single().getString(WearConstants.KEY_BATCH_NACK_REASON),
+            )
+            assertTrue(risposte(WearConstants.MSG_BATCH_ACK).isEmpty())
+        }
+
     @Test
     fun `un arretrato senza sport (orologio non aggiornato) non cambia lo sport del telefono`() =
         runTest {
