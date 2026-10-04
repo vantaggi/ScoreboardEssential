@@ -2289,6 +2289,10 @@ di companion) a `Wear_OS_Small_Round_Prova`. Prova di fumo: un tocco sul polso a
   `adb -s <orologio> reconnect`, o mettere in pausa il telefono con `adb emu avd stop` per 80s
   lasciano l'orologio su «1 connected». Le prove offline (coda, arretrato, IN CODA) restano ai test
   JVM e a un dispositivo vero; sugli emulatori si prova l'app del telefono chiusa (`am force-stop`).
+- **Riaccensione senza Android Studio** (4 ottobre): nessun tunnel e «0 connected». Si rimettono a
+  mano `adb -s <telefono> forward tcp:5601 tcp:5601` e `adb -s <orologio> reverse tcp:5601 tcp:5601`,
+  poi si apre l'app di companion sul telefono (`monkey -p com.google.android.apps.wear.companion
+  -c android.intent.category.LAUNCHER 1`): in 30-40s torna «1 connected».
 - Non usare `adb kill-server` mentre gli emulatori sono abbinati: cadono i tunnel (Android Studio li
   ricrea in qualche secondo, su porte nuove).
 
@@ -2310,3 +2314,13 @@ di companion) a `Wear_OS_Small_Round_Prova`. Prova di fumo: un tocco sul polso a
 | alti (Sonnet) | `wf23/l5-arretrato` (backup su origin): tutti e cinque esistevano. Base del registro nel batch (`MatchLogCodec.impronta`, salvata quando la coda nasce), telefono che risponde sempre (ack o NACK su `MSG_BATCH_NACK`, `rejected`/`retry`), sequenza non consumata senza ricevitori, batch in volo che scade (15s) e al Connected, id di batch stabile su disco e ultimo id applicato per nodo nel telefono (riconferma i duplicati), `KEY_LAST_BATCH_ID` nello stato v2, servizio del polso che toglie dal disco senza Activity, coda rifiutata ferma con «n RIFIUTATI» e voce SCARTA LA CODA, tocchi messi da parte dal servizio del telefono (`IntentiInAttesa`, 12h, 200 voci) e applicati alla creazione del ViewModel. Costanti solo aggiunte. Unito in `d11adec`: **952 test JVM** verdi |
 | prova sugli emulatori (rilievo 5) | app del telefono chiusa, 2 tocchi dal polso, app riaperta: il servizio li mette da parte (`preso=false`), ma alla riapertura **nel database ci sono DUE partite attive** (la 3 a 3-0 e una nuova 4 a 3-2 col registro copiato piu' i due tocchi) e lo schermo resta 3-0. Causa probabile: `applicaIntentiInAttesa` gira prima che il ripristino della riga viva abbia messo `currentMatchId`, quindi il primo punto inserisce una riga nuova; e le cifre non vengono ripubblicate. **Da correggere prima di pubblicare** |
 | **prossimo** | (1) correggere il difetto qui sopra: applicare gli intenti in attesa DENTRO la fila della riga viva, dopo il ripristino, con test che ripristina una partita attiva e poi applica gli intenti (una sola riga attiva, cifre giuste); ripulire le due righe attive sul `Pixel_9a`; (2) revisione avversaria (Opus) di `7ec2a8e..d11adec` e falsificazione; (3) medi e bassi di L5 (sport nel batch, invii serializzati, tocchi nuovi in coda con arretrato pendente, NON CONSEGNATI anche da collegati); (4) L6 |
+
+**4 ottobre, mattina.**
+
+| passo | esito |
+|---|---|
+| due partite attive | NON riprodotto: con i dati del telefono azzerati, 3 punti dal polso, app chiusa, 2 tocchi, app riaperta: una sola riga attiva a 3-2. Le due righe di ieri (stesso `startedAt`, uuid diversi) vengono probabilmente dallo stato sporco di quella sessione (ANR, processo ucciso, cambio di build a partita aperta). Da osservare. Visto invece: i tocchi messi da parte entrano col tempo `@0` invece del loro istante (bassa, nel prossimo passo) |
+| cifre ferme a 3-0 (Sonnet) | `wf24/l5-intenti-in-attesa`, unito `2ab9cd6`: ripristina() e seedEngineFromAbsolute() scrivevano scoreDisplay con postValue, che scavalcava il 3-2 dei tocchi applicati subito dopo; ora `.value`. Test con lettura del DB sospesa e post del main accodati a mano, falsificato |
+| revisione L5 (Opus) | 2 alte: tocchi offline dopo un rifiuto finiti nella coda rifiutata; coda ferma dopo un NACK retry finche' il collegamento non cade e torna. 5 medie: base alla nascita della coda che produce rifiuti falsi; voci rimaste dopo un ack senza base; tocco dal vivo prima dell'arretrato ora rifiuto definitivo; doppio fra IntentiInAttesa e NON CONFERMATO (l'utente ripete il tocco); (piu' il medio gia' noto degli invii non serializzati). Basse: ricevute chiuse da un arretrato in ritardo, telefono vecchio con orologio nuovo, lock di IntentiInAttesa per istanza, test doppione |
+| correzione 1 (Sonnet, in corso) | `wf25/l5-base-coda`: base = id partita (KEY_MATCH_UUID nello stato v2) + prefisso del registro, coda rifiutata messa da parte, rinvio allo stato dal vivo e dopo l'ack, base delle voci rimaste dal registro dopo il blocco, tocchi dal vivo in coda con arretrato pendente e invii serializzati, ricevute non chiuse dall'arretrato |
+| correzione 2 (dopo) | custodia degli intenti messi da parte (il polso dice IN ATTESA DEL TELEFONO invece di NON CONFERMATO), sport nel batch, NON CONSEGNATI anche da collegati, lock condiviso e tetto di IntentiInAttesa, tempo `@0`, test doppione |
