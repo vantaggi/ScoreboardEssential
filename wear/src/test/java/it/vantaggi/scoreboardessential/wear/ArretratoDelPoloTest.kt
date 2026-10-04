@@ -137,6 +137,7 @@ class ArretratoDelPoloTest {
     private fun stato(
         registro: String,
         lastBatchId: Long = 0L,
+        matchUuid: String = "",
     ) = WearScoreState(
         side1Primary = "0",
         side1Secondary = "",
@@ -155,6 +156,7 @@ class ArretratoDelPoloTest {
         matchOver = false,
         eventLog = registro,
         lastBatchId = lastBatchId,
+        matchUuid = matchUuid,
     )
 
     private fun avanza(millisecondi: Long) {
@@ -220,6 +222,28 @@ class ArretratoDelPoloTest {
 
         // Dire "0" sarebbe applicare in silenzio i tocchi di una partita alla successiva (rilievo 4).
         assertEquals(MatchLogCodec.impronta(registro(3)), batchSpediti().single().getString(WearConstants.KEY_BATCH_BASE))
+    }
+
+    /** D1: la base e' anche l'identita' della partita, quella che il polso vedeva quando la coda e' nata. */
+    @Test
+    fun `il batch porta l'identita' della partita su cui la coda e' nata`() {
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        segnaOffline(1)
+        // Il telefono passa a un'altra partita: l'identita' del batch resta quella di prima.
+        viewModel.applyStateV2(stato(registro(1), matchUuid = "partita-B"))
+        assestati()
+
+        viewModel.flushPending()
+        assestati()
+
+        assertEquals("partita-A", batchSpediti().single().getString(WearConstants.KEY_MATCH_UUID))
+    }
+
+    @Test
+    fun `lo stato del telefono porta l'identita' della partita e un telefono vecchio la lascia vuota`() {
+        val nuovo = DataMap().apply { putString(WearConstants.KEY_MATCH_UUID, "partita-A") }
+        assertEquals("partita-A", WearScoreState.fromDataMap(nuovo).matchUuid)
+        assertEquals("", WearScoreState.fromDataMap(DataMap()).matchUuid)
     }
 
     // --- Rilievo 2: un arretrato mai confermato non blocca l'orologio ---

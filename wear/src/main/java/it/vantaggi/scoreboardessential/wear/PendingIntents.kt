@@ -45,6 +45,7 @@ class PendingIntents(
         const val CHIAVE_BATCH_QUANTE = "batch_n"
         const val CHIAVE_RIFIUTATA = "rifiutata"
         const val CHIAVE_BASE = "base"
+        const val CHIAVE_PARTITA = "partita"
         const val SEP_VOCE = ";"
         const val SEP_CAMPO = ","
 
@@ -90,26 +91,39 @@ class PendingIntents(
     fun add(
         intento: PendingIntent,
         base: String? = null,
+        partita: String? = null,
     ): Boolean {
         val attuali = all()
         if (attuali.size >= MASSIMO) {
             Log.w(TAG, "Coda piena ($MASSIMO): tocco scartato")
             return false
         }
-        if (attuali.isEmpty() && base != null) this.base = base
+        if (attuali.isEmpty() && base != null) {
+            this.base = base
+            this.partita = partita
+        }
         scrivi(attuali + intento)
         return true
     }
 
     /**
-     * Il registro del telefono su cui la coda e' nata, come impronta (null se non e' ancora noto:
-     * una coda scritta prima di L5, o rimasta in coda dopo un arretrato, la cui base e' lo stato che
-     * il telefono mandera'). Va nel batch ([it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_BATCH_BASE]):
-     * il telefono accoda solo se il suo registro e' ancora quello.
+     * Il prefisso del registro del telefono su cui la coda e' nata, come impronta (null se non e'
+     * ancora noto: una coda scritta prima di L5). Va nel batch
+     * ([it.vantaggi.scoreboardessential.shared.communication.WearConstants.KEY_BATCH_BASE]): il telefono
+     * accoda se il suo registro INIZIA con questi eventi (dopo ce ne possono essere altri, i tocchi dal
+     * vivo arrivati prima dell'arretrato) e la partita e' la stessa ([partita]).
      */
     var base: String?
         get() = prefs.getString(CHIAVE_BASE, null)
         set(valore) = prefs.edit { if (valore == null) remove(CHIAVE_BASE) else putString(CHIAVE_BASE, valore) }
+
+    /**
+     * L'identita' della partita del telefono su cui la coda e' nata ([base] ne e' il registro): il
+     * `matchUuid` che il telefono manda nello stato, vuoto se non ne aveva ancora uno.
+     */
+    var partita: String?
+        get() = prefs.getString(CHIAVE_PARTITA, null)
+        set(valore) = prefs.edit { if (valore == null) remove(CHIAVE_PARTITA) else putString(CHIAVE_PARTITA, valore) }
 
     /**
      * Toglie dalla testa le voci gia' consegnate.
@@ -162,6 +176,7 @@ class PendingIntents(
             remove(CHIAVE_BATCH_QUANTE)
             remove(CHIAVE_RIFIUTATA)
             remove(CHIAVE_BASE)
+            remove(CHIAVE_PARTITA)
         }
         return inVolo.quante
     }
@@ -182,6 +197,7 @@ class PendingIntents(
             remove(CHIAVE_BATCH_QUANTE)
             remove(CHIAVE_RIFIUTATA)
             remove(CHIAVE_BASE)
+            remove(CHIAVE_PARTITA)
         }
     }
 

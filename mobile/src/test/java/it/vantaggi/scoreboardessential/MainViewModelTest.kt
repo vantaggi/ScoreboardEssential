@@ -15,6 +15,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import it.vantaggi.scoreboardessential.core.ExportResult
+import it.vantaggi.scoreboardessential.core.LoggedEvent
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
@@ -1701,8 +1702,9 @@ class MainViewModelTest {
             cominciaUnPadelConTrePunti()
             advanceUntilIdle()
 
-            // La base e' quella di una partita vuota (o di un'altra): il telefono ha tre punti suoi.
-            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 4L, 78L, "0"))
+            // La base e' quella di un'altra partita (tre punti del lato 2): il telefono ne ha tre del lato 1.
+            val altra = MatchLogCodec.impronta(List(3) { LoggedEvent(ScoringEvent.Point(side = 2)) })
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 4L, 78L, altra))
             advanceUntilIdle()
 
             assertEquals("non si fonde", 3, motore().log.size)
@@ -1711,6 +1713,88 @@ class MainViewModelTest {
             assertEquals(WearConstants.NACK_REJECTED, nack.getString(WearConstants.KEY_BATCH_NACK_REASON))
             assertEquals(78L, nack.getLong(WearConstants.KEY_BATCH_ID))
             assertTrue("e nessun ack", risposte(WearConstants.MSG_BATCH_ACK).isEmpty())
+        }
+
+    /** D1: i tocchi dal vivo arrivati prima dell'arretrato non lo fanno piu' rifiutare. */
+    @Test
+    fun `un tocco dal vivo applicato prima dell'arretrato non lo fa rifiutare, entra dopo`() =
+        runTest {
+            cominciaUnPadelConTrePunti()
+            advanceUntilIdle()
+            val base = improntaDelMotore()
+            // Il polso ha calcolato sui tre punti; intanto un suo tocco dal vivo e' arrivato per primo.
+            ricevi(puntoDallOrologio(2))
+            advanceUntilIdle()
+            assertEquals(4, motore().log.size)
+
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 5L, 83L, base))
+            advanceUntilIdle()
+
+            assertEquals("dopo il tocco dal vivo", 5, motore().log.size)
+            assertEquals(WatchNotice.Applied(1), viewModel.watchNotice.value)
+            assertEquals(83L, risposte(WearConstants.MSG_BATCH_ACK).single().getLong(WearConstants.KEY_BATCH_ID))
+            assertTrue("nessun rifiuto", risposte(WearConstants.MSG_BATCH_NACK).isEmpty())
+        }
+
+    /** D1: una partita con un'altra identita' e' un rifiuto definitivo, anche se il prefisso coincide. */
+    @Test
+    fun `un arretrato di un'altra partita viene rifiutato anche se il prefisso del registro coincide`() =
+        runTest {
+            cominciaUnPadelConTrePunti()
+            advanceUntilIdle()
+            imposta("matchUuid", "partita-A")
+            val base = improntaDelMotore()
+
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 4L, 84L, base).putExtra(WearConstants.KEY_MATCH_UUID, "partita-B"))
+            advanceUntilIdle()
+
+            assertEquals(3, motore().log.size)
+            assertEquals(
+                WearConstants.NACK_REJECTED,
+                risposte(WearConstants.MSG_BATCH_NACK).single().getString(WearConstants.KEY_BATCH_NACK_REASON),
+            )
+            // La stessa partita, con la stessa base, entra.
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 5L, 85L, base).putExtra(WearConstants.KEY_MATCH_UUID, "partita-A"))
+            advanceUntilIdle()
+            assertEquals(4, motore().log.size)
+        }
+
+    /** D1: un registro riscritto (un ANNULLA sul telefono) non ha piu' come prefisso la base del polso. */
+    @Test
+    fun `un arretrato calcolato su un registro che il telefono ha riscritto viene rifiutato`() =
+        runTest {
+            cominciaUnPadelConTrePunti()
+            advanceUntilIdle()
+            val base = improntaDelMotore()
+            viewModel.undoLastGoal()
+            advanceUntilIdle()
+            assertEquals(2, motore().log.size)
+
+            ricevi(arretratoConBase(voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000), 4L, 86L, base))
+            advanceUntilIdle()
+
+            assertEquals(2, motore().log.size)
+            assertEquals(1, risposte(WearConstants.MSG_BATCH_NACK).size)
+        }
+
+    /** D1: il telefono manda l'identita' della partita nello stato v2 (vuota finche' non ne ha una). */
+    @Test
+    fun `lo stato v2 porta l'identita' della partita`() =
+        runTest {
+            cominciaUnPadelConTrePunti()
+            advanceUntilIdle()
+            imposta("matchUuid", "partita-C")
+
+            viewModel.addScore(1)
+            advanceUntilIdle()
+
+            val ultimoStato =
+                mockingDetails(mockConnectionManager)
+                    .invocations
+                    .filter { it.method.name == "sendData" && it.arguments[0] == WearConstants.PATH_STATE_V2 }
+                    .last()
+                    .arguments[1] as Map<*, *>
+            assertEquals("partita-C", ultimoStato[WearConstants.KEY_MATCH_UUID])
         }
 
     @Test

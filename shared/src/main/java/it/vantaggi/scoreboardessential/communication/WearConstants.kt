@@ -226,6 +226,14 @@ object WearConstants {
      */
     const val KEY_LAST_BATCH_ID = "last_batch_id"
 
+    /**
+     * L'identita' della partita (il `matchUuid` del telefono), nello stato v2 e nel batch. Il polso la
+     * legge dallo stato quando la coda nasce e la rimanda nel batch: il telefono accoda solo se la
+     * partita e' la stessa. Vuota se la partita non ha ancora un uuid (nasce col primo punto) o da
+     * un telefono non aggiornato: nel batch, vuota vuol dire "nessun controllo sull'identita'".
+     */
+    const val KEY_MATCH_UUID = "match_uuid"
+
     // Message Paths (MessageClient, fire-and-forget triggers)
     const val MSG_SCORER_SELECTED = "/scoreboard/scorer_selected"
     const val MSG_REQUEST_SYNC = "/scoreboard/request_sync"

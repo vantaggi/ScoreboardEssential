@@ -139,6 +139,32 @@ class MatchLogCodecTest {
         assertEquals("?", MatchLogCodec.impronta("9:zz"))
     }
 
+    /** L5 base e coda: un marcatore dato dopo, o un orario diverso, non cambiano la partita. */
+    @Test
+    fun improntaNonContaMarcatoreEOrario() {
+        val nudi = listOf(LoggedEvent(ScoringEvent.Point(side = 1)), LoggedEvent(ScoringEvent.Point(side = 2)))
+        val annotati =
+            listOf(
+                LoggedEvent(ScoringEvent.Point(side = 1, playerId = 7), atMillis = 1000L),
+                LoggedEvent(ScoringEvent.Point(side = 2), atMillis = 2000L),
+            )
+        assertEquals(MatchLogCodec.impronta(MatchLogCodec.encode(nudi)), MatchLogCodec.impronta(MatchLogCodec.encode(annotati)))
+    }
+
+    /** L5 base e coda: il registro che inizia con la base (stessi primi n eventi) la accetta. */
+    @Test
+    fun iniziaConVaPerIPrimiNEventi() {
+        val base = listOf(LoggedEvent(ScoringEvent.Point(side = 1)), LoggedEvent(ScoringEvent.Point(side = 2)))
+        val impronta = MatchLogCodec.impronta(base)
+        val piuLungo = base + LoggedEvent(ScoringEvent.Point(side = 1))
+        assertTrue("lo stesso registro", MatchLogCodec.iniziaCon(base, impronta))
+        assertTrue("con eventi dal vivo dopo", MatchLogCodec.iniziaCon(piuLungo, impronta))
+        assertTrue("la base vuota e' prefisso di tutto", MatchLogCodec.iniziaCon(piuLungo, "0"))
+        assertTrue("registro riscritto: lati diversi", !MatchLogCodec.iniziaCon(base.reversed() + base, impronta))
+        assertTrue("registro piu' corto della base (un annulla)", !MatchLogCodec.iniziaCon(base.take(1), impronta))
+        assertTrue("base illeggibile", !MatchLogCodec.iniziaCon(piuLungo, "?"))
+    }
+
     @Test
     fun trecentoPuntiSenzaTempiStannoSottoIlKilobyte() {
         val events = List(300) { LoggedEvent(ScoringEvent.Point(side = if (it % 2 == 0) 1 else 2)) }

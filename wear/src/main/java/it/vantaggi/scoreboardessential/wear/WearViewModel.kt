@@ -74,6 +74,11 @@ data class WearScoreState(
      * il polso capisce di poter togliere le voci dalla coda. 0 da un telefono che non lo manda.
      */
     val lastBatchId: Long = 0L,
+    /**
+     * L'identita' della partita del telefono (L5): vuota se non ne ha ancora una o se il telefono non
+     * la manda. La coda la ricorda quando nasce, e il batch la rimanda.
+     */
+    val matchUuid: String = "",
 ) {
     companion object {
         private const val TAG = "WearScoreState"
@@ -115,6 +120,7 @@ data class WearScoreState(
                 servingSide = dataMap.getInt(WearConstants.KEY_SERVING_SIDE, 0),
                 servingSlot = dataMap.getInt(WearConstants.KEY_SERVING_SLOT, 0),
                 lastBatchId = idDelBatch(dataMap),
+                matchUuid = dataMap.getString(WearConstants.KEY_MATCH_UUID, ""),
             )
         }
 
@@ -1218,7 +1224,12 @@ class WearViewModel(
         // La base e' quella su cui la coda e' NATA (salvata con lei), non quella di adesso: se nel
         // frattempo il telefono e' passato a un'altra partita, i tocchi non le appartengono, e il
         // rinvio deve dirlo invece di prendere la base nuova e applicarli in silenzio.
-        val base = pending.base ?: improntaDelRegistroVisto().also { pending.base = it }
+        val base =
+            pending.base ?: improntaDelRegistroVisto().also {
+                pending.base = it
+                pending.partita = statoDalTelefono?.matchUuid.orEmpty()
+            }
+        val partita = pending.partita.orEmpty()
         armaTimeoutBatch(blocco)
         viewModelScope.launch {
             val payload =
@@ -1233,6 +1244,7 @@ class WearViewModel(
                     putLong(WearConstants.KEY_SEQ, seq)
                     putLong(WearConstants.KEY_BATCH_ID, blocco.id)
                     putString(WearConstants.KEY_BATCH_BASE, base)
+                    putString(WearConstants.KEY_MATCH_UUID, partita)
                 }
             if (!connectionManager.sendMessage(WearConstants.MSG_INTENT_BATCH, payload.toByteArray())) {
                 // Non e' partito: il tentativo e' scaduto subito, si riprova al prossimo collegamento
@@ -1430,7 +1442,8 @@ class WearViewModel(
             // cambia niente -- quindi il polso deve comunque distinguere "preso dal telefono" da
             // "tenuto da parte", e il conteggio in attesa lo dice a schermo.
             // La base della coda e' il registro che il polso vede ORA, se la coda nasce con questo tocco.
-            val accodato = pending.add(PendingIntent(kind, side, quando), improntaDelRegistroVisto())
+            val accodato =
+                pending.add(PendingIntent(kind, side, quando), improntaDelRegistroVisto(), statoDalTelefono?.matchUuid.orEmpty())
             _pendingCount.value = pending.size
             if (codaRifiutata) _rifiutati.value = pending.size
             // Il gesto smette di essere cieco: il punteggio a schermo si aggiorna subito, calcolato

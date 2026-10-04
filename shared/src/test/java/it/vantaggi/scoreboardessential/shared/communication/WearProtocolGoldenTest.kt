@@ -293,6 +293,7 @@ class WearProtocolGoldenTest {
                 "NACK_REJECTED" to "rejected",
                 "NACK_RETRY" to "retry",
                 "KEY_LAST_BATCH_ID" to "last_batch_id",
+                "KEY_MATCH_UUID" to "match_uuid",
                 // Messaggi v1
                 "MSG_SCORER_SELECTED" to "/scoreboard/scorer_selected",
                 "MSG_REQUEST_SYNC" to "/scoreboard/request_sync",
