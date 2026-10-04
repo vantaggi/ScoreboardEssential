@@ -2297,6 +2297,9 @@ di companion) a `Wear_OS_Small_Round_Prova`. Prova di fumo: un tocco sul polso a
   prende il focus della finestra, e gli stati dell'orologio rendono la partita "non vuota", quindi il
   cambio sport dei test viene rifiutato). Si fanno su `Pixel_9a_Test` con gli abbinati spenti (tre
   emulatori insieme portano il telefono all'ANR per memoria).
+- **I seriali non sono fissi**: al riavvio `emulator-5554` puo' essere l'orologio. Ricavarli sempre
+  dal nome (`adb -s <serial> emu avd name`) prima di forward/reverse/install (il 4 ottobre l'APK del
+  telefono e' stato tentato sull'orologio: rifiutato come downgrade, nessun danno).
 - Non usare `adb kill-server` mentre gli emulatori sono abbinati: cadono i tunnel (Android Studio li
   ricrea in qualche secondo, su porte nuove).
 
@@ -2332,3 +2335,11 @@ di companion) a `Wear_OS_Small_Round_Prova`. Prova di fumo: un tocco sul polso a
 | prova della custodia | app del telefono chiusa, tocco dal polso: IN ATTESA TELEFONO in ambra per qualche secondo, niente NON CONFERMATO; alla riapertura una sola partita 3-1 con uuid e tempi veri (`2@15290`, non `@0`). **Da capire:** l'orologio e' rimasto a 2-0 mentre il registro del telefono era 3-1 (quattro stati v2 trasmessi alle 10:17:25); il telefono era sull'onboarding (dati azzerati dagli strumentati), poi il PC si e' spento |
 | ordine degli stati (Sonnet) | causa della discrepanza 2-0 contro 3-1: le pubblicazioni dello stato v2 correvano in parallelo e in GMS restava quella finita per ultima. `wf28/l5-ordine-stato`: canale conflato a consumatore unico per PATH_STATE_V2 e PATH_SCORE, `KEY_STATE_VERSION` monotona (da currentTimeMillis), l'orologio ignora versioni minori (ViewModel e servizio). Test falsificati |
 | chiusura | `a5e68d8`: **1024 test JVM** (core 178, mobile 461, shared 34, wear 351), strumentati 38 su 38 su `Pixel_9a_Test`. Sugli abbinati: 3 tocchi in custodia applicati una volta, con i tempi veri, telefono e orologio entrambi a 3-4. Limiti noti: due orologi (ultimo id applicato globale, via d'uscita dopo 10s), orologio del telefono che va indietro (versioni ignorate finche' non le supera), telefono e orologio di versioni diverse (scritto in VALIDAZIONE), caduta del Bluetooth da vedere su dispositivi veri. Le due partite attive del 3 ottobre non si sono piu' riprodotte |
+
+### L6, origine e ordine dei DataItem - 4 ottobre 2026 (in corso)
+
+| passo | esito |
+|---|---|
+| premessa dell'alta | verificata FALSA sugli emulatori abbinati: il telefono scrive `/scoreboard/score` e il suo servizio non riceve l'eco. Si mette comunque il filtro difensivo sul nodo locale |
+| bassa (stati v2 in parallelo) | gia' chiusa da L5 (canale conflato e `KEY_STATE_VERSION`) |
+| correzione (Sonnet) | `wf29/l6-nodo-locale`: filtro sul nodo locale nei due servizi e nella rilettura dei DataItem al risveglio dell'orologio |
