@@ -1467,7 +1467,7 @@ class MainViewModel(
                 val side = campi.getOrNull(1)?.toIntOrNull()
                 val quando = campi.getOrNull(2)?.toLongOrNull()
                 val tipo = campi[0]
-                val noto = tipo == WearConstants.INTENT_UNDO || tipo == WearConstants.INTENT_CORRECTION || tipo == WearConstants.INTENT_POINT
+                val noto = tipo in setOf(WearConstants.INTENT_UNDO, WearConstants.INTENT_CORRECTION, WearConstants.INTENT_POINT)
                 if (!noto || side == null || quando == null || (side != 1 && side != 2)) null else Triple(tipo, side, quando)
             }
         if (voci.isEmpty()) {
