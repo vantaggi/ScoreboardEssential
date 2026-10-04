@@ -10,6 +10,7 @@ import com.google.android.gms.wearable.DataItem
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
+import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 
@@ -82,7 +83,11 @@ class WearDataLayerService : WearableListenerService() {
                     // (sport e registro): il calcolo a freddo riparte da li' e non le conta due volte.
                     if (!preso) {
                         val idApplicato = WearScoreState.idDelBatch(dataMap)
-                        if (idApplicato > 0L && PendingIntents(context).confermaBatch(idApplicato) != null) {
+                        // Le voci rimaste prendono come base questo stato, che e' il registro dopo il blocco.
+                        val registro = dataMap.getString(WearConstants.KEY_EVENT_LOG, "")
+                        val dopo = if (registro.isEmpty()) "0" else MatchLogCodec.impronta(registro)
+                        val partita = dataMap.getString(WearConstants.KEY_MATCH_UUID, "")
+                        if (idApplicato > 0L && PendingIntents(context).confermaBatch(idApplicato, dopo, partita) != null) {
                             LastKnownMatch(context).save(
                                 dataMap.getString(WearConstants.KEY_SPORT_ID, ""),
                                 dataMap.getString(WearConstants.KEY_EVENT_LOG, ""),

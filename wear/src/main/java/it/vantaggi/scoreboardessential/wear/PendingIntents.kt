@@ -46,6 +46,7 @@ class PendingIntents(
         const val CHIAVE_RIFIUTATE = "rifiutate"
         const val CHIAVE_BASE = "base"
         const val CHIAVE_PARTITA = "partita"
+        const val CHIAVE_BASE_DOPO = "base_dopo"
         const val SEP_VOCE = ";"
         const val SEP_CAMPO = ","
 
@@ -167,19 +168,52 @@ class PendingIntents(
      * Il telefono ha applicato l'arretrato [id]: le sue voci escono dalla testa e l'identita' si
      * azzera. Ritorna quante ne ha tolte, o null se [id] non e' quello in volo (gia' confermato da
      * un altro percorso: l'ack, lo stato v2 col suo id, il servizio ad app chiusa). Idempotente.
+     *
+     * Le voci rimaste sono state segnate mentre l'arretrato era in volo: la loro base e' il registro
+     * DOPO di lui ([baseDopo] e [partitaDopo], dallo stato del telefono che porta [id] come ultimo
+     * arretrato applicato). Se il polso non lo sa ancora (l'ack e' arrivato prima dello stato, o
+     * senza Activity) la base resta da risolvere ([baseDopoDi]) e la coda non parte: prendere il
+     * registro "del momento" applicherebbe le voci a un'altra partita, in silenzio (D4).
      */
-    fun confermaBatch(id: Long): Int? {
+    fun confermaBatch(
+        id: Long,
+        baseDopo: String? = null,
+        partitaDopo: String? = null,
+    ): Int? {
         val inVolo = batchInVolo()?.takeIf { it.id == id } ?: return null
         removeFirst(inVolo.quante)
-        // Le voci rimaste sono state segnate mentre l'arretrato era in volo: la loro base e' il
-        // registro dopo di lui, che il polso conoscera' dallo stato del telefono.
+        val rimaste = size > 0
         prefs.edit {
             remove(CHIAVE_BATCH_ID)
             remove(CHIAVE_BATCH_QUANTE)
             remove(CHIAVE_BASE)
             remove(CHIAVE_PARTITA)
+            remove(CHIAVE_BASE_DOPO)
+            when {
+                !rimaste -> Unit
+                baseDopo != null -> {
+                    putString(CHIAVE_BASE, baseDopo)
+                    putString(CHIAVE_PARTITA, partitaDopo.orEmpty())
+                }
+                else -> putLong(CHIAVE_BASE_DOPO, id)
+            }
         }
         return inVolo.quante
+    }
+
+    /** L'id del blocco dopo il quale e' nata la base delle voci rimaste, se e' ancora da risolvere; 0 altrimenti. */
+    fun baseDopoDi(): Long = prefs.getLong(CHIAVE_BASE_DOPO, 0L)
+
+    /** Lo stato del telefono dopo il blocco e' arrivato: la base delle voci rimaste e' questa. */
+    fun risolviBaseDopo(
+        base: String,
+        partita: String,
+    ) {
+        prefs.edit {
+            putString(CHIAVE_BASE, base)
+            putString(CHIAVE_PARTITA, partita)
+            remove(CHIAVE_BASE_DOPO)
+        }
     }
 
     /**
@@ -206,6 +240,7 @@ class PendingIntents(
             remove(CHIAVE_BATCH_QUANTE)
             remove(CHIAVE_BASE)
             remove(CHIAVE_PARTITA)
+            remove(CHIAVE_BASE_DOPO)
         }
     }
 

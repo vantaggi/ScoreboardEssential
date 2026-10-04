@@ -372,13 +372,76 @@ class ArretratoDelPoloTest {
         val primo = batchSpediti().single()
         segnaOffline(1)
 
-        viewModel.onBatchAck(primo.getLong(WearConstants.KEY_SEQ), idDi(primo))
+        // Un ack di un telefono che l'id non lo manda: nessuno stato da aspettare (D4), le voci partono.
+        viewModel.onBatchAck(primo.getLong(WearConstants.KEY_SEQ))
         assestati()
 
         val inviati = batchSpediti()
         assertEquals(2, inviati.size)
         assertNotEquals("un blocco nuovo", idDi(primo), idDi(inviati[1]))
         assertEquals("solo la voce rimasta", 1, inviati[1].getString(WearConstants.KEY_INTENT_BATCH).orEmpty().split(WearConstants.BATCH_SEPARATOR).size)
+    }
+
+    /**
+     * D4: le voci segnate mentre il blocco era in volo hanno per base il registro DOPO il blocco, non
+     * quello del momento del flush (che puo' essere un'altra partita).
+     */
+    @Test
+    fun `le voci rimaste dopo l'ack aspettano lo stato dopo il blocco e prendono quello come base`() {
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        segnaOffline(1)
+
+        // L'ack arriva prima dello stato che contiene il blocco: la base non si conosce ancora.
+        viewModel.onBatchAck(primo.getLong(WearConstants.KEY_SEQ), idDi(primo))
+        assestati()
+        assertEquals("non parte con una base che non si sa", 1, batchSpediti().size)
+        assertEquals("la voce rimasta c'e'", 1, coda.size)
+
+        // Lo stato col suo id: 3 del telefono piu' i 2 del blocco.
+        viewModel.applyStateV2(stato(registro(5), lastBatchId = idDi(primo), matchUuid = "partita-A"))
+        assestati()
+
+        val secondo = batchSpediti()[1]
+        assertEquals(MatchLogCodec.impronta(registro(5)), secondo.getString(WearConstants.KEY_BATCH_BASE))
+        assertEquals("partita-A", secondo.getString(WearConstants.KEY_MATCH_UUID))
+    }
+
+    @Test
+    fun `se lo stato dopo il blocco e' arrivato prima dell'ack la base delle voci rimaste e' quella`() {
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        segnaOffline(1)
+
+        // Lo stato dopo il blocco arriva mentre il blocco e' in volo: lo conferma, e la base e' lui.
+        viewModel.applyStateV2(stato(registro(5), lastBatchId = idDi(primo), matchUuid = "partita-A"))
+        assestati()
+
+        val secondo = batchSpediti()[1]
+        assertEquals(MatchLogCodec.impronta(registro(5)), secondo.getString(WearConstants.KEY_BATCH_BASE))
+        assertNotEquals(idDi(primo), idDi(secondo))
+    }
+
+    @Test
+    fun `un telefono che non manda l'id dell'ultimo arretrato non lascia le voci rimaste ad aspettare`() {
+        viewModel.applyStateV2(stato(registro(3)))
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        segnaOffline(1)
+
+        viewModel.onBatchAck(primo.getLong(WearConstants.KEY_SEQ))
+        viewModel.applyStateV2(stato(registro(5)))
+        assestati()
+
+        assertEquals("parte comunque", 2, batchSpediti().size)
     }
 
     // --- Rilievo 3: ack perso ---

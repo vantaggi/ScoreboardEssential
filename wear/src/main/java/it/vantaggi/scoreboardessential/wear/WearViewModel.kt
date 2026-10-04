@@ -739,6 +739,8 @@ class WearViewModel(
         // ha avuto bisogno di arrivare (L5, ack perso). Dopo chiudiRicevute: lo stato dell'arretrato
         // non e' la conferma di un tocco dal vivo, e finche' batchInVolo c'e' non la chiude.
         batchInVolo?.takeIf { state.lastBatchId > 0L && state.lastBatchId == it.id }?.let { batchApplicato(it) }
+        // L'ack e' arrivato prima di questo stato: ora si sa il registro dopo il blocco (D4).
+        risolviBaseDopo(state)
         when {
             batchAttivo() -> Unit
             pending.size > 0 && rebuildLocalState() -> Unit
@@ -756,7 +758,7 @@ class WearViewModel(
         // Un telefono che parla adesso e' raggiungibile, e una coda senza un tentativo vivo (un NACK
         // passeggero, un tentativo scaduto, voci rimaste dopo un blocco) non ha altro da aspettare:
         // connectionState e' uno StateFlow e non rimette Connected se lo era gia' (L5, D3).
-if (dalVivo && pending.size > 0 && !batchAttivo()) flushPending()
+        if (dalVivo && pending.size > 0 && !batchAttivo()) flushPending()
     }
 
     /**
@@ -1209,6 +1211,9 @@ if (dalVivo && pending.size > 0 && !batchAttivo()) flushPending()
         if (batchAttivo()) return
         val voci = pending.all()
         if (voci.isEmpty()) return
+        // Le voci rimaste dopo un blocco aspettano di sapere il registro dopo di lui (D4): senza,
+        // la base sarebbe quella di adesso, e un telefono passato a un'altra partita le applicherebbe.
+        if (!risolviBaseDopo(statoDalTelefono)) return
         val blocco =
             batchInVolo ?: PendingIntents.BatchInVolo(id = ++intentSequence, quante = voci.size).also { pending.segnaBatchInVolo(it) }
         // Un rinvio manda lo STESSO blocco: le voci segnate dopo il primo invio vanno nel prossimo.
@@ -1256,8 +1261,24 @@ if (dalVivo && pending.size > 0 && !batchAttivo()) flushPending()
     }
 
     /** L'impronta del registro del telefono che il polso ha sotto gli occhi: "0" se non ne ha visto uno. */
-    private fun improntaDelRegistroVisto(): String =
-        statoDalTelefono?.eventLog?.takeIf { it.isNotEmpty() }?.let { MatchLogCodec.impronta(it) } ?: "0"
+    private fun improntaDelRegistroVisto(): String = improntaDi(statoDalTelefono)
+
+    private fun improntaDi(stato: WearScoreState?): String =
+        stato?.eventLog?.takeIf { it.isNotEmpty() }?.let { MatchLogCodec.impronta(it) } ?: "0"
+
+    /**
+     * La base delle voci rimaste dopo la conferma di un blocco (D4) e' lo stato del telefono che lo
+     * contiene: quello con l'id del blocco come ultimo applicato (lo manda sempre, anche dopo, finche'
+     * non ne entra un altro). Uno stato precedente non va bene: e' il registro di prima del blocco.
+     * Ritorna `true` se non c'e' piu' niente da risolvere.
+     */
+    private fun risolviBaseDopo(stato: WearScoreState?): Boolean {
+        val attesa = pending.baseDopoDi()
+        if (attesa == 0L) return true
+        if (stato == null || stato.lastBatchId != attesa) return false
+        pending.risolviBaseDopo(improntaDi(stato), stato.matchUuid)
+        return true
+    }
 
     private fun armaTimeoutBatch(blocco: PendingIntents.BatchInVolo) {
         timeoutBatchJob?.cancel()
@@ -1292,8 +1313,20 @@ if (dalVivo && pending.size > 0 && !batchAttivo()) flushPending()
      * chiusa, non c'e' piu' niente da togliere). I tocchi rifiutati di un'altra partita non c'entrano:
      * restano da parte finche' l'utente non li scarta.
      */
-    private fun batchApplicato(blocco: PendingIntents.BatchInVolo) {
-        pending.confermaBatch(blocco.id)
+    private fun batchApplicato(
+        blocco: PendingIntents.BatchInVolo,
+        telefonoConId: Boolean = true,
+    ) {
+        // Le voci rimaste prendono come base il registro DOPO il blocco: lo stato del telefono che lo
+        // contiene, se e' gia' arrivato (D4). Altrimenti la base resta da risolvere (risolviBaseDopo).
+        // Un telefono che l'id non lo manda non ha uno stato che lo dica, e la sua base non la controlla:
+        // le voci tengono quella della coda, e non aspettano uno stato che non arrivera'.
+        val dopo = statoDalTelefono?.takeIf { it.lastBatchId == blocco.id }
+        when {
+            dopo != null -> pending.confermaBatch(blocco.id, improntaDi(dopo), dopo.matchUuid)
+            !telefonoConId -> pending.confermaBatch(blocco.id, pending.base, pending.partita)
+            else -> pending.confermaBatch(blocco.id)
+        }
         batchInVolo = null
         batchInVoloDal = null
         timeoutBatchJob?.cancel()
@@ -1312,13 +1345,13 @@ if (dalVivo && pending.size > 0 && !batchAttivo()) flushPending()
         val inVolo = batchInVolo ?: return
         // Con l'id si riconosce anche l'ack di un tentativo precedente (stesso blocco, altra seq).
         if (if (batchId > 0L) batchId != inVolo.id else seq != seqUltimoBatch) return
-        batchApplicato(inVolo)
+        batchApplicato(inVolo, telefonoConId = batchId > 0L)
         // Coda vuota: l'autorita' torna al telefono, e a schermo va cio' che ha mandato per ultimo.
         if (pending.size == 0 || !rebuildLocalState()) {
             statoDalTelefono?.let { _scoreState.value = it }
         }
         // Le voci segnate mentre il blocco era in volo non hanno altro da aspettare: partono ora (D3).
-if (pending.size > 0) flushPending()
+        if (pending.size > 0) flushPending()
     }
 
     /**
