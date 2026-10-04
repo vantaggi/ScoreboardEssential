@@ -100,16 +100,45 @@ object MatchLogCodec {
     /**
      * L'impronta di un registro, per dire "questo e' il registro su cui ho calcolato" in un campo
      * solo (L5, la base dell'arretrato dell'orologio). "0" per il registro vuoto, comunque scritto
-     * (assente, `''` o l'intestazione senza token), altrimenti "<numero eventi>:<hash>" sulla forma
-     * CANONICA ([encode] del decodificato): orologio e telefono la calcolano da stringhe che
-     * possono differire solo nella forma, mai nel contenuto. "?" per cio' che non si legge: il
-     * registro del telefono si legge sempre, quindi un "?" non coincide mai con la sua impronta.
+     * (assente, `''` o l'intestazione senza token), altrimenti "<numero eventi>:<hash>". "?" per
+     * cio' che non si legge: il registro del telefono si legge sempre, quindi un "?" non coincide
+     * mai con la sua impronta.
+     *
+     * Conta CHE COSA e' successo (tipo, lato, peso), non le annotazioni: il marcatore dato a un gol
+     * e l'orario cambiano la stringa del registro ma non la partita, e un'impronta che li contasse
+     * farebbe rifiutare un arretrato calcolato su un registro a cui il telefono ha solo attribuito
+     * un nome. Orologio e telefono la calcolano da stringhe che possono differire solo nella forma
+     * o nelle annotazioni, mai nel contenuto.
      */
-    fun impronta(raw: String): String {
-        val eventi = decode(raw) ?: return "?"
+    fun impronta(raw: String): String = decode(raw)?.let { impronta(it) } ?: "?"
+
+    /** Come [impronta] sugli eventi gia' letti: "0" se vuoti, altrimenti "<numero>:<hash>". */
+    fun impronta(eventi: List<LoggedEvent>): String {
         if (eventi.isEmpty()) return "0"
-        return "${eventi.size}:${encode(eventi).hashCode()}"
+        val forma =
+            eventi.joinToString(TOKEN_SEP.toString()) {
+                encodeToken(it.copy(event = senzaMarcatore(it.event), atMillis = null))
+            }
+        return "${eventi.size}:${forma.hashCode()}"
     }
+
+    /**
+     * Il registro [eventi] INIZIA con quello descritto da [base] (un'impronta di [impronta])? I primi
+     * n eventi, con n letto dalla base, devono avere esattamente quell'impronta: dopo ce ne possono
+     * essere altri (tocchi dal vivo arrivati prima dell'arretrato), prima no. La base "0" e' il
+     * registro vuoto, prefisso di qualunque registro; "?" e il resto illeggibile non lo sono mai.
+     */
+    fun iniziaCon(
+        eventi: List<LoggedEvent>,
+        base: String,
+    ): Boolean {
+        if (base == "0") return true
+        val quanti = base.substringBefore(':').toIntOrNull() ?: return false
+        if (quanti <= 0 || quanti > eventi.size) return false
+        return impronta(eventi.take(quanti)) == base
+    }
+
+    private fun senzaMarcatore(event: ScoringEvent): ScoringEvent = if (event is ScoringEvent.Point) event.copy(playerId = null) else event
 
     private fun encodeToken(entry: LoggedEvent): String {
         val sb = StringBuilder(4)

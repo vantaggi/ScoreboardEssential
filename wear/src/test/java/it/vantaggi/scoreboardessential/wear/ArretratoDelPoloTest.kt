@@ -36,6 +36,9 @@ import org.mockito.stubbing.Answer
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.resume
 
 /** Il vibratore che non fa niente: qui interessa la coda, non cio' che si sente al polso. */
 private object VibratoreDelArretrato : WearHaptics {
@@ -74,6 +77,17 @@ class ArretratoDelPoloTest {
     private var consegnato = true
     private val inizio = 1_700_000_000_000L
 
+    /** Un sendMessage rimasto in volo: il suo contenuto e il modo di farlo finire. */
+    private class InvioSospeso(
+        val dati: ByteArray,
+        val continuazione: Continuation<Boolean>,
+    ) {
+        val sequenza: Long get() = DataMap.fromByteArray(dati).getLong(WearConstants.KEY_SEQ)
+    }
+
+    private var sospendiInvii = false
+    private val invii = mutableListOf<InvioSospeso>()
+
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
@@ -97,7 +111,26 @@ class ArretratoDelPoloTest {
             Mockito.mock(
                 OptimizedWearDataSync::class.java,
                 Answer { invocazione ->
-                    if (invocazione.method.name == "sendMessage") consegnato else Mockito.RETURNS_DEFAULTS.answer(invocazione)
+                    when {
+                        invocazione.method.name != "sendMessage" -> {
+                            Mockito.RETURNS_DEFAULTS.answer(invocazione)
+                        }
+
+                        // Un invio che non finisce finche' il test non lo dice: e' cosi' che si vede se due partono insieme.
+                        sospendiInvii -> {
+                            @Suppress("UNCHECKED_CAST")
+                            invii +=
+                                InvioSospeso(
+                                    invocazione.arguments[1] as ByteArray,
+                                    invocazione.rawArguments.last() as Continuation<Boolean>,
+                                )
+                            COROUTINE_SUSPENDED
+                        }
+
+                        else -> {
+                            consegnato
+                        }
+                    }
                 },
             )
         Mockito.`when`(telefono.connectionState).thenReturn(MutableStateFlow(ConnectionState.Connected(1)))
@@ -137,6 +170,7 @@ class ArretratoDelPoloTest {
     private fun stato(
         registro: String,
         lastBatchId: Long = 0L,
+        matchUuid: String = "",
     ) = WearScoreState(
         side1Primary = "0",
         side1Secondary = "",
@@ -155,6 +189,7 @@ class ArretratoDelPoloTest {
         matchOver = false,
         eventLog = registro,
         lastBatchId = lastBatchId,
+        matchUuid = matchUuid,
     )
 
     private fun avanza(millisecondi: Long) {
@@ -220,6 +255,28 @@ class ArretratoDelPoloTest {
 
         // Dire "0" sarebbe applicare in silenzio i tocchi di una partita alla successiva (rilievo 4).
         assertEquals(MatchLogCodec.impronta(registro(3)), batchSpediti().single().getString(WearConstants.KEY_BATCH_BASE))
+    }
+
+    /** D1: la base e' anche l'identita' della partita, quella che il polso vedeva quando la coda e' nata. */
+    @Test
+    fun `il batch porta l'identita' della partita su cui la coda e' nata`() {
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        segnaOffline(1)
+        // Il telefono passa a un'altra partita: l'identita' del batch resta quella di prima.
+        viewModel.applyStateV2(stato(registro(1), matchUuid = "partita-B"))
+        assestati()
+
+        viewModel.flushPending()
+        assestati()
+
+        assertEquals("partita-A", batchSpediti().single().getString(WearConstants.KEY_MATCH_UUID))
+    }
+
+    @Test
+    fun `lo stato del telefono porta l'identita' della partita e un telefono vecchio la lascia vuota`() {
+        val nuovo = DataMap().apply { putString(WearConstants.KEY_MATCH_UUID, "partita-A") }
+        assertEquals("partita-A", WearScoreState.fromDataMap(nuovo).matchUuid)
+        assertEquals("", WearScoreState.fromDataMap(DataMap()).matchUuid)
     }
 
     // --- Rilievo 2: un arretrato mai confermato non blocca l'orologio ---
@@ -289,6 +346,231 @@ class ArretratoDelPoloTest {
                 .size,
         )
         assertFalse("un NACK passeggero non e' un rifiuto", viewModel.rifiutati.value > 0)
+    }
+
+    /** D3: connectionState non rimette Connected se lo era gia': il rinvio parte con lo stato dal vivo. */
+    @Test
+    fun `dopo un NACK passeggero uno stato dal vivo rimanda la coda senza aspettare un nuovo collegamento`() {
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        viewModel.onBatchNack(idDi(primo), WearConstants.NACK_RETRY)
+        assestati()
+        assertEquals("da solo non riparte", 1, batchSpediti().size)
+
+        // L'app del telefono e' tornata: manda il suo stato.
+        viewModel.applyStateV2(stato(registro(0)))
+        assestati()
+
+        val inviati = batchSpediti()
+        assertEquals(2, inviati.size)
+        assertEquals("stesso blocco, stessa identita'", idDi(primo), idDi(inviati[1]))
+    }
+
+    @Test
+    fun `scaduto il tentativo uno stato dal vivo rimanda la coda, uno rilevato dal disco no`() {
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        avanza(WearViewModel.TIMEOUT_BATCH_MS)
+
+        // Una copia riletta dai DataItem al risveglio non e' un telefono che parla adesso.
+        viewModel.applyStateV2(stato(registro(0)), dalVivo = false)
+        assestati()
+        assertEquals(1, batchSpediti().size)
+
+        viewModel.applyStateV2(stato(registro(0)))
+        assestati()
+        assertEquals(2, batchSpediti().size)
+    }
+
+    @Test
+    fun `con un tentativo vivo uno stato dal vivo non ne lancia un secondo`() {
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+
+        viewModel.applyStateV2(stato(registro(0)))
+        assestati()
+
+        assertEquals(1, batchSpediti().size)
+    }
+
+    @Test
+    fun `dopo un ack le voci rimaste mentre il blocco era in volo partono subito`() {
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        segnaOffline(1)
+
+        // Un ack di un telefono che l'id non lo manda: nessuno stato da aspettare (D4), le voci partono.
+        viewModel.onBatchAck(primo.getLong(WearConstants.KEY_SEQ))
+        assestati()
+
+        val inviati = batchSpediti()
+        assertEquals(2, inviati.size)
+        assertNotEquals("un blocco nuovo", idDi(primo), idDi(inviati[1]))
+        assertEquals(
+            "solo la voce rimasta",
+            1,
+            inviati[1]
+                .getString(WearConstants.KEY_INTENT_BATCH)
+                .orEmpty()
+                .split(WearConstants.BATCH_SEPARATOR)
+                .size,
+        )
+    }
+
+    /**
+     * D4: le voci segnate mentre il blocco era in volo hanno per base il registro DOPO il blocco, non
+     * quello del momento del flush (che puo' essere un'altra partita).
+     */
+    @Test
+    fun `le voci rimaste dopo l'ack aspettano lo stato dopo il blocco e prendono quello come base`() {
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        segnaOffline(1)
+
+        // L'ack arriva prima dello stato che contiene il blocco: la base non si conosce ancora.
+        viewModel.onBatchAck(primo.getLong(WearConstants.KEY_SEQ), idDi(primo))
+        assestati()
+        assertEquals("non parte con una base che non si sa", 1, batchSpediti().size)
+        assertEquals("la voce rimasta c'e'", 1, coda.size)
+
+        // Lo stato col suo id: 3 del telefono piu' i 2 del blocco.
+        viewModel.applyStateV2(stato(registro(5), lastBatchId = idDi(primo), matchUuid = "partita-A"))
+        assestati()
+
+        val secondo = batchSpediti()[1]
+        assertEquals(MatchLogCodec.impronta(registro(5)), secondo.getString(WearConstants.KEY_BATCH_BASE))
+        assertEquals("partita-A", secondo.getString(WearConstants.KEY_MATCH_UUID))
+    }
+
+    @Test
+    fun `se lo stato dopo il blocco e' arrivato prima dell'ack la base delle voci rimaste e' quella`() {
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        segnaOffline(1)
+
+        // Lo stato dopo il blocco arriva mentre il blocco e' in volo: lo conferma, e la base e' lui.
+        viewModel.applyStateV2(stato(registro(5), lastBatchId = idDi(primo), matchUuid = "partita-A"))
+        assestati()
+
+        val secondo = batchSpediti()[1]
+        assertEquals(MatchLogCodec.impronta(registro(5)), secondo.getString(WearConstants.KEY_BATCH_BASE))
+        assertNotEquals(idDi(primo), idDi(secondo))
+    }
+
+    @Test
+    fun `un telefono che non manda l'id dell'ultimo arretrato non lascia le voci rimaste ad aspettare`() {
+        viewModel.applyStateV2(stato(registro(3)))
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        segnaOffline(1)
+
+        viewModel.onBatchAck(primo.getLong(WearConstants.KEY_SEQ))
+        viewModel.applyStateV2(stato(registro(5)))
+        assestati()
+
+        assertEquals("parte comunque", 2, batchSpediti().size)
+    }
+
+    private fun intentiDalVivoSpediti(): Int =
+        Mockito
+            .mockingDetails(telefono)
+            .invocations
+            .count { it.method.name == "sendMessage" && it.arguments[0] == WearConstants.MSG_SCORE_INTENT }
+
+    /** D5: con la coda non vuota un tocco dal vivo non parte davanti all'arretrato, va in coda. */
+    @Test
+    fun `con la coda non vuota un tocco nuovo non parte dal vivo, va in coda`() {
+        segnaOffline(2)
+        val prima = intentiDalVivoSpediti()
+
+        viewModel.incrementScore(1)
+        assestati()
+
+        assertEquals("nessun invio dal vivo", prima, intentiDalVivoSpediti())
+        assertEquals(3, viewModel.pendingCount.value)
+        assertEquals(3, coda.size)
+    }
+
+    @Test
+    fun `con un arretrato in volo un tocco nuovo va in coda dietro di lui`() {
+        segnaOffline(1)
+        viewModel.flushPending()
+        assestati()
+        val prima = intentiDalVivoSpediti()
+
+        viewModel.incrementScore(2)
+        assestati()
+
+        assertEquals(prima, intentiDalVivoSpediti())
+        assertEquals(2, coda.size)
+        assertEquals("il blocco in volo e' sempre il primo", 1, coda.batchInVolo()?.quante)
+    }
+
+    @Test
+    fun `con la coda vuota il tocco parte dal vivo come sempre`() {
+        val prima = intentiDalVivoSpediti()
+
+        viewModel.incrementScore(1)
+        assestati()
+
+        assertEquals(prima + 1, intentiDalVivoSpediti())
+        assertEquals(0, coda.size)
+    }
+
+    /** D5: un invio alla volta, sendMessage compresa: due tocchi ravvicinati escono nell'ordine dei tocchi. */
+    @Test
+    fun `due tocchi ravvicinati escono uno alla volta e nell'ordine`() {
+        sospendiInvii = true
+
+        viewModel.incrementScore(1)
+        viewModel.incrementScore(2)
+        assestati()
+        assertEquals("il secondo aspetta che il primo finisca", 1, invii.size)
+
+        invii[0].continuazione.resume(true)
+        assestati()
+        assertEquals(2, invii.size)
+        assertTrue("la sequenza del primo precede quella del secondo", invii[0].sequenza < invii[1].sequenza)
+        invii[1].continuazione.resume(true)
+        assestati()
+    }
+
+    @Test
+    fun `un tocco dal vivo non supera un arretrato che sta partendo`() {
+        segnaOffline(1)
+        sospendiInvii = true
+        viewModel.flushPending()
+        viewModel.incrementScore(1)
+        assestati()
+
+        assertEquals("parte il solo arretrato", 1, invii.size)
+        assertEquals(
+            WearConstants.MSG_INTENT_BATCH,
+            Mockito
+                .mockingDetails(telefono)
+                .invocations
+                .last {
+                    it.method.name == "sendMessage"
+                }.arguments[0],
+        )
+        invii[0].continuazione.resume(true)
+        assestati()
+        assertEquals("il tocco e' in coda, non partito", 1, invii.size)
+        assertEquals(2, coda.size)
     }
 
     // --- Rilievo 3: ack perso ---
@@ -449,7 +731,8 @@ class ArretratoDelPoloTest {
 
         assertEquals(2, viewModel.rifiutati.value)
         assertEquals(Frase.Rifiutati(2), viewModel.statoFiducia.value)
-        assertEquals("le voci non si perdono da sole", 2, coda.size)
+        assertEquals("le voci non si perdono da sole: stanno da parte", 2, coda.rifiutateSize)
+        assertEquals("la coda viva e' vuota", 0, coda.size)
         // Ne' al collegamento successivo ne' dopo la morte del processo.
         viewModel.flushPending(collegatoDiNuovo = true)
         viewModel = nuovoViewModel()
@@ -457,7 +740,64 @@ class ArretratoDelPoloTest {
         viewModel.flushPending(collegatoDiNuovo = true)
         assestati()
         assertEquals("nessun rinvio", 1, batchSpediti().size)
-        assertEquals("anche un ViewModel nuovo la dice rifiutata", 2, viewModel.rifiutati.value)
+        assertEquals("anche un ViewModel nuovo le dice rifiutate", 2, viewModel.rifiutati.value)
+    }
+
+    /** D2: dopo un rifiuto i tocchi nuovi non finiscono fra i rifiutati: sono una coda nuova, spedibile. */
+    @Test
+    fun `dopo un NACK definitivo i tocchi nuovi aprono una coda nuova che si calcola e si spedisce`() {
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        viewModel.onBatchNack(idDi(primo), WearConstants.NACK_REJECTED)
+        assestati()
+        // Il telefono e' su un'altra partita: stato con registro vuoto.
+        viewModel.applyStateV2(stato(registro(0), matchUuid = "partita-B"))
+        assestati()
+
+        segnaOffline(3)
+
+        assertEquals("tre tocchi nuovi in coda", 3, viewModel.pendingCount.value)
+        assertEquals("le rifiutate restano due, separate", 2, viewModel.rifiutati.value)
+        assertEquals(2, coda.rifiutateSize)
+        assertEquals("il quadrante mostra telefono piu' coda nuova", "40", viewModel.scoreState.value?.side1Primary)
+
+        viewModel.flushPending()
+        assestati()
+
+        val nuovo = batchSpediti()[1]
+        assertNotEquals("un blocco nuovo, con un'identita' nuova", idDi(primo), idDi(nuovo))
+        assertEquals("0", nuovo.getString(WearConstants.KEY_BATCH_BASE))
+        assertEquals("partita-B", nuovo.getString(WearConstants.KEY_MATCH_UUID))
+        assertEquals(
+            "solo i tre nuovi, non le rifiutate",
+            3,
+            nuovo
+                .getString(WearConstants.KEY_INTENT_BATCH)
+                .orEmpty()
+                .split(WearConstants.BATCH_SEPARATOR)
+                .size,
+        )
+    }
+
+    /** D2: SCARTA butta solo le rifiutate, la coda nuova resta e si spedisce. */
+    @Test
+    fun `scartare dopo un rifiuto butta solo le rifiutate e lascia la coda nuova`() {
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        viewModel.onBatchNack(idDi(batchSpediti().single()), WearConstants.NACK_REJECTED)
+        segnaOffline(3)
+
+        viewModel.scartaCoda()
+        assestati()
+
+        assertEquals(0, viewModel.rifiutati.value)
+        assertEquals(0, coda.rifiutateSize)
+        assertEquals("la coda nuova non si tocca", 3, coda.size)
+        assertEquals(3, viewModel.pendingCount.value)
     }
 
     @Test
@@ -511,10 +851,16 @@ class ArretratoDelPoloTest {
         viewModel.flushPending(collegatoDiNuovo = true)
         assestati()
 
-        assertNotEquals(
-            "con la base nuova il telefono applicherebbe a una partita che non e' la sua",
-            "0",
-            batchSpediti().single().getString(WearConstants.KEY_BATCH_BASE),
-        )
+        // Lo stato dal vivo ha gia' rimandato la coda (D3) e il collegamento di nuovo la rimanda ancora:
+        // in ogni tentativo la base e' quella della partita in cui la coda e' nata.
+        val inviati = batchSpediti()
+        assertTrue("almeno un invio", inviati.isNotEmpty())
+        inviati.forEach {
+            assertNotEquals(
+                "con la base nuova il telefono applicherebbe a una partita che non e' la sua",
+                "0",
+                it.getString(WearConstants.KEY_BATCH_BASE),
+            )
+        }
     }
 }

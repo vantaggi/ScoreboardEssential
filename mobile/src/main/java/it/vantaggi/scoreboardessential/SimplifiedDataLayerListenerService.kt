@@ -347,6 +347,9 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                     if (dataMap.containsKey(WearConstants.KEY_BATCH_BASE)) {
                         putExtra(WearConstants.KEY_BATCH_BASE, dataMap.getString(WearConstants.KEY_BATCH_BASE, ""))
                     }
+                    if (dataMap.containsKey(WearConstants.KEY_MATCH_UUID)) {
+                        putExtra(WearConstants.KEY_MATCH_UUID, dataMap.getString(WearConstants.KEY_MATCH_UUID, ""))
+                    }
                     putExtra(EXTRA_NODE_ID, sourceNodeId)
                 },
             )

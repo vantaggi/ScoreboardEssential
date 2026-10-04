@@ -303,7 +303,28 @@ class ProtocolloV2DelTelefonoTest {
         with(ricevuti.single()) {
             assertEquals(0L, getLongExtra(WearConstants.KEY_BATCH_ID, 0L))
             assertEquals(null, getStringExtra(WearConstants.KEY_BATCH_BASE))
+            assertEquals("senza uuid il ViewModel non controlla l'identita'", null, getStringExtra(WearConstants.KEY_MATCH_UUID))
         }
+    }
+
+    /** L5 D1: l'identita' della partita su cui l'orologio ha calcolato arriva al ViewModel. */
+    @Test
+    fun `il batch inoltrato porta l'identita' della partita`() {
+        consegna(
+            messaggio(
+                nodoA,
+                WearConstants.MSG_INTENT_BATCH,
+                DataMap().apply {
+                    putString(WearConstants.KEY_INTENT_BATCH, "point,1,1")
+                    putLong(WearConstants.KEY_SEQ, 3L)
+                    putLong(WearConstants.KEY_BATCH_ID, 902L)
+                    putString(WearConstants.KEY_BATCH_BASE, "0")
+                    putString(WearConstants.KEY_MATCH_UUID, "partita-A")
+                },
+            ),
+        )
+
+        assertEquals("partita-A", ricevuti.single().getStringExtra(WearConstants.KEY_MATCH_UUID))
     }
 
     /** Rilievo 2: l'app chiusa non deve consumare la sequenza, o il rinvio verrebbe scartato come "gia' visto". */

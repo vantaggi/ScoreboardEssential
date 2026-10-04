@@ -347,6 +347,7 @@ class MainViewModel(
                             // Assente (null) = orologio non aggiornato: vale la regola di prima, registro vuoto.
                             base = intent.getStringExtra(WearConstants.KEY_BATCH_BASE),
                             nodo = intent.getStringExtra(SimplifiedDataLayerListenerService.EXTRA_NODE_ID),
+                            uuidPartita = intent.getStringExtra(WearConstants.KEY_MATCH_UUID),
                         )
                     }
 
@@ -1057,6 +1058,7 @@ class MainViewModel(
         val scegliibili = SportRegistry.selectable()
         val partitaIniziata = engine.log.isNotEmpty()
         val registro = MatchLogCodec.encode(engine.log)
+        val uuidDellaPartita = matchUuid.orEmpty()
         viewModelScope.launch {
             val data =
                 mapOf(
@@ -1092,6 +1094,9 @@ class MainViewModel(
                     // L'ultimo arretrato applicato: se l'ack si perde, il polso toglie le voci dalla
                     // coda da qui. 0 se non ne e' mai entrato uno.
                     WearConstants.KEY_LAST_BATCH_ID to sharedPreferences.getLong(PREF_BATCH_APPLICATO_ULTIMO, 0L),
+                    // L'identita' della partita: il polso la porta nel batch, e il telefono accoda
+                    // solo se e' la stessa. Vuota finche' la partita non ha il suo uuid (col primo punto).
+                    WearConstants.KEY_MATCH_UUID to uuidDellaPartita,
                 )
             connectionManager.sendData(
                 path = WearConstants.PATH_STATE_V2,
@@ -1382,12 +1387,14 @@ class MainViewModel(
      * quegli orari: una partita giocata alle 18 e consegnata alle 20 resta una partita delle 18,
      * quindi durata, serie e tempi esportati restano quelli veri.
      *
-     * SI APPLICA SOLO SULLA PARTITA SU CUI L'OROLOGIO HA CALCOLATO ([base]: l'impronta del registro
-     * che il polso vedeva). Prima era "solo a registro vuoto", e una partita cominciata col telefono
-     * -- il caso per cui il calcolo offline esiste -- veniva sempre rifiutata (L5). Con la base, un
-     * registro uguale accoda; uno diverso e' un'altra partita, e fondere due registri sarebbe una
-     * scelta arbitraria fatta al posto dell'utente: non si applica e lo si dice all'orologio con un
-     * NACK definitivo, che l'arretrato non lo rimandi in silenzio alla partita dopo.
+     * SI APPLICA SOLO SULLA PARTITA SU CUI L'OROLOGIO HA CALCOLATO: la stessa partita ([uuidPartita]) e
+     * un registro che INIZIA con quello che il polso vedeva ([base]: l'impronta dei primi n eventi).
+     * Prima era "solo a registro vuoto", e una partita cominciata col telefono -- il caso per cui il
+     * calcolo offline esiste -- veniva sempre rifiutata (L5); poi "registro identico", e i tocchi dal
+     * vivo arrivati prima dell'arretrato lo facevano rifiutare. Con il prefisso l'arretrato va in
+     * coda DOPO di loro; un'altra partita, o un registro riscritto, e' un'altra cosa, e fondere due
+     * registri sarebbe una scelta arbitraria fatta al posto dell'utente: non si applica e lo si dice
+     * all'orologio con un NACK definitivo, che l'arretrato non lo rimandi in silenzio alla partita dopo.
      *
      * Si risponde SEMPRE: ack se applicato, o gia' applicato (stesso [batchId] per nodo: l'ack si era
      * perso e il polso ha rinviato), NACK altrimenti. [batchId] vale 0 da un orologio non aggiornato,
@@ -1399,6 +1406,7 @@ class MainViewModel(
         batchId: Long = 0L,
         base: String? = null,
         nodo: String? = null,
+        uuidPartita: String? = null,
     ) {
         if (batch.isBlank() || seq <= 0L) return
         // Gia' dentro: l'ack si e' perso e il polso ha rinviato lo stesso blocco. Riapplicarlo
@@ -1407,13 +1415,16 @@ class MainViewModel(
             rispondiAlBatch(WearConstants.MSG_BATCH_ACK, seq, batchId)
             return
         }
-        // La base e' il registro su cui il polso ha calcolato (impronta): uguale al mio, e' la stessa
-        // partita e l'arretrato si accoda; diversa, e' un'altra e si rifiuta con un NACK definitivo,
-        // perche' il polso non la rimandi in silenzio alla partita dopo (L5). Senza base (orologio
-        // non aggiornato) vale la regola di prima: solo a registro vuoto.
+        // La base e' (a) l'identita' della partita e (b) il prefisso del registro su cui il polso ha
+        // calcolato: se la partita e' la stessa e il mio registro INIZIA con quel prefisso, l'arretrato
+        // si accoda, anche dopo tocchi dal vivo arrivati prima di lui. Un'altra partita, o un registro
+        // riscritto (un annulla sul telefono), e' un rifiuto definitivo con un NACK, perche' il polso
+        // non la rimandi in silenzio alla partita dopo (L5). Senza base (orologio non aggiornato)
+        // vale la regola di prima: solo a registro vuoto. Senza uuid nel batch (partita non ancora
+        // cominciata, o orologio che non lo manda) l'identita' non si controlla.
         val baseCoincide =
             if (base != null) {
-                base == MatchLogCodec.impronta(MatchLogCodec.encode(engine.log))
+                (uuidPartita.isNullOrEmpty() || uuidPartita == matchUuid) && MatchLogCodec.iniziaCon(engine.log, base)
             } else {
                 engine.log.isEmpty()
             }

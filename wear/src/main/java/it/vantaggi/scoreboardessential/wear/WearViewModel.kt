@@ -22,6 +22,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.abs
 
@@ -74,6 +76,11 @@ data class WearScoreState(
      * il polso capisce di poter togliere le voci dalla coda. 0 da un telefono che non lo manda.
      */
     val lastBatchId: Long = 0L,
+    /**
+     * L'identita' della partita del telefono (L5): vuota se non ne ha ancora una o se il telefono non
+     * la manda. La coda la ricorda quando nasce, e il batch la rimanda.
+     */
+    val matchUuid: String = "",
 ) {
     companion object {
         private const val TAG = "WearScoreState"
@@ -115,6 +122,7 @@ data class WearScoreState(
                 servingSide = dataMap.getInt(WearConstants.KEY_SERVING_SIDE, 0),
                 servingSlot = dataMap.getInt(WearConstants.KEY_SERVING_SLOT, 0),
                 lastBatchId = idDelBatch(dataMap),
+                matchUuid = dataMap.getString(WearConstants.KEY_MATCH_UUID, ""),
             )
         }
 
@@ -238,19 +246,33 @@ class WearViewModel(
 
     private var timeoutBatchJob: Job? = null
 
+    /**
+     * Il blocco confermato dall'ack il cui stato (quello che porta il suo id) non e' ancora arrivato:
+     * quando arriva, le sue voci non sono la conferma di un tocco dal vivo (D6).
+     */
+    private var bloccoSenzaStato: PendingIntents.BatchInVolo? = null
+
+    /**
+     * Un invio alla volta (L5, D5): intenzioni, chiusura, cambio sport e arretrato. Ogni invio prende
+     * la sequenza al momento del gesto, ma parte in una coroutine sua: senza un turno, due tocchi
+     * ravvicinati andavano in parallelo e potevano arrivare invertiti, e il telefono scarta cio' che
+     * non supera l'ultima sequenza vista. Il Mutex e' equo (chi aspetta parte nell'ordine in cui e'
+     * arrivato) e copre tutta la sendMessage, non solo l'avvio.
+     */
+    private val invii = Mutex()
+
     /** Un arretrato in volo che non e' scaduto: finche' c'e', non se ne spedisce un altro e lo schermo non si ridisegna. */
     private fun batchAttivo(): Boolean = batchInVolo != null && batchInVoloDal != null
 
-    /**
-     * Il telefono ha rifiutato la coda (NACK definitivo): non si rimanda piu' da sola, e la riga dice
-     * "n RIFIUTATI" finche' l'utente non la scarta dal menu ([scartaCoda]). Anche la copia su disco,
-     * perche' un ViewModel nuovo non deve rimandarla alla partita dopo.
-     */
-    private var codaRifiutata = false
-
     private val _rifiutati = MutableStateFlow(0)
 
-    /** Quanti tocchi in coda il telefono ha rifiutato; 0 se la coda non e' rifiutata. */
+    /**
+     * Quanti tocchi il telefono ha rifiutato (NACK definitivo); 0 se non ne ha rifiutati. Stanno da
+     * parte, su disco ([PendingIntents.rifiutate]): non si rimandano mai da soli, nemmeno alla
+     * partita dopo, e la riga dice "n RIFIUTATI" finche' l'utente non li scarta dal menu
+     * ([scartaCoda]). I tocchi nuovi non li raggiungono: aprono una coda nuova, che si calcola, si
+     * mostra e si spedisce normalmente.
+     */
     val rifiutati = _rifiutati.asStateFlow()
 
     /**
@@ -499,7 +521,7 @@ class WearViewModel(
                     putLong(WearConstants.KEY_SEQ, seq)
                     putLong(WearConstants.KEY_AT_MILLIS, quando)
                 }
-            if (!connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())) {
+            if (!invii.withLock { connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray()) }) {
                 chiusuraInAttesa = false
                 chiusuraJob?.cancel()
                 triggerFailureVibration()
@@ -734,6 +756,8 @@ class WearViewModel(
         // ha avuto bisogno di arrivare (L5, ack perso). Dopo chiudiRicevute: lo stato dell'arretrato
         // non e' la conferma di un tocco dal vivo, e finche' batchInVolo c'e' non la chiude.
         batchInVolo?.takeIf { state.lastBatchId > 0L && state.lastBatchId == it.id }?.let { batchApplicato(it) }
+        // L'ack e' arrivato prima di questo stato: ora si sa il registro dopo il blocco (D4).
+        risolviBaseDopo(state)
         when {
             batchAttivo() -> Unit
             pending.size > 0 && rebuildLocalState() -> Unit
@@ -748,6 +772,10 @@ class WearViewModel(
         }
         // Lo stato puo' restare identico mentre l'ora cambia: il collector non se ne accorgerebbe.
         ricalcolaFiducia()
+        // Un telefono che parla adesso e' raggiungibile, e una coda senza un tentativo vivo (un NACK
+        // passeggero, un tentativo scaduto, voci rimaste dopo un blocco) non ha altro da aspettare:
+        // connectionState e' uno StateFlow e non rimette Connected se lo era gia' (L5, D3).
+        if (dalVivo && pending.size > 0 && !batchAttivo()) flushPending()
     }
 
     /**
@@ -786,10 +814,18 @@ class WearViewModel(
      * non chiude nessuna ricevuta.
      */
     private fun chiudiRicevute(state: WearScoreState) {
-        val registro = lunghezzaRegistro(state)
+        // D6: lo stato che porta l'arretrato applicato, arrivato DOPO la sua conferma (l'ack e lo stato
+        // viaggiano separati, e uno stato in ritardo e' normale), allunga il registro delle voci del
+        // blocco: non e' la conferma di un tocco dal vivo segnato nel frattempo. Le voci del blocco si
+        // tolgono dalla distanza, una volta sola, e le ricevute aperte ripartono dal registro vero.
+        val delBlocco = bloccoSenzaStato?.takeIf { state.lastBatchId == it.id }?.quante ?: 0
+        if (delBlocco > 0) bloccoSenzaStato = null
+        val reale = lunghezzaRegistro(state)
         val piuVecchia = ricevute.firstOrNull()
-        if (registro != null && piuVecchia != null && !batchAttivo()) {
+        if (reale != null && piuVecchia != null && !batchAttivo()) {
+            val registro = reale - delBlocco
             val distanza = abs(registro - piuVecchia.registroBase)
+            if (distanza == 0 && delBlocco > 0) ricevute.forEach { it.registroBase = reale }
             if (distanza > 0) {
                 // Il registro e' CRESCIUTO: un gol ha allungato la lista. Se si e' accorciato e'
                 // stato un annullamento (del telefono, di solito) e non c'e' un gol da attribuire.
@@ -798,7 +834,7 @@ class WearViewModel(
                 repeat(minOf(distanza, ricevute.size)) {
                     chiuse += ricevute.removeFirst().also { it.scadenza?.cancel() }
                 }
-                ricevute.forEach { it.registroBase = registro }
+                ricevute.forEach { it.registroBase = reale }
                 val ultima = chiuse.last()
                 // Piu' di una insieme: suona l'ultima, la prima verrebbe tagliata subito.
                 suonaDopoIlTick(ultima.tickAlle, patternConferma(ultima))
@@ -1103,9 +1139,8 @@ class WearViewModel(
      * orologio di partita al polso per un valore che qui nessuno legge.
      */
     private fun rebuildLocalState(): Boolean {
-        // Una coda che il telefono ha rifiutato non e' piu' un conto da mostrare: e' di un'altra
-        // partita, e sommarla a quella del telefono mescolerebbe i due punteggi.
-        if (codaRifiutata) return false
+        // Solo la coda viva: i tocchi che il telefono ha rifiutato sono di un'altra partita e stanno
+        // da parte, sommarli a quella del telefono mescolerebbe i due punteggi.
         val base = statoDalTelefono ?: return false
         // Senza sport non si puo' calcolare niente: succede con un telefono che parla una bozza
         // precedente del v2. Si dice di no, e chi ha chiesto mostrera' l'ultimo dato vero invece
@@ -1159,12 +1194,11 @@ class WearViewModel(
             ricalcolaFiducia()
         }
         _pendingCount.value = pending.size
-        // L'identita' dell'arretrato e il rifiuto stanno su disco con la coda (L5): un ViewModel
-        // nuovo li ritrova. Un tentativo di una vita precedente non ha un orario: e' scaduto, e il
-        // prossimo flush lo rimanda con lo stesso id.
+        // L'identita' dell'arretrato e i tocchi rifiutati stanno su disco (L5): un ViewModel nuovo li
+        // ritrova. Un tentativo di una vita precedente non ha un orario: e' scaduto, e il prossimo
+        // flush lo rimanda con lo stesso id.
         if (batchInVolo == null) batchInVolo = pending.batchInVolo()
-        codaRifiutata = pending.rifiutata && pending.size > 0
-        _rifiutati.value = if (codaRifiutata) pending.size else 0
+        _rifiutati.value = pending.rifiutateSize
         // Un orologio riacceso a meta' partita, col telefono in borsa, deve ritrovare il
         // punteggio che aveva: non basta sapere quanti tocchi sono in coda.
         if (pending.size == 0) return
@@ -1188,10 +1222,10 @@ class WearViewModel(
      * `quante` voci, e il telefono lo riconosce se l'ha gia' applicato. Porta anche la base, cioe'
      * il registro del telefono su cui il polso ha calcolato quello che mostra: su un'altra partita
      * il telefono rifiuta con un NACK, e la coda non si applica mai in silenzio a una partita nuova.
-     * Una coda rifiutata non riparte da sola: la scarta l'utente.
+     * I tocchi che il telefono ha rifiutato stanno da parte e non ripartono mai da soli: li scarta
+     * l'utente. Quelli nuovi sono una coda nuova, e partono.
      */
     fun flushPending(collegatoDiNuovo: Boolean = false) {
-        if (codaRifiutata) return
         // Il disco e' la verita': ad app chiusa il servizio puo' aver tolto il blocco da solo, e un
         // id vecchio sulle voci segnate dopo le farebbe passare per gia' applicate.
         batchInVolo = pending.batchInVolo()
@@ -1202,6 +1236,9 @@ class WearViewModel(
         if (batchAttivo()) return
         val voci = pending.all()
         if (voci.isEmpty()) return
+        // Le voci rimaste dopo un blocco aspettano di sapere il registro dopo di lui (D4): senza,
+        // la base sarebbe quella di adesso, e un telefono passato a un'altra partita le applicherebbe.
+        if (!risolviBaseDopo(statoDalTelefono)) return
         val blocco =
             batchInVolo ?: PendingIntents.BatchInVolo(id = ++intentSequence, quante = voci.size).also { pending.segnaBatchInVolo(it) }
         // Un rinvio manda lo STESSO blocco: le voci segnate dopo il primo invio vanno nel prossimo.
@@ -1218,7 +1255,12 @@ class WearViewModel(
         // La base e' quella su cui la coda e' NATA (salvata con lei), non quella di adesso: se nel
         // frattempo il telefono e' passato a un'altra partita, i tocchi non le appartengono, e il
         // rinvio deve dirlo invece di prendere la base nuova e applicarli in silenzio.
-        val base = pending.base ?: improntaDelRegistroVisto().also { pending.base = it }
+        val base =
+            pending.base ?: improntaDelRegistroVisto().also {
+                pending.base = it
+                pending.partita = statoDalTelefono?.matchUuid.orEmpty()
+            }
+        val partita = pending.partita.orEmpty()
         armaTimeoutBatch(blocco)
         viewModelScope.launch {
             val payload =
@@ -1233,8 +1275,9 @@ class WearViewModel(
                     putLong(WearConstants.KEY_SEQ, seq)
                     putLong(WearConstants.KEY_BATCH_ID, blocco.id)
                     putString(WearConstants.KEY_BATCH_BASE, base)
+                    putString(WearConstants.KEY_MATCH_UUID, partita)
                 }
-            if (!connectionManager.sendMessage(WearConstants.MSG_INTENT_BATCH, payload.toByteArray())) {
+            if (!invii.withLock { connectionManager.sendMessage(WearConstants.MSG_INTENT_BATCH, payload.toByteArray()) }) {
                 // Non e' partito: il tentativo e' scaduto subito, si riprova al prossimo collegamento
                 // con una sequenza nuova e lo stesso id.
                 scadeBatch(blocco)
@@ -1243,8 +1286,24 @@ class WearViewModel(
     }
 
     /** L'impronta del registro del telefono che il polso ha sotto gli occhi: "0" se non ne ha visto uno. */
-    private fun improntaDelRegistroVisto(): String =
-        statoDalTelefono?.eventLog?.takeIf { it.isNotEmpty() }?.let { MatchLogCodec.impronta(it) } ?: "0"
+    private fun improntaDelRegistroVisto(): String = improntaDi(statoDalTelefono)
+
+    private fun improntaDi(stato: WearScoreState?): String =
+        stato?.eventLog?.takeIf { it.isNotEmpty() }?.let { MatchLogCodec.impronta(it) } ?: "0"
+
+    /**
+     * La base delle voci rimaste dopo la conferma di un blocco (D4) e' lo stato del telefono che lo
+     * contiene: quello con l'id del blocco come ultimo applicato (lo manda sempre, anche dopo, finche'
+     * non ne entra un altro). Uno stato precedente non va bene: e' il registro di prima del blocco.
+     * Ritorna `true` se non c'e' piu' niente da risolvere.
+     */
+    private fun risolviBaseDopo(stato: WearScoreState?): Boolean {
+        val attesa = pending.baseDopoDi()
+        if (attesa == 0L) return true
+        if (stato == null || stato.lastBatchId != attesa) return false
+        pending.risolviBaseDopo(improntaDi(stato), stato.matchUuid)
+        return true
+    }
 
     private fun armaTimeoutBatch(blocco: PendingIntents.BatchInVolo) {
         timeoutBatchJob?.cancel()
@@ -1276,15 +1335,29 @@ class WearViewModel(
     /**
      * Il telefono ha applicato l'arretrato [blocco], lo dica l'ack o lo stato col suo id: le sue voci
      * escono dalla coda (la copia su disco, idempotente: se ha gia' provveduto il servizio ad app
-     * chiusa, non c'e' piu' niente da togliere), e il rifiuto, se c'era, non vale piu'.
+     * chiusa, non c'e' piu' niente da togliere). I tocchi rifiutati di un'altra partita non c'entrano:
+     * restano da parte finche' l'utente non li scarta.
      */
-    private fun batchApplicato(blocco: PendingIntents.BatchInVolo) {
-        pending.confermaBatch(blocco.id)
+    private fun batchApplicato(
+        blocco: PendingIntents.BatchInVolo,
+        telefonoConId: Boolean = true,
+    ) {
+        // Le voci rimaste prendono come base il registro DOPO il blocco: lo stato del telefono che lo
+        // contiene, se e' gia' arrivato (D4). Altrimenti la base resta da risolvere (risolviBaseDopo).
+        // Un telefono che l'id non lo manda non ha uno stato che lo dica, e la sua base non la controlla:
+        // le voci tengono quella della coda, e non aspettano uno stato che non arrivera'.
+        val dopo = statoDalTelefono?.takeIf { it.lastBatchId == blocco.id }
+        // Il suo stato non e' ancora arrivato: quando arrivera' non dovra' passare per la conferma di un
+        // tocco dal vivo (D6, vedi chiudiRicevute).
+        bloccoSenzaStato = blocco.takeIf { dopo == null && telefonoConId }
+        when {
+            dopo != null -> pending.confermaBatch(blocco.id, improntaDi(dopo), dopo.matchUuid)
+            !telefonoConId -> pending.confermaBatch(blocco.id, pending.base, pending.partita)
+            else -> pending.confermaBatch(blocco.id)
+        }
         batchInVolo = null
         batchInVoloDal = null
         timeoutBatchJob?.cancel()
-        codaRifiutata = false
-        _rifiutati.value = 0
         _pendingCount.value = pending.size
         mostraTransitorio(Transitorio.Consegnati(blocco.quante))
     }
@@ -1300,11 +1373,13 @@ class WearViewModel(
         val inVolo = batchInVolo ?: return
         // Con l'id si riconosce anche l'ack di un tentativo precedente (stesso blocco, altra seq).
         if (if (batchId > 0L) batchId != inVolo.id else seq != seqUltimoBatch) return
-        batchApplicato(inVolo)
+        batchApplicato(inVolo, telefonoConId = batchId > 0L)
         // Coda vuota: l'autorita' torna al telefono, e a schermo va cio' che ha mandato per ultimo.
         if (pending.size == 0 || !rebuildLocalState()) {
             statoDalTelefono?.let { _scoreState.value = it }
         }
+        // Le voci segnate mentre il blocco era in volo non hanno altro da aspettare: partono ora (D3).
+        if (pending.size > 0) flushPending()
     }
 
     /**
@@ -1312,9 +1387,11 @@ class WearViewModel(
      *
      * Passeggero: nessuno ha applicato (app chiusa sul telefono), il tentativo scade e il blocco si
      * rimanda al prossimo collegamento con lo stesso id. Definitivo: la partita del telefono non e'
-     * quella su cui la coda e' nata (la base e' salvata con lei e non cambia). La coda si ferma e la
-     * riga dice "n RIFIUTATI" finche' l'utente non la scarta dal menu: mai applicata in silenzio
-     * alla partita dopo, ne' rimandata da un ViewModel nuovo.
+     * quella su cui la coda e' nata (la base e' salvata con lei e non cambia). La coda passa fra i
+     * tocchi rifiutati, da parte: la riga dice "n RIFIUTATI" finche' l'utente non li scarta dal menu,
+     * e non si applicano mai in silenzio alla partita dopo ne' si rimandano da un ViewModel nuovo. I
+     * tocchi segnati da qui in poi aprono una coda nuova, con la base del registro che il polso vede
+     * adesso.
      */
     fun onBatchNack(
         batchId: Long,
@@ -1324,31 +1401,27 @@ class WearViewModel(
         if (batchId > 0L && batchId != inVolo.id) return
         scadeBatch(inVolo)
         if (motivo != WearConstants.NACK_REJECTED) return
-        pending.rifiutata = true
-        codaRifiutata = true
-        _rifiutati.value = pending.size
+        pending.rifiutaCoda()
+        batchInVolo = null
+        batchInVoloDal = null
+        timeoutBatchJob?.cancel()
+        _pendingCount.value = pending.size
+        _rifiutati.value = pending.rifiutateSize
         triggerFailureVibration()
-        // La coda non si mostra piu' come conto locale: a schermo torna quello del telefono.
-        statoDalTelefono?.let { _scoreState.value = it }
+        // La coda rifiutata non si mostra piu' come conto locale: a schermo torna quello del telefono.
+        statoDalTelefono?.let { ridisegna(it) }
         ricalcolaFiducia()
     }
 
     /**
-     * L'utente scarta la coda rifiutata dal telefono (voce SCARTA del menu): le voci, l'identita'
-     * dell'arretrato e il rifiuto escono insieme, e il quadrante torna a mostrare il telefono.
-     * Non fa niente se la coda non e' rifiutata: scartare punti che il telefono potrebbe ancora
-     * accettare sarebbe la perdita che tutto il resto si sforza di evitare.
+     * L'utente scarta i tocchi rifiutati dal telefono (voce SCARTA del menu): escono loro e basta, la
+     * coda nuova resta com'e'. Non fa niente se non ce ne sono: scartare punti che il telefono
+     * potrebbe ancora accettare sarebbe la perdita che tutto il resto si sforza di evitare.
      */
     fun scartaCoda() {
-        if (!codaRifiutata) return
-        pending.scarta()
-        batchInVolo = null
-        batchInVoloDal = null
-        timeoutBatchJob?.cancel()
-        codaRifiutata = false
+        if (pending.rifiutateSize == 0) return
+        pending.scartaRifiutate()
         _rifiutati.value = 0
-        _pendingCount.value = 0
-        statoDalTelefono?.let { _scoreState.value = it }
         ricalcolaFiducia()
     }
 
@@ -1371,7 +1444,7 @@ class WearViewModel(
                     putString(WearConstants.KEY_SPORT_ID, sportId)
                     putLong(WearConstants.KEY_SEQ, seq)
                 }
-            val consegnato = connectionManager.sendMessage(WearConstants.MSG_SPORT_INTENT, payload.toByteArray())
+            val consegnato = invii.withLock { connectionManager.sendMessage(WearConstants.MSG_SPORT_INTENT, payload.toByteArray()) }
             // Consegnato non e' cambiato: la conferma e' lo stato con lo sport chiesto.
             if (consegnato) {
                 apriRicevutaSport(sportId)
@@ -1417,29 +1490,40 @@ class WearViewModel(
                     putLong(WearConstants.KEY_SEQ, seq)
                     putLong(WearConstants.KEY_AT_MILLIS, quando)
                 }
-            val consegnato = connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
-            if (consegnato) {
-                // Consegnato non e' preso: niente vibrazione adesso. La conferma suona quando il
-                // telefono rimanda lo stato, e se non lo rimanda lo dice NON CONFERMATO.
-                ricevuta?.let { avviaScadenza(it) }
-                return@launch
+            // Un invio alla volta, dal controllo della coda alla risposta di sendMessage (L5, D5): due
+            // tocchi ravvicinati partirebbero in parallelo e potrebbero arrivare invertiti, e il
+            // telefono scarta cio' che non supera l'ultima sequenza vista. Il controllo sta DENTRO il
+            // turno: un tocco finito in coda mentre il precedente era in volo lo deve trovare.
+            invii.withLock {
+                // Con una coda non vuota o un arretrato in volo i tocchi nuovi vanno in coda, dietro di
+                // loro: dal vivo arriverebbero PRIMA dell'arretrato e il telefono li applicherebbe fuori
+                // ordine rispetto a quello che il polso mostra.
+                val consegnato =
+                    !(pending.size > 0 || batchAttivo()) &&
+                        connectionManager.sendMessage(WearConstants.MSG_SCORE_INTENT, payload.toByteArray())
+                if (consegnato) {
+                    // Consegnato non e' preso: niente vibrazione adesso. La conferma suona quando il
+                    // telefono rimanda lo stato, e se non lo rimanda lo dice NON CONFERMATO.
+                    ricevuta?.let { avviaScadenza(it) }
+                    return@withLock
+                }
+                // Non consegnato: la ricevuta si toglie senza suonare, vale la coda qui sotto.
+                ricevuta?.let { ricevute.remove(it) }
+                // Non arrivato: si REGISTRA invece di sparire. Il gesto e' cieco -- sullo schermo non
+                // cambia niente -- quindi il polso deve comunque distinguere "preso dal telefono" da
+                // "tenuto da parte", e il conteggio in attesa lo dice a schermo.
+                // La base della coda e' il registro che il polso vede ORA, se la coda nasce con questo tocco.
+                val accodato =
+                    pending.add(PendingIntent(kind, side, quando), improntaDelRegistroVisto(), statoDalTelefono?.matchUuid.orEmpty())
+                _pendingCount.value = pending.size
+                // Il gesto smette di essere cieco: il punteggio a schermo si aggiorna subito, calcolato
+                // qui, e sara' identico a quello che il telefono calcolera' ricevendo la coda.
+                if (accodato) rebuildLocalState()
+                // Tenuto da parte non e' un fallimento -- il punto e' salvo, arrivera' al telefono da
+                // solo -- ma non e' nemmeno la conferma: il tabellone del telefono non si sta muovendo.
+                // Per questo suona la conferma del lato con in fondo un colpo lungo.
+                suonaDopoIlTick(tickAlle, if (accodato) WearPatterns.inCoda(side) else WearPatterns.NON_CONFERMATO)
             }
-            // Non consegnato: la ricevuta si toglie senza suonare, vale la coda qui sotto.
-            ricevuta?.let { ricevute.remove(it) }
-            // Non arrivato: si REGISTRA invece di sparire. Il gesto e' cieco -- sullo schermo non
-            // cambia niente -- quindi il polso deve comunque distinguere "preso dal telefono" da
-            // "tenuto da parte", e il conteggio in attesa lo dice a schermo.
-            // La base della coda e' il registro che il polso vede ORA, se la coda nasce con questo tocco.
-            val accodato = pending.add(PendingIntent(kind, side, quando), improntaDelRegistroVisto())
-            _pendingCount.value = pending.size
-            if (codaRifiutata) _rifiutati.value = pending.size
-            // Il gesto smette di essere cieco: il punteggio a schermo si aggiorna subito, calcolato
-            // qui, e sara' identico a quello che il telefono calcolera' ricevendo la coda.
-            if (accodato) rebuildLocalState()
-            // Tenuto da parte non e' un fallimento -- il punto e' salvo, arrivera' al telefono da
-            // solo -- ma non e' nemmeno la conferma: il tabellone del telefono non si sta muovendo.
-            // Per questo suona la conferma del lato con in fondo un colpo lungo.
-            suonaDopoIlTick(tickAlle, if (accodato) WearPatterns.inCoda(side) else WearPatterns.NON_CONFERMATO)
         }
     }
 
