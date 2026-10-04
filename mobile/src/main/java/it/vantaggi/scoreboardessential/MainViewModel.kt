@@ -528,6 +528,7 @@ class MainViewModel(
         setWatchNotice(null)
         matchUuid = null
         matchStartedAt = null
+        ripresaAlle = null
         _team1Score.value = 0
         _team2Score.value = 0
         _scoreDisplay.value = sportRules.display(engine.state)
@@ -666,6 +667,14 @@ class MainViewModel(
     // li scrive.
     private var matchUuid: String? = null
     private var matchStartedAt: Long? = null
+
+    /**
+     * Quando e' stata ripresa la partita dal database; null se non e' stata ripresa. Dopo il ripristino
+     * l'orologio della partita e' spostato apposta (il tempo ad app chiusa non e' di gioco): un tocco
+     * dato PRIMA di quell'istante, per esempio uno messo da parte dal servizio, non si puo' leggere con
+     * lui, e usciva con un tempo negativo schiacciato a zero ([tempoDiPartita]).
+     */
+    private var ripresaAlle: Long? = null
 
     // DEVE stare sopra init. Il collettore delle impostazioni, lanciato in init, riceve la
     // prima emissione subito e chiama applySport quando lo sport salvato non e' il calcio:
@@ -862,6 +871,7 @@ class MainViewModel(
         // sospeso lo riscriveva dopo, oppure SCARTA non trovava piu' la riga da cancellare.
         matchUuid = null
         matchStartedAt = null
+        ripresaAlle = null
         // Le cifre del telefono leggono scoreDisplay, non i due punteggi di testata: senza questa
         // riga, dopo la chiusura restava il risultato vecchio sopra "nessun gol".
         _scoreDisplay.value = sportRules.display(engine.state)
@@ -1230,7 +1240,11 @@ class MainViewModel(
         if (eventi != null) {
             engine.restoreLog(eventi)
             // Il tempo in cui l'app e' rimasta chiusa non e' tempo di gioco.
-            eventi.lastOrNull()?.atMillis?.let { matchClock.resume(it, System.currentTimeMillis()) }
+            eventi.lastOrNull()?.atMillis?.let {
+                val adesso = System.currentTimeMillis()
+                matchClock.resume(it, adesso)
+                ripresaAlle = adesso
+            }
             val (uno, due) = engine.state.headline()
             // Con value e non postValue: il ripristino gira sul main, e un postValue arriva in un
             // messaggio successivo, DOPO le cifre dei tocchi messi da parte applicati qui sotto da
@@ -1407,8 +1421,8 @@ class MainViewModel(
         batchId: Long = 0L,
         base: String? = null,
         nodo: String? = null,
-        sportId: String? = null,
         uuidPartita: String? = null,
+        sportId: String? = null,
     ) {
         if (batch.isBlank() || seq <= 0L) return
         // Gia' dentro: l'ack si e' perso e il polso ha rinviato lo stesso blocco. Riapplicarlo
@@ -1584,7 +1598,20 @@ class MainViewModel(
     }
 
     /** L'epoch di chi ha generato l'evento; in sua assenza, adesso. */
-    private fun tempoDiPartita(atEpoch: Long?): Long = matchClock.relative(atEpoch ?: System.currentTimeMillis())
+    private fun tempoDiPartita(atEpoch: Long?): Long {
+        val ripresa = ripresaAlle
+        val inizio = matchStartedAt
+        if (atEpoch != null && ripresa != null && inizio != null && atEpoch < ripresa) {
+            // Un tocco dato mentre l'app era chiusa (messo da parte dal servizio): il suo istante e'
+            // relativo all'inizio VERO della partita, non all'orologio spostato dal ripristino. Mai prima
+            // dell'ultimo evento del registro, che e' gia' dentro. Poi l'orologio riparte da qui, o un
+            // tocco dal vivo subito dopo tornerebbe indietro rispetto a questi.
+            val tempo = (atEpoch - inizio).coerceAtLeast(engine.log.lastOrNull()?.atMillis ?: 0L)
+            matchClock.resume(tempo, System.currentTimeMillis())
+            return tempo
+        }
+        return matchClock.relative(atEpoch ?: System.currentTimeMillis())
+    }
 
     fun subtractScore(
         teamId: Int,

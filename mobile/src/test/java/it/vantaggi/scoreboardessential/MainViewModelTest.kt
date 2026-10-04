@@ -2078,6 +2078,62 @@ class MainViewModelTest {
             }
         }
 
+    /**
+     * Visto sugli emulatori: i tocchi messi da parte entravano nel registro col tempo @0 invece del
+     * loro istante ("1|1@0,1@2567,1@5133,2@0,2@0"). Dopo il ripristino l'orologio della partita e'
+     * spostato apposta (il tempo ad app chiusa non e' di gioco), e un tocco di PRIMA del ripristino
+     * veniva letto con un tempo negativo, schiacciato a zero. Ora si calcola dall'inizio vero della
+     * partita (la riga ripresa), e l'orologio riparte da li' per i tocchi dal vivo.
+     */
+    @Test
+    fun `i tocchi messi da parte entrano nel registro col loro istante e non a zero`() =
+        runTest {
+            val db = databaseInMemoria()
+            val svuota = codaDelMain()
+            try {
+                val dao = DaoCheSospende(db.matchDao(), cancelloInsert = CompletableDeferred(Unit), cancelloLettura = CompletableDeferred())
+                val adesso = System.currentTimeMillis()
+                // Una partita cominciata un'ora fa: tre punti, a 0, 2s e 4s dall'inizio.
+                val inizio = adesso - 3_600_000L
+                db.matchDao().insert(
+                    Match(
+                        team1Id = 1,
+                        team2Id = 2,
+                        team1Score = 3,
+                        team2Score = 0,
+                        timestamp = 0L,
+                        isActive = true,
+                        startedAt = inizio,
+                        eventLog =
+                            MatchLogCodec.encode(
+                                listOf(0L, 2_000L, 4_000L).map { LoggedEvent(ScoringEvent.Point(side = 1), it) },
+                            ),
+                    ),
+                )
+                val app = ApplicationProvider.getApplicationContext<Application>()
+                // Due tocchi dati a 60s e a 75s dall'inizio, mentre l'app era chiusa.
+                IntentiInAttesa(app).aggiungi(WearConstants.INTENT_POINT, 2, inizio + 60_000L)
+                IntentiInAttesa(app).aggiungi(WearConstants.INTENT_POINT, 2, inizio + 75_000L)
+
+                viewModel.viewModelScope.cancel()
+                viewModel = creaViewModel(matchDao = dao)
+                iniettaServizio(viewModel)
+                advanceUntilIdle()
+                dao.cancelloLettura.complete(Unit)
+                advanceUntilIdle()
+                svuota()
+
+                assertEquals(
+                    "i tempi veri, non zero",
+                    listOf(0L, 2_000L, 4_000L, 60_000L, 75_000L),
+                    motore().log.map { it.atMillis },
+                )
+            } finally {
+                ArchTaskExecutor.getInstance().setDelegate(null)
+                chiudiDatabase(db)
+            }
+        }
+
     /** Senza una partita da riprendere i tocchi messi da parte aprono la partita, una riga sola. */
     @Test
     fun `senza partita attiva i tocchi messi da parte aprono una riga sola`() =
