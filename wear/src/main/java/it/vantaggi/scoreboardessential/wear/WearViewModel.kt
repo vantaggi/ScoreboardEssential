@@ -247,16 +247,15 @@ class WearViewModel(
     /** Un arretrato in volo che non e' scaduto: finche' c'e', non se ne spedisce un altro e lo schermo non si ridisegna. */
     private fun batchAttivo(): Boolean = batchInVolo != null && batchInVoloDal != null
 
-    /**
-     * Il telefono ha rifiutato la coda (NACK definitivo): non si rimanda piu' da sola, e la riga dice
-     * "n RIFIUTATI" finche' l'utente non la scarta dal menu ([scartaCoda]). Anche la copia su disco,
-     * perche' un ViewModel nuovo non deve rimandarla alla partita dopo.
-     */
-    private var codaRifiutata = false
-
     private val _rifiutati = MutableStateFlow(0)
 
-    /** Quanti tocchi in coda il telefono ha rifiutato; 0 se la coda non e' rifiutata. */
+    /**
+     * Quanti tocchi il telefono ha rifiutato (NACK definitivo); 0 se non ne ha rifiutati. Stanno da
+     * parte, su disco ([PendingIntents.rifiutate]): non si rimandano mai da soli, nemmeno alla
+     * partita dopo, e la riga dice "n RIFIUTATI" finche' l'utente non li scarta dal menu
+     * ([scartaCoda]). I tocchi nuovi non li raggiungono: aprono una coda nuova, che si calcola, si
+     * mostra e si spedisce normalmente.
+     */
     val rifiutati = _rifiutati.asStateFlow()
 
     /**
@@ -1109,9 +1108,8 @@ class WearViewModel(
      * orologio di partita al polso per un valore che qui nessuno legge.
      */
     private fun rebuildLocalState(): Boolean {
-        // Una coda che il telefono ha rifiutato non e' piu' un conto da mostrare: e' di un'altra
-        // partita, e sommarla a quella del telefono mescolerebbe i due punteggi.
-        if (codaRifiutata) return false
+        // Solo la coda viva: i tocchi che il telefono ha rifiutato sono di un'altra partita e stanno
+        // da parte, sommarli a quella del telefono mescolerebbe i due punteggi.
         val base = statoDalTelefono ?: return false
         // Senza sport non si puo' calcolare niente: succede con un telefono che parla una bozza
         // precedente del v2. Si dice di no, e chi ha chiesto mostrera' l'ultimo dato vero invece
@@ -1165,12 +1163,11 @@ class WearViewModel(
             ricalcolaFiducia()
         }
         _pendingCount.value = pending.size
-        // L'identita' dell'arretrato e il rifiuto stanno su disco con la coda (L5): un ViewModel
-        // nuovo li ritrova. Un tentativo di una vita precedente non ha un orario: e' scaduto, e il
-        // prossimo flush lo rimanda con lo stesso id.
+        // L'identita' dell'arretrato e i tocchi rifiutati stanno su disco (L5): un ViewModel nuovo li
+        // ritrova. Un tentativo di una vita precedente non ha un orario: e' scaduto, e il prossimo
+        // flush lo rimanda con lo stesso id.
         if (batchInVolo == null) batchInVolo = pending.batchInVolo()
-        codaRifiutata = pending.rifiutata && pending.size > 0
-        _rifiutati.value = if (codaRifiutata) pending.size else 0
+        _rifiutati.value = pending.rifiutateSize
         // Un orologio riacceso a meta' partita, col telefono in borsa, deve ritrovare il
         // punteggio che aveva: non basta sapere quanti tocchi sono in coda.
         if (pending.size == 0) return
@@ -1194,10 +1191,10 @@ class WearViewModel(
      * `quante` voci, e il telefono lo riconosce se l'ha gia' applicato. Porta anche la base, cioe'
      * il registro del telefono su cui il polso ha calcolato quello che mostra: su un'altra partita
      * il telefono rifiuta con un NACK, e la coda non si applica mai in silenzio a una partita nuova.
-     * Una coda rifiutata non riparte da sola: la scarta l'utente.
+     * I tocchi che il telefono ha rifiutato stanno da parte e non ripartono mai da soli: li scarta
+     * l'utente. Quelli nuovi sono una coda nuova, e partono.
      */
     fun flushPending(collegatoDiNuovo: Boolean = false) {
-        if (codaRifiutata) return
         // Il disco e' la verita': ad app chiusa il servizio puo' aver tolto il blocco da solo, e un
         // id vecchio sulle voci segnate dopo le farebbe passare per gia' applicate.
         batchInVolo = pending.batchInVolo()
@@ -1288,15 +1285,14 @@ class WearViewModel(
     /**
      * Il telefono ha applicato l'arretrato [blocco], lo dica l'ack o lo stato col suo id: le sue voci
      * escono dalla coda (la copia su disco, idempotente: se ha gia' provveduto il servizio ad app
-     * chiusa, non c'e' piu' niente da togliere), e il rifiuto, se c'era, non vale piu'.
+     * chiusa, non c'e' piu' niente da togliere). I tocchi rifiutati di un'altra partita non c'entrano:
+     * restano da parte finche' l'utente non li scarta.
      */
     private fun batchApplicato(blocco: PendingIntents.BatchInVolo) {
         pending.confermaBatch(blocco.id)
         batchInVolo = null
         batchInVoloDal = null
         timeoutBatchJob?.cancel()
-        codaRifiutata = false
-        _rifiutati.value = 0
         _pendingCount.value = pending.size
         mostraTransitorio(Transitorio.Consegnati(blocco.quante))
     }
@@ -1324,9 +1320,11 @@ class WearViewModel(
      *
      * Passeggero: nessuno ha applicato (app chiusa sul telefono), il tentativo scade e il blocco si
      * rimanda al prossimo collegamento con lo stesso id. Definitivo: la partita del telefono non e'
-     * quella su cui la coda e' nata (la base e' salvata con lei e non cambia). La coda si ferma e la
-     * riga dice "n RIFIUTATI" finche' l'utente non la scarta dal menu: mai applicata in silenzio
-     * alla partita dopo, ne' rimandata da un ViewModel nuovo.
+     * quella su cui la coda e' nata (la base e' salvata con lei e non cambia). La coda passa fra i
+     * tocchi rifiutati, da parte: la riga dice "n RIFIUTATI" finche' l'utente non li scarta dal menu,
+     * e non si applicano mai in silenzio alla partita dopo ne' si rimandano da un ViewModel nuovo. I
+     * tocchi segnati da qui in poi aprono una coda nuova, con la base del registro che il polso vede
+     * adesso.
      */
     fun onBatchNack(
         batchId: Long,
@@ -1336,31 +1334,27 @@ class WearViewModel(
         if (batchId > 0L && batchId != inVolo.id) return
         scadeBatch(inVolo)
         if (motivo != WearConstants.NACK_REJECTED) return
-        pending.rifiutata = true
-        codaRifiutata = true
-        _rifiutati.value = pending.size
+        pending.rifiutaCoda()
+        batchInVolo = null
+        batchInVoloDal = null
+        timeoutBatchJob?.cancel()
+        _pendingCount.value = pending.size
+        _rifiutati.value = pending.rifiutateSize
         triggerFailureVibration()
-        // La coda non si mostra piu' come conto locale: a schermo torna quello del telefono.
-        statoDalTelefono?.let { _scoreState.value = it }
+        // La coda rifiutata non si mostra piu' come conto locale: a schermo torna quello del telefono.
+        statoDalTelefono?.let { ridisegna(it) }
         ricalcolaFiducia()
     }
 
     /**
-     * L'utente scarta la coda rifiutata dal telefono (voce SCARTA del menu): le voci, l'identita'
-     * dell'arretrato e il rifiuto escono insieme, e il quadrante torna a mostrare il telefono.
-     * Non fa niente se la coda non e' rifiutata: scartare punti che il telefono potrebbe ancora
-     * accettare sarebbe la perdita che tutto il resto si sforza di evitare.
+     * L'utente scarta i tocchi rifiutati dal telefono (voce SCARTA del menu): escono loro e basta, la
+     * coda nuova resta com'e'. Non fa niente se non ce ne sono: scartare punti che il telefono
+     * potrebbe ancora accettare sarebbe la perdita che tutto il resto si sforza di evitare.
      */
     fun scartaCoda() {
-        if (!codaRifiutata) return
-        pending.scarta()
-        batchInVolo = null
-        batchInVoloDal = null
-        timeoutBatchJob?.cancel()
-        codaRifiutata = false
+        if (pending.rifiutateSize == 0) return
+        pending.scartaRifiutate()
         _rifiutati.value = 0
-        _pendingCount.value = 0
-        statoDalTelefono?.let { _scoreState.value = it }
         ricalcolaFiducia()
     }
 
@@ -1445,7 +1439,6 @@ class WearViewModel(
             val accodato =
                 pending.add(PendingIntent(kind, side, quando), improntaDelRegistroVisto(), statoDalTelefono?.matchUuid.orEmpty())
             _pendingCount.value = pending.size
-            if (codaRifiutata) _rifiutati.value = pending.size
             // Il gesto smette di essere cieco: il punteggio a schermo si aggiorna subito, calcolato
             // qui, e sara' identico a quello che il telefono calcolera' ricevendo la coda.
             if (accodato) rebuildLocalState()

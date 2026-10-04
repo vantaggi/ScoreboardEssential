@@ -473,7 +473,8 @@ class ArretratoDelPoloTest {
 
         assertEquals(2, viewModel.rifiutati.value)
         assertEquals(Frase.Rifiutati(2), viewModel.statoFiducia.value)
-        assertEquals("le voci non si perdono da sole", 2, coda.size)
+        assertEquals("le voci non si perdono da sole: stanno da parte", 2, coda.rifiutateSize)
+        assertEquals("la coda viva e' vuota", 0, coda.size)
         // Ne' al collegamento successivo ne' dopo la morte del processo.
         viewModel.flushPending(collegatoDiNuovo = true)
         viewModel = nuovoViewModel()
@@ -481,7 +482,64 @@ class ArretratoDelPoloTest {
         viewModel.flushPending(collegatoDiNuovo = true)
         assestati()
         assertEquals("nessun rinvio", 1, batchSpediti().size)
-        assertEquals("anche un ViewModel nuovo la dice rifiutata", 2, viewModel.rifiutati.value)
+        assertEquals("anche un ViewModel nuovo le dice rifiutate", 2, viewModel.rifiutati.value)
+    }
+
+    /** D2: dopo un rifiuto i tocchi nuovi non finiscono fra i rifiutati: sono una coda nuova, spedibile. */
+    @Test
+    fun `dopo un NACK definitivo i tocchi nuovi aprono una coda nuova che si calcola e si spedisce`() {
+        viewModel.applyStateV2(stato(registro(3), matchUuid = "partita-A"))
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        val primo = batchSpediti().single()
+        viewModel.onBatchNack(idDi(primo), WearConstants.NACK_REJECTED)
+        assestati()
+        // Il telefono e' su un'altra partita: stato con registro vuoto.
+        viewModel.applyStateV2(stato(registro(0), matchUuid = "partita-B"))
+        assestati()
+
+        segnaOffline(3)
+
+        assertEquals("tre tocchi nuovi in coda", 3, viewModel.pendingCount.value)
+        assertEquals("le rifiutate restano due, separate", 2, viewModel.rifiutati.value)
+        assertEquals(2, coda.rifiutateSize)
+        assertEquals("il quadrante mostra telefono piu' coda nuova", "40", viewModel.scoreState.value?.side1Primary)
+
+        viewModel.flushPending()
+        assestati()
+
+        val nuovo = batchSpediti()[1]
+        assertNotEquals("un blocco nuovo, con un'identita' nuova", idDi(primo), idDi(nuovo))
+        assertEquals("0", nuovo.getString(WearConstants.KEY_BATCH_BASE))
+        assertEquals("partita-B", nuovo.getString(WearConstants.KEY_MATCH_UUID))
+        assertEquals(
+            "solo i tre nuovi, non le rifiutate",
+            3,
+            nuovo
+                .getString(WearConstants.KEY_INTENT_BATCH)
+                .orEmpty()
+                .split(WearConstants.BATCH_SEPARATOR)
+                .size,
+        )
+    }
+
+    /** D2: SCARTA butta solo le rifiutate, la coda nuova resta e si spedisce. */
+    @Test
+    fun `scartare dopo un rifiuto butta solo le rifiutate e lascia la coda nuova`() {
+        segnaOffline(2)
+        viewModel.flushPending()
+        assestati()
+        viewModel.onBatchNack(idDi(batchSpediti().single()), WearConstants.NACK_REJECTED)
+        segnaOffline(3)
+
+        viewModel.scartaCoda()
+        assestati()
+
+        assertEquals(0, viewModel.rifiutati.value)
+        assertEquals(0, coda.rifiutateSize)
+        assertEquals("la coda nuova non si tocca", 3, coda.size)
+        assertEquals(3, viewModel.pendingCount.value)
     }
 
     @Test

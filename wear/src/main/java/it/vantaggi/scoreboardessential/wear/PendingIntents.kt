@@ -43,7 +43,7 @@ class PendingIntents(
         const val CHIAVE = "queue"
         const val CHIAVE_BATCH_ID = "batch_id"
         const val CHIAVE_BATCH_QUANTE = "batch_n"
-        const val CHIAVE_RIFIUTATA = "rifiutata"
+        const val CHIAVE_RIFIUTATE = "rifiutate"
         const val CHIAVE_BASE = "base"
         const val CHIAVE_PARTITA = "partita"
         const val SEP_VOCE = ";"
@@ -61,9 +61,11 @@ class PendingIntents(
 
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    fun all(): List<PendingIntent> =
+    fun all(): List<PendingIntent> = leggi(CHIAVE)
+
+    private fun leggi(chiave: String): List<PendingIntent> =
         prefs
-            .getString(CHIAVE, "")
+            .getString(chiave, "")
             .orEmpty()
             .split(SEP_VOCE)
             .filter { it.isNotBlank() }
@@ -174,7 +176,6 @@ class PendingIntents(
         prefs.edit {
             remove(CHIAVE_BATCH_ID)
             remove(CHIAVE_BATCH_QUANTE)
-            remove(CHIAVE_RIFIUTATA)
             remove(CHIAVE_BASE)
             remove(CHIAVE_PARTITA)
         }
@@ -182,31 +183,41 @@ class PendingIntents(
     }
 
     /**
-     * Il telefono ha detto di no: la sua partita non e' quella su cui la coda e' stata calcolata. Da
-     * qui la coda non si rimanda piu' da sola, nemmeno alla partita dopo: la scarta l'utente.
+     * I tocchi che il telefono ha rifiutato: la sua partita non e' quella su cui la coda era stata
+     * calcolata (L5). Stanno da parte, in una chiave sola loro: non si rimandano mai, nemmeno alla
+     * partita dopo, e non si mischiano ai tocchi nuovi, che aprono una coda nuova con la base del
+     * registro che il polso vede adesso. Li butta l'utente ([scartaRifiutate]).
      */
-    var rifiutata: Boolean
-        get() = prefs.getBoolean(CHIAVE_RIFIUTATA, false)
-        set(valore) = prefs.edit { putBoolean(CHIAVE_RIFIUTATA, valore) }
+    fun rifiutate(): List<PendingIntent> = leggi(CHIAVE_RIFIUTATE)
 
-    /** Butta la coda, l'identita' dell'arretrato e il rifiuto: l'utente ha scelto di scartare. */
-    fun scarta() {
+    val rifiutateSize: Int get() = rifiutate().size
+
+    /**
+     * Il telefono ha detto di no: l'intera coda (le voci del blocco e quelle segnate mentre era in
+     * volo, tutte sulla stessa base) passa fra le rifiutate, e la coda riparte vuota, senza id, base
+     * ne' partita. Si aggiunge a quelle gia' messe da parte: un secondo rifiuto non cancella il primo.
+     */
+    fun rifiutaCoda() {
+        val daParte = rifiutate() + all()
         prefs.edit {
+            putString(CHIAVE_RIFIUTATE, serializza(daParte))
             remove(CHIAVE)
             remove(CHIAVE_BATCH_ID)
             remove(CHIAVE_BATCH_QUANTE)
-            remove(CHIAVE_RIFIUTATA)
             remove(CHIAVE_BASE)
             remove(CHIAVE_PARTITA)
         }
     }
 
+    /** Butta le sole voci rifiutate: l'utente ha scelto di scartarle. La coda nuova non si tocca. */
+    fun scartaRifiutate() {
+        prefs.edit { remove(CHIAVE_RIFIUTATE) }
+    }
+
+    private fun serializza(voci: List<PendingIntent>): String =
+        voci.joinToString(SEP_VOCE) { "${it.kind}$SEP_CAMPO${it.side}$SEP_CAMPO${it.atMillis}" }
+
     private fun scrivi(voci: List<PendingIntent>) {
-        prefs.edit {
-            putString(
-                CHIAVE,
-                voci.joinToString(SEP_VOCE) { "${it.kind}$SEP_CAMPO${it.side}$SEP_CAMPO${it.atMillis}" },
-            )
-        }
+        prefs.edit { putString(CHIAVE, serializza(voci)) }
     }
 }
