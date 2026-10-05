@@ -37,7 +37,9 @@ class MenuPiegaTest {
             risultato = "6–4",
         )
 
-    private fun dp(px: Int): Float = px / RuntimeEnvironment.getApplication().resources.displayMetrics.density
+    private fun metriche() = RuntimeEnvironment.getApplication().resources.displayMetrics
+
+    private fun dp(px: Int): Float = px / metriche().density
 
     /** Il fondo della vista nelle coordinate dell'area visibile dello ScrollView, senza scorrere. */
     private fun fondoVisibile(
@@ -75,7 +77,10 @@ class MenuPiegaTest {
                 "visibile=${visibile}dp card=${dp(prima.height)}dp fondoSottotitolo=${fondoSotto}dp fondoCard=${fondoCard}dp " +
                 "sottotitolo=${sotto.lineCount}righe \"${sotto.text}\"",
         )
-        assertTrue("il sottotitolo \"${sotto.text}\" finisce a ${fondoSotto}dp, l'area visibile e' ${visibile}dp", fondoSotto <= visibile + 0.5f)
+        assertTrue(
+            "il sottotitolo \"${sotto.text}\" finisce a ${fondoSotto}dp, l'area visibile e' ${visibile}dp",
+            fondoSotto <= visibile + 0.5f,
+        )
         if (cardIntera) assertTrue("la card finisce a ${fondoCard}dp, l'area visibile e' ${visibile}dp", fondoCard <= visibile + 0.5f)
     }
 
