@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:text="@string/wear_menu_title"
             android:textColor="@color/stencil_white"
-            android:fontFamily="sans-serif-condensed"
+            android:fontFamily="@font/inter"
             android:textStyle="bold"
             android:textAllCaps="true"
             android:textSize="14sp"

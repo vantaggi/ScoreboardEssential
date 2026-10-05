@@ -206,8 +206,9 @@
         cifre e' il bianco puro; le altre righe lo impostano nel layout.
     -->
     <style name="TextAppearance.App.Game.Score" parent="TextAppearance.Material3.DisplayLarge">
-        <item name="android:fontFamily">sans-serif-condensed</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">@font/jetbrains_mono</item>
+        <item name="android:textFontWeight">800</item>
+        <item name="android:fontFeatureSettings">tnum</item>
         <item name="android:textSize">@dimen/score_text_max</item>
         <item name="android:textColor">@color/ink_white</item>
         <item name="android:letterSpacing">0</item>
