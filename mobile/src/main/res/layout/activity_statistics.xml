@@ -54,7 +54,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:fontFamily="sans-serif-condensed-medium"
+            android:fontFamily="@font/inter"
+            android:textFontWeight="500"
             android:text="@string/stats_empty_title"
             android:textColor="@color/sidewalk_gray"
             android:textSize="20sp" />
@@ -63,7 +64,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:fontFamily="sans-serif-condensed"
+            android:fontFamily="@font/inter"
             android:text="@string/stats_empty_hint"
             android:textColor="@color/sidewalk_gray"
             android:textSize="16sp" />

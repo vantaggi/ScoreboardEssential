@@ -31,7 +31,9 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:textAppearance="?attr/textAppearanceLabelSmall"
-        android:fontFamily="monospace"
+        android:fontFamily="@font/jetbrains_mono"
+        android:fontFeatureSettings="tnum"
+        android:textFontWeight="700"
         android:gravity="start"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"/>

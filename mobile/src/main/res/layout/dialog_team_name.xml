@@ -34,7 +34,7 @@
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="@color/stencil_white"
-            android:fontFamily="sans-serif-condensed" />
+            android:fontFamily="@font/inter" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <!-- Preview del nome con stile -->
@@ -53,7 +53,8 @@
             android:text="@string/team_name_preview"
             android:textSize="28sp"
             android:textColor="@color/concrete_gray"
-            android:fontFamily="sans-serif-black"
+            android:fontFamily="@font/inter"
+            android:textFontWeight="900"
             android:textAllCaps="true" />
     </com.google.android.material.card.MaterialCardView>
 

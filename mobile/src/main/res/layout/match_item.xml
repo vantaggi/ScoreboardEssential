@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
-            android:fontFamily="sans-serif-condensed"
+            android:fontFamily="@font/inter"
             android:letterSpacing="0.12"
             android:textColor="@color/sidewalk_gray"
             android:textSize="12sp"
@@ -50,7 +50,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="start|center_vertical"
                     android:ellipsize="end"
-                    android:fontFamily="sans-serif-condensed"
+                    android:fontFamily="@font/inter"
                     android:maxLines="1"
                     android:paddingHorizontal="8dp"
                     android:paddingVertical="4dp"
@@ -65,11 +65,9 @@
                 android:id="@+id/team1_score_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFeatureSettings="tnum"
-                android:fontFamily="sans-serif-condensed"
+                android:textAppearance="@style/TextAppearance.App.Punteggio"
                 android:textColor="@color/stencil_white"
                 android:textSize="32sp"
-                android:textStyle="bold"
                 tools:text="10" />
         </LinearLayout>
 
@@ -92,7 +90,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="start|center_vertical"
                     android:ellipsize="end"
-                    android:fontFamily="sans-serif-condensed"
+                    android:fontFamily="@font/inter"
                     android:maxLines="1"
                     android:paddingHorizontal="8dp"
                     android:paddingVertical="4dp"
@@ -107,11 +105,9 @@
                 android:id="@+id/team2_score_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFeatureSettings="tnum"
-                android:fontFamily="sans-serif-condensed"
+                android:textAppearance="@style/TextAppearance.App.Punteggio"
                 android:textColor="@color/sidewalk_gray"
                 android:textSize="32sp"
-                android:textStyle="bold"
                 tools:text="8" />
         </LinearLayout>
 
@@ -121,7 +117,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:fontFamily="sans-serif-condensed"
+            android:fontFamily="@font/jetbrains_mono"
+            android:fontFeatureSettings="tnum"
+            android:textFontWeight="700"
             android:textColor="@color/sidewalk_gray"
             android:textSize="14sp"
             android:visibility="gone"
@@ -135,7 +133,7 @@
             android:layout_marginTop="12dp"
             android:textAppearance="?attr/textAppearanceBodyLarge"
             android:textColor="@color/sidewalk_gray"
-            android:fontFamily="sans-serif-condensed"
+            android:fontFamily="@font/inter"
             tools:text="Players: John, Doe, Jane, Smith" />
 
         <!-- Esporta sta accanto a Elimina: i comandi di una partita dello storico stanno sulla sua card. -->

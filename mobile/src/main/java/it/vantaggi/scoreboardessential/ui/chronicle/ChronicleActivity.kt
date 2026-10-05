@@ -20,9 +20,11 @@ import android.widget.TableRow
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.ColorRes
+import androidx.annotation.FontRes
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -45,6 +47,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
+import it.vantaggi.scoreboardessential.shared.R as SharedR
 
 /**
  * La Cronaca di una partita chiusa: la stessa della dashboard di Padel Elite, sui dati del
@@ -175,10 +178,9 @@ class ChronicleActivity : AppCompatActivity() {
             val ink = if (s.ended && s.winnerTeam != side) R.color.sidewalk_gray else R.color.stencil_white
             columns.forEach { (games, tieBreak) ->
                 row.addView(
-                    text(setScore(games[side - 1], tieBreak?.get(side - 1)), ink, size = 24f, bold = true).apply {
+                    text(setScore(games[side - 1], tieBreak?.get(side - 1)), ink, size = 24f, bold = true, score = true).apply {
                         gravity = Gravity.END
                         minWidth = dp(36)
-                        fontFeatureSettings = TABULAR
                     },
                 )
             }
@@ -281,10 +283,9 @@ class ChronicleActivity : AppCompatActivity() {
                 "${g.gamesAfter[0]}-${g.gamesAfter[1]}"
             }
         val shown = if (isBreak) "$label ${getString(R.string.chronicle_break_mark)}" else label
-        return text(shown, size = 14f, bold = true).apply {
+        return text(shown, size = 14f, bold = true, score = true).apply {
             etichettaDiSquadra(paints[g.winner - 1])
             setPadding(dp(8), dp(4), dp(8), dp(4))
-            fontFeatureSettings = TABULAR
             // Il colore non e' l'unico segno di chi ha vinto il game.
             contentDescription =
                 getString(if (isBreak) R.string.chronicle_game_cd_break else R.string.chronicle_game_cd, label, teams[g.winner - 1])
@@ -344,8 +345,8 @@ class ChronicleActivity : AppCompatActivity() {
     ): TableRow =
         serveRow(
             label,
-            text("${line.won}/${line.points}  ${percent(line.won, line.points)}").apply { fontFeatureSettings = TABULAR },
-            text("${line.held}/${line.games}").apply { fontFeatureSettings = TABULAR },
+            text("${line.won}/${line.points}  ${percent(line.won, line.points)}", score = true),
+            text("${line.held}/${line.games}", score = true),
         )
 
     private fun serveRow(vararg cells: View): TableRow =
@@ -386,7 +387,7 @@ class ChronicleActivity : AppCompatActivity() {
         rows.forEach { (label, ms) ->
             val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
             row.addView(text(label, R.color.sidewalk_gray), LinearLayout.LayoutParams(0, WRAP, 1f))
-            row.addView(text(ChronicleText.duration(resources, ms), bold = true).apply { fontFeatureSettings = TABULAR })
+            row.addView(text(ChronicleText.duration(resources, ms), bold = true, score = true))
             body.addView(row, blockParams(top = 2, bottom = 2))
         }
         t.longestGame?.let { g ->
@@ -456,13 +457,26 @@ class ChronicleActivity : AppCompatActivity() {
         @ColorRes ink: Int = R.color.stencil_white,
         size: Float = 14f,
         bold: Boolean = false,
+        score: Boolean = false,
     ): TextView =
         TextView(this).apply {
             text = value
             setTextColor(color(ink))
             textSize = size
-            typeface = Typeface.create(CONDENSED, if (bold) Typeface.BOLD else Typeface.NORMAL)
+            if (score) {
+                // Punteggi e tempi: JetBrains Mono con cifre tabulari, 800 dal corpo 20 in su e 700 sotto.
+                val peso = if (size >= SCORE_HEAVY_FROM_SP) WEIGHT_EXTRABOLD else WEIGHT_BOLD
+                typeface = Typeface.create(font(SharedR.font.jetbrains_mono), peso, false)
+                fontFeatureSettings = TABULAR
+            } else {
+                typeface = Typeface.create(font(SharedR.font.inter), if (bold) WEIGHT_BOLD else WEIGHT_REGULAR, false)
+            }
         }
+
+    /** Il carattere di res/font (modulo shared). Se manca, Typeface.DEFAULT: meglio un testo storto che nessun testo. */
+    private fun font(
+        @FontRes id: Int,
+    ): Typeface = ResourcesCompat.getFont(this, id) ?: Typeface.DEFAULT
 
     private fun badge(fill: Int) =
         MaterialShapeDrawable(ShapeAppearanceModel.builder(this, R.style.ShapeAppearance_App_StreetBadge, 0).build()).apply {
@@ -487,7 +501,10 @@ class ChronicleActivity : AppCompatActivity() {
         const val EXTRA_MATCH_ID = "it.vantaggi.scoreboardessential.extra.MATCH_ID"
         private const val NO_MATCH = -1
         private const val DATE_PATTERN = "dd/MM/yyyy HH:mm"
-        private const val CONDENSED = "sans-serif-condensed"
+        private const val WEIGHT_REGULAR = 400
+        private const val WEIGHT_BOLD = 700
+        private const val WEIGHT_EXTRABOLD = 800
+        private const val SCORE_HEAVY_FROM_SP = 20f
         private const val TABULAR = "tnum"
         private const val SUPERSCRIPT_SIZE = 0.55f
         private const val CHART_HEIGHT_DP = 160
