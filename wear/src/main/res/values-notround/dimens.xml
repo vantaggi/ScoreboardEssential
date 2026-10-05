@@ -15,4 +15,9 @@
 
     <dimen name="scorer_top_inset">6dp</dimen>
     <dimen name="scorer_row_inset">10dp</dimen>
+
+    <!-- Menu e selezione sport: sul quadrato non c'e' cerchio che taglia, le misure restano quelle di sempre. -->
+    <dimen name="menu_box_padding">16dp</dimen>
+    <dimen name="voce_padding_verticale">8dp</dimen>
+    <bool name="voce_rientro_angolo">true</bool>
 </resources>
