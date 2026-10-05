@@ -1514,16 +1514,30 @@ class MainViewModel(
         }
 
         // Il riepilogo dice quanti PUNTI sono entrati: annullamenti e correzioni nell'arretrato
-        // cambiano il motore, ma non sono punti.
-        val punti = voci.count { it.first == WearConstants.INTENT_POINT }
+        // cambiano il motore, ma non sono punti. E contano solo le voci che hanno cambiato il motore:
+        // a partita finita i punti sono inerti, e dire «2 punti entrati» con l'ack sarebbe falso (L7).
+        var punti = 0
+        var cambiate = 0
         // Gli istanti come per i tocchi messi da parte: dopo una ripresa dal DB sono relativi all'inizio VERO
         // della partita, e un tempo non scende mai sotto l'ultimo evento del registro (L5).
         voci.forEach { (tipo, side, quando) ->
+            val prima = engine.log.size
             when (tipo) {
                 WearConstants.INTENT_UNDO -> engine.undo()
                 WearConstants.INTENT_CORRECTION -> engine.apply(ScoringEvent.Correction(side = side), tempoDiPartita(quando))
                 else -> engine.apply(ScoringEvent.Point(side = side), tempoDiPartita(quando))
             }
+            if (engine.log.size != prima) {
+                cambiate++
+                if (tipo == WearConstants.INTENT_POINT) punti++
+            }
+        }
+        // Rifiutato solo se portava punti e non ne e' entrato nessuno: quei punti sono persi e il polso
+        // deve dirlo. Annullamenti o correzioni senza effetto non perdono niente, e l'ack li chiude.
+        if (cambiate == 0 && voci.any { it.first == WearConstants.INTENT_POINT }) {
+            setWatchNotice(WatchNotice.Rejected)
+            rispondiAlBatch(WearConstants.MSG_BATCH_NACK, seq, batchId, WearConstants.NACK_REJECTED)
+            return
         }
 
         // L'id si registra PRIMA di pubblicare: lo stato v2 lo porta, e un ack perso non lascia

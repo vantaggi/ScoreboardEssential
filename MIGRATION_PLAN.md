@@ -2347,7 +2347,14 @@ di companion) a `Wear_OS_Small_Round_Prova`. Prova di fumo: un tocco sul polso a
 
 ## RIPRESA - dopo il 4 ottobre 2026
 
-Chiusi e pubblicati su main: L2, L4, L5, L6, L11, L12, design del telefono passi 5-15, design
+**5 ottobre**: chiuso il residuo di L7 (arretrato a partita finita: conta solo le voci che cambiano il
+motore, NACK se porta punti e non ne entra nessuno), note di chiusura di L7 e L12 in VALIDAZIONE; tolti
+i worktree degli agenti. Suite verde, **1028 test JVM**, strumentati 38 su 38 su `Pixel_9a_Test`. Restano
+sul disco cartelle orfane `wf_*` e `agent-*` in `.claude/worktrees` (non piu' worktree git, lavoro gia'
+unito): da cancellare quando il proprietario lo dice. `recursing-roentgen-93ee09` non e' di questa
+sessione.
+
+Chiusi e pubblicati su main: L1-L12 (L1, L3, L8, L9, L10 a settembre), design del telefono passi 5-15, design
 dell'orologio passi 4-11. Resta in coda solo cio' che aspetta il proprietario:
 - **I4/I5 su Padel Elite**: serve un'autorizzazione esplicita (Padel Elite e' produzione).
 - Prove che chiedono dispositivi veri: caduta del Bluetooth (coda, arretrato, IN CODA), vibrazioni,

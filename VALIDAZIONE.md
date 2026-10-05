@@ -445,6 +445,12 @@ Corretto in parte: 616eab5, solo il lato orologio. incrementScore esce a partita
 
 Nota (7d7de5f, 0ae20f4): la guardia in addRemotePoint c'e' ora, entrata con L3 perche' il punto remoto ha sempre la sua riga; test in MainViewModelTest, rosso senza. Restano aperte le voci inerti in applyWatchBatch.
 
+Nota (5 ottobre 2026): chiuso. Il motore non registra le voci inerti (MatchEngine.apply esce se lo stato
+non cambia), quindi l'arretrato a partita finita non crea righe ne' annullamenti; e applyWatchBatch ora
+conta solo le voci che hanno cambiato il motore: un arretrato con punti di cui non entra nessuno e'
+rifiutato con un NACK (prima diceva «N punti entrati» con l'ack). Test in MainViewModelTest, rosso senza.
+Il difetto alto "NUOVA PARTITA/AZZERA dal polso non separa la coda" citato sotto e' chiuso da L4.
+
 Nota (b505532): la guardia legge `_scoreState`, che resetMatch non tocca (difetto alto "NUOVA PARTITA/AZZERA dal polso non separa la coda", ancora aperto). Dopo un AZZERA dal polso su un padel finito il tocco resta quindi rifiutato finche' il telefono non rimanda uno stato v2 a partita non finita. Collegato, questo succede subito: MATCH_STATE=false porta a endMatch e startNewMatch, che chiama sendStateV2. Offline succede al ritorno del telefono, e fino ad allora i tocchi della partita nuova non vengono registrati. Lasciarli passare li metterebbe in coda insieme alla partita finita, cioe' di nuovo le righe fantasma. Il rifiuto ora vibra da errore, invece di essere silenzioso. Il calcio non e' toccato: il suo matchOver e' sempre falso, lo alza solo RacketRules.
 
 ### [media] Con TalkBack il punteggio dell'orologio non viene letto: la contentDescription fissa del lato prende il posto delle cifre
@@ -464,6 +470,12 @@ Corretto: 616eab5, la descrizione del lato dice nome e punteggio a schermo ("ROS
 **Scenario.** Stima: 'NIENTE TELEFONO - 12 IN ATTESA' misura circa 135-140dp contro circa 128dp disponibili. Con maxLines=1 si leggerebbe 'NIENTE TELEFONO - 12 IN'. Va misurato.
 
 **Rimedio.** Accorciare la stringa, oppure 0dp con ellipsize o autoSize.
+
+Corretto (passo 4 del design dell'orologio, 1 ottobre 2026): la riga E e' StatoFiducia con frasi corte
+(«SCOLLEGATO · 18:42», «n IN CODA», «n NON CONSEGNATI», «IN ATTESA TELEFONO»), larghezza fissa e
+autoSize da 10sp; RigaStatoLarghezzaTest misura con la paint della riga, al minimo dell'autoSize, le
+frasi piu' lunghe in italiano e in inglese contro la larghezza reale sul tondo da 192dp. Verificato
+anche a occhio sui tre AVD del passo 11.
 
 ## L8 Cronometro e portiere
 
@@ -728,6 +740,9 @@ Corretto: de561aa. Statistiche e modifica del giocatore a 48dp con etichetta da 
 Corretto: 419026e. Tolte 12 dimen e report_sets e report_draw, dopo grep su tutti i moduli; UnusedResources passa da 15 segnalazioni a 1 (android_wear_capabilities, falso positivo: la legge Play Services). match_resumed e' ora usata.
 
 ## L12 Rete di test
+
+**Chiuso (1 ottobre 2026, `bd0b6d6`).** I quattro rilievi sono corretti: dettagli e commit in
+MIGRATION_PLAN.md ("L12 e passi 10-11 del telefono chiusi" e la riga di OptimizedWearDataSyncTest).
 
 ### [bassa] Tre test verdi che non possono fallire: annullamento offline, fuga di dati nei log e quattro benchmark senza asserzioni
 

@@ -1775,6 +1775,42 @@ class MainViewModelTest {
             assertEquals(1, MatchLogCodec.decode(registroDelloStato(stati.last()))?.size)
         }
 
+    /**
+     * Residuo di L7: a partita finita il motore ignora i punti, ma il riepilogo diceva «2 punti
+     * entrati» e l'orologio riceveva l'ack. Un arretrato che non cambia niente e' rifiutato.
+     */
+    @Test
+    fun `un arretrato a partita finita non entra e riceve un NACK`() =
+        runTest {
+            kotlinx.coroutines.runBlocking { whenever(mockConnectionManager.sendMessage(any(), any())).thenReturn(true) }
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            advanceUntilIdle()
+            var tocchi = 0
+            while (viewModel.scoreDisplay.value?.matchOver != true && tocchi < 500) {
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                tocchi++
+            }
+            assertEquals(true, viewModel.scoreDisplay.value?.matchOver)
+            val registro = motore().log.size
+
+            val voci =
+                listOf(
+                    voceDiArretrato(WearConstants.INTENT_POINT, 2, 1000),
+                    voceDiArretrato(WearConstants.INTENT_POINT, 2, 2000),
+                ).joinToString(WearConstants.BATCH_SEPARATOR)
+            ricevi(arretratoConBase(voci, 4L, 97L, improntaDelMotore()))
+            advanceUntilIdle()
+
+            assertEquals("il registro non cambia", registro, motore().log.size)
+            assertEquals(WatchNotice.Rejected, viewModel.watchNotice.value)
+            assertEquals(
+                WearConstants.NACK_REJECTED,
+                risposte(WearConstants.MSG_BATCH_NACK).single().getString(WearConstants.KEY_BATCH_NACK_REASON),
+            )
+            assertTrue("nessun ack", risposte(WearConstants.MSG_BATCH_ACK).isEmpty())
+        }
+
     /** L5, sport nel batch (media): un blocco senza voci applicabili non cambia lo sport, risponde NACK. */
     @Test
     fun `un arretrato inapplicabile di un altro sport riceve un NACK e lo sport resta com'e'`() =
