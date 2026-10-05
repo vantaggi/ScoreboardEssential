@@ -6,6 +6,17 @@ lettura in sola lettura di `vantaggi/padel-dashboard` (via `gh api`, nessuna scr
 chiamata a Supabase). Padel Elite resta **produzione**: ogni passo che la tocca e' segnato con
 **[AUTORIZZAZIONE]** e non parte senza un si' esplicito del proprietario.
 
+**Decisioni del proprietario (5 ottobre 2026, sera).** Accettate tutte le proposte del piano: G1
+via lo street dal contorno, G2 lati lime/ciano, G3 Inter e JetBrains Mono (cifre dell'orologio da
+misurare), G4 solo il tema Navy scuro, G5 nome e icona da proporre; E-a casella d'arrivo per tutti i
+membri con conferma di un admin, E-c proposta dei giocatori. Autorizzato il lavoro nel repository
+`padel-dashboard` sul ramo `development` (branch e PR verso `development`; il merge su `main` lo fa
+il proprietario alla fine, dopo le prove). **Non** autorizzati: scritture sul database di produzione
+(la migrazione 64 si prova solo su Supabase locale con `npx supabase start`), creazione di progetti o
+client esterni (Supabase di prova, OAuth Google): per ora l'accesso e' solo email/password. Lavoro
+della dashboard nel clone `PROGETTI/padel-dashboard-claude` (la copia del proprietario
+`PROGETTI/padel` non si tocca).
+
 Tre filoni, in quest'ordine:
 
 1. **Prova sul campo** con Galaxy Watch 8 e Galaxy S26 Ultra: subito, non dipende da niente.
