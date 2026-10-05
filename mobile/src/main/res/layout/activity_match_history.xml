@@ -43,7 +43,7 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?attr/textAppearanceHeadlineMedium"
                 android:textColor="@color/sidewalk_gray"
-                android:fontFamily="sans-serif-condensed"
+                android:fontFamily="@font/inter"
                 tools:text="TOTAL MATCHES: 12" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

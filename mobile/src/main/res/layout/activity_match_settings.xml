@@ -85,7 +85,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Le regole che il motore applica allo sport scelto, composte da SportRegistry. -->
-                <TextView android:id="@+id/sportRulesText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:fontFamily="sans-serif-condensed" android:textColor="@color/sidewalk_gray" android:textSize="14sp" />
+                <TextView android:id="@+id/sportRulesText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:fontFamily="@font/inter" android:textColor="@color/sidewalk_gray" android:textSize="14sp" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

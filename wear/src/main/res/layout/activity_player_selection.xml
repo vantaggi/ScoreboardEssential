@@ -18,7 +18,7 @@
         android:id="@+id/goal_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-condensed"
+        android:fontFamily="@font/inter"
         android:gravity="center"
         android:includeFontPadding="false"
         android:maxLines="1"

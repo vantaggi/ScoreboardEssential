@@ -83,29 +83,98 @@
         <!-- Tutti i dialoghi, anche quelli costruiti senza overlay esplicito. -->
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.App.MaterialAlertDialog</item>
 
-        <!-- Street Vibe Typeface References -->
+        <!--
+            Caratteri (DESIGN.md, G-1): Inter per il testo. Tutta la scala di Material 3 e' ripuntata
+            su Inter qui sotto. Niente android:fontFamily nel tema: la vista lo legge DOPO il suo
+            textAppearance e lo sovrascriverebbe (il punteggio perderebbe JetBrains Mono).
+        -->
         <item name="textAppearanceDisplayLarge">@style/TextAppearance.App.DisplayLarge.Street</item>
+        <item name="textAppearanceDisplayMedium">@style/TextAppearance.App.DisplayMedium</item>
+        <item name="textAppearanceDisplaySmall">@style/TextAppearance.App.DisplaySmall</item>
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.App.HeadlineLarge</item>
         <item name="textAppearanceHeadlineMedium">@style/TextAppearance.App.HeadlineMedium.Street</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.App.HeadlineSmall</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.App.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.App.TitleMedium</item>
+        <item name="textAppearanceTitleSmall">@style/TextAppearance.App.TitleSmall</item>
         <item name="textAppearanceBodyLarge">@style/TextAppearance.App.BodyLarge.Street</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.App.BodyMedium</item>
+        <item name="textAppearanceBodySmall">@style/TextAppearance.App.BodySmall</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.App.LabelLarge</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.App.LabelMedium</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.App.LabelSmall</item>
 
         <!-- Street Vibe Shape References -->
         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.App.StreetCard</item>
         <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.App.StreetButton</item>
     </style>
 
-    <!-- Street Vibe Type and Shape -->
+    <!--
+        Tipografia del contorno (G-1). Inter ovunque c'e' testo: i pesi vengono dai ruoli di M3
+        (textFontWeight), il carattere e' quello di res/font. I tre stili "Street" tengono il nome
+        perche' li citano layout e test; il maiuscolo e la spaziatura sono quelli di prima.
+    -->
     <style name="TextAppearance.App.DisplayLarge.Street" parent="TextAppearance.Material3.DisplayLarge">
-        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:fontFamily">@font/inter</item>
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">0.08</item>
     </style>
     <style name="TextAppearance.App.HeadlineMedium.Street" parent="TextAppearance.Material3.HeadlineMedium">
-        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:fontFamily">@font/inter</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textAllCaps">true</item>
     </style>
     <style name="TextAppearance.App.BodyLarge.Street" parent="TextAppearance.Material3.BodyLarge">
-        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+    <style name="TextAppearance.App.DisplayMedium" parent="TextAppearance.Material3.DisplayMedium">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+    <style name="TextAppearance.App.DisplaySmall" parent="TextAppearance.Material3.DisplaySmall">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+    <style name="TextAppearance.App.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+    <style name="TextAppearance.App.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+    <style name="TextAppearance.App.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+    <style name="TextAppearance.App.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+    <style name="TextAppearance.App.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+    <style name="TextAppearance.App.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+    <style name="TextAppearance.App.BodySmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+    <style name="TextAppearance.App.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+    <style name="TextAppearance.App.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+    <style name="TextAppearance.App.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+
+    <!--
+        Il punteggio del contorno (storico, statistiche, Cronaca, foglio): JetBrains Mono 800 con
+        cifre tabulari, cosi' le colonne di numeri stanno in fila. Il padre e' il TextAppearance
+        di base e non uno di M3: M3 porta con se' un'altezza di riga fissa che taglierebbe un 32sp.
+        Corpo e colore li dice la vista; per un tempo piccolo la vista chiede textFontWeight 700.
+    -->
+    <style name="TextAppearance.App.Punteggio" parent="android:TextAppearance">
+        <item name="android:fontFamily">@font/jetbrains_mono</item>
+        <item name="android:textFontWeight">800</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+        <item name="android:letterSpacing">0</item>
     </style>
 
     <style name="ShapeAppearance.App.StreetCard" parent="ShapeAppearance.Material3.MediumComponent">
@@ -137,8 +206,9 @@
         cifre e' il bianco puro; le altre righe lo impostano nel layout.
     -->
     <style name="TextAppearance.App.Game.Score" parent="TextAppearance.Material3.DisplayLarge">
-        <item name="android:fontFamily">sans-serif-condensed</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">@font/jetbrains_mono</item>
+        <item name="android:textFontWeight">800</item>
+        <item name="android:fontFeatureSettings">tnum</item>
         <item name="android:textSize">@dimen/score_text_max</item>
         <item name="android:textColor">@color/ink_white</item>
         <item name="android:letterSpacing">0</item>
@@ -185,7 +255,7 @@
 
     <!-- Street Vibe Button Text -->
     <style name="TextAppearance.App.Button" parent="TextAppearance.Material3.LabelLarge">
-        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:fontFamily">@font/inter</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:textStyle">bold</item>
     </style>

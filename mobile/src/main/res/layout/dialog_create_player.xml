@@ -36,6 +36,6 @@
         android:text="@string/no_roles_selected"
         android:textAppearance="?attr/textAppearanceBodyMedium"
         android:textColor="@color/sidewalk_gray"
-        android:fontFamily="sans-serif-condensed" />
+        android:fontFamily="@font/inter" />
 
 </LinearLayout>

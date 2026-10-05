@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:textAppearance="?attr/textAppearanceListItem"
         android:textColor="@color/stencil_white"
-        android:fontFamily="sans-serif-condensed"
+        android:fontFamily="@font/inter"
         android:text="Player Name" />
 
     <com.google.android.material.chip.ChipGroup

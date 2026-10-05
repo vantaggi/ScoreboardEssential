@@ -8,5 +8,5 @@
     android:paddingEnd="16dp"
     android:textColor="@color/stencil_white"
     app:buttonTint="@color/graffiti_pink"
-    android:fontFamily="sans-serif-condensed"
+    android:fontFamily="@font/inter"
     android:textAppearance="?attr/textAppearanceBodyLarge" />

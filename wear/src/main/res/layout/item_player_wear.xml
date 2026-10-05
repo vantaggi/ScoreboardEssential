@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:ellipsize="end"
-        android:fontFamily="sans-serif-condensed"
+        android:fontFamily="@font/inter"
         android:includeFontPadding="false"
         android:maxLines="1"
         android:textColor="@color/ink_white"

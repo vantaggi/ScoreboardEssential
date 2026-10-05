@@ -55,7 +55,7 @@
                 android:text="@string/label_roles"
                 android:textAppearance="?attr/textAppearanceHeadlineSmall"
                 android:textColor="@color/sidewalk_gray"
-                android:fontFamily="sans-serif-condensed" />
+                android:fontFamily="@font/inter" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/roles_recycler_view"
