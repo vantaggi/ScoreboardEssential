@@ -15,67 +15,70 @@
         digitato. Cambiare base li sistema tutti in una volta invece di rincorrerli uno per uno.
     -->
     <style name="Theme.ScoreboardEssential" parent="Theme.Material3.Dark.NoActionBar">
-        <!-- Street Vibe Color Palette -->
-        <item name="colorPrimary">@color/graffiti_pink</item>
         <!--
-            Sopra rosa e ciano il testo e' NERO puro. Col bianco sporco dello street il rosa
-            faceva 3,17:1 e il ciano 1,17:1 (icona del FAB giocatori): sotto AA a 14sp. Anche
-            #121212 non basta sul rosa (4,48): l'unico inchiostro che passa e' il nero, 5,02 sul
-            rosa e 13,65 sul ciano.
+            Colori di Padel Elite (DESIGN.md, pista "Coerenza con Padel Elite", G-0). Il lime e' l'unico
+            accento: sopra il lime il testo e' il fondo #0D0D0F (14,9:1), mai il bianco (1,3:1). Il ciano
+            della dashboard vive solo nei grafici e non ha un ruolo qui: un secondo accento nel contorno
+            sarebbe un'invenzione dell'app.
         -->
-        <item name="colorOnPrimary">@color/asphalt_black</item>
-        <item name="colorSecondary">@color/neon_cyan</item>
-        <item name="colorOnSecondary">@color/asphalt_black</item>
-        <item name="colorError">@color/error_red</item>
-        <item name="colorOnError">@color/stencil_white</item>
-        <item name="android:colorBackground">@color/asphalt_dark</item>
-        <item name="colorSurface">@color/concrete_gray</item>
-        <item name="colorOnSurface">@color/stencil_white</item>
-        <item name="colorOnSurfaceVariant">@color/sidewalk_gray</item>
+        <item name="colorPrimary">@color/elite_lime</item>
+        <item name="colorOnPrimary">@color/elite_on_lime</item>
+        <!-- Il secondario e' neutro, come il bottone secondario della dashboard. -->
+        <item name="colorSecondary">@color/elite_text_secondary</item>
+        <item name="colorOnSecondary">@color/elite_background</item>
+        <item name="colorError">@color/elite_error</item>
+        <item name="colorOnError">@color/elite_background</item>
+        <item name="android:colorBackground">@color/elite_background</item>
+        <item name="colorSurface">@color/elite_surface</item>
+        <item name="colorOnSurface">@color/elite_text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/elite_text_secondary</item>
 
         <!--
             Mappatura COMPLETA dei ruoli di Material 3 (DESIGN.md, Contorno: tema e dialoghi).
             Un ruolo lasciato fuori prende il valore base di M3, che e' viola: avatar delle rose,
             sfondo dei dialoghi, bordi dei campi. Qui ogni ruolo ha un token del progetto e il
-            test TemaDelTelefonoTest controlla che nessuno sia viola. Il tema resta solo scuro.
+            test TemaDelTelefonoTest controlla che nessuno sia viola. Il tema resta solo scuro (G4).
         -->
-        <item name="colorOnBackground">@color/stencil_white</item>
-        <item name="colorPrimaryContainer">@color/graffiti_dark_gray</item>
-        <item name="colorOnPrimaryContainer">@color/stencil_white</item>
-        <item name="colorSecondaryContainer">@color/graffiti_dark_gray</item>
-        <item name="colorOnSecondaryContainer">@color/stencil_white</item>
-        <!-- Terzo accento: non esiste nello street, il ruolo segue il grigio chiaro del testo. -->
-        <item name="colorTertiary">@color/stencil_white</item>
-        <item name="colorOnTertiary">@color/asphalt_black</item>
-        <item name="colorTertiaryContainer">@color/graffiti_dark_gray</item>
-        <item name="colorOnTertiaryContainer">@color/stencil_white</item>
-        <item name="colorSurfaceVariant">@color/graffiti_dark_gray</item>
-        <item name="colorSurfaceDim">@color/asphalt_dark</item>
-        <item name="colorSurfaceBright">@color/graffiti_dark_gray</item>
-        <item name="colorSurfaceContainerLowest">@color/asphalt_dark</item>
-        <item name="colorSurfaceContainerLow">@color/concrete_gray</item>
-        <item name="colorSurfaceContainer">@color/concrete_gray</item>
-        <item name="colorSurfaceContainerHigh">@color/graffiti_dark_gray</item>
-        <item name="colorSurfaceContainerHighest">@color/graffiti_dark_gray</item>
-        <item name="colorOutline">@color/outline_gray</item>
-        <item name="colorOutlineVariant">@color/graffiti_dark_gray</item>
-        <!-- Superficie e inchiostro invertiti (snackbar): chiaro su scuro, con l'azione in nero. -->
-        <item name="colorSurfaceInverse">@color/stencil_white</item>
-        <item name="colorOnSurfaceInverse">@color/asphalt_black</item>
-        <item name="colorPrimaryInverse">@color/asphalt_black</item>
+        <item name="colorOnBackground">@color/elite_text_primary</item>
+        <item name="colorPrimaryContainer">@color/elite_surface_raised</item>
+        <item name="colorOnPrimaryContainer">@color/elite_text_primary</item>
+        <item name="colorSecondaryContainer">@color/elite_surface_raised</item>
+        <item name="colorOnSecondaryContainer">@color/elite_text_primary</item>
+        <!-- Terzo accento: non esiste in Padel Elite, il ruolo segue il testo primario. -->
+        <item name="colorTertiary">@color/elite_text_primary</item>
+        <item name="colorOnTertiary">@color/elite_background</item>
+        <item name="colorTertiaryContainer">@color/elite_surface_raised</item>
+        <item name="colorOnTertiaryContainer">@color/elite_text_primary</item>
+        <item name="colorErrorContainer">@color/elite_surface</item>
+        <item name="colorOnErrorContainer">@color/elite_error</item>
+        <item name="colorSurfaceVariant">@color/elite_surface_raised</item>
+        <item name="colorSurfaceDim">@color/elite_background</item>
+        <item name="colorSurfaceBright">@color/elite_surface_hover</item>
+        <item name="colorSurfaceContainerLowest">@color/elite_background</item>
+        <item name="colorSurfaceContainerLow">@color/elite_surface</item>
+        <item name="colorSurfaceContainer">@color/elite_surface</item>
+        <item name="colorSurfaceContainerHigh">@color/elite_surface_raised</item>
+        <item name="colorSurfaceContainerHighest">@color/elite_surface_raised</item>
+        <!-- Contorno dei comandi: elite_outline (3:1), non il bordo della dashboard (1,4:1). -->
+        <item name="colorOutline">@color/elite_outline</item>
+        <item name="colorOutlineVariant">@color/elite_border_strong</item>
+        <!-- Superficie e inchiostro invertiti (snackbar): chiaro su scuro, con l'azione sul fondo. -->
+        <item name="colorSurfaceInverse">@color/elite_text_primary</item>
+        <item name="colorOnSurfaceInverse">@color/elite_background</item>
+        <item name="colorPrimaryInverse">@color/elite_background</item>
         <!-- Ruoli fissi: nessun layout li usa, ma il primo componente nuovo li userebbe viola. -->
-        <item name="colorPrimaryFixed">@color/graffiti_pink</item>
-        <item name="colorPrimaryFixedDim">@color/graffiti_pink</item>
-        <item name="colorOnPrimaryFixed">@color/asphalt_black</item>
-        <item name="colorOnPrimaryFixedVariant">@color/asphalt_black</item>
-        <item name="colorSecondaryFixed">@color/neon_cyan</item>
-        <item name="colorSecondaryFixedDim">@color/neon_cyan</item>
-        <item name="colorOnSecondaryFixed">@color/asphalt_black</item>
-        <item name="colorOnSecondaryFixedVariant">@color/asphalt_black</item>
-        <item name="colorTertiaryFixed">@color/stencil_white</item>
-        <item name="colorTertiaryFixedDim">@color/sidewalk_gray</item>
-        <item name="colorOnTertiaryFixed">@color/asphalt_black</item>
-        <item name="colorOnTertiaryFixedVariant">@color/asphalt_black</item>
+        <item name="colorPrimaryFixed">@color/elite_lime</item>
+        <item name="colorPrimaryFixedDim">@color/elite_lime</item>
+        <item name="colorOnPrimaryFixed">@color/elite_on_lime</item>
+        <item name="colorOnPrimaryFixedVariant">@color/elite_on_lime</item>
+        <item name="colorSecondaryFixed">@color/elite_text_secondary</item>
+        <item name="colorSecondaryFixedDim">@color/elite_text_secondary</item>
+        <item name="colorOnSecondaryFixed">@color/elite_background</item>
+        <item name="colorOnSecondaryFixedVariant">@color/elite_background</item>
+        <item name="colorTertiaryFixed">@color/elite_text_primary</item>
+        <item name="colorTertiaryFixedDim">@color/elite_text_secondary</item>
+        <item name="colorOnTertiaryFixed">@color/elite_background</item>
+        <item name="colorOnTertiaryFixedVariant">@color/elite_background</item>
 
         <!-- Tutti i dialoghi, anche quelli costruiti senza overlay esplicito. -->
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.App.MaterialAlertDialog</item>
@@ -206,11 +209,11 @@
         <item name="strokeColor">@color/outline_gray</item>
     </style>
 
-    <!-- Overlay di tutti i dialoghi (materialAlertDialogTheme del tema): accento ciano, fondo dai ruoli di superficie. -->
+    <!-- Overlay di tutti i dialoghi (materialAlertDialogTheme del tema): accento lime, fondo dai ruoli di superficie. -->
     <style name="ThemeOverlay.App.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
-        <item name="colorPrimary">@color/neon_cyan</item>
-        <item name="colorSurface">@color/concrete_gray</item>
-        <item name="colorOnSurface">@color/stencil_white</item>
+        <item name="colorPrimary">@color/elite_lime</item>
+        <item name="colorSurface">@color/elite_surface_raised</item>
+        <item name="colorOnSurface">@color/elite_text_primary</item>
         <item name="alertDialogTheme">@style/ThemeOverlay.App.Dialog</item>
     </style>
 

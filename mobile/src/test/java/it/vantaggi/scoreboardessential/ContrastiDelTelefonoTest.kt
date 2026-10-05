@@ -32,19 +32,19 @@ class ContrastiDelTelefonoTest {
 
     private fun attributo(id: Int) = MaterialColors.getColor(context, id, "manca")
 
-    // Col bianco sporco il rosa faceva 3,17:1 (testo dei pulsanti pieni) e il ciano 1,17:1
-    // (icona del FAB giocatori).
+    // Il pulsante pieno del tema e' lime (G-0): col testo bianco farebbe 1,3:1, col fondo scuro 14,9:1.
+    // Prima il bianco sporco sul rosa faceva 3,17:1 e sul ciano 1,17:1 (icona del FAB giocatori).
     @Test
-    fun `sopra rosa e ciano del tema il testo passa AA`() {
+    fun `sopra primario e secondario del tema il testo passa AA`() {
         // colorPrimary non sta piu' in R.attr di Material 1.13: si prende da appcompat.
         val primario = attributo(androidx.appcompat.R.attr.colorPrimary)
         val suPrimario = attributo(com.google.android.material.R.attr.colorOnPrimary)
         val secondario = attributo(com.google.android.material.R.attr.colorSecondary)
         val suSecondario = attributo(com.google.android.material.R.attr.colorOnSecondary)
 
-        assertTrue("sul rosa %.2f".format(TeamInk.contrast(suPrimario, primario)), TeamInk.contrast(suPrimario, primario) >= 4.5)
+        assertTrue("sul primario %.2f".format(TeamInk.contrast(suPrimario, primario)), TeamInk.contrast(suPrimario, primario) >= 4.5)
         assertTrue(
-            "sul ciano %.2f".format(TeamInk.contrast(suSecondario, secondario)),
+            "sul secondario %.2f".format(TeamInk.contrast(suSecondario, secondario)),
             TeamInk.contrast(suSecondario, secondario) >= 4.5,
         )
     }
