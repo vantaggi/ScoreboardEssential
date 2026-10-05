@@ -57,4 +57,20 @@
     <!-- La riga di stato: dimensione massima e altezza fissa; sotto, l'autoSize arriva a 10sp. -->
     <dimen name="wear_hint_text_size">12sp</dimen>
     <dimen name="wear_hint_height">16dp</dimen>
+
+    <!--
+    Il menu e la selezione dello sport sul tondo da 192dp (values: e' la misura piccola, i quadrati e
+    il 227dp la ripristinano in values-notround e values-sw210dp).
+
+    L'area visibile del menu e' circa 77dp: sotto il BoxInsetLayout e il titolo PARTITA restano il
+    rientro di 28dp per lato, piu' il padding. Una voce spenta con la sua riga del perche' (titolo
+    su due righe e sottotitolo su due) ne chiede piu' di 100, e il perche' restava sotto la piega.
+    Tre rimedi piccoli, uno per ogni spreco: il padding del BoxInsetLayout a 4dp (le card restano
+    dentro il cerchio: l'angolo basso dista 90,5dp dal centro su 96), il rientro verticale interno
+    della voce a 4dp, e niente rientro d'angolo della card (il taglio e' di 12dp, ne mangiava 6 per
+    lato fra testo e bordo: il testo parte a 6dp dal bordo, il taglio a quell'altezza e' a 6dp).
+    -->
+    <dimen name="menu_box_padding">4dp</dimen>
+    <dimen name="voce_padding_verticale">4dp</dimen>
+    <bool name="voce_rientro_angolo">false</bool>
 </resources>

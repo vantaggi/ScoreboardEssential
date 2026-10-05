@@ -34,4 +34,9 @@
 
     <dimen name="wear_hint_text_size">14sp</dimen>
     <dimen name="wear_hint_height">18dp</dimen>
+
+    <!-- Menu e selezione sport: il 227dp ha spazio, le misure restano quelle di sempre. -->
+    <dimen name="menu_box_padding">16dp</dimen>
+    <dimen name="voce_padding_verticale">8dp</dimen>
+    <bool name="voce_rientro_angolo">true</bool>
 </resources>
