@@ -2354,6 +2354,13 @@ sul disco cartelle orfane `wf_*` e `agent-*` in `.claude/worktrees` (non piu' wo
 unito): da cancellare quando il proprietario lo dice. `recursing-roentgen-93ee09` non e' di questa
 sessione.
 
+**5 ottobre, sera**: chiuso l'ultimo basso del passo 11 dell'orologio (sul tondo da 192dp il perche'
+della voce spenta stava sotto la piega): `wf30/menu-piega`, padding del BoxInsetLayout 4dp, padding
+verticale della card 4dp e niente rientro d'angolo, solo nei `values` del tondo piccolo (227dp e
+quadrato invariati). MenuPiegaTest misura card e area visibile (prima 117-127dp contro 77, dopo
+82-97dp contro 101), falsificato. Visto sui tre AVD (`docs/verifica-orologio/menu-piega-dopo.png`).
+**1034 test JVM**.
+
 Chiusi e pubblicati su main: L1-L12 (L1, L3, L8, L9, L10 a settembre), design del telefono passi 5-15, design
 dell'orologio passi 4-11. Resta in coda solo cio' che aspetta il proprietario:
 - **I4/I5 su Padel Elite**: serve un'autorizzazione esplicita (Padel Elite e' produzione).
