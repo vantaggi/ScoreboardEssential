@@ -1,5 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--
+        TOKEN DI PADEL ELITE (DESIGN.md, pista "Coerenza con Padel Elite"). Valori veri da css/style.css
+        della dashboard, tema Navy scuro. E' la fonte unica del contorno: il tema M3 (themes.xml) e,
+        passo dopo passo, i layout si appoggiano a questi nomi e non a un esadecimale. Il quadrante
+        dell'orologio ha il suo colors.xml e qui non si tocca (G-7).
+    -->
+    <!-- Fondi: pagina, card, superficie rialzata (dialoghi, campi), hover. -->
+    <color name="elite_background">#0D0D0F</color>
+    <color name="elite_surface">#161618</color>
+    <color name="elite_surface_raised">#1E1E22</color>
+    <color name="elite_surface_hover">#2A2A2E</color>
+    <!--
+        Bordi della dashboard: servono a separare le card, non a farsi trovare. Contro i fondi
+        valgono 1,1:1 e 1,4:1, quindi NON bastano come contorno di un comando o di un campo
+        (WCAG 1.4.11 chiede 3:1): per quello c'e' elite_outline.
+    -->
+    <color name="elite_border">#1E1E22</color>
+    <color name="elite_border_strong">#2A2A2E</color>
+    <!--
+        Contorno di campi e pulsanti secondari, una scelta dell'app e non della dashboard: la tinta
+        del testo secondario scurita fino a 3,3:1 sulla superficie rialzata (3,6 sulla superficie,
+        3,9 sul fondo). E' il ruolo colorOutline del tema.
+    -->
+    <color name="elite_outline">#6E6E7E</color>
+    <!-- Testi: primario, secondario, terziario (solo su fondo e superficie, 4,6:1 sulla superficie). -->
+    <color name="elite_text_primary">#D1D1D8</color>
+    <color name="elite_text_secondary">#8A8A9A</color>
+    <color name="elite_text_tertiary">#7F7F93</color>
+    <!-- Marchio: l'unico accento del contorno. Il testo sopra il lime e' il fondo, mai il bianco (1,3:1). -->
+    <color name="elite_lime">#C8F135</color>
+    <color name="elite_on_lime">#0D0D0F</color>
+    <!-- Successo = lime, come nella dashboard. -->
+    <color name="elite_success">@color/elite_lime</color>
+    <!-- Ciano: SOLO visualizzazioni e grafici (Cronaca, momentum), mai nel contorno dei comandi. -->
+    <color name="elite_cyan">#00E5FF</color>
+    <color name="elite_warning">#E09A35</color>
+    <!-- Errore: testo e icone su fondo e superficie (4,7:1 sulla superficie, 4,3:1 sulla rialzata). -->
+    <color name="elite_error">#E05252</color>
+    <!-- Velo dei dialoghi: nero all'85%. -->
+    <color name="elite_overlay">#D9000000</color>
+
+    <!--
+        STREET (eredita'): i colori di prima. Restano finche' un layout o una classe li cita: la
+        schermata di gioco e il foglio PARTITA li usano ancora, il contorno passa ai token qui sopra
+        in G-2 (componenti), G-4 (schermate), G-6 (gioco). Quando non li cita piu' nessuno si tolgono.
+    -->
     <color name="asphalt_black">#000000</color>
     <!-- Cifre del punteggio e pallino del servizio: il bianco PURO, mai altrove (DESIGN.md, Colori). -->
     <color name="ink_white">#FFFFFF</color>
@@ -9,7 +55,9 @@
     <color name="stencil_white">#E0E0E0</color>
     <color name="sidewalk_gray">#9E9E9E</color>
     <color name="graffiti_pink">#F50057</color>
-    <color name="neon_cyan">#00E5FF</color>
+    <!-- Stesso valore del ciano di Padel Elite: un nome vecchio, una sola fonte. -->
+    <color name="neon_cyan">@color/elite_cyan</color>
+    <!-- Colori predefiniti delle squadre (G-6 li cambia in lime e ciano, decisione G2). -->
     <color name="team_spray_yellow">#FFD600</color>
     <color name="team_electric_green">#76FF03</color>
     <color name="error_red">#FF1744</color>
