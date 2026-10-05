@@ -91,8 +91,9 @@ class MatchLogAdapterTest {
         val testo = holder.itemView.findViewById<TextView>(R.id.event_description)
         val barretta = holder.itemView.findViewById<View>(R.id.team_indicator)
 
-        val fondo = context.getColor(R.color.concrete_gray)
-        assertEquals(context.getColor(R.color.stencil_white), testo.currentTextColor)
+        // Il testo viene dal tema (colorOnSurface) e la riga sta sulla card del foglio (elite_surface).
+        val fondo = context.getColor(R.color.elite_surface)
+        assertEquals(context.getColor(R.color.elite_text_primary), testo.currentTextColor)
         assertTrue(TeamInk.contrast(testo.currentTextColor, fondo) >= 4.5)
         assertEquals(bluNotte, (barretta.background as ColorDrawable).color)
     }
@@ -247,7 +248,7 @@ class MatchLogAdapterTest {
         val riga = rigaDelGame(game(winner = 2), adapter = adapter)
 
         assertEquals(verde, (riga.findViewById<View>(R.id.team_indicator).background as ColorDrawable).color)
-        assertEquals(context.getColor(R.color.stencil_white), testo(riga, R.id.game_title).currentTextColor)
+        assertEquals(context.getColor(R.color.elite_text_primary), testo(riga, R.id.game_title).currentTextColor)
     }
 
     @Test

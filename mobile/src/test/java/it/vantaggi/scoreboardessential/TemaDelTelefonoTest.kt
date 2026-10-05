@@ -42,29 +42,29 @@ class TemaDelTelefonoTest {
 
     // Gli accenti e i loro inchiostri: sono i ruoli che il tema dichiarava gia', qui si fissano.
     @Test
-    fun `primario, secondario e superficie del tema sono i token del progetto`() {
-        assertEquals(token(R.color.graffiti_pink), attributo(context, androidx.appcompat.R.attr.colorPrimary))
-        assertEquals(token(R.color.asphalt_black), attributo(context, M3.attr.colorOnPrimary))
-        assertEquals(token(R.color.neon_cyan), attributo(context, M3.attr.colorSecondary))
-        assertEquals(token(R.color.asphalt_black), attributo(context, M3.attr.colorOnSecondary))
-        assertEquals(token(R.color.concrete_gray), attributo(context, M3.attr.colorSurface))
-        assertEquals(token(R.color.stencil_white), attributo(context, M3.attr.colorOnSurface))
+    fun `primario, secondario e superficie del tema sono i token di Padel Elite`() {
+        assertEquals(token(R.color.elite_lime), attributo(context, androidx.appcompat.R.attr.colorPrimary))
+        assertEquals(token(R.color.elite_on_lime), attributo(context, M3.attr.colorOnPrimary))
+        assertEquals(token(R.color.elite_text_secondary), attributo(context, M3.attr.colorSecondary))
+        assertEquals(token(R.color.elite_background), attributo(context, M3.attr.colorOnSecondary))
+        assertEquals(token(R.color.elite_surface), attributo(context, M3.attr.colorSurface))
+        assertEquals(token(R.color.elite_text_primary), attributo(context, M3.attr.colorOnSurface))
     }
 
     // DESIGN.md, Contorno: tema e dialoghi. Prima questi ruoli restavano ai valori base di M3.
     @Test
-    fun `i contenitori, i bordi e le superfici prendono i grigi dello street`() {
+    fun `i contenitori, i bordi e le superfici prendono i token di Padel Elite`() {
         val attesi =
             mapOf(
-                "colorPrimaryContainer" to (M3.attr.colorPrimaryContainer to R.color.graffiti_dark_gray),
-                "colorOnPrimaryContainer" to (M3.attr.colorOnPrimaryContainer to R.color.stencil_white),
-                "colorSurfaceContainerLowest" to (M3.attr.colorSurfaceContainerLowest to R.color.asphalt_dark),
-                "colorSurfaceContainerLow" to (M3.attr.colorSurfaceContainerLow to R.color.concrete_gray),
-                "colorSurfaceContainer" to (M3.attr.colorSurfaceContainer to R.color.concrete_gray),
-                "colorSurfaceContainerHigh" to (M3.attr.colorSurfaceContainerHigh to R.color.graffiti_dark_gray),
-                "colorSurfaceContainerHighest" to (M3.attr.colorSurfaceContainerHighest to R.color.graffiti_dark_gray),
-                "colorOutline" to (M3.attr.colorOutline to R.color.outline_gray),
-                "colorOutlineVariant" to (M3.attr.colorOutlineVariant to R.color.graffiti_dark_gray),
+                "colorPrimaryContainer" to (M3.attr.colorPrimaryContainer to R.color.elite_surface_raised),
+                "colorOnPrimaryContainer" to (M3.attr.colorOnPrimaryContainer to R.color.elite_text_primary),
+                "colorSurfaceContainerLowest" to (M3.attr.colorSurfaceContainerLowest to R.color.elite_background),
+                "colorSurfaceContainerLow" to (M3.attr.colorSurfaceContainerLow to R.color.elite_surface),
+                "colorSurfaceContainer" to (M3.attr.colorSurfaceContainer to R.color.elite_surface),
+                "colorSurfaceContainerHigh" to (M3.attr.colorSurfaceContainerHigh to R.color.elite_surface_raised),
+                "colorSurfaceContainerHighest" to (M3.attr.colorSurfaceContainerHighest to R.color.elite_surface_raised),
+                "colorOutline" to (M3.attr.colorOutline to R.color.elite_outline),
+                "colorOutlineVariant" to (M3.attr.colorOutlineVariant to R.color.elite_border_strong),
             )
 
         for ((nome, coppia) in attesi) {
@@ -99,6 +99,10 @@ class TemaDelTelefonoTest {
                 "colorOnTertiary" to M3.attr.colorOnTertiary,
                 "colorTertiaryContainer" to M3.attr.colorTertiaryContainer,
                 "colorOnTertiaryContainer" to M3.attr.colorOnTertiaryContainer,
+                "colorError" to androidx.appcompat.R.attr.colorError,
+                "colorOnError" to M3.attr.colorOnError,
+                "colorErrorContainer" to M3.attr.colorErrorContainer,
+                "colorOnErrorContainer" to M3.attr.colorOnErrorContainer,
                 "colorTertiaryFixed" to M3.attr.colorTertiaryFixed,
                 "colorTertiaryFixedDim" to M3.attr.colorTertiaryFixedDim,
                 "colorOnTertiaryFixed" to M3.attr.colorOnTertiaryFixed,
@@ -139,12 +143,12 @@ class TemaDelTelefonoTest {
     // Marcatore, fine partita, annulla, reset del tempo, giocatori: tutti MaterialAlertDialogBuilder(this)
     // senza overlay. Il contesto del builder e' quello che i loro widget vedono.
     @Test
-    fun `un dialogo costruito senza overlay ha fondo grigio e accento ciano, non viola`() {
+    fun `un dialogo costruito senza overlay ha fondo rialzato e accento lime, non viola`() {
         val contestoDelDialogo = MaterialAlertDialogBuilder(context).context
 
-        assertEquals(token(R.color.graffiti_dark_gray), attributo(contestoDelDialogo, M3.attr.colorSurfaceContainerHigh))
-        assertEquals(token(R.color.neon_cyan), attributo(contestoDelDialogo, androidx.appcompat.R.attr.colorPrimary))
-        assertEquals(token(R.color.stencil_white), attributo(contestoDelDialogo, M3.attr.colorOnSurface))
+        assertEquals(token(R.color.elite_surface_raised), attributo(contestoDelDialogo, M3.attr.colorSurfaceContainerHigh))
+        assertEquals(token(R.color.elite_lime), attributo(contestoDelDialogo, androidx.appcompat.R.attr.colorPrimary))
+        assertEquals(token(R.color.elite_text_primary), attributo(contestoDelDialogo, M3.attr.colorOnSurface))
 
         val fondo = attributo(contestoDelDialogo, M3.attr.colorSurfaceContainerHigh)
         assertTrue(TeamInk.contrast(attributo(contestoDelDialogo, M3.attr.colorOnSurface), fondo) >= 4.5)
@@ -159,9 +163,35 @@ class TemaDelTelefonoTest {
         val iniziali = riga.findViewById<TextView>(R.id.player_initials)
 
         val fondo = avatar.cardBackgroundColor.defaultColor
-        assertEquals(token(R.color.graffiti_dark_gray), fondo)
+        assertEquals(token(R.color.elite_surface_raised), fondo)
         assertFalse(eViola(fondo))
         assertTrue(TeamInk.contrast(iniziali.currentTextColor, fondo) >= 4.5)
+    }
+
+    // G-0: i testi del tema (onSurface, onSurfaceVariant) restano leggibili su ogni fondo che il tema
+    // espone, e il contorno dei comandi ha 3:1: se qualcuno rimappa un ruolo sul bordo della dashboard
+    // (1,4:1) il test lo vede.
+    @Test
+    fun `i testi e il contorno del tema passano AA e 3 a 1 sui fondi del tema`() {
+        val fondi =
+            mapOf(
+                "background" to attributo(context, android.R.attr.colorBackground),
+                "surface" to attributo(context, M3.attr.colorSurface),
+                "surfaceContainerLowest" to attributo(context, M3.attr.colorSurfaceContainerLowest),
+                "surfaceContainerHigh" to attributo(context, M3.attr.colorSurfaceContainerHigh),
+                "surfaceContainerHighest" to attributo(context, M3.attr.colorSurfaceContainerHighest),
+            )
+        val suSuperficie = attributo(context, M3.attr.colorOnSurface)
+        val suVariante = attributo(context, M3.attr.colorOnSurfaceVariant)
+        val contorno = attributo(context, M3.attr.colorOutline)
+
+        for ((nome, fondo) in fondi) {
+            assertTrue("onSurface su $nome", TeamInk.contrast(suSuperficie, fondo) >= 4.5)
+            assertTrue("onSurfaceVariant su $nome", TeamInk.contrast(suVariante, fondo) >= 4.5)
+            assertTrue("colorOutline su $nome", TeamInk.contrast(contorno, fondo) >= 3.0)
+        }
+        // Falsificazione: il bordo della dashboard come contorno non passerebbe.
+        assertTrue(TeamInk.contrast(token(R.color.elite_border_strong), attributo(context, M3.attr.colorSurface)) < 3.0)
     }
 
     // Viola = tonalita' fra 250 e 300 gradi con una saturazione che si nota: il grigio appena
