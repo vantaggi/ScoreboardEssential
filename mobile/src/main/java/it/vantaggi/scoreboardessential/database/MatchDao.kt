@@ -14,6 +14,10 @@ interface MatchDao {
     @Query("SELECT * FROM matches WHERE matchId = :matchId")
     suspend fun getMatchById(matchId: Int): Match?
 
+    /** La partita col suo identificativo del file (`matchId` del formato 2): chiave dell'invio a Padel Elite. */
+    @Query("SELECT * FROM matches WHERE matchUuid = :matchUuid LIMIT 1")
+    suspend fun getMatchByUuid(matchUuid: String): Match?
+
     /** Una partita con le sue squadre, per la Cronaca: nomi e colori con cui si e' giocato. */
     @Transaction
     @Query("SELECT * FROM matches WHERE matchId = :matchId")

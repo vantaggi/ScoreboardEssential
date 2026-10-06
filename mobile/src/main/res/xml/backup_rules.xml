@@ -14,4 +14,6 @@
     <include domain="database" path="match_database-wal" />
     <!-- Include all shared preferences -->
     <include domain="sharedpref" path="."/>
+    <!-- La sessione di Padel Elite non lascia il telefono. -->
+    <exclude domain="sharedpref" path="padel_elite_session.xml"/>
 </full-backup-content>

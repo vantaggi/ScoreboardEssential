@@ -93,4 +93,8 @@ class MatchRepository(
         val schieramento = matchDao.getMatchLineup(matchId)
         return MatchExportUtils.savedMatchExport(partita, schieramento, BuildConfig.VERSION_NAME, ZoneId.systemDefault())
     }
+
+    /** Lo stesso export, trovando la partita dal suo identificativo del file: e' la chiave dell'invio. Null se non c'e'. */
+    suspend fun buildSavedExportByUuid(matchUuid: String): ExportResult? =
+        matchDao.getMatchByUuid(matchUuid)?.let { buildSavedExport(it.matchId) }
 }
