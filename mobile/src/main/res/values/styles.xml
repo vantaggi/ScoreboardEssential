@@ -7,7 +7,7 @@
     -->
 
     <!-- La pressione, per qualunque vista che non e' uno dei controlli qui sotto (righe, zone). -->
-    <style name="Widget.App.Pressable">
+    <style name="Widget.App.Pressable" parent="">
         <item name="android:stateListAnimator">?attr/pressFeedback</item>
     </style>
 
@@ -103,6 +103,20 @@
 
     <!-- CAMPO DI TESTO: fondo, bordo a 3:1, fuoco lime di 2dp, errore sotto il campo (col testo in colore errore). -->
     <style name="Widget.App.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="shapeAppearance">@style/ShapeAppearance.App.Control</item>
+        <item name="boxBackgroundColor">@color/elite_surface</item>
+        <item name="boxStrokeColor">@color/field_stroke</item>
+        <item name="boxStrokeErrorColor">@color/elite_error</item>
+        <item name="boxStrokeWidth">@dimen/border_width</item>
+        <item name="boxStrokeWidthFocused">@dimen/focus_ring_width</item>
+        <item name="errorTextColor">@color/elite_error</item>
+        <item name="errorIconTint">@color/elite_error</item>
+        <item name="helperTextTextColor">@color/elite_text_secondary</item>
+        <item name="hintTextColor">@color/elite_text_secondary</item>
+    </style>
+
+    <!-- Lo stesso campo, a tendina (impostazioni: lingua e sport). Il padre porta la freccia e il menu. -->
+    <style name="Widget.App.TextInputLayout.ExposedDropdownMenu" parent="Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
         <item name="shapeAppearance">@style/ShapeAppearance.App.Control</item>
         <item name="boxBackgroundColor">@color/elite_surface</item>
         <item name="boxStrokeColor">@color/field_stroke</item>

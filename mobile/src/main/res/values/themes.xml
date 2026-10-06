@@ -134,7 +134,7 @@
         Movimento ridotto (ANIMATOR_DURATION_SCALE = 0): la pressione perde la scala e tiene la sola
         opacita'. Lo applica MovimentoRidotto.kt a ogni activity prima che gonfi i layout.
     -->
-    <style name="ThemeOverlay.App.MovimentoRidotto">
+    <style name="ThemeOverlay.App.MovimentoRidotto" parent="">
         <item name="pressFeedback">@animator/press_feedback_reduced</item>
     </style>
 
