@@ -50,7 +50,7 @@ fun View.riempiDiSquadra(
     colore: Int,
     sfondo: Int,
 ) {
-    val forma = ShapeAppearanceModel.builder(context, R.style.ShapeAppearance_App_StreetBadge, 0).build()
+    val forma = ShapeAppearanceModel.builder(context, R.style.ShapeAppearance_App_Badge, 0).build()
     background =
         MaterialShapeDrawable(forma).apply {
             fillColor = ColorStateList.valueOf(colore)

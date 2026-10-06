@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bordo della card: border-subtle a riposo; selezionata, lime. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/elite_lime" android:state_checked="true" />
+    <item android:color="@color/elite_border_strong" />
+</selector>

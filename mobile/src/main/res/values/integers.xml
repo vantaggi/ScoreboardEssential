@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Durate della UI Constitution (DESIGN.md, Mappatura dei ruoli), in millisecondi. Nessuna
+        animazione del contorno dura piu' di duration_standard. duration-expressive (380) non si usa.
+    -->
+    <!-- duration-instant: la pressione di ogni comando. -->
+    <integer name="duration_instant">100</integer>
+    <!-- duration-fast: dissolvenze brevi, un cambio di testo. -->
+    <integer name="duration_fast">160</integer>
+    <!-- duration-standard: apertura di un dialogo o di un foglio, il segno di spunta. -->
+    <integer name="duration_standard">240</integer>
+</resources>

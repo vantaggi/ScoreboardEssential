@@ -9,6 +9,7 @@ import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
+import it.vantaggi.scoreboardessential.utils.MovimentoRidotto
 
 class ScoreboardEssentialApplication : Application() {
     val database by lazy { AppDatabase.getDatabase(this) }
@@ -20,6 +21,7 @@ class ScoreboardEssentialApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        MovimentoRidotto.registra(this)
         createNotificationChannel()
     }
 

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Anello di fuoco (focus-ring): lime pieno, 2dp, a 2dp di distanza dal controllo; si usa come foreground. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <inset
+            android:insetBottom="-2dp"
+            android:insetLeft="-2dp"
+            android:insetRight="-2dp"
+            android:insetTop="-2dp">
+            <shape android:shape="rectangle">
+                <stroke
+                    android:width="@dimen/focus_ring_width"
+                    android:color="@color/elite_lime" />
+                <corners android:radius="@dimen/radius_control" />
+            </shape>
+        </inset>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+</selector>

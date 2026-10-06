@@ -479,7 +479,7 @@ class ChronicleActivity : AppCompatActivity() {
     ): Typeface = ResourcesCompat.getFont(this, id) ?: Typeface.DEFAULT
 
     private fun badge(fill: Int) =
-        MaterialShapeDrawable(ShapeAppearanceModel.builder(this, R.style.ShapeAppearance_App_StreetBadge, 0).build()).apply {
+        MaterialShapeDrawable(ShapeAppearanceModel.builder(this, R.style.ShapeAppearance_App_Badge, 0).build()).apply {
             fillColor = ColorStateList.valueOf(fill)
         }
 

@@ -1,14 +1,10 @@
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="8dp"
-    android:layout_marginVertical="4dp"
-    style="?attr/materialCardViewElevatedStyle"
-    app:cardBackgroundColor="@color/concrete_gray"
-    app:shapeAppearance="@style/ShapeAppearance.App.StreetCard"
-    app:cardElevation="4dp">
+    android:layout_marginVertical="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -147,7 +143,7 @@
             <!-- La Cronaca si apre da qui, come l'export: e' un comando di questa partita. -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/chronicle_match_button"
-                style="@style/Widget.App.Button.TextButton.Street"
+                style="@style/Widget.App.Button.Text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/chronicle_open"
@@ -157,7 +153,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/export_match_button"
-                style="@style/Widget.App.Button.TextButton.Street"
+                style="@style/Widget.App.Button.Text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/export_match"

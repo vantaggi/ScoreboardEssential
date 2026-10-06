@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sfondo dei dialoghi: superficie rialzata, raggio radius-overlay, bordo sottile. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/elite_surface_raised" />
+    <stroke
+        android:width="@dimen/border_width"
+        android:color="@color/elite_border_strong" />
+    <corners android:radius="@dimen/radius_overlay" />
+</shape>

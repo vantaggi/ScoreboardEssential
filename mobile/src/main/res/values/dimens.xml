@@ -17,4 +17,31 @@
     -->
     <dimen name="score_text_max">150dp</dimen>
     <dimen name="score_text_min">72dp</dimen>
+    <!--
+        Ruoli della UI Constitution (DESIGN.md, Mappatura dei ruoli): spaziature, raggi, bersaglio.
+        Un valore nuovo entra qui solo se nomina un ruolo riusabile.
+    -->
+    <!-- space-4 .. space-64 -->
+    <dimen name="space_4">4dp</dimen>
+    <dimen name="space_8">8dp</dimen>
+    <dimen name="space_12">12dp</dimen>
+    <dimen name="space_16">16dp</dimen>
+    <dimen name="space_24">24dp</dimen>
+    <dimen name="space_32">32dp</dimen>
+    <dimen name="space_48">48dp</dimen>
+    <dimen name="space_64">64dp</dimen>
+    <!-- radius-control: bottoni, campi, voci. radius-surface: gruppi, card, foglio. -->
+    <dimen name="radius_control">8dp</dimen>
+    <dimen name="radius_surface">14dp</dimen>
+    <!-- radius-overlay: dialoghi e menu (uguale a radius-surface, conflitto dichiarato 8). -->
+    <dimen name="radius_overlay">14dp</dimen>
+    <!-- Raggio dei badge: Padel Elite li disegna solo col bordo, senza sfondo. -->
+    <dimen name="radius_badge">6dp</dimen>
+    <!-- control-touch: altezza e larghezza minime di ogni comando. -->
+    <dimen name="control_touch">48dp</dimen>
+    <!-- Spessore del bordo di gruppi, card, campi e chip; il fuoco (focus-ring) e' di 2dp. -->
+    <dimen name="border_width">1dp</dimen>
+    <dimen name="focus_ring_width">2dp</dimen>
+    <!-- scrim: nero all'85% dietro i dialoghi (come elite_overlay), in frazione per il tema. -->
+    <item name="scrim_dim_amount" format="float" type="dimen">0.85</item>
 </resources>

@@ -15,6 +15,6 @@
     app:chipStartPadding="6dp"
     app:chipEndPadding="6dp"
     app:ensureMinTouchTargetSize="false"
-    app:shapeAppearance="@style/ShapeAppearance.App.StreetBadge"
+    app:shapeAppearance="@style/ShapeAppearance.App.Badge"
     app:textStartPadding="0dp"
     app:textEndPadding="0dp" />

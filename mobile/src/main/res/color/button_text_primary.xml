@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Testo del bottone primario: on-accent sul lime; disattivo, text-disabled sulla superficie rialzata. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/elite_text_disabled" android:state_enabled="false" />
+    <item android:color="@color/elite_on_lime" />
+</selector>

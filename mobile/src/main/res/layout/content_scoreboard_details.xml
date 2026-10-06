@@ -12,7 +12,7 @@
         <!-- Testa del foglio: titolo e CHIUDI. Chiude anche il trascinamento verso il basso o indietro. -->
         <TextView android:id="@+id/match_sheet_title" android:layout_width="0dp" android:layout_height="wrap_content" android:text="@string/label_match_sheet" android:textColor="@color/stencil_white" android:textSize="20sp" android:fontFamily="@font/inter" android:textStyle="bold" android:letterSpacing="0.06" android:maxLines="1" android:ellipsize="end" android:accessibilityHeading="true" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toStartOf="@id/match_sheet_close_button" app:layout_constraintTop_toTopOf="@id/match_sheet_close_button" app:layout_constraintBottom_toBottomOf="@id/match_sheet_close_button"/>
 
-        <com.google.android.material.button.MaterialButton android:id="@+id/match_sheet_close_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_close_sheet" android:textColor="@color/stencil_white" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/match_sheet_close_button" style="@style/Widget.App.Button.Text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_close_sheet" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"/>
 
         <!-- Avviso persistente dell'orologio: c'e' finche' l'arretrato rifiutato riguarda questa partita.
              Descrive e non prescrive. Nascosto di norma: a GONE il foglio resta identico. -->
@@ -24,9 +24,9 @@
         </LinearLayout>
 
         <!-- Team Rosters Section (Scrollable) -->
-        <com.google.android.material.card.MaterialCardView android:id="@+id/rosters_card" style="?attr/materialCardViewElevatedStyle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="8dp" app:cardBackgroundColor="@android:color/transparent" app:cardElevation="4dp" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard" app:layout_constraintTop_toBottomOf="@id/watch_notice_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
+        <com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" android:id="@+id/rosters_card" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="8dp" app:layout_constraintTop_toBottomOf="@id/watch_notice_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_concrete_card" android:orientation="vertical" android:padding="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_team_rosters" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:layout_marginBottom="12dp"/>
 
@@ -39,7 +39,7 @@
 
                         <androidx.recyclerview.widget.RecyclerView android:id="@+id/team1_roster_recyclerview" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
 
-                        <com.google.android.material.button.MaterialButton android:id="@+id/add_team1_player_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_add_player" android:layout_marginTop="8dp"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/add_team1_player_button" style="@style/Widget.App.Button.Text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_add_player" android:layout_marginTop="8dp"/>
                     </LinearLayout>
 
                     <!-- Team 2 Roster -->
@@ -49,16 +49,16 @@
 
                         <androidx.recyclerview.widget.RecyclerView android:id="@+id/team2_roster_recyclerview" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
 
-                        <com.google.android.material.button.MaterialButton android:id="@+id/add_team2_player_button" style="@style/Widget.App.Button.TextButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_add_player" android:layout_marginTop="8dp"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/add_team2_player_button" style="@style/Widget.App.Button.Text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_add_player" android:layout_marginTop="8dp"/>
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Coppie (padel e tennis in doppio): due posti numerati per lato, nell'ordine delle rose. Il primo serve per primo. -->
-        <com.google.android.material.card.MaterialCardView android:id="@+id/pairs_card" style="?attr/materialCardViewElevatedStyle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:visibility="gone" app:cardBackgroundColor="@android:color/transparent" app:cardElevation="4dp" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard" app:layout_constraintTop_toBottomOf="@id/rosters_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
+        <com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" android:id="@+id/pairs_card" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:visibility="gone" app:layout_constraintTop_toBottomOf="@id/rosters_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_concrete_card" android:orientation="vertical" android:padding="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_pairs" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:layout_marginBottom="12dp"/>
 
@@ -83,7 +83,7 @@
                         </LinearLayout>
 
                         <!-- Scambio da 48dp: inverte i due, e quindi chi serve per primo. Dopo il primo punto si spegne col lucchetto. -->
-                        <com.google.android.material.button.MaterialButton android:id="@+id/team1_swap_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="48dp" android:minHeight="48dp" android:layout_marginTop="8dp" android:text="@string/label_pair_swap" app:icon="@drawable/ic_swap" app:iconTint="@color/stencil_white"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/team1_swap_button" style="@style/Widget.App.Button.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="48dp" android:minHeight="48dp" android:layout_marginTop="8dp" android:text="@string/label_pair_swap" app:icon="@drawable/ic_swap"/>
                     </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="8dp">
@@ -105,7 +105,7 @@
                         </LinearLayout>
 
                         <!-- Scambio da 48dp: inverte i due, e quindi chi serve per primo. Dopo il primo punto si spegne col lucchetto. -->
-                        <com.google.android.material.button.MaterialButton android:id="@+id/team2_swap_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="48dp" android:minHeight="48dp" android:layout_marginTop="8dp" android:text="@string/label_pair_swap" app:icon="@drawable/ic_swap" app:iconTint="@color/stencil_white"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/team2_swap_button" style="@style/Widget.App.Button.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="48dp" android:minHeight="48dp" android:layout_marginTop="8dp" android:text="@string/label_pair_swap" app:icon="@drawable/ic_swap"/>
                     </LinearLayout>
 
                 </LinearLayout>
@@ -113,9 +113,9 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Match Log Section -->
-        <com.google.android.material.card.MaterialCardView android:id="@+id/match_log_card" style="?attr/materialCardViewElevatedStyle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:cardBackgroundColor="@android:color/transparent" app:cardElevation="4dp" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard" app:layout_constraintTop_toBottomOf="@id/pairs_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
+        <com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" android:id="@+id/match_log_card" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:layout_constraintTop_toBottomOf="@id/pairs_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_concrete_card" android:orientation="vertical" android:padding="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_match_log" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:layout_marginBottom="12dp"/>
 
@@ -123,9 +123,9 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.card.MaterialCardView android:id="@+id/formations_card" style="?attr/materialCardViewElevatedStyle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:cardBackgroundColor="@android:color/transparent" app:cardElevation="4dp" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard" app:layout_constraintTop_toBottomOf="@id/match_log_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
+        <com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" android:id="@+id/formations_card" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:layout_constraintTop_toBottomOf="@id/match_log_card" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_concrete_card" android:orientation="vertical" android:padding="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_formations" android:textAppearance="?attr/textAppearanceHeadlineMedium" android:textColor="@color/sidewalk_gray" android:textSize="14sp" android:layout_marginBottom="12dp"/>
 
@@ -158,22 +158,22 @@
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
 
-                <com.google.android.material.button.MaterialButton android:id="@+id/match_history_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_match_history"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/match_history_button" style="@style/Widget.App.Button.Secondary" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_match_history"/>
 
-                <com.google.android.material.button.MaterialButton android:id="@+id/reset_scores_button" style="@style/Widget.App.Button.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginHorizontal="8dp" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_end_match"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/reset_scores_button" style="@style/Widget.App.Button.Primary" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginHorizontal="8dp" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_end_match"/>
 
-                <com.google.android.material.button.MaterialButton android:id="@+id/share_match_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/share_match_report"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/share_match_button" style="@style/Widget.App.Button.Secondary" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/share_match_report"/>
             </LinearLayout>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="horizontal">
 
-                <com.google.android.material.button.MaterialButton android:id="@+id/statistics_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_statistics"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/statistics_button" style="@style/Widget.App.Button.Secondary" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_statistics"/>
 
-                <com.google.android.material.button.MaterialButton android:id="@+id/players_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginHorizontal="8dp" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_players"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/players_button" style="@style/Widget.App.Button.Secondary" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginHorizontal="8dp" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_players"/>
 
-                <com.google.android.material.button.MaterialButton android:id="@+id/sheet_settings_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_settings"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/sheet_settings_button" style="@style/Widget.App.Button.Secondary" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingHorizontal="8dp" android:maxLines="2" android:text="@string/label_settings"/>
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton android:id="@+id/sheet_reset_timer_button" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/label_reset_match_time"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/sheet_reset_timer_button" style="@style/Widget.App.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/label_reset_match_time"/>
         </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

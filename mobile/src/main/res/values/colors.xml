@@ -42,6 +42,26 @@
     <color name="elite_overlay">#D9000000</color>
 
     <!--
+        Ruoli della UI Constitution aggiunti da G-2 (DESIGN.md, Mappatura dei ruoli). Il commento di
+        ogni token dice il ruolo; l'origine (P, C, A) e i contrasti sono nella tabella del documento.
+    -->
+    <!-- text-disabled: solo etichette di comandi disattivati, sotto 4,5 per scelta della Constitution. -->
+    <color name="elite_text_disabled">#6B7077</color>
+    <!-- status-info: avviso informativo, sempre con una parola o un'icona (mai solo la tinta). -->
+    <color name="elite_info">#7FBDEA</color>
+    <!-- status-*-subtle: fondo degli avvisi; l'etichetta e' il colore di stato, il testo e' text-primary. -->
+    <color name="elite_success_subtle">#15291F</color>
+    <color name="elite_warning_subtle">#2E2410</color>
+    <color name="elite_error_subtle">#2A1415</color>
+    <color name="elite_info_subtle">#14262F</color>
+    <!-- state-pressed: il testo primario al 12%, l'overlay delle righe premute col movimento ridotto. -->
+    <color name="elite_state_pressed">#1FD1D1D8</color>
+    <!-- chart-3, chart-4, chart-5: i lati 1 e 2 sono lime e ciano; questi servono dal terzo dato. -->
+    <color name="elite_chart_3">#F0A36B</color>
+    <color name="elite_chart_4">#D79BDB</color>
+    <color name="elite_chart_5">#A4A9B0</color>
+
+    <!--
         STREET (eredita'): i colori di prima. Restano finche' un layout o una classe li cita: la
         schermata di gioco e il foglio PARTITA li usano ancora, il contorno passa ai token qui sopra
         in G-2 (componenti), G-4 (schermate), G-6 (gioco). Quando non li cita piu' nessuno si tolgono.
