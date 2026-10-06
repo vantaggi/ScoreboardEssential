@@ -24,8 +24,9 @@ import com.google.android.material.R as MaterialR
 import it.vantaggi.scoreboardessential.shared.R as SharedR
 
 /**
- * I caratteri del telefono (DESIGN.md, pista Coerenza con Padel Elite, G-1): Inter per il testo,
- * JetBrains Mono con cifre tabulari per i punteggi.
+ * I caratteri del telefono (DESIGN.md, Adattamento alla UI Constitution, G-1 e G-1b): Inter per il
+ * testo e anche per i punteggi, questi con la feature tnum (cifre tabulari); tre pesi, 400, 500, 600.
+ * JetBrains Mono e' uscito dall'app.
  *
  * Si guarda il carattere che la vista usa DAVVERO: la larghezza di una stringa col pennello della
  * vista contro quella del file in res/font. Serve la grafica nativa (con quella di default
@@ -72,29 +73,49 @@ class CaratteriDelTelefonoTest {
     }
 
     @Test
-    fun `i sei file e le due famiglie di res-font si caricano e sono diversi fra loro`() {
-        val file =
-            listOf(
-                SharedR.font.inter_regular,
-                SharedR.font.inter_medium,
-                SharedR.font.inter_bold,
-                SharedR.font.inter_black,
-                SharedR.font.jetbrains_mono_bold,
-                SharedR.font.jetbrains_mono_extrabold,
-            )
-        file.forEach { carattere(it) }
+    fun `i tre file di Inter si caricano, hanno pesi diversi e JetBrains Mono non c'e' piu'`() {
+        listOf(SharedR.font.inter_regular, SharedR.font.inter_medium, SharedR.font.inter_semibold).forEach { carattere(it) }
         carattere(SharedR.font.inter)
-        carattere(SharedR.font.jetbrains_mono)
-        // Inter e' proporzionale, JetBrains Mono no: "iiii" e "MMMM" misurano uguale solo nel secondo.
+        // Inter e' proporzionale: "iiii" e "MMMM" non misurano uguale (in un monospazio si').
         assertNotEquals(
             larghezza(carattere(SharedR.font.inter_regular), "iiii"),
             larghezza(carattere(SharedR.font.inter_regular), "MMMM"),
             1f,
         )
-        val mono = carattere(SharedR.font.jetbrains_mono_extrabold)
-        assertEquals(larghezza(mono, "iiii"), larghezza(mono, "MMMM"), 0.01f)
-        // Il peso cambia il disegno: il nero di Inter e' piu' largo del regolare.
-        assertTrue(larghezza(carattere(SharedR.font.inter_black), "Padel") > larghezza(carattere(SharedR.font.inter_regular), "Padel"))
+        // Il peso cambia il disegno: ogni peso e' piu' largo del precedente.
+        val regolare = larghezza(carattere(SharedR.font.inter_regular), "Padel")
+        val medio = larghezza(carattere(SharedR.font.inter_medium), "Padel")
+        val semibold = larghezza(carattere(SharedR.font.inter_semibold), "Padel")
+        assertTrue("400 $regolare, 500 $medio", medio > regolare)
+        assertTrue("500 $medio, 600 $semibold", semibold > medio)
+        // Falsificazione della decisione "JetBrains Mono esce dall'app": ne' i file ne' la famiglia esistono piu'.
+        listOf("jetbrains_mono", "jetbrains_mono_bold", "jetbrains_mono_extrabold", "inter_bold", "inter_black").forEach { nome ->
+            assertEquals("il carattere $nome non doveva restare in res/font", 0, app.resources.getIdentifier(nome, "font", app.packageName))
+        }
+    }
+
+    @Test
+    fun `chi chiede il grassetto cade sul 600 senza grassetto finto`() {
+        // Con tre pesi, textStyle bold (700) sceglie il 600, il piu' vicino: stessa larghezza del file semibold.
+        val semibold = larghezza(carattere(SharedR.font.inter_semibold), "Padel 12/09")
+        assertEquals(semibold, larghezza(carattere(SharedR.font.inter, 700), "Padel 12/09"), 0.01f)
+        assertEquals(semibold, larghezza(carattere(SharedR.font.inter, 600), "Padel 12/09"), 0.01f)
+        // Sul 500 non cade: il 600 e' un disegno diverso dal medio.
+        assertNotEquals(larghezza(carattere(SharedR.font.inter_medium), "Padel 12/09"), semibold, 0.01f)
+    }
+
+    @Test
+    fun `senza tnum le cifre di Inter sono proporzionali, con tnum stanno in fila`() {
+        val libero =
+            Paint().apply {
+                typeface = carattere(SharedR.font.inter, 600)
+                textSize = 100f
+            }
+        val tabulare = Paint(libero).apply { fontFeatureSettings = "tnum" }
+        // Falsificazione: senza la feature "11" e "88" misurano diverso, ed e' per questo che serve tnum.
+        assertNotEquals(libero.measureText("11"), libero.measureText("88"), 1f)
+        assertEquals(tabulare.measureText("11"), tabulare.measureText("88"), 0.01f)
+        assertEquals(tabulare.measureText("00"), tabulare.measureText("77"), 0.01f)
     }
 
     @Test
@@ -143,14 +164,15 @@ class CaratteriDelTelefonoTest {
     fun `una TextView del contorno e' in Inter, non nel condensato di sistema`() {
         val riga = gonfia(R.layout.match_item)
         val data = riga.findViewById<TextView>(R.id.timestamp_textview)
-        // Nel layout e' bold: Inter 700.
-        val inter700 = carattere(SharedR.font.inter, 700)
+        // Nel layout e' textFontWeight 600: Inter semibold.
+        val inter600 = carattere(SharedR.font.inter, 600)
+        assertEquals(600, data.paint.typeface.weight)
         // La vista ha la sua spaziatura (0,12 em): il confronto la porta anche sul file.
-        assertEquals(larghezza(inter700, "PADEL 12/09", data.letterSpacing), larghezzaDellaVista(data, "PADEL 12/09"), 0.5f)
+        assertEquals(larghezza(inter600, "PADEL 12/09", data.letterSpacing), larghezzaDellaVista(data, "PADEL 12/09"), 0.5f)
         val condensato = Typeface.create("sans-serif-condensed", Typeface.BOLD)
         assertNotEquals(larghezza(condensato, "PADEL 12/09", data.letterSpacing), larghezzaDellaVista(data, "PADEL 12/09"), 1f)
 
-        // Il nome della squadra, maiuscolo e bold, e il testo dei giocatori: Inter 700 e Inter 400.
+        // Il testo dei giocatori: Inter 400.
         val giocatori = riga.findViewById<TextView>(R.id.players_textview)
         assertEquals(
             larghezza(carattere(SharedR.font.inter, 400), "Marco, Luca", giocatori.letterSpacing),
@@ -159,41 +181,47 @@ class CaratteriDelTelefonoTest {
         )
     }
 
+    /** Il pennello di Inter 600 con cifre tabulari, come lo vuole lo stile del punteggio. */
+    private fun inter600Tabulare(spaziatura: Float) =
+        Paint().apply {
+            typeface = carattere(SharedR.font.inter, 600)
+            textSize = 100f
+            letterSpacing = spaziatura
+            fontFeatureSettings = "tnum"
+        }
+
     @Test
-    fun `un punteggio dello storico e' in JetBrains Mono 800 con numeri tabulari`() {
+    fun `un punteggio dello storico e' in Inter 600 con numeri tabulari`() {
         val riga = gonfia(R.layout.match_item)
         listOf(R.id.team1_score_textview, R.id.team2_score_textview).forEach { id ->
             val punti = riga.findViewById<TextView>(id)
             assertEquals("tnum", punti.fontFeatureSettings)
-            assertEquals(800, punti.paint.typeface.weight)
-            val mono800 = carattere(SharedR.font.jetbrains_mono, 800)
-            assertEquals(larghezza(mono800, "10", punti.letterSpacing), larghezzaDellaVista(punti, "10"), 0.5f)
+            assertEquals(600, punti.paint.typeface.weight)
+            // Inter 600 con tnum, non un'altra famiglia: la larghezza di "10" e' quella del file con la feature.
+            assertEquals(inter600Tabulare(punti.letterSpacing).measureText("10"), larghezzaDellaVista(punti, "10"), 0.5f)
             // Tabulari: "11" e "88" occupano lo stesso spazio, le colonne di punteggi stanno in fila.
             assertEquals(larghezzaDellaVista(punti, "11"), larghezzaDellaVista(punti, "88"), 0.01f)
         }
-        // Il risultato dei set e' un punteggio anche lui, in 700.
+        // Il risultato dei set e' un punteggio anche lui, in 600.
         val set = riga.findViewById<TextView>(R.id.sets_textview)
         assertEquals("tnum", set.fontFeatureSettings)
-        assertEquals(700, set.paint.typeface.weight)
-        assertEquals(
-            larghezzaDellaVista(set, "6-4"),
-            larghezza(carattere(SharedR.font.jetbrains_mono, 700), "6-4", set.letterSpacing),
-            0.5f,
-        )
+        assertEquals(600, set.paint.typeface.weight)
+        assertEquals(larghezzaDellaVista(set, "11-11"), larghezzaDellaVista(set, "88-88"), 0.01f)
+        assertEquals(inter600Tabulare(set.letterSpacing).measureText("6-4"), larghezzaDellaVista(set, "6-4"), 0.5f)
     }
 
     @Test
-    fun `il minuto del registro e le cifre delle statistiche sono in JetBrains Mono`() {
+    fun `il minuto del registro e' Inter 500 e le cifre delle statistiche Inter 600, tutti e due tabulari`() {
         val minuto = gonfia(R.layout.match_event_item).findViewById<TextView>(R.id.event_timestamp)
         assertEquals("tnum", minuto.fontFeatureSettings)
-        assertEquals(700, minuto.paint.typeface.weight)
+        assertEquals(500, minuto.paint.typeface.weight)
         assertEquals(larghezzaDellaVista(minuto, "11'"), larghezzaDellaVista(minuto, "88'"), 0.01f)
 
         val statistica = gonfia(R.layout.item_player_stat)
         listOf(R.id.text_rank, R.id.text_goals).forEach { id ->
             val cifra = statistica.findViewById<TextView>(id)
             assertEquals("tnum", cifra.fontFeatureSettings)
-            assertEquals(800, cifra.paint.typeface.weight)
+            assertEquals(600, cifra.paint.typeface.weight)
             assertEquals(larghezzaDellaVista(cifra, "11"), larghezzaDellaVista(cifra, "88"), 0.01f)
         }
     }
@@ -230,34 +258,39 @@ class CaratteriDelTelefonoTest {
     }
 
     /**
-     * La misura che decide se le cifre giganti passano a JetBrains Mono (G-1). In JetBrains Mono ogni
-     * carattere e' largo 0,6 em: "88" e "AV" misurano 1,2 em e a 150dp (180dp) NON entrano nei 173,7dp
-     * della mezza colonna del Pixel 9a. Non e' un ostacolo: la misura delle cifre non usa un corpo
-     * fisso, prende il piu' piccolo fra il tetto e cio' che entra, e qui entra a 144,6dp (il 96% del
-     * tetto). Le cifre di JetBrains Mono sono piu' alte di quelle del condensato (0,73 em contro 0,71),
-     * quindi a 144,6dp si leggono alte quanto prima a 150dp.
+     * La misura delle cifre giganti con Inter 600 e tnum (G-1b). Non c'e' un corpo fisso: la regola
+     * prende il piu' piccolo fra il tetto (150dp) e cio' che entra nella mezza colonna, per larghezza e
+     * per altezza. Misurato a 411dp: "88" (calcio) 133,5dp, "AV" (padel e tennis) 124,8dp, cioe' l'89% e
+     * l'83% del tetto; a 360dp 113,8dp e 106,5dp. Con le cifre tabulari di Inter "AV" e' il token piu'
+     * largo (in JetBrains Mono erano uguali). Alle altezze: le cifre di Inter sono alte 0,73 em, quindi
+     * "AV" a 124,8dp vale 91dp di altezza contro i 105dp del mono a 144,6dp: costa il 13% di altezza.
      */
     @Test
-    fun `le cifre giganti del gioco sono in JetBrains Mono 800 con tnum e 88 e AV entrano nella mezza colonna del Pixel 9a`() {
+    fun `le cifre giganti del gioco sono in Inter 600 con tnum e 88 e AV entrano nella mezza colonna del Pixel 9a`() {
         val radice = misuraLaColonna(411)
         val densita = radice.resources.displayMetrics.density
         listOf(R.id.team1_score_textview, R.id.team2_score_textview).forEach { id ->
             val cifre = radice.findViewById<TextView>(id)
             assertEquals("tnum", cifre.fontFeatureSettings)
-            assertEquals(800, cifre.paint.typeface.weight)
+            assertEquals(600, cifre.paint.typeface.weight)
         }
         val mezzaColonna = radice.findViewById<View>(R.id.score_row).width / 2f - 16 * densita
         val punti = radice.findViewById<TextView>(R.id.team1_score_textview)
-        // Tutti i token a due caratteri misurano uguale (mono): la prova vale per 88, AV, 40, 15, PV.
-        listOf("88", "AV").forEach { token ->
-            val dimensione = dimensioneDelNumero(radice, token)
-            val larghezzaDelToken = Paint(punti.paint).apply { textSize = dimensione }.measureText(token)
-            assertTrue(
-                "\"$token\" e' largo ${larghezzaDelToken}px, la mezza colonna ne da $mezzaColonna",
-                larghezzaDelToken <= mezzaColonna + 0.5f,
-            )
-            assertTrue("\"$token\" scende a ${dimensione / densita}dp: piu' del 5% sotto il tetto", dimensione >= 142 * densita)
-        }
+        val corpi =
+            listOf("88" to 130f, "AV" to 120f).associate { (token, minimoDp) ->
+                val dimensione = dimensioneDelNumero(radice, token)
+                val larghezzaDelToken = Paint(punti.paint).apply { textSize = dimensione }.measureText(token)
+                assertTrue(
+                    "\"$token\" e' largo ${larghezzaDelToken}px, la mezza colonna ne da $mezzaColonna",
+                    larghezzaDelToken <= mezzaColonna + 0.5f,
+                )
+                val corpoDp = dimensione / densita
+                assertTrue("\"$token\" scende a ${corpoDp}dp: sotto i ${minimoDp}dp misurati", corpoDp >= minimoDp)
+                token to dimensione
+            }
+        // Falsificazione della misura: con le cifre tabulari di Inter "AV" e' piu' largo di "88", quindi il corpo
+        // per le racchette e' piu' piccolo di quello del calcio. Se fossero uguali la misura non guarderebbe il token.
+        assertTrue("AV ${corpi["AV"]} dovrebbe stare sotto 88 ${corpi["88"]}", corpi.getValue("AV") < corpi.getValue("88"))
     }
 
     @Test
@@ -265,9 +298,11 @@ class CaratteriDelTelefonoTest {
         val radice = misuraLaColonna(360)
         val densita = radice.resources.displayMetrics.density
         val minimo = radice.resources.getDimension(R.dimen.score_text_min)
-        listOf("88", "AV").forEach { token ->
+        listOf("88" to 110f, "AV" to 103f).forEach { (token, minimoDp) ->
             val dimensione = dimensioneDelNumero(radice, token)
             assertTrue("\"$token\" a 360dp scende a ${dimensione / densita}dp, sotto il minimo", dimensione >= minimo)
+            val corpoDp = dimensione / densita
+            assertTrue("\"$token\" a 360dp scende a ${corpoDp}dp: sotto i ${minimoDp}dp misurati", corpoDp >= minimoDp)
         }
     }
 }
