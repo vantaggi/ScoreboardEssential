@@ -17,7 +17,6 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.view.WindowManager
-import android.view.animation.OvershootInterpolator
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -1084,19 +1083,18 @@ class MainActivity :
         textView: TextView,
         newText: String,
     ) {
+        // Dissolvenza breve (G-2): fuori e dentro in duration_fast in tutto, senza traslazione ne' rimbalzo.
+        val meta = resources.getInteger(R.integer.duration_fast) / 2L
         textView
             .animate()
             .alpha(0f)
-            .translationY(-20f)
-            .setDuration(150)
+            .setDuration(meta)
             .withEndAction {
                 textView.text = newText.uppercase()
                 textView
                     .animate()
                     .alpha(1f)
-                    .translationY(0f)
-                    .setDuration(150)
-                    .setInterpolator(OvershootInterpolator())
+                    .setDuration(meta)
                     .start()
             }.start()
     }

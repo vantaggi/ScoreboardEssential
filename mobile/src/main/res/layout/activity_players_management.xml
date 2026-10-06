@@ -120,7 +120,7 @@
         android:contentDescription="@string/label_add_player"
         app:backgroundTint="@color/graffiti_pink"
         app:tint="@color/asphalt_black"
-        app:shapeAppearance="@style/ShapeAppearance.App.StreetButton"
+        app:shapeAppearance="@style/ShapeAppearance.App.Control"
         app:srcCompat="@drawable/ic_person_add" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

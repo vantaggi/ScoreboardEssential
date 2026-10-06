@@ -19,7 +19,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/skipButton"
-            style="@style/Widget.App.Button.TextButton.Street"
+            style="@style/Widget.App.Button.Text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -30,7 +30,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/nextButton"
-            style="@style/Widget.App.Button.Street"
+            style="@style/Widget.App.Button.Primary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
@@ -41,7 +41,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/finishButton"
-            style="@style/Widget.App.Button.Street"
+            style="@style/Widget.App.Button.Primary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"

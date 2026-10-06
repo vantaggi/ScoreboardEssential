@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Testo del bottone distruttivo: solo testo in colore errore, disattivo con text-disabled. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/elite_text_disabled" android:state_enabled="false" />
+    <item android:color="@color/elite_error" />
+</selector>

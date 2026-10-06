@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Movimento ridotto: nessuna scala, resta l'opacita' 0,85. Lo sceglie ThemeOverlay.App.MovimentoRidotto
+    quando ANIMATOR_DURATION_SCALE e' 0 (MovimentoRidotto.kt).
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <set>
+            <objectAnimator
+                android:duration="@integer/duration_instant"
+                android:propertyName="alpha"
+                android:valueTo="0.85"
+                android:valueType="floatType" />
+        </set>
+    </item>
+    <item>
+        <set>
+            <objectAnimator
+                android:duration="@integer/duration_instant"
+                android:propertyName="alpha"
+                android:valueTo="1"
+                android:valueType="floatType" />
+        </set>
+    </item>
+</selector>

@@ -13,7 +13,7 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         app:cardBackgroundColor="@color/graffiti_pink"
-        app:shapeAppearance="@style/ShapeAppearance.App.StreetBadge"
+        app:shapeAppearance="@style/ShapeAppearance.App.Badge"
         app:strokeWidth="0dp">
 
         <TextView

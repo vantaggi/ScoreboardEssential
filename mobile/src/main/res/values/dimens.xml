@@ -39,4 +39,9 @@
     <dimen name="radius_badge">6dp</dimen>
     <!-- control-touch: altezza e larghezza minime di ogni comando. -->
     <dimen name="control_touch">48dp</dimen>
+    <!-- Spessore del bordo di gruppi, card, campi e chip; il fuoco (focus-ring) e' di 2dp. -->
+    <dimen name="border_width">1dp</dimen>
+    <dimen name="focus_ring_width">2dp</dimen>
+    <!-- scrim: nero all'85% dietro i dialoghi (come elite_overlay), in frazione per il tema. -->
+    <item name="scrim_dim_amount" format="float" type="dimen">0.85</item>
 </resources>

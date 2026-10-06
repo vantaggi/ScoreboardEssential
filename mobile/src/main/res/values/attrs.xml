@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Lo StateListAnimator della pressione (scala e opacita'): lo risolve il tema, cosi' con
+        l'animazione ridotta del sistema ThemeOverlay.App.MovimentoRidotto lo sostituisce con la
+        sola opacita'. Gli stili dei controlli lo citano con ?attr/pressFeedback.
+    -->
+    <attr name="pressFeedback" format="reference" />
+</resources>

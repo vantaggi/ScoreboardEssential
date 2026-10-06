@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Segno di spunta dell'interruttore acceso: il secondo segno oltre al lime. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <group android:translateY="960">
+        <path
+            android:fillColor="@color/elite_on_lime"
+            android:pathData="M382,-240L154,-468L211,-525L382,-354L749,-721L806,-664L382,-240Z" />
+    </group>
+</vector>

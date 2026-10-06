@@ -1,11 +1,159 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Widget.App.Chip.Street" parent="Widget.Material3.Chip.Filter">
-        <item name="shapeAppearance">@style/ShapeAppearance.App.StreetBadge</item>
+    <!--
+        COMPONENTI DEL CONTORNO (G-2, UI Constitution). Solo token: i colori sono elite_*, i raggi e le
+        misure sono dimens.xml. Niente ombra su cio' che sta fermo; la pressione e' la stessa su ogni
+        controllo (?attr/pressFeedback, risolto dal tema) e senza increspatura (rippleColor trasparente).
+    -->
+
+    <!-- La pressione, per qualunque vista che non e' uno dei controlli qui sotto (righe, zone). -->
+    <style name="Widget.App.Pressable">
+        <item name="android:stateListAnimator">?attr/pressFeedback</item>
+    </style>
+
+    <!--
+        BOTTONI. Un solo primario per regione. Raggio 8dp (radius-control), altezza minima 48dp
+        (control-touch), mai a pillola. Il bottone che lavora tiene la larghezza: lo decide il layout.
+    -->
+    <style name="Widget.App.Button.Primary" parent="Widget.Material3.Button">
         <item name="android:textAppearance">@style/TextAppearance.App.Button</item>
-        <item name="chipBackgroundColor">@color/concrete_gray</item>
-        <item name="chipStrokeColor">@color/graffiti_pink</item>
-        <item name="chipStrokeWidth">1dp</item>
-        <item name="android:textColor">@color/stencil_white</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.Control</item>
+        <item name="android:minHeight">@dimen/control_touch</item>
+        <item name="android:minWidth">@dimen/control_touch</item>
+        <item name="android:elevation">0dp</item>
+        <item name="backgroundTint">@color/button_fill_primary</item>
+        <item name="android:textColor">@color/button_text_primary</item>
+        <item name="iconTint">@color/button_text_primary</item>
+        <item name="rippleColor">@android:color/transparent</item>
+        <item name="android:stateListAnimator">?attr/pressFeedback</item>
+    </style>
+
+    <!-- Secondario: superficie rialzata con bordo (outline, 3:1) e testo secondario. -->
+    <style name="Widget.App.Button.Secondary" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textAppearance">@style/TextAppearance.App.Button</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.Control</item>
+        <item name="android:minHeight">@dimen/control_touch</item>
+        <item name="android:minWidth">@dimen/control_touch</item>
+        <item name="android:elevation">0dp</item>
+        <item name="backgroundTint">@color/elite_surface_raised</item>
+        <item name="android:textColor">@color/button_text_secondary</item>
+        <item name="iconTint">@color/button_text_secondary</item>
+        <item name="strokeColor">@color/elite_outline</item>
+        <item name="strokeWidth">@dimen/border_width</item>
+        <item name="rippleColor">@android:color/transparent</item>
+        <item name="android:stateListAnimator">?attr/pressFeedback</item>
+    </style>
+
+    <!-- Distruttivo: solo testo, in colore errore (4,7:1 sulla superficie). Con l'icona o a corpo grande sulla rialzata. -->
+    <style name="Widget.App.Button.Destructive" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textAppearance">@style/TextAppearance.App.Button</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.Control</item>
+        <item name="android:minHeight">@dimen/control_touch</item>
+        <item name="android:minWidth">@dimen/control_touch</item>
+        <item name="android:textColor">@color/button_text_destructive</item>
+        <item name="iconTint">@color/button_text_destructive</item>
+        <item name="rippleColor">@android:color/transparent</item>
+        <item name="android:stateListAnimator">?attr/pressFeedback</item>
+    </style>
+
+    <!-- Testuale: solo testo, nel colore del testo primario (il lime e' del primario). -->
+    <style name="Widget.App.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textAppearance">@style/TextAppearance.App.Button</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.Control</item>
+        <item name="android:minHeight">@dimen/control_touch</item>
+        <item name="android:minWidth">@dimen/control_touch</item>
+        <item name="android:textColor">@color/button_text_plain</item>
+        <item name="iconTint">@color/button_text_plain</item>
+        <item name="rippleColor">@android:color/transparent</item>
+        <item name="android:stateListAnimator">?attr/pressFeedback</item>
+    </style>
+
+    <!-- Nomi di prima: li citano ancora la schermata di gioco e il foglio (G-6); ora sono gli stili nuovi. -->
+    <style name="Widget.App.Button.Street" parent="Widget.App.Button.Primary" />
+    <style name="Widget.App.Button.TextButton.Street" parent="Widget.App.Button.Text" />
+    <style name="Widget.App.Button.OutlinedButton.Street" parent="Widget.App.Button.Secondary" />
+
+    <!--
+        GRUPPO TONALE: superficie su canvas, bordo di 1dp, raggio radius-surface, nessuna ombra. E' il
+        contenitore dei contenuti statici; dentro, le righe si separano con una linea sottile.
+    -->
+    <style name="Widget.App.Group" parent="Widget.Material3.CardView.Filled">
+        <item name="cardBackgroundColor">@color/elite_surface</item>
+        <item name="cardElevation">0dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="strokeColor">@color/elite_border</item>
+        <item name="strokeWidth">@dimen/border_width</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.Surface</item>
+    </style>
+
+    <!--
+        CARD: solo per un elemento indipendente (spostabile, selezionabile, sollevato). Raggio 14, bordo,
+        nessuna ombra; selezionata prende il bordo lime. Pressione condivisa.
+    -->
+    <style name="Widget.App.Card" parent="Widget.Material3.CardView.Filled">
+        <item name="cardBackgroundColor">@color/elite_surface_raised</item>
+        <item name="cardElevation">0dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="strokeColor">@color/card_stroke</item>
+        <item name="strokeWidth">@dimen/border_width</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.Surface</item>
+        <item name="rippleColor">@android:color/transparent</item>
+        <item name="android:stateListAnimator">?attr/pressFeedback</item>
+    </style>
+
+    <!-- CAMPO DI TESTO: fondo, bordo a 3:1, fuoco lime di 2dp, errore sotto il campo (col testo in colore errore). -->
+    <style name="Widget.App.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="shapeAppearance">@style/ShapeAppearance.App.Control</item>
+        <item name="boxBackgroundColor">@color/elite_surface</item>
+        <item name="boxStrokeColor">@color/field_stroke</item>
+        <item name="boxStrokeErrorColor">@color/elite_error</item>
+        <item name="boxStrokeWidth">@dimen/border_width</item>
+        <item name="boxStrokeWidthFocused">@dimen/focus_ring_width</item>
+        <item name="errorTextColor">@color/elite_error</item>
+        <item name="errorIconTint">@color/elite_error</item>
+        <item name="helperTextTextColor">@color/elite_text_secondary</item>
+        <item name="hintTextColor">@color/elite_text_secondary</item>
+    </style>
+
+    <!--
+        CHIP e BADGE: solo bordo e testo. Il chip selezionato prende bordo e testo lime e il segno di
+        spunta (secondo segno). Il badge e' una piccola superficie senza fondo, raggio 6dp.
+    -->
+    <style name="Widget.App.Chip" parent="Widget.Material3.Chip.Filter">
+        <item name="shapeAppearance">@style/ShapeAppearance.App.Badge</item>
+        <item name="android:textAppearance">@style/TextAppearance.App.Button</item>
+        <item name="chipBackgroundColor">@android:color/transparent</item>
+        <item name="chipStrokeColor">@color/chip_stroke</item>
+        <item name="chipStrokeWidth">@dimen/border_width</item>
+        <item name="android:textColor">@color/chip_text</item>
+        <item name="rippleColor">@android:color/transparent</item>
+        <item name="android:stateListAnimator">?attr/pressFeedback</item>
+    </style>
+    <style name="Widget.App.Chip.Street" parent="Widget.App.Chip" />
+
+    <style name="Widget.App.Badge" parent="Widget.Material3.CardView.Outlined">
+        <item name="cardBackgroundColor">@android:color/transparent</item>
+        <item name="cardElevation">0dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="strokeColor">@color/elite_outline</item>
+        <item name="strokeWidth">@dimen/border_width</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.Badge</item>
+    </style>
+
+    <!-- INTERRUTTORI E CASELLE: selezione col lime e un secondo segno (la spunta). -->
+    <style name="Widget.App.CheckBox" parent="Widget.Material3.CompoundButton.CheckBox">
+        <item name="buttonTint">@color/selection_tint</item>
+        <item name="android:minHeight">@dimen/control_touch</item>
+        <item name="android:stateListAnimator">?attr/pressFeedback</item>
+    </style>
+    <style name="Widget.App.RadioButton" parent="Widget.Material3.CompoundButton.RadioButton">
+        <item name="buttonTint">@color/selection_tint</item>
+        <item name="android:minHeight">@dimen/control_touch</item>
+        <item name="android:stateListAnimator">?attr/pressFeedback</item>
+    </style>
+    <style name="Widget.App.Switch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="thumbIcon">@drawable/ic_switch_thumb</item>
+        <item name="android:minHeight">@dimen/control_touch</item>
+        <item name="android:stateListAnimator">?attr/pressFeedback</item>
     </style>
 </resources>
