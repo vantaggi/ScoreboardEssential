@@ -32,7 +32,7 @@
             android:inputType="textCapCharacters"
             android:maxLength="15"
             android:textSize="24sp"
-            android:textStyle="bold"
+            android:textFontWeight="600"
             android:textColor="@color/stencil_white"
             android:fontFamily="@font/inter" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -54,7 +54,7 @@
             android:textSize="28sp"
             android:textColor="@color/concrete_gray"
             android:fontFamily="@font/inter"
-            android:textFontWeight="900"
+            android:textFontWeight="600"
             android:textAllCaps="true" />
     </com.google.android.material.card.MaterialCardView>
 

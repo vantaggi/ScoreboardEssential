@@ -30,17 +30,17 @@
     <!-- Street Vibe Type and Shape -->
     <style name="TextAppearance.App.DisplayLarge.Street" parent="TextAppearance.Material3.DisplayLarge">
         <item name="android:fontFamily">@font/inter</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textFontWeight">600</item>
         <item name="android:letterSpacing">0.08</item>
     </style>
     <style name="TextAppearance.App.HeadlineMedium.Street" parent="TextAppearance.Material3.HeadlineMedium">
         <item name="android:fontFamily">@font/inter</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textFontWeight">600</item>
         <item name="android:textAllCaps">true</item>
     </style>
     <style name="TextAppearance.App.HeadlineSmall.Street" parent="TextAppearance.Material3.HeadlineSmall">
         <item name="android:fontFamily">@font/inter</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textFontWeight">600</item>
     </style>
     <style name="TextAppearance.App.BodyLarge.Street" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:fontFamily">@font/inter</item>
@@ -91,14 +91,14 @@
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">@color/ink_white</item>
         <item name="android:fontFamily">@font/inter</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textFontWeight">600</item>
         <item name="android:letterSpacing">0.04</item>
     </style>
     <style name="TextAppearance.Face.Status" parent="android:TextAppearance">
         <item name="android:textSize">@dimen/wear_hint_text_size</item>
         <item name="android:textColor">@color/sidewalk_gray</item>
         <item name="android:fontFamily">@font/inter</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textFontWeight">600</item>
         <item name="android:letterSpacing">0.04</item>
     </style>
 

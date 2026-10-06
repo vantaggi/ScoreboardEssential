@@ -464,12 +464,12 @@ class ChronicleActivity : AppCompatActivity() {
             setTextColor(color(ink))
             textSize = size
             if (score) {
-                // Punteggi e tempi: JetBrains Mono con cifre tabulari, 800 dal corpo 20 in su e 700 sotto.
-                val peso = if (size >= SCORE_HEAVY_FROM_SP) WEIGHT_EXTRABOLD else WEIGHT_BOLD
-                typeface = Typeface.create(font(SharedR.font.jetbrains_mono), peso, false)
+                // Punteggi e tempi: Inter con cifre tabulari, 600 dal corpo 20 in su e 500 sotto.
+                val peso = if (size >= SCORE_SEMIBOLD_FROM_SP) WEIGHT_SEMIBOLD else WEIGHT_MEDIUM
+                typeface = Typeface.create(font(SharedR.font.inter), peso, false)
                 fontFeatureSettings = TABULAR
             } else {
-                typeface = Typeface.create(font(SharedR.font.inter), if (bold) WEIGHT_BOLD else WEIGHT_REGULAR, false)
+                typeface = Typeface.create(font(SharedR.font.inter), if (bold) WEIGHT_SEMIBOLD else WEIGHT_REGULAR, false)
             }
         }
 
@@ -502,9 +502,9 @@ class ChronicleActivity : AppCompatActivity() {
         private const val NO_MATCH = -1
         private const val DATE_PATTERN = "dd/MM/yyyy HH:mm"
         private const val WEIGHT_REGULAR = 400
-        private const val WEIGHT_BOLD = 700
-        private const val WEIGHT_EXTRABOLD = 800
-        private const val SCORE_HEAVY_FROM_SP = 20f
+        private const val WEIGHT_MEDIUM = 500
+        private const val WEIGHT_SEMIBOLD = 600
+        private const val SCORE_SEMIBOLD_FROM_SP = 20f
         private const val TABULAR = "tnum"
         private const val SUPERSCRIPT_SIZE = 0.55f
         private const val CHART_HEIGHT_DP = 160

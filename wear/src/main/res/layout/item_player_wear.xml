@@ -34,7 +34,7 @@
         android:maxLines="1"
         android:textColor="@color/ink_white"
         android:textSize="18sp"
-        android:textStyle="bold"
+        android:textFontWeight="600"
         android:textAlignment="viewStart" />
 
 </LinearLayout>

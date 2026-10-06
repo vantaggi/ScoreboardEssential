@@ -86,7 +86,7 @@
         <!--
             Caratteri (DESIGN.md, G-1): Inter per il testo. Tutta la scala di Material 3 e' ripuntata
             su Inter qui sotto. Niente android:fontFamily nel tema: la vista lo legge DOPO il suo
-            textAppearance e lo sovrascriverebbe (il punteggio perderebbe JetBrains Mono).
+            textAppearance e lo sovrascriverebbe (il punteggio perderebbe le cifre tabulari).
         -->
         <item name="textAppearanceDisplayLarge">@style/TextAppearance.App.DisplayLarge.Street</item>
         <item name="textAppearanceDisplayMedium">@style/TextAppearance.App.DisplayMedium</item>
@@ -110,18 +110,19 @@
     </style>
 
     <!--
-        Tipografia del contorno (G-1). Inter ovunque c'e' testo: i pesi vengono dai ruoli di M3
-        (textFontWeight), il carattere e' quello di res/font. I tre stili "Street" tengono il nome
-        perche' li citano layout e test; il maiuscolo e la spaziatura sono quelli di prima.
+        Tipografia del contorno (G-1, G-1b). Inter ovunque c'e' testo: i pesi vengono dai ruoli di M3
+        (textFontWeight) e sono tre, 400, 500 e 600 (UI Constitution); il grassetto e' il 600. Il
+        carattere e' quello di res/font. I tre stili "Street" tengono il nome perche' li citano
+        layout e test; il maiuscolo e la spaziatura sono quelli di prima.
     -->
     <style name="TextAppearance.App.DisplayLarge.Street" parent="TextAppearance.Material3.DisplayLarge">
         <item name="android:fontFamily">@font/inter</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textFontWeight">600</item>
         <item name="android:letterSpacing">0.08</item>
     </style>
     <style name="TextAppearance.App.HeadlineMedium.Street" parent="TextAppearance.Material3.HeadlineMedium">
         <item name="android:fontFamily">@font/inter</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textFontWeight">600</item>
         <item name="android:textAllCaps">true</item>
     </style>
     <style name="TextAppearance.App.BodyLarge.Street" parent="TextAppearance.Material3.BodyLarge">
@@ -165,14 +166,14 @@
     </style>
 
     <!--
-        Il punteggio del contorno (storico, statistiche, Cronaca, foglio): JetBrains Mono 800 con
-        cifre tabulari, cosi' le colonne di numeri stanno in fila. Il padre e' il TextAppearance
+        Il punteggio del contorno (storico, statistiche, Cronaca, foglio): Inter 600 con cifre
+        tabulari (tnum), cosi' le colonne di numeri stanno in fila. Il padre e' il TextAppearance
         di base e non uno di M3: M3 porta con se' un'altezza di riga fissa che taglierebbe un 32sp.
-        Corpo e colore li dice la vista; per un tempo piccolo la vista chiede textFontWeight 700.
+        Corpo e colore li dice la vista; un tempo piccolo chiede textFontWeight 500.
     -->
     <style name="TextAppearance.App.Punteggio" parent="android:TextAppearance">
-        <item name="android:fontFamily">@font/jetbrains_mono</item>
-        <item name="android:textFontWeight">800</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">600</item>
         <item name="android:fontFeatureSettings">tnum</item>
         <item name="android:letterSpacing">0</item>
     </style>
@@ -206,8 +207,8 @@
         cifre e' il bianco puro; le altre righe lo impostano nel layout.
     -->
     <style name="TextAppearance.App.Game.Score" parent="TextAppearance.Material3.DisplayLarge">
-        <item name="android:fontFamily">@font/jetbrains_mono</item>
-        <item name="android:textFontWeight">800</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">600</item>
         <item name="android:fontFeatureSettings">tnum</item>
         <item name="android:textSize">@dimen/score_text_max</item>
         <item name="android:textColor">@color/ink_white</item>
@@ -257,7 +258,7 @@
     <style name="TextAppearance.App.Button" parent="TextAppearance.Material3.LabelLarge">
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textAllCaps">true</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:textFontWeight">600</item>
     </style>
 
     <!-- Street Vibe Button Styles -->
