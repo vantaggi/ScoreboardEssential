@@ -178,9 +178,20 @@ class TokenEliteTest {
     fun `spaziature, raggi, bersaglio e durate hanno i valori della tabella dei ruoli`() {
         val r = context.resources
         val densita = r.displayMetrics.density
+
         fun dp(id: Int) = r.getDimension(id) / densita
 
-        val spazi = listOf(R.dimen.space_4, R.dimen.space_8, R.dimen.space_12, R.dimen.space_16, R.dimen.space_24, R.dimen.space_32, R.dimen.space_48, R.dimen.space_64)
+        val spazi =
+            listOf(
+                R.dimen.space_4,
+                R.dimen.space_8,
+                R.dimen.space_12,
+                R.dimen.space_16,
+                R.dimen.space_24,
+                R.dimen.space_32,
+                R.dimen.space_48,
+                R.dimen.space_64,
+            )
         assertEquals(listOf(4f, 8f, 12f, 16f, 24f, 32f, 48f, 64f), spazi.map { dp(it) })
 
         assertEquals(8f, dp(R.dimen.radius_control))
@@ -221,7 +232,11 @@ class TokenEliteTest {
             }
         }
         // Il lime premuto (opacita' 0,85 sul fondo) tiene il testo scuro a 4,5.
-        val premuto = ColorUtils.compositeColors(ColorUtils.setAlphaComponent(token(R.color.elite_lime), 217), token(R.color.elite_background))
+        val premuto =
+            ColorUtils.compositeColors(
+                ColorUtils.setAlphaComponent(token(R.color.elite_lime), 217),
+                token(R.color.elite_background),
+            )
         assertTrue(TeamInk.contrast(token(R.color.elite_on_lime), premuto) >= 4.5)
     }
 

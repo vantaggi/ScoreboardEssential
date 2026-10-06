@@ -76,7 +76,9 @@ class ComponentiDelContornoTest {
     private fun raggioDelBottone(bottone: MaterialButton): Float {
         misura(bottone)
         bottone.layout(0, 0, bottone.measuredWidth, bottone.measuredHeight)
-        return bottone.shapeAppearanceModel.topLeftCornerSize.getCornerSize(RectF(0f, 0f, bottone.width.toFloat(), bottone.height.toFloat()))
+        return bottone.shapeAppearanceModel.topLeftCornerSize.getCornerSize(
+            RectF(0f, 0f, bottone.width.toFloat(), bottone.height.toFloat()),
+        )
     }
 
     private fun tutti(
@@ -153,11 +155,40 @@ class ComponentiDelContornoTest {
 
     @Test
     fun `un bottone disattivo perde il lime e prende text-disabled`() {
-        val bottone = MaterialButton(contesto).apply { text = "Salva"; isEnabled = false }
+        val bottone =
+            MaterialButton(contesto).apply {
+                text = "Salva"
+                isEnabled = false
+            }
         val fondo = bottone.backgroundTintList!!.getColorForState(intArrayOf(-android.R.attr.state_enabled), 0)
 
         assertEquals(token(R.color.elite_surface_raised), fondo)
         assertEquals(token(R.color.elite_text_disabled), bottone.currentTextColor)
+    }
+
+    // Un solo primario per regione: nelle schermate del contorno al massimo un bottone lime visibile.
+    @Test
+    fun `ogni layout del contorno ha al massimo un bottone primario visibile`() {
+        val layout =
+            listOf(
+                R.layout.activity_match_settings,
+                R.layout.content_scoreboard_details,
+                R.layout.activity_onboarding,
+                R.layout.dialog_create_player,
+                R.layout.match_item,
+            )
+        var primariTrovati = 0
+        for (id in layout) {
+            val radice = LayoutInflater.from(contesto).inflate(id, null)
+            val primari =
+                tutti(radice, MaterialButton::class.java)
+                    .map { it as MaterialButton }
+                    .filter { it.visibility == View.VISIBLE && it.backgroundTintList?.defaultColor == token(R.color.elite_lime) }
+            assertTrue("${contesto.resources.getResourceEntryName(id)} ha ${primari.size} primari", primari.size <= 1)
+            primariTrovati += primari.size
+        }
+        // Non e' un test vuoto: il foglio ha TERMINA e l'onboarding ha AVANTI.
+        assertTrue(primariTrovati >= 2)
     }
 
     // --- Gruppi e card ---
@@ -214,7 +245,10 @@ class ComponentiDelContornoTest {
 
         assertEquals(token(R.color.elite_surface), campo.boxBackgroundColor)
         assertEquals(token(R.color.elite_outline), s.defaultColor)
-        assertEquals(token(R.color.elite_lime), s.getColorForState(intArrayOf(android.R.attr.state_focused, android.R.attr.state_enabled), 0))
+        assertEquals(
+            token(R.color.elite_lime),
+            s.getColorForState(intArrayOf(android.R.attr.state_focused, android.R.attr.state_enabled), 0),
+        )
         assertEquals(dp(R.dimen.border_width).toInt(), campo.boxStrokeWidth)
         assertEquals(dp(R.dimen.focus_ring_width).toInt(), campo.boxStrokeWidthFocused)
         assertEquals(token(R.color.elite_error), campo.boxStrokeErrorColor!!.defaultColor)
