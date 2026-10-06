@@ -143,7 +143,6 @@
         <item name="rippleColor">@android:color/transparent</item>
         <item name="android:stateListAnimator">?attr/pressFeedback</item>
     </style>
-    <style name="Widget.App.Chip.Street" parent="Widget.App.Chip" />
 
     <style name="Widget.App.Badge" parent="Widget.Material3.CardView.Outlined">
         <item name="cardBackgroundColor">@android:color/transparent</item>

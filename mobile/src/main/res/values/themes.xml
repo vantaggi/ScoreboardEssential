@@ -235,7 +235,6 @@
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
     <!-- Nomi di prima: li citano ancora il foglio e la schermata di gioco (G-6 li toglie); ora sono le forme nuove. -->
-    <style name="ShapeAppearance.App.StreetCard" parent="ShapeAppearance.App.Surface" />
     <style name="ShapeAppearance.App.StreetButton" parent="ShapeAppearance.App.Control" />
     <style name="ShapeAppearance.App.StreetBadge" parent="ShapeAppearance.App.Badge" />
 
