@@ -9,5 +9,5 @@
     android:paddingBottom="8dp"
     android:textAppearance="?attr/textAppearanceHeadlineSmall"
     android:fontFamily="@font/inter"
-    android:textStyle="bold"
+    android:textFontWeight="600"
     android:textColor="@color/team_spray_yellow" />

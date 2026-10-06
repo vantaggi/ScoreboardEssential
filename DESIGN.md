@@ -1220,6 +1220,306 @@ Proposta: una collocazione per i valori e una per la logica.
 
 3) I colori delle squadre viaggiano già come Int ARGB (WearConstants.KEY_TEAM_COLOR, letto in WearDataLayerService righe 107-119). Con la funzione in :core e i default in :shared, i due lati calcolano inchiostro e striscia dallo stesso Int con la stessa funzione e gli stessi default. Oggi il telefono li prende da ColorRepository e l'orologio dal proprio colors.xml. Se il proprietario cambia la coppia predefinita (Telefono > Decisioni, riga 448), la modifica resta una sola.
 
+## Adattamento alla UI Constitution - 6 ottobre 2026
+
+Il proprietario ha un design system trasversale, la **UI Constitution** (<https://claude.ai/artifact/8DhrtZW85wiHTsfw1vmXSn>), che il progetto adotta. Questa sezione e' l'**unica fonte** dell'adattamento: identita', mappatura dei ruoli, conflitti dichiarati e passi G-1b..G-10. Segue la procedura di `adapting.md` della Constitution: i valori del progetto vincono, si tengono i ruoli; i buchi si riempiono coi predefiniti e si dice quali sono.
+
+La pista "Coerenza con Padel Elite" (sotto) resta per cio' che e' gia' fatto (G-0 e G-1) e per i **valori** di Padel Elite e i loro contrasti. I suoi passi G-2..G-9 sono stati **tolti** da li' e rifatti qui: li sostituiscono. Dove la pista dice JetBrains Mono, Heroicons o "pillole" va letto con questa sezione.
+
+Sigle dell'origine dei valori: **P** valore di Padel Elite (preso dalla dashboard); **C** predefinito della Constitution; **A** scelta dell'app (derivata o corretta, con la ragione).
+
+### Decisioni del proprietario, 6 ottobre 2026
+
+1. **Numeri in Inter con cifre tabulari** (feature `tnum`), non JetBrains Mono, che **esce dall'app** (file, famiglia e licenza). Cambia la decisione G3 del 5 ottobre.
+2. **Chi serve si segna con l'accento lime `#C8F135`**: i pallini del servizio sul telefono e sull'orologio. In ambient nessun colore.
+3. **Il tema ad alto contrasto si fa piu' avanti**, come passo G-10.
+
+Restano valide: valori di Padel Elite mappati sui ruoli (G0 e la tabella sotto); **Inter come carattere del testo**, eccezione dichiarata rispetto al "font di sistema" della Constitution e approvata dal proprietario per coerenza con la dashboard (la Constitution dice "non aggiungere un font senza approvazione": c'e'); quadrante dell'orologio con le cifre condensate se Inter non entra (misura qui sotto); solo tema scuro (G4); via l'identita' street dal contorno (G1); lati lime e ciano (G2); nome e icona G5 da confermare.
+
+### Identita' (le sei righe, una per superficie)
+
+Telefono e orologio condividono accento, caratteri e nomi; non la densita' ne' il movimento (`adapting.md` punto 5).
+
+```text
+TELEFONO
+Product character: tabellone da bordo campo, letto di sfuggita e toccato col pollice; il contorno (storico, Cronaca, statistiche) e' la pagina di una dashboard sobria, la stessa di Padel Elite
+Density: balanced nel contorno; in gioco un numero per lato e niente altro (le tre fasce a slot fissi)
+Geometry: precise (raggi 8, 14, 14; gruppi tonali; mai angoli tagliati, mai pillole)
+Accent behavior: restrained (lime solo per l'azione primaria, la selezione, il fuoco e chi serve)
+Motion character: precise (due stati alla volta, nessuna decorazione, niente oltre 240ms)
+Primary domain pattern: tabellone a due meta' con punteggio tabulare, registro cronologico e Cronaca derivata dal motore
+Distinctive visual behavior: nero puro in gioco, cifre bianche giganti in Inter 600 tabulare, il colore della squadra solo nelle zone + e nella barretta (con inchiostro TeamInk), pallino lime per il servizio, il punteggio che rotola nella direzione del cambio
+
+OROLOGIO
+Product character: un numero al polso, letto in mezzo secondo e toccato con un dito; il resto e' sul telefono
+Density: compact (un valore focale, al massimo due di supporto, un'azione)
+Geometry: precise (tondo prima, quadrato dopo; nessuna card, nessuna ombra; raggi di Padel Elite nel menu)
+Accent behavior: functional (il lime marca una cosa sola: chi serve; in ambient nessun colore)
+Motion character: calm (corto, a molla 'control', niente in loop, niente al risveglio)
+Primary domain pattern: quadrante a fasce con la coppia di cifre al centro e il gesto del tocco, con ricevuta aptica per lato
+Distinctive visual behavior: cifre bianche su nero puro, strisce di squadra sotto le cifre, pallino lime sul lato di chi serve, vibrazione diversa a sinistra e a destra, ambient con le sole cifre sottili
+```
+
+### Mappatura dei ruoli della Constitution
+
+Il tema e' uno solo, **scuro** (decisione G4): i valori sono quelli del tema scuro della Constitution; il chiaro non c'e' (conflitto dichiarato, sotto) e l'alto contrasto e' G-10. La fonte dei valori e' `mobile/src/main/res/values/colors.xml` (token `elite_*`), il quadrante la riceve in G-7. I nomi marcati *(nuovo)* non esistono ancora: li crea G-2.
+
+| Ruolo | Token Android | Valore | Origine |
+|---|---|---|---|
+| `background-canvas` | `elite_background` (`android:colorBackground`) | `#0D0D0F` | P |
+| `background-surface` | `elite_surface` (`colorSurface`) | `#161618` | P |
+| `background-elevated` | `elite_surface_raised` (`colorSurfaceContainerHigh`) | `#1E1E22` | P |
+| `background-watch` | `ink_black`; nero del gioco sul telefono e del quadrante | `#000000` | C (uguale al valore dell'app) |
+| `text-primary` | `elite_text_primary` (`colorOnSurface`); le cifre del gioco e del quadrante sono `ink_white` | `#D1D1D8` (cifre `#FFFFFF`) | P (cifre A: dati su nero) |
+| `text-secondary` | `elite_text_secondary` (`colorOnSurfaceVariant`) | `#8A8A9A` | P |
+| `text-disabled` | `elite_text_disabled` *(nuovo)* | `#6B7077` | C |
+| (nessun ruolo) | `elite_text_tertiary` | `#7F7F93` | P; la Constitution non ha un terzo livello leggibile: si usa `text-secondary`; il token si toglie in G-4 quando nessun layout lo cita |
+| `border-subtle` | `elite_border_strong` (`colorOutlineVariant`) | `#2A2A2E` | P (nel ruolo di linea sottile fra le righe di un gruppo) |
+| `border-group` | `elite_border` | `#1E1E22` | P; **visibile anche in scuro** (la Constitution lo vuole trasparente: qui i due toni distano 1,07:1) |
+| `border-strong` | `elite_outline` (`colorOutline`) | `#6E6E7E` | A (il bordo forte di Padel Elite fa 1,36:1 e non passa 3:1, vedi G-0) |
+| `accent-default` | `elite_lime` (`colorPrimary`) | `#C8F135` | P |
+| `accent-hover`, `accent-pressed` | derivati dal lime col feedback di pressione (opacita' 0,85): sul fondo `#ACCF2F` | derivati | A (P non ha stati; il blu della Constitution non si usa) |
+| `on-accent` | `elite_on_lime` (`colorOnPrimary`) | `#0D0D0F` | P |
+| `status-success` | `elite_success` (alias del lime) | `#C8F135` | P |
+| `status-warning` | `elite_warning` | `#E09A35` | P |
+| `status-error` | `elite_error` (`colorError`) | `#E05252` | P |
+| `status-info` | `elite_info` *(nuovo)* | `#7FBDEA` | C (P usa il ciano solo nei grafici) |
+| `status-success-subtle` | `elite_success_subtle` *(nuovo)* | `#15291F` | C |
+| `status-warning-subtle` | `elite_warning_subtle` *(nuovo)* | `#2E2410` | C |
+| `status-error-subtle` | `elite_error_subtle` *(nuovo)* | `#2A1415` | A (il `#33191A` di C con l'errore di P fa 4,25:1 e l'etichetta non passa 4,5) |
+| `status-info-subtle` | `elite_info_subtle` *(nuovo)* | `#14262F` | C |
+| `focus-ring` | `elite_lime`, tratto pieno 2dp con distanza 2dp | `#C8F135` | P (campi con focus lime; il blu di C si scarta) |
+| `state-hover` | `elite_surface_hover` (`colorSurfaceBright`), solo puntatore e tastiera | `#2A2A2E` | P |
+| `state-pressed` | `elite_state_pressed` *(nuovo)*: il testo primario al 12% | `#1FD1D1D8` | A (C dark e' `rgba(236,238,240,0.12)`: stessa regola sul testo di P) |
+| `state-selected` | `elite_surface_raised` piu' un secondo segno (indicatore lime, peso 600) | `#1E1E22` | P/A |
+| `scrim` | `elite_overlay` | nero all'85% (`#D9000000`) | P (C dark e' 60%) |
+| `chart-1` | `elite_lime` (lato 1) | `#C8F135` | P |
+| `chart-2` | `elite_cyan` (lato 2) | `#00E5FF` | P |
+| `chart-3`, `chart-4`, `chart-5` | `elite_chart_3`, `_4`, `_5` *(nuovi)* | `#F0A36B`, `#D79BDB`, `#A4A9B0` | C (dark, in ordine; saltati il blu e il verde acqua di C: troppo vicini al ciano) |
+| `chart-grid` | = `border-subtle` | `#2A2A2E` | C |
+| `radius-control` | 8dp (bottoni, campi, voci) | 8dp | P (C: 10) |
+| `radius-surface` | 14dp (gruppi, card, foglio) | 14dp | P (C: 16) |
+| `radius-overlay` | 14dp (dialoghi, menu) | 14dp | P (C: 22): P non distingue dalle card |
+| `radius-full` | solo interruttori e indicatori | tondo | C |
+| (nessun ruolo) | raggio dei badge | 6dp | P: badge solo bordo, senza sfondo |
+| `space-4`..`space-64` | `space_4`..`space_64` *(nuovi, `dimens.xml`)* | 4, 8, 12, 16, 24, 32, 48, 64dp | C |
+| `control-touch` | altezza e larghezza minime dei comandi | 48dp | C (P: 44, app: 48) |
+| `control-standard` | altezza dei bottoni sul telefono | 48dp | A (C: 44: su Android il minimo e' 48) |
+| `icon-compact`, `-standard`, `-prominent` | 16, 20, 24dp | 16, 20, 24dp | C |
+| icone | Material Symbols **outlined**, peso 400, scaricate una per una come vettoriali (non il font); niente `icon-stroke` (vale per Lucide) | | C (`integration.md`); sostituisce Heroicons |
+| `duration-instant`, `-fast`, `-standard` | `duration_instant`, `duration_fast`, `duration_standard` *(nuovi, `integers.xml`)* | 100, 160, 240ms | C = tetto di P (240ms) |
+| `duration-expressive` | non si usa | 380ms | C; fuori dal tetto di P |
+| molle | `control` stiffness 743 e smorzamento 1,0; `surface` 400 e 0,83 (`SpringAnimation`, non `tween`) | | C (`integration.md`); `expressive` mai sull'orologio |
+
+**Tipografia.** Inter, tre pesi (400, 500, 600). Ruoli sulla scala M3 (come `integration.md`): `display` displaySmall, `page-title` headlineLarge, `section-heading` titleLarge, `body` bodyLarge, `label` labelLarge, `caption` bodySmall, `numeric` lo stile `Punteggio`. Pesi: `display`, `page-title`, `section-heading` e `body-strong` 600; `body` e `caption` 400; `label` 500; `numeric` 500 (600 per i punteggi grandi). Non servono altri pesi: **al massimo tre per schermata**, e il 700 e il 900 sono usciti dall'app. I corpi sono quelli della scala M3 in sp (36, 32, 22, 16, 14, 12), non i px della Constitution (scostamento dichiarato: sp, per il carattere al 200%); `display` non si usa negli strumenti.
+
+### Contrasti (WCAG, ricalcolati il 6 ottobre; tema scuro, l'unico)
+
+I valori di P sono quelli gia' verificati da `TokenEliteTest`; qui si aggiungono i ruoli nuovi.
+
+| Coppia | Rapporto | Esito |
+|---|---|---|
+| `text-primary` su canvas / surface / elevated / hover | 12,78 / 11,90 / 10,94 / 9,41 | AAA |
+| `text-secondary` su canvas / surface / elevated / hover | 5,72 / 5,32 / 4,89 / 4,21 | AA; **mai su hover** |
+| `text-disabled` `#6B7077` su canvas / surface / elevated | 3,89 / 3,62 / 3,33 | sotto 4,5 per scelta della Constitution (solo etichette disattivate) |
+| `accent-default` lime su canvas / surface / elevated / nero | 14,88 / 13,85 / 12,73 / 16,09 | AAA, anche come testo, icona e pallino |
+| `on-accent` `#0D0D0F` su lime | 14,88 | AAA |
+| `on-accent` sul lime premuto `#ACCF2F` | 10,84 | AAA |
+| `status-error` su canvas / surface / elevated | 5,08 / 4,73 / 4,35 | AA su canvas e surface; su elevated vale come icona (3:1) e testo grande |
+| `status-warning` su canvas / surface / elevated | 8,18 / 7,61 / 7,00 | AAA |
+| `status-info` `#7FBDEA` su canvas / surface / elevated | 9,59 / 8,92 / 8,20 | AAA |
+| `*-subtle`: `text-primary` su success / warning / error / info | 10,10 / 10,05 / 11,43 / 10,25 | AAA |
+| `*-subtle`: colore di stato su success / warning / error / info (etichetta) | 11,75 / 6,43 / 4,55 / 7,69 | AA, tutti sopra 4,5 |
+| `border-strong` `#6E6E7E` su canvas / surface / elevated | 3,88 / 3,61 / 3,32 | 3:1, passa |
+| `border-group` `#1E1E22` su canvas / surface | 1,17 / 1,09 | decorativo: separa, non identifica un comando |
+| `border-subtle` `#2A2A2E` su canvas / surface | 1,36 / 1,26 | decorativo |
+| surface su canvas | 1,07 | il gruppo si legge per tono **e** per `border-group` (conflitto dichiarato) |
+| `chart-1`..`chart-5` su canvas / surface | 14,88-8,21 / 13,85-7,64 | 3:1 con ampio margine |
+| cifre `#FFFFFF` su nero / lime su nero (pallino) | 21,00 / 16,09 | AAA |
+| grigio `#9E9E9E` (cronometro fermo, perdente) su nero | 7,84 | AAA |
+
+### Conflitti dichiarati
+
+La Constitution ammette di cambiare ogni valore, ma non di lasciar cadere un ruolo, saltare uno stato o usare un pattern vietato senza dichiararlo. Qui sono tutti:
+
+1. **Inter al posto del font di sistema.** La Constitution dice `--font-sans` di sistema e "non aggiungere un font senza approvazione". Inter e' approvato dal proprietario per coerenza con la dashboard. Costa tre file da circa 96 KB (288 KB in tutto) e li porta l'APK; non si usa un font scaricabile (niente Play Services in partita).
+2. **Niente tema chiaro** (G4). La Constitution chiede chiaro, scuro e alto contrasto. Il chiaro e' fuori; l'alto contrasto e' G-10.
+3. **Cifre giganti fuori dalla scala dei ruoli.** Il punteggio del gioco e' il valore focale e si misura per entrare nella meta' colonna (da 72dp a un tetto di 150dp): e' `numeric` con un corpo calcolato. E' l'unico corpo fuori scala.
+4. **Cifre del quadrante in condensato di sistema**, non in Inter, perche' Inter non entra (misura qui sotto). E' un secondo carattere sul quadrante, limitato alle cifre e al cronometro.
+5. **`border-group` visibile in scuro**, la Constitution lo vuole invisibile dove il tono basta: qui i due toni distano 1,07:1 (Padel Elite le disegna con un bordo di 1px).
+6. **`border-strong` e' `elite_outline`**, non il bordo forte di Padel Elite (1,36:1, non passa 3:1).
+7. **Successo = lime = accento**: la tinta non distingue lo stato (la Constitution lo vieta da solo), quindi lo stato ha sempre una parola o un'icona. Il lime e' anche il colore del lato 1 in gioco e nella Cronaca; il lato e' sempre accompagnato dal nome.
+8. **`radius-overlay` = `radius-surface`** (14dp): Padel Elite non distingue i dialoghi dalle card. Il raggio interno resta minore (8) del contenitore.
+9. **`control-standard` 48dp** al posto di 44, e le molle con `SpringAnimation` perche' il progetto e' a View e non a Compose.
+10. **Corpi in sp sulla scala M3**, non i px della Constitution.
+11. **Maiuscolo.** La Constitution lo vuole raro. Oggi i bottoni e i titoli del contorno sono in `textAllCaps`: G-2 e G-4 lo tolgono. In gioco i nomi delle squadre e le etichette dei comandi restano maiuscoli (si leggono a due metri) fino a G-6, che decide.
+12. **Colori di squadra scelti dall'utente** fuori dai ruoli: sono contenuto, non tema; `TeamInk` garantisce il contrasto.
+13. **Stati del movimento sull'orologio.** Il pallino del servizio non anima; in ambient niente colore (decisione 2) e niente movimento.
+
+### Piano
+
+#### G-1b. Numeri in Inter con cifre tabulari; JetBrains Mono esce. FATTO (6 ottobre 2026).
+
+**Come e' stato fatto.**
+
+- **File.** `shared/src/main/res/font` contiene solo `inter_regular` (400), `inter_medium` (500) e la nuova `inter_semibold` (600), piu' `inter.xml` con i tre pesi. `inter_semibold` e' il file ufficiale Inter 4.1 (`Inter-SemiBold.ttf`, release dei progetti) ridotto con `pyftsubset` (fontTools) allo stesso sottoinsieme latino di G-1 (stessi unicode, `--layout-features='*'`, hinting tolto): 96.728 B. Il procedimento riprodotto con `inter_regular` da' i 95.020 B di G-1, quindi e' lo stesso. Via `inter_bold`, `inter_black`, `jetbrains_mono.xml`, `jetbrains_mono_bold`, `jetbrains_mono_extrabold` e `docs/licenses/OFL-JetBrainsMono.txt`: l'APK perde 145 KB di mono e 192 KB di Inter 700 e 900 e prende 96 KB, quindi dai 529 KB di G-1 ai 288 KB di oggi. La licenza di Inter resta in `docs/licenses/OFL-Inter.txt`.
+- **Pesi.** Chi chiede il grassetto (700) cade sul 600, il piu' vicino, senza grassetto finto (la sintesi del grassetto scatta solo con due gradini di differenza, e qui ce n'e' uno): lo fissa un test. Gli stili che dicevano `bold` o `black` dicono `textFontWeight` 600: `DisplayLarge.Street`, `HeadlineMedium.Street`, `TextAppearance.App.Button`, i tre stili del tema dell'orologio che usano Inter, `Face.Who` e `Face.Status`; nei layout i dieci `textStyle bold` che stavano su Inter (sette sul telefono, tre sull'orologio) e il 900 di `dialog_team_name`. La Cronaca costruisce le viste in codice: 600 dal corpo 20sp in su e 500 sotto per i numeri, 600 e 400 per il testo.
+- **Stile del punteggio.** `TextAppearance.App.Punteggio` e' Inter 600 con `fontFeatureSettings tnum` e spaziatura 0; il set (`sets_textview`) e le cifre delle statistiche sono 600 tabulari, il minuto del registro 500 tabulare. Inter ha le cifre **proporzionali** di default: senza `tnum` "11" e "88" misurano diverso (e' la falsificazione nel test), con `tnum` stanno in fila.
+- **Cifre del gioco** (misura rifatta col `Paint` vero della vista, `CaratteriDelTelefonoTest`): `dimensioneDelNumero` non e' stata toccata, copia il `Paint` e quindi misura gia' Inter 600 tabulare. Con le cifre tabulari "AV" e' il token piu' largo (in JetBrains Mono erano tutti uguali). **411dp (Pixel 9a):** "88" a **133,5dp** (89% del tetto di 150dp, 172,7dp su 173,5dp di mezza colonna), "AV" a **124,8dp** (83%, 172,3dp su 173,5dp). **360dp:** "88" a **113,8dp**, "AV" a **106,5dp**, sopra il pavimento di 72dp. Costo visivo: le cifre di Inter sono alte 0,73 em, quindi "AV" a 124,8dp vale circa 91dp di altezza contro i 105dp del mono a 144,6dp (G-1) e i 106dp del condensato a 150dp: **le cifre del padel e del tennis perdono circa il 13% di altezza** rispetto a G-1. Se il proprietario le trova piccole, due rimedi per G-6 (nessuno fatto ora): spaziatura negativa di 0,02 em, che guadagna circa il 4%, oppure la variante Inter Display 4.1 (file ufficiale, stesso procedimento), che e' disegnata per i corpi grandi e piu' stretta.
+- **Cifre del quadrante** (`CifreDelQuadranteTest`, grafica nativa, xhdpi, file veri): Inter 600 tabulare, con la regola "solo se entra a 58dp e 68dp". **Tondo da 192dp, corpo 58dp: "AV" 80dp, "40" 75dp contro 68dp di colonna: non entra.** **Tondo da 227dp, corpo 68dp: "AV" 94dp, "40" 88dp contro 80,5dp: non entra.** Per entrare servirebbero 49dp e 58dp (il 15% in meno); a 56dp "AV" fa ancora 77dp. Il condensato entra (AV 66dp, 40 59dp a 58dp; 77,5dp e 69dp a 68dp). **Decisione: le cifre del quadrante (`Face.Score`, `Face.Context`, `Face.Keeper`, ambient compreso) restano condensate**, Inter va sul resto del quadrante, come gia' dopo G-1. Il test fallisce se Inter comincia a entrare (e dice di rifare la scelta) o se il condensato smette di entrare, e rifiuta il fuori-misura "per un soffio" (Inter deve restare oltre il 10% sotto).
+- **Test.** `CaratteriDelTelefonoTest` aggiornato alla decisione: i tre file e la famiglia si caricano e hanno pesi diversi; JetBrains Mono, `inter_bold` e `inter_black` non esistono piu' (falsificazione); il 700 cade sul 600; `tnum` e' necessario (senza, "11" e "88" misurano diverso); i quindici ruoli M3 sono Inter; punteggio dello storico, set, statistiche e minuto del registro hanno il peso e la feature giusti; "88" e "AV" entrano nella mezza colonna a 411dp e restano sopra i valori misurati, a 360dp sopra il pavimento; "AV" scende sotto "88". `CifreDelQuadranteTest` come sopra.
+- **Resta fuori:** `Game.Clock`, `Game.Value`, `Game.Name`, `Game.Command` e `Game.Caption` sono ancora in condensato (G-6); il PDF (G-8); gli screenshot.
+
+- **Costo:** piccolo
+- **File:** `shared/src/main/res/font/*`, `docs/licenses/OFL-JetBrainsMono.txt`, `mobile/src/main/res/values/themes.xml`, `wear/src/main/res/values/theme.xml`, layout (`match_item.xml`, `match_event_item.xml`, `chronicle_section.xml`, `dialog_color_picker.xml`, `dialog_team_name.xml`, `item_role_header.xml`, `wear/.../activity_menu.xml`, `activity_player_selection.xml`, `item_player_wear.xml`), `mobile/.../ui/chronicle/ChronicleActivity.kt`, test `CaratteriDelTelefonoTest`, `CifreDelQuadranteTest`
+- **Verifica:** `./gradlew test ktlintCheck lintDebug assembleDebug`; i due test dei caratteri verdi e falsificati; nessun riferimento a `jetbrains` nel repository fuori dai documenti.
+
+#### G-2. Ruoli mancanti, gruppi tonali, bottoni e stati; la stessa pressione ovunque.
+
+Il passo che porta la Constitution nel tema; i passi dopo lo usano.
+
+- **Token mancanti**, in `colors.xml`, `dimens.xml` e un nuovo `integers.xml`: `elite_text_disabled`, `elite_info`, i quattro `elite_*_subtle`, `elite_state_pressed`, `elite_chart_3..5`, `space_4..space_64`, i quattro raggi (8, 14, 14, 6), `duration_instant/fast/standard`. Il tema li dichiara come attributi, cosi' i layout citano ruoli e non esadecimali. Un test controlla che ogni ruolo della tabella risolva al valore dichiarato e che i contrasti sopra reggano (estende `TokenEliteTest`).
+- **Gruppi tonali.** Un gruppo e' `elite_surface` su `elite_background`, raggio 14, `elite_border` di 1dp, **senza ombra** (`bg_concrete_card` diventa `bg_group`); dentro, le righe sono separate da una linea sottile di `elite_border_strong` **rientrata fino al bordo del testo** (divisore con inset). **Una card non e' un gruppo:** si usa una `MaterialCardView` rialzata solo per un elemento indipendente, spostabile, selezionabile o sollevato (il foglio PARTITA mentre si trascina, i dialoghi). Oggi le card sono usate come gruppi (`content_scoreboard_details.xml`, `match_item`, `item_player_stat`, `item_player_management`): G-4 le riporta a gruppi con righe.
+- **Niente ombre sulle superfici ferme.** `cardElevation` e `elevation` a 0 su tutto cio' che sta fermo (`match_item.xml` e `item_player_stat.xml` hanno 4dp, il foglio usa lo stile `materialCardViewElevatedStyle`); `shadow` solo per foglio trascinato, dialoghi, snackbar. Grep di verifica.
+- **Bottoni.** `radius-control` 8dp (M3 li fa a pillola: `shapeAppearance` sul tema). **Un solo primario per regione** (lime, testo `elite_on_lime`); secondario a contorno `elite_outline`; distruttivo `TextButton` in `elite_error` (su elevated con l'icona o a corpo grande: 4,35:1); un bottone che lavora **tiene la larghezza**: la stessa vista diventa `progress_activity` che gira una volta ogni 0,8s (ferma con il movimento ridotto) e poi `check` disegnato lungo il tratto in `duration_standard`; larghezza minima fissata sull'etichetta piu' lunga. Via `textAllCaps` dai bottoni: i bottoni dicono l'azione ("Salva risultato"), non "Continua".
+- **La pressione e' la stessa ovunque:** scala 0,97 e opacita' 0,85 in `duration_instant`, al rilascio torna com'era. Un solo `StateListAnimator` (`res/animator/press_feedback.xml`) applicato a bottoni, righe, zone + e comandi con icona; niente increspatura (`colorControlHighlight` trasparente). Con il movimento ridotto niente scala: solo opacita', e le righe prendono l'overlay `state-pressed`. Sostituisce `animateZoneTap` (scala 0,96 a mano).
+- **Tutti gli stati** dove valgono: normale, premuto, fuoco (anello lime pieno 2dp, distanza 2dp: `foreground` col drawable di fuoco), selezionato (con un secondo segno), disattivo (testo `text-disabled`, icone a 0,5), in corso, sola lettura, errore, vuoto. Un campo con errore mostra il messaggio sotto il campo e tiene cio' che l'utente ha scritto.
+- **Movimento.** Via cio' che la Constitution vieta: `AnimationUtils.kt` ha `playEnhancedScoreAnimation` (zoom 1,4, rotazione, colori, rimbalzo: nessun chiamante, si cancella), `pulseAnimation` (ciclo infinito di una card: si cancella) e `animateTextChange` in `MainActivity.kt` (traslazione 20 con `OvershootInterpolator`: rimbalzo decorativo, diventa dissolvenza di `duration_fast`). Nessuna animazione oltre `duration_standard` (240ms).
+- **Forme.** Tutte `rounded` (G1): `StreetCard` 14, `StreetButton` e campi 8, `StreetBadge` 6, `MatchSheet` 14 in alto; badge solo bordo e testo dello stesso colore.
+- **Pesi.** Tre al massimo per schermata: lo dice il tema (400, 500, 600) e un test conta i pesi distinti dei `TextView` gonfiati di ogni layout del contorno.
+
+- **Costo:** medio
+- **File:** `mobile/src/main/res/values/colors.xml`, `dimens.xml`, `integers.xml` (nuovo), `themes.xml`, `styles.xml`, `mobile/src/main/res/animator/press_feedback.xml` (nuovo), `drawable/bg_concrete_card.xml` (-> `bg_group.xml`), `drawable/bg_focus_ring.xml` (nuovo), `mobile/.../utils/AnimationUtils.kt`, `utils/TeamColorViews.kt`, `MainActivity.kt` (`animateTextChange`), `mobile/src/test/.../TokenEliteTest.kt`
+- **Verifica:** `TokenEliteTest` esteso verde (ogni ruolo risolve, contrasti della tabella); grep: zero `cornerFamily cut`, zero `textAllCaps` sui bottoni, `cardElevation` e `elevation` solo a 0 fuori da foglio e dialoghi; test che conta un solo bottone pieno per layout (come prima) e che la pressione sia scala 0,97 e opacita' 0,85 (e solo opacita' con `ANIMATOR_DURATION_SCALE` a zero), **falsificato** togliendo l'animator; `ContrastiDelTelefonoTest` verde.
+
+#### G-3. Icone: Material Symbols outlined, con la tabella concetto-icona.
+
+La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Material Symbols, outlined, un solo peso). **Non Heroicons** (la decisione del 5 ottobre cade). Vettoriali scaricati dal catalogo Material Symbols uno per uno (outlined, peso 400, riempimento 0, 24dp), nome `ic_<concetto>.xml`, colore `?attr/...` o `currentColor`, tre misure 16, 20 e 24dp (`icon-compact`, `-standard`, `-prominent`); **niente emoji ne' altre famiglie**; i comandi di sola icona hanno `contentDescription`, quelle decorative `importantForAccessibility="no"`. Selezione: l'icona selezionata **tiene la forma a contorno**: la selezione si mostra con l'indicatore e il lime, non col riempimento. Progresso: sempre `progress_activity` che gira; successo `check_circle` o `check` disegnato; errore `cancel`.
+
+| Concetto | Material Symbols (outlined) | Icona dell'app oggi |
+|---|---|---|
+| Indietro | `arrow_back` | `ic_arrow_back` |
+| Chiudi | `close` | |
+| Menu | `menu` | |
+| Vai al dettaglio | `chevron_right` | |
+| Espandi / comprimi | `expand_more` / `expand_less` | |
+| Altre azioni | `more_horiz` | `ic_menu_dots` (orologio) |
+| Apre fuori dall'app | `open_in_new` | |
+| Aggiungi | `add` | `ic_plus` |
+| Modifica | `edit` | `ic_edit` |
+| Elimina | `delete` | `ic_delete` |
+| Cerca / filtra / ordina | `search` / `filter_list` / `swap_vert` | |
+| Condividi | `share` | `ic_share` |
+| Scarica, esporta | `download` | |
+| Copia | `content_copy` | |
+| Salva | `save` | `ic_save` |
+| Annulla (undo) | `undo` | `ic_undo` |
+| Aggiorna | `refresh` | |
+| Mostra / nascondi | `visibility` / `visibility_off` | |
+| Avvia, riprendi / pausa | `play_arrow` / `pause` | `ic_play` / `ic_pause` |
+| Fatto, selezionato | `check` | |
+| Successo | `check_circle` | |
+| Avviso | `warning` | |
+| Errore | `cancel` | |
+| Informazione | `info` | |
+| In corso | `progress_activity` | |
+| Statistiche | `bar_chart` | `ic_stats` |
+| Data | `calendar_today` | |
+| Persona | `person` | |
+| Squadra, gruppo | `group` | |
+| Impostazioni | `settings` | |
+| Notifiche | `notifications` | |
+
+Icone di dominio, che la tabella non ha e che sono del progetto (stesso peso e stessa geometria): scambio dei posti `swap_horiz` (`ic_swap`), aggiungi giocatore `person_add` (`ic_person_add`), blocco `lock` (`ic_lock`), colore `palette` (`ic_color_picker`), orologio collegato `watch` e scollegato `watch_off` (`ic_watch_connected`, `ic_watch_disconnected`: colore lime e testo secondario, mai il verde `#76FF03`). Le icone del launcher sono G5. `ic_play`, `ic_pause`, `ic_plus` e `ic_undo` stanno nella schermata di gioco e passano in G-6.
+
+- **Costo:** piccolo
+- **File:** `mobile/src/main/res/drawable/ic_*.xml` (quelle in tabella), `mobile/src/main/res/menu/menu_add_edit_player.xml`, `menu_players_management.xml`, `wear/src/main/res/drawable/ic_menu_dots.xml`
+- **Verifica:** lint senza voci nuove; test che ogni `ic_*` ha viewport 24, nessun `fillColor` che non sia il colore del tema, e un test della tabella (ogni concetto ha un solo file); bersagli di 48dp invariati; screenshot.
+
+#### G-4. Contorno: foglio PARTITA, storico, statistiche, giocatori, impostazioni, onboarding, e "Essential information".
+
+Ogni layout del contorno smette di citare i vecchi token (`asphalt_dark`, `concrete_gray`, `graffiti_dark_gray`, `stencil_white`, `sidewalk_gray`, `outline_gray`, `graffiti_pink`, `neon_cyan`) e cita i ruoli `elite_*`. Rosa e ciano escono dal chrome: il podio e i numeri delle statistiche passano a lime (`StatisticsAdapter.kt`, `item_player_stat.xml`, `activity_statistics.xml`), i ruoli dei giocatori non si distinguono piu' per rosa e ciano ma per etichetta e testo (`RoleUtils.kt`, `item_role.xml`, `view_role_chip.xml`, `view_formation_player_marker.xml`); il ciano resta nel grafico della Cronaca. Dialoghi del marcatore, del ruolo, del nome squadra, del colore e del giocatore: fondo rialzato, un solo primario. Dopo l'ultima citazione si cancellano dal blocco "STREET (eredita')" di `colors.xml` i vecchi nomi che nessuno usa piu'. In piu', le regole della Constitution:
+
+- **Gruppi, non card.** Ogni lista diventa **un gruppo**: storico, giocatori, statistiche, registro, rose; le righe sono separate da linee sottili rientrate al testo e **senza ombra**. Si cambia `match_item.xml`, `item_player_stat.xml`, `item_player_management.xml`, `team_player_item.xml` e i quattro blocchi di `content_scoreboard_details.xml` (che oggi sono card elevate, vietate per un gruppo). Non resta nessuna card nel contorno: se ne serve una, si giustifica per iscritto (indipendente, spostabile, selezionabile, sollevata).
+- **Essential information: si toglie prima di rimpicciolire.** Ogni schermata ha un compito e un valore piu' importante, e il resto passa a un secondo livello, o sparisce. Per schermata: **storico** una riga = squadre, punteggio e data (il resto, set, luogo e giocatori, nel dettaglio); **statistiche** una riga = nome e il valore che conta (il rango e le presenze passano nel dettaglio); **giocatori** una riga = nome e ruolo; **impostazioni** una sezione per volta, la riga delle regole solo dove cambia qualcosa; **foglio PARTITA** primario TERMINA e al massimo due azioni frequenti visibili, le altre in un menu; **onboarding** un solo messaggio per passo. Nessun titolo che ripete la scheda, nessuna etichetta che ripete l'icona, nessun aiuto che ripete l'etichetta. Un valore mostrato ha etichetta, unita' e una ragione: "una cifra con il suo significato, non cinque senza".
+- **Gli stati e le parole.** Vuoto dice che cosa e' vuoto, perche' e che fare ("Nessuna partita questo mese", poi cosa fare); errore dice che cosa e' successo e come rimediare e tiene il lavoro dell'utente; niente tono da marketing, niente punti esclamativi.
+- **Un solo primario per vista** (come G-2), e **via `textAllCaps`** dai titoli di schermata.
+
+- **Costo:** medio
+- **File:** `mobile/src/main/res/layout/activity_match_settings.xml`, `activity_match_history.xml`, `match_item.xml`, `match_game_item.xml`, `activity_statistics.xml`, `item_player_stat.xml`, `activity_players_management.xml`, `item_player_management.xml`, `activity_add_edit_player.xml`, `dialog_create_player.xml`, `dialog_role_selection.xml`, `dialog_select_scorer.xml`, `dialog_color_picker.xml`, `dialog_team_name.xml`, `item_role.xml`, `item_role_header.xml`, `view_role_chip.xml`, `view_formation_player_marker.xml`, `team_player_item.xml`, `scorer_item.xml`, `content_scoreboard_details.xml` (i quattro blocchi), `activity_onboarding.xml`, `fragment_onboarding_step.xml`; `mobile/src/main/java/it/vantaggi/scoreboardessential/ui/statistics/StatisticsAdapter.kt`, `utils/RoleUtils.kt`, `MatchHistoryAdapter.kt`, `MatchLogAdapter.kt`, `TeamRosterAdapter.kt`, `MainActivity.kt` (le righe del foglio); `values/strings.xml` e `values-it/strings.xml` (stati vuoti ed errori); test che nominano i vecchi token (`MatchLogAdapterTest`, `StoricoDelContornoTest`, `GiocatoriEStatisticheDelContornoTest`, `PartitaARacchettaTest`, `utils/RoleUtilsAndroidTest`) e `TitoliDelleSchermateTest`, `AccessibilitaDelTelefonoTest`
+- **Verifica:** grep dei vecchi nomi nel contorno (zero risultati fuori da gioco e PDF) e di `MaterialCardView` nel contorno (zero, o ciascuna giustificata in `DESIGN.md`); per ogni schermata una riga "il compito e' ..., il valore piu' importante e' ..., tolto: ..." nel registro dei lavori; test dei titoli e dell'accessibilita' verdi; screenshot accanto alla pagina della dashboard; carattere al 200% senza tagli.
+
+#### G-5. Cronaca dell'app allineata alla Cronaca della dashboard.
+
+Stesso ordine delle sezioni della Cronaca della dashboard; lati lime (lato 1) e ciano (lato 2) quando le squadre hanno i colori predefiniti, con colori scelti dall'utente l'app tiene il loro colore schiarito da `TeamInk.graphicOnBlack` (la dashboard non ha colori di squadra e l'app si': differenza voluta); apice del tie-break e "B" sui break come nella dashboard. In piu': la Cronaca e' un gruppo tonale con righe sottili (come G-4); il grafico del momentum risponde a **una domanda sola** (chi sta spingendo), nella forma piu' semplice, con `chart-1` lime e `chart-2` ciano, **etichette dirette** sulle serie e un secondo segno oltre al colore (forma o testo): lime e ciano si confondono con alcune forme di daltonismo; griglia `chart-grid`; nessun grafico decorativo. I numeri della Cronaca sono Inter tabulare (gia' fatto in G-1b).
+- **Costo:** medio
+- **File:** `mobile/.../ui/chronicle/ChronicleActivity.kt`, `MomentumView.kt`, `ChronicleText.kt`, `activity_chronicle.xml`, `chronicle_section.xml`, `mobile/src/test/.../ui/chronicle/ChronicleTextTest.kt`
+- **Verifica:** test sul testo del tie-break e della "B"; contrasto dei lati sul fondo >= 3 e la serie ha un segno oltre al colore; la Cronaca della stessa partita nell'app e nella dashboard affiancate.
+
+#### G-6. Schermata di gioco (telefono): cifre in Inter, il punteggio che rotola, pallini lime, colori dei lati.
+
+Resta quasi tutto com'e' (nero puro, slot fissi, zone +, regola `TeamInk`); cambiano:
+
+- **NumberRoll per il punteggio.** Il numero che cambia mostra la **direzione**: la vecchia cifra esce verso l'alto e la nuova entra dal basso quando il valore **sale**, il contrario quando **scende** (annulla, correzione -1), in `duration_standard` con `ease-standard`, solo `translationY` e `alpha` (specifica completa nel registro: Trigger il punteggio cambia di un passo; elemento che resta: la scatola della cifra e l'etichetta; interruzione: un cambio nuovo sostituisce subito quello in corso; scopo: far vedere che e come e' cambiato). **Scatola di larghezza fissa** (le cifre tabulari non spostano nulla attorno), un solo numero per lato, non si anima nient'altro. Il nuovo valore e' annunciato da una **live region** `polite` (`accessibilityLiveRegion`) con il nome della squadra, come gia' fa TalkBack ("ROSSI, 30"): l'animazione non e' mai l'unico segnale. **Movimento ridotto** (`ANIMATOR_DURATION_SCALE` a 0 o `Settings.Global`): la cifra si sostituisce con una breve dissolvenza, e il risultato e' identico. Ogni tocco aggiorna subito, anche a raffica. Sostituisce `animateScoreNumber` (zoom 1,06, senza direzione). Il cronometro non rotola: scorre da solo, non e' un valore che cambia di un passo.
+- **Cifre.** `Game.Clock` e `Game.Value` passano a Inter 600 tabulare, con la misura rifatta sulla barra (`ColonnaDiGiocoTest`: 100:00 in 32sp). Se il corpo di "AV" (124,8dp a 411dp, vedi G-1b) risulta piccolo: spaziatura -0,02 em o Inter Display. Nomi e comandi restano per ora maiuscoli (conflitto 11).
+- **Pallini del servizio lime** `#C8F135`: `bg_serve_dot` (e i due del padel) da bianco a `elite_lime`, 12dp; il rosa del conto del portiere che corre passa a lime (`MainActivity.kt`, `content_scoreboard_live.xml`); il lime non e' mai l'unico segno (il pallino sta accanto al nome e la barra dice anche "SERVE" a parole, come oggi per TalkBack). Contrasto 16,09:1 su nero.
+- **Colori predefiniti dei lati** lime e ciano (G2) via `ColorRepository`; zone + col glifo `TeamInk` nero (>= 4,5). Le partite gia' salvate restano come sono.
+- **Icone** `ic_play`, `ic_pause`, `ic_plus`, `ic_undo` come G-3, a 24dp; **pressione** di G-2 sulle zone +; bersagli >= 48dp.
+- **Costo:** medio
+- **File:** `mobile/src/main/res/values/themes.xml` (`Game.*`), `colors.xml` (`team_*`), `mobile/.../repository/ColorRepository.kt`, `MainViewModel.kt` (predefiniti), `MainActivity.kt` (portiere, pallini, `animateScoreNumber`), `utils/AnimationUtils.kt` (`NumberRoll`), `content_scoreboard_live.xml`, `drawable/bg_serve_dot.xml`, `ic_play.xml`, `ic_pause.xml`, `ic_plus.xml`, `ic_undo.xml`; test `ColonnaDiGiocoTest`, `ContrastiDelTelefonoTest`, `CaratteriDelTelefonoTest`
+- **Verifica:** test che il rotolo va in su quando il punteggio sale e in giu' quando scende (falsificato invertendo il segno), che la scatola non cambia di larghezza fra "1" e "15", che a movimento ridotto non c'e' traslazione, che la live region dice il nome e il valore; "88" e "AV" entrano ancora; pallino lime = `elite_lime` e contrasto >= 4,5 sul nero; `ColonnaDiGiocoTest` verde; screenshot a 412x923dp e al 200%.
+
+#### G-7. Orologio: menu e selezione sport sui token, chi serve in lime, il punteggio che rotola.
+
+I token passano al quadrante (in `shared/src/main/res/values/colors.xml`, come gia' proposto in "Dove vivono i token": attenzione a `android.nonTransitiveRClass=true`); il tema dell'orologio smette di dire rosa e ciano. Menu e selezione sport: **gruppo tonale** su `elite_surface_raised` con righe sottili e raggi di Padel Elite (non piu' `cut`), lime per l'azione, **un primario per schermata**, bersagli >= 48dp (`control-touch`). Quadrante: nero puro, cifre bianche **condensate** (misura di G-1b: Inter non entra), strisce di squadra, `TeamInk`. In piu':
+
+- **Chi serve e' lime** `#C8F135` (decisione 2): il pallino sul lato di chi serve (`bg_serving_dot`), 8dp, 16,09:1 sul nero; **in ambient nessun colore**: il pallino non si accende lime ma esce dal quadrante o diventa il solo contorno sottile bianco, nessuna fascia colorata, nessun movimento, aggiornamento al massimo una volta al minuto o a ogni cambio di punto (`wearable.md`). Il lime non e' mai l'unico segno (il lato e' anche detto dal gesto e dall'etichetta di TalkBack).
+- **NumberRoll sulle cifre** (come G-6, con corsa piu' breve: la meta', `duration_fast` con la molla `control`, mai `expressive`): su si' quando sale, giu' quando scende; **niente al risveglio** e niente in ambient; fallback senza movimento; live region polite per le cifre, con `team1Name` e `team2Name`. Ogni tocco di punteggio ha comunque la vibrazione per lato (1 impulso a sinistra, 2 a destra), che resta il segnale primario.
+- **Tondo e quadrato** con la stessa gerarchia (`WatchLayouts`): valore focale al centro nell'area inscritta (circa il 71% del diametro), un'azione, al massimo due valori di supporto; il tondo prima, il quadrato poi, mai il contrario; misure in proporzione. Si rimisurano 192dp e 227dp e un quadrato.
+- **Costo:** medio
+- **File:** `wear/src/main/res/values/colors.xml` (-> token condivisi), `theme.xml`, `layout/item_sport_wear.xml`, `activity_menu.xml`, `activity_sport_selection.xml`, `activity_player_selection.xml`, `item_player_wear.xml`, `activity_main.xml`, `drawable/bg_serving_dot.xml`, `bg_chi_capsule.xml`, `wear/.../MainActivity.kt` (ambient e rotolo), `MenuActivity.kt`, `MenuVoci.kt`, `SportSelectionActivity.kt`, `PlayerSelectionActivity.kt`; test `MenuActivityTest`, `SelezioneSportTest`, `MainActivityTest`, `AmbientTest`, `CifreDelQuadranteTest`
+- **Verifica:** `./gradlew :wear:test`; `CifreDelQuadranteTest` verde (Inter non entra, il condensato si); tre AVD (192dp, 227dp, quadrato); lo stesso token ha lo stesso valore sui due lati (test che confronta i due `R.color`); test che in ambient il pallino non ha il lime e non c'e' animazione; che l'animazione del rotolo non parte al risveglio; che il rotolo sale e scende.
+
+#### G-8. PDF del report con gli stessi token e caratteri.
+
+Il report e' una vista gonfiata e disegnata su un PDF: oggi `asphalt_dark` di fondo, `stencil_white` e `sidewalk_gray` per il testo, bande nel colore di squadra con testo `TeamInk`. Passa ai token e ai caratteri di G-1b (Inter 400, 500, 600, cifre tabulari). La pagina e' scura su carta; se si sceglie la carta bianca (da valutare per la stampa) il lime NON e' leggibile come testo (1,31:1 sul bianco) e va solo come banda con `elite_on_lime`. Gruppi con righe sottili, nessuna ombra.
+- **Costo:** piccolo
+- **File:** `mobile/src/main/res/layout/pdf_match_report.xml`, `mobile/.../utils/MatchReportUtils.kt`, `MatchReportUtilsTest.kt`
+- **Verifica:** `MatchReportUtilsTest` verde; PDF di una partita di padel e di una di calcio aperti a mano; contrasto delle bande >= 4,5.
+
+#### G-9. Verifica finale: app e dashboard affiancate, tre AVD, carattere al 200%, i controlli della Constitution.
+
+Schermate dell'app accanto alle pagine della dashboard (storico, Cronaca, tabellone); tre AVD dell'orologio; carattere al 200% sul telefono; passata dei contrasti con `TokenEliteTest` e a occhio; decisione G5 (nome e icona) presa e applicata; `MIGRATION_PLAN.md` aggiornato; `CHANGELOG.md`, `STORE_LISTING.md` e le schermate della scheda Play se cambiano nome o icona. **Piu' i controlli di `review.md`** della Constitution: le **otto porte di qualita'** (compito e punto focale; ogni contenitore ha una ragione; larghezze strette e larghe, 200% e testo lungo senza salti; colori semantici, accento sobrio, raggi e ombre per ruolo; icone di una famiglia, comandi di sola icona con nome; ogni stato e ogni animazione con la sua ragione e il suo fallback; tastiera, fuoco, contrasto; riconoscibile senza il logo) e la **lista dei pattern vietati** (griglie di card uguali; sfumature e vetro; pillole ovunque; icone in quadrati colorati; emoji; maiuscolo ovunque; ombre sulle superfici ferme; entrate a scaglioni; effetti che spostano il layout; grigio su grigio), con il rapporto finale del lavoro (che cosa e' cambiato, componenti e token riusati, stati, movimenti, movimento ridotto, accessibilita', rischi). Le divergenze sono confrontate con la tabella dei **conflitti dichiarati**.
+- **Costo:** medio
+- **File:** `MIGRATION_PLAN.md`, `CHANGELOG.md`, `STORE_LISTING.md`, `mobile/src/main/res/mipmap-anydpi-v26/ic_launcher*.xml`, `drawable/ic_launcher_*_vs.xml` (e i tre di `wear`), `strings.xml` e `values-it/strings.xml` (solo se G5 cambia il nome)
+- **Verifica:** `./gradlew test ktlintCheck lintDebug assembleDebug`; i vecchi nomi del blocco "STREET" spariti o giustificati; la lista dei pattern vietati controllata schermata per schermata e firmata; confronto visivo firmato dal proprietario.
+
+#### G-10. Tema ad alto contrasto.
+
+Un tema **aggiunto** (la Constitution: 7:1 sul testo e 3:1 sui bordi), scuro, che non tocca gli altri. Valori proposti, gia' calcolati (da confermare in G-10 con `TokenEliteTest` esteso):
+
+| Ruolo | Valore | Contrasto sul nero / su elevated `#0D0D0F` |
+|---|---|---|
+| `background-canvas`, `background-surface` | `#000000` (uguali: il gruppo si vede per il bordo) | |
+| `background-elevated` | `#0D0D0F` | |
+| `text-primary` | `#FFFFFF` | 21,00 / 19,42 |
+| `text-secondary` | `#C9C9D2` | 12,77 / 11,81 |
+| `text-disabled` | `#8A8A9A` | 6,18 / 5,72 |
+| `border-subtle` | `#6E6E7E` | 4,19 / 3,88 |
+| `border-group` | `#8A8A9A` (visibile: e' il solo segno del gruppo) | 6,18 / 5,72 |
+| `border-strong` | `#B4B4C0` | 10,23 / 9,46 |
+| `accent-default`, `status-success`, `focus-ring` | `#C8F135` (focus `#FFFFFF`) | 16,09 / 14,88 |
+| `on-accent` | `#000000` | 16,09 sul lime |
+| `status-warning` | `#F0B35A` | 11,30 / 10,45 |
+| `status-error` | `#FF8A8A` | 9,25 / 8,56 |
+| `status-info` | `#9ED0F5` | 12,79 / 11,83 |
+| `status-*-subtle` | `#0A1A10`, `#1F1606`, `#2B0D0D`, `#0A1822`: `#FFFFFF` fa 17,98-18,01, il colore di stato 13,77, 9,61, 7,94, 10,97 | |
+
+Si attiva con un interruttore nelle impostazioni **e** seguendo il sistema (`UiModeManager.getContrast()` da Android 14; sotto, solo l'interruttore: minSdk e' 30). E' un `ThemeOverlay` sul tema (stessi ruoli, nuovi valori), scelto prima di `setContentView`; nel gioco e sul quadrante, che sono gia' bianco su nero, cambiano solo i grigi (`#9E9E9E` a `#C9C9D2`) e i bordi. Il tema ad alto contrasto **tiene** le forme, i pesi e il movimento. Ambient dell'orologio invariato.
+- **Costo:** medio
+- **File:** `mobile/src/main/res/values/colors.xml`, `themes.xml` (overlay), `mobile/.../ui/settings` (interruttore), `MainActivity.kt` e le altre attivita' (applicazione dell'overlay), `wear/src/main/res/values/theme.xml`; test `TokenEliteTest` esteso
+- **Verifica:** test che ogni coppia testo/sfondo del tema ha >= 7 e ogni bordo e icona >= 3, falsificato abbassando di un passo il testo secondario; l'overlay non cambia le forme, i pesi e i raggi; screenshot di ogni schermata del contorno nei due temi; carattere al 200%.
+
 ## Coerenza con Padel Elite - 5 ottobre 2026
 
 Terza pista, dopo telefono e orologio. Nasce da `PIANO_PADEL_ELITE.md` (filone 2) e dalle decisioni del proprietario del 5 ottobre. I valori dei token sono quelli veri di `css/style.css` della dashboard, tema Navy scuro; i rapporti di contrasto sono ricalcolati qui con la formula WCAG (stessa di `TeamInk.contrast`).
@@ -1228,13 +1528,15 @@ Terza pista, dopo telefono e orologio. Nasce da `PIANO_PADEL_ELITE.md` (filone 2
 
 **La dashboard da' il contorno, l'app tiene la schermata di gioco.** Foglio PARTITA, storico, Cronaca, statistiche, giocatori, impostazioni, onboarding, dialoghi, PDF e menu dell'orologio prendono token, caratteri, forme e regole di Padel Elite. La schermata di gioco e il quadrante restano come sono (nero puro, cifre giganti, colore di squadra con `TeamInk`) e cambiano solo le cifre (JetBrains Mono) e gli accenti (lime al posto del rosa), nei passi G-6 e G-7. Nessun passo tocca la dashboard.
 
+> **6 ottobre 2026:** le cifre dei punteggi non sono piu' in JetBrains Mono ma in Inter con cifre tabulari, e i passi G-2..G-9 sono rifatti nella sezione "Adattamento alla UI Constitution". Il resto di questa direzione vale.
+
 Regole di Padel Elite che l'app adotta nel contorno: un solo bottone primario per vista (lime, testo `#0D0D0F`, raggio 8, altezza almeno 48dp sull'app); secondario su superficie rialzata con bordo e testo secondario; distruttivo solo testo rosso; badge solo bordo e testo colorati, mai sfondo pieno; card raggio 14 con bordo 1px e senza ombra; campi su fondo con bordo, focus lime; niente glow; animazioni di 240ms al massimo; ciano `#00E5FF` SOLO in visualizzazioni e grafici, mai nel chrome; successo = lime.
 
 ### Decisioni prese (proprietario, 5 ottobre 2026, sera)
 
 - **G1. Identita' street**: via dal contorno, tutta. Via gli angoli tagliati (`cornerFamily cut`), via `StreetCard`, `StreetButton`, `StreetBadge`, `MatchSheet` nella forma tagliata; restano i nomi degli stili finche' non li si rinomina, ma la famiglia diventa `rounded`.
 - **G2. Lati**: lime e ciano, come la Cronaca della dashboard. Sostituiscono giallo `#FFD600` e verde `#76FF03` come colori predefiniti delle squadre (G-6). Restano personalizzabili e `TeamInk` garantisce il contrasto: sul nero il lime fa 16,09:1 e il ciano 13,65:1, quindi nessuno stroke di rimedio.
-- **G3. Caratteri**: Inter per il testo, JetBrains Mono 700-800 con numeri tabulari per i punteggi. Sull'orologio le cifre vanno **misurate** prima (G-7): a 58sp nel tondo da 192dp "AV" e "40" devono entrare; se non entrano il condensato resta sulle cifre e Inter sul resto.
+- **G3. Caratteri** (cambiata il 6 ottobre: i numeri sono Inter con `tnum`, JetBrains Mono esce): Inter per il testo, JetBrains Mono 700-800 con numeri tabulari per i punteggi. Sull'orologio le cifre vanno **misurate** prima (G-7): a 58sp nel tondo da 192dp "AV" e "40" devono entrare; se non entrano il condensato resta sulle cifre e Inter sul resto.
 - **G4. Temi**: solo il Navy scuro. Niente tema chiaro dell'app (e' un lavoro a parte). Il tema dell'app resta `Theme.Material3.Dark` e non DayNight.
 - **G5. Nome e icona**: da proporre. **Proposta, da confermare:** l'app resta una app a se', ma con il marchio di Padel Elite accanto: nome visibile **"Scoreboard Essential"** invariato (la scheda Play e le recensioni non cambiano), icona nuova nel linguaggio della dashboard: fondo `#0D0D0F`, un pallino lime `#C8F135` (la pallina) sopra due linee a tratto 2 che richiamano il tabellone, niente rosa; icona monocromatica (themed) sullo stesso disegno. In alternativa piu' forte, **"Padel Elite Score"** con la stessa icona, che pero' cambia `app_name` in due moduli, la scheda Play, `STORE_LISTING.md` e il tutorial, e vincola lo sport (l'app e' anche calcio e tennis). **Da confermare** con il proprietario prima di G-9; nessun file dell'icona si tocca prima.
 
@@ -1304,6 +1606,8 @@ Verificati da `TokenEliteTest` (mobile/src/test/.../TokenEliteTest.kt): i valori
 
 #### G-1. Caratteri: Inter e JetBrains Mono, numeri tabulari ovunque ci sono punteggi. FATTO (5 ottobre 2026).
 
+> **Superato il 6 ottobre 2026 da G-1b** (sezione "Adattamento alla UI Constitution"): JetBrains Mono e' uscito dall'app, i pesi sono 400, 500, 600 e i numeri sono Inter 600 con `tnum`. Le misure di sotto sono quelle del mono e restano come storia.
+
 Inter 400, 500, 600, 700 e JetBrains Mono 700 e 800 inclusi in `res/font` (licenza OFL, circa 600 KB; si evita il font scaricabile di Google per non dipendere da Play Services in partita). Il tema dichiara `android:fontFamily` Inter; i `TextAppearance.App.*Street` smettono di dire `sans-serif-condensed`. Dove c'e' un punteggio o un tempo: JetBrains Mono con `fontFeatureSettings tnum`. Il numero della schermata di gioco misura con `Paint.measureText` il token piu' largo: la misura va rifatta con il nuovo `Typeface`, altrimenti il corpo scelto non e' quello vero. La Cronaca costruisce le viste in codice con `Typeface.create(CONDENSED, ...)`: va sostituito. Il PDF usa gli stessi stili.
 
 **Come e' stato fatto (5 ottobre 2026).**
@@ -1321,71 +1625,9 @@ Inter 400, 500, 600, 700 e JetBrains Mono 700 e 800 inclusi in `res/font` (licen
 - **File:** `mobile/src/main/res/font/*` (nuovi), `mobile/src/main/res/values/themes.xml` (famiglia del tema e `TextAppearance.App.*`), `mobile/src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt` (misura delle cifre, riga 767), `mobile/src/main/java/it/vantaggi/scoreboardessential/ui/chronicle/ChronicleActivity.kt` (`CONDENSED`, riga 464), `mobile/src/main/res/layout/match_item.xml`, `mobile/src/main/res/layout/match_event_item.xml` (`fontFamily monospace`), file di licenza in `docs/`
 - **Verifica:** test Robolectric che `ResourcesCompat.getFont` carichi i sei file; "88" e "AV" a 150sp entrano nella mezza colonna del Pixel 9a; schermate prima e dopo; carattere al 200% senza testi tagliati.
 
-#### G-2. Componenti: card, bottoni, badge, campi; via StreetCard dal contorno (G1).
+#### G-2..G-9. Rifatti nella sezione "Adattamento alla UI Constitution" (6 ottobre 2026).
 
-Forme: `StreetCard` 14dp, `StreetButton` e campi 8dp, `StreetBadge` 6dp, `MatchSheet` 14dp in alto, tutti `cornerFamily rounded`. Card: `bg_concrete_card` con bordo 1px `elite_border`, senza ombra; la finestra dei dialoghi (`ThemeOverlay.App.Dialog`, `windowBackground`) sulla superficie rialzata con raggio 14. Bottone primario: `Widget.App.Button.Street` lime, altezza almeno 48dp; uno solo per vista: oggi sono pieni i bottoni di `activity_match_settings.xml`, `activity_onboarding.xml`, `content_scoreboard_details.xml` (TERMINA), `content_scoreboard_live.xml`, `dialog_create_player.xml` e vanno ridotti a un primario per schermata. Secondario: `Widget.App.Button.OutlinedButton.Street` con fondo rialzato, `strokeColor` `elite_outline` e testo secondario (oggi `outline_gray` e `stencil_white`). Distruttivo: `TextButton` con testo `elite_error` (su rialzata va a corpo grande o con `error_text`, vedi Contrasti). Badge e chip: `Widget.App.Chip.Street` senza sfondo pieno, bordo e testo dello stesso colore (oggi `concrete_gray` e bordo rosa). Campi: i cinque `TextInputLayout.OutlinedBox` di `activity_match_settings.xml` e `activity_add_edit_player.xml` con `boxStrokeColor` `elite_outline` e focus lime. Velo dei dialoghi `elite_overlay`. Animazioni: nessuna oltre 240ms (`AnimationUtils.kt`).
-
-Sotto-decisione **da confermare**: le etichette di squadra delle rose e della cronologia (`etichettaDiSquadra`, `riempiDiSquadra` in `TeamColorViews.kt`) sono oggi un riempimento pieno con testo `TeamInk`, e la regola "badge solo bordo" le vieterebbe. Proposta: restano un'identita' di colore, non un badge di stato, quindi riempimento pieno con `TeamInk` come oggi (e' la regola di leggibilita' gia' provata); i badge di stato (orologio, esito) passano a bordo e testo.
-
-- **Costo:** medio
-- **File:** `mobile/src/main/res/values/themes.xml` (forme e stili dei widget, overlay dei dialoghi), `mobile/src/main/res/values/styles.xml` (`Widget.App.Chip.Street`), `mobile/src/main/res/drawable/bg_concrete_card.xml`, `mobile/src/main/java/it/vantaggi/scoreboardessential/utils/TeamColorViews.kt`, `mobile/src/main/java/it/vantaggi/scoreboardessential/utils/AnimationUtils.kt`, layout dei bottoni sopra elencati
-- **Verifica:** un solo bottone lime per vista (test che conta i `MaterialButton` pieni per layout); altezza almeno 48dp; `cornerFamily` non e' piu' `cut` in nessuno stile del telefono (grep); `ContrastiDelTelefonoTest` e `TokenEliteTest` verdi; screenshot.
-
-#### G-3. Icone: set outline a tratto 2.
-
-Heroicons outline (viewBox 24, tratto 2, estremi e giunzioni arrotondati) come vettoriali con `strokeColor` e senza riempimento, al posto dei Material pieni. Si cambiano le icone del contorno; `ic_play`, `ic_pause`, `ic_plus` e `ic_undo` stanno nella schermata di gioco e passano in G-6. Le icone di stato dell'orologio (`ic_watch_connected`, `ic_watch_disconnected`) seguono la riga di stato e il colore (lime collegato, testo secondario scollegato, nessun verde `#76FF03`). Le icone del launcher sono G5.
-
-- **Costo:** piccolo
-- **File:** `mobile/src/main/res/drawable/ic_arrow_back.xml`, `ic_color_picker.xml`, `ic_delete.xml`, `ic_edit.xml`, `ic_lock.xml`, `ic_person_add.xml`, `ic_save.xml`, `ic_share.xml`, `ic_stats.xml`, `ic_swap.xml`, `ic_watch_connected.xml`, `ic_watch_disconnected.xml`, `mobile/src/main/res/menu/menu_add_edit_player.xml`, `mobile/src/main/res/menu/menu_players_management.xml`
-- **Verifica:** lint senza voci nuove; ogni icona a 24dp con tratto 2 (grep `strokeWidth`); bersagli di 48dp invariati; screenshot.
-
-#### G-4. Foglio PARTITA, storico, statistiche, giocatori, impostazioni, onboarding sui nuovi componenti.
-
-Ogni layout del contorno smette di citare i vecchi token e cita `elite_*`: i riferimenti diretti a `asphalt_dark`, `concrete_gray`, `graffiti_dark_gray`, `stencil_white`, `sidewalk_gray`, `outline_gray`, `graffiti_pink`, `neon_cyan` nei file sotto. Rosa e ciano escono dal chrome: il podio e i numeri delle statistiche passano a lime (`StatisticsAdapter.kt`, `item_player_stat.xml`, `activity_statistics.xml`), i ruoli dei giocatori non si distinguono piu' per rosa e ciano ma per etichetta e testo (`RoleUtils.kt`, `item_role.xml`, `view_role_chip.xml`, `view_formation_player_marker.xml`); il ciano resta nel grafico della Cronaca. Dialoghi del marcatore, del ruolo, del nome squadra, del colore e del giocatore: fondo rialzato, un solo primario. Dopo l'ultima citazione, si cancellano i vecchi nomi dal blocco "STREET" che nessuno usa piu'.
-
-- **Costo:** medio
-- **File:** `mobile/src/main/res/layout/activity_match_settings.xml`, `activity_match_history.xml`, `match_item.xml`, `match_game_item.xml`, `activity_statistics.xml`, `item_player_stat.xml`, `activity_players_management.xml`, `item_player_management.xml`, `activity_add_edit_player.xml`, `dialog_create_player.xml`, `dialog_role_selection.xml`, `dialog_select_scorer.xml`, `dialog_color_picker.xml`, `dialog_team_name.xml`, `item_role.xml`, `item_role_header.xml`, `view_role_chip.xml`, `view_formation_player_marker.xml`, `team_player_item.xml`, `scorer_item.xml`, `content_scoreboard_details.xml`, `activity_onboarding.xml`, `fragment_onboarding_step.xml`; `mobile/src/main/java/it/vantaggi/scoreboardessential/ui/statistics/StatisticsAdapter.kt`, `utils/RoleUtils.kt`, `MatchHistoryAdapter.kt`, `MatchLogAdapter.kt`, `TeamRosterAdapter.kt`, `MainActivity.kt` (le righe del foglio); test che nominano i vecchi token: `MatchLogAdapterTest`, `StoricoDelContornoTest`, `GiocatoriEStatisticheDelContornoTest`, `PartitaARacchettaTest`, `utils/RoleUtilsAndroidTest`
-- **Verifica:** grep dei vecchi nomi nel contorno (zero risultati fuori da gioco e PDF); `TitoliDelleSchermateTest`, `AccessibilitaDelTelefonoTest` e i test del contorno verdi; screenshot di ogni schermata accanto alla pagina della dashboard.
-
-#### G-5. Cronaca dell'app allineata alla Cronaca della dashboard.
-
-Stesso ordine delle sezioni, lati lime (lato 1) e ciano (lato 2) quando le squadre hanno i colori predefiniti; con colori scelti dall'utente l'app tiene il loro colore, schiarito da `TeamInk.graphicOnBlack`, perche' la dashboard non ha colori di squadra e l'app si' (differenza voluta). Apice del tie-break e "B" sui break come nella dashboard; il grafico del momentum nello stesso stile (ciano ammesso, e' un grafico).
-
-- **Costo:** medio
-- **File:** `mobile/src/main/java/it/vantaggi/scoreboardessential/ui/chronicle/ChronicleActivity.kt`, `ui/chronicle/MomentumView.kt`, `ui/chronicle/ChronicleText.kt`, `mobile/src/main/res/layout/activity_chronicle.xml`, `mobile/src/main/res/layout/chronicle_section.xml`, `mobile/src/test/java/it/vantaggi/scoreboardessential/ui/chronicle/ChronicleTextTest.kt`
-- **Verifica:** test sul testo del tie-break e della "B"; la Cronaca della stessa partita nell'app e nella dashboard affiancate; contrasto dei lati sul fondo >= 3.
-
-#### G-6. Schermata di gioco: cifre, accento lime, colori predefiniti dei lati.
-
-Solo tre cose. Cifre del punteggio, cronometro e valori in JetBrains Mono 800 con `tnum` (`TextAppearance.App.Game.*`, `android:fontFamily` al posto di `sans-serif-condensed`), con la misura "88" e "AV" rifatta. **Le cifre giganti (`Game.Score`) sono gia' passate in G-1** (misura rifatta: 144,6dp a 411dp); restano `Game.Clock` e `Game.Value`, dove la misura da rifare e' quella della barra (`ColonnaDiGiocoTest`: 100:00 in 32sp mono e' piu' largo del condensato). Accento lime al posto del rosa dove il rosa e' ancora in gioco (il conto del portiere che corre, in `MainActivity.kt`, e i riferimenti a `graffiti_pink` in `content_scoreboard_live.xml`). Colori predefiniti delle squadre lime `#C8F135` e ciano `#00E5FF` (decisione G2): `team_spray_yellow` e `team_electric_green` diventano due token che puntano a `elite_lime` e `elite_cyan` (o si rinominano), `ColorRepository` li legge da li'. Le partite e le impostazioni gia' salvate con giallo e verde restano come sono. Resta fuori: fondo nero, layout a slot fissi, zone +, regola `TeamInk`.
-
-- **Costo:** piccolo
-- **File:** `mobile/src/main/res/values/themes.xml` (`TextAppearance.App.Game.*`), `mobile/src/main/res/values/colors.xml` (`team_*`), `mobile/src/main/java/it/vantaggi/scoreboardessential/repository/ColorRepository.kt`, `mobile/src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt`, `mobile/src/main/res/layout/content_scoreboard_live.xml`, `mobile/src/main/res/drawable/ic_play.xml`, `ic_pause.xml`, `ic_plus.xml`, `ic_undo.xml` (outline, G-3 rimandato), `mobile/src/main/java/it/vantaggi/scoreboardessential/MainViewModel.kt` (riga 396, i predefiniti)
-- **Verifica:** `ColonnaDiGiocoTest` e `ContrastiDelTelefonoTest` verdi; "88" e "AV" a 150sp entrano; lime e ciano come zone + hanno glifo `TeamInk` nero >= 4,5; screenshot a 412x923dp e al 200%.
-
-#### G-7. Orologio: menu e selezione sport sui token, cifre secondo G3.
-
-I token passano al quadrante: o copiati in `wear/src/main/res/values/colors.xml` o, meglio, spostati in `shared/src/main/res/values/colors.xml` (come gia' proposto in "Dove vivono i token": attenzione a `android.nonTransitiveRClass=true` e ai riferimenti `R.color` in Kotlin). Il tema dell'orologio (`wear/.../theme.xml`) smette di dire rosa e ciano. Menu e selezione sport: card su `elite_surface_raised`, lime per l'azione, raggi di Padel Elite (non piu' `cut`). Le cifre: **misura fatta in G-1** (`CifreDelQuadranteTest`): JetBrains Mono 800 a 58dp fa 69,6dp contro i 68dp della colonna e a 68dp fa 81,6dp contro gli 81dp, quindi **non entra** e le cifre tengono il condensato; Inter e' gia' sul resto del testo. Resta da vedere il Layout Inspector su `Wear_OS_Small_Round` e, se si vuole il mono, un corpo piu' piccolo (a 56dp entrerebbe); l'ambient tiene il peso sottile. Il quadrante di gioco resta come e': nero, cifre bianche, strisce di squadra, `TeamInk`.
-
-- **Costo:** piccolo
-- **File:** `wear/src/main/res/values/colors.xml`, `wear/src/main/res/values/theme.xml`, `wear/src/main/res/layout/item_sport_wear.xml`, `activity_menu.xml`, `activity_sport_selection.xml`, `activity_player_selection.xml`, `item_player_wear.xml`, `wear/src/main/res/drawable/bg_chi_capsule.xml`, `wear/src/main/java/it/vantaggi/scoreboardessential/wear/MenuActivity.kt`, `MenuVoci.kt`, `SportSelectionActivity.kt`, `PlayerSelectionActivity.kt`, `TitoloIntero.kt`; test `MenuActivityTest`, `SelezioneSportTest`, `MainActivityTest`, `AmbientTest`
-- **Verifica:** `./gradlew :wear:test`; tre AVD (192dp, 227dp, quadrato); lo stesso token ha lo stesso valore sui due lati (test che confronta i due `R.color`).
-
-#### G-8. PDF del report con gli stessi token e caratteri.
-
-Il report e' una vista gonfiata e disegnata su un PDF: oggi `asphalt_dark` di fondo, `stencil_white` e `sidewalk_gray` per il testo, bande nel colore di squadra con testo `TeamInk`. Passa ai token e ai caratteri di G-1 (Inter, JetBrains Mono per i punteggi). Pagina scura su carta: se si sceglie la carta bianca (da valutare per la stampa), il lime NON e' leggibile come testo (1,31:1 sul bianco) e va solo come banda con `elite_on_lime`.
-
-- **Costo:** piccolo
-- **File:** `mobile/src/main/res/layout/pdf_match_report.xml`, `mobile/src/main/java/it/vantaggi/scoreboardessential/utils/MatchReportUtils.kt` (`dipingiBanda`, riga 103), `mobile/src/test/java/it/vantaggi/scoreboardessential/utils/MatchReportUtilsTest.kt`
-- **Verifica:** `MatchReportUtilsTest` verde; PDF di una partita di padel e una di calcio aperti a mano; contrasto delle bande >= 4,5.
-
-#### G-9. Verifica finale: app e dashboard affiancate, tre AVD, carattere al 200%, contrasti.
-
-Schermate dell'app accanto alle pagine della dashboard (storico, Cronaca, tabellone); tre AVD dell'orologio; carattere al 200% su telefono; passata dei contrasti con `TokenEliteTest` e a occhio; decisione G5 (nome e icona) presa e applicata; `MIGRATION_PLAN.md` aggiornato; `CHANGELOG.md`, `STORE_LISTING.md` e le schermate della scheda Play se cambiano nome o icona.
-
-- **Costo:** medio
-- **File:** `MIGRATION_PLAN.md`, `CHANGELOG.md`, `STORE_LISTING.md`, `mobile/src/main/res/mipmap-anydpi-v26/ic_launcher.xml` e `ic_launcher_round.xml`, `mobile/src/main/res/drawable/ic_launcher_background_vs.xml`, `ic_launcher_foreground_vs.xml`, `ic_launcher_monochrome_vs.xml` (e i tre equivalenti di `wear`), `mobile/src/main/res/values/strings.xml` e `values-it/strings.xml` (solo se G5 cambia il nome)
-- **Verifica:** `./gradlew test ktlintCheck lintDebug assembleDebug`; tutti i vecchi nomi del blocco "STREET" spariti o giustificati; confronto visivo firmato dal proprietario.
+I passi G-2 (componenti), G-3 (icone), G-4 (contorno), G-5 (Cronaca), G-6 (gioco), G-7 (orologio), G-8 (PDF) e G-9 (verifica) che stavano qui sono stati **tolti**: la fonte e' ora la sezione che sta sopra, che li rivede secondo la UI Constitution (icone Material Symbols e non Heroicons, gruppi tonali e card solo per elementi indipendenti, nessuna ombra sulle superfici ferme, bottoni non a pillola, pressione uguale ovunque, NumberRoll per i punteggi, pallini del servizio lime, "Essential information" nel contorno) e aggiunge G-10 (alto contrasto). Il testo di prima resta nella cronologia di git.
 
 ### Rischi
 
@@ -1393,5 +1635,5 @@ Schermate dell'app accanto alle pagine della dashboard (storico, Cronaca, tabell
 - **Bordo forte della dashboard sotto 3:1.** E' un limite della dashboard, non dell'app: l'app lo evita con `elite_outline`. Se il proprietario vuole i bordi identici, i campi perdono il 3:1 (decisione sua, non presa).
 - **Il contorno e' gia' ritinto in parte da G-0.** Il fondo e le card di tutte le schermate di contorno prendono `#0D0D0F` e `#161618` dai due drawable, mentre i layout citano ancora `stencil_white`, `sidewalk_gray`, rosa e ciano: fino a G-4 le schermate sono ibride (fondo nuovo, testi vecchi). I contrasti dei testi vecchi sui fondi nuovi restano AAA (14,71 e 7,25 sul fondo), quindi nulla diventa illeggibile.
 - **Il quadrante ha un `colors.xml` suo** con i nove colori vecchi duplicati: finche' G-7 non li porta ai token, telefono e orologio mostrano due palette. E' una divergenza voluta e temporanea.
-- **Font inclusi nell'APK** (circa 600 KB): accettato (G3); sull'orologio vanno misurati prima.
+- **Font inclusi nell'APK**: accettato (G3); dopo G-1b sono tre file di Inter (288 KB); sull'orologio le cifre sono state misurate e restano condensate.
 - **Lint sulle risorse non ancora usate:** i token `elite_success`, `elite_warning`, `elite_overlay`, `elite_text_tertiary`, `elite_border` e altri sono definiti ma citati solo dai test finche' G-2 e G-4 non li usano.

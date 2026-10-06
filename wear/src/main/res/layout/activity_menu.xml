@@ -19,7 +19,7 @@
             android:text="@string/wear_menu_title"
             android:textColor="@color/stencil_white"
             android:fontFamily="@font/inter"
-            android:textStyle="bold"
+            android:textFontWeight="600"
             android:textAllCaps="true"
             android:textSize="14sp"
             android:maxLines="1"

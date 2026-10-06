@@ -24,7 +24,7 @@
         android:maxLines="1"
         android:textColor="@color/stencil_white"
         android:textSize="14sp"
-        android:textStyle="bold"
+        android:textFontWeight="600"
         tools:text="GOL · 3–2" />
 
     <View
