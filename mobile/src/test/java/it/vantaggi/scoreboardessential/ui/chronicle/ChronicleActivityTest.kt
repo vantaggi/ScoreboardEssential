@@ -329,7 +329,14 @@ class ChronicleActivityTest {
         val cronaca = apri(salva((1..6).flatMap { game(1) }, serveOrder = "", stepMs = null))
         val sezioni = cronaca.findViewById<ViewGroup>(R.id.chronicle_sections)
 
-        val titoli = (0 until sezioni.childCount).map { sezioni.getChildAt(it).findViewById<TextView>(R.id.section_title).text.toString() }
+        val titoli =
+            (0 until sezioni.childCount).map {
+                sezioni
+                    .getChildAt(it)
+                    .findViewById<TextView>(R.id.section_title)
+                    .text
+                    .toString()
+            }
         assertEquals(listOf("Tabellone", "Andamento", "Game per game", "Servizio", "Tempi", "Momenti chiave"), titoli)
         for (i in 0 until sezioni.childCount) {
             val gruppo = tutteLeViste(sezioni.getChildAt(i)).filterIsInstance<MaterialCardView>().single()

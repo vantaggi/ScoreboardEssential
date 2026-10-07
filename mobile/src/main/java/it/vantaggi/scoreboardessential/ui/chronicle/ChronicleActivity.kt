@@ -31,6 +31,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isNotEmpty
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.chip.ChipGroup
 import it.vantaggi.scoreboardessential.R
@@ -185,7 +186,17 @@ class ChronicleActivity : AppCompatActivity() {
                     ).apply { minWidth = dimen(R.dimen.space_32) }
                 }
             // L'etichetta resta della sua misura: si allarga la colonna, non il colore.
-            val first = FrameLayout(this).apply { addView(label, FrameLayout.LayoutParams(WRAP, WRAP, Gravity.START or Gravity.CENTER_VERTICAL)) }
+            val first =
+                FrameLayout(this).apply {
+                    addView(
+                        label,
+                        FrameLayout.LayoutParams(
+                            WRAP,
+                            WRAP,
+                            Gravity.START or Gravity.CENTER_VERTICAL,
+                        ),
+                    )
+                }
             addTableRow(table, first, *cells.toTypedArray())
         }
         body.addView(table)
@@ -193,7 +204,12 @@ class ChronicleActivity : AppCompatActivity() {
         val foot = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         if (!s.ended) {
             foot.addView(
-                text(getString(R.string.chronicle_interrupted), R.color.elite_text_secondary, size = CAPTION_SP, weight = WEIGHT_SEMIBOLD).apply {
+                text(
+                    getString(R.string.chronicle_interrupted),
+                    R.color.elite_text_secondary,
+                    size = CAPTION_SP,
+                    weight = WEIGHT_SEMIBOLD,
+                ).apply {
                     background = badge()
                     setPaddingRelative(dimen(R.dimen.space_8), dimen(R.dimen.space_4), dimen(R.dimen.space_8), dimen(R.dimen.space_4))
                 },
@@ -463,7 +479,13 @@ class ChronicleActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_VERTICAL
             val bar = View(this@ChronicleActivity)
             if (paint != null) bar.setBackgroundColor(onSurface(paint))
-            addView(bar, LinearLayout.LayoutParams(dimen(R.dimen.space_4), dimen(R.dimen.space_16)).apply { marginEnd = dimen(R.dimen.space_8) })
+            addView(
+                bar,
+                LinearLayout.LayoutParams(dimen(R.dimen.space_4), dimen(R.dimen.space_16)).apply {
+                    marginEnd =
+                        dimen(R.dimen.space_8)
+                },
+            )
             addView(label, LinearLayout.LayoutParams(0, WRAP, 1f))
         }
 
@@ -487,7 +509,7 @@ class ChronicleActivity : AppCompatActivity() {
         body: LinearLayout,
         content: View,
     ) {
-        if (body.childCount > 0) body.addView(divider(LinearLayout.LayoutParams(MATCH, dimen(R.dimen.border_width))))
+        if (body.isNotEmpty()) body.addView(divider(LinearLayout.LayoutParams(MATCH, dimen(R.dimen.border_width))))
         val row =
             FrameLayout(this).apply {
                 setPaddingRelative(dimen(R.dimen.space_16), dimen(R.dimen.space_12), dimen(R.dimen.space_16), dimen(R.dimen.space_12))
@@ -504,7 +526,7 @@ class ChronicleActivity : AppCompatActivity() {
         table: TableLayout,
         vararg cells: View,
     ) {
-        if (table.childCount > 0) table.addView(divider(TableLayout.LayoutParams(MATCH, dimen(R.dimen.border_width))))
+        if (table.isNotEmpty()) table.addView(divider(TableLayout.LayoutParams(MATCH, dimen(R.dimen.border_width))))
         val row =
             TableRow(this).apply {
                 gravity = Gravity.CENTER_VERTICAL
