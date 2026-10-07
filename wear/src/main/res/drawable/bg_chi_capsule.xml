@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     La capsula di CHI?: solo un bordo chiaro sul fondo nero, a raggio dei comandi (8dp). Il lime non
-    c'e': sul quadrante marca solo chi serve. Il testo primario su nero fa 12,8:1.
+    c'e': sul quadrante marca solo chi serve. Il testo primario su nero fa 13,8:1.
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">

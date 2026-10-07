@@ -17,7 +17,7 @@
     <color name="elite_surface">#161618</color>
     <!-- border-subtle: la linea sottile fra le righe di un gruppo. -->
     <color name="elite_border_strong">#2A2A2E</color>
-    <!-- text-primary e text-secondary (contrasti sul nero 12,8 e 6,2; sul gruppo 11,9 e 5,3). -->
+    <!-- text-primary e text-secondary (contrasti sul nero 13,8 e 6,2; sul gruppo 11,9 e 5,3). -->
     <color name="elite_text_primary">#D1D1D8</color>
     <color name="elite_text_secondary">#8A8A9A</color>
     <!-- text-disabled: solo le etichette di una voce spenta, sotto 4,5 per scelta della Constitution;

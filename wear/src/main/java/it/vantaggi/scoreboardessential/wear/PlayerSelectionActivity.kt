@@ -131,8 +131,7 @@ class PlayerSelectionActivity : ComponentActivity() {
     /** Il colore della squadra e' grafica: portato a 3:1 sul nero, mai colore di un testo. */
     private fun coloreBarra(colore: Int): Int = TeamInk.graphicOnBlack(colore) or TeamInk.NERO
 
-    private fun defaultColore(lato: Int): Int =
-        ContextCompat.getColor(this, if (lato == 2) R.color.team_side_2 else R.color.team_side_1)
+    private fun defaultColore(lato: Int): Int = ContextCompat.getColor(this, if (lato == 2) R.color.team_side_2 else R.color.team_side_1)
 
     private fun mostraIntestazione(
         colore: Int,

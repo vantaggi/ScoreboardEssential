@@ -38,7 +38,9 @@ class TokenDelPolsoTest {
             Regex("<color name=\"([a-z0-9_]+)\">([^<]+)</color>")
                 .findAll(file.readText())
                 .associate { it.groupValues[1] to it.groupValues[2].trim() }
-        fun risolvi(valore: String): String = if (valore.startsWith("@color/")) risolvi(grezzi.getValue(valore.removePrefix("@color/"))) else valore.uppercase()
+
+        fun risolvi(valore: String): String =
+            if (valore.startsWith("@color/")) risolvi(grezzi.getValue(valore.removePrefix("@color/"))) else valore.uppercase()
         return grezzi.mapValues { risolvi(it.value) }
     }
 
@@ -53,8 +55,7 @@ class TokenDelPolsoTest {
     ) = cartella.walkTopDown().filter { it.isFile && it.extension == estensione }.toList()
 
     /** I file che possono citare un colore: layout, disegni, valori (tranne colors.xml), codice. */
-    private fun fontiDelModulo(): List<File> =
-        tutti(res, "xml").filter { it.name != "colors.xml" } + tutti(File("src/main/java"), "kt")
+    private fun fontiDelModulo(): List<File> = tutti(res, "xml").filter { it.name != "colors.xml" } + tutti(File("src/main/java"), "kt")
 
     @Test
     fun `i ruoli dell'orologio hanno gli stessi valori del telefono`() {
@@ -64,8 +65,17 @@ class TokenDelPolsoTest {
         assertTrue("pochi token in comune: $comuni", comuni.size >= 14)
         comuni.forEach { assertEquals("il token $it diverge fra telefono e orologio", telefonoColori.getValue(it), polso.getValue(it)) }
 
-        listOf("elite_lime", "elite_on_lime", "elite_text_primary", "elite_text_secondary", "elite_error", "elite_warning", "ink_black", "team_side_1", "team_side_2")
-            .forEach { assertTrue("manca $it sull'orologio", it in polso) }
+        listOf(
+            "elite_lime",
+            "elite_on_lime",
+            "elite_text_primary",
+            "elite_text_secondary",
+            "elite_error",
+            "elite_warning",
+            "ink_black",
+            "team_side_1",
+            "team_side_2",
+        ).forEach { assertTrue("manca $it sull'orologio", it in polso) }
         assertEquals("#000000", polso.getValue("ink_black"))
         assertEquals("#C8F135", polso.getValue("elite_lime"))
         assertEquals("#C8F135", polso.getValue("team_side_1"))
@@ -136,11 +146,18 @@ class TokenDelPolsoTest {
         // Il menu e la selezione sport non hanno stringhe in maiuscolo.
         listOf("values/strings.xml", "values-it/strings.xml").forEach { nome ->
             val testo = File(res, nome).readText()
-            listOf("wear_menu_title", "wear_menu_end", "wear_menu_end_confirm", "wear_menu_discard", "wear_menu_discard_confirm", "wear_sport", "wear_sport_title")
-                .forEach { chiave ->
-                    val valore = Regex("<string name=\"$chiave\">([^<]*)</string>").find(testo)!!.groupValues[1]
-                    assertTrue("$nome/$chiave e' \"$valore\" in maiuscolo", valore != valore.uppercase())
-                }
+            listOf(
+                "wear_menu_title",
+                "wear_menu_end",
+                "wear_menu_end_confirm",
+                "wear_menu_discard",
+                "wear_menu_discard_confirm",
+                "wear_sport",
+                "wear_sport_title",
+            ).forEach { chiave ->
+                val valore = Regex("<string name=\"$chiave\">([^<]*)</string>").find(testo)!!.groupValues[1]
+                assertTrue("$nome/$chiave e' \"$valore\" in maiuscolo", valore != valore.uppercase())
+            }
         }
     }
 
@@ -161,7 +178,12 @@ class TokenDelPolsoTest {
         assertTrue(tema.contains("<item name=\"pressFeedback\">@animator/press_feedback_reduced</item>"))
     }
 
-    private fun estraiMisure(testo: String) = Regex("android:(propertyName|valueTo|duration)=\"([^\"]+)\"").findAll(testo).map { it.value }.toList()
+    private fun estraiMisure(testo: String) =
+        Regex("android:(propertyName|valueTo|duration)=\"([^\"]+)\"")
+            .findAll(testo)
+            .map {
+                it.value
+            }.toList()
 
     @Test
     fun `i predefiniti delle strisce sono lime e ciano e il marcatore parte dagli stessi`() {

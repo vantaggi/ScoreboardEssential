@@ -51,7 +51,11 @@ class OrologioG7Test {
     fun setup() {
         val app = RuntimeEnvironment.getApplication()
         listOf("wear_pending_intents", "wear_last_known_match").forEach { nome ->
-            app.getSharedPreferences(nome, Context.MODE_PRIVATE).edit().clear().commit()
+            app
+                .getSharedPreferences(nome, Context.MODE_PRIVATE)
+                .edit()
+                .clear()
+                .commit()
         }
         Settings.Global.putFloat(app.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
         val telefono = Mockito.mock(OptimizedWearDataSync::class.java)
@@ -221,7 +225,10 @@ class OrologioG7Test {
                 marginEnd = 4
             },
         )
-        genitore.measure(View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY))
+        genitore.measure(
+            View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),
+        )
         genitore.layout(0, 0, 400, 300)
         return Scena(genitore, cifra, NumberRoll(cifra))
     }
@@ -242,7 +249,10 @@ class OrologioG7Test {
         assertEquals("il fantasma e' nascosto a TalkBack", View.IMPORTANT_FOR_ACCESSIBILITY_NO, uscente.importantForAccessibility)
         assertTrue("la vecchia sale (y negativo): ${uscente.translationY}", uscente.translationY < 0f)
         assertTrue("la nuova arriva dal basso (y positivo): ${s.cifra.translationY}", s.cifra.translationY > 0f)
-        s.genitore.measure(View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY))
+        s.genitore.measure(
+            View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),
+        )
         s.genitore.layout(0, 0, 400, 300)
         assertTrue(s.cifra.width > 0)
         assertEquals("il fantasma ha la scatola della cifra", s.cifra.width, uscente.width)
@@ -336,7 +346,10 @@ class OrologioG7Test {
             s.rotolo.mostra(it, NumberRoll.SU)
             assertEquals("scatola di $it durante il rotolo", iniziale, s.cifra.width)
             passa(300)
-            s.genitore.measure(View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY))
+            s.genitore.measure(
+                View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),
+            )
             s.genitore.layout(0, 0, 400, 300)
             assertEquals("scatola di $it a rotolo finito", iniziale, s.cifra.width)
         }
@@ -373,7 +386,13 @@ class OrologioG7Test {
         assertEquals("in ambient nessun rotolo", prima, attivita().rotoliAvviati)
         assertEquals(0f, binding.team1Score.translationY, 0f)
         assertEquals(1f, binding.team1Score.alpha, 0f)
-        assertEquals("nessun fantasma accanto alla cifra", 1, (binding.team1Score.parent as ViewGroup).let { g -> (0 until g.childCount).count { g.getChildAt(it) is TextView } })
+        assertEquals(
+            "nessun fantasma accanto alla cifra",
+            1,
+            (binding.team1Score.parent as ViewGroup).let { g ->
+                (0 until g.childCount).count { g.getChildAt(it) is TextView }
+            },
+        )
     }
 
     @Test
@@ -426,6 +445,10 @@ class OrologioG7Test {
 
         val lato1 = binding.team1Container.contentDescription.toString()
         assertTrue(lato1, lato1.startsWith("Rossi, 30"))
-        assertTrue(binding.team2Container.contentDescription.toString().startsWith("Blu, 15"))
+        assertTrue(
+            binding.team2Container.contentDescription
+                .toString()
+                .startsWith("Blu, 15"),
+        )
     }
 }
