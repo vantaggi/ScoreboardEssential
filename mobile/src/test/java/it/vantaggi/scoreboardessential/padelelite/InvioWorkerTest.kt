@@ -56,12 +56,21 @@ class InvioWorkerTest {
         val store = InvioStore(preferenze(context, "invii_worker"))
 
         InvioWorker.enqueue(context, store, UUID_PARTITA, "g-1")
+        val primo =
+            WorkManager
+                .getInstance(context)
+                .getWorkInfosForUniqueWork(InvioWorker.workName(UUID_PARTITA))
+                .get()
+                .single()
+                .id
         InvioWorker.enqueue(context, store, UUID_PARTITA, "g-1")
         InvioWorker.enqueue(context, store, UUID_PARTITA, "g-1")
 
         val lavori = WorkManager.getInstance(context).getWorkInfosForUniqueWork(InvioWorker.workName(UUID_PARTITA)).get()
         assertEquals(1, lavori.size)
         assertEquals(WorkInfo.State.ENQUEUED, lavori.single().state)
+        // KEEP: e' sempre il lavoro di prima, non uno nuovo (con REPLACE l'id cambierebbe).
+        assertEquals(primo, lavori.single().id)
         assertEquals(InvioInfo(InvioState.QUEUED), store.get(UUID_PARTITA))
     }
 

@@ -53,7 +53,8 @@ internal fun json(
 ) = MockResponse().setResponseCode(codice).setHeader("Content-Type", "application/json").setBody(corpo)
 
 /** Un file v2 minimo ma con la forma giusta: il server finto non lo guarda, il test confronta i byte. */
-internal const val FILE_V2 = """{"formatVersion":2,"sportId":"padel","matchId":"3f2a9c1e-5b7d-4e8a-9c01-2d4f6a8b0c1e","players":[],"timeline":[]}"""
+internal const val FILE_V2 =
+    """{"formatVersion":2,"sportId":"padel","matchId":"3f2a9c1e-5b7d-4e8a-9c01-2d4f6a8b0c1e","players":[],"timeline":[]}"""
 
 internal const val UUID_PARTITA = "3f2a9c1e-5b7d-4e8a-9c01-2d4f6a8b0c1e"
 
