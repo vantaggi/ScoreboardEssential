@@ -34,16 +34,7 @@
             column="72"/>
     </issue>
 
-    <issue
-        id="MissingQuantity"
-        message="For locale &quot;it&quot; (Italian) the following quantity should also be defined: `many`"
-        errorLine1="    &lt;plurals name=&quot;wear_menu_deliver_first&quot;>"
-        errorLine2="    ^">
-        <location
-            file="src/main/res/values-it/strings.xml"
-            line="31"
-            column="5"/>
-    </issue>
+
 
     <issue
         id="DataExtractionRules"
@@ -74,16 +65,7 @@
             file="src/main/res/mipmap-anydpi-v26"/>
     </issue>
 
-    <issue
-        id="Overdraw"
-        message="Possible overdraw: Root element paints background `@color/asphalt_dark` with a theme that also paints a background (inferred theme is `@style/Theme.ScoreboardEssential`)"
-        errorLine1="    android:background=&quot;@color/asphalt_dark&quot;"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_menu.xml"
-            line="7"
-            column="5"/>
-    </issue>
+
 
     <issue
         id="Overdraw"
@@ -96,49 +78,13 @@
             column="5"/>
     </issue>
 
-    <issue
-        id="Overdraw"
-        message="Possible overdraw: Root element paints background `@color/asphalt_dark` with a theme that also paints a background (inferred theme is `@style/Theme.ScoreboardEssential`)"
-        errorLine1="    android:background=&quot;@color/asphalt_dark&quot;"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_sport_selection.xml"
-            line="7"
-            column="5"/>
-    </issue>
 
-    <issue
-        id="Overdraw"
-        message="Possible overdraw: Root element paints background `?attr/selectableItemBackground` with a theme that also paints a background (inferred theme is `@style/Theme.ScoreboardEssential`)"
-        errorLine1="    android:background=&quot;?attr/selectableItemBackground&quot;"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/item_player_wear.xml"
-            line="10"
-            column="5"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.color.background` appears to be unused"
-        errorLine1="    &lt;color name=&quot;background&quot;>@color/asphalt_dark&lt;/color>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/colors.xml"
-            line="26"
-            column="12"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.color.surface` appears to be unused"
-        errorLine1="    &lt;color name=&quot;surface&quot;>@color/concrete_gray&lt;/color>"
-        errorLine2="           ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/colors.xml"
-            line="27"
-            column="12"/>
-    </issue>
+
+
+
+
 
     <issue
         id="UnusedResources"
@@ -162,75 +108,25 @@
             column="19"/>
     </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
-        <location
-            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
-        <location
-            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
-        <location
-            file="src/main/res/mipmap-xhdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
-        <location
-            file="src/main/res/mipmap-xxhdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
-        <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icon used as round icon did not have a circular shape">
-        <location
-            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icon used as round icon did not have a circular shape">
-        <location
-            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icon used as round icon did not have a circular shape">
-        <location
-            file="src/main/res/mipmap-xhdpi/ic_launcher_round.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icon used as round icon did not have a circular shape">
-        <location
-            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icon used as round icon did not have a circular shape">
-        <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
-    </issue>
+
+
+
+
+
+
+
+
+
+
 
     <issue
         id="MonochromeLauncherIcon"
@@ -254,80 +150,19 @@
             column="1"/>
     </issue>
 
-    <issue
-        id="IconDipSize"
-        message="The image `ic_launcher.png` varies significantly in its density-independent (dip) size across the various density versions: mipmap-hdpi/ic_launcher.png: 683x683 dp (1024x1024 px), mipmap-mdpi/ic_launcher.png: 1024x1024 dp (1024x1024 px), mipmap-xhdpi/ic_launcher.png: 512x512 dp (1024x1024 px), mipmap-xxhdpi/ic_launcher.png: 341x341 dp (1024x1024 px), mipmap-xxxhdpi/ic_launcher.png: 256x256 dp (1024x1024 px)">
-        <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher.png"/>
-        <location
-            file="src/main/res/mipmap-xxhdpi/ic_launcher.png"/>
-        <location
-            file="src/main/res/mipmap-xhdpi/ic_launcher.png"/>
-        <location
-            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
-        <location
-            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconDipSize"
-        message="The image `ic_launcher_round.png` varies significantly in its density-independent (dip) size across the various density versions: mipmap-hdpi/ic_launcher_round.png: 683x683 dp (1024x1024 px), mipmap-mdpi/ic_launcher_round.png: 1024x1024 dp (1024x1024 px), mipmap-xhdpi/ic_launcher_round.png: 512x512 dp (1024x1024 px), mipmap-xxhdpi/ic_launcher_round.png: 341x341 dp (1024x1024 px), mipmap-xxxhdpi/ic_launcher_round.png: 256x256 dp (1024x1024 px)">
-        <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-xhdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
-    </issue>
 
-    <issue
-        id="IconDuplicates"
-        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
-        <location
-            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconDuplicates"
-        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
-        <location
-            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconDuplicates"
-        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
-        <location
-            file="src/main/res/mipmap-xhdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-xhdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconDuplicates"
-        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
-        <location
-            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-xxhdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconDuplicates"
-        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
-        <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher.png"/>
-    </issue>
+
+
+
+
+
+
+
 
     <issue
         id="WearRecents"
@@ -351,27 +186,9 @@
             column="9"/>
     </issue>
 
-    <issue
-        id="SetTextI18n"
-        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
-        errorLine1="                            binding.team1Score.text = score.toString()"
-        errorLine2="                                                      ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt"
-            line="615"
-            column="55"/>
-    </issue>
 
-    <issue
-        id="SetTextI18n"
-        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
-        errorLine1="                            binding.team2Score.text = score.toString()"
-        errorLine2="                                                      ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt"
-            line="624"
-            column="55"/>
-    </issue>
+
+
 
     <issue
         id="HardcodedText"

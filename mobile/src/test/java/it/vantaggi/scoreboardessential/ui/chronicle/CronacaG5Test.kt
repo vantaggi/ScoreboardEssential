@@ -120,7 +120,9 @@ class CronacaG5Test {
 
     private val sorgenti
         get() =
-            file("").walkTopDown().filter { it.isFile && (it.extension == "kt" || it.extension == "xml") && it.name != "colors.xml" }.toList()
+            file(
+                "",
+            ).walkTopDown().filter { it.isFile && (it.extension == "kt" || it.extension == "xml") && it.name != "colors.xml" }.toList()
 
     @Test
     fun `nessun colore Street esiste ancora in colors xml e nessuno lo cita, nemmeno l'icona`() {
@@ -128,8 +130,15 @@ class CronacaG5Test {
         // Usciti con G-5 (la Cronaca), con G-8 (il PDF) e con G-9 (l'icona, ultimo uso).
         val usciti =
             listOf(
-                "concrete_gray", "graffiti_dark_gray", "outline_gray", "asphalt_black", "stencil_white", "sidewalk_gray",
-                "asphalt_dark", "team_spray_yellow", "team_electric_green",
+                "concrete_gray",
+                "graffiti_dark_gray",
+                "outline_gray",
+                "asphalt_black",
+                "stencil_white",
+                "sidewalk_gray",
+                "asphalt_dark",
+                "team_spray_yellow",
+                "team_electric_green",
             )
         for (nome in usciti) {
             assertTrue("$nome e' ancora definito", !colori.contains("name=\"$nome\""))
@@ -146,7 +155,10 @@ class CronacaG5Test {
         assertTrue("il fondo non e' background-canvas", sfondo.contains("@color/elite_background_standard"))
         assertTrue("manca il lime", primo.contains("@color/elite_lime"))
         assertTrue("manca il testo primario", primo.contains("@color/elite_text_primary_standard"))
-        assertTrue("l'icona cita un token che segue il tema", !Regex("@color/elite_(background|text_primary)\"").containsMatchIn(sfondo + primo))
+        assertTrue(
+            "l'icona cita un token che segue il tema",
+            !Regex("@color/elite_(background|text_primary)\"").containsMatchIn(sfondo + primo),
+        )
         // Falsificazione: il fondo e le colonne di prima erano Street e il controllo li vede.
         assertTrue(coloriStreet.containsMatchIn("""<solid android:color="@color/asphalt_dark"/>"""))
         assertTrue(coloriStreet.containsMatchIn("""android:fillColor="@color/team_spray_yellow""""))

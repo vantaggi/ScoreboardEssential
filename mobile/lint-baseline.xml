@@ -162,27 +162,9 @@
             column="5"/>
     </issue>
 
-    <issue
-        id="DisableBaselineAlignment"
-        message="Set `android:baselineAligned=&quot;false&quot;` on this element for better performance"
-        errorLine1="                &lt;LinearLayout android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;wrap_content&quot; android:orientation=&quot;horizontal&quot;>"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/content_scoreboard_details.xml"
-            line="33"
-            column="18"/>
-    </issue>
 
-    <issue
-        id="DisableBaselineAlignment"
-        message="Set `android:baselineAligned=&quot;false&quot;` on this element for better performance"
-        errorLine1="                &lt;LinearLayout android:layout_width=&quot;match_parent&quot; android:layout_height=&quot;wrap_content&quot; android:orientation=&quot;horizontal&quot;>"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/content_scoreboard_details.xml"
-            line="75"
-            column="18"/>
-    </issue>
+
+
 
     <issue
         id="UnusedResources"
@@ -195,75 +177,25 @@
             column="19"/>
     </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
-        <location
-            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
-        <location
-            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
-        <location
-            file="src/main/res/mipmap-xhdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
-        <location
-            file="src/main/res/mipmap-xxhdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icons should not fill every pixel of their square region; see the design guide for details">
-        <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icon used as round icon did not have a circular shape">
-        <location
-            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icon used as round icon did not have a circular shape">
-        <location
-            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icon used as round icon did not have a circular shape">
-        <location
-            file="src/main/res/mipmap-xhdpi/ic_launcher_round.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icon used as round icon did not have a circular shape">
-        <location
-            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.png"/>
-    </issue>
 
-    <issue
-        id="IconLauncherShape"
-        message="Launcher icon used as round icon did not have a circular shape">
-        <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
-    </issue>
+
+
+
+
+
+
+
+
+
+
 
     <issue
         id="MonochromeLauncherIcon"
@@ -287,124 +219,27 @@
             column="1"/>
     </issue>
 
-    <issue
-        id="IconDipSize"
-        message="The image `ic_launcher.png` varies significantly in its density-independent (dip) size across the various density versions: mipmap-hdpi/ic_launcher.png: 683x683 dp (1024x1024 px), mipmap-mdpi/ic_launcher.png: 1024x1024 dp (1024x1024 px), mipmap-xhdpi/ic_launcher.png: 512x512 dp (1024x1024 px), mipmap-xxhdpi/ic_launcher.png: 341x341 dp (1024x1024 px), mipmap-xxxhdpi/ic_launcher.png: 256x256 dp (1024x1024 px)">
-        <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher.png"/>
-        <location
-            file="src/main/res/mipmap-xxhdpi/ic_launcher.png"/>
-        <location
-            file="src/main/res/mipmap-xhdpi/ic_launcher.png"/>
-        <location
-            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
-        <location
-            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconDipSize"
-        message="The image `ic_launcher_round.png` varies significantly in its density-independent (dip) size across the various density versions: mipmap-hdpi/ic_launcher_round.png: 683x683 dp (1024x1024 px), mipmap-mdpi/ic_launcher_round.png: 1024x1024 dp (1024x1024 px), mipmap-xhdpi/ic_launcher_round.png: 512x512 dp (1024x1024 px), mipmap-xxhdpi/ic_launcher_round.png: 341x341 dp (1024x1024 px), mipmap-xxxhdpi/ic_launcher_round.png: 256x256 dp (1024x1024 px)">
-        <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-xhdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
-    </issue>
 
-    <issue
-        id="IconDuplicates"
-        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
-        <location
-            file="src/main/res/mipmap-hdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-hdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconDuplicates"
-        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
-        <location
-            file="src/main/res/mipmap-mdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-mdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconDuplicates"
-        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
-        <location
-            file="src/main/res/mipmap-xhdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-xhdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconDuplicates"
-        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
-        <location
-            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-xxhdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="IconDuplicates"
-        message="The following unrelated icon files have identical contents: ic_launcher.png, ic_launcher_round.png">
-        <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"/>
-        <location
-            file="src/main/res/mipmap-xxxhdpi/ic_launcher.png"/>
-    </issue>
 
-    <issue
-        id="SmallSp"
-        message="Avoid using sizes smaller than `11sp`: `10sp`"
-        errorLine1="        android:textSize=&quot;10sp&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/dialog_team_name.xml"
-            line="66"
-            column="9"/>
-    </issue>
 
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="            &lt;ImageView"
-        errorLine2="             ~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_players_management.xml"
-            line="74"
-            column="14"/>
-    </issue>
 
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageView"
-        errorLine2="         ~~~~~~~~~">
-        <location
-            file="src/main/res/layout/activity_statistics.xml"
-            line="47"
-            column="10"/>
-    </issue>
 
-    <issue
-        id="ContentDescription"
-        message="Missing `contentDescription` attribute on image"
-        errorLine1="        &lt;ImageView"
-        errorLine2="         ~~~~~~~~~">
-        <location
-            file="src/main/res/layout/fragment_onboarding_step.xml"
-            line="10"
-            column="10"/>
-    </issue>
+
+
+
+
+
+
+
+
+
+
+
 
     <issue
         id="LabelFor"
@@ -483,93 +318,21 @@
             column="53"/>
     </issue>
 
-    <issue
-        id="SetTextI18n"
-        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
-        errorLine1="            goalsTextView.text = &quot;⚽ ${player.goals}&quot;"
-        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/it/vantaggi/scoreboardessential/PlayersManagementAdapter.kt"
-            line="60"
-            column="34"/>
-    </issue>
 
-    <issue
-        id="SetTextI18n"
-        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
-        errorLine1="            appearancesTextView.text = &quot;🎮 ${player.appearances}&quot;"
-        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/it/vantaggi/scoreboardessential/PlayersManagementAdapter.kt"
-            line="61"
-            column="40"/>
-    </issue>
 
-    <issue
-        id="SetTextI18n"
-        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
-        errorLine1="            rankTextView.text = &quot;#$rank&quot;"
-        errorLine2="                                ~~~~~~~~">
-        <location
-            file="src/main/java/it/vantaggi/scoreboardessential/ui/statistics/StatisticsAdapter.kt"
-            line="48"
-            column="33"/>
-    </issue>
 
-    <issue
-        id="HardcodedText"
-        message="Hardcoded string &quot;LIONS&quot;, should use `@string` resource"
-        errorLine1="            android:text=&quot;LIONS&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/dialog_team_name.xml"
-            line="80"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="HardcodedText"
-        message="Hardcoded string &quot;EAGLES&quot;, should use `@string` resource"
-        errorLine1="            android:text=&quot;EAGLES&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/dialog_team_name.xml"
-            line="86"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="HardcodedText"
-        message="Hardcoded string &quot;WARRIORS&quot;, should use `@string` resource"
-        errorLine1="            android:text=&quot;WARRIORS&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/dialog_team_name.xml"
-            line="92"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="HardcodedText"
-        message="Hardcoded string &quot;THUNDER&quot;, should use `@string` resource"
-        errorLine1="            android:text=&quot;THUNDER&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/dialog_team_name.xml"
-            line="98"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="HardcodedText"
-        message="Hardcoded string &quot;#1&quot;, should use `@string` resource"
-        errorLine1="            android:text=&quot;#1&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/item_player_stat.xml"
-            line="25"
-            column="13"/>
-    </issue>
+
+
+
+
+
+
+
+
 
     <issue
         id="HardcodedText"
@@ -582,15 +345,6 @@
             column="9"/>
     </issue>
 
-    <issue
-        id="HardcodedText"
-        message="Hardcoded string &quot;Player Name&quot;, should use `@string` resource"
-        errorLine1="        android:text=&quot;Player Name&quot; />"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/scorer_item.xml"
-            line="17"
-            column="9"/>
-    </issue>
+
 
 </issues>

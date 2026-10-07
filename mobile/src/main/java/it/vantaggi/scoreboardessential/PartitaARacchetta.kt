@@ -207,4 +207,3 @@ private fun setInCorso(display: ScoreDisplay): Int = display.side1Secondary?.spl
 
 /** Lo sport gioca a game (un tocco = un game) invece che a punti? Dalle regole, non dal testo. */
 internal fun modalitaAGame(sportId: String): Boolean = SportRegistry.byId(sportId).config.mode == ScoringMode.GAMES
-

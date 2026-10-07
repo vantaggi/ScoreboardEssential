@@ -127,7 +127,6 @@ private fun ultimoGameChiuso(display: ScoreDisplay): String? {
 // Il separatore dei set nei secondari di :core (RacketRules.SEPARATOR, privato): middot fra spazi.
 internal const val SEPARATORE_DEI_SET = " · "
 
-
 /**
  * ANNULLA chiede conferma solo dove l'azione da annullare puo' essere un gol con un marcatore da
  * perdere: nel calcio. Nel padel e nel tennis e' un tocco solo (DESIGN.md, Decisioni prese,

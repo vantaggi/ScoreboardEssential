@@ -83,7 +83,11 @@ class ChiusuraG9Test {
             val v = valori(file)
             assertEquals(cambio, v.getValue("label_keeper_change"))
             val tutti = v.filterValues { tuttoMaiuscolo(it) }.keys
-            assertEquals("$file: maiuscoli oltre all'allarme", setOf("label_keeper_change"), tutti.filter { it.startsWith("label_") }.toSet())
+            assertEquals(
+                "$file: maiuscoli oltre all'allarme",
+                setOf("label_keeper_change"),
+                tutti.filter { it.startsWith("label_") }.toSet(),
+            )
         }
     }
 
