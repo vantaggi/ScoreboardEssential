@@ -1,6 +1,7 @@
 package it.vantaggi.scoreboardessential.padelelite
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -77,7 +78,7 @@ class InvioStore(
         matchUuid: String,
         info: InvioInfo,
     ) {
-        prefs.edit().putString(matchUuid, encode(info)).apply()
+        prefs.edit { putString(matchUuid, encode(info)) }
         flow.value = flow.value + (matchUuid to info)
     }
 
