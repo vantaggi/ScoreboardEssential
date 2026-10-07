@@ -86,21 +86,12 @@
     <color name="print_text_secondary">#5A5F66</color>
 
     <!--
-        STREET (eredita'): i colori di prima. Il contorno (G-4), la schermata di gioco e il foglio PARTITA
-        (G-6), la Cronaca (G-5) e il PDF (G-8) non ne citano piu' nessuno. Restano finche' li cita qualcuno:
-        l'icona dell'app (G-9: asphalt_dark nello sfondo, team_spray_yellow e team_electric_green). Quando
-        non li cita piu' nessuno si tolgono. Con G-5 sono usciti concrete_gray, graffiti_dark_gray e
-        outline_gray; con G-8 asphalt_black, stencil_white e sidewalk_gray.
-    -->
-    <color name="asphalt_dark">#121212</color>
-    <!--
         Colori predefiniti delle squadre (G-6, decisione G2): lato 1 lime e lato 2 ciano, gli stessi della
         Cronaca e della dashboard di Padel Elite. Restano personalizzabili: contano solo finche' l'utente
         non sceglie un colore (le preferenze salvano solo la scelta), e TeamInk garantisce il contrasto
-        di cio' che sta sopra. Il giallo e il verde di prima restano solo nell'icona dell'app (G-9).
+        di cio' che sta sopra. I colori Street non ci sono piu': l'ultimo uso, l'icona dell'app, e' passato
+        ai token con G-9 (fondo elite_background_standard, colonne elite_lime e elite_text_primary_standard).
     -->
     <color name="team_side_1">@color/elite_lime</color>
     <color name="team_side_2">@color/elite_cyan</color>
-    <color name="team_spray_yellow">#FFD600</color>
-    <color name="team_electric_green">#76FF03</color>
 </resources>

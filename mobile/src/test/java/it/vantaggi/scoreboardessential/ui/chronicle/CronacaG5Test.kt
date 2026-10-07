@@ -116,25 +116,39 @@ class CronacaG5Test {
         assertTrue(!tuttoMaiuscolo("TB %1\$d-%2\$d"))
     }
 
-    // --- Colori Street usciti con questo passo ---
+    // --- Colori Street: tutti usciti (G-5, G-8, G-9) ---
+
+    private val sorgenti
+        get() =
+            file("").walkTopDown().filter { it.isFile && (it.extension == "kt" || it.extension == "xml") && it.name != "colors.xml" }.toList()
 
     @Test
-    fun `i colori Street che nessuno citava piu' sono stati tolti da colors xml e quello rimasto lo cita solo l'icona`() {
+    fun `nessun colore Street esiste ancora in colors xml e nessuno lo cita, nemmeno l'icona`() {
         val colori = file("res/values/colors.xml").readText()
-        // Usciti con G-5 (la Cronaca) e con G-8 (il PDF).
-        for (nome in listOf("concrete_gray", "graffiti_dark_gray", "outline_gray", "asphalt_black", "stencil_white", "sidewalk_gray")) {
+        // Usciti con G-5 (la Cronaca), con G-8 (il PDF) e con G-9 (l'icona, ultimo uso).
+        val usciti =
+            listOf(
+                "concrete_gray", "graffiti_dark_gray", "outline_gray", "asphalt_black", "stencil_white", "sidewalk_gray",
+                "asphalt_dark", "team_spray_yellow", "team_electric_green",
+            )
+        for (nome in usciti) {
             assertTrue("$nome e' ancora definito", !colori.contains("name=\"$nome\""))
         }
-        // Quello rimasto lo cita l'icona (G-9); se nessuno lo cita piu' va tolto, e la Cronaca non lo deve citare.
-        val sorgenti =
-            file(
-                "",
-            ).walkTopDown().filter { it.isFile && (it.extension == "kt" || it.extension == "xml") && it.name != "colors.xml" }.toList()
-        for (nome in listOf("asphalt_dark")) {
-            val citanti = sorgenti.filter { it.readText().contains("color/$nome") || it.readText().contains("color.$nome") }
-            assertTrue("$nome non lo cita nessuno: toglierlo", citanti.isNotEmpty())
-            assertTrue("$nome e' citato dalla Cronaca: ${citanti.map { it.name }}", citanti.none { "chronic" in it.name.lowercase() })
-            assertEquals("$nome deve restare solo all'icona (G-9)", listOf("ic_launcher_background_vs.xml"), citanti.map { it.name })
-        }
+        val citanti = sorgenti.filter { coloriStreet.containsMatchIn(it.readText()) }
+        assertTrue("citano ancora un colore Street: ${citanti.map { it.name }}", citanti.isEmpty())
+    }
+
+    @Test
+    fun `l'icona del telefono e' fatta di token e non di colori Street`() {
+        val sfondo = file("res/drawable/ic_launcher_background_vs.xml").readText()
+        val primo = file("res/drawable/ic_launcher_foreground_vs.xml").readText()
+        // Il launcher non ha il tema dell'app: i colori sono quelli pieni, non i token che seguono il tema.
+        assertTrue("il fondo non e' background-canvas", sfondo.contains("@color/elite_background_standard"))
+        assertTrue("manca il lime", primo.contains("@color/elite_lime"))
+        assertTrue("manca il testo primario", primo.contains("@color/elite_text_primary_standard"))
+        assertTrue("l'icona cita un token che segue il tema", !Regex("@color/elite_(background|text_primary)\"").containsMatchIn(sfondo + primo))
+        // Falsificazione: il fondo e le colonne di prima erano Street e il controllo li vede.
+        assertTrue(coloriStreet.containsMatchIn("""<solid android:color="@color/asphalt_dark"/>"""))
+        assertTrue(coloriStreet.containsMatchIn("""android:fillColor="@color/team_spray_yellow""""))
     }
 }

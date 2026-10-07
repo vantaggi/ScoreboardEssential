@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Fondo dell'icona (G-9): background-canvas, #0D0D0F. Valore pieno e non il token che segue il tema: il launcher non ha il tema dell'app. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="@color/asphalt_dark"/>
+    <solid android:color="@color/elite_background_standard"/>
 </shape>

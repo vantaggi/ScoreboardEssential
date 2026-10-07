@@ -120,16 +120,16 @@
             su Inter qui sotto. Niente android:fontFamily nel tema: la vista lo legge DOPO il suo
             textAppearance e lo sovrascriverebbe (il punteggio perderebbe le cifre tabulari).
         -->
-        <item name="textAppearanceDisplayLarge">@style/TextAppearance.App.DisplayLarge.Street</item>
+        <item name="textAppearanceDisplayLarge">@style/TextAppearance.App.DisplayLarge</item>
         <item name="textAppearanceDisplayMedium">@style/TextAppearance.App.DisplayMedium</item>
         <item name="textAppearanceDisplaySmall">@style/TextAppearance.App.DisplaySmall</item>
         <item name="textAppearanceHeadlineLarge">@style/TextAppearance.App.HeadlineLarge</item>
-        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.App.HeadlineMedium.Street</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.App.HeadlineMedium</item>
         <item name="textAppearanceHeadlineSmall">@style/TextAppearance.App.HeadlineSmall</item>
         <item name="textAppearanceTitleLarge">@style/TextAppearance.App.TitleLarge</item>
         <item name="textAppearanceTitleMedium">@style/TextAppearance.App.TitleMedium</item>
         <item name="textAppearanceTitleSmall">@style/TextAppearance.App.TitleSmall</item>
-        <item name="textAppearanceBodyLarge">@style/TextAppearance.App.BodyLarge.Street</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.App.BodyLarge</item>
         <item name="textAppearanceBodyMedium">@style/TextAppearance.App.BodyMedium</item>
         <item name="textAppearanceBodySmall">@style/TextAppearance.App.BodySmall</item>
         <item name="textAppearanceLabelLarge">@style/TextAppearance.App.LabelLarge</item>
@@ -202,19 +202,19 @@
     <!--
         Tipografia del contorno (G-1, G-1b). Inter ovunque c'e' testo: i pesi vengono dai ruoli di M3
         (textFontWeight) e sono tre, 400, 500 e 600 (UI Constitution); il grassetto e' il 600. Il
-        carattere e' quello di res/font. I tre stili "Street" tengono il nome perche' li citano
-        layout e test; il maiuscolo e la spaziatura sono quelli di prima.
+        carattere e' quello di res/font. DisplayLarge, HeadlineMedium e BodyLarge si chiamavano "Street" e
+        hanno perso il suffisso con G-9 (il tema li cita; DisplayLarge non si usa negli strumenti).
     -->
-    <style name="TextAppearance.App.DisplayLarge.Street" parent="TextAppearance.Material3.DisplayLarge">
+    <style name="TextAppearance.App.DisplayLarge" parent="TextAppearance.Material3.DisplayLarge">
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">600</item>
         <item name="android:letterSpacing">0.08</item>
     </style>
-    <style name="TextAppearance.App.HeadlineMedium.Street" parent="TextAppearance.Material3.HeadlineMedium">
+    <style name="TextAppearance.App.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">600</item>
     </style>
-    <style name="TextAppearance.App.BodyLarge.Street" parent="TextAppearance.Material3.BodyLarge">
+    <style name="TextAppearance.App.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:fontFamily">@font/inter</item>
     </style>
     <style name="TextAppearance.App.DisplayMedium" parent="TextAppearance.Material3.DisplayMedium">
