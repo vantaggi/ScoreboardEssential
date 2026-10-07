@@ -62,7 +62,7 @@ class FaceTextTest {
         val stato = statoDi(tennis, *primoSet, 1, 2, 1, 2, 1, 2, 1)
 
         assertEquals("6-4 · 4-3", stato.side1Secondary)
-        assertEquals("4 – 3" to "SET 2 · 6-4", FaceText.split(stato))
+        assertEquals("4 – 3" to "Set 2 · 6-4", FaceText.split(stato))
     }
 
     @Test
@@ -73,8 +73,8 @@ class FaceTextTest {
         assertEquals("Tie-break", stato.periodLabel)
         val (contesto, dettaglio) = FaceText.split(stato)
         assertEquals("6 – 6", contesto)
-        assertTrue(dettaglio, dettaglio.startsWith("TIE-BREAK"))
-        assertEquals("TIE-BREAK · 6-4", dettaglio)
+        assertTrue(dettaglio, dettaglio.startsWith("Tie-break"))
+        assertEquals("Tie-break · 6-4", dettaglio)
     }
 
     @Test
@@ -84,7 +84,7 @@ class FaceTextTest {
 
         // 6-6 nel set unico: il periodo dice TIE-BREAK, nessun set chiuso da accodare.
         val tieBreak = statoDi(padel, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2)
-        assertEquals("6 – 6" to "TIE-BREAK", FaceText.split(tieBreak))
+        assertEquals("6 – 6" to "Tie-break", FaceText.split(tieBreak))
     }
 
     @Test
@@ -123,7 +123,7 @@ class FaceTextTest {
     fun `senza riga dei set la A e' vuota e il periodo resta in D`() {
         val stato = statoDi(tennis).copy(side1Secondary = "", periodLabel = "Set 1")
 
-        assertEquals("" to "SET 1", FaceText.split(stato))
+        assertEquals("" to "Set 1", FaceText.split(stato))
     }
 
     @Test

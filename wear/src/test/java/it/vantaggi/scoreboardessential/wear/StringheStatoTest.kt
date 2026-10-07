@@ -69,36 +69,36 @@ class StringheStatoTest {
     fun `le due lingue sono davvero due, e l'italiano e' quello del design`() {
         // Senza questo, un contesto che ignorasse la lingua farebbe passare i due test sopra sullo
         // stesso catalogo: la lunghezza della frase inglese non sarebbe mai stata guardata.
-        assertEquals("2 IN CODA", Frase.InCoda(2).testo(contesto("it")))
-        assertEquals("2 QUEUED", Frase.InCoda(2).testo(contesto("en")))
-        assertEquals("3 NON CONSEGNATI", Frase.NonConsegnati(3).testo(contesto("it")))
-        assertEquals("3 NOT DELIVERED", Frase.NonConsegnati(3).testo(contesto("en")))
-        assertEquals("INVIO 2…", Frase.Invio(2).testo(contesto("it")))
-        assertEquals("SENDING 2…", Frase.Invio(2).testo(contesto("en")))
-        assertEquals("PARTITA FINITA", Frase.PartitaFinita.testo(contesto("it")))
-        assertEquals("MATCH OVER", Frase.PartitaFinita.testo(contesto("en")))
-        assertEquals("TIENI: −1", Frase.TieniMeno.testo(contesto("it")))
-        assertEquals("HOLD: UNDO", Frase.TieniAnnulla.testo(contesto("en")))
+        assertEquals("2 in coda", Frase.InCoda(2).testo(contesto("it")))
+        assertEquals("2 queued", Frase.InCoda(2).testo(contesto("en")))
+        assertEquals("3 non consegnati", Frase.NonConsegnati(3).testo(contesto("it")))
+        assertEquals("3 not delivered", Frase.NonConsegnati(3).testo(contesto("en")))
+        assertEquals("Invio 2…", Frase.Invio(2).testo(contesto("it")))
+        assertEquals("Sending 2…", Frase.Invio(2).testo(contesto("en")))
+        assertEquals("Partita finita", Frase.PartitaFinita.testo(contesto("it")))
+        assertEquals("Match over", Frase.PartitaFinita.testo(contesto("en")))
+        assertEquals("Tieni: −1", Frase.TieniMeno.testo(contesto("it")))
+        assertEquals("Hold: undo", Frase.TieniAnnulla.testo(contesto("en")))
         // La chiusura e' partita e non si ritira: la frase dice che manca la conferma, non "non chiusa".
-        assertEquals("NON CONFERMATA", Transitorio.ChiusuraNonConfermata.testo(contesto("it")))
-        assertEquals("NOT CONFIRMED", Transitorio.ChiusuraNonConfermata.testo(contesto("en")))
+        assertEquals("Non confermata", Transitorio.ChiusuraNonConfermata.testo(contesto("it")))
+        assertEquals("Not confirmed", Transitorio.ChiusuraNonConfermata.testo(contesto("en")))
         // Il cambio sport: l'italiano di SPORT NON CAMBIATO sta al limite, 18 su 18.
-        assertEquals("CAMBIO SPORT…", Transitorio.CambioSport.testo(contesto("it")))
-        assertEquals("CHANGING SPORT…", Transitorio.CambioSport.testo(contesto("en")))
-        assertEquals("SPORT NON CAMBIATO", Transitorio.SportNonCambiato.testo(contesto("it")))
-        assertEquals("SPORT NOT CHANGED", Transitorio.SportNonCambiato.testo(contesto("en")))
+        assertEquals("Cambio sport…", Transitorio.CambioSport.testo(contesto("it")))
+        assertEquals("Changing sport…", Transitorio.CambioSport.testo(contesto("en")))
+        assertEquals("Sport non cambiato", Transitorio.SportNonCambiato.testo(contesto("it")))
+        assertEquals("Sport not changed", Transitorio.SportNonCambiato.testo(contesto("en")))
         // La custodia (L5): il telefono ha messo da parte il tocco, l'italiano e' di nuovo al limite, 18 su 18.
-        assertEquals("IN ATTESA TELEFONO", Transitorio.InAttesaDelTelefono.testo(contesto("it")))
-        assertEquals("WAITING FOR PHONE", Transitorio.InAttesaDelTelefono.testo(contesto("en")))
+        assertEquals("In attesa telefono", Transitorio.InAttesaDelTelefono.testo(contesto("it")))
+        assertEquals("Waiting for phone", Transitorio.InAttesaDelTelefono.testo(contesto("en")))
     }
 
     @Test
     fun `SCOLLEGATO porta l'ora dell'ultimo dato, e senza ora niente`() {
         val italiano = contesto("it")
 
-        assertEquals("SCOLLEGATO", Frase.Scollegato(null).testo(italiano))
+        assertEquals("Scollegato", Frase.Scollegato(null).testo(italiano))
         val conOra = Frase.Scollegato(1_700_000_000_000L).testo(italiano)
-        assertTrue(conOra, Regex("SCOLLEGATO · \\d\\d:\\d\\d").matches(conOra))
-        assertEquals("OFFLINE", Frase.Scollegato(null).testo(contesto("en")))
+        assertTrue(conOra, Regex("Scollegato · \\d\\d:\\d\\d").matches(conOra))
+        assertEquals("Offline", Frase.Scollegato(null).testo(contesto("en")))
     }
 }

@@ -31,8 +31,8 @@ internal object FaceText {
      * Col cronometro (calcio) la fascia A e' il tempo, che non viene da qui: entrambe vuote.
      *
      * Racchetta in corso: A e' l'ultimo segmento di [WearScoreState.side1Secondary], i game del set
-     * in corso, scritto "4 – 3" (trattino lungo). D e' il periodo in maiuscolo e poi i set chiusi:
-     * "SET 3 · 6-4 · 3-6", "TIE-BREAK · 6-4", "SET 1". Nel padel a set unico il periodo non c'e' e
+     * in corso, scritto "4 – 3" (trattino lungo). D e' il periodo e poi i set chiusi:
+     * "Set 3 · 6-4 · 3-6", "Tie-break · 6-4", "Set 1". Nel padel a set unico il periodo non c'e' e
      * non ci sono set chiusi, quindi D e' vuota. Senza separatore la stringa e' un segmento solo, e
      * A la mostra per intero.
      *
@@ -53,7 +53,7 @@ internal object FaceText {
         }
         val segmenti = state.side1Secondary.split(SET_SEPARATOR).filter { it.isNotEmpty() }
         val corrente = segmenti.lastOrNull().orEmpty()
-        val dettaglio = listOf(state.periodLabel.uppercase()).filter { it.isNotEmpty() } + segmenti.dropLast(1)
+        val dettaglio = listOf(state.periodLabel).filter { it.isNotEmpty() } + segmenti.dropLast(1)
         return trattinoLungo(corrente) to dettaglio.joinToString(SET_SEPARATOR)
     }
 

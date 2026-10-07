@@ -66,12 +66,12 @@ class StatoOrologioTest {
         assertEquals("L'orologio ha mandato punti che non sono entrati in questa partita.", testo)
     }
 
-    /** Il riepilogo nella striscia dice N PUNTI DALL'OROLOGIO, col singolare. */
+    /** Il riepilogo nella striscia dice N punti dall'orologio, col singolare. */
     @Test
     @Config(qualifiers = "it")
     fun ilRiepilogo_dice_N_punti_dall_orologio() {
-        assertEquals("1 PUNTO DALL'OROLOGIO", app.resources.getQuantityString(R.plurals.strip_msg_from_watch, 1, 1))
-        assertEquals("3 PUNTI DALL'OROLOGIO", app.resources.getQuantityString(R.plurals.strip_msg_from_watch, 3, 3))
+        assertEquals("1 punto dall'orologio", app.resources.getQuantityString(R.plurals.strip_msg_from_watch, 1, 1))
+        assertEquals("3 punti dall'orologio", app.resources.getQuantityString(R.plurals.strip_msg_from_watch, 3, 3))
     }
 
     /**
