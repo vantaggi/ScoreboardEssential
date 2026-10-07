@@ -89,6 +89,10 @@ class AddEditPlayerActivityTest {
         val campo = activity.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.player_name_layout)
         assertEquals("The name is too long: 30 characters at most.", campo.error?.toString())
         assertEquals(longName, nameInput.text.toString())
-        assertEquals("il bottone non e' partito", false, activity.findViewById<it.vantaggi.scoreboardessential.ui.ProgressButton>(R.id.save_player_button).isLoading)
+        assertEquals(
+            "il bottone non e' partito",
+            false,
+            activity.findViewById<it.vantaggi.scoreboardessential.ui.ProgressButton>(R.id.save_player_button).isLoading,
+        )
     }
 }

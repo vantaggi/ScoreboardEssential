@@ -61,9 +61,9 @@
     <color name="elite_chart_5">#A4A9B0</color>
 
     <!--
-        STREET (eredita'): i colori di prima. Restano finche' un layout o una classe li cita: la
-        schermata di gioco e il foglio PARTITA li usano ancora, il contorno passa ai token qui sopra
-        in G-2 (componenti), G-4 (schermate), G-6 (gioco). Quando non li cita piu' nessuno si tolgono.
+        STREET (eredita'): i colori di prima. Il contorno (G-4) non ne cita piu' nessuno. Restano finche'
+        li cita qualcuno: la schermata di gioco e il foglio PARTITA (G-6), la Cronaca (G-5), il PDF (G-8) e
+        il colore predefinito delle squadre. Quando non li cita piu' nessuno si tolgono.
     -->
     <color name="asphalt_black">#000000</color>
     <!-- Cifre del punteggio e pallino del servizio: il bianco PURO, mai altrove (DESIGN.md, Colori). -->

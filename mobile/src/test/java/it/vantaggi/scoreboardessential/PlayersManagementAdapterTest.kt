@@ -34,7 +34,13 @@ class PlayersManagementAdapterTest {
         val viewHolder = adapter.onCreateViewHolder(parent, 0)
         adapter.onBindViewHolder(viewHolder, 0)
 
-        assertEquals("Vandal", viewHolder.itemView.findViewById<TextView>(R.id.player_name).text.toString())
+        assertEquals(
+            "Vandal",
+            viewHolder.itemView
+                .findViewById<TextView>(R.id.player_name)
+                .text
+                .toString(),
+        )
         val roles = viewHolder.itemView.findViewById<com.google.android.material.chip.ChipGroup>(R.id.player_roles_group)
         assertEquals("POR", (roles.getChildAt(0) as com.google.android.material.chip.Chip).text.toString())
     }

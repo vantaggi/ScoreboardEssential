@@ -4,15 +4,14 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
-import androidx.transition.AutoTransition
-import androidx.transition.TransitionManager
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import androidx.transition.AutoTransition
+import androidx.transition.TransitionManager
 import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
@@ -61,7 +60,6 @@ class MatchHistoryAdapter(
         private val aperte: MutableSet<Int> = mutableSetOf(),
     ) : RecyclerView.ViewHolder(itemView) {
         private val dettaglio: View = itemView.findViewById(R.id.match_detail)
-        private val freccia: ImageView = itemView.findViewById(R.id.match_expand_icon)
         private val team1NameTextView: TextView = itemView.findViewById(R.id.team1_name_textview)
         private val team2NameTextView: TextView = itemView.findViewById(R.id.team2_name_textview)
         private val team1ScoreTextView: TextView = itemView.findViewById(R.id.team1_score_textview)
@@ -79,7 +77,12 @@ class MatchHistoryAdapter(
         private fun mostraDettaglio(aperto: Boolean) {
             val context = itemView.context
             dettaglio.visibility = if (aperto) View.VISIBLE else View.GONE
-            freccia.setImageResource(if (aperto) R.drawable.ic_expand_less else R.drawable.ic_expand_more)
+            timestampTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                0,
+                0,
+                if (aperto) R.drawable.ic_expand_less else R.drawable.ic_expand_more,
+                0,
+            )
             ViewCompat.setStateDescription(
                 itemView,
                 context.getString(if (aperto) R.string.history_detail_open else R.string.history_detail_closed),

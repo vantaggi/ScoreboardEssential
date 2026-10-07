@@ -119,10 +119,23 @@ class PadelEliteActivity : AppCompatActivity() {
                     text = getString(R.string.padel_elite_group_row, gruppo.name, nomeDelRuolo(gruppo.role))
                     isChecked = gruppo.id == stato.selectedId
                 }
+            // La linea sottile fra una riga e l'altra, rientrata fino al bordo del testo (G-2, divisore con inset).
+            if (elenco.childCount > 0) elenco.addView(rigaDivisoria())
             elenco.addView(riga)
         }
         elenco.setOnCheckedChangeListener { gruppo, id ->
             (gruppo.findViewById<View>(id)?.tag as? PadelEliteGroup)?.let(viewModel::selectGroup)
+        }
+    }
+
+    private fun rigaDivisoria(): View {
+        val parametri =
+            RadioGroup.LayoutParams(RadioGroup.LayoutParams.MATCH_PARENT, resources.getDimensionPixelSize(R.dimen.border_width))
+        parametri.marginStart = resources.getDimensionPixelSize(R.dimen.space_32)
+        return View(this).apply {
+            setBackgroundColor(getColor(R.color.elite_border_strong))
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            layoutParams = parametri
         }
     }
 

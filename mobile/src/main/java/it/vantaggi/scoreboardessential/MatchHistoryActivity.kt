@@ -11,8 +11,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
-import it.vantaggi.scoreboardessential.ui.MatchHistoryViewModel
 import it.vantaggi.scoreboardessential.ui.EmptyStateView
+import it.vantaggi.scoreboardessential.ui.MatchHistoryViewModel
 import it.vantaggi.scoreboardessential.ui.MatchHistoryViewModelFactory
 import it.vantaggi.scoreboardessential.ui.chronicle.ChronicleActivity
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils

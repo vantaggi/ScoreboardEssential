@@ -24,31 +24,19 @@
         android:paddingVertical="@dimen/space_8">
 
         <!-- Sport, data e durata: un 6-4 di padel e un 2-1 di calcio non si confondono. -->
-        <LinearLayout
+        <!-- La freccia del dettaglio e' l'icona in coda del testo (compound drawable), non una vista a parte. -->
+        <TextView
+            android:id="@+id/timestamp_textview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:drawablePadding="@dimen/space_8"
             android:gravity="center_vertical"
-            android:orientation="horizontal"
             android:paddingStart="@dimen/space_16"
-            android:paddingEnd="@dimen/space_12">
-
-            <TextView
-                android:id="@+id/timestamp_textview"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textAppearance="@style/TextAppearance.App.Caption"
-                tools:text="Padel · 12/09 18:30 · 47 min" />
-
-            <ImageView
-                android:id="@+id/match_expand_icon"
-                android:layout_width="@dimen/icon_standard"
-                android:layout_height="@dimen/icon_standard"
-                android:layout_marginStart="@dimen/space_8"
-                android:importantForAccessibility="no"
-                android:src="@drawable/ic_expand_more"
-                app:tint="@color/elite_text_secondary" />
-        </LinearLayout>
+            android:paddingEnd="@dimen/space_12"
+            android:textAppearance="@style/TextAppearance.App.Caption"
+            app:drawableEndCompat="@drawable/ic_expand_more"
+            app:drawableTint="@color/elite_text_secondary"
+            tools:text="Padel · 12/09 18:30 · 47 min" />
 
         <!-- Una riga per squadra: etichetta nel colore con cui si e' giocato, risultato a destra.
              Chi ha vinto si legge senza il colore: testo primario contro secondario. -->

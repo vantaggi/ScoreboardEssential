@@ -101,8 +101,9 @@ class ContornoDelTelefonoG4Test {
     private fun difetti(xml: String): List<String> {
         val trovati = mutableListOf<String>()
         if (xml.contains("textAllCaps=\"true\"")) trovati += "textAllCaps"
-        Regex("@color/(concrete_gray|stencil_white|sidewalk_gray|graffiti_[a-z_]+|asphalt_[a-z]+|outline_gray|neon_cyan|team_spray_yellow|team_electric_green|error_red|error_text|elite_text_tertiary|elite_cyan)")
-            .findAll(xml)
+        Regex(
+            "@color/(concrete_gray|stencil_white|sidewalk_gray|graffiti_[a-z_]+|asphalt_[a-z]+|outline_gray|neon_cyan|team_spray_yellow|team_electric_green|error_red|error_text|elite_text_tertiary|elite_cyan)",
+        ).findAll(xml)
             .forEach { trovati += it.value }
         if (xml.contains("selectableItemBackground")) trovati += "ripple di sistema"
         Regex("""(android:elevation|app:cardElevation)="(?!0dp)[^"]+"""").findAll(xml).forEach { trovati += it.value }
@@ -167,7 +168,12 @@ class ContornoDelTelefonoG4Test {
     @Test
     fun `gli stili di testo del contorno non sono in maiuscolo`() {
         val themes = File("src/main/res/values/themes.xml").readText()
-        for (stile in listOf("TextAppearance.App.SectionHeading", "TextAppearance.App.RowTitle", "TextAppearance.App.Caption", "TextAppearance.App.HeadlineMedium.Street")) {
+        for (stile in listOf(
+            "TextAppearance.App.SectionHeading",
+            "TextAppearance.App.RowTitle",
+            "TextAppearance.App.Caption",
+            "TextAppearance.App.HeadlineMedium.Street",
+        )) {
             val corpo = Regex("""<style name="${Regex.escape(stile)}".*?</style>""", RegexOption.DOT_MATCHES_ALL).find(themes)!!.value
             assertFalse("$stile e' in maiuscolo", corpo.contains("textAllCaps\">true"))
         }
@@ -263,7 +269,11 @@ class ContornoDelTelefonoG4Test {
     // --- Il bottone che lavora tiene la larghezza ---
 
     private fun misura(vista: View): Int {
-        if (vista.layoutParams == null) vista.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        if (vista.layoutParams ==
+            null
+        ) {
+            vista.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
         vista.measure(
             View.MeasureSpec.makeMeasureSpec((300 * densita).toInt(), View.MeasureSpec.AT_MOST),
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
@@ -274,10 +284,11 @@ class ContornoDelTelefonoG4Test {
 
     @Test
     fun `il ProgressButton tiene la larghezza, mostra l'icona e non accetta altri tocchi`() {
-        val bottone = ProgressButton(contesto).apply {
-            text = "Salva giocatore"
-            loadingLabel = "Salvataggio"
-        }
+        val bottone =
+            ProgressButton(contesto).apply {
+                text = "Salva giocatore"
+                loadingLabel = "Salvataggio"
+            }
         val prima = misura(bottone)
 
         bottone.setLoading(true)
@@ -322,7 +333,10 @@ class ContornoDelTelefonoG4Test {
                 override fun getItemCount() = righe
             }
         lista.addItemDecoration(InsetDividerDecoration(contesto))
-        lista.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY))
+        lista.measure(
+            View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY),
+        )
         lista.layout(0, 0, 600, 1000)
         val bitmap = Bitmap.createBitmap(600, 1000, Bitmap.Config.ARGB_8888)
         lista.draw(Canvas(bitmap))
@@ -395,7 +409,12 @@ class ContornoDelTelefonoG4Test {
 
         vista.performClick()
         assertEquals(View.VISIBLE, dettaglio.visibility)
-        assertEquals("Dettaglio aperto", androidx.core.view.ViewCompat.getStateDescription(vista)?.toString())
+        assertEquals(
+            "Dettaglio aperto",
+            androidx.core.view.ViewCompat
+                .getStateDescription(vista)
+                ?.toString(),
+        )
 
         // La vista si ricicla su un'altra partita: quella e' chiusa. Tornando alla prima, e' ancora aperta.
         adapter.onBindViewHolder(riga, 1)
@@ -405,7 +424,12 @@ class ContornoDelTelefonoG4Test {
 
         vista.performClick()
         assertEquals(View.GONE, dettaglio.visibility)
-        assertEquals("Dettaglio chiuso", androidx.core.view.ViewCompat.getStateDescription(vista)?.toString())
+        assertEquals(
+            "Dettaglio chiuso",
+            androidx.core.view.ViewCompat
+                .getStateDescription(vista)
+                ?.toString(),
+        )
     }
 
     @Test
