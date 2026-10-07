@@ -124,6 +124,36 @@ class TeamInkTest {
     }
 
     @Test
+    fun `la grafica su carta chiara da' almeno 3 su tutto l'RGB e scurisce invece di schiarire`() {
+        val carta = TeamInk.BIANCO
+        ogniColore { colore ->
+            val grafica = TeamInk.graphicOnLight(colore, carta)
+            val c = TeamInk.contrast(grafica, carta)
+            assertTrue("#%06X diventa #%06X a %.3f".format(colore and 0xFFFFFF, grafica and 0xFFFFFF, c), c >= 3.0)
+            assertTrue(TeamInk.luminance(grafica) <= TeamInk.luminance(colore) + 1e-9)
+        }
+        // Falsificazione: la funzione per i fondi scuri su carta bianca non arriva a 3:1 per il lime, perche' schiarisce.
+        val lime = argb(0xC8F135)
+        assertTrue(TeamInk.contrast(TeamInk.graphicOn(lime, carta), carta) < 3.0)
+        assertTrue(TeamInk.contrast(TeamInk.graphicOnLight(lime, carta), carta) >= 3.0)
+    }
+
+    @Test
+    fun `casi fissi della grafica su carta chiara`() {
+        val carta = TeamInk.BIANCO
+        // Chi ha gia' 3:1 resta com'e'.
+        assertEquals(argb(0x1A237E), TeamInk.graphicOnLight(argb(0x1A237E), carta))
+        assertEquals(argb(0xF50057), TeamInk.graphicOnLight(argb(0xF50057), carta))
+        // Lime e ciano predefiniti scendono quel tanto che basta, tinta compresa (verde e azzurro restano verde e azzurro).
+        val lime = TeamInk.graphicOnLight(argb(0xC8F135), carta)
+        val ciano = TeamInk.graphicOnLight(argb(0x00E5FF), carta)
+        assertTrue(((lime shr 8) and 0xFF) > ((lime shr 16) and 0xFF) && ((lime shr 8) and 0xFF) > (lime and 0xFF))
+        assertTrue((ciano and 0xFF) > ((ciano shr 16) and 0xFF) && ((ciano shr 8) and 0xFF) > ((ciano shr 16) and 0xFF))
+        // Il bianco non ha risposta migliore del nero.
+        assertEquals(TeamInk.NERO, TeamInk.graphicOnLight(TeamInk.BIANCO, carta, min = 21.0))
+    }
+
+    @Test
     fun `una soglia piu' alta schiarisce di piu'`() {
         val c = TeamInk.graphicOnBlack(argb(0x000080), min = 4.5)
         assertTrue(TeamInk.contrast(c, TeamInk.NERO) >= 4.5)

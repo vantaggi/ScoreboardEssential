@@ -93,6 +93,26 @@ object TeamInk {
         return BIANCO
     }
 
+    /**
+     * Come [graphicOn] ma per un fondo CHIARO (la carta del report PDF): la grafica sale di
+     * contrasto scurendosi verso il nero invece di schiarirsi. Il lime #C8F135 su bianco fa 1,31:1
+     * e diventa un verde oliva, il ciano #00E5FF fa 1,54:1 e diventa un petrolio; la tinta resta
+     * riconoscibile e scende solo la luminanza. Chi ha gia' [min] resta com'e'. Il nero vale 21:1
+     * sul bianco, quindi per ogni [min] fino a 21 il ciclo trova una risposta.
+     */
+    fun graphicOnLight(
+        argb: Int,
+        sfondo: Int,
+        min: Double = 3.0,
+    ): Int {
+        if (contrast(argb, sfondo) >= min) return argb
+        for (passo in 1..100) {
+            val scurito = versoIlNero(argb, passo / 100.0)
+            if (contrast(scurito, sfondo) >= min) return scurito
+        }
+        return NERO
+    }
+
     private fun lineare(canale: Int): Double {
         val c = canale / 255.0
         return if (c <= 0.04045) c / 12.92 else ((c + 0.055) / 1.055).pow(2.4)
@@ -103,6 +123,17 @@ object TeamInk {
         t: Double,
     ): Int {
         fun canale(c: Int): Int = (c + (255 - c) * t).roundToInt()
+        val r = canale((argb shr 16) and 0xFF)
+        val g = canale((argb shr 8) and 0xFF)
+        val b = canale(argb and 0xFF)
+        return NERO or (r shl 16) or (g shl 8) or b
+    }
+
+    private fun versoIlNero(
+        argb: Int,
+        t: Double,
+    ): Int {
+        fun canale(c: Int): Int = (c * (1 - t)).roundToInt()
         val r = canale((argb shr 16) and 0xFF)
         val g = canale((argb shr 8) and 0xFF)
         val b = canale(argb and 0xFF)
