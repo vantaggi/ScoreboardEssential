@@ -41,6 +41,9 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "it")
 class ChronicleActivityTest {
+    /** Il grigio dei testi di prima, il vecchio stencil_white, che non e' piu' un colore dell'app. */
+    private val grigioDiPrima = 0xFFE0E0E0.toInt()
+
     private lateinit var database: AppDatabase
 
     @Before
@@ -312,7 +315,7 @@ class ChronicleActivityTest {
         val storto =
             TextView(cronaca).apply {
                 text = "24"
-                setTextColor(cronaca.getColor(R.color.stencil_white))
+                setTextColor(grigioDiPrima)
             }
         assertEquals(listOf("24"), cifreNonTabulari(listOf(storto)))
         assertEquals(1, testiFuoriRegola(listOf(storto), cronaca).size)

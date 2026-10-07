@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Gruppo tonale del report PDF (G-8): la superficie su carta, il bordo di 1dp e il raggio dei gruppi,
+    nessuna ombra. E' lo stesso gruppo del telefono (Widget.App.Group) nei valori chiari della carta.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/print_surface" />
+    <stroke
+        android:width="@dimen/border_width"
+        android:color="@color/print_border" />
+    <corners android:radius="@dimen/radius_surface" />
+</shape>

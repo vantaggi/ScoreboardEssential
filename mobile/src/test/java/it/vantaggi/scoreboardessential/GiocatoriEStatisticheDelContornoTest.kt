@@ -1,6 +1,8 @@
 package it.vantaggi.scoreboardessential
 
 import android.content.Context
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
@@ -11,7 +13,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.shape.MaterialShapeDrawable
 import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
@@ -38,8 +39,6 @@ class GiocatoriEStatisticheDelContornoTest {
 
     private val bluNotte = 0xFF1A237E.toInt()
     private val giallo = 0xFFFFD600.toInt()
-
-    private fun sfondoPieno(vista: View): Int = (vista.background as MaterialShapeDrawable).fillColor!!.defaultColor
 
     /** AA per il testo normale: almeno 4,5:1. */
     private fun leggibile(
@@ -165,34 +164,53 @@ class GiocatoriEStatisticheDelContornoTest {
             matchEvents = emptyList(),
         )
 
-    // Il blu #0D47A1 come testo su #121212 faceva 2,17:1. Ora il colore e' la banda e il testo e' TeamInk.
-    @Test
-    fun `nel PDF ogni squadra e' una banda con nome e punteggio leggibili`() {
-        val vista = MatchReportUtils.buildReportView(tema, rapporto(bluNotte, giallo), attributesScorer = true)
+    /** Il colore della barretta di una vista (il primo strato del suo sfondo, come lo mette etichettaConBarretta). */
+    private fun barretta(vista: View): Int = ((vista.background as LayerDrawable).getDrawable(0) as GradientDrawable).color!!.defaultColor
 
-        val bande =
+    // Il blu #0D47A1 come testo su #121212 faceva 2,17:1. Ora il colore e' la barretta e il testo e' l'inchiostro della carta.
+    @Test
+    fun `nel PDF ogni squadra ha nome e punteggio leggibili e il colore e' una barretta`() {
+        val vista = MatchReportUtils.buildReportView(tema, rapporto(bluNotte, giallo), attributesScorer = true)
+        val carta = base.getColor(R.color.print_background)
+        val gruppo = base.getColor(R.color.print_surface)
+
+        val lati =
             listOf(
-                Triple(R.id.pdf_team1_band, bluNotte, listOf(R.id.pdf_team1_name, R.id.pdf_team1_score)),
-                Triple(R.id.pdf_team2_band, giallo, listOf(R.id.pdf_team2_name, R.id.pdf_team2_score)),
+                Triple(R.id.pdf_team1_name, bluNotte, R.id.pdf_team1_score),
+                Triple(R.id.pdf_team2_name, giallo, R.id.pdf_team2_score),
             )
-        for ((bandaId, colore, testi) in bande) {
-            assertEquals(colore, sfondoPieno(vista.findViewById(bandaId)))
-            for (id in testi) {
-                val inchiostro = vista.findViewById<TextView>(id).currentTextColor
-                assertEquals(TeamInk.on(colore), inchiostro)
-                assertTrue(TeamInk.contrast(inchiostro, colore) >= 4.5)
+        for ((nomeId, colore, punteggioId) in lati) {
+            val nome = vista.findViewById<TextView>(nomeId)
+            // Nome e punteggio non portano il colore della squadra: sono l'inchiostro della carta, 4,5:1 sul gruppo e sulla carta.
+            for (testo in listOf(nome, vista.findViewById<TextView>(punteggioId))) {
+                assertEquals(base.getColor(R.color.print_text_primary), testo.currentTextColor)
+                leggibile("testo del PDF sul gruppo", testo.currentTextColor, gruppo)
+                leggibile("testo del PDF sulla carta", testo.currentTextColor, carta)
             }
+            // La barretta e' il colore scelto, scurito solo se non regge 3:1 sul gruppo (il giallo e' scurito, il blu notte no).
+            assertEquals(TeamInk.graphicOnLight(colore, gruppo), barretta(nome))
+            assertTrue(TeamInk.contrast(barretta(nome), gruppo) >= 3.0)
         }
+        assertEquals(bluNotte, barretta(vista.findViewById(R.id.pdf_team1_name)))
+        assertTrue(giallo != barretta(vista.findViewById(R.id.pdf_team2_name)))
         assertEquals("BLU", vista.findViewById<TextView>(R.id.pdf_team1_name).text.toString())
         assertEquals("10", vista.findViewById<TextView>(R.id.pdf_team1_score).text.toString())
     }
 
     @Test
-    fun `nel PDF senza colore la banda ripiega su giallo e verde`() {
+    fun `nel PDF senza colore la barretta ripiega su lime e ciano`() {
         val senzaColori = rapporto(0, 0).copy(team1Color = null, team2Color = null)
         val vista = MatchReportUtils.buildReportView(tema, senzaColori, attributesScorer = true)
+        val gruppo = base.getColor(R.color.print_surface)
 
-        assertEquals(base.getColor(R.color.team_side_1), sfondoPieno(vista.findViewById(R.id.pdf_team1_band)))
-        assertEquals(base.getColor(R.color.team_side_2), sfondoPieno(vista.findViewById(R.id.pdf_team2_band)))
+        // I predefiniti dei lati, come nella Cronaca; su carta chiara scendono a 3:1 restando verde e azzurro.
+        assertEquals(
+            TeamInk.graphicOnLight(base.getColor(R.color.team_side_1), gruppo),
+            barretta(vista.findViewById(R.id.pdf_team1_name)),
+        )
+        assertEquals(
+            TeamInk.graphicOnLight(base.getColor(R.color.team_side_2), gruppo),
+            barretta(vista.findViewById(R.id.pdf_team2_name)),
+        )
     }
 }

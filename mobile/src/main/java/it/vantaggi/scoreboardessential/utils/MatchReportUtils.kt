@@ -2,15 +2,16 @@ package it.vantaggi.scoreboardessential.utils
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.pdf.PdfDocument
+import android.util.DisplayMetrics
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import it.vantaggi.scoreboardessential.R
-import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.domain.models.MatchReportData
@@ -99,15 +100,52 @@ object MatchReportUtils {
         return scorers
     }
 
-    /** La banda nel colore della squadra, con i testi sopra nell'inchiostro di [TeamInk]. */
-    private fun dipingiBanda(
+    /**
+     * Il contesto con cui si gonfia la pagina: tema dell'app, densita' 160 e carattere al 100%. La
+     * pagina A4 e' larga 595 punti e `view.draw` disegna un pixel per punto: con la densita' del
+     * telefono (2,6 su un Pixel) 16sp diventavano 42 punti e la pagina conteneva venti caratteri per
+     * riga. A densita' 1 un dp e' un punto, i corpi sono quelli della scala (16sp = 16pt), e il
+     * carattere ingrandito del telefono non cambia un foglio che si stampa.
+     */
+    private fun contestoDellaPagina(context: Context): Context {
+        val configurazione =
+            Configuration(context.resources.configuration).apply {
+                densityDpi = DisplayMetrics.DENSITY_MEDIUM
+                fontScale = 1f
+            }
+        return ContextThemeWrapper(context.createConfigurationContext(configurazione), R.style.Theme_ScoreboardEssential)
+    }
+
+    /**
+     * Una riga di testo di un gruppo: Inter 400 a 14sp con cifre tabulari, spaziata dal suo vicino.
+     * Il colore e' sempre quello dell'inchiostro della carta, mai quello della squadra.
+     */
+    private fun riga(
         context: Context,
-        banda: View,
+        testo: String,
         colore: Int,
-        vararg testi: TextView,
+    ): TextView =
+        TextView(context).apply {
+            text = testo
+            setTextAppearance(R.style.TextAppearance_App_BodyMedium)
+            setTextColor(colore)
+            fontFeatureSettings = CIFRE_TABULARI
+            val spazio = resources.getDimensionPixelSize(R.dimen.space_4)
+            setPadding(0, spazio, 0, spazio)
+        }
+
+    /** I nomi di una squadra, uno per riga; senza nessuno, lo stato vuoto in testo secondario. */
+    private fun riempiLaColonna(
+        context: Context,
+        colonna: LinearLayout,
+        nomi: List<String>,
     ) {
-        banda.riempiDiSquadra(colore, context.getColor(R.color.asphalt_dark))
-        testi.forEach { it.setTextColor(TeamInk.on(colore)) }
+        if (nomi.isEmpty()) {
+            val vuoto = context.getString(R.string.report_pdf_no_players)
+            colonna.addView(riga(context, vuoto, context.getColor(R.color.print_text_secondary)))
+            return
+        }
+        nomi.forEach { colonna.addView(riga(context, it, context.getColor(R.color.print_text_primary))) }
     }
 
     /** La pagina del report, gia' riempita ma non ancora misurata ne' disegnata. */
@@ -116,7 +154,8 @@ object MatchReportUtils {
         data: MatchReportData,
         attributesScorer: Boolean,
     ): View {
-        val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val pagina = contestoDellaPagina(context)
+        val inflater = pagina.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val view = inflater.inflate(R.layout.pdf_match_report, null)
 
         // Get Views
@@ -124,6 +163,8 @@ object MatchReportUtils {
         val team1ScoreTextView = view.findViewById<TextView>(R.id.pdf_team1_score)
         val team2NameTextView = view.findViewById<TextView>(R.id.pdf_team2_name)
         val team2ScoreTextView = view.findViewById<TextView>(R.id.pdf_team2_score)
+        val team1PlayersTitle = view.findViewById<TextView>(R.id.pdf_team1_players_title)
+        val team2PlayersTitle = view.findViewById<TextView>(R.id.pdf_team2_players_title)
         val team1PlayersList = view.findViewById<LinearLayout>(R.id.pdf_team1_players_list)
         val team2PlayersList = view.findViewById<LinearLayout>(R.id.pdf_team2_players_list)
         val scorersList = view.findViewById<LinearLayout>(R.id.pdf_scorers_list)
@@ -133,47 +174,26 @@ object MatchReportUtils {
         team1ScoreTextView.text = data.team1Score.toString()
         team2NameTextView.text = data.team2Name
         team2ScoreTextView.text = data.team2Score.toString()
+        team1PlayersTitle.text = data.team1Name
+        team2PlayersTitle.text = data.team2Name
 
-        // Due bande, una per squadra nel suo colore: nome e punteggio in TeamInk. Il colore grezzo
-        // come testo sul fondo scuro del PDF non si leggeva, e il PDF e' l'unica cosa che esce dal
-        // telefono. Senza colore si ripiega sui predefiniti (giallo e verde).
-        dipingiBanda(
-            context,
-            view.findViewById(R.id.pdf_team1_band),
-            data.team1Color ?: context.getColor(R.color.team_side_1),
-            team1NameTextView,
-            team1ScoreTextView,
-        )
-        dipingiBanda(
-            context,
-            view.findViewById(R.id.pdf_team2_band),
-            data.team2Color ?: context.getColor(R.color.team_side_2),
-            team2NameTextView,
-            team2ScoreTextView,
-        )
+        // Il colore di squadra e' solo la barretta accanto al nome, come nella Cronaca: il colore con
+        // cui si e' giocato (lime e ciano se la squadra non l'ha cambiato), scurito da TeamInk fino a
+        // 3:1 sul gruppo perche' la pagina e' chiara. Il testo resta nell'inchiostro della carta, quindi
+        // non dipende dal colore scelto. Senza colore si ripiega sui predefiniti dei lati.
+        val gruppo = pagina.getColor(R.color.print_surface)
+        val colore1 = data.team1Color ?: pagina.getColor(R.color.team_side_1)
+        val colore2 = data.team2Color ?: pagina.getColor(R.color.team_side_2)
+        val primario = pagina.getColor(R.color.print_text_primary)
+        val secondario = pagina.getColor(R.color.print_text_secondary)
+        team1NameTextView.etichettaConBarretta(colore1, gruppo, primario, sfondoChiaro = true)
+        team2NameTextView.etichettaConBarretta(colore2, gruppo, primario, sfondoChiaro = true)
+        team1PlayersTitle.etichettaConBarretta(colore1, gruppo, secondario, sfondoChiaro = true)
+        team2PlayersTitle.etichettaConBarretta(colore2, gruppo, secondario, sfondoChiaro = true)
 
         // Populate Formations
-        data.team1Players.forEach { player ->
-            val playerTextView =
-                TextView(context).apply {
-                    text = player.player.playerName
-                    setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                    setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
-                    setPadding(0, 4, 0, 4)
-                }
-            team1PlayersList.addView(playerTextView)
-        }
-
-        data.team2Players.forEach { player ->
-            val playerTextView =
-                TextView(context).apply {
-                    text = player.player.playerName
-                    setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                    setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
-                    setPadding(0, 4, 0, 4)
-                }
-            team2PlayersList.addView(playerTextView)
-        }
+        riempiLaColonna(pagina, team1PlayersList, data.team1Players.map { it.player.playerName })
+        riempiLaColonna(pagina, team2PlayersList, data.team2Players.map { it.player.playerName })
 
         if (!attributesScorer) {
             view.findViewById<View>(R.id.pdf_formations_title).visibility = View.GONE
@@ -195,26 +215,14 @@ object MatchReportUtils {
                     .append(" (")
                     .append(goalCount)
                     .append(")")
-                val scorerTextView =
-                    TextView(context).apply {
-                        text = sb.toString()
-                        setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                        setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
-                        setPadding(0, 4, 0, 4)
-                    }
-                scorersList.addView(scorerTextView)
+                scorersList.addView(riga(pagina, sb.toString(), primario))
             }
         } else {
-            val noScorersTextView =
-                TextView(context).apply {
-                    text = context.getString(R.string.report_pdf_no_scorers)
-                    setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)
-                    setTextColor(ContextCompat.getColor(context, R.color.sidewalk_gray))
-                    setPadding(0, 4, 0, 4)
-                }
-            scorersList.addView(noScorersTextView)
+            scorersList.addView(riga(pagina, pagina.getString(R.string.report_pdf_no_scorers), secondario))
         }
 
         return view
     }
+
+    private const val CIFRE_TABULARI = "tnum"
 }

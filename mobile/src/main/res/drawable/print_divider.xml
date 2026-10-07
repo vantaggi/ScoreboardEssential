@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    La linea sottile fra le righe di un gruppo del report PDF (G-8): 1dp in print_border.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <size android:height="@dimen/border_width" />
+    <solid android:color="@color/print_border" />
+</shape>
