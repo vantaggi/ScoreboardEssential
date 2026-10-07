@@ -109,14 +109,13 @@ object ChronicleText {
     }
 
     /**
-     * Il colore di squadra come GRAFICA su un fondo scuro [background], con almeno 3:1 (WCAG
-     * 1.4.11). [TeamInk.graphicOnBlack] misura contro il nero; il contrasto con un fondo piu'
-     * chiaro del colore e' quello col nero diviso per il contrasto fondo/nero, quindi chiedere
-     * contro il nero 3 volte quel rapporto garantisce 3:1 contro il fondo. Col 3 nudo il blu notte
-     * #1A237E sulla card #1E1E1E si fermerebbe sotto 2,4:1.
+     * Il colore di squadra come GRAFICA sul fondo del gruppo [background], con almeno 3:1 (WCAG
+     * 1.4.11): resta quello scelto se gia' regge, altrimenti si schiarisce verso il bianco. I
+     * predefiniti lime e ciano (chart-1 e chart-2) reggono da soli e non cambiano; un blu notte
+     * scelto dall'utente sul gruppo #161618 diventa un blu piu' chiaro, della stessa tinta.
      */
     fun graphicOn(
         paint: Int,
         background: Int,
-    ): Int = TeamInk.graphicOnBlack(paint, GRAPHIC_MIN * TeamInk.contrast(background, TeamInk.NERO))
+    ): Int = TeamInk.graphicOn(paint, background, GRAPHIC_MIN)
 }

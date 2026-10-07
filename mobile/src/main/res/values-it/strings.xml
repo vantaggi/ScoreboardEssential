@@ -224,38 +224,45 @@
     <string name="match_resumed">Partita ripresa</string>
 
     <!-- Cronaca: la partita chiusa rigiocata punto per punto, dallo storico -->
-    <string name="chronicle_title">CRONACA</string>
+    <string name="chronicle_title">Cronaca</string>
     <string name="chronicle_open">Cronaca</string>
-    <string name="chronicle_unavailable">Cronaca non disponibile: il registro di questa partita non si legge.</string>
+    <string name="chronicle_unavailable">Cronaca non disponibile</string>
+    <string name="chronicle_unavailable_reason">Il registro di questa partita non si legge. Torna allo storico: la partita resta salvata.</string>
     <string name="chronicle_section_scoreboard">Tabellone</string>
     <string name="chronicle_section_momentum">Andamento</string>
     <string name="chronicle_section_games">Game per game</string>
     <string name="chronicle_section_serve">Servizio</string>
     <string name="chronicle_section_times">Tempi</string>
     <string name="chronicle_section_moments">Momenti chiave</string>
-    <string name="chronicle_interrupted">INTERROTTA</string>
+    <string name="chronicle_interrupted">Interrotta</string>
     <string name="chronicle_totals">Punti vinti %1$d – %2$d · Game %3$d – %4$d</string>
-    <string name="chronicle_no_points">Nessun punto giocato: il registro di questa partita è vuoto.</string>
-    <string name="chronicle_momentum_caption">Sopra la linea: %1$s avanti nei punti vinti. Sotto: %2$s. Le linee tratteggiate separano i set.</string>
+    <string name="chronicle_no_points">Nessun punto registrato</string>
+    <string name="chronicle_no_points_reason">La Cronaca si ricava dai punti. Questa partita è stata salvata senza, per esempio perché si è segnato a game: con i punti segnati uno a uno si riempie.</string>
+    <string name="chronicle_momentum_empty_reason">Si disegna dai punti, uno a uno.</string>
+    <string name="chronicle_momentum_caption">Punti vinti in più, punto per punto. Il numero accanto al nome è il suo vantaggio massimo; le linee tratteggiate chiudono i set.</string>
     <string name="chronicle_momentum_description">Punti vinti, punto per punto. Vantaggio massimo: %1$s +%2$d, %3$s +%4$d.</string>
     <string name="chronicle_set">%1$d° set</string>
     <string name="chronicle_set_open">%1$d° set (in corso)</string>
-    <string name="chronicle_no_games">Nessun game concluso.</string>
+    <string name="chronicle_no_games">Nessun game concluso</string>
+    <string name="chronicle_no_games_reason">Qui compare un riquadro per ogni game chiuso, e il registro non ne ha.</string>
     <string name="chronicle_tiebreak_cell">TB %1$d-%2$d</string>
     <string name="chronicle_break_mark">B</string>
     <string name="chronicle_game_cd">%1$s, game a %2$s</string>
     <string name="chronicle_game_cd_break">%1$s, game a %2$s, break</string>
-    <string name="chronicle_games_legend">Il colore dice chi ha vinto il game, il numero è il punteggio dopo il game.</string>
-    <string name="chronicle_games_legend_breaks">Il colore dice chi ha vinto il game, il numero è il punteggio dopo il game. B = break: il game lo ha vinto chi riceveva.</string>
-    <string name="chronicle_serve_unknown">Il tabellone non sapeva chi serviva: con due giocatori per squadra nelle rose prima del primo punto, qui vedrai punti e game vinti al servizio da ciascuno.</string>
-    <string name="chronicle_serve_unknown_singles">Servizio e palle break si ricavano dai punti giocati: senza punti registrati, per esempio con il punteggio a game, non ci sono dati da mostrare.</string>
+    <string name="chronicle_games_legend">La barretta dice chi ha vinto il game: %1$s a sinistra, %2$s a destra. Il numero è il punteggio dopo il game.</string>
+    <string name="chronicle_games_legend_breaks">La barretta dice chi ha vinto il game: %1$s a sinistra, %2$s a destra. Il numero è il punteggio dopo il game. B = break: il game lo ha vinto chi riceveva.</string>
+    <string name="chronicle_serve_unknown">Il tabellone non sapeva chi serviva</string>
+    <string name="chronicle_serve_unknown_reason">Con due giocatori per squadra nelle rose prima del primo punto, qui vedrai punti e game vinti al servizio da ciascuno.</string>
+    <string name="chronicle_serve_unknown_singles">Servizio e palle break si ricavano dai punti giocati</string>
+    <string name="chronicle_serve_unknown_singles_reason">Questa partita non ne ha, per esempio perché si è segnato a game. Con i punti segnati uno a uno compaiono.</string>
     <string name="chronicle_serve_header_player">Al servizio</string>
     <string name="chronicle_serve_header_points">Punti vinti</string>
     <string name="chronicle_serve_header_games">Game tenuti</string>
     <string name="chronicle_percent">%1$d%%</string>
     <string name="chronicle_breaks">%1$s: palle break convertite %2$d su %3$d</string>
     <string name="chronicle_player_unknown">Giocatore %1$d</string>
-    <string name="chronicle_times_unknown">Il tabellone non ha registrato i tempi di questa partita.</string>
+    <string name="chronicle_times_unknown">Il tabellone non ha registrato i tempi di questa partita</string>
+    <string name="chronicle_times_unknown_reason">I punti di questa partita non hanno l\'ora. Le partite nuove la registrano.</string>
     <string name="chronicle_times_total">Durata</string>
     <string name="chronicle_times_set">%1$d° set (%2$d-%3$d)</string>
     <string name="chronicle_times_point">Tra un punto e l\'altro</string>

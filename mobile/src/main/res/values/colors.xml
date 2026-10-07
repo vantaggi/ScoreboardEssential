@@ -62,10 +62,10 @@
 
     <!--
         STREET (eredita'): i colori di prima. Il contorno (G-4), la schermata di gioco e il foglio PARTITA
-        (G-6) non ne citano piu' nessuno. Restano finche' li cita qualcuno: la Cronaca (G-5: asphalt_dark,
-        concrete_gray, graffiti_dark_gray, stencil_white, sidewalk_gray, outline_gray), il PDF (G-8:
-        asphalt_black, asphalt_dark, stencil_white, sidewalk_gray) e l'icona dell'app (G-9: team_spray_yellow
-        e team_electric_green). Quando non li cita piu' nessuno si tolgono.
+        (G-6) e la Cronaca (G-5) non ne citano piu' nessuno. Restano finche' li cita qualcuno: il PDF (G-8:
+        asphalt_black, asphalt_dark, stencil_white, sidewalk_gray, con asphalt_dark anche nello sfondo
+        dell'icona) e l'icona dell'app (G-9: team_spray_yellow e team_electric_green). Quando non li cita
+        piu' nessuno si tolgono. Con G-5 sono usciti concrete_gray, graffiti_dark_gray e outline_gray.
     -->
     <color name="asphalt_black">#000000</color>
     <!-- Cifre del punteggio e pallino del servizio: il bianco PURO, mai altrove (DESIGN.md, Colori). -->
@@ -73,8 +73,6 @@
     <!-- background-watch: il nero del gioco sul telefono e del quadrante. -->
     <color name="ink_black">#000000</color>
     <color name="asphalt_dark">#121212</color>
-    <color name="concrete_gray">#1E1E1E</color>
-    <color name="graffiti_dark_gray">#2C2C2C</color>
     <color name="stencil_white">#E0E0E0</color>
     <color name="sidewalk_gray">#9E9E9E</color>
     <!--
@@ -87,6 +85,4 @@
     <color name="team_side_2">@color/elite_cyan</color>
     <color name="team_spray_yellow">#FFD600</color>
     <color name="team_electric_green">#76FF03</color>
-    <!-- Bordi e linee funzionali (DESIGN.md, Colori): 3,27 su concrete_gray, sopra 3:1 per la grafica. -->
-    <color name="outline_gray">#6E6E6E</color>
 </resources>
