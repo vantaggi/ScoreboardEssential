@@ -32,6 +32,13 @@
         <item name="colorSurface">@color/elite_surface</item>
         <item name="colorOnSurface">@color/elite_text_primary</item>
         <item name="colorOnSurfaceVariant">@color/elite_text_secondary</item>
+        <!--
+            Niente tinta di elevazione (G-3). Material 3 mescola colorPrimary nelle superfici sollevate
+            (dialoghi, fogli, card): con il lime il fondo del dialogo diventava verde oliva invece di
+            background-elevated (#1E1E22). Le superfici si alzano di tono coi token, mai di tinta; lo
+            ripetono gli overlay dei dialoghi, che hanno il loro tema.
+        -->
+        <item name="elevationOverlayEnabled">false</item>
 
         <!--
             Mappatura COMPLETA dei ruoli di Material 3 (DESIGN.md, Contorno: tema e dialoghi).
@@ -306,11 +313,13 @@
         <item name="colorPrimary">@color/elite_lime</item>
         <item name="colorSurface">@color/elite_surface_raised</item>
         <item name="colorOnSurface">@color/elite_text_primary</item>
+        <item name="elevationOverlayEnabled">false</item>
         <item name="shapeAppearanceCornerExtraLarge">@style/ShapeAppearance.App.Overlay</item>
         <item name="alertDialogTheme">@style/ThemeOverlay.App.Dialog</item>
     </style>
 
     <style name="ThemeOverlay.App.Dialog" parent="Theme.Material3.Dark.Dialog.Alert">
+        <item name="elevationOverlayEnabled">false</item>
         <item name="android:windowBackground">@drawable/bg_overlay</item>
         <item name="dialogCornerRadius">@dimen/radius_overlay</item>
         <item name="android:backgroundDimEnabled">true</item>

@@ -39,6 +39,10 @@
     <dimen name="radius_badge">6dp</dimen>
     <!-- control-touch: altezza e larghezza minime di ogni comando. -->
     <dimen name="control_touch">48dp</dimen>
+    <!-- icon-compact, icon-standard, icon-prominent: le uniche tre misure delle icone (Material Symbols a 24dp, scalati). -->
+    <dimen name="icon_compact">16dp</dimen>
+    <dimen name="icon_standard">20dp</dimen>
+    <dimen name="icon_prominent">24dp</dimen>
     <!-- Spessore del bordo di gruppi, card, campi e chip; il fuoco (focus-ring) e' di 2dp. -->
     <dimen name="border_width">1dp</dimen>
     <dimen name="focus_ring_width">2dp</dimen>

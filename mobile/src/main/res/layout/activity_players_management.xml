@@ -73,8 +73,9 @@
 
             <ImageView
                 android:id="@+id/empty_icon"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
+                android:importantForAccessibility="no"
+                android:layout_width="@dimen/icon_prominent"
+                android:layout_height="@dimen/icon_prominent"
                 android:src="@drawable/ic_person_add"
                 app:tint="@color/sidewalk_gray"
                 android:alpha="0.5"

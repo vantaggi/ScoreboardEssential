@@ -45,9 +45,10 @@
         app:layout_constraintTop_toBottomOf="@id/tabLayout">
 
         <ImageView
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:src="@drawable/ic_stats"
+            android:layout_width="@dimen/icon_prominent"
+            android:layout_height="@dimen/icon_prominent"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_bar_chart"
             app:tint="@color/sidewalk_gray" />
 
         <TextView

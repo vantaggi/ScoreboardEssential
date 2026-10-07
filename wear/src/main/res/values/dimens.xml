@@ -8,6 +8,13 @@
     -->
     <dimen name="box_inset_layout_padding">0dp</dimen>
 
+    <!-- icon-compact, icon-standard, icon-prominent: le tre misure delle icone, le stesse del telefono. -->
+    <dimen name="icon_compact">16dp</dimen>
+    <dimen name="icon_standard">20dp</dimen>
+    <dimen name="icon_prominent">24dp</dimen>
+    <!-- Il vuoto fra un'icona e il testo che la segue. -->
+    <dimen name="icon_text_gap">4dp</dimen>
+
     <dimen name="face_margin_d">16dp</dimen>
     <dimen name="face_margin_e">30dp</dimen>
 

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Le tre misure delle icone sono token (G-3): icon_standard e icon_prominent non sono ancora citate da un layout dell'orologio ma restano, per lint. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@dimen/icon_standard,@dimen/icon_prominent" />

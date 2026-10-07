@@ -19,7 +19,7 @@ import org.robolectric.annotation.Config
 
 /**
  * La selezione dello sport sul polso (passo 10): titolo a 14sp su una riga, voci a 20sp in righe da
- * almeno 52dp, "✓ in uso" in ciano, il focus alla lista per la corona.
+ * almeno 52dp, la spunta e "in uso" in ciano, il focus alla lista per la corona.
  *
  * Le righe si leggono dall'adapter, non da una lista impaginata: in Robolectric la lista non ha
  * un'altezza vera, e le misure che contano sono quelle dichiarate nelle risorse.
@@ -86,7 +86,11 @@ class SelezioneSportTest {
         val inUso = riga(attivita, 1).findViewById<TextView>(R.id.sport_current)
         assertEquals(View.VISIBLE, inUso.visibility)
         assertEquals(attivita.getString(R.string.wear_sport_current), inUso.text.toString())
-        assertTrue("manca la spunta: \"${inUso.text}\"", inUso.text.startsWith("✓"))
+        // La spunta e' un'icona (Material Symbols check, 16dp) e non un carattere nel testo.
+        val spunta = inUso.compoundDrawablesRelative[0]
+        assertTrue("manca la spunta come icona", spunta != null)
+        assertEquals(dp(attivita, 16f).toInt(), spunta.bounds.width())
+        assertTrue("il testo non deve portare il carattere della spunta", !inUso.text.contains("✓"))
         assertEquals(ContextCompat.getColor(attivita, R.color.neon_cyan), inUso.currentTextColor)
 
         listOf(0, 2).forEach {
@@ -96,10 +100,10 @@ class SelezioneSportTest {
 
     @Test
     @Config(qualifiers = "it")
-    fun `in italiano il segno e' la spunta e le parole in uso`() {
+    fun `in italiano le parole sono in uso e la spunta e' l'icona`() {
         val attivita = apri()
 
-        assertEquals("✓ in uso", riga(attivita, 1).findViewById<TextView>(R.id.sport_current).text.toString())
+        assertEquals("in uso", riga(attivita, 1).findViewById<TextView>(R.id.sport_current).text.toString())
     }
 
     @Test

@@ -40,7 +40,7 @@ fun mostraLeCoppie(
         val acceso = !partitaIniziata && rosa.size >= 2
         val scambio = radice.findViewById<MaterialButton>(if (squadra == 1) R.id.team1_swap_button else R.id.team2_swap_button)
         scambio.isEnabled = acceso
-        scambio.setIconResource(if (partitaIniziata) R.drawable.ic_lock else R.drawable.ic_swap)
+        scambio.setIconResource(if (partitaIniziata) R.drawable.ic_lock else R.drawable.ic_swap_horiz)
         scambio.contentDescription =
             contesto.getString(if (partitaIniziata) R.string.pair_swap_locked else R.string.pair_swap_description, nomeSquadra)
     }

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Le tre misure delle icone sono token (G-3): icon_compact non e' ancora citato da un layout ma resta, per lint. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@dimen/icon_compact" />

@@ -47,7 +47,7 @@
     <string name="wear_sport">SPORT</string>
     <string name="wear_sport_title">SPORT</string>
     <!-- Il segno davanti si legge anche senza il colore: in uso e' ciano, ma la spunta dice la stessa cosa. -->
-    <string name="wear_sport_current">✓ in uso</string>
+    <string name="wear_sport_current">in uso</string>
     <string name="wear_sport_locked">Partita in corso</string>
     <string name="wear_match_over">PARTITA FINITA</string>
     <!-- Riga di stato: una frase sola, al massimo 18 caratteri anche con un numero a tre cifre.

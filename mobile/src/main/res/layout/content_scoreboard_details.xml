@@ -83,7 +83,7 @@
                         </LinearLayout>
 
                         <!-- Scambio da 48dp: inverte i due, e quindi chi serve per primo. Dopo il primo punto si spegne col lucchetto. -->
-                        <com.google.android.material.button.MaterialButton android:id="@+id/team1_swap_button" style="@style/Widget.App.Button.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="48dp" android:minHeight="48dp" android:layout_marginTop="8dp" android:text="@string/label_pair_swap" app:icon="@drawable/ic_swap"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/team1_swap_button" style="@style/Widget.App.Button.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="48dp" android:minHeight="48dp" android:layout_marginTop="8dp" android:text="@string/label_pair_swap" app:icon="@drawable/ic_swap_horiz" app:iconSize="@dimen/icon_standard"/>
                     </LinearLayout>
 
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="8dp">
@@ -105,7 +105,7 @@
                         </LinearLayout>
 
                         <!-- Scambio da 48dp: inverte i due, e quindi chi serve per primo. Dopo il primo punto si spegne col lucchetto. -->
-                        <com.google.android.material.button.MaterialButton android:id="@+id/team2_swap_button" style="@style/Widget.App.Button.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="48dp" android:minHeight="48dp" android:layout_marginTop="8dp" android:text="@string/label_pair_swap" app:icon="@drawable/ic_swap"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/team2_swap_button" style="@style/Widget.App.Button.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="48dp" android:minHeight="48dp" android:layout_marginTop="8dp" android:text="@string/label_pair_swap" app:icon="@drawable/ic_swap_horiz" app:iconSize="@dimen/icon_standard"/>
                     </LinearLayout>
 
                 </LinearLayout>

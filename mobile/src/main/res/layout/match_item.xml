@@ -175,7 +175,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/chronicle_open"
                 android:visibility="gone"
-                app:icon="@drawable/ic_stats"
+                app:icon="@drawable/ic_timeline"
+                app:iconSize="@dimen/icon_standard"
                 tools:visibility="visible" />
 
             <com.google.android.material.button.MaterialButton
@@ -186,6 +187,7 @@
                 android:text="@string/export_match"
                 android:visibility="gone"
                 app:icon="@drawable/ic_share"
+                app:iconSize="@dimen/icon_standard"
                 tools:visibility="visible" />
 
             <ImageButton
