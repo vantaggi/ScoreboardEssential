@@ -7,6 +7,7 @@ import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
+import it.vantaggi.scoreboardessential.database.PadelEliteLinkDao
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,8 @@ class MatchRepository(
     private val matchDao: MatchDao,
     private val context: Context,
     private val colorRepository: ColorRepository,
+    /** I collegamenti ai giocatori di Padel Elite (R-1); senza, l'invio non porta nessun `padelPlayerId`. */
+    private val padelLinkDao: PadelEliteLinkDao? = null,
 ) {
     companion object {
         private const val PREFS_NAME = "it.vantaggi.scoreboardessential.PREFERENCES"
@@ -88,13 +91,28 @@ class MatchRepository(
      *
      * Sta qui e non nel ViewModel della partita: lo storico non deve costruirne uno per esportare.
      */
-    suspend fun buildSavedExport(matchId: Int): ExportResult? {
+    suspend fun buildSavedExport(
+        matchId: Int,
+        padelGroupId: String? = null,
+    ): ExportResult? {
         val partita = matchDao.getMatchById(matchId) ?: return null
         val schieramento = matchDao.getMatchLineup(matchId)
-        return MatchExportUtils.savedMatchExport(partita, schieramento, BuildConfig.VERSION_NAME, ZoneId.systemDefault())
+        // Il file da condividere resta anonimo (nessun gruppo): i collegamenti sono di UN gruppo, e
+        // solo l'invio a quel gruppo li porta, come `padelPlayerId` dei giocatori collegati.
+        val collegati =
+            padelGroupId
+                ?.let { padelLinkDao?.linksOf(it) }
+                ?.associate { it.localPlayerId to it.remotePlayerId }
+                .orEmpty()
+        return MatchExportUtils.savedMatchExport(partita, schieramento, BuildConfig.VERSION_NAME, ZoneId.systemDefault(), collegati)
     }
 
-    /** Lo stesso export, trovando la partita dal suo identificativo del file: e' la chiave dell'invio. Null se non c'e'. */
-    suspend fun buildSavedExportByUuid(matchUuid: String): ExportResult? =
-        matchDao.getMatchByUuid(matchUuid)?.let { buildSavedExport(it.matchId) }
+    /**
+     * Lo stesso export, trovando la partita dal suo identificativo del file: e' la chiave dell'invio.
+     * Null se non c'e'. [padelGroupId] e' il gruppo di destinazione dell'invio (R-1).
+     */
+    suspend fun buildSavedExportByUuid(
+        matchUuid: String,
+        padelGroupId: String? = null,
+    ): ExportResult? = matchDao.getMatchByUuid(matchUuid)?.let { buildSavedExport(it.matchId, padelGroupId) }
 }

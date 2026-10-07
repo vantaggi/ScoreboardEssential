@@ -38,7 +38,7 @@ class InvioRunnerTest {
         store.save(PadelEliteSession("A1", "R1", Long.MAX_VALUE / 2, "u-1", "a@b.it"))
         val account = PadelEliteAccount(s.config(), PadelEliteApi(s.config()), store)
         invii = InvioStore(preferenze(context, "invii_runner"))
-        return InvioRunner(account, invii) { payload }
+        return InvioRunner(account, invii) { _, _ -> payload }
     }
 
     private fun stato() = invii.get(UUID_PARTITA)

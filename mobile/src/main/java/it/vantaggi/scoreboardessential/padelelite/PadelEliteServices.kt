@@ -43,8 +43,8 @@ class PadelEliteServices(
     val invii: InvioStore by lazy(invioStoreFactory)
 
     val runner: InvioRunner by lazy {
-        InvioRunner(account, invii) { uuid ->
-            when (val esito = repository.buildSavedExportByUuid(uuid)) {
+        InvioRunner(account, invii) { uuid, groupId ->
+            when (val esito = repository.buildSavedExportByUuid(uuid, groupId)) {
                 null -> {
                     PayloadOutcome.Missing
                 }

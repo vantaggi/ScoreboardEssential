@@ -60,6 +60,25 @@ sealed interface GroupsResult {
     data object Network : GroupsResult
 }
 
+/** Un giocatore della rosa di un gruppo nella dashboard (`v2_players`). */
+data class RemotePlayer(
+    val id: Int,
+    val name: String,
+    /** L'account che il giocatore ha collegato, o null. */
+    val linkedUserId: String?,
+)
+
+sealed interface RosterResult {
+    /** La rosa del gruppo, in ordine di nome; puo' essere vuota. */
+    data class Ok(
+        val players: List<RemotePlayer>,
+    ) : RosterResult
+
+    data object NotAuthenticated : RosterResult
+
+    data object Network : RosterResult
+}
+
 /** La voce della casella d'arrivo, com'e' restituita da `submit_scoreboard_match` (senza il file). */
 data class InboxItem(
     val id: String,
@@ -120,7 +139,7 @@ sealed interface StatusResult {
  * Le chiamate a Supabase che l'app usa, scritte a mano su `HttpURLConnection`.
  *
  * Sono tre famiglie, tutte REST: GoTrue (`/auth/v1/token`) per accesso e rinnovo, PostgREST
- * (`/rest/v1/group_members`, `/rest/v1/v2_scoreboard_inbox`) per leggere, e la RPC
+ * (`/rest/v1/group_members`, `/rest/v1/v2_players`, `/rest/v1/v2_scoreboard_inbox`) per leggere, e la RPC
  * `submit_scoreboard_match` per consegnare la partita. Una libreria (supabase-kt, OkHttp) avrebbe
  * portato un'altra dozzina di dipendenze per quattro richieste; su Android `HttpURLConnection` e'
  * gia' OkHttp, e il TLS e i timeout sono quelli di sistema.
@@ -228,6 +247,51 @@ class PadelEliteApi(
                         if (id.isEmpty()) return@mapNotNull null
                         val nome = riga.optJSONObject("groups")?.optString("name").orEmpty()
                         PadelEliteGroup(id, nome.ifEmpty { id.take(ID_FALLBACK_LENGTH) }, riga.optString("role"))
+                    },
+                )
+            }
+        }
+    }
+
+    /**
+     * La rosa del gruppo [groupId]: i `v2_players` che i membri possono leggere. Gli stessi errori
+     * di [fetchGroups]: 401 e' [RosterResult.NotAuthenticated], il resto che non va e' rete.
+     * Una riga senza id positivo o senza nome non e' un giocatore che si possa collegare: si salta.
+     */
+    suspend fun fetchRoster(
+        accessToken: String,
+        groupId: String,
+    ): RosterResult {
+        val filtro = URLEncoder.encode("eq.$groupId", "UTF-8")
+        val path = "/rest/v1/v2_players?group_id=$filtro&select=id,name,linked_user_id&order=name"
+        val reply = send("GET", path, accessToken, null) ?: return RosterResult.Network
+        return when {
+            reply.status == 401 -> {
+                RosterResult.NotAuthenticated
+            }
+
+            reply.status >= 500 || reply.status !in 200..299 -> {
+                RosterResult.Network
+            }
+
+            else -> {
+                val righe = parseArray(reply.body) ?: return RosterResult.Network
+                RosterResult.Ok(
+                    (0 until righe.length()).mapNotNull { i ->
+                        val riga = righe.optJSONObject(i) ?: return@mapNotNull null
+                        val id = riga.optInt("id", 0)
+                        val nome = riga.optString("name").trim()
+                        if (id <= 0 || nome.isEmpty()) return@mapNotNull null
+                        val utente =
+                            if (riga.isNull(
+                                    "linked_user_id",
+                                )
+                            ) {
+                                null
+                            } else {
+                                riga.optString("linked_user_id").takeIf { it.isNotEmpty() }
+                            }
+                        RemotePlayer(id, nome, utente)
                     },
                 )
             }
