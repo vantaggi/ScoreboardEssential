@@ -138,11 +138,11 @@
             android:id="@+id/send_status_textview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:drawablePadding="8dp"
+            android:layout_marginTop="@dimen/space_12"
+            android:drawablePadding="@dimen/space_8"
             android:gravity="center_vertical"
             android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textColor="@color/stencil_white"
+            android:textColor="@color/elite_text_primary"
             android:visibility="gone"
             app:drawableStartCompat="@drawable/ic_schedule"
             tools:text="Inviata: in attesa di un admin"
@@ -150,13 +150,14 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/send_match_button"
-            style="@style/Widget.App.Button.TextButton.Street"
+            style="@style/Widget.App.Button.Text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:text="@string/padel_elite_send"
             android:visibility="gone"
             app:icon="@drawable/ic_send"
+            app:iconSize="@dimen/icon_standard"
             tools:visibility="visible" />
 
         <!-- Esporta sta accanto a Elimina: i comandi di una partita dello storico stanno sulla sua card. -->

@@ -34,7 +34,7 @@ fun invioLook(
         }
 
         InvioState.SENT -> {
-            InvioLook(context.getString(R.string.padel_elite_status_sent), R.drawable.ic_hourglass, R.color.elite_text_secondary)
+            InvioLook(context.getString(R.string.padel_elite_status_sent), R.drawable.ic_hourglass_empty, R.color.elite_text_secondary)
         }
 
         InvioState.IMPORTED -> {
@@ -42,7 +42,7 @@ fun invioLook(
         }
 
         InvioState.DISCARDED -> {
-            InvioLook(context.getString(R.string.padel_elite_status_discarded), R.drawable.ic_error, R.color.elite_warning)
+            InvioLook(context.getString(R.string.padel_elite_status_discarded), R.drawable.ic_warning, R.color.elite_warning)
         }
 
         InvioState.LOGIN_AGAIN -> {
@@ -50,7 +50,7 @@ fun invioLook(
         }
 
         InvioState.UNSENDABLE -> {
-            InvioLook(unsendableText(context, info), R.drawable.ic_error, R.color.elite_error)
+            InvioLook(unsendableText(context, info), R.drawable.ic_cancel, R.color.elite_error)
         }
     }
 

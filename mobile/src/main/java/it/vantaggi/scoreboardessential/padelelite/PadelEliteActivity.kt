@@ -113,15 +113,13 @@ class PadelEliteActivity : AppCompatActivity() {
         if (stato !is GroupsUi.Ready) return
         stato.groups.forEach { gruppo ->
             val riga =
-                RadioButton(this).apply {
+                (layoutInflater.inflate(R.layout.item_padel_elite_group, elenco, false) as RadioButton).apply {
                     id = View.generateViewId()
                     tag = gruppo
                     text = getString(R.string.padel_elite_group_row, gruppo.name, nomeDelRuolo(gruppo.role))
-                    minHeight = resources.getDimensionPixelSize(R.dimen.control_touch)
-                    setTextColor(getColor(R.color.elite_text_primary))
                     isChecked = gruppo.id == stato.selectedId
                 }
-            elenco.addView(riga, RadioGroup.LayoutParams.MATCH_PARENT, RadioGroup.LayoutParams.WRAP_CONTENT)
+            elenco.addView(riga)
         }
         elenco.setOnCheckedChangeListener { gruppo, id ->
             (gruppo.findViewById<View>(id)?.tag as? PadelEliteGroup)?.let(viewModel::selectGroup)
