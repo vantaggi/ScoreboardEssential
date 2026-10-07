@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Fondo della striscia dell'ultima azione: un gruppo tonale (elite_surface sul nero del gioco),
+    raggio dei gruppi, senza ombra e senza bordo. Il nero del gioco e' l'unico fondo scuro dove il
+    bordo del gruppo non serve: il tono della striscia si legge contro il nero e il testo e' sopra.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/elite_surface" />
+    <corners android:radius="@dimen/radius_surface" />
+</shape>

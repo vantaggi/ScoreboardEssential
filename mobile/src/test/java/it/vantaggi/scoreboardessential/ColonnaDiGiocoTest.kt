@@ -294,15 +294,15 @@ class ColonnaDiGiocoTest {
         assertEquals("in gioco la barra non si vede", 0f, barra.alpha, 0f)
 
         applicaStatoDellaZona(zona, glifo, barretta, barra, blu, finita = true)
-        assertEquals("la zona spenta e' #2C2C2C", 0xFF2C2C2C.toInt(), zona.cardBackgroundColor.defaultColor)
-        assertEquals("niente stroke sulla zona spenta", 0, zona.strokeWidth)
+        assertEquals("la zona spenta e' la superficie rialzata", 0xFF1E1E22.toInt(), zona.cardBackgroundColor.defaultColor)
+        assertEquals("la zona spenta ha la sua linea da 1dp", zona.resources.getDimensionPixelSize(R.dimen.border_width), zona.strokeWidth)
         assertEquals("il glifo sparisce", 0f, glifo.alpha, 0f)
         assertEquals("la barra si accende", 1f, barra.alpha, 0f)
-        // La barra sta sul grigio #2C2C2C della zona spenta: il 3:1 si misura li', non contro il nero.
+        // La barra sta sulla zona spenta (#1E1E22): il 3:1 si misura li', non contro il nero.
         val colorBarra = (barra.background as ColorDrawable).color
-        val grigio = 0xFF2C2C2C.toInt()
+        val grigio = 0xFF1E1E22.toInt()
         assertTrue(
-            "la barra di #1A237E su #2C2C2C fa %.2f".format(TeamInk.contrast(colorBarra, grigio)),
+            "la barra di #1A237E sulla zona spenta fa %.2f".format(TeamInk.contrast(colorBarra, grigio)),
             TeamInk.contrast(colorBarra, grigio) >= 3.0,
         )
         assertEquals("la barra porta il colore della squadra, schiarito per il grigio", TeamInk.graphicOn(blu, grigio), colorBarra)

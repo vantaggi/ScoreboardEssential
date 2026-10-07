@@ -65,7 +65,7 @@ class TestiDelTelefonoTest {
     @Test
     @Config(qualifiers = "it")
     fun `la formazione assente si dice in italiano`() {
-        assertEquals("ROSSI (nessun modulo)", context.getString(R.string.formation_none, "ROSSI"))
-        assertEquals("ROSSI (4-4-2)", context.getString(R.string.formation_label, "ROSSI", "4-4-2"))
+        assertEquals("Rossi: nessun modulo", context.getString(R.string.formation_none, "Rossi"))
+        assertEquals("Rossi: 4-4-2", context.getString(R.string.formation_label, "Rossi", "4-4-2"))
     }
 }

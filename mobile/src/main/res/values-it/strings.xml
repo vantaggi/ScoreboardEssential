@@ -45,9 +45,9 @@
     <string name="cd_serving">%1$s al servizio</string>
     <string name="cd_serving_first_player">%1$s al servizio, primo giocatore</string>
     <string name="cd_serving_second_player">%1$s al servizio, secondo giocatore</string>
-    <string name="caption_game">GAME</string>
-    <string name="caption_set">SET</string>
-    <string name="caption_set_game">SET · GAME</string>
+    <string name="caption_game">Game</string>
+    <string name="caption_set">Set</string>
+    <string name="caption_set_game">Set · game</string>
     <string name="timer_state_running">In corso</string>
     <string name="timer_state_stopped">Fermo</string>
 
@@ -71,7 +71,7 @@
     <string name="undo_goal_message">Questo annullerà il punteggio e rimuoverà il gol dal registro.</string>
     <string name="undo">Annulla</string>
     <string name="no_available_players">Nessun giocatore disponibile. Crea nuovi giocatori in Gestione Giocatori.</string>
-    <string name="manage">GESTISCI</string>
+    <string name="manage">Gestisci</string>
     <string name="add_player_title">Aggiungi Giocatore a Squadra %d</string>
     <string name="player_added_message">%1$s aggiunto a %2$s</string>
     <string name="remove_player_title">Rimuovi Giocatore?</string>
@@ -117,7 +117,7 @@
     <string name="reset_timer_message">Questo resetterà il timer della partita a 00:00</string>
     <string name="reset">Resetta</string>
 
-    <string name="label_keeper_timer">PORTIERE</string>
+    <string name="label_keeper_timer">Portiere</string>
     <string name="label_keeper_change">CAMBIO</string>
     <string name="cd_keeper_stopped">Portiere, fermo, %1$s. Tocca per avviare</string>
     <string name="cd_keeper_running">Portiere, in corso, %1$s. Tocca per ripartire da capo, cambio avvenuto</string>
@@ -127,28 +127,28 @@
     <string name="share_match_report">Condividi</string>
     <string name="score_period_serving">%1$s · serve %2$s</string>
     <string name="watch_batch_rejected">L\'orologio ha mandato punti che non sono entrati in questa partita.</string>
-    <string name="label_match_history">STORICO</string>
-    <string name="label_end_match">FINE PARTITA</string>
-    <string name="label_team_rosters">ROSE</string>
-    <string name="label_match_log">REGISTRO</string>
-    <string name="label_pairs">COPPIE</string>
-    <string name="label_pair_swap">SCAMBIA</string>
+    <string name="label_match_history">Storico</string>
+    <string name="label_end_match">Fine partita</string>
+    <string name="label_team_rosters">Rose</string>
+    <string name="label_match_log">Registro</string>
+    <string name="label_pairs">Coppie</string>
+    <string name="label_pair_swap">Scambia</string>
     <string name="pair_slot_empty">libero</string>
     <string name="pair_slot_description">%1$s, posto %2$d: %3$s</string>
     <string name="pair_swap_description">Scambia i due giocatori di %1$s, il primo batte per primo</string>
     <string name="pair_swap_locked">Scambio bloccato a partita iniziata</string>
-    <string name="label_formations">FORMAZIONI</string>
+    <string name="label_formations">Formazioni</string>
     <!-- Foglio PARTITA: cio che si consulta, a un tocco dalla schermata di gioco. -->
-    <string name="label_match_sheet">PARTITA</string>
+    <string name="label_match_sheet">Partita</string>
     <string name="label_open_match_sheet">≡</string>
     <string name="cd_open_match_sheet">Apri il foglio della partita</string>
-    <string name="label_close_sheet">CHIUDI</string>
-    <string name="label_statistics">STATISTICHE</string>
-    <string name="label_players">GIOCATORI</string>
-    <string name="label_settings">IMPOSTAZIONI</string>
-    <string name="label_reset_match_time">AZZERA TEMPO</string>
-    <string name="formation_label">%1$s (%2$s)</string>
-    <string name="formation_none">%1$s (nessun modulo)</string>
+    <string name="label_close_sheet">Chiudi</string>
+    <string name="label_statistics">Statistiche</string>
+    <string name="label_players">Giocatori</string>
+    <string name="label_settings">Impostazioni</string>
+    <string name="label_reset_match_time">Azzera tempo</string>
+    <string name="formation_label">%1$s: %2$s</string>
+    <string name="formation_none">%1$s: nessun modulo</string>
     <string name="select_scorer_title">Chi ha segnato?</string>
     <string name="label_add_player">Aggiungi giocatore</string>
     <string name="label_team_1">Squadra 1</string>

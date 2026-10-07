@@ -1,6 +1,9 @@
 package it.vantaggi.scoreboardessential.utils
 
 import android.content.res.ColorStateList
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
+import android.view.Gravity
 import android.view.View
 import android.widget.TextView
 import com.google.android.material.button.MaterialButton
@@ -40,6 +43,31 @@ fun TextView.etichettaDiSquadra(
 ) {
     riempiDiSquadra(colore, sfondo)
     setTextColor(TeamInk.on(colore))
+}
+
+/**
+ * Il nome di una squadra nel foglio PARTITA (rose, coppie, formazioni): testo primario e il colore della
+ * squadra solo come barretta di 4dp sul bordo iniziale (G-6). Niente blocco pieno con il testo sopra:
+ * il colore sta nella grafica e la leggibilita' non dipende da lui. La barretta e' il colore scelto, o
+ * [TeamInk.graphicOn] se sul fondo del gruppo non arriva a 3:1.
+ */
+fun TextView.etichettaConBarretta(
+    colore: Int,
+    sfondo: Int = context.getColor(R.color.elite_surface),
+) {
+    val densita = resources.displayMetrics.density
+    val barretta =
+        GradientDrawable().apply {
+            setColor(TeamInk.graphicOn(colore, sfondo))
+            cornerRadius = 2 * densita
+        }
+    background =
+        LayerDrawable(arrayOf(barretta)).apply {
+            setLayerWidth(0, (4 * densita).toInt())
+            setLayerGravity(0, Gravity.START or Gravity.FILL_VERTICAL)
+        }
+    setPaddingRelative((12 * densita).toInt(), (2 * densita).toInt(), 0, (2 * densita).toInt())
+    setTextColor(context.getColor(R.color.elite_text_primary))
 }
 
 /**

@@ -302,13 +302,13 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `al primo avvio le squadre sono gialla e verde, non arancio e lime`() {
+    fun `al primo avvio le squadre sono lime e ciano, non giallo e verde`() {
         val predefiniti = ColorRepository(ApplicationProvider.getApplicationContext<Application>())
 
         assertEquals(predefiniti.getTeam1DefaultColor(), viewModel.team1Color.value)
         assertEquals(predefiniti.getTeam2DefaultColor(), viewModel.team2Color.value)
-        assertEquals(0xFFFFD600.toInt(), viewModel.team1Color.value)
-        assertEquals(0xFF76FF03.toInt(), viewModel.team2Color.value)
+        assertEquals(0xFFC8F135.toInt(), viewModel.team1Color.value)
+        assertEquals(0xFF00E5FF.toInt(), viewModel.team2Color.value)
     }
 
     @Test

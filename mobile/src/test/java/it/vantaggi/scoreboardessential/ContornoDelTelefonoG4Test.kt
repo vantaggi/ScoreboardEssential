@@ -130,8 +130,8 @@ class ContornoDelTelefonoG4Test {
         assertTrue(difetti("""<View app:cardElevation="2dp" />""").isNotEmpty())
         // E non scambia per difetti un'ombra a zero.
         assertEquals(emptyList<String>(), difetti("""<View android:elevation="0dp" />"""))
-        // La schermata di gioco ne ha ancora (G-6): il controllo la vede.
-        assertTrue(difetti(sorgente("content_scoreboard_live")).isNotEmpty())
+        // Con G-6 la schermata di gioco e il foglio non ne hanno piu': il controllo vede il difetto in un esempio.
+        assertTrue(difetti("""<View android:background="@color/concrete_gray" android:foreground="?attr/selectableItemBackground" />""").isNotEmpty())
     }
 
     @Test

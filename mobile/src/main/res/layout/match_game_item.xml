@@ -45,7 +45,7 @@
             android:layout_height="wrap_content"
             android:importantForAccessibility="no"
             android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textColor="@color/sidewalk_gray"
+            android:textColor="@color/elite_text_secondary"
             android:textSize="14sp"
             android:visibility="gone" />
 

@@ -68,10 +68,6 @@
         <item name="android:stateListAnimator">?attr/pressFeedback</item>
     </style>
 
-    <!-- Nomi di prima: li citano ancora la schermata di gioco e il foglio (G-6); ora sono gli stili nuovi. -->
-    <style name="Widget.App.Button.Street" parent="Widget.App.Button.Primary" />
-    <style name="Widget.App.Button.TextButton.Street" parent="Widget.App.Button.Text" />
-    <style name="Widget.App.Button.OutlinedButton.Street" parent="Widget.App.Button.Secondary" />
 
     <!--
         GRUPPO TONALE: superficie su canvas, bordo di 1dp, raggio radius-surface, nessuna ombra. E' il

@@ -471,7 +471,7 @@ class MainActivityLayoutTest {
                 )
                 assertEquals(
                     "lo sconfitto e' grigio",
-                    it.getColor(R.color.sidewalk_gray),
+                    it.getColor(R.color.elite_text_secondary),
                     it.findViewById<TextView>(R.id.team2_score_textview).currentTextColor,
                 )
                 assertEquals("la barra della zona spenta si vede", 1f, it.findViewById<View>(R.id.team1_zone_bar).alpha, 0f)
@@ -681,10 +681,10 @@ class MainActivityLayoutTest {
                     "il tocco non ha avviato il conto",
                     aspettaCheAttivi(scenario) {
                         it.findViewById<TextView>(R.id.keeper_timer_textview).currentTextColor ==
-                            it.getColor(R.color.graffiti_pink)
+                            it.getColor(R.color.elite_lime)
                     },
                 )
-                // Il conto scade: dopo la scadenza lo slot e' pieno #FF1744 con CAMBIO in #000000.
+                // Il conto scade: dopo la scadenza lo slot e' pieno elite_error con CAMBIO in elite_background.
                 assertTrue(
                     "dopo la scadenza lo slot non e' diventato rosso",
                     aspettaCheAttivi(scenario) { modello.isKeeperTimerExpired.value == true },
@@ -693,8 +693,8 @@ class MainActivityLayoutTest {
                 scenario.onActivity {
                     val slot = it.findViewById<com.google.android.material.card.MaterialCardView>(R.id.keeper_slot)
                     val valore = it.findViewById<TextView>(R.id.keeper_timer_textview)
-                    assertEquals("lo slot scaduto e' pieno #FF1744", it.getColor(R.color.error_red), slot.cardBackgroundColor.defaultColor)
-                    assertEquals("CAMBIO e' in #000000", it.getColor(R.color.asphalt_black), valore.currentTextColor)
+                    assertEquals("lo slot scaduto e' pieno elite_error", it.getColor(R.color.elite_error), slot.cardBackgroundColor.defaultColor)
+                    assertEquals("CAMBIO e' in elite_background", it.getColor(R.color.elite_background), valore.currentTextColor)
                     assertEquals("lo slot scaduto dice CAMBIO", it.getString(R.string.label_keeper_change), valore.text.toString())
                     assertEquals(
                         "TalkBack dice lo stato e l'azione",

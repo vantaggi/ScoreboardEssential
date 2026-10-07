@@ -26,7 +26,7 @@ class TeamNameDialogFragment : DialogFragment() {
         for (i in 0 until suggestionsChipGroup.childCount) {
             val chip = suggestionsChipGroup.getChildAt(i) as? Chip
             chip?.setOnClickListener {
-                editText.setText(chip.text.toString().uppercase())
+                editText.setText(chip.text.toString())
                 editText.setSelection(editText.text?.length ?: 0)
             }
         }

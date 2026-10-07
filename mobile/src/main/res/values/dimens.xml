@@ -17,6 +17,8 @@
     -->
     <dimen name="score_text_max">150dp</dimen>
     <dimen name="score_text_min">72dp</dimen>
+    <!-- La corsa del numero che rotola (NumberRoll), come parte dell'altezza della sua scatola. -->
+    <fraction name="number_roll_travel">50%</fraction>
     <!--
         Ruoli della UI Constitution (DESIGN.md, Mappatura dei ruoli): spaziature, raggi, bersaglio.
         Un valore nuovo entra qui solo se nomina un ruolo riusabile.

@@ -274,7 +274,7 @@ class MatchSettingsActivity : AppCompatActivity() {
         // L'anteprima parte dal colore attuale e segue la ruota a ogni movimento.
         val anteprima = dialogView.findViewById<TextView>(R.id.colorPreview)
         val nome = (if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value).orEmpty()
-        val attuale = (if (team == 1) viewModel.team1Color.value else viewModel.team2Color.value) ?: getColor(R.color.team_spray_yellow)
+        val attuale = (if (team == 1) viewModel.team1Color.value else viewModel.team2Color.value) ?: getColor(R.color.team_side_1)
         anteprima.anteprimaDiSquadra(attuale, nome)
         colorPickerView.setColorListener(
             ColorEnvelopeListener { envelope, _ -> anteprima.anteprimaDiSquadra(envelope.color, nome) },

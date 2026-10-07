@@ -38,7 +38,7 @@ class AccessibilitaDelTelefonoTest {
             val contenitore = radice.findViewById<View>(contenitoreId)
             val testo = radice.findViewById<TextView>(testoId)
             mostraNomeSquadra(contenitore, testo, "Rossi")
-            assertEquals("ROSSI", testo.text.toString())
+            assertEquals("Rossi", testo.text.toString())
             assertEquals("Modifica il nome di Rossi", contenitore.contentDescription?.toString())
         }
     }

@@ -47,9 +47,9 @@
     <string name="cd_serving_first_player">%1$s serving, first player</string>
     <string name="cd_serving_second_player">%1$s serving, second player</string>
     <string name="cd_score_of_team" translatable="false">%1$s, %2$s</string>
-    <string name="caption_game">GAME</string>
-    <string name="caption_set">SET</string>
-    <string name="caption_set_game">SET · GAME</string>
+    <string name="caption_game">Game</string>
+    <string name="caption_set">Set</string>
+    <string name="caption_set_game">Set · game</string>
     <string name="timer_state_running">Running</string>
     <string name="timer_state_stopped">Stopped</string>
     <string name="label_correct_minus_one" translatable="false">−1</string>
@@ -74,7 +74,7 @@
     <string name="undo_goal_message">This will revert the score and remove the goal from the log.</string>
     <string name="undo">Undo</string>
     <string name="no_available_players">No available players. Create new players in Player Management.</string>
-    <string name="manage">MANAGE</string>
+    <string name="manage">Manage</string>
     <string name="add_player_title">Add Player to Team %d</string>
     <string name="player_added_message">%1$s added to %2$s</string>
     <string name="remove_player_title">Remove Player?</string>
@@ -119,7 +119,7 @@
     <string name="reset_timer_message">This will reset the match timer to 00:00</string>
     <string name="reset">Reset</string>
 
-    <string name="label_keeper_timer">KEEPER</string>
+    <string name="label_keeper_timer">Keeper</string>
     <string name="label_keeper_change">CHANGE</string>
     <string name="cd_keeper_stopped">Keeper, stopped, %1$s. Tap to start</string>
     <string name="cd_keeper_running">Keeper, running, %1$s. Tap to restart, change done</string>
@@ -129,30 +129,30 @@
     <string name="share_match_report">Share</string>
     <string name="score_period_serving">%1$s · serve %2$s</string>
     <string name="watch_batch_rejected">The watch sent points that did not go into this match.</string>
-    <string name="label_match_history">HISTORY</string>
-    <string name="label_end_match">END MATCH</string>
-    <string name="label_team_rosters">TEAM ROSTERS</string>
-    <string name="label_match_log">MATCH LOG</string>
-    <string name="label_pairs">PAIRS</string>
-    <string name="label_pair_swap">SWAP</string>
+    <string name="label_match_history">History</string>
+    <string name="label_end_match">End match</string>
+    <string name="label_team_rosters">Team rosters</string>
+    <string name="label_match_log">Match log</string>
+    <string name="label_pairs">Pairs</string>
+    <string name="label_pair_swap">Swap</string>
     <string name="pair_place_1" translatable="false">1</string>
     <string name="pair_place_2" translatable="false">2</string>
     <string name="pair_slot_empty">free</string>
     <string name="pair_slot_description">%1$s, place %2$d: %3$s</string>
     <string name="pair_swap_description">Swap the two players of %1$s, the first one serves first</string>
     <string name="pair_swap_locked">Swap locked, the match has started</string>
-    <string name="label_formations">FORMATIONS</string>
+    <string name="label_formations">Formations</string>
     <!-- Foglio PARTITA: cio che si consulta, a un tocco dalla schermata di gioco. -->
-    <string name="label_match_sheet">MATCH</string>
+    <string name="label_match_sheet">Match</string>
     <string name="label_open_match_sheet">≡</string>
     <string name="cd_open_match_sheet">Open the match sheet</string>
-    <string name="label_close_sheet">CLOSE</string>
-    <string name="label_statistics">STATISTICS</string>
-    <string name="label_players">PLAYERS</string>
-    <string name="label_settings">SETTINGS</string>
-    <string name="label_reset_match_time">RESET TIME</string>
-    <string name="formation_label">%1$s (%2$s)</string>
-    <string name="formation_none">%1$s (no formation)</string>
+    <string name="label_close_sheet">Close</string>
+    <string name="label_statistics">Statistics</string>
+    <string name="label_players">Players</string>
+    <string name="label_settings">Settings</string>
+    <string name="label_reset_match_time">Reset time</string>
+    <string name="formation_label">%1$s: %2$s</string>
+    <string name="formation_none">%1$s: no formation</string>
     <string name="select_scorer_title">Who scored?</string>
     <string name="label_add_player">Add player</string>
     <string name="label_team_1">Team 1</string>

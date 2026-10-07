@@ -45,7 +45,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/timer_start_button"
-            style="@style/Widget.App.Button.Street"
+            style="@style/Widget.App.Button.Text"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:insetTop="0dp"
@@ -55,11 +55,11 @@
             android:maxLines="1"
             android:text="00:00"
             android:textAppearance="@style/TextAppearance.App.Game.Clock"
-            android:textColor="@color/sidewalk_gray"
+            android:textColor="@color/elite_text_secondary"
             android:onClick="startStopTimer"
-            app:backgroundTint="@color/concrete_gray"
+            app:backgroundTint="@color/elite_surface"
             app:icon="@drawable/ic_play_arrow"
-            app:iconTint="@color/stencil_white"
+            app:iconTint="@color/elite_text_primary"
             app:iconGravity="textStart"
             app:iconPadding="6dp"
             app:iconSize="@dimen/icon_prominent"
@@ -73,10 +73,11 @@
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:layout_marginStart="8dp"
+            android:stateListAnimator="?attr/pressFeedback"
             app:cardBackgroundColor="@android:color/transparent"
             app:cardElevation="0dp"
-            app:shapeAppearance="@style/ShapeAppearance.App.StreetBadge"
-            app:strokeColor="@color/outline_gray"
+            app:shapeAppearance="@style/ShapeAppearance.App.Badge"
+            app:strokeColor="@color/elite_outline"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -103,7 +104,7 @@
                     android:maxLines="1"
                     android:text="05:00"
                     android:textAppearance="@style/TextAppearance.App.Game.Value"
-                    android:textColor="@color/sidewalk_gray"
+                    android:textColor="@color/elite_text_secondary"
                     android:textSize="24dp"
                     tools:ignore="HardcodedText,SpUsage" />
             </LinearLayout>
@@ -119,7 +120,7 @@
             android:maxLines="1"
             android:paddingHorizontal="4dp"
             android:textAppearance="@style/TextAppearance.App.Game.Command"
-            android:textColor="@color/stencil_white"
+            android:textColor="@color/elite_text_primary"
             tools:text="PADEL · SERVE ROSSI" />
 
         <ImageView
@@ -135,7 +136,7 @@
              con la descrizione a voce: la parola non entra in 328dp con i caratteri ingranditi. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/match_sheet_button"
-            style="@style/Widget.App.Button.TextButton.Street"
+            style="@style/Widget.App.Button.Text"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:contentDescription="@string/cd_open_match_sheet"
@@ -145,7 +146,7 @@
             android:minWidth="48dp"
             android:paddingHorizontal="4dp"
             android:text="@string/label_open_match_sheet"
-            android:textColor="@color/stencil_white"
+            android:textColor="@color/elite_text_primary"
             android:textSize="24sp" />
     </LinearLayout>
 
@@ -172,7 +173,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/team1_subtract_button_card"
-                style="@style/Widget.App.Button.OutlinedButton.Street"
+                style="@style/Widget.App.Button.Secondary"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
                 android:layout_marginEnd="4dp"
@@ -190,7 +191,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="?attr/selectableItemBackground"
+                android:stateListAnimator="?attr/pressFeedback"
                 android:contentDescription="@string/cd_edit_team_1_name"
                 android:gravity="center"
                 android:orientation="vertical">
@@ -263,7 +264,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="?attr/selectableItemBackground"
+                android:stateListAnimator="?attr/pressFeedback"
                 android:contentDescription="@string/cd_edit_team_2_name"
                 android:gravity="center"
                 android:orientation="vertical">
@@ -321,7 +322,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/team2_subtract_button_card"
-                style="@style/Widget.App.Button.OutlinedButton.Street"
+                style="@style/Widget.App.Button.Secondary"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
                 android:layout_marginStart="4dp"
@@ -403,7 +404,7 @@
             android:layout_height="wrap_content"
             android:maxLines="1"
             android:textAppearance="@style/TextAppearance.App.Game.Value"
-            android:textColor="@color/stencil_white"
+            android:textColor="@color/elite_text_primary"
             tools:text="5-3" />
 
         <TextView
@@ -425,8 +426,8 @@
         android:id="@+id/last_action_strip"
         android:layout_width="match_parent"
         android:layout_height="@dimen/game_strip_height"
-        android:background="@color/concrete_gray"
-        android:foreground="?attr/selectableItemBackground"
+        android:background="@drawable/bg_strip"
+        android:stateListAnimator="?attr/pressFeedback"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingStart="16dp"
@@ -440,11 +441,11 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:textAppearance="@style/TextAppearance.App.Game.Command"
-            android:textColor="@color/stencil_white" />
+            android:textColor="@color/elite_text_primary" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/undo_goal_button"
-            style="@style/Widget.App.Button.TextButton.Street"
+            style="@style/Widget.App.Button.Text"
             android:layout_width="wrap_content"
             android:layout_height="@dimen/game_strip_height"
             android:insetTop="0dp"
@@ -455,12 +456,12 @@
             android:paddingHorizontal="8dp"
             android:text="@string/undo"
             android:textAppearance="@style/TextAppearance.App.Game.Command"
-            android:textColor="@color/stencil_white"
+            android:textColor="@color/elite_text_primary"
             app:icon="@drawable/ic_undo"
             app:iconGravity="textStart"
             app:iconPadding="4dp"
             app:iconSize="@dimen/icon_prominent"
-            app:iconTint="@color/stencil_white" />
+            app:iconTint="@color/elite_text_primary" />
     </LinearLayout>
 
     <Space
@@ -487,10 +488,11 @@
             android:clickable="true"
             android:contentDescription="@string/cd_increase_team_1"
             android:focusable="true"
-            app:cardBackgroundColor="@color/team_spray_yellow"
+            android:stateListAnimator="?attr/pressFeedback"
+            app:cardBackgroundColor="@color/team_side_1"
             app:cardElevation="0dp"
-            app:shapeAppearance="@style/ShapeAppearance.App.StreetButton"
-            app:strokeColor="@color/stencil_white"
+            app:shapeAppearance="@style/ShapeAppearance.App.Control"
+            app:strokeColor="@color/elite_text_primary"
             app:strokeWidth="0dp">
 
             <ImageView
@@ -520,10 +522,11 @@
             android:clickable="true"
             android:contentDescription="@string/cd_increase_team_2"
             android:focusable="true"
-            app:cardBackgroundColor="@color/neon_cyan"
+            android:stateListAnimator="?attr/pressFeedback"
+            app:cardBackgroundColor="@color/team_side_2"
             app:cardElevation="0dp"
-            app:shapeAppearance="@style/ShapeAppearance.App.StreetButton"
-            app:strokeColor="@color/stencil_white"
+            app:shapeAppearance="@style/ShapeAppearance.App.Control"
+            app:strokeColor="@color/elite_text_primary"
             app:strokeWidth="0dp">
 
             <ImageView

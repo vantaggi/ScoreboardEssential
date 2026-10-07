@@ -74,7 +74,6 @@ class TokenEliteTest {
     @Test
     fun `successo e ciano vecchio non sono valori a parte, il velo e' nero all'85 per cento`() {
         assertEquals(token(R.color.elite_lime), token(R.color.elite_success))
-        assertEquals(token(R.color.elite_cyan), token(R.color.neon_cyan))
 
         val velo = token(R.color.elite_overlay)
         assertEquals(0, Color.red(velo) + Color.green(velo) + Color.blue(velo))

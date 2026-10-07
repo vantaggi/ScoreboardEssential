@@ -61,27 +61,32 @@
     <color name="elite_chart_5">#A4A9B0</color>
 
     <!--
-        STREET (eredita'): i colori di prima. Il contorno (G-4) non ne cita piu' nessuno. Restano finche'
-        li cita qualcuno: la schermata di gioco e il foglio PARTITA (G-6), la Cronaca (G-5), il PDF (G-8) e
-        il colore predefinito delle squadre. Quando non li cita piu' nessuno si tolgono.
+        STREET (eredita'): i colori di prima. Il contorno (G-4), la schermata di gioco e il foglio PARTITA
+        (G-6) non ne citano piu' nessuno. Restano finche' li cita qualcuno: la Cronaca (G-5: asphalt_dark,
+        concrete_gray, graffiti_dark_gray, stencil_white, sidewalk_gray, outline_gray), il PDF (G-8:
+        asphalt_black, asphalt_dark, stencil_white, sidewalk_gray) e l'icona dell'app (G-9: team_spray_yellow
+        e team_electric_green). Quando non li cita piu' nessuno si tolgono.
     -->
     <color name="asphalt_black">#000000</color>
     <!-- Cifre del punteggio e pallino del servizio: il bianco PURO, mai altrove (DESIGN.md, Colori). -->
     <color name="ink_white">#FFFFFF</color>
+    <!-- background-watch: il nero del gioco sul telefono e del quadrante. -->
+    <color name="ink_black">#000000</color>
     <color name="asphalt_dark">#121212</color>
     <color name="concrete_gray">#1E1E1E</color>
     <color name="graffiti_dark_gray">#2C2C2C</color>
     <color name="stencil_white">#E0E0E0</color>
     <color name="sidewalk_gray">#9E9E9E</color>
-    <color name="graffiti_pink">#F50057</color>
-    <!-- Stesso valore del ciano di Padel Elite: un nome vecchio, una sola fonte. -->
-    <color name="neon_cyan">@color/elite_cyan</color>
-    <!-- Colori predefiniti delle squadre (G-6 li cambia in lime e ciano, decisione G2). -->
+    <!--
+        Colori predefiniti delle squadre (G-6, decisione G2): lato 1 lime e lato 2 ciano, gli stessi della
+        Cronaca e della dashboard di Padel Elite. Restano personalizzabili: contano solo finche' l'utente
+        non sceglie un colore (le preferenze salvano solo la scelta), e TeamInk garantisce il contrasto
+        di cio' che sta sopra. Il giallo e il verde di prima restano solo nell'icona dell'app (G-9).
+    -->
+    <color name="team_side_1">@color/elite_lime</color>
+    <color name="team_side_2">@color/elite_cyan</color>
     <color name="team_spray_yellow">#FFD600</color>
     <color name="team_electric_green">#76FF03</color>
-    <color name="error_red">#FF1744</color>
-    <!-- Testo distruttivo su fondi grigi (SCARTA nel dialogo di fine partita): 5,13 su #2C2C2C, dove il rosso pieno non passa. -->
-    <color name="error_text">#FF6E6E</color>
     <!-- Bordi e linee funzionali (DESIGN.md, Colori): 3,27 su concrete_gray, sopra 3:1 per la grafica. -->
     <color name="outline_gray">#6E6E6E</color>
 </resources>
