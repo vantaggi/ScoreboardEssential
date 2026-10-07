@@ -6,4 +6,15 @@
         sola opacita'. Gli stili dei controlli lo citano con ?attr/pressFeedback.
     -->
     <attr name="pressFeedback" format="reference" />
+
+    <!--
+        Lo stato vuoto (G-4): che cosa e' vuoto, perche', che fare. L'azione e' facoltativa, ma una
+        schermata vuota senza una strada davanti non dice abbastanza.
+    -->
+    <declare-styleable name="EmptyStateView">
+        <attr name="emptyIcon" format="reference" />
+        <attr name="emptyTitle" format="string" />
+        <attr name="emptyReason" format="string" />
+        <attr name="emptyAction" format="string" />
+    </declare-styleable>
 </resources>

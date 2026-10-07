@@ -1414,8 +1414,8 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Menu | `menu` | - | - |
 | Casa | `home` | - | - |
 | Vai al dettaglio | `chevron_right` | - | - |
-| Espandi | `expand_more` | - | - |
-| Comprimi | `expand_less` | - | - |
+| Espandi | `expand_more` | `ic_expand_more` | - |
+| Comprimi | `expand_less` | `ic_expand_less` | - |
 | Altre azioni | `more_horiz` | - | `ic_more_horiz` |
 | Apre fuori dall'app | `open_in_new` | - | - |
 | Aggiungi | `add` | `ic_add` | - |
@@ -1440,7 +1440,7 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Avviso | `warning` | `ic_warning` | - |
 | Errore | `cancel` | `ic_cancel` | - |
 | Informazione | `info` | - | - |
-| In corso | `progress_activity` | - | - |
+| In corso | `progress_activity` | `ic_progress_activity` | - |
 | Statistiche | `bar_chart` | `ic_bar_chart` | - |
 | Data | `calendar_today` | - | - |
 | Persona | `person` | - | - |

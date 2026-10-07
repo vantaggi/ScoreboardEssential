@@ -24,10 +24,9 @@
         3,9 sul fondo). E' il ruolo colorOutline del tema.
     -->
     <color name="elite_outline">#6E6E7E</color>
-    <!-- Testi: primario, secondario, terziario (solo su fondo e superficie, 4,6:1 sulla superficie). -->
+    <!-- Testi: primario e secondario. La Constitution non ha un terzo livello leggibile (tolto in G-4). -->
     <color name="elite_text_primary">#D1D1D8</color>
     <color name="elite_text_secondary">#8A8A9A</color>
-    <color name="elite_text_tertiary">#7F7F93</color>
     <!-- Marchio: l'unico accento del contorno. Il testo sopra il lime e' il fondo, mai il bianco (1,3:1). -->
     <color name="elite_lime">#C8F135</color>
     <color name="elite_on_lime">#0D0D0F</color>

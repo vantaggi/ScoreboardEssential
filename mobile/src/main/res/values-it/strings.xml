@@ -3,7 +3,7 @@
     <string name="channel_name">Scoreboard Channel</string>
     <string name="channel_description">Notifiche da Scoreboard Essential</string>
     <string name="appbar_scrolling_view_behavior" translatable="false">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
-    <string name="delete_match">Elimina Partita</string>
+    <string name="delete_match">Elimina partita</string>
     <string name="match_timer">Timer Partita</string>
     <string name="pause">Pausa</string>
     <string name="stop">Stop</string>
@@ -16,16 +16,16 @@
     <string name="onboarding_finish">Inizia</string>
 
     <!-- Onboarding Step 1: Score Management -->
-    <string name="onboarding_score_title">GESTIONE PUNTEGGIO FACILE</string>
-    <string name="onboarding_score_description">Tocca la zona grande di una squadra per segnare. ANNULLA toglie l\'ultima azione. Rose, registro, colori e sport stanno sotto il pulsante ≡ in alto a destra.</string>
+    <string name="onboarding_score_title">Segna con un tocco</string>
+    <string name="onboarding_score_description">Tocca la zona grande di una squadra per segnare. Annulla toglie l\'ultima azione.</string>
 
     <!-- Onboarding Step 2: Timers and Players -->
-    <string name="onboarding_timers_title">TIMER PARTITA E PORTIERE</string>
-    <string name="onboarding_timers_description">Tocca il tempo in alto per avviarlo o fermarlo. Nel calcio lo slot PORTIERE accanto conta il portiere. Aggiungi giocatori alle squadre dal pulsante ≡ in alto a destra.</string>
+    <string name="onboarding_timers_title">Tempo e portiere</string>
+    <string name="onboarding_timers_description">Tocca il tempo in alto per avviarlo o fermarlo. Nel calcio, il riquadro Portiere accanto conta il cambio.</string>
 
     <!-- Onboarding Step 3: Wear OS Sync -->
-    <string name="onboarding_wear_title">SINCRONIZZAZIONE WEAR OS</string>
-    <string name="onboarding_wear_description">Resta connesso. Il punteggio e i timer sono sempre sincronizzati con il tuo smartwatch Wear OS.</string>
+    <string name="onboarding_wear_title">Orologio Wear OS</string>
+    <string name="onboarding_wear_description">Punteggio e tempo restano allineati con il tuo orologio, finche\' e\' collegato.</string>
 
     <!-- Accessibility -->
     <string name="cd_increase_team_1">Aumenta punteggio Squadra 1</string>
@@ -56,11 +56,11 @@
     <string name="select">Seleziona</string>
     <string name="cancel">Annulla</string>
     <string name="language">Lingua</string>
-    <string name="team_1_name">Nome Squadra 1</string>
-    <string name="team_2_name">Nome Squadra 2</string>
-    <string name="keeper_timer_seconds">Timer Portiere (secondi)</string>
-    <string name="btn_team_1_color">Colore Squadra 1</string>
-    <string name="btn_team_2_color">Colore Squadra 2</string>
+    <string name="team_1_name">Nome squadra 1</string>
+    <string name="team_2_name">Nome squadra 2</string>
+    <string name="keeper_timer_seconds">Timer portiere (secondi)</string>
+    <string name="btn_team_1_color">Colore squadra 1</string>
+    <string name="btn_team_2_color">Colore squadra 2</string>
 
     <!-- MainActivity Strings -->
     <string name="notification_permission_required">È necessaria l\'autorizzazione per le notifiche del timer</string>
@@ -154,7 +154,7 @@
     <string name="label_team_1">Squadra 1</string>
     <string name="label_team_2">Squadra 2</string>
     <string name="team_name_dialog_title">Rinomina squadra %1$d</string>
-    <string name="save">SALVA</string>
+    <string name="save">Salva</string>
     <string name="cd_match_over">Partita finita</string>
     <string name="btn_discard_match">Scarta</string>
     <string name="match_discarded">Partita scartata</string>
@@ -197,7 +197,6 @@
 
     <!-- Multi-sport -->
     <string name="settings_sport_title">Sport</string>
-    <string name="settings_sport_hint">Si cambia solo a partita ferma</string>
     <string name="sport_football">Calcio</string>
     <string name="sport_padel">Padel</string>
     <string name="sport_tennis">Tennis</string>
@@ -293,29 +292,28 @@
     <string name="chronicle_moment_deciding_even">Punti decisivi: %1$d a testa su %2$d</string>
 
     <!-- Schermate secondarie: titoli, dialoghi e testi prima cablati nel codice -->
-    <string name="title_match_history">Storico Partite</string>
+    <string name="title_match_history">Storico partite</string>
     <string name="title_player">Giocatore</string>
     <string name="title_edit_player">Modifica giocatore</string>
-    <string name="title_match_settings">Impostazioni Partita</string>
-    <string name="title_manage_players">Gestisci Giocatori</string>
+    <string name="title_match_settings">Impostazioni partita</string>
+    <string name="title_manage_players">Gestisci giocatori</string>
     <string name="title_statistics">Statistiche</string>
     <string name="player_name_hint">Nome Giocatore</string>
-    <string name="player_name_empty">Il nome del giocatore non può essere vuoto</string>
-    <string name="player_name_too_long">Nome del giocatore troppo lungo (lunghezza massima %1$d)</string>
+    <string name="player_name_empty">Scrivi il nome del giocatore.</string>
+    <string name="player_name_too_long">Il nome e\' troppo lungo: al massimo %1$d caratteri.</string>
     <string name="player_created">%1$s creato</string>
-    <string name="create_player_title">Nuovo Giocatore</string>
+    <string name="create_player_title">Nuovo giocatore</string>
     <string name="label_roles">Ruoli</string>
-    <string name="choose_roles">SCEGLI I RUOLI</string>
-    <string name="select_roles_title">Scegli i Ruoli</string>
+    <string name="choose_roles">Scegli i ruoli</string>
+    <string name="select_roles_title">Scegli i ruoli</string>
     <string name="no_roles_selected">Nessun ruolo scelto</string>
     <string name="roles_not_specified">Non indicati</string>
     <string name="delete">Elimina</string>
     <string name="delete_match_message">Vuoi davvero eliminare questa partita dallo storico?</string>
-    <string name="total_matches">PARTITE TOTALI: %1$d</string>
-    <string name="no_matches_found">Nessuna partita trovata</string>
+    <string name="no_matches_found">Nessuna partita salvata</string>
     <string name="filter_all">Tutti</string>
-    <string name="no_players_yet">Ancora nessun giocatore</string>
-    <string name="no_players_hint">Tocca il pulsante + per aggiungere il primo giocatore</string>
+    <string name="no_players_yet">Nessun giocatore</string>
+    <string name="no_players_hint">Aggiungi chi gioca con te: i giocatori entrano nelle rose e ne contano gol e presenze.</string>
     <string name="player_stats_title">%1$s - Statistiche</string>
     <string name="player_stats_message">Presenze: %1$d\nGol segnati: %2$d\nGol a partita: %3$s\n\nRuoli: %4$s</string>
     <string name="reset_stats">Azzera Statistiche</string>
@@ -329,14 +327,14 @@
     <string name="menu_search">Cerca</string>
     <string name="search_players_hint">Cerca giocatori…</string>
     <string name="menu_sort">Ordina</string>
-    <string name="sort_by_name">Ordina per nome</string>
-    <string name="sort_by_goals">Ordina per gol</string>
-    <string name="sort_by_appearances">Ordina per presenze</string>
+    <string name="sort_by_name">Per nome</string>
+    <string name="sort_by_goals">Per gol</string>
+    <string name="sort_by_appearances">Per presenze</string>
     <string name="stats_tab_general">Generale</string>
     <string name="stats_tab_attack">Attacco</string>
     <string name="stats_tab_defense">Difesa</string>
-    <string name="stats_empty_title">Nessuna partita giocata</string>
-    <string name="stats_empty_hint">Gioca un match per vedere chi è il King!</string>
+    <string name="stats_empty_title">Nessuna statistica</string>
+    <string name="stats_empty_hint">Gol e presenze si contano dalle partite salvate con i marcatori. Salva una partita per vederli qui.</string>
     <plurals name="stats_goals">
         <item quantity="one">%d gol</item>
         <item quantity="many">%d gol</item>
@@ -347,7 +345,23 @@
         <item quantity="many">%d presenze</item>
         <item quantity="other">%d presenze</item>
     </plurals>
-    <string name="team_name_label">NOME SQUADRA</string>
-    <string name="team_name_preview">ANTEPRIMA</string>
-    <string name="team_name_quick_picks">SCELTE RAPIDE</string>
+    <string name="settings_teams_title">Squadre</string>
+    <string name="settings_match_title">Partita</string>
+    <string name="history_empty_reason">Una partita compare qui quando la salvi a fine partita. Gioca e termina una partita per vederla.</string>
+    <string name="no_players_found">Nessun giocatore trovato</string>
+    <string name="no_players_found_hint">Cambia la ricerca o il filtro del ruolo.</string>
+    <string name="save_player">Salva giocatore</string>
+    <string name="saving_player">Salvataggio</string>
+    <string name="team_name_hint">Nome squadra</string>
+    <string name="team_name_suggestion_1">Lions</string>
+    <string name="team_name_suggestion_2">Eagles</string>
+    <string name="team_name_suggestion_3">Warriors</string>
+    <string name="team_name_suggestion_4">Thunder</string>
+    <string name="history_detail_open">Dettaglio aperto</string>
+    <string name="history_detail_closed">Dettaglio chiuso</string>
+    <string name="history_detail_show">Mostra il dettaglio</string>
+    <string name="history_detail_hide">Nascondi il dettaglio</string>
+    <string name="empty_action_back_to_match">Torna alla partita</string>
+    <string name="stats_row_description">%1$d. %2$s, %3$s, %4$s</string>
+    <string name="players_empty_action">Aggiungi giocatore</string>
 </resources>

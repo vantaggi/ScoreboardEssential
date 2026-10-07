@@ -57,7 +57,6 @@ class TokenEliteTest {
                 R.color.elite_border_strong to 0xFF2A2A2E,
                 R.color.elite_text_primary to 0xFFD1D1D8,
                 R.color.elite_text_secondary to 0xFF8A8A9A,
-                R.color.elite_text_tertiary to 0xFF7F7F93,
                 R.color.elite_lime to 0xFFC8F135,
                 R.color.elite_on_lime to 0xFF0D0D0F,
                 R.color.elite_cyan to 0xFF00E5FF,
@@ -98,8 +97,6 @@ class TokenEliteTest {
             assertAlmeno(4.5, R.color.elite_text_secondary, fondo, "testo secondario su $nome")
         }
         assertAlmeno(4.5, R.color.elite_text_primary, R.color.elite_surface_hover, "testo primario su hover")
-        assertAlmeno(4.5, R.color.elite_text_tertiary, R.color.elite_background, "testo terziario su fondo")
-        assertAlmeno(4.5, R.color.elite_text_tertiary, R.color.elite_surface, "testo terziario su superficie")
     }
 
     // Il marchio: il lime si legge su ogni fondo e il testo sopra il lime e' il fondo scuro.
@@ -145,8 +142,7 @@ class TokenEliteTest {
         assertTrue(TeamInk.contrast(TeamInk.BIANCO, token(R.color.elite_lime)) < 3.0)
         // Il testo secondario sul lime non passa: sul pulsante primario non si usa.
         assertTrue(contrasto(R.color.elite_text_secondary, R.color.elite_lime) < 4.5)
-        // Terziario ed errore scendono sotto 4,5 sulla superficie rialzata e sull'hover.
-        assertTrue(contrasto(R.color.elite_text_tertiary, R.color.elite_surface_raised) < 4.5)
+        // L'errore scende sotto 4,5 sulla superficie rialzata e il secondario sull'hover.
         assertTrue(contrasto(R.color.elite_error, R.color.elite_surface_raised) < 4.5)
         assertTrue(contrasto(R.color.elite_text_secondary, R.color.elite_surface_hover) < 4.5)
     }

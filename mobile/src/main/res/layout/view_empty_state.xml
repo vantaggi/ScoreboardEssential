@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Stato vuoto (UI Constitution, EmptyState): titolo che dice cosa e' vuoto, motivo e cosa fare, piu'
+    il comando. L'icona (icon-prominent) c'e' solo se aiuta; non e' un'illustrazione.
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ImageView
+        android:id="@+id/empty_icon"
+        android:layout_width="@dimen/icon_prominent"
+        android:layout_height="@dimen/icon_prominent"
+        android:importantForAccessibility="no"
+        app:tint="@color/elite_text_secondary" />
+
+    <TextView
+        android:id="@+id/empty_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_16"
+        android:accessibilityHeading="true"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.App.SectionHeading" />
+
+    <TextView
+        android:id="@+id/empty_reason"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_8"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.App.Caption"
+        android:textSize="16sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/empty_action"
+        style="@style/Widget.App.Button.Primary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_24" />
+</merge>
