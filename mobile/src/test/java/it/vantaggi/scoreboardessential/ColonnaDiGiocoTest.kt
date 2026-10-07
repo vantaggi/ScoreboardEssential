@@ -16,6 +16,7 @@ import com.google.android.material.card.MaterialCardView
 import it.vantaggi.scoreboardessential.core.TeamInk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -131,7 +132,7 @@ class ColonnaDiGiocoTest {
     /**
      * La barra del calcio a 360dp, il telefono stretto piu' diffuso: 328dp utili. Il tempo e il
      * portiere sono fissi, la molla e' il testo del periodo, ed e' l'unico che puo' restringersi:
-     * il pulsante ≡ e' l'unico modo di aprire il foglio e non deve mai uscire dal bordo. Il tempo
+     * il pulsante del foglio (icona menu) e' l'unico modo di aprirlo e non deve mai uscire dal bordo. Il tempo
      * e' quello piu' largo, 100:00, perche' oltre i 99 minuti il pulsante prende una cifra in piu'.
      */
     @Test
@@ -151,9 +152,9 @@ class ColonnaDiGiocoTest {
             assertIntero("il tempo a 360dp e scala $scala", radice.findViewById(R.id.timer_start_button))
             assertIntero("il valore del portiere a 360dp e scala $scala", radice.findViewById(R.id.keeper_timer_textview))
             assertTrue("il pulsante del foglio a scala $scala e' largo ${foglio.width}px, sotto i 48dp", foglio.width >= 48 * densita)
-            // Ridotto al glifo, a voce dice comunque cosa apre: e' il suo unico nome.
+            // Ridotto all'icona, a voce dice comunque cosa apre: e' il suo unico nome.
             assertEquals(
-                "il pulsante del foglio ridotto al glifo non ha la descrizione",
+                "il pulsante del foglio ridotto all'icona non ha la descrizione",
                 radice.context.getString(R.string.cd_open_match_sheet),
                 foglio.contentDescription?.toString(),
             )
@@ -183,19 +184,21 @@ class ColonnaDiGiocoTest {
     }
 
     /**
-     * Il tutorial indicava il pulsante con la sua parola ("≡ PARTITA"): ridotto al glifo, la parola
-     * non c'e' piu' e il testo non deve mandare a cercarla.
+     * Il tutorial indicava il pulsante con la sua parola ("≡ PARTITA"): ridotto all'icona menu (G-9,
+     * prima era il glifo di testo «≡», fuori dalla famiglia Material Symbols) la parola non c'e' piu'
+     * e il testo non deve mandare a cercarla.
      */
     @Test
     fun ilTutorial_non_nomina_la_parola_che_il_pulsante_non_ha_piu() {
         val radice = gonfia(1f)
         val contesto = radice.context
-        val glifo = radice.findViewById<TextView>(R.id.match_sheet_button).text.toString()
+        val bottone = radice.findViewById<com.google.android.material.button.MaterialButton>(R.id.match_sheet_button)
+        assertEquals("il pulsante del foglio e' solo l'icona, senza testo", "", bottone.text.toString())
+        assertNotNull("il pulsante del foglio non ha l'icona menu", bottone.icon)
         val parola = contesto.getString(R.string.label_match_sheet)
-        assertFalse("il pulsante non e' piu' solo il glifo: '$glifo'", glifo.contains(parola))
         for (id in listOf(R.string.onboarding_score_description, R.string.onboarding_timers_description)) {
             val testo = contesto.getString(id)
-            assertFalse("il tutorial nomina ancora '$glifo $parola': $testo", testo.contains("$glifo $parola"))
+            assertFalse("il tutorial nomina ancora '≡ $parola': $testo", testo.contains("≡ $parola"))
         }
     }
 

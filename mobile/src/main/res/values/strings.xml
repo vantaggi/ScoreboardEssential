@@ -143,7 +143,6 @@
     <string name="label_formations">Formations</string>
     <!-- Foglio PARTITA: cio che si consulta, a un tocco dalla schermata di gioco. -->
     <string name="label_match_sheet">Match</string>
-    <string name="label_open_match_sheet">≡</string>
     <string name="cd_open_match_sheet">Open the match sheet</string>
     <string name="label_close_sheet">Close</string>
     <string name="label_statistics">Statistics</string>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Material Symbols Outlined: menu. Peso 400, grade 0, optical size 24, riempimento 0, stessa geometria del catalogo google/material-design-icons (tre barre da 80 su 720 di larghezza), riscritta a mano in questo passo perche' senza rete non si poteva scaricare: da sostituire col file ufficiale alla prima occasione. Il colore lo da' il tint: nel vettore non c'e' nessun colore scritto a mano. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960"
+    android:tint="?attr/colorControlNormal">
+  <path
+      android:fillColor="@android:color/white"
+      android:pathData="M120,720L120,640L840,640L840,720L120,720ZM120,520L120,440L840,440L840,520L120,520ZM120,320L120,240L840,240L840,320L120,320Z"/>
+</vector>

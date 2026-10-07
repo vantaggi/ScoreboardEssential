@@ -132,8 +132,9 @@
             android:src="@drawable/ic_watch_off"
             tools:src="@drawable/ic_watch" />
 
-        <!-- Apre il foglio PARTITA: rose, registro, formazioni e azioni stanno li'. Solo il glifo,
-             con la descrizione a voce: la parola non entra in 328dp con i caratteri ingranditi. -->
+        <!-- Apre il foglio PARTITA: rose, registro, formazioni e azioni stanno li'. Solo l'icona menu (G-9:
+             prima era il glifo di testo), con la descrizione a voce: la parola non entra in 328dp con i
+             caratteri ingranditi. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/match_sheet_button"
             style="@style/Widget.App.Button.Text"
@@ -142,12 +143,13 @@
             android:contentDescription="@string/cd_open_match_sheet"
             android:insetTop="0dp"
             android:insetBottom="0dp"
-            android:maxLines="1"
             android:minWidth="48dp"
             android:paddingHorizontal="4dp"
-            android:text="@string/label_open_match_sheet"
-            android:textColor="@color/elite_text_primary"
-            android:textSize="24sp" />
+            app:icon="@drawable/ic_menu"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="@dimen/icon_prominent"
+            app:iconTint="@color/elite_text_primary" />
     </LinearLayout>
 
     <!--
