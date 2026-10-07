@@ -36,14 +36,16 @@ import androidx.constraintlayout.widget.ConstraintLayout
 internal class NumberRoll(
     private val cifra: TextView,
 ) {
-    private var corsa: AnimatorSet? = null
+    internal var corsa: AnimatorSet? = null
+        private set
     private var fantasma: TextView? = null
 
     /** `true` mentre il rotolo e' in corso: serve ai test. */
     val inCorso: Boolean get() = corsa != null
 
-    /** Il fantasma della cifra vecchia, finche' il rotolo dura: serve ai test. */
-    internal val cifraUscente: TextView? get() = fantasma
+    /** Quante volte il rotolo e' partito davvero (non i cambi immediati): serve ai test. */
+    internal var avviati = 0
+        private set
 
     /**
      * Mostra [testo] al posto della cifra di adesso. [direzione] e' [SU] se il valore sale, [GIU] se
@@ -97,6 +99,7 @@ internal class NumberRoll(
                 )
             }
         corsa = insieme
+        avviati++
         insieme.start()
     }
 
@@ -123,7 +126,24 @@ internal class NumberRoll(
     private fun parametriDellaCifra(): ViewGroup.LayoutParams {
         val originali = cifra.layoutParams
         return if (originali is ConstraintLayout.LayoutParams) {
-            ConstraintLayout.LayoutParams(originali)
+            // Non il costruttore di copia: condivide con l'originale il ConstraintWidget interno, e le
+            // due viste si disegnerebbero lo stesso rettangolo (la cifra resterebbe a larghezza 0).
+            ConstraintLayout.LayoutParams(originali.width, originali.height).apply {
+                startToStart = originali.startToStart
+                startToEnd = originali.startToEnd
+                endToStart = originali.endToStart
+                endToEnd = originali.endToEnd
+                topToTop = originali.topToTop
+                topToBottom = originali.topToBottom
+                bottomToTop = originali.bottomToTop
+                bottomToBottom = originali.bottomToBottom
+                horizontalBias = originali.horizontalBias
+                verticalBias = originali.verticalBias
+                marginStart = originali.marginStart
+                marginEnd = originali.marginEnd
+                topMargin = originali.topMargin
+                bottomMargin = originali.bottomMargin
+            }
         } else {
             ViewGroup.MarginLayoutParams(cifra.width, cifra.height)
         }

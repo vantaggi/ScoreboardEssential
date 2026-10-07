@@ -79,6 +79,9 @@ class MainActivity : ComponentActivity() {
     private lateinit var rotolo1: NumberRoll
     private lateinit var rotolo2: NumberRoll
 
+    /** Quanti rotoli sono partiti sulle due cifre dall'apertura: serve ai test. */
+    internal val rotoliAvviati: Int get() = rotolo1.avviati + rotolo2.avviati
+
     /**
      * La scelta dello sport torna qui, e da qui parte la richiesta al telefono: il numero di
      * sequenza e' uno solo per nodo e vive nel ViewModel di questa schermata.
