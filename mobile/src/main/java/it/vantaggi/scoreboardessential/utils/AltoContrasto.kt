@@ -34,9 +34,10 @@ object AltoContrasto {
 
     /** Il contrasto di sistema, 0 senza supporto. I test lo sostituiscono per simulare `getContrast()`. */
     @Volatile
-    var contrastoDiSistema: (Context) -> Float = ::leggiContrastoDiSistema
+    var contrastoDiSistema: (Context) -> Float = ::contrastoLettoDalSistema
 
-    private fun leggiContrastoDiSistema(context: Context): Float {
+    /** Il valore vero di `UiModeManager.getContrast()` (da Android 14), 0 sotto o senza servizio. */
+    fun contrastoLettoDalSistema(context: Context): Float {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return 0f
         val gestore = context.getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager
         return gestore?.contrast ?: 0f
