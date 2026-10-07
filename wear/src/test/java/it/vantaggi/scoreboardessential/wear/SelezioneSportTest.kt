@@ -89,7 +89,7 @@ class SelezioneSportTest {
         // La spunta e' un'icona (Material Symbols check, 16dp) e non un carattere nel testo.
         val spunta = inUso.compoundDrawablesRelative[0]
         assertTrue("manca la spunta come icona", spunta != null)
-        assertEquals(dp(attivita, 16f), spunta.bounds.width())
+        assertEquals(dp(attivita, 16f).toInt(), spunta.bounds.width())
         assertTrue("il testo non deve portare il carattere della spunta", !inUso.text.contains("✓"))
         assertEquals(ContextCompat.getColor(attivita, R.color.neon_cyan), inUso.currentTextColor)
 
