@@ -29,12 +29,12 @@ import kotlinx.coroutines.launch
  */
 class MatchHistoryViewModel(
     private val repository: MatchRepository,
-    /** Il calcolo della riga dei set; iniettabile solo perche' il test conta le chiamate. */
-    private val calcolaRiga: (Match) -> String? = RigaDeiSet::of,
     /** Padel Elite configurato: senza, nessun comando e nessuno stato di invio sulle card. */
     private val padelEliteEnabled: Boolean = false,
     /** Lo stato di invio di ogni partita per `matchUuid`; vuoto con la funzione spenta. */
     private val invii: Flow<Map<String, InvioInfo>> = flowOf(emptyMap()),
+    /** Il calcolo della riga dei set; iniettabile solo perche' il test conta le chiamate. Ultimo: il test lo passa come lambda finale. */
+    private val calcolaRiga: (Match) -> String? = RigaDeiSet::of,
 ) : ViewModel() {
     /**
      * Cio' che determina la riga dei set di una partita. Room rilegge tutta la query a ogni punto
