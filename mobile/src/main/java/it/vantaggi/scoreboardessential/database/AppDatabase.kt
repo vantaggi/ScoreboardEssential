@@ -13,9 +13,9 @@ import kotlinx.coroutines.launch
 @Database(
     entities = [
         Match::class, Player::class, MatchPlayerCrossRef::class,
-        Team::class, Role::class, PlayerRoleCrossRef::class,
+        Team::class, Role::class, PlayerRoleCrossRef::class, PadelEliteLink::class,
     ],
-    version = 14,
+    version = 15,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -23,11 +23,13 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun playerDao(): PlayerDao
 
+    abstract fun padelEliteLinkDao(): PadelEliteLinkDao
+
     abstract fun teamDao(): TeamDao
 
     companion object {
         /** Versione dello schema. Tenuta qui cosi' che i test non la ripetano a mano. */
-        const val SCHEMA_VERSION = 14
+        const val SCHEMA_VERSION = 15
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -196,6 +198,32 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
 
+        internal val MIGRATION_14_15 =
+            object : Migration(14, 15) {
+                override fun migrate(database: SupportSQLiteDatabase) {
+                    // Solo additiva: una tabella nuova e il suo indice unico. Nessuna tabella
+                    // esistente toccata o ricostruita (`players` resta com'e', con la sua colonna
+                    // dismessa), nessuna riga riscritta. Vuota: nessun giocatore e' collegato
+                    // finche' l'utente non lo collega. Il testo deve combaciare con quello che Room
+                    // genera dall'entita' (schema 15.json), altrimenti la validazione fallisce
+                    // all'avvio a ogni avvio.
+                    database.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `padel_elite_links` (" +
+                            "`localPlayerId` INTEGER NOT NULL, " +
+                            "`groupId` TEXT NOT NULL, " +
+                            "`remotePlayerId` INTEGER NOT NULL, " +
+                            "`remoteName` TEXT NOT NULL, " +
+                            "PRIMARY KEY(`localPlayerId`, `groupId`), " +
+                            "FOREIGN KEY(`localPlayerId`) REFERENCES `players`(`playerId`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE )",
+                    )
+                    database.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS `index_padel_elite_links_groupId_remotePlayerId` " +
+                            "ON `padel_elite_links` (`groupId`, `remotePlayerId`)",
+                    )
+                }
+            }
+
         fun getDatabase(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 val instance =
@@ -227,6 +255,7 @@ abstract class AppDatabase : RoomDatabase() {
                             MIGRATION_11_12,
                             MIGRATION_12_13,
                             MIGRATION_13_14,
+                            MIGRATION_14_15,
                         )
                         // Non esiste alcun percorso di migrazione dalle versioni 1-5: un
                         // dispositivo fermo li' crasherebbe a ogni avvio, per sempre. La

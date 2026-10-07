@@ -134,9 +134,63 @@ class DatabaseMigrationTest {
         db.close()
     }
 
+    /**
+     * R-1: la 14 -> 15 aggiunge la tabella dei collegamenti coi giocatori di Padel Elite e basta.
+     * Si prova che i giocatori e le partite di prima restano com'erano (compresa la colonna
+     * dismessa `padelPlayerId`, che la migrazione non tocca), che la tabella nasce vuota, che le
+     * due unicita' tengono e che cancellare un giocatore locale toglie i suoi collegamenti.
+     */
     @Test
     @Throws(IOException::class)
-    fun laCatena11a14_arriva_in_fondo_in_un_colpo_solo() {
+    fun migrazione14a15_crea_la_tabella_dei_collegamenti_senza_toccare_il_resto() {
+        helper.createDatabase(TEST_DB, 14).apply {
+            execSQL("INSERT INTO players (playerId, playerName, appearances, goals, padelPlayerId) VALUES (7, 'Anna', 5, 2, 42)")
+            execSQL("INSERT INTO players (playerId, playerName, appearances, goals) VALUES (8, 'Luca', 1, 0)")
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 15, true, AppDatabase.MIGRATION_14_15)
+
+        db.query("SELECT playerName, appearances, goals, padelPlayerId FROM players WHERE playerId = 7").use { c ->
+            assertTrue("il giocatore della v14 deve sopravvivere", c.moveToFirst())
+            assertEquals("Anna", c.getString(0))
+            assertEquals(5, c.getInt(1))
+            assertEquals(2, c.getInt(2))
+            assertEquals("la colonna dismessa non si tocca", 42, c.getInt(3))
+        }
+        db.query("SELECT COUNT(*) FROM padel_elite_links").use { c ->
+            assertTrue(c.moveToFirst())
+            assertEquals("nessun collegamento finche' l'utente non ne fa uno", 0, c.getInt(0))
+        }
+
+        db.execSQL("INSERT INTO padel_elite_links (localPlayerId, groupId, remotePlayerId, remoteName) VALUES (7, 'g-1', 100, 'Anna R.')")
+        // Lo stesso giocatore locale non si collega due volte nello stesso gruppo...
+        val dueVolteLocale =
+            runCatching {
+                db.execSQL("INSERT INTO padel_elite_links (localPlayerId, groupId, remotePlayerId, remoteName) VALUES (7, 'g-1', 101, 'X')")
+            }
+        assertTrue("(giocatore locale, gruppo) e' unico", dueVolteLocale.isFailure)
+        // ...e lo stesso giocatore della dashboard non e' di due giocatori locali.
+        val dueVolteRemoto =
+            runCatching {
+                db.execSQL("INSERT INTO padel_elite_links (localPlayerId, groupId, remotePlayerId, remoteName) VALUES (8, 'g-1', 100, 'X')")
+            }
+        assertTrue("(gruppo, giocatore della dashboard) e' unico", dueVolteRemoto.isFailure)
+        // In un altro gruppo, invece, gli stessi numeri sono un'altra cosa.
+        db.execSQL("INSERT INTO padel_elite_links (localPlayerId, groupId, remotePlayerId, remoteName) VALUES (7, 'g-2', 100, 'Anna')")
+
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL("DELETE FROM players WHERE playerId = 7")
+        db.query("SELECT COUNT(*) FROM padel_elite_links").use { c ->
+            assertTrue(c.moveToFirst())
+            assertEquals("cancellare il giocatore toglie i suoi collegamenti", 0, c.getInt(0))
+        }
+        db.close()
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun laCatena11a15_arriva_in_fondo_in_un_colpo_solo() {
         // E' il percorso che fa davvero un telefono rimasto indietro di tre versioni: Room
         // incatena le migrazioni da solo, e l'ordine in cui le applica non e' garantito da
         // nessun test che le provi una per una.
@@ -153,6 +207,7 @@ class DatabaseMigrationTest {
                 AppDatabase.MIGRATION_11_12,
                 AppDatabase.MIGRATION_12_13,
                 AppDatabase.MIGRATION_13_14,
+                AppDatabase.MIGRATION_14_15,
             )
 
         db.query("SELECT sportId, serveOrder, matchUuid FROM matches WHERE matchId = 1").use { c ->
