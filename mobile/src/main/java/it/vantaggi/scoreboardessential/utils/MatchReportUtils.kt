@@ -141,7 +141,8 @@ object MatchReportUtils {
         nomi: List<String>,
     ) {
         if (nomi.isEmpty()) {
-            colonna.addView(riga(context, context.getString(R.string.report_pdf_no_players), context.getColor(R.color.print_text_secondary)))
+            val vuoto = context.getString(R.string.report_pdf_no_players)
+            colonna.addView(riga(context, vuoto, context.getColor(R.color.print_text_secondary)))
             return
         }
         nomi.forEach { colonna.addView(riga(context, it, context.getColor(R.color.print_text_primary))) }

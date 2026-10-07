@@ -165,8 +165,7 @@ class GiocatoriEStatisticheDelContornoTest {
         )
 
     /** Il colore della barretta di una vista (il primo strato del suo sfondo, come lo mette etichettaConBarretta). */
-    private fun barretta(vista: View): Int =
-        ((vista.background as LayerDrawable).getDrawable(0) as GradientDrawable).color!!.defaultColor
+    private fun barretta(vista: View): Int = ((vista.background as LayerDrawable).getDrawable(0) as GradientDrawable).color!!.defaultColor
 
     // Il blu #0D47A1 come testo su #121212 faceva 2,17:1. Ora il colore e' la barretta e il testo e' l'inchiostro della carta.
     @Test

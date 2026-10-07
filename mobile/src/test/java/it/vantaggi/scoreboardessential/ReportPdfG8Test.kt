@@ -138,7 +138,8 @@ class ReportPdfG8Test {
         assertTrue(difetti("""titolo.text = titolo.text.toString().uppercase()""").isNotEmpty())
         assertTrue(difetti("""setTextAppearance(R.style.TextAppearance_App_BodyLarge_Street)""").isNotEmpty())
         assertTrue(difetti("""<View android:elevation="4dp" />""").isNotEmpty())
-        assertEquals(emptyList<String>(), difetti("""<!-- il vecchio #121212 e @color/stencil_white --> <View android:elevation="0dp" />"""))
+        val commento = """<!-- il vecchio #121212 e @color/stencil_white --> <View android:elevation="0dp" />"""
+        assertEquals(emptyList<String>(), difetti(commento))
     }
 
     @Test
@@ -232,8 +233,7 @@ class ReportPdfG8Test {
 
     // --- Colori dei lati: quelli della partita, come nella Cronaca, solo barretta ---
 
-    private fun barretta(vista: View): Int =
-        ((vista.background as LayerDrawable).getDrawable(0) as GradientDrawable).color!!.defaultColor
+    private fun barretta(vista: View): Int = ((vista.background as LayerDrawable).getDrawable(0) as GradientDrawable).color!!.defaultColor
 
     @Test
     fun `i colori dei lati sono quelli della partita, scuriti a 3 a 1 sul gruppo solo se serve`() {
