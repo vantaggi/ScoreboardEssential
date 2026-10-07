@@ -7,6 +7,7 @@ import android.os.Build
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
@@ -16,6 +17,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.Espresso.pressBackUnconditionally
@@ -846,9 +848,10 @@ class MainActivityLayoutTest {
             }
             // Il dialogo dice il punteggio vero, non 0-0 e non il rifiuto "non iniziata".
             onView(withText(atteso)).inRoot(isDialog()).check(matches(isDisplayed()))
+            // G-6: SCARTA e' testo primario (il rosso sul fondo rialzato del dialogo fa 4,35:1); solo SALVA e' lime.
             assertEquals(
-                "SCARTA deve essere #FF6E6E",
-                0xFFFF6E6E.toInt(),
+                "SCARTA deve essere il testo primario",
+                ContextCompat.getColor(ApplicationProvider.getApplicationContext(), R.color.elite_text_primary),
                 coloreDelBottoneDelDialogo(R.string.btn_discard_match),
             )
             onView(withText(R.string.continue_action)).inRoot(isDialog()).perform(click())
@@ -1500,12 +1503,13 @@ class MainActivityLayoutTest {
         }
     }
 
-    /** L'icona e' #E0E0E0 se l'orologio e' collegato, #9E9E9E (col glifo barrato) se no. */
+    /** L'icona ha il testo primario se l'orologio e' collegato, il secondario (col glifo barrato) se no. */
     @Test
     fun l_icona_dell_orologio_e_chiara_se_collegato_e_grigia_se_no() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            val stencil = 0xFFE0E0E0.toInt()
-            val grigio = 0xFF9E9E9E.toInt()
+            val contesto = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val stencil = ContextCompat.getColor(contesto, R.color.elite_text_primary)
+            val grigio = ContextCompat.getColor(contesto, R.color.elite_text_secondary)
 
             fun tinta(activity: MainActivity) = activity.findViewById<ImageView>(R.id.wear_status_icon).imageTintList?.defaultColor
 
@@ -1519,9 +1523,9 @@ class MainActivityLayoutTest {
                     stato.value = collegato
                 }
             imposta(true)
-            assertTrue("collegato l'icona deve essere #E0E0E0", aspettaCheAttivi(scenario) { tinta(it) == stencil })
+            assertTrue("collegato l'icona deve avere il testo primario", aspettaCheAttivi(scenario) { tinta(it) == stencil })
             imposta(false)
-            assertTrue("scollegato l'icona deve essere #9E9E9E", aspettaCheAttivi(scenario) { tinta(it) == grigio })
+            assertTrue("scollegato l'icona deve avere il testo secondario", aspettaCheAttivi(scenario) { tinta(it) == grigio })
         }
     }
 
