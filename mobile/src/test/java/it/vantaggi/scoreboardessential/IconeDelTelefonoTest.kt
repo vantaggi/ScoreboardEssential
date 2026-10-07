@@ -242,7 +242,7 @@ class IconeDelTelefonoTest {
 
         fonti.forEach { f ->
             val testo = f.readText()
-            Regex("(?:@drawable/|R\\.drawable\\.)(ic_[a-z0-9_]+)").findAll(testo).forEach {
+            Regex("(?:@drawable/|(?<!android\\.)R\\.drawable\\.)(ic_[a-z0-9_]+)").findAll(testo).forEach {
                 val nome = it.groupValues[1]
                 if (!nome.startsWith("ic_launcher")) assertTrue("${f.name} cita $nome, che non e' in tabella", nome in ammessi)
             }

@@ -25,9 +25,9 @@
         <!-- Stats Row -->
         <LinearLayout android:id="@+id/stats_row" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal" app:layout_constraintTop_toBottomOf="@id/info_container" app:layout_constraintStart_toStartOf="@id/info_container" app:layout_constraintEnd_toEndOf="@id/info_container">
 
-            <TextView android:id="@+id/player_goals" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="16dp" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/team_spray_yellow" android:drawableStart="@drawable/ic_sports_soccer" android:drawablePadding="4dp" android:drawableTint="@color/team_spray_yellow" android:gravity="center_vertical" tools:text="12"/>
+            <TextView android:id="@+id/player_goals" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="16dp" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/team_spray_yellow" app:drawableStartCompat="@drawable/ic_sports_soccer" android:drawablePadding="4dp" app:drawableTint="@color/team_spray_yellow" android:gravity="center_vertical" tools:text="12"/>
 
-            <TextView android:id="@+id/player_appearances" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/team_electric_green" android:drawableStart="@drawable/ic_event_available" android:drawablePadding="4dp" android:drawableTint="@color/team_electric_green" android:gravity="center_vertical" tools:text="24"/>
+            <TextView android:id="@+id/player_appearances" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/team_electric_green" app:drawableStartCompat="@drawable/ic_event_available" android:drawablePadding="4dp" app:drawableTint="@color/team_electric_green" android:gravity="center_vertical" tools:text="24"/>
         </LinearLayout>
 
         <!-- Actions -->

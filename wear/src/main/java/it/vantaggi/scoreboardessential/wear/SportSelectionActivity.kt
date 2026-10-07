@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
+import androidx.core.widget.TextViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.wear.widget.WearableLinearLayoutManager
 import androidx.wear.widget.WearableRecyclerView
@@ -110,7 +111,7 @@ class SportAdapter(
             stato.setTextColor(colore)
             stato.setCompoundDrawablesRelative(spunta, null, null, null)
             stato.compoundDrawablePadding = stato.resources.getDimensionPixelSize(R.dimen.icon_text_gap)
-            stato.compoundDrawableTintList = ColorStateList.valueOf(colore)
+            TextViewCompat.setCompoundDrawableTintList(stato, ColorStateList.valueOf(colore))
             stato.visibility = if (scelta.current) View.VISIBLE else View.GONE
             itemView.setOnClickListener { onClick(scelta) }
         }

@@ -13,6 +13,7 @@ import com.google.android.material.chip.ChipGroup
 import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.utils.setRoles
+import java.util.Locale
 
 class PlayersManagementAdapter(
     private val onPlayerClick: (PlayerWithRoles) -> Unit,
@@ -57,10 +58,10 @@ class PlayersManagementAdapter(
 
             rolesGroup.setRoles(playerWithRoles.roles)
 
-            goalsTextView.text = player.goals.toString()
+            goalsTextView.text = String.format(Locale.getDefault(), "%d", player.goals)
             goalsTextView.contentDescription =
                 itemView.resources.getQuantityString(R.plurals.stats_goals, player.goals, player.goals)
-            appearancesTextView.text = player.appearances.toString()
+            appearancesTextView.text = String.format(Locale.getDefault(), "%d", player.appearances)
             appearancesTextView.contentDescription =
                 itemView.resources.getQuantityString(R.plurals.stats_appearances, player.appearances, player.appearances)
 

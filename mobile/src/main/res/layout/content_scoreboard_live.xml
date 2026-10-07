@@ -62,6 +62,7 @@
             app:iconTint="@color/stencil_white"
             app:iconGravity="textStart"
             app:iconPadding="6dp"
+            app:iconSize="@dimen/icon_prominent"
             tools:ignore="HardcodedText" />
 
         <!-- Il portiere: sempre presente nel calcio. Il tocco avvia dalla durata piena o riparte da capo. -->
@@ -458,6 +459,7 @@
             app:icon="@drawable/ic_undo"
             app:iconGravity="textStart"
             app:iconPadding="4dp"
+            app:iconSize="@dimen/icon_prominent"
             app:iconTint="@color/stencil_white" />
     </LinearLayout>
 
