@@ -1,43 +1,69 @@
-<com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Una partita dello storico (G-4). E' una card perche' e' un elemento indipendente: si espande, si
+    invia, si elimina. In vista c'e' solo cio' che serve a ritrovarla (sport e data, le due squadre con
+    il punteggio) e lo stato dell'invio a Padel Elite, che non si nasconde; set, giocatori e i comandi
+    di questa partita stanno nel dettaglio, che si apre toccando la scheda (RowDetail).
+-->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/match_card"
+    style="@style/Widget.App.Card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="8dp"
-    android:layout_marginVertical="4dp">
+    android:layout_marginVertical="@dimen/space_4"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="@drawable/bg_focus_ring">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingVertical="@dimen/space_8">
 
-        <!-- Sport, data e durata in una riga: un 6-4 di padel e un 2-1 di calcio non si confondono. -->
-        <TextView
-            android:id="@+id/timestamp_textview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:fontFamily="@font/inter"
-            android:letterSpacing="0.12"
-            android:textColor="@color/sidewalk_gray"
-            android:textSize="12sp"
-            android:textFontWeight="600"
-            tools:text="PADEL · 12/09 18:30 · 47 MIN" />
-
-        <!-- Una riga per squadra: etichetta nel colore con cui si e' giocato, risultato a destra.
-             Chi ha vinto si legge senza il colore: #E0E0E0 contro #9E9E9E. -->
+        <!-- Sport, data e durata: un 6-4 di padel e un 2-1 di calcio non si confondono. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:minHeight="48dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:paddingStart="@dimen/space_16"
+            android:paddingEnd="@dimen/space_12">
+
+            <TextView
+                android:id="@+id/timestamp_textview"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textAppearance="@style/TextAppearance.App.Caption"
+                tools:text="Padel · 12/09 18:30 · 47 min" />
+
+            <ImageView
+                android:id="@+id/match_expand_icon"
+                android:layout_width="@dimen/icon_standard"
+                android:layout_height="@dimen/icon_standard"
+                android:layout_marginStart="@dimen/space_8"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_expand_more"
+                app:tint="@color/elite_text_secondary" />
+        </LinearLayout>
+
+        <!-- Una riga per squadra: etichetta nel colore con cui si e' giocato, risultato a destra.
+             Chi ha vinto si legge senza il colore: testo primario contro secondario. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:minHeight="@dimen/control_touch"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/space_16">
 
             <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
+                android:layout_marginEnd="@dimen/space_16"
                 android:layout_weight="1">
 
                 <TextView
@@ -46,14 +72,10 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="start|center_vertical"
                     android:ellipsize="end"
-                    android:fontFamily="@font/inter"
                     android:maxLines="1"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp"
-                    android:textAllCaps="true"
-                    android:textSize="16sp"
-                    android:textFontWeight="600"
-                    tools:background="@color/team_spray_yellow"
+                    android:paddingHorizontal="@dimen/space_8"
+                    android:paddingVertical="@dimen/space_4"
+                    android:textAppearance="@style/TextAppearance.App.RowTitle"
                     tools:text="Team Alpha" />
             </FrameLayout>
 
@@ -62,7 +84,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.App.Punteggio"
-                android:textColor="@color/stencil_white"
+                android:textColor="@color/elite_text_primary"
                 android:textSize="32sp"
                 tools:text="10" />
         </LinearLayout>
@@ -71,13 +93,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:minHeight="48dp"
-            android:orientation="horizontal">
+            android:minHeight="@dimen/control_touch"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/space_16">
 
             <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
+                android:layout_marginEnd="@dimen/space_16"
                 android:layout_weight="1">
 
                 <TextView
@@ -86,14 +109,10 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="start|center_vertical"
                     android:ellipsize="end"
-                    android:fontFamily="@font/inter"
                     android:maxLines="1"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp"
-                    android:textAllCaps="true"
-                    android:textSize="16sp"
-                    android:textFontWeight="600"
-                    tools:background="@color/team_electric_green"
+                    android:paddingHorizontal="@dimen/space_8"
+                    android:paddingVertical="@dimen/space_4"
+                    android:textAppearance="@style/TextAppearance.App.RowTitle"
                     tools:text="Team Beta" />
             </FrameLayout>
 
@@ -102,46 +121,22 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.App.Punteggio"
-                android:textColor="@color/sidewalk_gray"
+                android:textColor="@color/elite_text_secondary"
                 android:textSize="32sp"
                 tools:text="8" />
         </LinearLayout>
 
-        <!-- I set per il tennis, la regola per il padel: c'e' solo dove dice qualcosa. -->
-        <TextView
-            android:id="@+id/sets_textview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:fontFamily="@font/inter"
-            android:fontFeatureSettings="tnum"
-            android:textFontWeight="600"
-            android:textColor="@color/sidewalk_gray"
-            android:textSize="14sp"
-            android:visibility="gone"
-            tools:text="6-4 · 3-6 · 7-6 (7-4)"
-            tools:visibility="visible" />
-
-        <TextView
-            android:id="@+id/players_textview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
-            android:textColor="@color/sidewalk_gray"
-            android:fontFamily="@font/inter"
-            tools:text="Players: John, Doe, Jane, Smith" />
-
-        <!-- Padel Elite: lo stato dell'invio (parola e icona, mai solo il colore) e il comando.
-             Entrambi spenti se la funzione non e' configurata. -->
+        <!-- Padel Elite: lo stato dell'invio (parola e icona, mai solo il colore) e il comando. Restano
+             in vista: lo stato e' cio' che l'utente deve poter rimediare. Spenti se la funzione non c'e'. -->
         <TextView
             android:id="@+id/send_status_textview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_12"
+            android:layout_marginTop="@dimen/space_8"
             android:drawablePadding="@dimen/space_8"
             android:gravity="center_vertical"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:paddingHorizontal="@dimen/space_16"
+            android:textAppearance="@style/TextAppearance.App.Caption"
             android:textColor="@color/elite_text_primary"
             android:visibility="gone"
             app:drawableStartCompat="@drawable/ic_schedule"
@@ -154,51 +149,97 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
+            android:layout_marginEnd="@dimen/space_8"
             android:text="@string/padel_elite_send"
             android:visibility="gone"
             app:icon="@drawable/ic_send"
             app:iconSize="@dimen/icon_standard"
             tools:visibility="visible" />
 
-        <!-- Esporta sta accanto a Elimina: i comandi di una partita dello storico stanno sulla sua card. -->
+        <!-- Il dettaglio (RowDetail): una linea rientrata, i set o la regola, i giocatori e i comandi di
+             questa partita. Chiuso finche' non si tocca la scheda. -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:id="@+id/match_detail"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
 
-            <!-- La Cronaca si apre da qui, come l'export: e' un comando di questa partita. -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/chronicle_match_button"
-                style="@style/Widget.App.Button.Text"
-                android:layout_width="wrap_content"
+            <View
+                style="@style/Widget.App.RowDivider"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/border_width"
+                android:layout_marginStart="@dimen/space_16"
+                android:layout_marginTop="@dimen/space_8" />
+
+            <!-- I set per il tennis, la regola per il padel: c'e' solo dove dice qualcosa. -->
+            <TextView
+                android:id="@+id/sets_textview"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/chronicle_open"
+                android:layout_marginTop="@dimen/space_12"
+                android:paddingHorizontal="@dimen/space_16"
+                android:textAppearance="@style/TextAppearance.App.Punteggio"
+                android:textColor="@color/elite_text_secondary"
+                android:textSize="14sp"
                 android:visibility="gone"
-                app:icon="@drawable/ic_timeline"
-                app:iconSize="@dimen/icon_standard"
+                tools:text="6-4 · 3-6 · 7-6 (7-4)"
                 tools:visibility="visible" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/export_match_button"
-                style="@style/Widget.App.Button.Text"
+            <TextView
+                android:id="@+id/players_textview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_8"
+                android:paddingHorizontal="@dimen/space_16"
+                android:textAppearance="@style/TextAppearance.App.Caption"
+                android:textSize="16sp"
+                tools:text="Giocatori: John, Doe, Jane, Smith" />
+
+            <!-- Esporta sta accanto a Elimina: i comandi di una partita dello storico stanno sulla sua scheda. -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/export_match"
-                android:visibility="gone"
-                app:icon="@drawable/ic_share"
-                app:iconSize="@dimen/icon_standard"
-                tools:visibility="visible" />
+                android:layout_gravity="end"
+                android:layout_marginEnd="@dimen/space_8"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-            <ImageButton
-                android:id="@+id/delete_match_button"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/delete_match"
-                app:tint="@color/error_red"
-                app:srcCompat="@drawable/ic_delete" />
+                <!-- La Cronaca si apre da qui, come l'export: e' un comando di questa partita. -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/chronicle_match_button"
+                    style="@style/Widget.App.Button.Text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/chronicle_open"
+                    android:visibility="gone"
+                    app:icon="@drawable/ic_timeline"
+                    app:iconSize="@dimen/icon_standard"
+                    tools:visibility="visible" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/export_match_button"
+                    style="@style/Widget.App.Button.Text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/export_match"
+                    android:visibility="gone"
+                    app:icon="@drawable/ic_share"
+                    app:iconSize="@dimen/icon_standard"
+                    tools:visibility="visible" />
+
+                <ImageButton
+                    android:id="@+id/delete_match_button"
+                    style="@style/Widget.App.Pressable"
+                    android:layout_width="@dimen/control_touch"
+                    android:layout_height="@dimen/control_touch"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="@string/delete_match"
+                    android:foreground="@drawable/bg_focus_ring"
+                    app:srcCompat="@drawable/ic_delete"
+                    app:tint="@color/elite_error" />
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>

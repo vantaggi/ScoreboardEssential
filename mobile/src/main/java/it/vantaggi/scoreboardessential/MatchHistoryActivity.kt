@@ -2,7 +2,6 @@ package it.vantaggi.scoreboardessential
 
 import android.os.Bundle
 import android.view.View
-import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -13,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.ui.MatchHistoryViewModel
+import it.vantaggi.scoreboardessential.ui.EmptyStateView
 import it.vantaggi.scoreboardessential.ui.MatchHistoryViewModelFactory
 import it.vantaggi.scoreboardessential.ui.chronicle.ChronicleActivity
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
@@ -44,9 +44,10 @@ class MatchHistoryActivity : AppCompatActivity() {
         val viewModelFactory = MatchHistoryViewModelFactory(application.matchRepository, padelElite)
         val viewModel = ViewModelProvider(this, viewModelFactory)[MatchHistoryViewModel::class.java]
 
-        val summaryTextView = findViewById<TextView>(R.id.summary_textview)
         val recyclerView = findViewById<RecyclerView>(R.id.match_history_recyclerview)
-        val emptyStateTextView = findViewById<TextView>(R.id.empty_state_textview)
+        val emptyState = findViewById<EmptyStateView>(R.id.empty_state)
+        // Lo stato vuoto ha una strada: tornare alla partita, da dove si salva.
+        emptyState.actionButton.setOnClickListener { finish() }
         val adapter =
             MatchHistoryAdapter(
                 onDeleteClicked = { matchWithTeams ->
@@ -80,14 +81,8 @@ class MatchHistoryActivity : AppCompatActivity() {
         viewModel.matchHistory.observe(this) { matches ->
             matches?.let {
                 adapter.submitList(it)
-                summaryTextView.text = getString(R.string.total_matches, it.size)
-                if (it.isEmpty()) {
-                    recyclerView.visibility = android.view.View.GONE
-                    emptyStateTextView.visibility = android.view.View.VISIBLE
-                } else {
-                    recyclerView.visibility = android.view.View.VISIBLE
-                    emptyStateTextView.visibility = android.view.View.GONE
-                }
+                recyclerView.visibility = if (it.isEmpty()) View.GONE else View.VISIBLE
+                emptyState.visibility = if (it.isEmpty()) View.VISIBLE else View.GONE
             }
         }
     }

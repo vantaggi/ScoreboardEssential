@@ -96,11 +96,11 @@ class StoricoDelContornoTest {
         assertTrue((blu.background as MaterialShapeDrawable).strokeWidth > 0f)
     }
 
-    // Chi ha vinto si legge senza il colore: #E0E0E0 il vincitore, #9E9E9E lo sconfitto.
+    // Chi ha vinto si legge senza il colore: testo primario il vincitore, secondario lo sconfitto.
     @Test
     fun `il vincitore e' chiaro e lo sconfitto e' grigio`() {
-        val chiaro = base.getColor(R.color.stencil_white)
-        val grigio = base.getColor(R.color.sidewalk_gray)
+        val chiaro = base.getColor(R.color.elite_text_primary)
+        val grigio = base.getColor(R.color.elite_text_secondary)
 
         val (_, vince1) = scheda(partita(SportRegistry.FOOTBALL, 3 to 1))
         assertEquals(chiaro, testo(vince1, R.id.team1_score_textview).currentTextColor)
@@ -121,11 +121,11 @@ class StoricoDelContornoTest {
     fun `la riga meta dice sport data e durata`() {
         val (_, vista) = scheda(partita(SportRegistry.PADEL, 6 to 4, minuti = 47))
         val meta = testo(vista, R.id.timestamp_textview).text.toString()
-        assertTrue(meta, Regex("""PADEL · \d\d/\d\d \d\d:\d\d · 47 MIN""").matches(meta))
+        assertTrue(meta, Regex("""Padel · \d\d/\d\d \d\d:\d\d · 47 min""").matches(meta))
 
         val (_, senzaDurata) = scheda(partita(SportRegistry.FOOTBALL, 2 to 1))
         val metaSenza = testo(senzaDurata, R.id.timestamp_textview).text.toString()
-        assertTrue(metaSenza, Regex("""CALCIO · \d\d/\d\d \d\d:\d\d""").matches(metaSenza))
+        assertTrue(metaSenza, Regex("""Calcio · \d\d/\d\d \d\d:\d\d""").matches(metaSenza))
     }
 
     @Test
