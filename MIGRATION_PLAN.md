@@ -1044,6 +1044,7 @@ quindi su Android 13+ ricadeva su una versione senza monocromatica.
 icone adattive coprono ogni dispositivo supportato e quei bitmap non vengono mai usati come
 icona di lancio. Sono peso morto, ma rigenerarli non e' possibile da qui e cancellarli
 senza poter verificare dove altro siano referenziati non vale il rischio.
+**Aggiornamento (G-9, 7 ottobre 2026):** quei PNG, e quelli dell'orologio, sono stati cancellati: `minSdk` e' 30, nessun file li citava (solo `@mipmap/ic_launcher` del manifest, che si risolve sulle icone adattive) e l'icona e' stata rifatta sui token.
 
 *Da guardare:* l'anteprima e' stata resa e mostrata, ma su un lanciatore vero cambiano
 l'ombra dinamica e il ritaglio effettivo. E' comunque la modifica piu' facile da giudicare
