@@ -52,7 +52,11 @@ class AltoContrastoTest {
 
     /** Nessuna scelta salvata e nessun contrasto di sistema: lo stato di un'installazione nuova. */
     private fun pulisci() {
-        app.applicationContext.getSharedPreferences("user_preferences", Context.MODE_PRIVATE).edit().clear().commit()
+        app.applicationContext
+            .getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .commit()
         AltoContrasto.contrastoDiSistema = { 0f }
     }
 
@@ -224,10 +228,12 @@ class AltoContrastoTest {
 
     /** Le voci dell'overlay che non sono un colore di ruolo (attributo elite*, valore *_alto_contrasto). */
     private fun vociNonColore(corpo: String): List<String> =
-        Regex("""<item name="([^"]+)">([^<]*)</item>""").findAll(corpo).mapNotNull {
-            val (nome, valore) = it.destructured
-            if (Regex("""elite[A-Z]\w*""").matches(nome) && Regex("""@color/elite_\w+_alto_contrasto""").matches(valore)) null else nome
-        }.toList()
+        Regex("""<item name="([^"]+)">([^<]*)</item>""")
+            .findAll(corpo)
+            .mapNotNull {
+                val (nome, valore) = it.destructured
+                if (Regex("""elite[A-Z]\w*""").matches(nome) && Regex("""@color/elite_\w+_alto_contrasto""").matches(valore)) null else nome
+            }.toList()
 
     @Test
     fun `l'overlay ha solo colori di ruolo, nessuna forma, peso, raggio, durata o stile`() {
