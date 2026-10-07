@@ -50,7 +50,6 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.Locale
 
 /**
  * La schermata di gioco, montata davvero.
@@ -392,16 +391,15 @@ class MainActivityLayoutTest {
                 nome1 =
                     modello.team1Name.value
                         .orEmpty()
-                        .uppercase(Locale.getDefault())
             }
             assertTrue(
-                "la barra non dice PADEL e il servente: \"${testoDi(scenario, R.id.match_period_textview)}\"",
+                "la barra non dice Padel e il servente: \"${testoDi(scenario, R.id.match_period_textview)}\"",
                 aspettaCheAttivi(scenario) {
                     it
                         .findViewById<TextView>(R.id.match_period_textview)
                         .text
                         .toString()
-                        .startsWith("PADEL") &&
+                        .startsWith("Padel") &&
                         it
                             .findViewById<TextView>(R.id.match_period_textview)
                             .text
@@ -428,7 +426,6 @@ class MainActivityLayoutTest {
                 val nome2 =
                     modello.team2Name.value
                         .orEmpty()
-                        .uppercase(Locale.getDefault())
                 assertTrue(
                     "la barra non nomina il nuovo servente ($nome2)",
                     it
@@ -458,8 +455,7 @@ class MainActivityLayoutTest {
                 val nome1 =
                     modello.team1Name.value
                         .orEmpty()
-                        .uppercase(Locale.getDefault())
-                atteso = it.getString(R.string.bar_winner, nome1, "6-3").uppercase(Locale.getDefault())
+                atteso = it.getString(R.string.bar_winner, nome1, "6-3")
             }
             assertTrue(
                 "la barra non dice \"$atteso\": \"${testoDi(scenario, R.id.match_period_textview)}\"",
@@ -527,7 +523,7 @@ class MainActivityLayoutTest {
                         .findViewById<TextView>(R.id.match_period_textview)
                         .text
                         .toString()
-                        .startsWith("PADEL")
+                        .startsWith("Padel")
                 },
             )
             scenario.onActivity {
@@ -547,7 +543,7 @@ class MainActivityLayoutTest {
         lateinit var atteso: String
         scenario.onActivity {
             val nome1 = ViewModelProvider(it)[MainViewModel::class.java].team1Name.value.orEmpty()
-            atteso = it.getString(R.string.strip_msg_undone_point, nome1.uppercase(Locale.getDefault()))
+            atteso = it.getString(R.string.strip_msg_undone_point, nome1)
         }
         return atteso
     }
@@ -683,7 +679,7 @@ class MainActivityLayoutTest {
                     "il tocco non ha avviato il conto",
                     aspettaCheAttivi(scenario) {
                         it.findViewById<TextView>(R.id.keeper_timer_textview).currentTextColor ==
-                            it.getColor(R.color.elite_lime)
+                            it.getColor(R.color.elite_text_primary)
                     },
                 )
                 // Il conto scade: dopo la scadenza lo slot e' pieno elite_error con CAMBIO in elite_background.
@@ -833,11 +829,9 @@ class MainActivityLayoutTest {
                 val nome1 =
                     modello.team1Name.value
                         .orEmpty()
-                        .uppercase(Locale.getDefault())
                 val nome2 =
                     modello.team2Name.value
                         .orEmpty()
-                        .uppercase(Locale.getDefault())
                 atteso =
                     listOf(
                         it.getString(R.string.end_summary_racket, nome1, nome2),
@@ -885,7 +879,6 @@ class MainActivityLayoutTest {
                         modello!!
                             .team1Name.value
                             .orEmpty()
-                            .uppercase(Locale.getDefault())
                 }
                 val iniziale = postiFissi(scenario)
                 onView(withId(R.id.team1_add_button_card)).perform(click())
@@ -910,7 +903,7 @@ class MainActivityLayoutTest {
 
                 // Scelto il marcatore: per 3 secondi il messaggio, poi il testo base col nome.
                 onView(withText("Marco B.")).inRoot(isDialog()).perform(click())
-                val messaggio = { attivita: MainActivity -> attivita.getString(R.string.strip_msg_goal_by, "MARCO B.") }
+                val messaggio = { attivita: MainActivity -> attivita.getString(R.string.strip_msg_goal_by, "Marco B.") }
                 assertTrue(
                     "dopo la scelta la striscia deve dire chi ha segnato",
                     aspettaCheAttivi(scenario) { it.findViewById<TextView>(R.id.last_action_text).text.toString() == messaggio(it) },
@@ -920,7 +913,7 @@ class MainActivityLayoutTest {
                     "passati 3 secondi deve tornare il testo base col marcatore",
                     aspettaCheAttivi(scenario) {
                         it.findViewById<TextView>(R.id.last_action_text).text.toString() ==
-                            it.getString(R.string.strip_goal_by, nome, "MARCO B.")
+                            it.getString(R.string.strip_goal_by, nome, "Marco B.")
                     },
                 )
                 scenario.onActivity {
