@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.checkbox.MaterialCheckBox xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/role_checkbox"
+    style="@style/Widget.App.CheckBox"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:textColor="@color/stencil_white"
-    app:buttonTint="@color/graffiti_pink"
-    android:fontFamily="@font/inter"
-    android:textAppearance="?attr/textAppearanceBodyLarge" />
+    android:paddingStart="@dimen/space_16"
+    android:paddingEnd="@dimen/space_16"
+    android:textAppearance="@style/TextAppearance.App.RowTitle" />

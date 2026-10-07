@@ -5,28 +5,27 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="32dp">
+        android:padding="@dimen/space_32">
 
         <ImageView
             android:id="@+id/onboarding_icon"
             android:layout_width="@dimen/icon_prominent"
             android:layout_height="@dimen/icon_prominent"
             android:importantForAccessibility="no"
-            android:layout_marginTop="64dp"
+            android:layout_marginTop="@dimen/space_64"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/team_spray_yellow"
+            app:tint="@color/elite_lime"
             tools:src="@drawable/ic_watch" />
 
         <TextView
             android:id="@+id/onboarding_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="48dp"
+            android:layout_marginTop="@dimen/space_24"
             android:gravity="center"
-            android:textAppearance="@style/TextAppearance.App.HeadlineMedium.Street"
-            android:textColor="@color/stencil_white"
+            android:textAppearance="@style/TextAppearance.App.SectionHeading"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/onboarding_icon"
@@ -36,10 +35,10 @@
             android:id="@+id/onboarding_description"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="@dimen/space_8"
             android:gravity="center"
-            android:textAppearance="@style/TextAppearance.App.BodyLarge.Street"
-            android:textColor="@color/sidewalk_gray"
+            android:textAppearance="@style/TextAppearance.App.Caption"
+            android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/onboarding_title"

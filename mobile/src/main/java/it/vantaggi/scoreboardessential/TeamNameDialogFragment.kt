@@ -2,9 +2,6 @@ package it.vantaggi.scoreboardessential
 
 import android.app.Dialog
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
-import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
@@ -22,38 +19,15 @@ class TeamNameDialogFragment : DialogFragment() {
 
         val dialogView = requireActivity().layoutInflater.inflate(R.layout.dialog_team_name, null)
         val editText = dialogView.findViewById<TextInputEditText>(R.id.team_name_input)
-        val previewText = dialogView.findViewById<TextView>(R.id.preview_text)
         val suggestionsChipGroup = dialogView.findViewById<ChipGroup>(R.id.suggestions_chips)
 
         editText.setText(currentName)
-        previewText.text = currentName.uppercase()
-
-        editText.addTextChangedListener(
-            object : TextWatcher {
-                override fun beforeTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    count: Int,
-                    after: Int,
-                ) {}
-
-                override fun onTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    before: Int,
-                    count: Int,
-                ) {
-                    previewText.text = s.toString().uppercase()
-                }
-
-                override fun afterTextChanged(s: Editable?) {}
-            },
-        )
 
         for (i in 0 until suggestionsChipGroup.childCount) {
             val chip = suggestionsChipGroup.getChildAt(i) as? Chip
             chip?.setOnClickListener {
-                editText.setText(chip.text)
+                editText.setText(chip.text.toString().uppercase())
+                editText.setSelection(editText.text?.length ?: 0)
             }
         }
 

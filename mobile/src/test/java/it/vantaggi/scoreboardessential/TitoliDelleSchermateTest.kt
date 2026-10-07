@@ -40,20 +40,20 @@ class TitoliDelleSchermateTest {
     @Test
     @Config(qualifiers = "it")
     fun `in italiano i titoli delle schermate secondarie sono italiani`() {
-        assertEquals("Storico Partite", titolo(MatchHistoryActivity::class.java))
+        assertEquals("Storico partite", titolo(MatchHistoryActivity::class.java))
         assertEquals("Giocatore", titolo(AddEditPlayerActivity::class.java))
-        assertEquals("Impostazioni Partita", titolo(MatchSettingsActivity::class.java))
-        assertEquals("Gestisci Giocatori", titolo(PlayersManagementActivity::class.java))
+        assertEquals("Impostazioni partita", titolo(MatchSettingsActivity::class.java))
+        assertEquals("Gestisci giocatori", titolo(PlayersManagementActivity::class.java))
         assertEquals("Statistiche", titolo(StatisticsActivity::class.java))
     }
 
     @Test
     @Config(qualifiers = "en")
     fun `in inglese i titoli delle schermate secondarie sono inglesi`() {
-        assertEquals("Match History", titolo(MatchHistoryActivity::class.java))
+        assertEquals("Match history", titolo(MatchHistoryActivity::class.java))
         assertEquals("Player", titolo(AddEditPlayerActivity::class.java))
-        assertEquals("Match Settings", titolo(MatchSettingsActivity::class.java))
-        assertEquals("Manage Players", titolo(PlayersManagementActivity::class.java))
+        assertEquals("Match settings", titolo(MatchSettingsActivity::class.java))
+        assertEquals("Manage players", titolo(PlayersManagementActivity::class.java))
         assertEquals("Statistics", titolo(StatisticsActivity::class.java))
     }
 
@@ -62,7 +62,7 @@ class TitoliDelleSchermateTest {
     fun `in inglese la statistica vuota non parla italiano`() {
         val tema = ContextThemeWrapper(context, R.style.Theme_ScoreboardEssential)
         val testi = testiDi(LayoutInflater.from(tema).inflate(R.layout.activity_statistics, null))
-        assertTrue(testi.toString(), "No matches played yet" in testi)
+        assertTrue(testi.toString(), "No statistics yet" in testi)
         assertTrue(testi.toString(), testi.none { it.contains("Nessuna") || it.contains("Gioca") })
     }
 
