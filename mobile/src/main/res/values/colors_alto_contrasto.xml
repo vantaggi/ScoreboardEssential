@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Valori del tema ad alto contrasto (G-10, DESIGN.md). Stessi ruoli di colors.xml, tono scuro, testo a 7:1
+        e bordi a 3:1 su ogni superficie del tema: li controlla AltoContrastoTest. ThemeOverlay.App.AltoContrasto
+        li assegna agli attributi del tema; i valori standard sono in colors.xml con il suffisso _standard.
+    -->
+    <color name="elite_background_alto_contrasto">#000000</color>
+    <color name="elite_surface_alto_contrasto">#000000</color>
+    <color name="elite_surface_raised_alto_contrasto">#0D0D0F</color>
+    <color name="elite_surface_hover_alto_contrasto">#26262B</color>
+    <color name="elite_border_alto_contrasto">#8A8A9A</color>
+    <color name="elite_border_strong_alto_contrasto">#6E6E7E</color>
+    <color name="elite_outline_alto_contrasto">#B4B4C0</color>
+    <color name="elite_text_primary_alto_contrasto">#FFFFFF</color>
+    <color name="elite_text_secondary_alto_contrasto">#C9C9D2</color>
+    <color name="elite_text_disabled_alto_contrasto">#8A8A9A</color>
+    <color name="elite_on_lime_alto_contrasto">#000000</color>
+    <color name="elite_warning_alto_contrasto">#F0B35A</color>
+    <color name="elite_error_alto_contrasto">#FF8A8A</color>
+    <color name="elite_info_alto_contrasto">#9ED0F5</color>
+    <color name="elite_success_subtle_alto_contrasto">#0A1A10</color>
+    <color name="elite_warning_subtle_alto_contrasto">#1F1606</color>
+    <color name="elite_error_subtle_alto_contrasto">#2B0D0D</color>
+    <color name="elite_info_subtle_alto_contrasto">#0A1822</color>
+    <color name="elite_state_pressed_alto_contrasto">#1FFFFFFF</color>
+    <color name="elite_focus_ring_alto_contrasto">#FFFFFF</color>
+</resources>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Fondo del bottone primario: lime; disattivo, superficie rialzata (nessun lime senza azione). -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="@color/elite_surface_raised" android:state_enabled="false" />
+    <item android:color="?attr/eliteSurfaceRaised" android:state_enabled="false" />
     <item android:color="@color/elite_lime" />
 </selector>

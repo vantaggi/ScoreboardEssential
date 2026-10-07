@@ -11,6 +11,7 @@ import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
+import it.vantaggi.scoreboardessential.utils.AltoContrasto
 import it.vantaggi.scoreboardessential.utils.MovimentoRidotto
 
 class ScoreboardEssentialApplication : Application() {
@@ -25,8 +26,12 @@ class ScoreboardEssentialApplication : Application() {
     val padelElite by lazy { PadelEliteServices(this, PadelEliteConfig.fromBuildConfig(), matchRepository) }
 
     override fun onCreate() {
+        // Il contesto dell'applicazione non riceve il tema del manifest (solo le activity): i token elite_* seguono il
+        // tema (G-10), e senza questa riga un getColor() da servizio, ricevitore o test uscirebbe magenta.
+        setTheme(R.style.Theme_ScoreboardEssential)
         super.onCreate()
         MovimentoRidotto.registra(this)
+        AltoContrasto.registra(this)
         createNotificationChannel()
     }
 

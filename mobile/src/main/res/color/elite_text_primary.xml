@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Testo del bottone testuale: text-primary, disattivo con text-disabled. -->
+<!-- Token elite_text_primary: segue il tema (standard o alto contrasto) tramite ?attr/eliteTextPrimary. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="?attr/eliteTextDisabled" android:state_enabled="false" />
     <item android:color="?attr/eliteTextPrimary" />
 </selector>

@@ -90,6 +90,28 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Accessibilita' (G-10): l'alto contrasto. Una riga sola: titolo, perche', interruttore. -->
+        <com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_24">
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/settings_accessibility_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/elite_text_secondary" android:accessibilityHeading="true" />
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/settings_high_contrast_title" android:textAppearance="@style/TextAppearance.App.RowTitle" />
+
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_4" android:text="@string/settings_high_contrast_summary" android:textAppearance="@style/TextAppearance.App.Caption" />
+                    </LinearLayout>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/highContrastSwitch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/space_16" android:contentDescription="@string/settings_high_contrast_title" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Padel Elite: il gruppo c'e' solo se la build conosce il Supabase (local.properties). -->
         <com.google.android.material.card.MaterialCardView android:id="@+id/padelEliteCard" style="@style/Widget.App.Group" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_24" android:visibility="gone">
 

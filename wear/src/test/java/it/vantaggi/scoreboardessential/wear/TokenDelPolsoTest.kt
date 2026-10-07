@@ -60,7 +60,9 @@ class TokenDelPolsoTest {
     @Test
     fun `i ruoli dell'orologio hanno gli stessi valori del telefono`() {
         val polso = colori(File(res, "values/colors.xml"))
-        val telefonoColori = colori(File(telefono, "values/colors.xml"))
+        // Dal passo G-10 il telefono tiene i valori standard dei token che cambiano con il tema col suffisso _standard:
+        // l'orologio ha un tema solo, quello standard, e deve avere gli stessi valori.
+        val telefonoColori = colori(File(telefono, "values/colors.xml")).mapKeys { it.key.removeSuffix("_standard") }
         val comuni = polso.keys.filter { it in telefonoColori }
         assertTrue("pochi token in comune: $comuni", comuni.size >= 14)
         comuni.forEach { assertEquals("il token $it diverge fra telefono e orologio", telefonoColori.getValue(it), polso.getValue(it)) }

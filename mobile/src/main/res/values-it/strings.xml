@@ -355,6 +355,9 @@
     </plurals>
     <string name="settings_teams_title">Squadre</string>
     <string name="settings_match_title">Partita</string>
+    <string name="settings_accessibility_title">Accessibilità</string>
+    <string name="settings_high_contrast_title">Alto contrasto</string>
+    <string name="settings_high_contrast_summary">Testo più luminoso e bordi più netti. Segue il contrasto del sistema finché non scegli.</string>
     <string name="history_empty_reason">Una partita compare qui quando la salvi a fine partita. Gioca e termina una partita per vederla.</string>
     <string name="no_players_found">Nessun giocatore trovato</string>
     <string name="no_players_found_hint">Cambia la ricerca o il filtro del ruolo.</string>

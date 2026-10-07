@@ -19,6 +19,7 @@ import it.vantaggi.scoreboardessential.padelelite.PadelEliteActivity
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.sportLabel
 import it.vantaggi.scoreboardessential.sportRulesLine
+import it.vantaggi.scoreboardessential.utils.AltoContrasto
 import it.vantaggi.scoreboardessential.utils.LocaleHelper
 import it.vantaggi.scoreboardessential.utils.anteprimaDiSquadra
 import it.vantaggi.scoreboardessential.utils.dipingiDiSquadra
@@ -50,6 +51,7 @@ class MatchSettingsActivity : AppCompatActivity() {
         observeViewModel()
         setupListeners()
         setupPadelElite()
+        setupAltoContrasto()
     }
 
     override fun onResume() {
@@ -70,6 +72,21 @@ class MatchSettingsActivity : AppCompatActivity() {
         binding.padelEliteSignOutButton.setOnClickListener {
             padelElite.account.signOut()
             showPadelEliteStatus()
+        }
+    }
+
+    /**
+     * L'interruttore dell'alto contrasto (G-10) mostra lo stato in vigore, sia scelto sia dal sistema.
+     * Toccarlo salva la scelta (anche "spento") e ricrea la schermata col tema nuovo. Non salva il suo
+     * stato: se il contrasto di sistema cambia mentre l'activity e' ferma, il valore ripristinato
+     * verrebbe scambiato per una scelta dell'utente.
+     */
+    private fun setupAltoContrasto() {
+        binding.highContrastSwitch.isSaveEnabled = false
+        binding.highContrastSwitch.isChecked = AltoContrasto.attivo(this)
+        binding.highContrastSwitch.setOnCheckedChangeListener { _, attivo ->
+            AltoContrasto.scegli(this, attivo)
+            recreate()
         }
     }
 

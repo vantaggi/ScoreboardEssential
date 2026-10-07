@@ -352,6 +352,9 @@
     </plurals>
     <string name="settings_teams_title">Teams</string>
     <string name="settings_match_title">Match</string>
+    <string name="settings_accessibility_title">Accessibility</string>
+    <string name="settings_high_contrast_title">High contrast</string>
+    <string name="settings_high_contrast_summary">Brighter text and sharper borders. Follows the system contrast until you choose.</string>
     <string name="history_empty_reason">A match shows up here once you save it at the end. Play and end a match to see it.</string>
     <string name="no_players_found">No players found</string>
     <string name="no_players_found_hint">Change the search or the role filter.</string>
