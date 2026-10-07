@@ -283,6 +283,8 @@ Il filone 1 (prova sul campo) e il filone 2 (coerenza grafica) non ne chiedono n
 
 **7 ottobre 2026 - pubblicato su main** il blocco coerenza grafica G-0..G-4 e G-6 (G-5 Cronaca, G-7 orologio, G-8 PDF, G-9 verifica e maiuscolo dei messaggi composti, G-10 alto contrasto restano da fare), l'adattamento alla UI Constitution (`CLAUDE.md`), l'invio a Padel Elite dall'app (A-1..A-4, spento finche' `local.properties` non ha URL e chiave) e la correzione della durata nello storico (tempo di gioco del registro, non tempo fra inizio e chiusura). Suite verde, **1199 test JVM distinti**, strumentati 38 su 38 su `Pixel_9a_Test`. Schermate in `docs/coerenza/`. Dashboard: PR #213 (casella d'arrivo, migrazione 64) e #214 (falla di `group_members`, migrazione 65) unite in `development`; in produzione nessuna migrazione applicata (prima la 65, poi la 64, dal proprietario).
 
+**7 ottobre 2026, sera - pubblicato su main** il resto della pista di coerenza: G-5 Cronaca, G-7 orologio, G-8 PDF, G-9 chiusura (messaggi composti in frase, icona adattiva sui token, nessun colore Street, baseline di lint ripulita), G-10 alto contrasto. Suite verde, **1291 test JVM distinti** (core 180, shared 34, telefono 685, orologio 392), strumentati 38 su 38 su `Pixel_9a_Test` (sei controlli aggiornati ai testi in frase e al conto del portiere in testo primario). Schermate in `docs/coerenza/` (`icona-g9.png`: l'icona sul launcher, **da confermare dal proprietario**). La pista di coerenza grafica e' chiusa; restano a occhio del proprietario app e dashboard affiancate, i tre AVD dell'orologio e il carattere al 200%.
+
 ---
 
 ## 4. Rose dalla dashboard, serate a coppie che ruotano, diretta (proposta del 7 ottobre 2026)
