@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    La capsula di CHI?: solo un bordo rosa, il fondo resta nero. Il rosa e' l'accento di marca e in
-    gioco vale solo qui e per il portiere che corre; su nero fa 5,02:1, abbastanza per la grafica.
+    La capsula di CHI?: solo un bordo chiaro sul fondo nero, a raggio dei comandi (8dp). Il lime non
+    c'e': sul quadrante marca solo chi serve. Il testo primario su nero fa 13,8:1.
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <stroke
         android:width="2dp"
-        android:color="@color/graffiti_pink" />
-    <corners android:radius="10dp" />
+        android:color="@color/elite_text_primary" />
+    <corners android:radius="@dimen/radius_control" />
 </shape>

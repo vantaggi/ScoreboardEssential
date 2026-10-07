@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Lo StateListAnimator della pressione (scala 0,97 e opacita' 0,85, duration_instant), uguale a
+        quello del telefono: lo risolve il tema, cosi' con le animazioni di sistema ridotte
+        ThemeOverlay.App.MovimentoRidotto lo sostituisce con la sola opacita'.
+    -->
+    <attr name="pressFeedback" format="reference" />
+</resources>

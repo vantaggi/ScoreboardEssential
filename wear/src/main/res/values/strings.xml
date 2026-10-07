@@ -18,12 +18,14 @@
     <string name="cd_match_clock_stopped">Match clock %1$s, stopped. Tap to start.</string>
     <string name="cd_current_game">Current set, games %1$s</string>
 
+    <!-- Menu e scelta dello sport: in frase, mai in maiuscolo (G-7). Restano maiuscole le frasi del
+         quadrante (riga di stato, CHI?, SALTA, GOL), che si leggono di sfuggita e a due metri. -->
     <!-- Menu partita: frasi corte, perche' il tondo da 192dp lascia circa 100dp di larghezza alla voce. -->
     <string name="cd_menu">Match menu</string>
-    <string name="wear_menu_title">MATCH</string>
-    <string name="wear_menu_end">END MATCH</string>
+    <string name="wear_menu_title">Match</string>
+    <string name="wear_menu_end">End match</string>
     <string name="wear_menu_end_saves">Saves %1$s on the phone</string>
-    <string name="wear_menu_end_confirm">CLOSE %1$s?</string>
+    <string name="wear_menu_end_confirm">Close %1$s?</string>
     <string name="wear_menu_tap_again">Tap again</string>
     <string name="wear_menu_phone_needed">Phone needed</string>
     <string name="wear_menu_nothing_to_save">Nothing to save</string>
@@ -31,8 +33,8 @@
         <item quantity="one">Deliver %1$d point first</item>
         <item quantity="other">Deliver %1$d points first</item>
     </plurals>
-    <string name="wear_menu_discard">DISCARD QUEUE</string>
-    <string name="wear_menu_discard_confirm">DISCARD?</string>
+    <string name="wear_menu_discard">Discard queue</string>
+    <string name="wear_menu_discard_confirm">Discard?</string>
     <plurals name="wear_menu_rejected_points">
         <item quantity="one">The phone rejected %1$d point</item>
         <item quantity="other">The phone rejected %1$d points</item>
@@ -48,8 +50,8 @@
     <string name="cd_keeper_timer">Goalkeeper countdown</string>
     <!-- Uguale nelle due lingue: K e i minuti:secondi che restano al portiere. -->
     <string name="wear_keeper_running" translatable="false">K %1$d:%2$02d</string>
-    <string name="wear_sport">SPORT</string>
-    <string name="wear_sport_title">SPORT</string>
+    <string name="wear_sport">Sport</string>
+    <string name="wear_sport_title">Sport</string>
     <!-- Il segno davanti si legge anche senza il colore: in uso e' ciano, ma la spunta dice la stessa cosa. -->
     <string name="wear_sport_current">in use</string>
     <string name="wear_sport_locked">Match in progress</string>

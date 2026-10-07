@@ -4,9 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardBackgroundColor="@color/concrete_gray"
-    app:shapeAppearance="@style/ShapeAppearance.App.StreetCard"
-    app:cardElevation="0dp"
+    style="@style/Widget.App.GroupRow"
     app:cardPreventCornerOverlap="@bool/voce_rientro_angolo"
     android:clickable="true"
     android:focusable="true">
@@ -21,7 +19,7 @@
         android:paddingVertical="@dimen/voce_padding_verticale"
         android:layout_margin="2dp">
 
-        <!-- Titolo a 20sp bold: e' testo grande WCAG, serve a FINE PARTITA rosso su #1E1E1E.
+        <!-- Titolo a 20sp semibold (600), in frase e non in maiuscolo. L'errore su elite_surface fa 4,7:1.
              TitoloIntero e' un TextView che, se la parola piu' lunga non entra nella card (sul tondo
              da 192dp le card sono strette), scende di dimensione fino a 14sp invece di spezzarla.
              Scelto al posto di un rientro piu' stretto del BoxInsetLayout: quel rientro tiene le card
@@ -34,7 +32,7 @@
             android:layout_height="wrap_content"
             android:textAppearance="?attr/textAppearanceHeadlineSmall"
             android:textSize="20sp"
-            android:textColor="@color/stencil_white"
+            android:textColor="@color/elite_text_primary"
             android:gravity="center" />
 
         <!-- La riga secondaria: "in uso" nella scelta dello sport, il perche' o il risultato nel menu. -->

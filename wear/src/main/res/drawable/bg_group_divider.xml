@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    La linea sottile fra le righe di un gruppo tonale (border-subtle), rientrata come nel contorno
+    del telefono: il rientro e' il raggio del gruppo, per non toccare gli angoli.
+-->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:insetLeft="@dimen/radius_surface"
+    android:insetRight="@dimen/radius_surface">
+    <shape android:shape="rectangle">
+        <size android:height="@dimen/border_width" />
+        <solid android:color="@color/elite_border_strong" />
+    </shape>
+</inset>

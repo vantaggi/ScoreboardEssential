@@ -20,10 +20,10 @@
 
     <!-- Menu partita: frasi corte, perche' il tondo da 192dp lascia circa 100dp di larghezza alla voce. -->
     <string name="cd_menu">Menu partita</string>
-    <string name="wear_menu_title">PARTITA</string>
-    <string name="wear_menu_end">FINE PARTITA</string>
+    <string name="wear_menu_title">Partita</string>
+    <string name="wear_menu_end">Fine partita</string>
     <string name="wear_menu_end_saves">Salva %1$s sul telefono</string>
-    <string name="wear_menu_end_confirm">CHIUDERE %1$s?</string>
+    <string name="wear_menu_end_confirm">Chiudere %1$s?</string>
     <string name="wear_menu_tap_again">Tocca di nuovo</string>
     <string name="wear_menu_phone_needed">Serve il telefono</string>
     <string name="wear_menu_nothing_to_save">Niente da salvare</string>
@@ -31,8 +31,8 @@
         <item quantity="one">Prima consegna %1$d punto</item>
         <item quantity="other">Prima consegna %1$d punti</item>
     </plurals>
-    <string name="wear_menu_discard">SCARTA LA CODA</string>
-    <string name="wear_menu_discard_confirm">SCARTARE?</string>
+    <string name="wear_menu_discard">Scarta la coda</string>
+    <string name="wear_menu_discard_confirm">Scartare?</string>
     <plurals name="wear_menu_rejected_points">
         <item quantity="one">Il telefono ha rifiutato %1$d punto</item>
         <item quantity="other">Il telefono ha rifiutato %1$d punti</item>
@@ -44,8 +44,8 @@
     <string name="wear_goal_header">GOL · %1$s</string>
     <string name="wear_goal_header_plain">GOL</string>
     <string name="cd_keeper_timer">Conto alla rovescia del portiere</string>
-    <string name="wear_sport">SPORT</string>
-    <string name="wear_sport_title">SPORT</string>
+    <string name="wear_sport">Sport</string>
+    <string name="wear_sport_title">Sport</string>
     <!-- Il segno davanti si legge anche senza il colore: in uso e' ciano, ma la spunta dice la stessa cosa. -->
     <string name="wear_sport_current">in uso</string>
     <string name="wear_sport_locked">Partita in corso</string>

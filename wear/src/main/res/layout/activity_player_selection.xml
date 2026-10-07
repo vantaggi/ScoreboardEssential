@@ -22,7 +22,7 @@
         android:gravity="center"
         android:includeFontPadding="false"
         android:maxLines="1"
-        android:textColor="@color/stencil_white"
+        android:textColor="@color/elite_text_primary"
         android:textSize="14sp"
         android:textFontWeight="600"
         tools:text="GOL · 3–2" />
@@ -34,7 +34,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="4dp"
         android:layout_marginBottom="4dp"
-        android:background="@color/team_spray_yellow"
+        android:background="@color/team_side_1"
         android:importantForAccessibility="no" />
 
     <!--

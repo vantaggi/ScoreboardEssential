@@ -6,7 +6,7 @@
     192dp, dal design:
 
         A  18-48    contesto: cronometro a sinistra, portiere a destra (nel calcio), game del set
-        B  50-124   le due cifre, bianche, a dimensione fissa
+        B  50-124   le due cifre, bianche, a dimensione fissa (il rotolo le muove solo dentro la loro scatola)
         C  126-130  le strisce di squadra
         D  132-148  dettaglio: periodo e set chiusi
         E  150-166  riga di stato (StatoFiducia)
@@ -359,13 +359,14 @@
         <!--
             Fascia C: il colore della squadra, solo come grafica. Mai testo sopra e mai il colore
             come colore delle cifre: la tinta la sceglie l'utente e puo' sparire sul nero. Il colore
-            vero lo scrive MainActivity (TeamInk.graphicOnBlack); qui i default.
+            vero lo scrive MainActivity (TeamInk.graphicOnBlack); qui i predefiniti, lime e ciano
+            come sul telefono.
         -->
         <View
             android:id="@+id/team1Stripe"
             android:layout_width="@dimen/face_stripe_width"
             android:layout_height="@dimen/face_stripe_height"
-            android:background="@color/team_spray_yellow"
+            android:background="@color/team_side_1"
             android:importantForAccessibility="no"
             app:layout_constraintTop_toBottomOf="@id/guide_126"
             app:layout_constraintStart_toStartOf="parent"
@@ -375,7 +376,7 @@
             android:id="@+id/team2Stripe"
             android:layout_width="@dimen/face_stripe_width"
             android:layout_height="@dimen/face_stripe_height"
-            android:background="@color/team_electric_green"
+            android:background="@color/team_side_2"
             android:importantForAccessibility="no"
             app:layout_constraintTop_toBottomOf="@id/guide_126"
             app:layout_constraintEnd_toEndOf="parent"

@@ -171,8 +171,8 @@ class AmbientTest {
         calcioColorato()
         // Fuori dall'ambient i colori ci sono: senza questo il test non direbbe niente.
         assertEquals(View.VISIBLE, binding.team1Stripe.visibility)
-        assertEquals(colore(R.color.error_red), binding.gestureHint.currentTextColor)
-        assertEquals(colore(R.color.error_red), binding.keeperTimer.currentTextColor)
+        assertEquals(colore(R.color.elite_error), binding.gestureHint.currentTextColor)
+        assertEquals(colore(R.color.elite_error), binding.keeperTimer.currentTextColor)
 
         attivita().applyAmbient(true)
         idle()
@@ -212,8 +212,8 @@ class AmbientTest {
         assertEquals(View.VISIBLE, binding.keeperTimer.visibility)
         assertEquals(View.VISIBLE, binding.keeperProgressBar.visibility)
         assertEquals(View.VISIBLE, binding.menuGlyph.visibility)
-        assertEquals(colore(R.color.error_red), binding.gestureHint.currentTextColor)
-        assertEquals(colore(R.color.error_red), binding.keeperTimer.currentTextColor)
+        assertEquals(colore(R.color.elite_error), binding.gestureHint.currentTextColor)
+        assertEquals(colore(R.color.elite_error), binding.keeperTimer.currentTextColor)
     }
 
     @Test

@@ -8,6 +8,15 @@
     -->
     <dimen name="box_inset_layout_padding">0dp</dimen>
 
+    <!-- radius-control (le righe) e radius-surface (il gruppo), gli stessi del telefono. -->
+    <dimen name="radius_control">8dp</dimen>
+    <dimen name="radius_surface">14dp</dimen>
+    <!-- La linea sottile fra le righe di un gruppo. -->
+    <dimen name="border_width">1dp</dimen>
+    <!-- La corsa di una cifra che rotola: un quarto dell'altezza della sua scatola, la meta' del
+         telefono (50%): sull'orologio il movimento e' piu' breve (wearable.md). -->
+    <fraction name="number_roll_travel">25%</fraction>
+
     <!-- icon-compact, icon-standard, icon-prominent: le tre misure delle icone, le stesse del telefono. -->
     <dimen name="icon_compact">16dp</dimen>
     <dimen name="icon_standard">20dp</dimen>
