@@ -24,7 +24,7 @@
                     <com.google.android.material.textfield.TextInputEditText android:id="@+id/team1NameEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.button.MaterialButton android:id="@+id/team1ColorButton" style="@style/Widget.App.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/btn_team_1_color" app:icon="@drawable/ic_color_picker" app:iconGravity="textStart" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/team1ColorButton" style="@style/Widget.App.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/btn_team_1_color" app:icon="@drawable/ic_palette" app:iconSize="@dimen/icon_standard" app:iconGravity="textStart" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -39,7 +39,7 @@
                     <com.google.android.material.textfield.TextInputEditText android:id="@+id/team2NameEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.button.MaterialButton android:id="@+id/team2ColorButton" style="@style/Widget.App.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/btn_team_2_color" app:icon="@drawable/ic_color_picker" app:iconGravity="textStart" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/team2ColorButton" style="@style/Widget.App.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/btn_team_2_color" app:icon="@drawable/ic_palette" app:iconSize="@dimen/icon_standard" app:iconGravity="textStart" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

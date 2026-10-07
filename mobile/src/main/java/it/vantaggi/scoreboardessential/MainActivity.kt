@@ -500,7 +500,7 @@ class MainActivity :
 
         // Lo stato si legge dal glifo e dal colore del tempo, non da una parola che cambia larghezza.
         viewModel.isMatchTimerRunning.observe(this) { isRunning ->
-            timerStartButton.setIconResource(if (isRunning) R.drawable.ic_pause else R.drawable.ic_play)
+            timerStartButton.setIconResource(if (isRunning) R.drawable.ic_pause else R.drawable.ic_play_arrow)
             timerStartButton.setTextColor(ContextCompat.getColor(this, if (isRunning) R.color.ink_white else R.color.sidewalk_gray))
             ViewCompat.setStateDescription(
                 timerStartButton,
@@ -1168,7 +1168,7 @@ class MainActivity :
         val statusIcon = findViewById<ImageView>(R.id.wear_status_icon)
         val collegato = viewModel.isWearConnected.value == true
         val rifiutato = viewModel.watchNotice.value is WatchNotice.Rejected
-        statusIcon.setImageResource(if (collegato) R.drawable.ic_watch_connected else R.drawable.ic_watch_disconnected)
+        statusIcon.setImageResource(if (collegato) R.drawable.ic_watch else R.drawable.ic_watch_off)
         statusIcon.imageTintList =
             ColorStateList.valueOf(ContextCompat.getColor(this, if (collegato) R.color.stencil_white else R.color.sidewalk_gray))
         statusIcon.foreground = if (rifiutato) ContextCompat.getDrawable(this, R.drawable.bg_watch_notice_badge) else null

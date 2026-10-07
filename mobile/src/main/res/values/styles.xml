@@ -166,6 +166,7 @@
     </style>
     <style name="Widget.App.Switch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
         <item name="thumbIcon">@drawable/ic_switch_thumb</item>
+        <item name="thumbIconTint">@color/elite_on_lime</item>
         <item name="android:minHeight">@dimen/control_touch</item>
         <item name="android:stateListAnimator">?attr/pressFeedback</item>
     </style>

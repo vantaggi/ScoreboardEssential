@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Material Symbols Outlined: bar_chart. Peso 400, grade 0, optical size 24, riempimento 0, scaricato com'e' da google/material-design-icons (symbols/android). Il colore lo da' il tint: nel vettore non c'e' nessun colore scritto a mano. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960"
+    android:tint="?attr/colorControlNormal">
+  <path
+      android:fillColor="@android:color/white"
+      android:pathData="M640,800L640,520L800,520L800,800L640,800ZM400,800L400,160L560,160L560,800L400,800ZM160,800L160,360L320,360L320,800L160,800Z"/>
+</vector>

@@ -16,7 +16,7 @@ class OnboardingPagerAdapter(
                 OnboardingStepFragment.newInstance(
                     R.string.onboarding_score_title,
                     R.string.onboarding_score_description,
-                    R.drawable.ic_stats,
+                    R.drawable.ic_bar_chart,
                 )
             }
 
@@ -32,7 +32,7 @@ class OnboardingPagerAdapter(
                 OnboardingStepFragment.newInstance(
                     R.string.onboarding_wear_title,
                     R.string.onboarding_wear_description,
-                    R.drawable.ic_watch_connected,
+                    R.drawable.ic_watch,
                 )
             }
 

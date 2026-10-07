@@ -58,7 +58,7 @@
             android:textColor="@color/sidewalk_gray"
             android:onClick="startStopTimer"
             app:backgroundTint="@color/concrete_gray"
-            app:icon="@drawable/ic_play"
+            app:icon="@drawable/ic_play_arrow"
             app:iconTint="@color/stencil_white"
             app:iconGravity="textStart"
             app:iconPadding="6dp"
@@ -127,8 +127,8 @@
             android:layout_height="48dp"
             android:contentDescription="@string/cd_wear_status"
             android:padding="8dp"
-            android:src="@drawable/ic_watch_disconnected"
-            tools:src="@drawable/ic_watch_connected" />
+            android:src="@drawable/ic_watch_off"
+            tools:src="@drawable/ic_watch" />
 
         <!-- Apre il foglio PARTITA: rose, registro, formazioni e azioni stanno li'. Solo il glifo,
              con la descrizione a voce: la parola non entra in 328dp con i caratteri ingranditi. -->
@@ -497,7 +497,7 @@
                 android:layout_height="48dp"
                 android:layout_gravity="center"
                 android:importantForAccessibility="no"
-                android:src="@drawable/ic_plus" />
+                android:src="@drawable/ic_add" />
 
             <!-- A partita finita la zona si spegne e questa barra porta il colore della squadra. -->
             <View
@@ -530,7 +530,7 @@
                 android:layout_height="48dp"
                 android:layout_gravity="center"
                 android:importantForAccessibility="no"
-                android:src="@drawable/ic_plus" />
+                android:src="@drawable/ic_add" />
 
             <View
                 android:id="@+id/team2_zone_bar"

@@ -16,7 +16,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:tint="@color/team_spray_yellow"
-            tools:src="@drawable/ic_watch_connected" />
+            tools:src="@drawable/ic_watch" />
 
         <TextView
             android:id="@+id/onboarding_title"

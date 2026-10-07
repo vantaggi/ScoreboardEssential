@@ -33,7 +33,7 @@
         <!-- Actions -->
         <LinearLayout android:id="@+id/action_container" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="vertical" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent">
 
-            <ImageButton android:id="@+id/stats_button" android:layout_width="48dp" android:layout_height="48dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_stats" android:contentDescription="@string/cd_player_stats" app:tint="@color/neon_cyan"/>
+            <ImageButton android:id="@+id/stats_button" android:layout_width="48dp" android:layout_height="48dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_bar_chart" android:contentDescription="@string/cd_player_stats" app:tint="@color/neon_cyan"/>
 
             <ImageButton android:id="@+id/edit_button" android:layout_width="48dp" android:layout_height="48dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_edit" android:contentDescription="@string/cd_edit_player" app:tint="@color/sidewalk_gray"/>
 
