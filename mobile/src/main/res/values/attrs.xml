@@ -6,6 +6,26 @@
         sola opacita'. Gli stili dei controlli lo citano con ?attr/pressFeedback.
     -->
     <attr name="pressFeedback" format="reference" />
+    <attr name="eliteBackground" format="color" />
+    <attr name="eliteSurface" format="color" />
+    <attr name="eliteSurfaceRaised" format="color" />
+    <attr name="eliteSurfaceHover" format="color" />
+    <attr name="eliteBorder" format="color" />
+    <attr name="eliteBorderStrong" format="color" />
+    <attr name="eliteOutline" format="color" />
+    <attr name="eliteTextPrimary" format="color" />
+    <attr name="eliteTextSecondary" format="color" />
+    <attr name="eliteTextDisabled" format="color" />
+    <attr name="eliteOnLime" format="color" />
+    <attr name="eliteWarning" format="color" />
+    <attr name="eliteError" format="color" />
+    <attr name="eliteInfo" format="color" />
+    <attr name="eliteSuccessSubtle" format="color" />
+    <attr name="eliteWarningSubtle" format="color" />
+    <attr name="eliteErrorSubtle" format="color" />
+    <attr name="eliteInfoSubtle" format="color" />
+    <attr name="eliteStatePressed" format="color" />
+    <attr name="eliteFocusRing" format="color" />
 
     <!--
         Lo stato vuoto (G-4): che cosa e' vuoto, perche', che fare. L'azione e' facoltativa, ma una

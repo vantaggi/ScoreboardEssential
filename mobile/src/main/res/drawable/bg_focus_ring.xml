@@ -10,7 +10,7 @@
             <shape android:shape="rectangle">
                 <stroke
                     android:width="@dimen/focus_ring_width"
-                    android:color="@color/elite_lime" />
+                    android:color="@color/elite_focus_ring" />
                 <corners android:radius="@dimen/radius_control" />
             </shape>
         </inset>

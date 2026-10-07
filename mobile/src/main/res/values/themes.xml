@@ -16,22 +16,47 @@
     -->
     <style name="Theme.ScoreboardEssential" parent="Theme.Material3.Dark.NoActionBar">
         <!--
+            Ruoli che il tema ad alto contrasto (G-10) cambia: ogni token elite_* e' un file in res/color che
+            punta a questi attributi, quindi layout e codice continuano a citare @color/elite_x e seguono il
+            tema. Qui i valori standard; ThemeOverlay.App.AltoContrasto assegna quelli ad alto contrasto.
+        -->
+        <item name="eliteBackground">@color/elite_background_standard</item>
+        <item name="eliteSurface">@color/elite_surface_standard</item>
+        <item name="eliteSurfaceRaised">@color/elite_surface_raised_standard</item>
+        <item name="eliteSurfaceHover">@color/elite_surface_hover_standard</item>
+        <item name="eliteBorder">@color/elite_border_standard</item>
+        <item name="eliteBorderStrong">@color/elite_border_strong_standard</item>
+        <item name="eliteOutline">@color/elite_outline_standard</item>
+        <item name="eliteTextPrimary">@color/elite_text_primary_standard</item>
+        <item name="eliteTextSecondary">@color/elite_text_secondary_standard</item>
+        <item name="eliteTextDisabled">@color/elite_text_disabled_standard</item>
+        <item name="eliteOnLime">@color/elite_on_lime_standard</item>
+        <item name="eliteWarning">@color/elite_warning_standard</item>
+        <item name="eliteError">@color/elite_error_standard</item>
+        <item name="eliteInfo">@color/elite_info_standard</item>
+        <item name="eliteSuccessSubtle">@color/elite_success_subtle_standard</item>
+        <item name="eliteWarningSubtle">@color/elite_warning_subtle_standard</item>
+        <item name="eliteErrorSubtle">@color/elite_error_subtle_standard</item>
+        <item name="eliteInfoSubtle">@color/elite_info_subtle_standard</item>
+        <item name="eliteStatePressed">@color/elite_state_pressed_standard</item>
+        <item name="eliteFocusRing">@color/elite_focus_ring_standard</item>
+        <!--
             Colori di Padel Elite (DESIGN.md, pista "Coerenza con Padel Elite", G-0). Il lime e' l'unico
             accento: sopra il lime il testo e' il fondo #0D0D0F (14,9:1), mai il bianco (1,3:1). Il ciano
             della dashboard vive solo nei grafici e non ha un ruolo qui: un secondo accento nel contorno
             sarebbe un'invenzione dell'app.
         -->
         <item name="colorPrimary">@color/elite_lime</item>
-        <item name="colorOnPrimary">@color/elite_on_lime</item>
+        <item name="colorOnPrimary">?attr/eliteOnLime</item>
         <!-- Il secondario e' neutro, come il bottone secondario della dashboard. -->
-        <item name="colorSecondary">@color/elite_text_secondary</item>
-        <item name="colorOnSecondary">@color/elite_background</item>
-        <item name="colorError">@color/elite_error</item>
-        <item name="colorOnError">@color/elite_background</item>
-        <item name="android:colorBackground">@color/elite_background</item>
-        <item name="colorSurface">@color/elite_surface</item>
-        <item name="colorOnSurface">@color/elite_text_primary</item>
-        <item name="colorOnSurfaceVariant">@color/elite_text_secondary</item>
+        <item name="colorSecondary">?attr/eliteTextSecondary</item>
+        <item name="colorOnSecondary">?attr/eliteBackground</item>
+        <item name="colorError">?attr/eliteError</item>
+        <item name="colorOnError">?attr/eliteBackground</item>
+        <item name="android:colorBackground">?attr/eliteBackground</item>
+        <item name="colorSurface">?attr/eliteSurface</item>
+        <item name="colorOnSurface">?attr/eliteTextPrimary</item>
+        <item name="colorOnSurfaceVariant">?attr/eliteTextSecondary</item>
         <!--
             Niente tinta di elevazione (G-3). Material 3 mescola colorPrimary nelle superfici sollevate
             (dialoghi, fogli, card): con il lime il fondo del dialogo diventava verde oliva invece di
@@ -46,46 +71,46 @@
             sfondo dei dialoghi, bordi dei campi. Qui ogni ruolo ha un token del progetto e il
             test TemaDelTelefonoTest controlla che nessuno sia viola. Il tema resta solo scuro (G4).
         -->
-        <item name="colorOnBackground">@color/elite_text_primary</item>
-        <item name="colorPrimaryContainer">@color/elite_surface_raised</item>
-        <item name="colorOnPrimaryContainer">@color/elite_text_primary</item>
-        <item name="colorSecondaryContainer">@color/elite_surface_raised</item>
-        <item name="colorOnSecondaryContainer">@color/elite_text_primary</item>
+        <item name="colorOnBackground">?attr/eliteTextPrimary</item>
+        <item name="colorPrimaryContainer">?attr/eliteSurfaceRaised</item>
+        <item name="colorOnPrimaryContainer">?attr/eliteTextPrimary</item>
+        <item name="colorSecondaryContainer">?attr/eliteSurfaceRaised</item>
+        <item name="colorOnSecondaryContainer">?attr/eliteTextPrimary</item>
         <!-- Terzo accento: non esiste in Padel Elite, il ruolo segue il testo primario. -->
-        <item name="colorTertiary">@color/elite_text_primary</item>
-        <item name="colorOnTertiary">@color/elite_background</item>
-        <item name="colorTertiaryContainer">@color/elite_surface_raised</item>
-        <item name="colorOnTertiaryContainer">@color/elite_text_primary</item>
-        <item name="colorErrorContainer">@color/elite_surface</item>
-        <item name="colorOnErrorContainer">@color/elite_error</item>
-        <item name="colorSurfaceVariant">@color/elite_surface_raised</item>
-        <item name="colorSurfaceDim">@color/elite_background</item>
-        <item name="colorSurfaceBright">@color/elite_surface_hover</item>
-        <item name="colorSurfaceContainerLowest">@color/elite_background</item>
-        <item name="colorSurfaceContainerLow">@color/elite_surface</item>
-        <item name="colorSurfaceContainer">@color/elite_surface</item>
-        <item name="colorSurfaceContainerHigh">@color/elite_surface_raised</item>
-        <item name="colorSurfaceContainerHighest">@color/elite_surface_raised</item>
+        <item name="colorTertiary">?attr/eliteTextPrimary</item>
+        <item name="colorOnTertiary">?attr/eliteBackground</item>
+        <item name="colorTertiaryContainer">?attr/eliteSurfaceRaised</item>
+        <item name="colorOnTertiaryContainer">?attr/eliteTextPrimary</item>
+        <item name="colorErrorContainer">?attr/eliteSurface</item>
+        <item name="colorOnErrorContainer">?attr/eliteError</item>
+        <item name="colorSurfaceVariant">?attr/eliteSurfaceRaised</item>
+        <item name="colorSurfaceDim">?attr/eliteBackground</item>
+        <item name="colorSurfaceBright">?attr/eliteSurfaceHover</item>
+        <item name="colorSurfaceContainerLowest">?attr/eliteBackground</item>
+        <item name="colorSurfaceContainerLow">?attr/eliteSurface</item>
+        <item name="colorSurfaceContainer">?attr/eliteSurface</item>
+        <item name="colorSurfaceContainerHigh">?attr/eliteSurfaceRaised</item>
+        <item name="colorSurfaceContainerHighest">?attr/eliteSurfaceRaised</item>
         <!-- Contorno dei comandi: elite_outline (3:1), non il bordo della dashboard (1,4:1). -->
-        <item name="colorOutline">@color/elite_outline</item>
-        <item name="colorOutlineVariant">@color/elite_border_strong</item>
+        <item name="colorOutline">?attr/eliteOutline</item>
+        <item name="colorOutlineVariant">?attr/eliteBorderStrong</item>
         <!-- Superficie e inchiostro invertiti (snackbar): chiaro su scuro, con l'azione sul fondo. -->
-        <item name="colorSurfaceInverse">@color/elite_text_primary</item>
-        <item name="colorOnSurfaceInverse">@color/elite_background</item>
-        <item name="colorPrimaryInverse">@color/elite_background</item>
+        <item name="colorSurfaceInverse">?attr/eliteTextPrimary</item>
+        <item name="colorOnSurfaceInverse">?attr/eliteBackground</item>
+        <item name="colorPrimaryInverse">?attr/eliteBackground</item>
         <!-- Ruoli fissi: nessun layout li usa, ma il primo componente nuovo li userebbe viola. -->
         <item name="colorPrimaryFixed">@color/elite_lime</item>
         <item name="colorPrimaryFixedDim">@color/elite_lime</item>
-        <item name="colorOnPrimaryFixed">@color/elite_on_lime</item>
-        <item name="colorOnPrimaryFixedVariant">@color/elite_on_lime</item>
-        <item name="colorSecondaryFixed">@color/elite_text_secondary</item>
-        <item name="colorSecondaryFixedDim">@color/elite_text_secondary</item>
-        <item name="colorOnSecondaryFixed">@color/elite_background</item>
-        <item name="colorOnSecondaryFixedVariant">@color/elite_background</item>
-        <item name="colorTertiaryFixed">@color/elite_text_primary</item>
-        <item name="colorTertiaryFixedDim">@color/elite_text_secondary</item>
-        <item name="colorOnTertiaryFixed">@color/elite_background</item>
-        <item name="colorOnTertiaryFixedVariant">@color/elite_background</item>
+        <item name="colorOnPrimaryFixed">?attr/eliteOnLime</item>
+        <item name="colorOnPrimaryFixedVariant">?attr/eliteOnLime</item>
+        <item name="colorSecondaryFixed">?attr/eliteTextSecondary</item>
+        <item name="colorSecondaryFixedDim">?attr/eliteTextSecondary</item>
+        <item name="colorOnSecondaryFixed">?attr/eliteBackground</item>
+        <item name="colorOnSecondaryFixedVariant">?attr/eliteBackground</item>
+        <item name="colorTertiaryFixed">?attr/eliteTextPrimary</item>
+        <item name="colorTertiaryFixedDim">?attr/eliteTextSecondary</item>
+        <item name="colorOnTertiaryFixed">?attr/eliteBackground</item>
+        <item name="colorOnTertiaryFixedVariant">?attr/eliteBackground</item>
 
         <!-- Tutti i dialoghi, anche quelli costruiti senza overlay esplicito. -->
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.App.MaterialAlertDialog</item>
@@ -144,6 +169,35 @@
     <style name="ThemeOverlay.App.MovimentoRidotto" parent="">
         <item name="pressFeedback">@animator/press_feedback_reduced</item>
     </style>
+    <!--
+        Alto contrasto (G-10): un tema AGGIUNTO, scuro, che cambia solo i colori dei ruoli (testo a 7:1, bordi e
+        icone a 3:1). Forme, pesi, raggi e movimento non si toccano: questo overlay non ne ha nessuno. Lo applica
+        AltoContrasto.kt a ogni activity prima che gonfi i layout, per scelta dell'utente o seguendo il contrasto
+        di sistema. I valori sono in colors_alto_contrasto.xml.
+    -->
+    <style name="ThemeOverlay.App.AltoContrasto" parent="">
+        <item name="eliteBackground">@color/elite_background_alto_contrasto</item>
+        <item name="eliteSurface">@color/elite_surface_alto_contrasto</item>
+        <item name="eliteSurfaceRaised">@color/elite_surface_raised_alto_contrasto</item>
+        <item name="eliteSurfaceHover">@color/elite_surface_hover_alto_contrasto</item>
+        <item name="eliteBorder">@color/elite_border_alto_contrasto</item>
+        <item name="eliteBorderStrong">@color/elite_border_strong_alto_contrasto</item>
+        <item name="eliteOutline">@color/elite_outline_alto_contrasto</item>
+        <item name="eliteTextPrimary">@color/elite_text_primary_alto_contrasto</item>
+        <item name="eliteTextSecondary">@color/elite_text_secondary_alto_contrasto</item>
+        <item name="eliteTextDisabled">@color/elite_text_disabled_alto_contrasto</item>
+        <item name="eliteOnLime">@color/elite_on_lime_alto_contrasto</item>
+        <item name="eliteWarning">@color/elite_warning_alto_contrasto</item>
+        <item name="eliteError">@color/elite_error_alto_contrasto</item>
+        <item name="eliteInfo">@color/elite_info_alto_contrasto</item>
+        <item name="eliteSuccessSubtle">@color/elite_success_subtle_alto_contrasto</item>
+        <item name="eliteWarningSubtle">@color/elite_warning_subtle_alto_contrasto</item>
+        <item name="eliteErrorSubtle">@color/elite_error_subtle_alto_contrasto</item>
+        <item name="eliteInfoSubtle">@color/elite_info_subtle_alto_contrasto</item>
+        <item name="eliteStatePressed">@color/elite_state_pressed_alto_contrasto</item>
+        <item name="eliteFocusRing">@color/elite_focus_ring_alto_contrasto</item>
+    </style>
+
 
     <!--
         Tipografia del contorno (G-1, G-1b). Inter ovunque c'e' testo: i pesi vengono dai ruoli di M3
@@ -335,8 +389,8 @@
     -->
     <style name="ThemeOverlay.App.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="colorPrimary">@color/elite_lime</item>
-        <item name="colorSurface">@color/elite_surface_raised</item>
-        <item name="colorOnSurface">@color/elite_text_primary</item>
+        <item name="colorSurface">?attr/eliteSurfaceRaised</item>
+        <item name="colorOnSurface">?attr/eliteTextPrimary</item>
         <item name="elevationOverlayEnabled">false</item>
         <item name="shapeAppearanceCornerExtraLarge">@style/ShapeAppearance.App.Overlay</item>
         <item name="alertDialogTheme">@style/ThemeOverlay.App.Dialog</item>

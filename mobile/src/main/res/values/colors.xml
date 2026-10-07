@@ -7,36 +7,38 @@
         dell'orologio ha il suo colors.xml e qui non si tocca (G-7).
     -->
     <!-- Fondi: pagina, card, superficie rialzata (dialoghi, campi), hover. -->
-    <color name="elite_background">#0D0D0F</color>
-    <color name="elite_surface">#161618</color>
-    <color name="elite_surface_raised">#1E1E22</color>
-    <color name="elite_surface_hover">#2A2A2E</color>
+    <color name="elite_background_standard">#0D0D0F</color>
+    <color name="elite_surface_standard">#161618</color>
+    <color name="elite_surface_raised_standard">#1E1E22</color>
+    <color name="elite_surface_hover_standard">#2A2A2E</color>
     <!--
         Bordi della dashboard: servono a separare le card, non a farsi trovare. Contro i fondi
         valgono 1,1:1 e 1,4:1, quindi NON bastano come contorno di un comando o di un campo
         (WCAG 1.4.11 chiede 3:1): per quello c'e' elite_outline.
     -->
-    <color name="elite_border">#1E1E22</color>
-    <color name="elite_border_strong">#2A2A2E</color>
+    <color name="elite_border_standard">#1E1E22</color>
+    <color name="elite_border_strong_standard">#2A2A2E</color>
     <!--
         Contorno di campi e pulsanti secondari, una scelta dell'app e non della dashboard: la tinta
         del testo secondario scurita fino a 3,3:1 sulla superficie rialzata (3,6 sulla superficie,
         3,9 sul fondo). E' il ruolo colorOutline del tema.
     -->
-    <color name="elite_outline">#6E6E7E</color>
+    <color name="elite_outline_standard">#6E6E7E</color>
     <!-- Testi: primario e secondario. La Constitution non ha un terzo livello leggibile (tolto in G-4). -->
-    <color name="elite_text_primary">#D1D1D8</color>
-    <color name="elite_text_secondary">#8A8A9A</color>
+    <color name="elite_text_primary_standard">#D1D1D8</color>
+    <color name="elite_text_secondary_standard">#8A8A9A</color>
     <!-- Marchio: l'unico accento del contorno. Il testo sopra il lime e' il fondo, mai il bianco (1,3:1). -->
     <color name="elite_lime">#C8F135</color>
-    <color name="elite_on_lime">#0D0D0F</color>
+    <color name="elite_on_lime_standard">#0D0D0F</color>
+    <!-- Anello di fuoco: lime nel tema standard, bianco in quello ad alto contrasto (G-10). -->
+    <color name="elite_focus_ring_standard">@color/elite_lime</color>
     <!-- Successo = lime, come nella dashboard. -->
     <color name="elite_success">@color/elite_lime</color>
     <!-- Ciano: SOLO visualizzazioni e grafici (Cronaca, momentum), mai nel contorno dei comandi. -->
     <color name="elite_cyan">#00E5FF</color>
-    <color name="elite_warning">#E09A35</color>
+    <color name="elite_warning_standard">#E09A35</color>
     <!-- Errore: testo e icone su fondo e superficie (4,7:1 sulla superficie, 4,3:1 sulla rialzata). -->
-    <color name="elite_error">#E05252</color>
+    <color name="elite_error_standard">#E05252</color>
     <!-- Velo dei dialoghi: nero all'85%. -->
     <color name="elite_overlay">#D9000000</color>
 
@@ -45,16 +47,16 @@
         ogni token dice il ruolo; l'origine (P, C, A) e i contrasti sono nella tabella del documento.
     -->
     <!-- text-disabled: solo etichette di comandi disattivati, sotto 4,5 per scelta della Constitution. -->
-    <color name="elite_text_disabled">#6B7077</color>
+    <color name="elite_text_disabled_standard">#6B7077</color>
     <!-- status-info: avviso informativo, sempre con una parola o un'icona (mai solo la tinta). -->
-    <color name="elite_info">#7FBDEA</color>
+    <color name="elite_info_standard">#7FBDEA</color>
     <!-- status-*-subtle: fondo degli avvisi; l'etichetta e' il colore di stato, il testo e' text-primary. -->
-    <color name="elite_success_subtle">#15291F</color>
-    <color name="elite_warning_subtle">#2E2410</color>
-    <color name="elite_error_subtle">#2A1415</color>
-    <color name="elite_info_subtle">#14262F</color>
+    <color name="elite_success_subtle_standard">#15291F</color>
+    <color name="elite_warning_subtle_standard">#2E2410</color>
+    <color name="elite_error_subtle_standard">#2A1415</color>
+    <color name="elite_info_subtle_standard">#14262F</color>
     <!-- state-pressed: il testo primario al 12%, l'overlay delle righe premute col movimento ridotto. -->
-    <color name="elite_state_pressed">#1FD1D1D8</color>
+    <color name="elite_state_pressed_standard">#1FD1D1D8</color>
     <!-- chart-3, chart-4, chart-5: i lati 1 e 2 sono lime e ciano; questi servono dal terzo dato. -->
     <color name="elite_chart_3">#F0A36B</color>
     <color name="elite_chart_4">#D79BDB</color>

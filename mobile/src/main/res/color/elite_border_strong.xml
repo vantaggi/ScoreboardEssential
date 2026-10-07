@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Bordo della card: border-subtle a riposo; selezionata, lime. -->
+<!-- Token elite_border_strong: segue il tema (standard o alto contrasto) tramite ?attr/eliteBorderStrong. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="@color/elite_lime" android:state_checked="true" />
     <item android:color="?attr/eliteBorderStrong" />
 </selector>
