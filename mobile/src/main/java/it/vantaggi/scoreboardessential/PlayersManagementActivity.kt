@@ -22,6 +22,8 @@ import com.google.android.material.snackbar.Snackbar
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
+import it.vantaggi.scoreboardessential.ui.EmptyStateView
+import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
 import it.vantaggi.scoreboardessential.views.PlayersManagementViewModelFactory
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -31,6 +33,8 @@ class PlayersManagementActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: PlayersManagementAdapter
     private lateinit var fab: FloatingActionButton
+    private lateinit var emptyState: EmptyStateView
+    private lateinit var playersGroup: View
     private lateinit var rolesFilterChipGroup: ChipGroup
     private var searchQuery: String = ""
 
@@ -85,11 +89,16 @@ class PlayersManagementActivity : AppCompatActivity() {
     private fun initViews() {
         recyclerView = findViewById(R.id.players_recyclerview)
         fab = findViewById(R.id.add_player_fab)
+        emptyState = findViewById(R.id.empty_state)
+        playersGroup = findViewById(R.id.players_group)
         rolesFilterChipGroup = findViewById(R.id.roles_filter_chip_group)
-        fab.setOnClickListener {
-            val createPlayerDialog = CreatePlayerDialogFragment()
-            createPlayerDialog.show(supportFragmentManager, "CreatePlayerDialog")
-        }
+        fab.setOnClickListener { apriNuovoGiocatore() }
+        // Lo stato vuoto offre la stessa strada: il FAB si nasconde quando c'e' il bottone, un primario solo.
+        emptyState.actionButton.setOnClickListener { apriNuovoGiocatore() }
+    }
+
+    private fun apriNuovoGiocatore() {
+        CreatePlayerDialogFragment().show(supportFragmentManager, "CreatePlayerDialog")
     }
 
     private fun setupRecyclerView() {
@@ -110,6 +119,7 @@ class PlayersManagementActivity : AppCompatActivity() {
             )
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.addItemDecoration(InsetDividerDecoration(this))
     }
 
     private fun observeViewModel() {
@@ -125,7 +135,7 @@ class PlayersManagementActivity : AppCompatActivity() {
                         }
                     }
                 adapter.submitList(filteredPlayers)
-                findViewById<View>(R.id.empty_state).visibility = if (filteredPlayers.isEmpty()) View.VISIBLE else View.GONE
+                mostraElencoOVuoto(filteredPlayers.isEmpty())
             }
         }
 
@@ -134,6 +144,24 @@ class PlayersManagementActivity : AppCompatActivity() {
                 setupRoleFilterChips(roles)
             }
         }
+    }
+
+    /**
+     * Elenco o stato vuoto. Vuoto per due motivi diversi: non c'e' nessun giocatore (si offre di
+     * aggiungerne uno) oppure la ricerca o il filtro del ruolo non trovano niente (si dice di cambiarli).
+     */
+    private fun mostraElencoOVuoto(vuoto: Boolean) {
+        playersGroup.visibility = if (vuoto) View.GONE else View.VISIBLE
+        emptyState.visibility = if (vuoto) View.VISIBLE else View.GONE
+        val filtrato = searchQuery.isNotEmpty() || viewModel.selectedRoleFilter.value != null
+        if (filtrato) {
+            emptyState.setMessage(getString(R.string.no_players_found), getString(R.string.no_players_found_hint))
+        } else {
+            emptyState.setMessage(getString(R.string.no_players_yet), getString(R.string.no_players_hint))
+        }
+        emptyState.actionButton.visibility = if (filtrato) View.GONE else View.VISIBLE
+        // Un primario per volta: con lo stato vuoto e il suo bottone, il FAB sta nascosto.
+        if (vuoto && !filtrato) fab.hide() else fab.show()
     }
 
     private fun setupRoleFilterChips(roles: List<it.vantaggi.scoreboardessential.database.Role>) {
@@ -249,16 +277,6 @@ class PlayersManagementActivity : AppCompatActivity() {
                 Snackbar.make(fab, R.string.stats_reset, Snackbar.LENGTH_SHORT).show()
             }.setNegativeButton(R.string.cancel, null)
             .show()
-    }
-
-    private fun showEmptyState() {
-        findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.empty_state)
-            ?.visibility = android.view.View.VISIBLE
-    }
-
-    private fun hideEmptyState() {
-        findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.empty_state)
-            ?.visibility = android.view.View.GONE
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

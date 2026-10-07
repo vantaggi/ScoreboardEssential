@@ -4,11 +4,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.card.MaterialCardView
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.domain.model.PlayerStatsDTO
 
@@ -31,47 +29,30 @@ class StatisticsAdapter : ListAdapter<PlayerStatsDTO, StatisticsAdapter.ViewHold
         holder.bind(getItem(position), position)
     }
 
+    /**
+     * Una riga e' il nome e i gol. Il primo in classifica ha i gol in lime (accento: l'enfasi che
+     * significa qualcosa, e il secondo segno e' la posizione in cima alla lista). Rango e presenze non
+     * sono a vista ma TalkBack le sente nella descrizione della riga.
+     */
     class ViewHolder(
         itemView: View,
     ) : RecyclerView.ViewHolder(itemView) {
-        private val rankTextView: TextView = itemView.findViewById(R.id.text_rank)
         private val nameTextView: TextView = itemView.findViewById(R.id.text_player_name)
         private val goalsTextView: TextView = itemView.findViewById(R.id.text_goals)
-        private val appearancesTextView: TextView = itemView.findViewById(R.id.text_appearances)
-        private val cardView: MaterialCardView = itemView.findViewById(R.id.card_player_stat)
 
         fun bind(
             item: PlayerStatsDTO,
             position: Int,
         ) {
             val rank = position + 1
-            rankTextView.text = "#$rank"
-            nameTextView.text = item.playerName
+            val resources = itemView.resources
             val context = itemView.context
-            goalsTextView.text = context.resources.getQuantityString(R.plurals.stats_goals, item.goals, item.goals)
-            appearancesTextView.text = context.resources.getQuantityString(R.plurals.stats_appearances, item.appearances, item.appearances)
-
-            if (rank == 1) {
-                // Il podio e' la card rosa piena con testo nero (5,02:1). Prima era gialla, il
-                // colore della squadra 1, con il rank in ciano a 1,09:1.
-                cardView.setCardBackgroundColor(
-                    ContextCompat.getColor(context, R.color.graffiti_pink),
-                )
-                nameTextView.setTextColor(ContextCompat.getColor(context, R.color.asphalt_black))
-                rankTextView.setTextColor(ContextCompat.getColor(context, R.color.asphalt_black))
-                goalsTextView.setTextColor(ContextCompat.getColor(context, R.color.asphalt_black))
-                appearancesTextView.setTextColor(ContextCompat.getColor(context, R.color.asphalt_black))
-            } else {
-                // Default style
-                cardView.setCardBackgroundColor(
-                    ContextCompat.getColor(context, R.color.graffiti_dark_gray),
-                )
-                nameTextView.setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
-                rankTextView.setTextColor(ContextCompat.getColor(context, R.color.graffiti_pink))
-                // I gol in #E0E0E0: il verde della squadra 2 non e' un evidenziatore.
-                goalsTextView.setTextColor(ContextCompat.getColor(context, R.color.stencil_white))
-                appearancesTextView.setTextColor(ContextCompat.getColor(context, R.color.sidewalk_gray))
-            }
+            nameTextView.text = item.playerName
+            val gol = resources.getQuantityString(R.plurals.stats_goals, item.goals, item.goals)
+            goalsTextView.text = gol
+            goalsTextView.setTextColor(context.getColor(if (rank == 1) R.color.elite_lime else R.color.elite_text_primary))
+            val presenze = resources.getQuantityString(R.plurals.stats_appearances, item.appearances, item.appearances)
+            itemView.contentDescription = resources.getString(R.string.stats_row_description, rank, item.playerName, gol, presenze)
         }
     }
 

@@ -48,11 +48,8 @@ class AccessibilitaDelTelefonoTest {
     fun `nella gestione giocatori i comandi sono da 48dp e parlano italiano`() {
         val riga = gonfia(R.layout.item_player_management)
         val minimo = (48 * riga.resources.displayMetrics.density).toInt()
-        val attese =
-            mapOf(
-                R.id.stats_button to "Statistiche del giocatore",
-                R.id.edit_button to "Modifica giocatore",
-            )
+        // La modifica e' la riga stessa (si tocca per modificare): in riga resta il solo comando del dettaglio.
+        val attese = mapOf(R.id.stats_button to "Statistiche del giocatore")
         for ((id, descrizione) in attese) {
             val pulsante = riga.findViewById<View>(id)
             val parametri = pulsante.layoutParams

@@ -1,40 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Aggiungi o modifica un giocatore (G-4). Il compito: nome e ruoli. Un solo primario, "Salva
+    giocatore", sotto il modulo (un bottone che dice l'azione al posto dell'icona di sola barra); mentre
+    salva resta lo stesso bottone con l'icona che gira. L'errore del nome sta sotto il campo e il testo
+    scritto non si perde.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@drawable/bg_asphalt_main"
     android:fitsSystemWindows="true"
     tools:context=".AddEditPlayerActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent">
+        android:background="@android:color/transparent"
+        app:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
+            style="@style/Widget.App.Toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_arrow_back"
-            app:titleTextColor="@color/stencil_white"
-            app:navigationIconTint="@color/stencil_white"
             app:title="@string/label_add_player" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="@dimen/space_16">
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/player_name_layout"
                 style="@style/Widget.App.TextInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -51,20 +58,28 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="@dimen/space_24"
+                android:accessibilityHeading="true"
                 android:text="@string/label_roles"
-                android:textAppearance="?attr/textAppearanceHeadlineSmall"
-                android:textColor="@color/sidewalk_gray"
-                android:fontFamily="@font/inter" />
+                android:textAppearance="@style/TextAppearance.App.RowTitle"
+                android:textColor="@color/elite_text_secondary" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/roles_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                tools:listitem="@layout/item_role_selection" />
+                android:layout_marginTop="@dimen/space_8"
+                tools:listitem="@layout/item_role" />
 
         </LinearLayout>
     </ScrollView>
+
+    <it.vantaggi.scoreboardessential.ui.ProgressButton
+        android:id="@+id/save_player_button"
+        style="@style/Widget.App.Button.Primary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/space_16"
+        android:text="@string/save_player" />
 
 </LinearLayout>

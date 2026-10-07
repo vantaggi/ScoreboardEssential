@@ -32,11 +32,11 @@ fun MaterialButton.dipingiDiSquadra(colore: Int) {
  *
  * Il riempimento deve anche staccarsi dal fondo su cui sta ([sfondo], di norma la card #1E1E1E):
  * sotto 3:1 (WCAG 1.4.11) un blu notte diventa una macchia nel grigio, e allora prende un
- * contorno da 1dp #9E9E9E. Il colore resta quello scelto, e' il bordo a farlo vedere.
+ * contorno da 1dp in testo secondario. Il colore resta quello scelto, e' il bordo a farlo vedere.
  */
 fun TextView.etichettaDiSquadra(
     colore: Int,
-    sfondo: Int = context.getColor(R.color.concrete_gray),
+    sfondo: Int = context.getColor(R.color.elite_surface_raised),
 ) {
     riempiDiSquadra(colore, sfondo)
     setTextColor(TeamInk.on(colore))
@@ -55,7 +55,7 @@ fun View.riempiDiSquadra(
         MaterialShapeDrawable(forma).apply {
             fillColor = ColorStateList.valueOf(colore)
             if (TeamInk.contrast(colore, sfondo) < CONTRASTO_GRAFICA) {
-                setStroke(resources.displayMetrics.density, context.getColor(R.color.sidewalk_gray))
+                setStroke(resources.displayMetrics.density, context.getColor(R.color.elite_text_secondary))
             }
         }
 }
@@ -65,13 +65,13 @@ fun View.riempiDiSquadra(
  * che si sta muovendo, con l'inchiostro che avranno davvero. Cosi' l'utente vede come si
  * leggera' il colore prima della partita, non a bordo campo.
  *
- * Il fondo del dialogo e' #2C2C2C, non la card: il contorno si decide contro quello.
+ * Il fondo del dialogo e' la superficie rialzata, come la scheda dello storico: il contorno si decide contro quella.
  */
 fun TextView.anteprimaDiSquadra(
     colore: Int,
     nome: String,
 ) {
-    etichettaDiSquadra(colore, context.getColor(R.color.graffiti_dark_gray))
+    etichettaDiSquadra(colore, context.getColor(R.color.elite_surface_raised))
     text = context.getString(R.string.color_preview_text, nome)
 }
 

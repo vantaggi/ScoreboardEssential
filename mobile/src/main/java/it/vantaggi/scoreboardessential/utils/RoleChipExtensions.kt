@@ -1,37 +1,23 @@
 package it.vantaggi.scoreboardessential.utils
 
-import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
-import com.google.android.material.color.MaterialColors
 import it.vantaggi.scoreboardessential.R
-import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.database.Role
 
+/**
+ * I chip dei ruoli di un giocatore: la sigla (POR, DC...) con il nome intero per TalkBack, solo bordo
+ * e testo come ogni badge. Un giocatore senza ruoli non ha chip: e' il nome e basta.
+ */
 fun ChipGroup.setRoles(roles: List<Role>) {
     removeAllViews()
 
     val inflater = LayoutInflater.from(context)
-
-    if (roles.isEmpty()) {
-        val chip = inflater.inflate(R.layout.view_role_chip, this, false) as Chip
-        chip.text = "N/A"
-        // Use colorSurface as a default for empty state, similar to how RoleBadgeGroup did it
-        val surfaceColor = MaterialColors.getColor(context, com.google.android.material.R.attr.colorSurface, 0)
-        chip.chipBackgroundColor = ColorStateList.valueOf(surfaceColor)
-        chip.setTextColor(TeamInk.on(surfaceColor))
-        addView(chip)
-        return
-    }
-
     roles.forEach { role ->
         val chip = inflater.inflate(R.layout.view_role_chip, this, false) as Chip
         chip.text = RoleUtils.getRoleAbbreviation(role.name)
-        val color = RoleUtils.getCategoryColor(context, role.category)
-        chip.chipBackgroundColor = ColorStateList.valueOf(color)
-        // Il bianco sporco fisso faceva 3,17 / 1,17 / 1,07 / 1,01 su rosa, ciano, giallo e verde.
-        chip.setTextColor(TeamInk.on(color))
+        chip.contentDescription = role.name
         addView(chip)
     }
 }

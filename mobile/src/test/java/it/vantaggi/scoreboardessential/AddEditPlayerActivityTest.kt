@@ -11,7 +11,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.shadows.ShadowToast
 
 @RunWith(RobolectricTestRunner::class)
 class AddEditPlayerActivityTest {
@@ -86,8 +85,14 @@ class AddEditPlayerActivityTest {
         // Before fix: This assertion should fail because save proceeds and activity finishes
         assertEquals("Activity should not finish (save should fail)", false, activity.isFinishing)
 
-        // Assert Toast
-        val latestToast = ShadowToast.getTextOfLatestToast()
-        assertEquals("Player name is too long (max length 30)", latestToast)
+        // L'errore e' sotto il campo, non in un toast, e il testo scritto resta dov'era
+        val campo = activity.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.player_name_layout)
+        assertEquals("The name is too long: 30 characters at most.", campo.error?.toString())
+        assertEquals(longName, nameInput.text.toString())
+        assertEquals(
+            "il bottone non e' partito",
+            false,
+            activity.findViewById<it.vantaggi.scoreboardessential.ui.ProgressButton>(R.id.save_player_button).isLoading,
+        )
     }
 }

@@ -159,7 +159,6 @@
     <style name="TextAppearance.App.HeadlineMedium.Street" parent="TextAppearance.Material3.HeadlineMedium">
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">600</item>
-        <item name="android:textAllCaps">true</item>
     </style>
     <style name="TextAppearance.App.BodyLarge.Street" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:fontFamily">@font/inter</item>
@@ -199,6 +198,27 @@
     </style>
     <style name="TextAppearance.App.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
         <item name="android:fontFamily">@font/inter</item>
+    </style>
+
+    <!--
+        Ruoli di testo del contorno (G-4), sulla scala di M3 e sui tre pesi. section-heading: il titolo
+        della schermata e dei suoi gruppi, 600. row-title: il testo principale di una riga, 500.
+        caption: il dato che spiega, 400 in text-secondary. Il colore lo da' il tema o la vista.
+    -->
+    <style name="TextAppearance.App.SectionHeading" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">600</item>
+        <item name="android:textColor">@color/elite_text_primary</item>
+    </style>
+    <style name="TextAppearance.App.RowTitle" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">500</item>
+        <item name="android:textColor">@color/elite_text_primary</item>
+    </style>
+    <style name="TextAppearance.App.Caption" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">400</item>
+        <item name="android:textColor">@color/elite_text_secondary</item>
     </style>
 
     <!--

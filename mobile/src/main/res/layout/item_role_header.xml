@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Intestazione di una categoria di ruoli: testo secondario, non un colore di categoria. -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/header_title"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingStart="16dp"
-    android:paddingTop="16dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="8dp"
-    android:textAppearance="?attr/textAppearanceHeadlineSmall"
-    android:fontFamily="@font/inter"
-    android:textFontWeight="600"
-    android:textColor="@color/team_spray_yellow" />
+    android:accessibilityHeading="true"
+    android:paddingStart="@dimen/space_16"
+    android:paddingTop="@dimen/space_16"
+    android:paddingEnd="@dimen/space_16"
+    android:paddingBottom="@dimen/space_8"
+    android:textAppearance="@style/TextAppearance.App.RowTitle"
+    android:textColor="@color/elite_text_secondary" />

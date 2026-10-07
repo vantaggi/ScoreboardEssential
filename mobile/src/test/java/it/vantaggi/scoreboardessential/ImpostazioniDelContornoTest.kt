@@ -72,7 +72,7 @@ class ImpostazioniDelContornoTest {
         assertTrue(TeamInk.contrast(anteprima.currentTextColor, bluNotte) >= 4.5)
     }
 
-    // Un blu notte su #1E1E1E fa 1,26:1: senza bordo l'etichetta e' una macchia nel grigio della card.
+    // Un blu notte sulla scheda rialzata fa 1,2:1: senza bordo l'etichetta e' una macchia nel grigio.
     @Test
     fun `l'etichetta scura prende il contorno e quella chiara no`() {
         val scura = TextView(tema).apply { etichettaDiSquadra(bluNotte) }
@@ -82,6 +82,6 @@ class ImpostazioniDelContornoTest {
         val bordoChiara = (chiara.background as MaterialShapeDrawable).strokeWidth
         assertTrue("blu notte senza contorno", bordoScura > 0f)
         assertEquals("il giallo non ne ha bisogno", 0f, bordoChiara, 0f)
-        assertEquals(0xFF9E9E9E.toInt(), (scura.background as MaterialShapeDrawable).strokeColor?.defaultColor)
+        assertEquals(base.getColor(R.color.elite_text_secondary), (scura.background as MaterialShapeDrawable).strokeColor?.defaultColor)
     }
 }

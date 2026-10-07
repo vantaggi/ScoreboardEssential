@@ -5,9 +5,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import androidx.transition.AutoTransition
+import androidx.transition.TransitionManager
 import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
@@ -25,6 +29,9 @@ class MatchHistoryAdapter(
     private val onChronicleClicked: (MatchWithTeams) -> Unit,
     private val onSendClicked: (MatchWithTeams) -> Unit = {},
 ) : ListAdapter<MatchHistoryUiState, MatchHistoryAdapter.MatchViewHolder>(MatchDiffCallback()) {
+    // Le schede aperte, per partita: le viste si riciclano, lo stato aperto o chiuso non puo' stare nella vista.
+    private val aperte = mutableSetOf<Int>()
+
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int,
@@ -33,7 +40,7 @@ class MatchHistoryAdapter(
             LayoutInflater
                 .from(parent.context)
                 .inflate(R.layout.match_item, parent, false)
-        return MatchViewHolder(view, onDeleteClicked, onExportClicked, onChronicleClicked, onSendClicked)
+        return MatchViewHolder(view, onDeleteClicked, onExportClicked, onChronicleClicked, onSendClicked, aperte)
     }
 
     override fun onBindViewHolder(
@@ -50,7 +57,9 @@ class MatchHistoryAdapter(
         private val onExportClicked: (MatchWithTeams) -> Unit,
         private val onChronicleClicked: (MatchWithTeams) -> Unit,
         private val onSendClicked: (MatchWithTeams) -> Unit = {},
+        private val aperte: MutableSet<Int> = mutableSetOf(),
     ) : RecyclerView.ViewHolder(itemView) {
+        private val dettaglio: View = itemView.findViewById(R.id.match_detail)
         private val team1NameTextView: TextView = itemView.findViewById(R.id.team1_name_textview)
         private val team2NameTextView: TextView = itemView.findViewById(R.id.team2_name_textview)
         private val team1ScoreTextView: TextView = itemView.findViewById(R.id.team1_score_textview)
@@ -63,6 +72,28 @@ class MatchHistoryAdapter(
         private val chronicleButton: View = itemView.findViewById(R.id.chronicle_match_button)
         private val sendButton: View = itemView.findViewById(R.id.send_match_button)
         private val sendStatusTextView: TextView = itemView.findViewById(R.id.send_status_textview)
+
+        /** Apre o chiude il dettaglio: la freccia cambia verso e TalkBack sente lo stato e l'azione. */
+        private fun mostraDettaglio(aperto: Boolean) {
+            val context = itemView.context
+            dettaglio.visibility = if (aperto) View.VISIBLE else View.GONE
+            timestampTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                0,
+                0,
+                if (aperto) R.drawable.ic_expand_less else R.drawable.ic_expand_more,
+                0,
+            )
+            ViewCompat.setStateDescription(
+                itemView,
+                context.getString(if (aperto) R.string.history_detail_open else R.string.history_detail_closed),
+            )
+            ViewCompat.replaceAccessibilityAction(
+                itemView,
+                AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLICK,
+                context.getString(if (aperto) R.string.history_detail_hide else R.string.history_detail_show),
+                null,
+            )
+        }
 
         fun bind(item: MatchHistoryUiState) {
             val matchWithTeams = item.matchWithTeams
@@ -79,13 +110,24 @@ class MatchHistoryAdapter(
             team1ScoreTextView.text = match.team1Score.toString()
             team2ScoreTextView.text = match.team2Score.toString()
 
-            // Chi ha vinto si legge senza il colore: #E0E0E0 contro #9E9E9E. Un pareggio li lascia
-            // tutti e due chiari.
+            // Chi ha vinto si legge senza il colore: testo primario contro secondario. Un pareggio li
+            // lascia tutti e due primari.
             val vincitore = item.winnerSide
             team1ScoreTextView.setTextColor(context.getColor(coloreDelPunteggio(vincitore, 1)))
             team2ScoreTextView.setTextColor(context.getColor(coloreDelPunteggio(vincitore, 2)))
 
             timestampTextView.text = metaDellaPartita(context, item)
+            mostraDettaglio(match.matchId in aperte)
+            itemView.setOnClickListener {
+                val ora = match.matchId !in aperte
+                if (ora) aperte.add(match.matchId) else aperte.remove(match.matchId)
+                // Il resto della lista scorre al suo posto con la durata veloce; col movimento ridotto e' immediato.
+                TransitionManager.beginDelayedTransition(
+                    itemView.parent as? ViewGroup ?: itemView as ViewGroup,
+                    AutoTransition().setDuration(context.resources.getInteger(R.integer.duration_fast).toLong()),
+                )
+                mostraDettaglio(ora)
+            }
 
             val righeDiSet =
                 item.setLine
@@ -104,7 +146,7 @@ class MatchHistoryAdapter(
                 onDeleteClicked(matchWithTeams)
             }
 
-            // Le card si riciclano: la visibilita' va scritta in entrambi i casi.
+            // Le schede si riciclano: la visibilita' va scritta in entrambi i casi.
             exportButton.visibility = if (item.canExport) View.VISIBLE else View.GONE
             exportButton.setOnClickListener {
                 onExportClicked(matchWithTeams)
@@ -137,15 +179,16 @@ class MatchHistoryAdapter(
 }
 
 /**
- * Il colore del risultato di un lato: #E0E0E0 per chi ha vinto, #9E9E9E per chi ha perso (6,22:1
- * su #1E1E1E, leggibile). Con un pareggio, [vincitore] null, tutti e due restano chiari.
+ * Il colore del risultato di un lato: testo primario per chi ha vinto, secondario per chi ha perso
+ * (4,9:1 sulla scheda rialzata, leggibile). Con un pareggio, [vincitore] null, tutti e due restano
+ * primari.
  */
 internal fun coloreDelPunteggio(
     vincitore: Int?,
     lato: Int,
-): Int = if (vincitore == null || vincitore == lato) R.color.stencil_white else R.color.sidewalk_gray
+): Int = if (vincitore == null || vincitore == lato) R.color.elite_text_primary else R.color.elite_text_secondary
 
-/** «PADEL · 12/09 18:30 · 47 MIN»: sport, data e, se c'e', durata. */
+/** «Padel · 12/09 18:30 · 47 min»: sport, data e, se c'e', durata. */
 internal fun metaDellaPartita(
     context: Context,
     item: MatchHistoryUiState,
@@ -160,7 +203,7 @@ internal fun metaDellaPartita(
         } else {
             context.getString(R.string.history_meta_duration, sport, data, ChronicleText.duration(context.resources, durata))
         }
-    return testo.uppercase()
+    return testo
 }
 
 class MatchDiffCallback : DiffUtil.ItemCallback<MatchHistoryUiState>() {

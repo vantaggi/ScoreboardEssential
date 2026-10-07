@@ -43,6 +43,8 @@
     <dimen name="icon_compact">16dp</dimen>
     <dimen name="icon_standard">20dp</dimen>
     <dimen name="icon_prominent">24dp</dimen>
+    <!-- Spazio sotto una lista per il comando che galleggia (FAB da 56dp piu' il suo margine di 16dp). -->
+    <dimen name="floating_action_clearance">72dp</dimen>
     <!-- Spessore del bordo di gruppi, card, campi e chip; il fuoco (focus-ring) e' di 2dp. -->
     <dimen name="border_width">1dp</dimen>
     <dimen name="focus_ring_width">2dp</dimen>

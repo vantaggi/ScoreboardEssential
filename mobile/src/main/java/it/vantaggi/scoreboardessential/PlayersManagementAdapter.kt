@@ -8,12 +8,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.ChipGroup
-import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.utils.setRoles
-import java.util.Locale
 
 class PlayersManagementAdapter(
     private val onPlayerClick: (PlayerWithRoles) -> Unit,
@@ -42,15 +39,10 @@ class PlayersManagementAdapter(
         private val onPlayerClick: (PlayerWithRoles) -> Unit,
         private val onStatsClick: (PlayerWithRoles) -> Unit,
     ) : RecyclerView.ViewHolder(itemView) {
-        private val cardView: MaterialCardView = itemView.findViewById(R.id.player_card)
+        private val rowView: View = itemView.findViewById(R.id.player_card)
         private val nameTextView: TextView = itemView.findViewById(R.id.player_name)
         private val rolesGroup: ChipGroup = itemView.findViewById(R.id.player_roles_group)
-        private val goalsTextView: TextView = itemView.findViewById(R.id.player_goals)
-        private val appearancesTextView: TextView = itemView.findViewById(R.id.player_appearances)
         private val statsButton: ImageButton = itemView.findViewById(R.id.stats_button)
-        private val editButton: ImageButton = itemView.findViewById(R.id.edit_button)
-        private val avatarTextView: TextView = itemView.findViewById(R.id.player_avatar)
-        private val avatarCardView: MaterialCardView = itemView.findViewById(R.id.player_avatar_card)
 
         fun bind(playerWithRoles: PlayerWithRoles) {
             val player = playerWithRoles.player
@@ -58,38 +50,8 @@ class PlayersManagementAdapter(
 
             rolesGroup.setRoles(playerWithRoles.roles)
 
-            goalsTextView.text = String.format(Locale.getDefault(), "%d", player.goals)
-            goalsTextView.contentDescription =
-                itemView.resources.getQuantityString(R.plurals.stats_goals, player.goals, player.goals)
-            appearancesTextView.text = String.format(Locale.getDefault(), "%d", player.appearances)
-            appearancesTextView.contentDescription =
-                itemView.resources.getQuantityString(R.plurals.stats_appearances, player.appearances, player.appearances)
-
-            // Initials for Avatar
-            val initials =
-                player.playerName
-                    .split(" ")
-                    .mapNotNull { it.firstOrNull()?.toString() }
-                    .take(2)
-                    .joinToString("")
-                    .uppercase()
-            avatarTextView.text = if (initials.isNotEmpty()) initials else "?"
-
-            // Colorful Avatar Background
-            val colors = itemView.context.resources.getIntArray(R.array.avatar_colors)
-            if (colors.isNotEmpty()) {
-                val colorIndex = Math.abs(player.playerName.hashCode()) % colors.size
-                avatarCardView.setCardBackgroundColor(colors[colorIndex])
-                // Le iniziali in #E0E0E0 fisso arrivavano a 1,04:1 sui colori chiari.
-                avatarTextView.setTextColor(TeamInk.on(colors[colorIndex]))
-            }
-
-            // Click Listeners
-            cardView.setOnClickListener {
-                onPlayerClick(playerWithRoles)
-            }
-
-            editButton.setOnClickListener {
+            // La riga si tocca per modificare; il dettaglio (presenze, gol) sta dietro il suo comando.
+            rowView.setOnClickListener {
                 onPlayerClick(playerWithRoles)
             }
 

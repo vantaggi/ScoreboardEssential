@@ -1,68 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Impostazioni (G-4). Il compito: preparare la partita. Tre gruppi tonali, uno per argomento
+    (squadre, partita, Padel Elite), e dentro righe separate da una linea sottile rientrata al bordo
+    del testo. Niente card, niente ombre. Il colore della squadra e' un comando di sola icona (la
+    tavolozza), dipinto del colore scelto: l'etichetta "Colore Squadra" che ripeteva l'icona e' la
+    descrizione per TalkBack.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@drawable/bg_asphalt_main" android:fitsSystemWindows="true" tools:context=".ui.MatchSettingsActivity">
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/elite_background" android:fitsSystemWindows="true" tools:context=".ui.MatchSettingsActivity">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
+        style="@style/Widget.App.Toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@android:color/transparent"
-        app:titleTextColor="@color/stencil_white" />
+        android:layout_height="?attr/actionBarSize" />
 
-    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent">
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:clipToPadding="false">
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="@dimen/space_16">
 
-        <!-- Team 1 Settings -->
+        <!-- Squadre: nome e colore, una riga per squadra. -->
         <com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" android:layout_width="match_parent" android:layout_height="wrap_content">
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
 
-                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/team_1_name">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/settings_teams_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/elite_text_secondary" android:accessibilityHeading="true" />
 
-                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/team1NameEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" />
-                </com.google.android.material.textfield.TextInputLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
-                <com.google.android.material.button.MaterialButton android:id="@+id/team1ColorButton" style="@style/Widget.App.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/btn_team_1_color" app:icon="@drawable/ic_palette" app:iconSize="@dimen/icon_standard" app:iconGravity="textStart" />
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:hint="@string/team_1_name">
 
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/team1NameEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Team 2 Settings -->
-        <com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/team1ColorButton" style="@style/Widget.App.Button.Secondary" android:layout_width="@dimen/control_touch" android:layout_height="@dimen/control_touch" android:layout_marginStart="@dimen/space_8" android:contentDescription="@string/btn_team_1_color" android:insetTop="0dp" android:insetBottom="0dp" android:paddingHorizontal="0dp" app:icon="@drawable/ic_palette" app:iconGravity="textStart" app:iconPadding="0dp" app:iconSize="@dimen/icon_standard" />
+                </LinearLayout>
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <View style="@style/Widget.App.RowDivider" android:layout_width="match_parent" android:layout_height="@dimen/border_width" android:layout_marginStart="@dimen/space_16" />
 
-                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/team_2_name">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
-                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/team2NameEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" />
-                </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:hint="@string/team_2_name">
 
-                <com.google.android.material.button.MaterialButton android:id="@+id/team2ColorButton" style="@style/Widget.App.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/btn_team_2_color" app:icon="@drawable/ic_palette" app:iconSize="@dimen/icon_standard" app:iconGravity="textStart" />
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/team2NameEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Timer Settings -->
-        <com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" android:id="@+id/keeperTimerCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp">
-
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-
-                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/keeper_timer_seconds">
-
-                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/keeperTimerEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" />
-                </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.button.MaterialButton android:id="@+id/team2ColorButton" style="@style/Widget.App.Button.Secondary" android:layout_width="@dimen/control_touch" android:layout_height="@dimen/control_touch" android:layout_marginStart="@dimen/space_8" android:contentDescription="@string/btn_team_2_color" android:insetTop="0dp" android:insetBottom="0dp" android:paddingHorizontal="0dp" app:icon="@drawable/ic_palette" app:iconGravity="textStart" app:iconPadding="0dp" app:iconSize="@dimen/icon_standard" />
+                </LinearLayout>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Language Settings -->
-        <com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp">
+        <!-- Partita: sport (con le regole che il motore applica), timer del portiere solo nel calcio, lingua. -->
+        <com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_24">
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
 
-                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout.ExposedDropdownMenu" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/language">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/settings_match_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/elite_text_secondary" android:accessibilityHeading="true" />
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
+
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout.ExposedDropdownMenu" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/settings_sport_title">
+
+                        <AutoCompleteTextView android:id="@+id/sportAutoComplete" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Le regole che il motore applica allo sport scelto, composte da SportRegistry. -->
+                    <TextView android:id="@+id/sportRulesText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_8" android:textAppearance="@style/TextAppearance.App.Caption" />
+                </LinearLayout>
+
+                <View style="@style/Widget.App.RowDivider" android:layout_width="match_parent" android:layout_height="@dimen/border_width" android:layout_marginStart="@dimen/space_16" />
+
+                <LinearLayout android:id="@+id/keeperTimerCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="@dimen/space_16" android:layout_marginVertical="@dimen/space_12" android:hint="@string/keeper_timer_seconds">
+
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/keeperTimerEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <View style="@style/Widget.App.RowDivider" android:layout_width="match_parent" android:layout_height="@dimen/border_width" android:layout_marginStart="@dimen/space_16" />
+                </LinearLayout>
+
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout.ExposedDropdownMenu" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="@dimen/space_16" android:layout_marginVertical="@dimen/space_12" android:hint="@string/language">
 
                     <AutoCompleteTextView android:id="@+id/languageAutoComplete" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="none" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -70,34 +90,14 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Sport Settings -->
-        <com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp">
+        <!-- Padel Elite: il gruppo c'e' solo se la build conosce il Supabase (local.properties). -->
+        <com.google.android.material.card.MaterialCardView android:id="@+id/padelEliteCard" style="@style/Widget.App.Group" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_24" android:visibility="gone">
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="@dimen/space_16">
 
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/settings_sport_title" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/stencil_white" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/padel_elite_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/elite_text_secondary" android:accessibilityHeading="true" />
 
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/settings_sport_hint" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/sidewalk_gray" />
-
-                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout.ExposedDropdownMenu" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
-
-                    <AutoCompleteTextView android:id="@+id/sportAutoComplete" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="none" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Le regole che il motore applica allo sport scelto, composte da SportRegistry. -->
-                <TextView android:id="@+id/sportRulesText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:fontFamily="@font/inter" android:textColor="@color/sidewalk_gray" android:textSize="14sp" />
-
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Padel Elite: la card c'e' solo se la build conosce il Supabase (local.properties). Gruppo tonale come i vicini. -->
-        <com.google.android.material.card.MaterialCardView android:id="@+id/padelEliteCard" style="@style/Widget.App.Group" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:visibility="gone">
-
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/padel_elite_title" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/elite_text_primary" />
-
-                <TextView android:id="@+id/padelEliteStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_4" android:text="@string/padel_elite_settings_signed_out" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/elite_text_secondary" />
+                <TextView android:id="@+id/padelEliteStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_4" android:text="@string/padel_elite_settings_signed_out" android:textAppearance="@style/TextAppearance.App.RowTitle" />
 
                 <com.google.android.material.button.MaterialButton android:id="@+id/padelEliteSignInButton" style="@style/Widget.App.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_12" android:text="@string/padel_elite_settings_sign_in" />
 

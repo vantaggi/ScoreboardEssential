@@ -1,26 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Nome squadra (G-4). Un campo con il suo testo-guida e i suggerimenti sotto; il titolo del dialogo
+    dice gia' quale squadra e' ("Rinomina squadra 1"), quindi niente etichetta che lo ripete e niente
+    anteprima: il nome si vede in gioco. Un solo primario, quello del dialogo.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="24dp">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/team_name_label"
-        android:textColor="@color/sidewalk_gray"
-        android:textSize="12sp"
-        android:letterSpacing="0.1"
-        android:layout_marginBottom="16dp" />
+    android:padding="@dimen/space_24">
 
     <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.App.TextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:boxBackgroundMode="outline"
-        app:boxStrokeColor="@color/neon_cyan"
-        app:boxStrokeWidth="2dp"
-        app:hintEnabled="false"
+        android:hint="@string/team_name_hint"
         app:counterEnabled="true"
         app:counterMaxLength="15">
 
@@ -29,73 +24,42 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textCapCharacters"
-            android:maxLength="15"
-            android:textSize="24sp"
-            android:textFontWeight="600"
-            android:textColor="@color/stencil_white"
-            android:fontFamily="@font/inter" />
+            android:maxLength="15" />
     </com.google.android.material.textfield.TextInputLayout>
-
-    <!-- Preview del nome con stile -->
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="@color/team_spray_yellow"
-        app:cardCornerRadius="12dp">
-
-        <TextView
-            android:id="@+id/preview_text"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="@string/team_name_preview"
-            android:textSize="28sp"
-            android:textColor="@color/concrete_gray"
-            android:fontFamily="@font/inter"
-            android:textFontWeight="600"
-            android:textAllCaps="true" />
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- Suggerimenti rapidi -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/team_name_quick_picks"
-        android:textColor="@color/sidewalk_gray"
-        android:textSize="10sp"
-        android:letterSpacing="0.1"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp" />
 
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/suggestions_chips"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_12"
         app:singleSelection="false">
 
         <com.google.android.material.chip.Chip
+            style="@style/Widget.App.Chip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="LIONS"
-            style="@style/Widget.Material3.Chip.Suggestion" />
+            android:checkable="false"
+            android:text="@string/team_name_suggestion_1" />
 
         <com.google.android.material.chip.Chip
+            style="@style/Widget.App.Chip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="EAGLES"
-            style="@style/Widget.Material3.Chip.Suggestion" />
+            android:checkable="false"
+            android:text="@string/team_name_suggestion_2" />
 
         <com.google.android.material.chip.Chip
+            style="@style/Widget.App.Chip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="WARRIORS"
-            style="@style/Widget.Material3.Chip.Suggestion" />
+            android:checkable="false"
+            android:text="@string/team_name_suggestion_3" />
 
         <com.google.android.material.chip.Chip
+            style="@style/Widget.App.Chip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="THUNDER"
-            style="@style/Widget.Material3.Chip.Suggestion" />
+            android:checkable="false"
+            android:text="@string/team_name_suggestion_4" />
     </com.google.android.material.chip.ChipGroup>
 </LinearLayout>

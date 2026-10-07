@@ -1,27 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/Widget.App.Pressable"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:focusable="true"
+    android:foreground="@drawable/bg_focus_ring"
+    android:minHeight="@dimen/control_touch"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:background="?android:attr/selectableItemBackground">
+    android:paddingHorizontal="@dimen/space_16"
+    android:paddingVertical="@dimen/space_12">
 
     <TextView
         android:id="@+id/player_name_textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?attr/textAppearanceListItem"
-        android:textColor="@color/stencil_white"
-        android:fontFamily="@font/inter"
-        android:text="Player Name" />
+        android:textAppearance="@style/TextAppearance.App.RowTitle" />
 
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/role_badge_group"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        app:chipSpacingHorizontal="4dp"
+        android:layout_marginTop="@dimen/space_4"
+        app:chipSpacingHorizontal="@dimen/space_4"
         app:singleLine="false"
         app:selectionRequired="false" />
 
