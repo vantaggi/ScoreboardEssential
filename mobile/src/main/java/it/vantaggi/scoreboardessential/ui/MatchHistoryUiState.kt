@@ -1,5 +1,6 @@
 package it.vantaggi.scoreboardessential.ui
 
+import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
@@ -46,13 +47,20 @@ data class MatchHistoryUiState(
             }
 
     /**
-     * La durata in millisecondi, dal primo punto alla chiusura. Null quando la partita e' stata
-     * salvata prima che si tenesse l'inizio, o quando i due istanti non tornano.
+     * La durata in millisecondi: il tempo di gioco, cioe' l'ultimo tempo del registro (e' misurato
+     * dal primo punto e non avanza mentre l'app e' chiusa, come nel riassunto). Solo per le righe
+     * il cui registro non ha tempi si ripiega sulla distanza fra l'inizio e la chiusura, che per una
+     * partita ripresa conterebbe le ore di pausa. Null quando non c'e' nessuna delle due, o non tornano.
      */
     val durationMillis: Long?
         get() =
             matchWithTeams.match.let { match ->
-                match.startedAt?.let { match.timestamp - it }?.takeIf { it > 0 }
+                val tempoDiGioco = MatchLogCodec.decode(match.eventLog)?.mapNotNull { it.atMillis }
+                if (tempoDiGioco.isNullOrEmpty()) {
+                    match.startedAt?.let { match.timestamp - it }?.takeIf { it > 0 }
+                } else {
+                    tempoDiGioco.last().takeIf { it > 0 }
+                }
             }
 
     /**
