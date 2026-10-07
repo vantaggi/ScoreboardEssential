@@ -1,30 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Nero puro, fondo di gioco: sugli schermi OLED sono pixel spenti e il bianco arriva a
-         21:1. Stesso nome del telefono (DESIGN.md, token condivisi), per non farli divergere. -->
+    <!--
+        TOKEN DEL QUADRANTE (DESIGN.md, Adattamento alla UI Constitution, G-7). Stessi nomi e stessi
+        valori del telefono (mobile/src/main/res/values/colors.xml): un test li confronta, cosi' le due
+        palette non possono divergere. Qui ci sono solo i ruoli che l'orologio usa; i nove colori Street
+        che il quadrante teneva da solo (asphalt_dark, concrete_gray, stencil_white, sidewalk_gray,
+        graffiti_pink, neon_cyan, team_spray_yellow, team_electric_green, error_red) sono tolti.
+    -->
+    <!-- background-watch: il nero puro del quadrante e di ogni schermata dell'orologio. Sugli schermi
+         OLED sono pixel spenti e il bianco arriva a 21:1. -->
     <color name="ink_black">#000000</color>
-    <!-- Bianco puro: le cifre del punteggio, il cronometro che corre e il pallino del servizio
-         (21:1 su nero). Stesso nome del telefono. -->
+    <!-- Le cifre del punteggio e del cronometro che corre (21:1 su nero). -->
     <color name="ink_white">#FFFFFF</color>
-    <color name="asphalt_dark">#121212</color>
-    <color name="concrete_gray">#1E1E1E</color>
-    <color name="stencil_white">#E0E0E0</color>
-    <color name="sidewalk_gray">#9E9E9E</color>
-    <!-- Il solo grigio che parla in ambient (la riga di stato): 11.2:1 su nero, senza colore. -->
-    <color name="ambient_gray">#BDBDBD</color>
-    <color name="graffiti_pink">#F50057</color>
-    <color name="neon_cyan">#00E5FF</color>
-    <color name="team_spray_yellow">#FFD600</color>
-    <color name="team_electric_green">#76FF03</color>
-    <color name="error_red">#FF1744</color>
-    <!-- Testo distruttivo su fondi grigi (6.12:1 su #1E1E1E): error_red e' testo solo su nero.
-         Stesso nome e valore del telefono; quando i token passeranno in :shared va tolto da qui. -->
-    <color name="error_text">#FF6E6E</color>
-    <!-- Stati di consegna: il punto e' salvo, ma il telefono non ce l'ha. 11.7:1 su nero. Solo al
-         polso, perche' la coda di consegna esiste solo li'. -->
-    <color name="signal_amber">#FFB300</color>
 
-    <!-- Previous semantic aliases for wear theme, now mapped to the new palette -->
-    <color name="background">@color/asphalt_dark</color>
-    <color name="surface">@color/concrete_gray</color>
+    <!-- background-surface: il gruppo tonale del menu e della scelta dello sport. -->
+    <color name="elite_surface">#161618</color>
+    <!-- border-subtle: la linea sottile fra le righe di un gruppo. -->
+    <color name="elite_border_strong">#2A2A2E</color>
+    <!-- text-primary e text-secondary (contrasti sul nero 12,8 e 6,2; sul gruppo 11,9 e 5,3). -->
+    <color name="elite_text_primary">#D1D1D8</color>
+    <color name="elite_text_secondary">#8A8A9A</color>
+    <!-- text-disabled: solo le etichette di una voce spenta, sotto 4,5 per scelta della Constitution;
+         il perche' sta nel sottotitolo, che e' text-secondary. -->
+    <color name="elite_text_disabled">#6B7077</color>
+    <!-- accent-default: il lime, sul quadrante solo per chi serve (identita' dell'orologio). -->
+    <color name="elite_lime">#C8F135</color>
+    <color name="elite_on_lime">#0D0D0F</color>
+    <!-- Ciano: sull'orologio solo come predefinito del lato 2, come sul telefono. -->
+    <color name="elite_cyan">#00E5FF</color>
+    <!-- status-warning (ambra: coda non consegnata) e status-error (rosso: errore e distruttivo). -->
+    <color name="elite_warning">#E09A35</color>
+    <color name="elite_error">#E05252</color>
+
+    <!-- Colori predefiniti delle squadre, gli stessi del telefono (G-6): lime e ciano. Il telefono
+         manda i suoi quando la partita ha colori scelti dall'utente, e quelli vincono. -->
+    <color name="team_side_1">@color/elite_lime</color>
+    <color name="team_side_2">@color/elite_cyan</color>
+
+    <!-- Il solo grigio che parla in ambient (la riga di stato, il cronometro fermo): 11,2:1 su nero,
+         senza tinta, perche' in ambient non c'e' colore. -->
+    <color name="ambient_gray">#BDBDBD</color>
+
+    <!-- Icona dell'app: i colori di prima, com'erano. Non sono ruoli: li rifa G-9 con l'icona. -->
+    <color name="launcher_background">#121212</color>
+    <color name="launcher_side_1">#FFD600</color>
+    <color name="launcher_side_2">#76FF03</color>
 </resources>

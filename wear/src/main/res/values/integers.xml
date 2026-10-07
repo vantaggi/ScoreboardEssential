@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Durate della UI Constitution (DESIGN.md, Mappatura dei ruoli), in millisecondi, gli stessi del
+        telefono (un test li confronta). Sull'orologio non si supera duration_fast: la corsa e' piu'
+        breve e la molla expressive non si usa mai (wearable.md).
+    -->
+    <!-- duration-instant: la pressione di ogni comando. -->
+    <integer name="duration_instant">100</integer>
+    <!-- duration-fast: la cifra che rotola. -->
+    <integer name="duration_fast">160</integer>
+</resources>

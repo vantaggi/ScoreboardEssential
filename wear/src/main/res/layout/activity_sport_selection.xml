@@ -4,7 +4,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/asphalt_dark"
     android:padding="16dp">
 
     <LinearLayout
@@ -25,12 +24,16 @@
             android:gravity="center"
             android:layout_marginBottom="8dp" />
 
-        <!-- Focusable perche' la corona scorre la vista che ha il focus (requestFocus in onCreate). -->
+        <!-- Focusable perche' la corona scorre la vista che ha il focus (requestFocus in onCreate).
+             La lista e' un gruppo tonale: le righe stanno sullo stesso tono, la linea sottile fra
+             l'una e l'altra la mette SportSelectionActivity. -->
         <androidx.wear.widget.WearableRecyclerView
             android:id="@+id/sport_list"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:background="@drawable/bg_group"
+            android:clipToOutline="true"
             android:focusable="true"
             android:focusableInTouchMode="true" />
 

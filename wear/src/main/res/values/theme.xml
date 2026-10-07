@@ -1,54 +1,74 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!--
+        Il tema dell'orologio sui ruoli della UI Constitution (DESIGN.md, G-7), con i valori di Padel
+        Elite gia' usati dal telefono. Un solo tema, scuro. Il fondo e' il nero del quadrante
+        (background-watch) anche per il menu e per la scelta dello sport: niente secondo fondo grigio.
+        Il lime e' l'unico accento e sul quadrante marca solo chi serve: nel tema c'e' per i ruoli di
+        Material, non perche' un componente lo usi.
+    -->
     <style name="Theme.ScoreboardEssential" parent="Theme.Material3.Dark.NoActionBar">
-        <!-- Street Vibe Color Palette -->
-        <item name="colorPrimary">@color/graffiti_pink</item>
-        <item name="colorOnPrimary">@color/stencil_white</item>
-        <item name="colorSecondary">@color/neon_cyan</item>
-        <item name="colorOnSecondary">@color/asphalt_dark</item>
-        <item name="colorError">@color/error_red</item>
-        <item name="colorOnError">@color/stencil_white</item>
-        <item name="android:colorBackground">@color/asphalt_dark</item>
-        <item name="colorSurface">@color/concrete_gray</item>
-        <item name="colorOnSurface">@color/stencil_white</item>
-        <item name="colorOnSurfaceVariant">@color/sidewalk_gray</item>
+        <item name="colorPrimary">@color/elite_lime</item>
+        <item name="colorOnPrimary">@color/elite_on_lime</item>
+        <!-- Il secondario e' neutro, come sul telefono. -->
+        <item name="colorSecondary">@color/elite_text_secondary</item>
+        <item name="colorOnSecondary">@color/ink_black</item>
+        <item name="colorError">@color/elite_error</item>
+        <item name="colorOnError">@color/ink_black</item>
+        <item name="android:colorBackground">@color/ink_black</item>
+        <item name="colorOnBackground">@color/elite_text_primary</item>
+        <item name="colorSurface">@color/elite_surface</item>
+        <item name="colorOnSurface">@color/elite_text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/elite_text_secondary</item>
+        <item name="colorOutlineVariant">@color/elite_border_strong</item>
+        <!-- Niente tinta di elevazione: le superfici si alzano di tono coi token, mai di tinta. -->
+        <item name="elevationOverlayEnabled">false</item>
 
         <!--
-            Caratteri (DESIGN.md, G-1): Inter per il testo; le cifre del quadrante restano sul condensato
-            (vedi Face.Score). Niente android:fontFamily nel tema: la vista lo legge DOPO il suo
-            textAppearance e lo sovrascriverebbe, cifre comprese.
+            Caratteri (DESIGN.md, G-1): Inter per il testo, in tre pesi (400, 600 qui; 500 resta
+            disponibile). Le cifre del quadrante restano sul condensato (vedi Face.Score). Niente
+            android:fontFamily nel tema: la vista lo legge DOPO il suo textAppearance e lo
+            sovrascriverebbe, cifre comprese. Nessun maiuscolo forzato.
         -->
-        <item name="textAppearanceDisplayLarge">@style/TextAppearance.App.DisplayLarge.Street</item>
-        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.App.HeadlineMedium.Street</item>
-        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.App.HeadlineSmall.Street</item>
-        <item name="textAppearanceBodyLarge">@style/TextAppearance.App.BodyLarge.Street</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.App.HeadlineMedium</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.App.HeadlineSmall</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.App.BodyLarge</item>
 
-        <!-- Street Vibe Shape References for Wear OS -->
-        <!-- Wear OS uses different component styles, so we apply shapes directly or through widgets -->
+        <!-- Forme: tutte arrotondate, sui raggi della Constitution (8 per i comandi, 14 per i gruppi). -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.App.Control</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.App.Surface</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.App.Surface</item>
+
+        <!-- La pressione di ogni controllo (animator/press_feedback.xml); il movimento ridotto la sostituisce. -->
+        <item name="pressFeedback">@animator/press_feedback</item>
     </style>
 
-    <!-- Street Vibe Type and Shape -->
-    <style name="TextAppearance.App.DisplayLarge.Street" parent="TextAppearance.Material3.DisplayLarge">
+    <!--
+        Movimento ridotto (ANIMATOR_DURATION_SCALE = 0): la pressione perde la scala e tiene la sola
+        opacita'. Lo applica MovimentoRidotto.kt a ogni activity prima che gonfi i layout.
+    -->
+    <style name="ThemeOverlay.App.MovimentoRidotto" parent="">
+        <item name="pressFeedback">@animator/press_feedback_reduced</item>
+    </style>
+
+    <style name="TextAppearance.App.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">600</item>
-        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textColor">@color/elite_text_primary</item>
     </style>
-    <style name="TextAppearance.App.HeadlineMedium.Street" parent="TextAppearance.Material3.HeadlineMedium">
+    <style name="TextAppearance.App.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">600</item>
-        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/elite_text_primary</item>
     </style>
-    <style name="TextAppearance.App.HeadlineSmall.Street" parent="TextAppearance.Material3.HeadlineSmall">
+    <style name="TextAppearance.App.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:fontFamily">@font/inter</item>
-        <item name="android:textFontWeight">600</item>
-    </style>
-    <style name="TextAppearance.App.BodyLarge.Street" parent="TextAppearance.Material3.BodyLarge">
-        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">400</item>
+        <item name="android:textColor">@color/elite_text_secondary</item>
     </style>
 
     <!--
         Il tema del quadrante di gioco: la finestra e' gia' nera, quindi il layout non dipinge un
-        secondo fondo (lint Overdraw). Le schermate di contorno restano sul tema street.
+        secondo fondo (lint Overdraw). Le schermate di contorno restano sul tema di sopra.
 
         Niente chiusura con lo swipe verso destra: a meta' partita chiuderebbe il quadrante e con lui
         il ViewModel, e si perderebbe cio' che il polso non ha ancora consegnato. Si esce col tasto.
@@ -60,7 +80,8 @@
     </style>
 
     <!--
-        I cinque livelli di lettura del quadrante. Tutti condensed bold salvo il dettaglio, e tutti
+        I cinque livelli di lettura del quadrante. Le cifre (Score, Context, Keeper) restano condensed
+        bold: Inter non entra nella colonna (CifreDelQuadranteTest). Detail, Who e Status sono Inter,
         senza il margine di font: il testo sta in fasce alte quanto serve e non un pixel di piu'.
         Le misure vengono da dimens, quindi crescono da sole sui tondi da 227dp.
     -->
@@ -78,13 +99,13 @@
     </style>
     <style name="TextAppearance.Face.Keeper" parent="android:TextAppearance">
         <item name="android:textSize">@dimen/face_keeper_text_size</item>
-        <item name="android:textColor">@color/sidewalk_gray</item>
+        <item name="android:textColor">@color/elite_text_secondary</item>
         <item name="android:fontFamily">sans-serif-condensed</item>
         <item name="android:textStyle">bold</item>
     </style>
     <style name="TextAppearance.Face.Detail" parent="android:TextAppearance">
         <item name="android:textSize">@dimen/face_detail_text_size</item>
-        <item name="android:textColor">@color/sidewalk_gray</item>
+        <item name="android:textColor">@color/elite_text_secondary</item>
         <item name="android:fontFamily">@font/inter</item>
     </style>
     <style name="TextAppearance.Face.Who" parent="android:TextAppearance">
@@ -96,18 +117,33 @@
     </style>
     <style name="TextAppearance.Face.Status" parent="android:TextAppearance">
         <item name="android:textSize">@dimen/wear_hint_text_size</item>
-        <item name="android:textColor">@color/sidewalk_gray</item>
+        <item name="android:textColor">@color/elite_text_secondary</item>
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">600</item>
         <item name="android:letterSpacing">0.04</item>
     </style>
 
-    <style name="ShapeAppearance.App.StreetCard" parent="ShapeAppearance.Material3.MediumComponent">
-        <item name="cornerFamily">cut</item>
-        <item name="cornerSize">12dp</item>
+    <!-- Forme della UI Constitution: radius-control 8dp, radius-surface 14dp. Tutte rounded. -->
+    <style name="ShapeAppearance.App.Control" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/radius_control</item>
+    </style>
+    <style name="ShapeAppearance.App.Surface" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/radius_surface</item>
     </style>
 
-    <!-- Note: ShapeAppearance attributes like shapeAppearanceMediumComponent might not be respected
-         in the same way on Wear OS. It's often better to apply shapes directly to widgets
-         or create custom widget styles. We will apply shapes in the layouts. -->
+    <!--
+        Una riga di un gruppo tonale (menu e scelta dello sport): sullo stesso tono del gruppo, senza
+        ombra e senza bordo, con la pressione condivisa. La linea fra le righe la mette il gruppo.
+    -->
+    <style name="Widget.App.GroupRow" parent="Widget.Material3.CardView.Filled">
+        <item name="cardBackgroundColor">@color/elite_surface</item>
+        <item name="cardElevation">0dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="rippleColor">@android:color/transparent</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.App.Control</item>
+        <item name="android:stateListAnimator">?attr/pressFeedback</item>
+    </style>
 </resources>

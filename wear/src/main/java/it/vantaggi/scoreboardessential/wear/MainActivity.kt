@@ -57,6 +57,12 @@ class MainActivity : ComponentActivity() {
     /** Fino a quando i tocchi sui lati sono ignorati in silenzio; 0 se nessuna guardia e' aperta. */
     private var guardiaFinoA = 0L
 
+    /**
+     * Fino a quando il punteggio non rotola (0 se il rotolo e' ammesso). Si apre con la guardia e
+     * anche in onStart, prima dei collector: i tocchi invece non c'entrano, e restano ammessi.
+     */
+    private var rotoloVietatoFinoA = 0L
+
     /** Il quadrante e' in ambient: polso abbassato, solo bianco e grigio su nero. */
     private var ambient = false
     private var ambientBurnIn = false
@@ -68,6 +74,10 @@ class MainActivity : ComponentActivity() {
     private val carattereGrasso: Typeface by lazy { Typeface.create("sans-serif-condensed", Typeface.BOLD) }
 
     private lateinit var binding: ActivityMainBinding
+
+    /** Il rotolo delle due cifre (NumberRoll): parte solo con lo schermo acceso e guardato, vedi [scriviCifra]. */
+    private lateinit var rotolo1: NumberRoll
+    private lateinit var rotolo2: NumberRoll
 
     /**
      * La scelta dello sport torna qui, e da qui parte la richiesta al telefono: il numero di
@@ -192,8 +202,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MovimentoRidotto.applica(this, theme)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        rotolo1 = NumberRoll(binding.team1Score)
+        rotolo2 = NumberRoll(binding.team2Score)
 
         setupClickListeners()
         describeSides()
@@ -250,6 +263,15 @@ class MainActivity : ComponentActivity() {
         } catch (e: NoClassDefFoundError) {
             Log.w(TAG, "Libreria wearable assente: niente ambient", e)
         }
+    }
+
+    /**
+     * La guardia del risveglio si apre PRIMA che i collector, che ripartono con lo schermo, ridisegnino
+     * lo stato: un punteggio arrivato mentre l'orologio dormiva compare di colpo e non rotola.
+     */
+    override fun onStart() {
+        rotoloVietatoFinoA = orologio() + GUARDIA_RISVEGLIO_MS
+        super.onStart()
     }
 
     override fun onResume() {
@@ -392,7 +414,7 @@ class MainActivity : ComponentActivity() {
         val finestra = viewModel.finestraChi.value ?: return
         val colore =
             (if (finestra.lato == 1) viewModel.team1Color.value else viewModel.team2Color.value)
-                ?: ContextCompat.getColor(this, if (finestra.lato == 1) R.color.team_spray_yellow else R.color.team_electric_green)
+                ?: ContextCompat.getColor(this, if (finestra.lato == 1) R.color.team_side_1 else R.color.team_side_2)
         viewModel.chiudiFinestraChi()
         startActivity(
             PlayerSelectionActivity.intent(this, finestra.lato, viewModel.allPlayers.value, colore, finestra.risultato),
@@ -461,8 +483,8 @@ class MainActivity : ComponentActivity() {
      * toglie i comandi che questo sport non ha. Con le capacita' del calcio non cambia nulla.
      */
     private fun renderScoreState(state: WearScoreState) {
-        binding.team1Score.text = state.side1Primary
-        binding.team2Score.text = state.side2Primary
+        scriviCifra(1, state.side1Primary)
+        scriviCifra(2, state.side2Primary)
         binding.faceDetail.text = FaceText.split(state).second
         applyGestureLabels(state.decrementIsUndo)
         applyMatchOver(state)
@@ -475,8 +497,8 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Il pallino bianco sul lato esterno della colonna di chi serve; con 0 (calcio, finita)
-     * nessuno. Un pallino se batte il primo giocatore o si gioca in singolare, due se batte il
+     * Il pallino lime sul lato esterno della colonna di chi serve (in ambient solo il contorno
+     * bianco, vedi [disegnaPallini]); con 0 (calcio, finita) nessuno. Un pallino se batte il primo giocatore o si gioca in singolare, due se batte il
      * secondo: il secondo sta accanto al primo, verso le cifre, e il primo non si muove.
      */
     private fun applyServing(state: WearScoreState) {
@@ -487,7 +509,38 @@ class MainActivity : ComponentActivity() {
         binding.team2ServeDotSecond.visibility = if (state.servingSide == 2 && secondo) View.VISIBLE else View.GONE
         serveLato = state.servingSide
         serveGiocatore = state.servingSlot
+        disegnaPallini()
         describeSides()
+    }
+
+    /**
+     * Il pallino e' lime fuori dall'ambient (accento: chi serve) e, in ambient, solo il contorno
+     * sottile bianco, senza colore e senza riempimento (wearable.md). Stessa misura nei due casi.
+     */
+    private fun disegnaPallini() {
+        val disegno = if (ambient) R.drawable.bg_serving_dot_ambient else R.drawable.bg_serving_dot
+        listOf(
+            binding.team1ServeDot,
+            binding.team1ServeDotSecond,
+            binding.team2ServeDot,
+            binding.team2ServeDotSecond,
+        ).forEach { it.setBackgroundResource(disegno) }
+    }
+
+    /**
+     * Scrive la cifra di un lato. Il rotolo (su se sale, giu' se scende) parte solo se lo schermo e'
+     * acceso e guardato: MAI in ambient e MAI nei 500ms dopo il risveglio, quando il nuovo valore e'
+     * solo cio' che e' successo mentre non si guardava. Col movimento ridotto NumberRoll cambia la
+     * cifra subito. La direzione la danno i due valori stampati (NumberRoll.direzione).
+     */
+    private fun scriviCifra(
+        lato: Int,
+        testo: String,
+    ) {
+        val cifra = if (lato == 1) binding.team1Score else binding.team2Score
+        val rotolo = if (lato == 1) rotolo1 else rotolo2
+        val vivo = !ambient && orologio() >= maxOf(guardiaFinoA, rotoloVietatoFinoA)
+        rotolo.mostra(testo, if (vivo) NumberRoll.direzione(cifra.text.toString(), testo) else 0)
     }
 
     /** Il colore della squadra e' solo grafica: portato a 3:1 sul nero, mai colore di un testo. */
@@ -591,7 +644,7 @@ class MainActivity : ComponentActivity() {
      *
      * Niente piu' opacita': ad alpha 0.4 il giallo scendeva a 3.02:1 sul fondo, e il risultato
      * finale, cioe' la cosa che tutti chiedono a fine partita, era la meno leggibile dello
-     * schermo. Lo sconfitto passa invece a #9E9E9E (7.84:1 su nero), come sul telefono: si legge
+     * schermo. Lo sconfitto passa invece a text-secondary (6,2:1 su nero), come sul telefono: si legge
      * chi ha perso senza spegnere la cifra. Il vincitore, e chi non ha un vincitore (un pari),
      * restano bianchi. Che i lati siano spenti lo dice anche la riga in basso.
      */
@@ -601,7 +654,7 @@ class MainActivity : ComponentActivity() {
         }
         val vincitore = FaceText.vincitore(state)
         val bianco = ContextCompat.getColor(this, R.color.ink_white)
-        val grigio = ContextCompat.getColor(this, R.color.sidewalk_gray)
+        val grigio = ContextCompat.getColor(this, R.color.elite_text_secondary)
         binding.team1Score.setTextColor(if (vincitore == 2) grigio else bianco)
         binding.team2Score.setTextColor(if (vincitore == 1) grigio else bianco)
     }
@@ -611,6 +664,7 @@ class MainActivity : ComponentActivity() {
 
     private fun apriGuardia() {
         guardiaFinoA = orologio() + GUARDIA_RISVEGLIO_MS
+        rotoloVietatoFinoA = guardiaFinoA
     }
 
     /**
@@ -640,8 +694,9 @@ class MainActivity : ComponentActivity() {
             renderContesto()
             sovrapponiAmbient()
         } else if (eraAmbient) {
-            ripristinaDaAmbient()
+            // La guardia prima del ridisegno: uscendo dall'ambient niente rotolo.
             apriGuardia()
+            ripristinaDaAmbient()
             // Il ciclo dei 15s taceva in ambient: il collegamento si rilegge subito.
             viewModel.refreshConnection()
         }
@@ -687,6 +742,10 @@ class MainActivity : ComponentActivity() {
             vista.paint.isAntiAlias = !ambientBitBassi
         }
         binding.gestureHint.paint.isAntiAlias = !ambientBitBassi
+        // Un rotolo in corso si ferma: in ambient non si muove niente.
+        rotolo1.ferma()
+        rotolo2.ferma()
+        disegnaPallini()
         listOf(
             binding.team1Stripe,
             binding.team2Stripe,
@@ -715,13 +774,14 @@ class MainActivity : ComponentActivity() {
             vista.paint.isAntiAlias = true
         }
         binding.gestureHint.paint.isAntiAlias = true
+        disegnaPallini()
         listOf(binding.team1Stripe, binding.team2Stripe, binding.faceDetail).forEach { it.visibility = View.VISIBLE }
         val stato = viewModel.scoreState.value
         if (stato != null) {
             renderScoreState(stato)
         } else {
-            binding.team1Score.text = viewModel.team1Score.value.toString()
-            binding.team2Score.text = viewModel.team2Score.value.toString()
+            scriviCifra(1, viewModel.team1Score.value.toString())
+            scriviCifra(2, viewModel.team2Score.value.toString())
             describeSides()
             renderContesto()
         }
@@ -771,7 +831,9 @@ class MainActivity : ComponentActivity() {
         val tempo = viewModel.matchTimer.value.let { if (ambient) FaceText.minuti(it) else it }
         if (binding.matchTimer.text.toString() != tempo) binding.matchTimer.text = tempo
         val corre = viewModel.matchTimerRunning.value
-        binding.matchTimer.setTextColor(ContextCompat.getColor(this, if (corre) R.color.ink_white else R.color.sidewalk_gray))
+        // Fermo e' text-secondary; in ambient il grigio senza tinta, perche' li' non c'e' colore.
+        val fermo = if (ambient) R.color.ambient_gray else R.color.elite_text_secondary
+        binding.matchTimer.setTextColor(ContextCompat.getColor(this, if (corre) R.color.ink_white else fermo))
         binding.touchTimer.isClickable = true
     }
 
@@ -827,7 +889,7 @@ class MainActivity : ComponentActivity() {
         when (state) {
             is KeeperTimerState.Hidden -> {
                 binding.keeperTimer.text = "K"
-                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.sidewalk_gray))
+                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.elite_text_secondary))
                 binding.keeperProgressBar.visibility = View.INVISIBLE
             }
 
@@ -840,7 +902,8 @@ class MainActivity : ComponentActivity() {
                         state.secondsRemaining / 60,
                         state.secondsRemaining % 60,
                     )
-                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.graffiti_pink))
+                // Il lime e' di chi serve: il conto che corre e' testo primario, come il cronometro.
+                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.elite_text_primary))
                 binding.keeperProgressBar.visibility =
                     if (auxAvailable) View.VISIBLE else View.INVISIBLE
             }
@@ -853,7 +916,7 @@ class MainActivity : ComponentActivity() {
                         state.secondsRemaining / 60,
                         state.secondsRemaining % 60,
                     )
-                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.sidewalk_gray))
+                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.elite_text_secondary))
                 binding.keeperProgressBar.visibility =
                     if (auxAvailable) View.VISIBLE else View.INVISIBLE
             }
@@ -861,7 +924,7 @@ class MainActivity : ComponentActivity() {
             is KeeperTimerState.Finished -> {
                 // Scaduto: "K 0:00" in rosso, come "K 4:12" mentre corre.
                 binding.keeperTimer.text = getString(R.string.wear_keeper_running, 0, 0)
-                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.error_red))
+                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.elite_error))
                 binding.keeperProgressBar.visibility =
                     if (auxAvailable) View.VISIBLE else View.INVISIBLE
             }
@@ -894,7 +957,7 @@ class MainActivity : ComponentActivity() {
                 launch {
                     viewModel.team1Score.collect { score ->
                         if (viewModel.scoreState.value == null) {
-                            binding.team1Score.text = score.toString()
+                            scriviCifra(1, score.toString())
                             describeSides()
                         }
                     }
@@ -903,7 +966,7 @@ class MainActivity : ComponentActivity() {
                 launch {
                     viewModel.team2Score.collect { score ->
                         if (viewModel.scoreState.value == null) {
-                            binding.team2Score.text = score.toString()
+                            scriviCifra(2, score.toString())
                             describeSides()
                         }
                     }
@@ -1025,11 +1088,11 @@ private fun testoScollegato(
     return context.getString(R.string.wear_status_offline_at, ora)
 }
 
-/** Il colore del ruolo: ambra e rosso distano 2.14:1, li distingue la parola. */
+/** Il colore del ruolo (status-error, status-warning, text-primary, text-secondary): ambra e rosso li distingue la parola. */
 internal fun Tono.colore(): Int =
     when (this) {
-        Tono.ROSSO -> R.color.error_red
-        Tono.AMBRA -> R.color.signal_amber
-        Tono.CHIARO -> R.color.stencil_white
-        Tono.GRIGIO -> R.color.sidewalk_gray
+        Tono.ROSSO -> R.color.elite_error
+        Tono.AMBRA -> R.color.elite_warning
+        Tono.CHIARO -> R.color.elite_text_primary
+        Tono.GRIGIO -> R.color.elite_text_secondary
     }

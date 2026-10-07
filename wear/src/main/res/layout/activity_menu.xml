@@ -4,7 +4,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/asphalt_dark"
     android:padding="@dimen/menu_box_padding">
 
     <LinearLayout
@@ -17,10 +16,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/wear_menu_title"
-            android:textColor="@color/stencil_white"
+            android:textColor="@color/elite_text_primary"
             android:fontFamily="@font/inter"
             android:textFontWeight="600"
-            android:textAllCaps="true"
             android:textSize="14sp"
             android:maxLines="1"
             android:gravity="center"
@@ -28,7 +26,9 @@
 
         <!--
             Le voci sono due e fisse: una ScrollView basta, e la corona la scorre quando il
-            tondo da 192dp non le contiene tutte e due. Il focus serve alla corona.
+            tondo da 192dp non le contiene tutte e due. Il focus serve alla corona. Le voci sono
+            le righe di UN gruppo tonale (surface, raggio 14, senza ombra) con la linea sottile fra
+            l'una e l'altra.
         -->
         <ScrollView
             android:id="@+id/menu_scroll"
@@ -43,7 +43,11 @@
                 android:id="@+id/menu_voci"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:background="@drawable/bg_group"
+                android:clipToOutline="true"
+                android:divider="@drawable/bg_group_divider"
+                android:orientation="vertical"
+                android:showDividers="middle" />
         </ScrollView>
 
     </LinearLayout>

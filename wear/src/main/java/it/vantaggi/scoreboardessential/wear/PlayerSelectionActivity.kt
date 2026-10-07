@@ -108,6 +108,7 @@ class PlayerSelectionActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MovimentoRidotto.applica(this, theme)
         setContentView(R.layout.activity_player_selection)
 
         sync = creaSync(applicationContext)
@@ -131,7 +132,7 @@ class PlayerSelectionActivity : ComponentActivity() {
     private fun coloreBarra(colore: Int): Int = TeamInk.graphicOnBlack(colore) or TeamInk.NERO
 
     private fun defaultColore(lato: Int): Int =
-        ContextCompat.getColor(this, if (lato == 2) R.color.team_electric_green else R.color.team_spray_yellow)
+        ContextCompat.getColor(this, if (lato == 2) R.color.team_side_2 else R.color.team_side_1)
 
     private fun mostraIntestazione(
         colore: Int,
@@ -293,7 +294,7 @@ class PlayerAdapter(
         ) {
             playerName.text = player.name
             playerName.setTextColor(
-                ContextCompat.getColor(itemView.context, if (salta) R.color.sidewalk_gray else R.color.ink_white),
+                ContextCompat.getColor(itemView.context, if (salta) R.color.elite_text_secondary else R.color.ink_white),
             )
             // INVISIBLE e non GONE: SALTA resta allineato ai nomi.
             playerBar.visibility = if (salta) View.INVISIBLE else View.VISIBLE

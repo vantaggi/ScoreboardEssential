@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
 import androidx.core.widget.TextViewCompat
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
 import androidx.wear.widget.WearableLinearLayoutManager
 import androidx.wear.widget.WearableRecyclerView
@@ -39,6 +40,7 @@ class SportSelectionActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MovimentoRidotto.applica(this, theme)
         setContentView(R.layout.activity_sport_selection)
 
         val ids = intent.getStringArrayListExtra(EXTRA_IDS).orEmpty()
@@ -52,6 +54,12 @@ class SportSelectionActivity : ComponentActivity() {
         val lista = findViewById<WearableRecyclerView>(R.id.sport_list)
         lista.layoutManager = WearableLinearLayoutManager(this)
         lista.isEdgeItemsCenteringEnabled = true
+        // La lista e' un gruppo tonale: la linea sottile fra le righe, rientrata come nel menu.
+        lista.addItemDecoration(
+            DividerItemDecoration(this, DividerItemDecoration.VERTICAL).apply {
+                setDrawable(ContextCompat.getDrawable(this@SportSelectionActivity, R.drawable.bg_group_divider)!!)
+            },
+        )
         lista.adapter =
             SportAdapter(voci) { scelta ->
                 if (!scelta.current) {
@@ -101,10 +109,11 @@ class SportAdapter(
         ) {
             nome.text = scelta.label
             // Quale sport si stia giocando si legge a parole ("in uso") e dalla spunta, non dal colore
-            // di una riga: il ciano (10.84:1 su #1E1E1E) e' solo un rinforzo. Colore e spunta stanno
+            // di una riga: l'accento e' solo un rinforzo. Colore e spunta stanno
             // qui e non nel layout, che il menu riusa per sottotitoli grigi e senza icona. La spunta
             // e' il simbolo check di Material Symbols a icon-compact (16dp), non un carattere.
-            val colore = ContextCompat.getColor(stato.context, R.color.neon_cyan)
+            // Il colore e' text-primary e non il lime: sul quadrante il lime e' solo di chi serve.
+            val colore = ContextCompat.getColor(stato.context, R.color.elite_text_primary)
             val lato = stato.resources.getDimensionPixelSize(R.dimen.icon_compact)
             val spunta = ContextCompat.getDrawable(stato.context, R.drawable.ic_check)!!.mutate()
             spunta.setBounds(0, 0, lato, lato)

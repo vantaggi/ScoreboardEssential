@@ -19,7 +19,7 @@ import org.robolectric.annotation.Config
 
 /**
  * La selezione dello sport sul polso (passo 10): titolo a 14sp su una riga, voci a 20sp in righe da
- * almeno 52dp, la spunta e "in uso" in ciano, il focus alla lista per la corona.
+ * almeno 52dp, la spunta e "in uso" in text-primary, il focus alla lista per la corona.
  *
  * Le righe si leggono dall'adapter, non da una lista impaginata: in Robolectric la lista non ha
  * un'altezza vera, e le misure che contano sono quelle dichiarate nelle risorse.
@@ -80,7 +80,7 @@ class SelezioneSportTest {
     }
 
     @Test
-    fun `lo sport in uso porta la spunta in ciano e gli altri niente`() {
+    fun `lo sport in uso porta la spunta in text-primary e gli altri niente`() {
         val attivita = apri()
 
         val inUso = riga(attivita, 1).findViewById<TextView>(R.id.sport_current)
@@ -91,7 +91,7 @@ class SelezioneSportTest {
         assertTrue("manca la spunta come icona", spunta != null)
         assertEquals(dp(attivita, 16f).toInt(), spunta.bounds.width())
         assertTrue("il testo non deve portare il carattere della spunta", !inUso.text.contains("✓"))
-        assertEquals(ContextCompat.getColor(attivita, R.color.neon_cyan), inUso.currentTextColor)
+        assertEquals(ContextCompat.getColor(attivita, R.color.elite_text_primary), inUso.currentTextColor)
 
         listOf(0, 2).forEach {
             assertEquals(View.GONE, riga(attivita, it).findViewById<TextView>(R.id.sport_current).visibility)
@@ -115,15 +115,15 @@ class SelezioneSportTest {
     }
 
     @Test
-    fun `il sottotitolo del menu resta grigio e il ciano e' solo della selezione sport`() {
+    fun `il sottotitolo del menu resta secondario e il colore della spunta e' solo della selezione sport`() {
         val menu = Robolectric.buildActivity(MenuActivity::class.java).create().get()
         val sottotitoli = menu.findViewById<LinearLayout>(R.id.menu_voci)
 
         (0 until sottotitoli.childCount).forEach {
             val sottotitolo = sottotitoli.getChildAt(it).findViewById<TextView>(R.id.sport_current)
             assertTrue(
-                "\"${sottotitolo.text}\" e' ciano nel menu",
-                sottotitolo.currentTextColor != ContextCompat.getColor(menu, R.color.neon_cyan),
+                "\"${sottotitolo.text}\" ha il colore della spunta nel menu",
+                sottotitolo.currentTextColor != ContextCompat.getColor(menu, R.color.elite_text_primary),
             )
         }
     }

@@ -175,7 +175,7 @@ class MainActivityTest {
 
         viewModel.syncMatchTimer(65_000L, isRunning = false)
         idle()
-        assertEquals(colore(R.color.sidewalk_gray), binding.matchTimer.currentTextColor)
+        assertEquals(colore(R.color.elite_text_secondary), binding.matchTimer.currentTextColor)
 
         viewModel.syncMatchTimer(65_000L, isRunning = true)
         idle()
@@ -199,10 +199,10 @@ class MainActivityTest {
     fun `a partita finita lo sconfitto e' grigio e il vincitore bianco`() {
         applica(stato(hasClock = false, primo = "6", secondo = "4", finita = true))
         assertEquals(colore(R.color.ink_white), binding.team1Score.currentTextColor)
-        assertEquals(colore(R.color.sidewalk_gray), binding.team2Score.currentTextColor)
+        assertEquals(colore(R.color.elite_text_secondary), binding.team2Score.currentTextColor)
 
         applica(stato(hasClock = false, primo = "1", secondo = "2", finita = true))
-        assertEquals(colore(R.color.sidewalk_gray), binding.team1Score.currentTextColor)
+        assertEquals(colore(R.color.elite_text_secondary), binding.team1Score.currentTextColor)
         assertEquals(colore(R.color.ink_white), binding.team2Score.currentTextColor)
     }
 
@@ -263,7 +263,7 @@ class MainActivityTest {
         idle()
 
         assertEquals("K 0:00", binding.keeperTimer.text.toString())
-        assertEquals(colore(R.color.error_red), binding.keeperTimer.currentTextColor)
+        assertEquals(colore(R.color.elite_error), binding.keeperTimer.currentTextColor)
     }
 
     @Test
@@ -461,7 +461,7 @@ class MainActivityTest {
 
         // Padel: il tocco lungo annulla.
         assertEquals("HOLD: UNDO", riga())
-        assertEquals(colore(R.color.sidewalk_gray), coloreRiga())
+        assertEquals(colore(R.color.elite_text_secondary), coloreRiga())
     }
 
     @Test
@@ -474,7 +474,7 @@ class MainActivityTest {
         // l'ora dell'ultimo stato che il telefono ha mandato dal vivo (qui, quello di prima).
         passano(3)
         assertTrue(riga(), Regex("OFFLINE · \\d\\d:\\d\\d").matches(riga()))
-        assertEquals(colore(R.color.signal_amber), coloreRiga())
+        assertEquals(colore(R.color.elite_warning), coloreRiga())
     }
 
     @Test
@@ -484,7 +484,7 @@ class MainActivityTest {
         mettiInCoda(2)
 
         assertEquals("2 QUEUED", riga())
-        assertEquals(colore(R.color.signal_amber), coloreRiga())
+        assertEquals(colore(R.color.elite_warning), coloreRiga())
     }
 
     @Test
@@ -494,11 +494,11 @@ class MainActivityTest {
         mettiInCoda(1)
 
         assertEquals("SENDING 1…", riga())
-        assertEquals(colore(R.color.stencil_white), coloreRiga())
+        assertEquals(colore(R.color.elite_text_primary), coloreRiga())
 
         passano(10)
         assertEquals("1 NOT DELIVERED", riga())
-        assertEquals(colore(R.color.signal_amber), coloreRiga())
+        assertEquals(colore(R.color.elite_warning), coloreRiga())
     }
 
     @Test
@@ -507,7 +507,7 @@ class MainActivityTest {
         collegati()
 
         assertEquals("MATCH OVER", riga())
-        assertEquals(colore(R.color.stencil_white), coloreRiga())
+        assertEquals(colore(R.color.elite_text_primary), coloreRiga())
         assertTrue(!binding.team1Container.isClickable)
     }
 

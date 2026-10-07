@@ -109,17 +109,17 @@ class TitoliIntegriTest {
 
     @Test
     @Config(qualifiers = "it-w192dp-h192dp-round-notnight-xhdpi")
-    fun `tondo da 192dp in italiano, FINE PARTITA va a capo solo sullo spazio`() {
+    fun `tondo da 192dp in italiano, Fine partita va a capo solo sullo spazio`() {
         val configurazione = RuntimeEnvironment.getApplication().resources.configuration
         assertTrue("la configurazione non e' tonda", configurazione.isScreenRound)
         assertEquals(1f, configurazione.fontScale, 0f)
-        verificaMenu("FINE PARTITA")
+        verificaMenu("Fine partita")
     }
 
     @Test
     @Config(qualifiers = "en-w192dp-h192dp-round-notnight-xhdpi")
-    fun `tondo da 192dp in inglese, END MATCH va a capo solo sullo spazio`() {
-        verificaMenu("END MATCH")
+    fun `tondo da 192dp in inglese, End match va a capo solo sullo spazio`() {
+        verificaMenu("End match")
     }
 
     private fun verificaSelezione() {
