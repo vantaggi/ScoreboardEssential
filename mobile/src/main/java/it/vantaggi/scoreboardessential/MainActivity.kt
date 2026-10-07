@@ -39,6 +39,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import it.vantaggi.scoreboardessential.core.ClockMode
@@ -1398,7 +1399,7 @@ class MainActivity :
             if (padelElite.isEnabled && sport == SportRegistry.PADEL && uuidDaInviare != null &&
                 viewModel.buildExport() is ExportResult.Ready
             ) {
-                android.widget.CheckBox(this).apply {
+                MaterialCheckBox(this).apply {
                     setText(R.string.padel_elite_send_in_dialog)
                     minHeight = resources.getDimensionPixelSize(R.dimen.control_touch)
                 }
@@ -1412,7 +1413,7 @@ class MainActivity :
                 .setMessage(testo.messaggio)
                 .apply {
                     if (inviaBox != null) {
-                        val margine = (resources.displayMetrics.density * 24).toInt()
+                        val margine = resources.getDimensionPixelSize(R.dimen.space_24)
                         setView(
                             android.widget.FrameLayout(this@MainActivity).apply {
                                 setPadding(margine, 0, margine, 0)

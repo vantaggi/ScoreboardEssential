@@ -1436,9 +1436,9 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Avvia, riprendi | `play_arrow` | `ic_play_arrow` | - |
 | Pausa | `pause` | `ic_pause` | - |
 | Fatto, selezionato | `check` | `ic_check` | `ic_check` |
-| Successo | `check_circle` | - | - |
-| Avviso | `warning` | - | - |
-| Errore | `cancel` | - | - |
+| Successo | `check_circle` | `ic_check_circle` | - |
+| Avviso | `warning` | `ic_warning` | - |
+| Errore | `cancel` | `ic_cancel` | - |
 | Informazione | `info` | - | - |
 | In corso | `progress_activity` | - | - |
 | Statistiche | `bar_chart` | `ic_bar_chart` | - |
@@ -1456,10 +1456,13 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Presenze | `event_available` | `ic_event_available` | - |
 | Scambio dei posti | `swap_horiz` | `ic_swap_horiz` | - |
 | Aggiungi giocatore | `person_add` | `ic_person_add` | - |
-| Blocco | `lock` | `ic_lock` | - |
+| Blocco, accedi di nuovo | `lock` | `ic_lock` | - |
 | Colore della squadra | `palette` | `ic_palette` | - |
 | Orologio collegato | `watch` | `ic_watch` | - |
 | Orologio scollegato | `watch_off` | `ic_watch_off` | - |
+| Invio a Padel Elite | `send` | `ic_send` | - |
+| In coda (invio) | `schedule` | `ic_schedule` | - |
+| In attesa dell'admin | `hourglass_empty` | `ic_hourglass_empty` | - |
 
 Le righe da `sports_soccer` in giu' sono le **icone di dominio**: la tabella della Constitution non le ha, sono del progetto e vengono dallo stesso catalogo (stesso peso, stessa geometria). Il colore dell'orologio collegato e' il lime e quello dello scollegato il testo secondario, mai il verde `#76FF03`. Le icone del launcher sono G5. Una riga con `-` e' un concetto fissato ma non ancora usato da nessuna schermata: il suo vettoriale non c'e' (non si tengono file morti) e si scarica dal catalogo, col nome `ic_<simbolo>`, quando serve. `IconeDelTelefonoTest` legge questa tabella: ogni `ic_*` in `drawable/` e' una sua riga, ogni riga con un drawable ha il file, e un concetto ha un solo simbolo e un solo file.
 
@@ -1695,15 +1698,16 @@ Filone 3 di `PIANO_PADEL_ELITE.md`. Il contratto del server e' `docs/dashboard/S
 
 - **"Padel Elite"** (`PadelEliteActivity`, `activity_padel_elite.xml`), da Impostazioni. Compito: collegarsi e scegliere il gruppo. Senza accesso, il modulo: **Field con etichetta sempre visibile sopra il campo** (`labelFor`), **errore sotto il campo** (campo vuoto, credenziali, email non confermata) o, per gli errori che non sono di un campo (rete, troppi tentativi), una riga con icona sopra il bottone; **un solo primario, "Accedi"** (lime, testo `elite_on_lime`), largo quanto la riga, cosi' in "Accesso in corso" cambia solo la parola e la larghezza non si muove; campi e bottone disattivati durante l'invio; riuscito = si passa al pannello dell'account. Con accesso: "Collegato come ...", gruppi come righe a scelta singola da 48dp (stato selezionato: pallino pieno e testo), "Esci" contornato; stati dei gruppi: in caricamento, vuoto (con cosa fare), errore di rete con "Riprova".
 - **Impostazioni**: card "Padel Elite" solo con la funzione accesa: "Non collegato" + "Padel Elite: accedi", oppure "<email> · <gruppo>" + "Gruppo" e "Esci".
-- **Card dello storico**: comando "Invia a Padel Elite" (solo padel chiuso, con registro e con identificativo; non mentre e' in coda o gia' arrivata) e riga di stato con **parola e icona**, mai solo il colore: in coda (orologio), inviata e in attesa di un admin (clessidra), importata (spunta, lime), scartata dall'admin (avviso), non inviabile col motivo (errore), accedi di nuovo (lucchetto). Il testo e' sempre `stencil_white`; l'icona porta il colore dello stato (lime, avviso, errore, secondario), tutti sopra 3:1 sul fondo della card.
+- **Card dello storico**: comando "Invia a Padel Elite" (solo padel chiuso, con registro e con identificativo; non mentre e' in coda o gia' arrivata) e riga di stato con **parola e icona**, mai solo il colore: in coda (`schedule`), inviata e in attesa di un admin (`hourglass_empty`), importata (`check_circle`, lime), scartata dall'admin (`warning`), non inviabile col motivo (`cancel`), accedi di nuovo (`lock`). Il testo e' sempre `elite_text_primary`; l'icona porta il colore dello stato (lime, avviso, errore, secondario), tutti sopra 3:1 sul fondo della card.
 - **Dialogo di fine partita**: una casella "Invia anche a Padel Elite" sotto il messaggio (solo padel, funzione accesa, file esportabile). Se si salva con la casella spuntata e manca l'accesso o il gruppo, si apre "Padel Elite" e dal ritorno il comando e' sulla card.
 
-**Conflitti e debiti dichiarati (G-2, G-3 e G-4 non sono ancora fatti).**
+**Conflitti e debiti dichiarati.** I primi tre erano debiti verso G-2 e G-3, chiusi il 7 ottobre 2026 con l'integrazione dei due rami (passo wf37).
 
-1. Le nuove schermate usano ancora gli stili di prima (`Widget.App.Button.Street`, `OutlinedButton.Street`, `TextInputLayout.OutlinedBox` di Material, card `concrete_gray` nelle impostazioni, `stencil_white` e `sidewalk_gray` sulla card dello storico) perche' i componenti di G-2 non esistono: seguono i vicini, e G-2/G-4 le porteranno ai token. La schermata "Padel Elite" invece cita gia' i token `elite_*`.
-2. Spaziature (8, 16, 24dp) scritte nei layout come nei vicini: `space_*` nasce in G-2. Aggiunto il solo `control_touch` (48dp) a `dimens.xml` perche' e' un ruolo.
-3. Icone (`ic_send`, `ic_schedule`, `ic_hourglass`, `ic_check_circle`, `ic_error`): vettoriali outlined scritti a mano dalle forme Material classiche, **non** ancora i Material Symbols scaricati uno a uno di G-3: G-3 le sostituisce, i nomi dei file restano.
+1. ~~Stili di prima.~~ **Chiuso.** Le schermate dell'invio usano i componenti di G-2: la card "Padel Elite" delle impostazioni e' un gruppo tonale (`Widget.App.Group`, come i quattro vicini), "Padel Elite: accedi" e "Gruppo" sono `Widget.App.Button.Secondary` ed "Esci" e' `Widget.App.Button.Text`; nella schermata "Padel Elite" i campi sono `Widget.App.TextInputLayout`, "Accedi" e' l'unico `Widget.App.Button.Primary`, "Riprova" e' secondario, "Esci" testuale, e i gruppi sono righe `MaterialRadioButton` da 48dp (`item_padel_elite_group.xml`, `Widget.App.RadioButton`) dentro un `Widget.App.Group`. Sulla card dello storico il comando e' `Widget.App.Button.Text` e la riga di stato ha il testo in `elite_text_primary`. La casella del dialogo di fine partita e' una `MaterialCheckBox`, cosi' prende lo stile del tema (lime, spunta) e non quello di fabbrica. Nessun nome `Street` resta in queste schermate; `ShapeAppearance.App.StreetCard`, tolta da G-2, non e' piu' citata.
+2. ~~Spaziature scritte a mano.~~ **Chiuso** per le schermate dell'invio: `space_4..space_32` e `control_touch` al posto di 4, 8, 12, 16, 24, 32 e 48dp.
+3. ~~Icone a mano.~~ **Chiuso.** `ic_send`, `ic_schedule`, `ic_hourglass_empty`, `ic_check_circle`, `ic_cancel` e `ic_warning` sono i Material Symbols outlined scaricati da `google/material-design-icons` come quelli di G-3, e hanno la loro riga nella tabella (concetti di dominio: invio `send`, in coda `schedule`, in attesa dell'admin `hourglass_empty`; "accedi di nuovo" e' `lock`, la riga "Blocco"). `ic_hourglass` ed `ic_error` sono tolti: la scartata dall'admin e' `warning` (avviso) e il non inviabile e l'errore del modulo sono `cancel` (la Constitution dice circle-x).
 4. Il dialogo di fine partita non ha un quarto bottone: la casella e' una scelta, non un comando.
 5. Movimento: nessuno aggiunto (nessun ciclo; il "in corso" e' una parola, quindi vale anche con il movimento ridotto). Non verificato a schermo ne' al 200%: nessun emulatore in questo passo.
+6. **Resta, del contorno e non dell'invio:** i colori `concrete_gray`, `stencil_white`, `sidewalk_gray` e il maiuscolo dei vicini (impostazioni, `match_item`) sono di G-4; le righe dei gruppi di Padel Elite non hanno ancora il divisore con inset di G-2 (una riga sola per gruppo nei casi comuni).
 
 **Non fatto in questo passo:** A-5 (integrazione contro Supabase locale: Docker non parte su questa macchina), A-6 (`PRIVACY_POLICY.md`, scheda "Sicurezza dei dati", `RELEASE_CHECKLIST.md`: il README dice ancora "nothing is uploaded"), A-7 (prova sul campo). La `KeystoreSecretBox` e il comportamento con rete vera non si provano su JVM.

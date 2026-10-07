@@ -90,22 +90,22 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Padel Elite: la card c'e' solo se la build conosce il Supabase (local.properties). -->
-        <com.google.android.material.card.MaterialCardView android:id="@+id/padelEliteCard" style="?attr/materialCardViewFilledStyle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:visibility="gone" app:cardBackgroundColor="@color/concrete_gray" app:shapeAppearance="@style/ShapeAppearance.App.StreetCard">
+        <!-- Padel Elite: la card c'e' solo se la build conosce il Supabase (local.properties). Gruppo tonale come i vicini. -->
+        <com.google.android.material.card.MaterialCardView android:id="@+id/padelEliteCard" style="@style/Widget.App.Group" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:visibility="gone">
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
 
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/padel_elite_title" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/stencil_white" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/padel_elite_title" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/elite_text_primary" />
 
-                <TextView android:id="@+id/padelEliteStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/padel_elite_settings_signed_out" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/sidewalk_gray" />
+                <TextView android:id="@+id/padelEliteStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_4" android:text="@string/padel_elite_settings_signed_out" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/elite_text_secondary" />
 
-                <com.google.android.material.button.MaterialButton android:id="@+id/padelEliteSignInButton" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:minHeight="48dp" android:text="@string/padel_elite_settings_sign_in" />
+                <com.google.android.material.button.MaterialButton android:id="@+id/padelEliteSignInButton" style="@style/Widget.App.Button.Secondary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_12" android:text="@string/padel_elite_settings_sign_in" />
 
-                <LinearLayout android:id="@+id/padelEliteAccountRow" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal" android:visibility="gone">
+                <LinearLayout android:id="@+id/padelEliteAccountRow" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_12" android:gravity="center_vertical" android:orientation="horizontal" android:visibility="gone">
 
-                    <com.google.android.material.button.MaterialButton android:id="@+id/padelEliteGroupButton" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:layout_weight="1" android:minHeight="48dp" android:text="@string/padel_elite_settings_group" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/padelEliteGroupButton" style="@style/Widget.App.Button.Secondary" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginEnd="@dimen/space_8" android:layout_weight="1" android:text="@string/padel_elite_settings_group" />
 
-                    <com.google.android.material.button.MaterialButton android:id="@+id/padelEliteSignOutButton" style="@style/Widget.App.Button.OutlinedButton.Street" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:minHeight="48dp" android:text="@string/padel_elite_sign_out" />
+                    <com.google.android.material.button.MaterialButton android:id="@+id/padelEliteSignOutButton" style="@style/Widget.App.Button.Text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/padel_elite_sign_out" />
                 </LinearLayout>
 
             </LinearLayout>

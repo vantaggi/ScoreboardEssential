@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Una riga a scelta singola del gruppo di Padel Elite: 48dp, il pallino pieno e il testo dicono "scelto". -->
+<com.google.android.material.radiobutton.MaterialRadioButton xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.App.RadioButton"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/control_touch"
+    android:textAppearance="?attr/textAppearanceBodyLarge"
+    android:textColor="@color/elite_text_primary" />
