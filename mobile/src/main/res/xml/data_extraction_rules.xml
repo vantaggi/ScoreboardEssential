@@ -17,6 +17,8 @@
         <include domain="database" path="match_database-wal" />
         <!-- Include all shared preferences -->
         <include domain="sharedpref" path="."/>
+        <!-- La sessione di Padel Elite non lascia il telefono: e cifrata con una chiave del Keystore che altrove non c e. -->
+        <exclude domain="sharedpref" path="padel_elite_session.xml"/>
     </cloud-backup>
     <!--
     <device-transfer>

@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
+import it.vantaggi.scoreboardessential.padelelite.invioLook
 import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
 import it.vantaggi.scoreboardessential.ui.chronicle.ChronicleText
 import it.vantaggi.scoreboardessential.utils.etichettaDiSquadra
@@ -22,6 +23,7 @@ class MatchHistoryAdapter(
     private val onDeleteClicked: (MatchWithTeams) -> Unit,
     private val onExportClicked: (MatchWithTeams) -> Unit,
     private val onChronicleClicked: (MatchWithTeams) -> Unit,
+    private val onSendClicked: (MatchWithTeams) -> Unit = {},
 ) : ListAdapter<MatchHistoryUiState, MatchHistoryAdapter.MatchViewHolder>(MatchDiffCallback()) {
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -31,7 +33,7 @@ class MatchHistoryAdapter(
             LayoutInflater
                 .from(parent.context)
                 .inflate(R.layout.match_item, parent, false)
-        return MatchViewHolder(view, onDeleteClicked, onExportClicked, onChronicleClicked)
+        return MatchViewHolder(view, onDeleteClicked, onExportClicked, onChronicleClicked, onSendClicked)
     }
 
     override fun onBindViewHolder(
@@ -47,6 +49,7 @@ class MatchHistoryAdapter(
         private val onDeleteClicked: (MatchWithTeams) -> Unit,
         private val onExportClicked: (MatchWithTeams) -> Unit,
         private val onChronicleClicked: (MatchWithTeams) -> Unit,
+        private val onSendClicked: (MatchWithTeams) -> Unit = {},
     ) : RecyclerView.ViewHolder(itemView) {
         private val team1NameTextView: TextView = itemView.findViewById(R.id.team1_name_textview)
         private val team2NameTextView: TextView = itemView.findViewById(R.id.team2_name_textview)
@@ -58,6 +61,8 @@ class MatchHistoryAdapter(
         private val deleteButton: View = itemView.findViewById(R.id.delete_match_button)
         private val exportButton: View = itemView.findViewById(R.id.export_match_button)
         private val chronicleButton: View = itemView.findViewById(R.id.chronicle_match_button)
+        private val sendButton: View = itemView.findViewById(R.id.send_match_button)
+        private val sendStatusTextView: TextView = itemView.findViewById(R.id.send_status_textview)
 
         fun bind(item: MatchHistoryUiState) {
             val matchWithTeams = item.matchWithTeams
@@ -108,6 +113,24 @@ class MatchHistoryAdapter(
             chronicleButton.visibility = if (item.canOpenChronicle) View.VISIBLE else View.GONE
             chronicleButton.setOnClickListener {
                 onChronicleClicked(matchWithTeams)
+            }
+
+            // Padel Elite: comando e stato compaiono solo con la funzione configurata. Lo stato dice
+            // sempre una parola e mostra un'icona; il colore segue ma non e' l'unico segno.
+            sendButton.visibility = if (item.canSendToPadelElite) View.VISIBLE else View.GONE
+            sendButton.setOnClickListener { onSendClicked(matchWithTeams) }
+            val invio = item.shownInvio
+            sendStatusTextView.visibility = if (invio != null) View.VISIBLE else View.GONE
+            if (invio != null) {
+                val aspetto = invioLook(context, invio)
+                sendStatusTextView.text = aspetto.text
+                sendStatusTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(aspetto.icon, 0, 0, 0)
+                androidx.core.widget.TextViewCompat
+                    .setCompoundDrawableTintList(
+                        sendStatusTextView,
+                        android.content.res.ColorStateList
+                            .valueOf(context.getColor(aspetto.tint)),
+                    )
             }
         }
     }

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Invio della partita a Padel Elite (passi A-2..A-4). Le versioni italiane stanno in values-it. -->
+    <string name="padel_elite_title">Padel Elite</string>
+    <string name="padel_elite_login_title">Sign in to Padel Elite</string>
+    <string name="padel_elite_login_hint">Use the same account as the dashboard. It is only needed to send matches to your group.</string>
+    <string name="padel_elite_email">Email</string>
+    <string name="padel_elite_password">Password</string>
+    <string name="padel_elite_sign_in">Sign in</string>
+    <string name="padel_elite_signing_in">Signing in</string>
+    <string name="padel_elite_sign_out">Sign out</string>
+    <string name="padel_elite_settings_sign_in">Padel Elite: sign in</string>
+    <string name="padel_elite_settings_group">Group</string>
+    <string name="padel_elite_settings_signed_out">Not signed in</string>
+    <string name="padel_elite_settings_signed_in">%1$s · %2$s</string>
+    <string name="padel_elite_settings_no_group">no group chosen</string>
+    <string name="padel_elite_signed_in_as">Signed in as %1$s</string>
+    <string name="padel_elite_groups_title">Group for sending</string>
+    <string name="padel_elite_groups_hint">Matches go to the inbox of this group; an admin opens them in the dashboard.</string>
+    <string name="padel_elite_groups_loading">Loading your groups</string>
+    <string name="padel_elite_groups_empty">You are not a member of any Padel Elite group. Ask an admin to add you, then try again.</string>
+    <string name="padel_elite_groups_error">Could not load the groups. Check the connection.</string>
+    <string name="padel_elite_retry">Try again</string>
+    <string name="padel_elite_role_owner">owner</string>
+    <string name="padel_elite_role_admin">admin</string>
+    <string name="padel_elite_role_member">member</string>
+    <string name="padel_elite_group_row">%1$s · %2$s</string>
+    <string name="padel_elite_error_email_empty">Enter your email</string>
+    <string name="padel_elite_error_password_empty">Enter your password</string>
+    <string name="padel_elite_error_invalid_credentials">Email or password is wrong</string>
+    <string name="padel_elite_error_email_not_confirmed">Confirm your email first: open the link we sent you</string>
+    <string name="padel_elite_error_rate_limited">Too many attempts. Wait a few minutes and try again.</string>
+    <string name="padel_elite_error_network">No connection. Check the network and try again.</string>
+    <string name="padel_elite_error_other">Could not sign in. Try again later.</string>
+
+    <!-- Il comando e lo stato sulla card dello storico: ogni stato ha una parola e un icona. -->
+    <string name="padel_elite_send">Send to Padel Elite</string>
+    <string name="padel_elite_send_in_dialog">Also send to Padel Elite</string>
+    <string name="padel_elite_status_queued">Queued: it leaves as soon as there is a connection</string>
+    <string name="padel_elite_status_queued_full">Queued: the group inbox is full, trying again later</string>
+    <string name="padel_elite_status_sent">Sent: waiting for an admin</string>
+    <string name="padel_elite_status_imported">Imported by an admin</string>
+    <string name="padel_elite_status_discarded">Discarded by an admin: you can send it again</string>
+    <string name="padel_elite_status_login_again">Sign in to Padel Elite again</string>
+    <string name="padel_elite_status_unsendable_invalid">Cannot be sent: the file is not valid (%1$s)</string>
+    <string name="padel_elite_status_unsendable_invalid_plain">Cannot be sent: the file is not valid</string>
+    <string name="padel_elite_status_unsendable_too_large">Cannot be sent: the file is too large</string>
+    <string name="padel_elite_status_unsendable_not_member">Cannot be sent: you are no longer in this group, choose another</string>
+    <string name="padel_elite_status_unsendable_no_file">Cannot be sent: the match needs an id and four players</string>
+    <string name="padel_elite_status_unsendable_server">Cannot be sent: the server answers in an unexpected way</string>
+</resources>

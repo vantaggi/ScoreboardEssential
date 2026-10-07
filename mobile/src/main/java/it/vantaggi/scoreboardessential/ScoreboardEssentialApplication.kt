@@ -4,6 +4,8 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import it.vantaggi.scoreboardessential.database.AppDatabase
+import it.vantaggi.scoreboardessential.padelelite.PadelEliteConfig
+import it.vantaggi.scoreboardessential.padelelite.PadelEliteServices
 import it.vantaggi.scoreboardessential.repository.ColorRepository
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
@@ -18,6 +20,9 @@ class ScoreboardEssentialApplication : Application() {
     val matchRepository by lazy { MatchRepository(database.matchDao(), this, colorRepository) }
     val userPreferencesRepository by lazy { UserPreferencesRepository(this) }
     val matchSettingsRepository by lazy { MatchSettingsRepository(this, colorRepository) }
+
+    /** L'invio a Padel Elite. Spento (nessun comando, nessuna rete) senza la configurazione di local.properties. */
+    val padelElite by lazy { PadelEliteServices(this, PadelEliteConfig.fromBuildConfig(), matchRepository) }
 
     override fun onCreate() {
         super.onCreate()

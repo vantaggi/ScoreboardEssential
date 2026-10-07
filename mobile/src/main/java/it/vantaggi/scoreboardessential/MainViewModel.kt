@@ -681,6 +681,10 @@ class MainViewModel(
     // primo punto, e tornano col ripristino. Sopra init perche' il ripristino, lanciato da init,
     // li scrive.
     private var matchUuid: String? = null
+
+    /** L'identificativo del file della partita in corso (null prima del primo punto): chiave dell'invio a Padel Elite. */
+    val currentMatchUuid: String? get() = matchUuid
+
     private var matchStartedAt: Long? = null
 
     /**

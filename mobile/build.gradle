@@ -22,8 +22,23 @@ android {
         keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
     }
 
+    // Padel Elite (invio della partita): URL di Supabase e chiave pubblica ("publishable") stanno
+    // in local.properties, git-ignored, o nelle variabili d'ambiente della CI. Mai nel repository.
+    // Se mancano la funzione e' spenta e l'app e' identica a quella senza invio.
+    def localProperties = new Properties()
+    def localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.withInputStream { localProperties.load(it) }
+    }
+    def padelEliteValue = { String name ->
+        def raw = (localProperties.getProperty(name) ?: System.getenv(name) ?: "").trim()
+        raw.replace("\\", "\\\\").replace("\"", "\\\"")
+    }
+
     defaultConfig {
         applicationId "it.vantaggi.scoreboardessential"
+        buildConfigField "String", "PADEL_ELITE_SUPABASE_URL", "\"${padelEliteValue('PADEL_ELITE_SUPABASE_URL')}\""
+        buildConfigField "String", "PADEL_ELITE_SUPABASE_KEY", "\"${padelEliteValue('PADEL_ELITE_SUPABASE_KEY')}\""
         minSdk 30
         targetSdk 36
         versionCode 1
@@ -157,4 +172,10 @@ dependencies {
     ksp libs.androidx.room.compiler
     testImplementation libs.androidx.room.testing
     implementation libs.colorpickerview
+
+    // Invio a Padel Elite: la coda dei lavori. Il resto (HTTP, JSON, cifratura della sessione)
+    // usa solo la piattaforma: HttpURLConnection, org.json e il Keystore, nessuna libreria in piu'.
+    implementation libs.androidx.work.runtime.ktx
+    testImplementation libs.androidx.work.testing
+    testImplementation libs.mockwebserver
 }

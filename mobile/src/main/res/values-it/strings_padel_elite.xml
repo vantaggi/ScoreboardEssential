@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Invio della partita a Padel Elite (passi A-2..A-4). Le versioni inglesi stanno in values. -->
+    <string name="padel_elite_title">Padel Elite</string>
+    <string name="padel_elite_login_title">Accedi a Padel Elite</string>
+    <string name="padel_elite_login_hint">Usa lo stesso account della dashboard. Serve solo per inviare le partite al tuo gruppo.</string>
+    <string name="padel_elite_email">Email</string>
+    <string name="padel_elite_password">Password</string>
+    <string name="padel_elite_sign_in">Accedi</string>
+    <string name="padel_elite_signing_in">Accesso in corso</string>
+    <string name="padel_elite_sign_out">Esci</string>
+    <string name="padel_elite_settings_sign_in">Padel Elite: accedi</string>
+    <string name="padel_elite_settings_group">Gruppo</string>
+    <string name="padel_elite_settings_signed_out">Non collegato</string>
+    <string name="padel_elite_settings_signed_in">%1$s · %2$s</string>
+    <string name="padel_elite_settings_no_group">nessun gruppo scelto</string>
+    <string name="padel_elite_signed_in_as">Collegato come %1$s</string>
+    <string name="padel_elite_groups_title">Gruppo per l\'invio</string>
+    <string name="padel_elite_groups_hint">Le partite vanno nella casella d\'arrivo di questo gruppo; un admin le apre nella dashboard.</string>
+    <string name="padel_elite_groups_loading">Carico i tuoi gruppi</string>
+    <string name="padel_elite_groups_empty">Non sei membro di nessun gruppo di Padel Elite. Chiedi a un admin di aggiungerti, poi riprova.</string>
+    <string name="padel_elite_groups_error">Non riesco a caricare i gruppi. Controlla la connessione.</string>
+    <string name="padel_elite_retry">Riprova</string>
+    <string name="padel_elite_role_owner">proprietario</string>
+    <string name="padel_elite_role_admin">admin</string>
+    <string name="padel_elite_role_member">membro</string>
+    <string name="padel_elite_group_row">%1$s · %2$s</string>
+    <string name="padel_elite_error_email_empty">Inserisci l\'email</string>
+    <string name="padel_elite_error_password_empty">Inserisci la password</string>
+    <string name="padel_elite_error_invalid_credentials">Email o password non corrette</string>
+    <string name="padel_elite_error_email_not_confirmed">Conferma prima l\'email: apri il link che ti abbiamo mandato</string>
+    <string name="padel_elite_error_rate_limited">Troppi tentativi. Aspetta qualche minuto e riprova.</string>
+    <string name="padel_elite_error_network">Nessuna connessione. Controlla la rete e riprova.</string>
+    <string name="padel_elite_error_other">Non riesco ad accedere. Riprova piu\' tardi.</string>
+
+    <!-- Il comando e lo stato sulla card dello storico: ogni stato ha una parola e un icona. -->
+    <string name="padel_elite_send">Invia a Padel Elite</string>
+    <string name="padel_elite_send_in_dialog">Invia anche a Padel Elite</string>
+    <string name="padel_elite_status_queued">In coda: parte appena c\'e\' rete</string>
+    <string name="padel_elite_status_queued_full">In coda: la casella del gruppo e\' piena, riprovo piu\' tardi</string>
+    <string name="padel_elite_status_sent">Inviata: in attesa di un admin</string>
+    <string name="padel_elite_status_imported">Importata da un admin</string>
+    <string name="padel_elite_status_discarded">Scartata da un admin: puoi rimandarla</string>
+    <string name="padel_elite_status_login_again">Accedi di nuovo a Padel Elite</string>
+    <string name="padel_elite_status_unsendable_invalid">Non inviabile: il file non e\' valido (%1$s)</string>
+    <string name="padel_elite_status_unsendable_invalid_plain">Non inviabile: il file non e\' valido</string>
+    <string name="padel_elite_status_unsendable_too_large">Non inviabile: il file e\' troppo grande</string>
+    <string name="padel_elite_status_unsendable_not_member">Non inviabile: non sei piu\' nel gruppo, scegline un altro</string>
+    <string name="padel_elite_status_unsendable_no_file">Non inviabile: alla partita servono un identificativo e quattro giocatori</string>
+    <string name="padel_elite_status_unsendable_server">Non inviabile: il server risponde in modo inatteso</string>
+</resources>

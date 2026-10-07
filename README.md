@@ -76,6 +76,27 @@ Without it, debug builds work normally and release builds are produced unsigned.
 watch share an `applicationId` (`it.vantaggi.scoreboardessential`); the watch uses a `2000+`
 `versionCode` offset so its bundle never collides with the phone's.
 
+### Sending a padel match to Padel Elite (optional)
+
+The phone app can send a finished padel match to a Padel Elite group's inbox (an admin then opens
+it in the dashboard). The feature is **off** unless the build knows the Supabase project. Put the two
+values in the git-ignored `local.properties` at the repo root (or in CI environment variables of the
+same names):
+
+```properties
+PADEL_ELITE_SUPABASE_URL=https://<project>.supabase.co
+PADEL_ELITE_SUPABASE_KEY=<the project's publishable key>
+```
+
+Without them no command appears and the app is identical to a build without the feature. Never put
+the service-role key here: only the publishable (public) key, whose safety rests on the database's
+RLS and RPCs. `local.properties` must never be committed (it is in `.gitignore`).
+
+Design note: the client is plain REST on `HttpURLConnection` (GoTrue for email/password sign-in and
+token refresh, PostgREST for groups and status, the `submit_scoreboard_match` RPC for delivery), the
+session is encrypted with an Android Keystore AES-GCM key, and the retry queue is WorkManager: the
+only new runtime dependency is `androidx.work`. No Supabase or OkHttp library, no Google Sign-In.
+
 ## Data & Privacy
 
 All data is stored locally in a Room database; nothing is uploaded. Android auto-backup is

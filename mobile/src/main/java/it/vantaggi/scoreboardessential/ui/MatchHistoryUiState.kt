@@ -3,6 +3,7 @@ package it.vantaggi.scoreboardessential.ui
 import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
+import it.vantaggi.scoreboardessential.padelelite.InvioInfo
 
 data class MatchHistoryUiState(
     val matchWithTeams: MatchWithTeams,
@@ -13,7 +14,23 @@ data class MatchHistoryUiState(
      * dal registro una volta sola fuori dal thread principale. Null dove non c'e' niente da dire.
      */
     val setLine: String? = null,
+    /** Lo stato dell'invio a Padel Elite di questa partita, o null se non e' mai partita. */
+    val invio: InvioInfo? = null,
+    /** La funzione e' configurata: senza, nessun comando e nessuno stato. */
+    val padelEliteEnabled: Boolean = false,
 ) {
+    /**
+     * Il comando "Invia a Padel Elite": solo con la funzione configurata, solo padel chiuso con un
+     * registro e con l'identificativo del file (le partite di prima della versione 14 non lo hanno
+     * e il server le rifiuta), e non mentre e' in coda o gia' arrivata.
+     */
+    val canSendToPadelElite: Boolean
+        get() =
+            padelEliteEnabled && canExport && matchWithTeams.match.matchUuid != null && (invio == null || invio.canSend)
+
+    /** Lo stato da mostrare sulla card: solo con la funzione accesa. */
+    val shownInvio: InvioInfo? get() = invio.takeIf { padelEliteEnabled }
+
     /**
      * Il vincitore dal punteggio di testata: 1, 2 o null per un pareggio. E' lo stesso confronto
      * con cui [MatchDao.getPlayerWinCounts] conta le vittorie, quindi vale per ogni sport.
