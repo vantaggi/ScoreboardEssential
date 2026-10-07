@@ -9,6 +9,7 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isNotEmpty
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -120,7 +121,7 @@ class PadelEliteActivity : AppCompatActivity() {
                     isChecked = gruppo.id == stato.selectedId
                 }
             // La linea sottile fra una riga e l'altra, rientrata fino al bordo del testo (G-2, divisore con inset).
-            if (elenco.childCount > 0) elenco.addView(rigaDivisoria())
+            if (elenco.isNotEmpty()) elenco.addView(rigaDivisoria())
             elenco.addView(riga)
         }
         elenco.setOnCheckedChangeListener { gruppo, id ->

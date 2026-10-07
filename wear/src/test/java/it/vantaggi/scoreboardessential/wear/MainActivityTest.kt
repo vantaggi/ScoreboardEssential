@@ -166,7 +166,7 @@ class MainActivityTest {
         applica(stato(hasClock = false, periodo = "Set 2", giochi = "6-4 \u00B7 4-3"))
 
         assertEquals("4 \u2013 3", binding.matchTimer.text.toString())
-        assertEquals("SET 2 \u00B7 6-4", binding.faceDetail.text.toString())
+        assertEquals("Set 2 \u00B7 6-4", binding.faceDetail.text.toString())
     }
 
     @Test
@@ -460,7 +460,7 @@ class MainActivityTest {
         collegati()
 
         // Padel: il tocco lungo annulla.
-        assertEquals("HOLD: UNDO", riga())
+        assertEquals("Hold: undo", riga())
         assertEquals(colore(R.color.elite_text_secondary), coloreRiga())
     }
 
@@ -468,12 +468,12 @@ class MainActivityTest {
     fun `all'avvio il collegamento non ancora risposto non lampeggia SCOLLEGATO`() {
         applica(stato(hasClock = false, periodo = "Set 1"))
 
-        assertEquals("HOLD: UNDO", riga())
+        assertEquals("Hold: undo", riga())
 
         // Passati i 2 secondi senza un collegamento, la riga lo dice a parole e in ambra, con
         // l'ora dell'ultimo stato che il telefono ha mandato dal vivo (qui, quello di prima).
         passano(3)
-        assertTrue(riga(), Regex("OFFLINE · \\d\\d:\\d\\d").matches(riga()))
+        assertTrue(riga(), Regex("Offline · \\d\\d:\\d\\d").matches(riga()))
         assertEquals(colore(R.color.elite_warning), coloreRiga())
     }
 
@@ -483,7 +483,7 @@ class MainActivityTest {
         passano(3)
         mettiInCoda(2)
 
-        assertEquals("2 QUEUED", riga())
+        assertEquals("2 queued", riga())
         assertEquals(colore(R.color.elite_warning), coloreRiga())
     }
 
@@ -493,11 +493,11 @@ class MainActivityTest {
         collegati()
         mettiInCoda(1)
 
-        assertEquals("SENDING 1…", riga())
+        assertEquals("Sending 1…", riga())
         assertEquals(colore(R.color.elite_text_primary), coloreRiga())
 
         passano(10)
-        assertEquals("1 NOT DELIVERED", riga())
+        assertEquals("1 not delivered", riga())
         assertEquals(colore(R.color.elite_warning), coloreRiga())
     }
 
@@ -506,7 +506,7 @@ class MainActivityTest {
         applica(stato(hasClock = false, primo = "6", secondo = "4", finita = true))
         collegati()
 
-        assertEquals("MATCH OVER", riga())
+        assertEquals("Match over", riga())
         assertEquals(colore(R.color.elite_text_primary), coloreRiga())
         assertTrue(!binding.team1Container.isClickable)
     }

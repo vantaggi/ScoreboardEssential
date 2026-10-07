@@ -69,7 +69,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Locale
 
 // Quanto scurisce la colonna di gioco a foglio PARTITA aperto: nero al 60%.
 private const val SCRIM_ALPHA = 0.6f
@@ -1014,7 +1013,7 @@ class MainActivity :
             // A zero la correzione non fa niente, e la striscia non deve dire che e' successo.
             if (viewModel.scoreDisplay.value != prima) {
                 val nome = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
-                mostraMessaggioInStriscia(getString(R.string.strip_msg_correction, (nome ?: "").uppercase(Locale.getDefault())))
+                mostraMessaggioInStriscia(getString(R.string.strip_msg_correction, nome ?: ""))
             }
         }
     }
@@ -1137,7 +1136,7 @@ class MainActivity :
             .alpha(0f)
             .setDuration(meta)
             .withEndAction {
-                textView.text = newText.uppercase()
+                textView.text = newText
                 textView
                     .animate()
                     .alpha(1f)
@@ -1413,7 +1412,7 @@ class MainActivity :
         // Il messaggio solo se l'attribuzione e' avvenuta: il punto puo' essere sparito nel frattempo.
         if (viewModel.attributeScorer(engineIndex, playerWithRoles)) {
             mostraMessaggioInStriscia(
-                getString(R.string.strip_msg_goal_by, playerWithRoles.player.playerName.uppercase(Locale.getDefault())),
+                getString(R.string.strip_msg_goal_by, playerWithRoles.player.playerName),
             )
         }
     }
@@ -1489,8 +1488,8 @@ class MainActivity :
     /**
      * Il valore dello slot del portiere. Lo slot e' sempre in barra nel calcio (lo decide
      * applyCapabilities): prima la riga spariva a 0 e sotto tutto saltava proprio alla scadenza.
-     * Fermo o a 00:00 e' grigio, in corso e' rosa: l'unico rosa della schermata di gioco
-     * (DESIGN.md, Coerenza fra telefono e orologio), lo stesso segno del polso.
+     * Fermo o a 00:00 e' grigio (testo secondario), in corso e' testo primario: il lime marca solo chi serve
+     * (G-9: la stessa scelta del polso, dove il conto che corre e' testo primario).
      */
     private fun updateKeeperTimerTextView(timeInMillis: Long) {
         val conto = TimeUtils.formatTime(timeInMillis)
@@ -1498,7 +1497,7 @@ class MainActivity :
         val stato = statoDelPortiere(inCorso, viewModel.isKeeperTimerExpired.value == true)
         val scaduto = stato == StatoPortiere.SCADUTO
         // SCADUTO: slot pieno elite_error con «CAMBIO» in elite_background (5,08:1). L'errore e' un riempimento e
-        // lo sfondo l'inchiostro, come nelle zone +; il lime resta solo del conto in corso.
+        // lo sfondo l'inchiostro, come nelle zone +; il conto in corso e' testo primario.
         val nero = ContextCompat.getColor(this, R.color.elite_background)
         val rosso = ContextCompat.getColor(this, R.color.elite_error)
         keeperSlot.setCardBackgroundColor(if (scaduto) rosso else Color.TRANSPARENT)
@@ -1509,7 +1508,7 @@ class MainActivity :
         keeperTimerTextView.setTextColor(
             when {
                 scaduto -> nero
-                inCorso -> ContextCompat.getColor(this, R.color.elite_lime)
+                inCorso -> ContextCompat.getColor(this, R.color.elite_text_primary)
                 else -> ContextCompat.getColor(this, R.color.elite_text_secondary)
             },
         )

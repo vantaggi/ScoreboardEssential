@@ -292,7 +292,7 @@ class QuadranteFasceTest {
 
         // Un cinque set e' il peggior caso di D: si stringe da sola fino a 9sp, e a 9sp deve entrare.
         val dettaglio = b.faceDetail.text.toString()
-        assertEquals("SET 5 · 6-4 · 3-6 · 7-5 · 6-2", dettaglio)
+        assertEquals("Set 5 · 6-4 · 3-6 · 7-5 · 6-2", dettaglio)
         val minimo = penna(b.faceDetail, 9f).measureText(dettaglio)
         assertTrue("D a 9sp e' larga ${minimo}px, la vista ${larghezzaUtile(b.faceDetail)}px", minimo <= larghezzaUtile(b.faceDetail))
 

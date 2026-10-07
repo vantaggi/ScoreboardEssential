@@ -77,22 +77,22 @@ class PartitaARacchettaTest {
 
     @Test
     fun `nel padel a set unico la barra dice lo sport e chi serve fin dal primo punto`() {
-        assertEquals("PADEL · SERVE ROSSI", barra(padel, padel.initial()))
-        assertEquals("PADEL · SERVE ROSSI", barra(padel, padel.punti(padel.initial(), 2, 1)))
+        assertEquals("Padel · serve Rossi", barra(padel, padel.initial()))
+        assertEquals("Padel · serve Rossi", barra(padel, padel.punti(padel.initial(), 2, 1)))
     }
 
     @Test
     fun `a ogni game il servizio passa all'altra squadra`() {
-        assertEquals("PADEL · SERVE BIANCHI", barra(padel, padel.game(padel.initial(), 1)))
+        assertEquals("Padel · serve Bianchi", barra(padel, padel.game(padel.initial(), 1)))
     }
 
     @Test
     fun `nel tennis la barra porta il set e dopo il primo set dice SET 2`() {
-        assertEquals("SET 1 · SERVE ROSSI", barra(tennis, tennis.initial()))
+        assertEquals("Set 1 · serve Rossi", barra(tennis, tennis.initial()))
         var s = tennis.initial()
         repeat(6) { s = tennis.game(s, 1) }
-        assertEquals("SET 2", barra(tennis, s).substringBefore(" · "))
-        assertTrue(barra(tennis, s), barra(tennis, s).contains("SERVE"))
+        assertEquals("Set 2", barra(tennis, s).substringBefore(" · "))
+        assertTrue(barra(tennis, s), barra(tennis, s).contains("serve"))
     }
 
     @Test
@@ -104,8 +104,8 @@ class PartitaARacchettaTest {
         }
         s = padel.game(s, 1)
         s = padel.game(s, 2)
-        assertEquals("TIE-BREAK", barra(padel, s).substringBefore(" · "))
-        assertTrue(barra(padel, s), barra(padel, s).contains("SERVE"))
+        assertEquals("Tie-break", barra(padel, s).substringBefore(" · "))
+        assertTrue(barra(padel, s), barra(padel, s).contains("serve"))
     }
 
     @Test
@@ -116,9 +116,9 @@ class PartitaARacchettaTest {
 
     @Test
     fun `al 6-3 la barra dice VINCE con il punteggio dal lato della squadra di sinistra`() {
-        assertEquals("VINCE ROSSI · 6-3", barra(padel, padelFinito(1)))
+        assertEquals("Vince Rossi · 6-3", barra(padel, padelFinito(1)))
         // Come lo schermo: a sinistra Rossi ha perso 3-6, e la barra non lo rigira in 6-3.
-        assertEquals("VINCE BIANCHI · 3-6", barra(padel, padelFinito(2)))
+        assertEquals("Vince Bianchi · 3-6", barra(padel, padelFinito(2)))
     }
 
     /** Tennis a tre set vinto dalla squadra di destra: 6-4 3-6 7-5 per Bianchi, cioe' 4-6 6-3 5-7 per Rossi. */
@@ -147,7 +147,7 @@ class PartitaARacchettaTest {
         val display = tennis.display(tennisVintoDaBianchi())
         assertTrue("la partita doveva finire: $display", display.matchOver)
         assertEquals("4-6 · 6-3 · 5-7", display.side1Secondary)
-        assertEquals("VINCE BIANCHI · 4-6 6-3 5-7", barra(tennis, tennisVintoDaBianchi()))
+        assertEquals("Vince Bianchi · 4-6 6-3 5-7", barra(tennis, tennisVintoDaBianchi()))
     }
 
     @Test
@@ -162,7 +162,7 @@ class PartitaARacchettaTest {
         assertTrue("il testo deve entrare: $testo", testo.length <= 24)
         assertTrue("accorciato il meno possibile: $testo", testo.length >= 23)
         // Se entra intero non si tocca.
-        assertEquals("VINCE MARIA ANTONIETTA DELLA · 6-3", testoDellaBarra(context, padel.id, display, lungo, "Bianchi") { true })
+        assertEquals("Vince Maria Antonietta Della · 6-3", testoDellaBarra(context, padel.id, display, lungo, "Bianchi") { true })
     }
 
     @Test
@@ -177,7 +177,7 @@ class PartitaARacchettaTest {
     @Test
     fun `il dialogo sul 5-3 e 30-15 dice il punteggio del display e non 0-0`() {
         val testo = testoDelDialogoDiFine(context, padel.id, padel.display(padelCinqueATre()), "Rossi", "Bianchi")
-        assertEquals("ROSSI – BIANCHI · game 5-3 · punto 30-15", testo.messaggio)
+        assertEquals("Rossi – Bianchi · game 5-3 · punto 30-15", testo.messaggio)
         assertEquals("Termina Partita?", testo.titolo)
         assertFalse("il positivo e' SALVA solo a partita chiusa", testo.salva)
     }
@@ -197,14 +197,14 @@ class PartitaARacchettaTest {
         assertEquals("6", display.side1Primary)
         assertEquals("6-6", display.side1Secondary)
         val testo = testoDelDialogoDiFine(context, padel.id, display, "Rossi", "Bianchi")
-        assertEquals("ROSSI – BIANCHI · game 6-6 · punto 6-6", testo.messaggio)
+        assertEquals("Rossi – Bianchi · game 6-6 · punto 6-6", testo.messaggio)
     }
 
     @Test
     fun `in modalita' a game il dialogo non ha la riga del punto`() {
         val display = ScoreDisplay(side1Primary = "5", side1Secondary = "5-3", side2Primary = "3", side2Secondary = "3-5")
         val testo = testoDelDialogoDiFine(context, padel.id, display, "Rossi", "Bianchi", modalitaAGame = true)
-        assertEquals("ROSSI – BIANCHI · game 5-3", testo.messaggio)
+        assertEquals("Rossi – Bianchi · game 5-3", testo.messaggio)
         assertTrue(modalitaAGame("padel").not())
         assertTrue(modalitaAGame(SportRegistry.FOOTBALL).not())
     }
@@ -214,14 +214,14 @@ class PartitaARacchettaTest {
         var s = tennis.initial()
         repeat(6) { s = tennis.game(s, 1) }
         val testo = testoDelDialogoDiFine(context, tennis.id, tennis.display(s), "Rossi", "Bianchi")
-        assertEquals("ROSSI – BIANCHI · set 6-0 · game 0-0 · punto 0-0", testo.messaggio)
+        assertEquals("Rossi – Bianchi · set 6-0 · game 0-0 · punto 0-0", testo.messaggio)
     }
 
     @Test
     fun `a partita chiusa il dialogo dice PARTITA FINITA, chi ha vinto e offre SALVA`() {
         val testo = testoDelDialogoDiFine(context, padel.id, padel.display(padelFinito(1)), "Rossi", "Bianchi")
-        assertEquals("PARTITA FINITA", testo.titolo)
-        assertEquals("VINCE ROSSI · 6-3", testo.messaggio)
+        assertEquals("Partita finita", testo.titolo)
+        assertEquals("Vince Rossi · 6-3", testo.messaggio)
         assertTrue(testo.salva)
         assertEquals("Salva", context.getString(R.string.btn_save_match))
     }
@@ -230,7 +230,7 @@ class PartitaARacchettaTest {
     fun `nel calcio il dialogo scrive il risultato dal display`() {
         val display = ScoreDisplay(side1Primary = "2", side2Primary = "1")
         val testo = testoDelDialogoDiFine(context, SportRegistry.FOOTBALL, display, "Rossi", "Lupi")
-        assertEquals("ROSSI 2-1 LUPI", testo.messaggio)
+        assertEquals("Rossi 2-1 Lupi", testo.messaggio)
         assertFalse(testo.salva)
     }
 

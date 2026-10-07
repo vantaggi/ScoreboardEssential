@@ -58,7 +58,7 @@ class StrisciaTest {
     fun `nel calcio senza marcatore la striscia chiede chi ha segnato e si puo toccare`() {
         val stato = striscia(listOf(gol(1, 0), avvio))
 
-        assertEquals("GOL ROSSI · CHI HA SEGNATO? ›", stato.testo)
+        assertEquals("Gol Rossi · chi ha segnato? ›", stato.testo)
         assertNotNull("il gol senza marcatore e' la scorciatoia", stato.daAttribuire)
         assertEquals("e porta l'indice del motore di quel gol", 0, stato.daAttribuire?.engineIndex)
     }
@@ -67,7 +67,7 @@ class StrisciaTest {
     fun `la striscia segue l'ultimo gol e la squadra che l'ha segnato`() {
         val stato = striscia(listOf(gol(2, 1), gol(1, 0), avvio))
 
-        assertEquals("GOL BLU · CHI HA SEGNATO? ›", stato.testo)
+        assertEquals("Gol Blu · chi ha segnato? ›", stato.testo)
         assertEquals(1, stato.daAttribuire?.engineIndex)
         assertEquals(2, stato.daAttribuire?.team)
     }
@@ -76,7 +76,7 @@ class StrisciaTest {
     fun `nel calcio con il marcatore la striscia lo nomina e non offre niente da toccare`() {
         val stato = striscia(listOf(gol(1, 0, marcatore = "Marco B.", idGiocatore = 7), avvio))
 
-        assertEquals("GOL ROSSI · MARCO B.", stato.testo)
+        assertEquals("Gol Rossi · Marco B.", stato.testo)
         assertNull(stato.daAttribuire)
     }
 
@@ -84,7 +84,7 @@ class StrisciaTest {
     fun `un avvio in testa non nasconde l'ultimo gol`() {
         val stato = striscia(listOf(avvio, gol(1, 0)))
 
-        assertEquals("GOL ROSSI · CHI HA SEGNATO? ›", stato.testo)
+        assertEquals("Gol Rossi · chi ha segnato? ›", stato.testo)
     }
 
     @Test
@@ -92,7 +92,7 @@ class StrisciaTest {
         // Il -1 ha tolto quel gol: attribuirlo darebbe un gol a un giocatore in una partita 0-0.
         val stato = striscia(listOf(correzione, gol(1, 0), avvio))
 
-        assertEquals("CORREZIONE −1 ROSSI", stato.testo)
+        assertEquals("Correzione −1 Rossi", stato.testo)
         assertNull("la correzione non e' un bersaglio", stato.daAttribuire)
     }
 
@@ -100,29 +100,29 @@ class StrisciaTest {
     fun `un gol dopo la correzione torna a essere l'ultima azione`() {
         val stato = striscia(listOf(gol(2, 2), correzione, gol(1, 0), avvio))
 
-        assertEquals("GOL BLU · CHI HA SEGNATO? ›", stato.testo)
+        assertEquals("Gol Blu · chi ha segnato? ›", stato.testo)
         assertEquals(2, stato.daAttribuire?.engineIndex)
     }
 
     @Test
     fun `senza punti la striscia dice che non c'e niente`() {
-        assertEquals("NESSUN GOL", striscia(null).testo)
-        assertEquals("NESSUN GOL", striscia(emptyList()).testo)
-        assertEquals("NESSUN GOL", striscia(listOf(avvio)).testo)
-        assertEquals("NESSUN PUNTO", striscia(listOf(avvio), capacita = padel).testo)
+        assertEquals("Nessun gol", striscia(null).testo)
+        assertEquals("Nessun gol", striscia(emptyList()).testo)
+        assertEquals("Nessun gol", striscia(listOf(avvio)).testo)
+        assertEquals("Nessun punto", striscia(listOf(avvio), capacita = padel).testo)
     }
 
     @Test
     fun `dopo ANNULLA la striscia torna al gol precedente e poi a nessun gol`() {
         // Annullare toglie la riga del gol dal registro: la striscia non ha memoria propria.
         val dopoIlPrimo = striscia(listOf(gol(2, 1, marcatore = "Anna", idGiocatore = 3), gol(1, 0), avvio))
-        assertEquals("GOL BLU · ANNA", dopoIlPrimo.testo)
+        assertEquals("Gol Blu · Anna", dopoIlPrimo.testo)
 
         val dopoAnnulla = striscia(listOf(gol(1, 0), avvio))
-        assertEquals("GOL ROSSI · CHI HA SEGNATO? ›", dopoAnnulla.testo)
+        assertEquals("Gol Rossi · chi ha segnato? ›", dopoAnnulla.testo)
 
         val dopoAncora = striscia(listOf(avvio))
-        assertEquals("NESSUN GOL", dopoAncora.testo)
+        assertEquals("Nessun gol", dopoAncora.testo)
         assertNull(dopoAncora.daAttribuire)
     }
 
@@ -131,7 +131,7 @@ class StrisciaTest {
         val display = ScoreDisplay(side1Primary = "40", side2Primary = "30")
         val stato = striscia(listOf(gol(1, 0), avvio), capacita = padel, display = display)
 
-        assertEquals("PUNTO ROSSI · 40-30", stato.testo)
+        assertEquals("Punto Rossi · 40-30", stato.testo)
         assertNull("negli sport senza marcatore non c'e' scorciatoia", stato.daAttribuire)
     }
 
@@ -155,7 +155,7 @@ class StrisciaTest {
 
         val stato = striscia(listOf(gol(1, 3), avvio), capacita = padel, display = display)
 
-        assertEquals("GAME ROSSI · 1-0", stato.testo)
+        assertEquals("Game Rossi · 1-0", stato.testo)
         assertNull(stato.daAttribuire)
     }
 
@@ -168,29 +168,29 @@ class StrisciaTest {
 
         val stato = striscia(listOf(gol(2, 23), avvio), capacita = SportRegistry.byId(SportRegistry.TENNIS).capabilities, display = display)
 
-        assertEquals("GAME BLU · 0-6", stato.testo)
+        assertEquals("Game Blu · 0-6", stato.testo)
     }
 
     @Test
     fun `a meta game la striscia dice ancora il punto`() {
         val display = displayDopo(SportRegistry.PADEL, punti = 2)
 
-        assertEquals("PUNTO ROSSI · 30-0", striscia(listOf(gol(1, 1), avvio), capacita = padel, display = display).testo)
+        assertEquals("Punto Rossi · 30-0", striscia(listOf(gol(1, 1), avvio), capacita = padel, display = display).testo)
     }
 
     @Test
     fun `senza marcatore noto la striscia dice solo il gol`() {
         // Senza indice del motore e senza giocatore: il registro scrive la squadra al posto del nome.
-        assertEquals("GOL ROSSI", striscia(listOf(gol(1, 0).copy(engineIndex = null))).testo)
+        assertEquals("Gol Rossi", striscia(listOf(gol(1, 0).copy(engineIndex = null))).testo)
         // Giocatore uscito dalla rosa: e' ancora attribuito, ma la riga porta il nome della squadra.
-        assertEquals("GOL ROSSI", striscia(listOf(gol(1, 0, marcatore = "Rossi", idGiocatore = 7))).testo)
+        assertEquals("Gol Rossi", striscia(listOf(gol(1, 0, marcatore = "Rossi", idGiocatore = 7))).testo)
     }
 
     @Test
     fun `nel padel dopo ANNULLA senza altri punti torna nessun punto`() {
         val display = ScoreDisplay(side1Primary = "0", side2Primary = "0")
 
-        assertEquals("NESSUN PUNTO", striscia(listOf(avvio), capacita = padel, display = display).testo)
+        assertEquals("Nessun punto", striscia(listOf(avvio), capacita = padel, display = display).testo)
     }
 
     @Test
@@ -199,7 +199,7 @@ class StrisciaTest {
         val stato =
             striscia(listOf(MatchEvent("20'", "Point", team = 1, type = MatchEventType.SCORE, engineIndex = 9), avvio), padel, display)
 
-        assertEquals("PARTITA FINITA · TERMINA ›", stato.testo)
+        assertEquals("Partita finita · termina ›", stato.testo)
         assertTrue("toccarla apre TERMINA", stato.terminaPartita)
         assertNull("e non e' la scorciatoia del marcatore", stato.daAttribuire)
         // Anche senza registro: a partita finita la striscia e' sempre il comando che conclude.
@@ -215,7 +215,7 @@ class StrisciaTest {
 
     @Test
     fun `finche le capacita non arrivano vale il calcio`() {
-        assertTrue(striscia(listOf(gol(1, 0)), capacita = null).testo.contains("CHI HA SEGNATO"))
+        assertTrue(striscia(listOf(gol(1, 0)), capacita = null).testo.contains("chi ha segnato"))
     }
 
     @Test
@@ -228,8 +228,8 @@ class StrisciaTest {
     @Test
     @Config(qualifiers = "en")
     fun `in inglese il testo segue la lingua`() {
-        assertEquals("GOAL ROSSI · WHO SCORED? ›", striscia(listOf(gol(1, 0))).testo)
-        assertEquals("NO GOALS YET", striscia(emptyList()).testo)
+        assertEquals("Goal Rossi · who scored? ›", striscia(listOf(gol(1, 0))).testo)
+        assertEquals("No goals yet", striscia(emptyList()).testo)
     }
 
     private val tennis = SportRegistry.byId(SportRegistry.TENNIS).capabilities
@@ -257,15 +257,15 @@ class StrisciaTest {
             capacita: it.vantaggi.scoreboardessential.core.SportCapabilities?,
         ) = testoDellAnnullamento(context, tolto, capacita, "Rossi", "Blu")
 
-        assertEquals("ANNULLATO: PUNTO ROSSI", testo(ScoringEvent.Point(side = 1), padel))
-        assertEquals("ANNULLATO: PUNTO BLU", testo(ScoringEvent.Point(side = 2), tennis))
-        assertEquals("ANNULLATO: GOL BLU", testo(ScoringEvent.Point(side = 2), calcio))
-        assertEquals("ANNULLATO: CORREZIONE ROSSI", testo(ScoringEvent.Correction(side = 1), calcio))
+        assertEquals("Annullato: punto Rossi", testo(ScoringEvent.Point(side = 1), padel))
+        assertEquals("Annullato: punto Blu", testo(ScoringEvent.Point(side = 2), tennis))
+        assertEquals("Annullato: gol Blu", testo(ScoringEvent.Point(side = 2), calcio))
+        assertEquals("Annullato: correzione Rossi", testo(ScoringEvent.Correction(side = 1), calcio))
     }
 
     @Test
     @Config(qualifiers = "en")
     fun `in inglese il messaggio di annullamento segue la lingua`() {
-        assertEquals("UNDONE: POINT ROSSI", testoDellAnnullamento(context, ScoringEvent.Point(side = 1), padel, "Rossi", "Blu"))
+        assertEquals("Undone: point Rossi", testoDellAnnullamento(context, ScoringEvent.Point(side = 1), padel, "Rossi", "Blu"))
     }
 }

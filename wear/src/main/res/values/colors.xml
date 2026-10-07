@@ -41,8 +41,7 @@
          senza tinta, perche' in ambient non c'e' colore. -->
     <color name="ambient_gray">#BDBDBD</color>
 
-    <!-- Icona dell'app: i colori di prima, com'erano. Non sono ruoli: li rifa G-9 con l'icona. -->
-    <color name="launcher_background">#121212</color>
-    <color name="launcher_side_1">#FFD600</color>
-    <color name="launcher_side_2">#76FF03</color>
+    <!-- background-canvas: lo cita solo il fondo dell'icona (G-9), come sul telefono. L'orologio ha un
+         tema solo, quello standard, quindi qui il nome e' senza suffisso. -->
+    <color name="elite_background">#0D0D0F</color>
 </resources>

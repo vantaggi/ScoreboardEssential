@@ -4,7 +4,6 @@ import android.content.Context
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.ScoringMode
 import it.vantaggi.scoreboardessential.core.SportRegistry
-import java.util.Locale
 
 /*
  * Barra, dialogo di fine partita e riscontri di padel e tennis (DESIGN.md, passo 8).
@@ -48,13 +47,13 @@ private fun punteggioDellaPartita(display: ScoreDisplay): String =
  * Il testo della barra in alto a sinistra.
  *
  * Nel padel e nel tennis e' l'etichetta di periodo oppure, se il motore non ne da' (il padel a set
- * unico), il nome dello sport, piu' «· SERVE <NOME>» finche' si sa chi serve: «PADEL · SERVE ROSSI»,
- * «SET 2 · SERVE ANNA», «TIE-BREAK · SERVE BRUNO». A partita dichiarata finita diventa «VINCE ROSSI
+ * unico), il nome dello sport, piu' «· serve <nome>» finche' si sa chi serve: «Padel · serve Rossi»,
+ * «Set 2 · serve Anna», «Tie-break · serve Bruno». A partita dichiarata finita diventa «Vince Rossi
  * · 6-3». Nel calcio non c'e' niente da dire e la barra resta vuota. Il testo cambia, la vista no.
  *
  * [entra] dice se un testo candidato sta nella barra. La barra ha una riga e taglia con l'ellissi
  * in coda: con un nome lungo il taglio mangiava il punteggio, che e' la parte che conta. Se il testo
- * della vittoria non entra si accorcia il NOME («VINCE MARIA ANTO… · 6-3»), mai il punteggio.
+ * della vittoria non entra si accorcia il nome («Vince Maria Anto… · 6-3»), mai il punteggio.
  */
 internal fun testoDellaBarra(
     context: Context,
@@ -69,7 +68,7 @@ internal fun testoDellaBarra(
         val nome = if (vincitore == 1) nomeSquadra1 else nomeSquadra2
         val punteggio = punteggioDellaPartita(display)
 
-        fun testo(nome: String) = context.getString(R.string.bar_winner, nome, punteggio).maiuscolo()
+        fun testo(nome: String) = context.getString(R.string.bar_winner, nome, punteggio)
         return testo(nome).takeIf(entra) ?: testo(nomeAccorciato(nome) { entra(testo(it)) })
     }
     val base = display.periodLabel ?: if (sportId == SportRegistry.FOOTBALL) null else sportLabel(context, sportId)
@@ -85,7 +84,7 @@ internal fun testoDellaBarra(
             servente.isNullOrBlank() -> base
             else -> context.getString(R.string.score_period_serving, base, servente)
         }
-    return testo.maiuscolo()
+    return testo
 }
 
 /** Il nome accorciato con l'ellissi, il piu' lungo che fa entrare il testo; almeno una lettera. */
@@ -107,9 +106,9 @@ private const val ELLISSI = "…"
  *
  * Il messaggio e' scritto dal display e non dagli interi di testata: nel padel a set unico i
  * primari sono i punti del game, e il dialogo che scriveva «0 / 0» sul 5-3 faceva sembrare l'app
- * rotta. Calcio: «ROSSI 2-1 LUPI». Racchetta in corso: «ROSSI – BIANCHI · game 5-3 · punto 30-15»,
- * con i set chiusi davanti se ce ne sono. A partita chiusa il titolo e' «PARTITA FINITA», il
- * messaggio «VINCE ROSSI · 6-3» e il positivo SALVA. In [modalitaAGame] i primari sono i game e
+ * rotta. Calcio: «Rossi 2-1 Lupi». Racchetta in corso: «Rossi – Bianchi · game 5-3 · punto 30-15»,
+ * con i set chiusi davanti se ce ne sono. A partita chiusa il titolo e' «Partita finita», il
+ * messaggio «Vince Rossi · 6-3» e il positivo SALVA. In [modalitaAGame] i primari sono i game e
  * la riga «punto» non c'e'.
  */
 internal data class TestoDelDialogoDiFine(
@@ -126,8 +125,8 @@ internal fun testoDelDialogoDiFine(
     nomeSquadra2: String,
     modalitaAGame: Boolean = false,
 ): TestoDelDialogoDiFine {
-    val nome1 = nomeSquadra1.maiuscolo()
-    val nome2 = nomeSquadra2.maiuscolo()
+    val nome1 = nomeSquadra1
+    val nome2 = nomeSquadra2
     val vincitore = vincitoreDellaPartita(display)
     if (vincitore != null) {
         return TestoDelDialogoDiFine(
@@ -208,5 +207,3 @@ private fun setInCorso(display: ScoreDisplay): Int = display.side1Secondary?.spl
 
 /** Lo sport gioca a game (un tocco = un game) invece che a punti? Dalle regole, non dal testo. */
 internal fun modalitaAGame(sportId: String): Boolean = SportRegistry.byId(sportId).config.mode == ScoringMode.GAMES
-
-private fun String.maiuscolo(): String = uppercase(Locale.getDefault())

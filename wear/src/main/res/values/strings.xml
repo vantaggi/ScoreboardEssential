@@ -1,10 +1,10 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Scoreboard Essential</string>
 
     <!-- Il gesto lungo cambia significato con lo sport: nel calcio toglie un punto a quella
          squadra, negli sport a set annulla l'ultima azione qualunque lato l'abbia segnata. -->
-    <string name="wear_hint_minus">HOLD: −1</string>
-    <string name="wear_hint_undo">HOLD: UNDO</string>
+    <string name="wear_hint_minus">Hold: −1</string>
+    <string name="wear_hint_undo">Hold: undo</string>
     <!-- Nome della squadra e punteggio a schermo: TalkBack legge questa frase al posto delle cifre. -->
     <string name="cd_score_side_minus">%1$s, %2$s. Tap to add a point, press and hold to remove one.</string>
     <string name="cd_score_side_undo">%1$s, %2$s. Tap to add a point, press and hold to undo the last action.</string>
@@ -18,8 +18,8 @@
     <string name="cd_match_clock_stopped">Match clock %1$s, stopped. Tap to start.</string>
     <string name="cd_current_game">Current set, games %1$s</string>
 
-    <!-- Menu e scelta dello sport: in frase, mai in maiuscolo (G-7). Restano maiuscole le frasi del
-         quadrante (riga di stato, CHI?, SALTA, GOL), che si leggono di sfuggita e a due metri. -->
+    <!-- Menu, scelta dello sport e frasi del quadrante (riga di stato, Chi?, Salta, Gol, Partita
+         finita): tutto in frase, mai in maiuscolo (G-7 e G-9). Il maiuscolo non e' piu' un segno. -->
     <!-- Menu partita: frasi corte, perche' il tondo da 192dp lascia circa 100dp di larghezza alla voce. -->
     <string name="cd_menu">Match menu</string>
     <string name="wear_menu_title">Match</string>
@@ -39,14 +39,14 @@
         <item quantity="one">The phone rejected %1$d point</item>
         <item quantity="other">The phone rejected %1$d points</item>
     </plurals>
-    <string name="wear_who_scored">WHO SCORED?</string>
+    <string name="wear_who_scored">Who scored?</string>
     <string name="wear_no_players">No players</string>
     <!-- Il marcatore: la finestra in basso dice CHI?, la lista si apre con SALTA in cima. Frasi
          brevi, perche' il tondo da 192dp lascia circa 100dp di larghezza. -->
-    <string name="wear_who_short">WHO?</string>
-    <string name="wear_skip">SKIP</string>
-    <string name="wear_goal_header">GOAL · %1$s</string>
-    <string name="wear_goal_header_plain">GOAL</string>
+    <string name="wear_who_short">Who?</string>
+    <string name="wear_skip">Skip</string>
+    <string name="wear_goal_header">Goal · %1$s</string>
+    <string name="wear_goal_header_plain">Goal</string>
     <string name="cd_keeper_timer">Goalkeeper countdown</string>
     <!-- Uguale nelle due lingue: K e i minuti:secondi che restano al portiere. -->
     <string name="wear_keeper_running" translatable="false">K %1$d:%2$02d</string>
@@ -55,21 +55,21 @@
     <!-- Il segno davanti si legge anche senza il colore: in uso e' ciano, ma la spunta dice la stessa cosa. -->
     <string name="wear_sport_current">in use</string>
     <string name="wear_sport_locked">Match in progress</string>
-    <string name="wear_match_over">MATCH OVER</string>
+    <string name="wear_match_over">Match over</string>
     <!-- Riga di stato: una frase sola, al massimo 18 caratteri anche con un numero a tre cifre.
          Nel tondo da 192dp il testo piu' lungo si taglia, quindi niente frasi nuove senza misurarle. -->
-    <string name="wear_status_rejected">%1$d REJECTED</string>
-    <string name="wear_status_not_confirmed">NOT CONFIRMED</string>
-    <string name="wear_status_delivered">%1$d DELIVERED</string>
-    <string name="wear_status_closing">CLOSING…</string>
-    <string name="wear_status_close_unconfirmed">NOT CONFIRMED</string>
-    <string name="wear_status_changing_sport">CHANGING SPORT…</string>
-    <string name="wear_status_sport_unchanged">SPORT NOT CHANGED</string>
-    <string name="wear_status_phone_waiting">WAITING FOR PHONE</string>
-    <string name="wear_status_not_delivered">%1$d NOT DELIVERED</string>
-    <string name="wear_status_sending">SENDING %1$d…</string>
-    <string name="wear_status_queued">%1$d QUEUED</string>
-    <string name="wear_status_offline">OFFLINE</string>
-    <string name="wear_status_offline_at">OFFLINE · %1$s</string>
-    <string name="wear_scorer_not_sent">SCORER NOT SENT</string>
+    <string name="wear_status_rejected" tools:ignore="PluralsCandidate">%1$d rejected</string>
+    <string name="wear_status_not_confirmed">Not confirmed</string>
+    <string name="wear_status_delivered" tools:ignore="PluralsCandidate">%1$d delivered</string>
+    <string name="wear_status_closing">Closing…</string>
+    <string name="wear_status_close_unconfirmed">Not confirmed</string>
+    <string name="wear_status_changing_sport">Changing sport…</string>
+    <string name="wear_status_sport_unchanged">Sport not changed</string>
+    <string name="wear_status_phone_waiting">Waiting for phone</string>
+    <string name="wear_status_not_delivered" tools:ignore="PluralsCandidate">%1$d not delivered</string>
+    <string name="wear_status_sending">Sending %1$d…</string>
+    <string name="wear_status_queued" tools:ignore="PluralsCandidate">%1$d queued</string>
+    <string name="wear_status_offline">Offline</string>
+    <string name="wear_status_offline_at">Offline · %1$s</string>
+    <string name="wear_scorer_not_sent">Scorer not sent</string>
 </resources>

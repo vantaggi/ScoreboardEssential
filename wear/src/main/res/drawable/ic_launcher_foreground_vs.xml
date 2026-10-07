@@ -1,21 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Due colonne di punteggio, allineate in basso, di altezza diversa.
+    Due colonne di punteggio, allineate in basso, di altezza diversa (G-9, icona proposta).
 
-    E' lo stesso marchio della schermata di gioco ridotto all'osso: due lati, due colori, uno
-    avanti all'altro. Non c'e' niente da leggere, quindi regge a 24dp in una notifica quanto a
-    108dp nelle impostazioni.
+    Lo stesso disegno e gli stessi colori dell'icona del telefono: la colonna avanti e' lime
+    (accent-default, 14,88:1 sul fondo), l'altra e' il testo primario (12,78:1). Non c'e' niente da
+    leggere, quindi regge a 24dp in una notifica quanto a 108dp.
 
-    Il disegno precedente sovrapponeva una "V" e una "S", entrambe con bordo nero, sopra un cerchio
-    bianco traslucido di raggio 40, piu' due schegge decorative. Tre problemi misurabili:
-      - a 48dp le due lettere sovrapposte diventavano una macchia;
-      - la zona sicura di un'icona adattiva e' un cerchio di RAGGIO 33 attorno a (54,54): il
-        cerchio a raggio 40 e le schegge a x 80-85 finivano fuori, e la maschera li tagliava;
-      - `monochrome` puntava a quello stesso disegno, e l'icona a tema usa solo il canale alfa:
-        il risultato era una macchia piena con le lettere invisibili dentro.
-
-    Qui l'estremo piu' lontano e' a distanza 32,7 dal centro: dentro la zona sicura con un
-    margine, quindi nessuna maschera (tonda, squircle o quadrata) taglia niente.
+    La zona sicura di un'icona adattiva e' un cerchio di RAGGIO 33 attorno a (54,54): l'estremo piu'
+    lontano e' a distanza 32,7 dal centro, dentro con un margine, quindi nessuna maschera (tonda,
+    squircle o quadrata) taglia niente.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -23,13 +16,13 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Colonna di sinistra, piu' alta: x 30..51, y 33..75, raccordo 4 -->
+    <!-- Colonna di sinistra, piu' alta, in lime: x 30..51, y 33..75, raccordo 4 -->
     <path
-        android:fillColor="@color/launcher_side_1"
+        android:fillColor="@color/elite_lime"
         android:pathData="M34,33 L47,33 A4,4 0 0,1 51,37 L51,71 A4,4 0 0,1 47,75 L34,75 A4,4 0 0,1 30,71 L30,37 A4,4 0 0,1 34,33 Z" />
 
-    <!-- Colonna di destra, piu' bassa: x 57..78, y 47..75, raccordo 4 -->
+    <!-- Colonna di destra, piu' bassa, in testo primario: x 57..78, y 47..75, raccordo 4 -->
     <path
-        android:fillColor="@color/launcher_side_2"
+        android:fillColor="@color/elite_text_primary"
         android:pathData="M61,47 L74,47 A4,4 0 0,1 78,51 L78,71 A4,4 0 0,1 74,75 L61,75 A4,4 0 0,1 57,71 L57,51 A4,4 0 0,1 61,47 Z" />
 </vector>

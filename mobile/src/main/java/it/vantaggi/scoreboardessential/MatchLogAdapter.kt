@@ -24,7 +24,7 @@ class MatchLogAdapter(
 
     /**
      * Se lo sport attribuisce i punti a un giocatore. Falso in padel e tennis: li' un punto non e'
-     * un "GOAL!" e non c'e' nessun marcatore da scegliere, quindi la riga non si offre al tocco.
+     * un "Goal!" e non c'e' nessun marcatore da scegliere, quindi la riga non si offre al tocco.
      * Vero finche' le capacita' non arrivano, come il resto della schermata.
      */
     var attribuisceMarcatore: Boolean = true
@@ -129,7 +129,7 @@ class MatchLogAdapter(
 
                     event.type == MatchEventType.SCORE && event.playerId != null -> {
                         val roleInfo = if (event.playerRole?.isNotEmpty() == true) " (${event.playerRole})" else ""
-                        "GOAL! ${event.player}$roleInfo"
+                        "Goal! ${event.player}$roleInfo"
                     }
 
                     daAttribuire -> {

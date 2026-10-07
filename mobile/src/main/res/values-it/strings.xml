@@ -34,7 +34,6 @@
     <string name="cd_edit_team_2_name">Modifica nome Squadra 2</string>
     <string name="cd_edit_team_name">Modifica il nome di %1$s</string>
     <string name="cd_player_stats">Statistiche del giocatore</string>
-    <string name="cd_edit_player">Modifica giocatore</string>
     <string name="cd_wear_status">Stato Connessione Wear OS</string>
     <string name="cd_wear_status_with_notice">%1$s. %2$s</string>
     <!-- La colonna di gioco: dicono quello che il tocco fa e lo stato di adesso, con il nome della squadra. -->
@@ -79,28 +78,28 @@
     <string name="remove">Rimuovi</string>
     <string name="player_removed_message">%1$s rimosso da %2$s</string>
     <!-- Striscia dell'ultima azione: testo base dal primo SCORE del registro, sempre su una riga. -->
-    <string name="strip_none_goal">NESSUN GOL</string>
-    <string name="strip_none_point">NESSUN PUNTO</string>
-    <string name="strip_goal_unattributed">GOL %1$s · CHI HA SEGNATO? ›</string>
-    <string name="strip_goal">GOL %1$s</string>
-    <string name="strip_goal_by">GOL %1$s · %2$s</string>
-    <string name="strip_point">PUNTO %1$s · %2$s</string>
-    <string name="strip_game">GAME %1$s · %2$s</string>
+    <string name="strip_none_goal">Nessun gol</string>
+    <string name="strip_none_point">Nessun punto</string>
+    <string name="strip_goal_unattributed">Gol %1$s · chi ha segnato? ›</string>
+    <string name="strip_goal">Gol %1$s</string>
+    <string name="strip_goal_by">Gol %1$s · %2$s</string>
+    <string name="strip_point">Punto %1$s · %2$s</string>
+    <string name="strip_game">Game %1$s · %2$s</string>
     <!-- Messaggi di 3 secondi nella striscia, al posto delle Snackbar che coprivano le zone. -->
-    <string name="strip_msg_goal_by">GOL DI %1$s</string>
-    <string name="strip_msg_correction">CORREZIONE −1 %1$s</string>
-    <string name="strip_msg_undone_point">ANNULLATO: PUNTO %1$s</string>
-    <string name="strip_msg_undone_goal">ANNULLATO: GOL %1$s</string>
-    <string name="strip_msg_undone_correction">ANNULLATO: CORREZIONE %1$s</string>
-    <string name="strip_msg_match_over">PARTITA FINITA</string>
-    <string name="strip_match_over_end">PARTITA FINITA · TERMINA ›</string>
+    <string name="strip_msg_goal_by">Gol di %1$s</string>
+    <string name="strip_msg_correction">Correzione −1 %1$s</string>
+    <string name="strip_msg_undone_point">Annullato: punto %1$s</string>
+    <string name="strip_msg_undone_goal">Annullato: gol %1$s</string>
+    <string name="strip_msg_undone_correction">Annullato: correzione %1$s</string>
+    <string name="strip_msg_match_over">Partita finita</string>
+    <string name="strip_match_over_end">Partita finita · termina ›</string>
     <plurals name="strip_msg_from_watch">
-        <item quantity="one">%1$d PUNTO DALL\'OROLOGIO</item>
-        <item quantity="many">%1$d PUNTI DALL\'OROLOGIO</item>
-        <item quantity="other">%1$d PUNTI DALL\'OROLOGIO</item>
+        <item quantity="one">%1$d punto dall\'orologio</item>
+        <item quantity="many">%1$d punti dall\'orologio</item>
+        <item quantity="other">%1$d punti dall\'orologio</item>
     </plurals>
     <string name="end_match_title">Termina Partita?</string>
-    <string name="end_match_over_title">PARTITA FINITA</string>
+    <string name="end_match_over_title">Partita finita</string>
     <!-- Il riepilogo del dialogo si compone dal display, come la schermata: niente 0-0 sopra un 5-3. -->
     <string name="end_summary_football">%1$s %2$s-%3$s %4$s</string>
     <string name="end_summary_racket">%1$s – %2$s</string>
@@ -108,7 +107,7 @@
     <string name="end_part_game">game %1$s</string>
     <string name="end_part_point">punto %1$s</string>
     <string name="btn_save_match">Salva</string>
-    <string name="bar_winner">VINCE %1$s · %2$s</string>
+    <string name="bar_winner">Vince %1$s · %2$s</string>
     <string name="btn_end_match">Termina Partita</string>
     <string name="continue_action">Continua</string>
     <string name="match_saved">Partita salvata!</string>
@@ -140,7 +139,6 @@
     <string name="label_formations">Formazioni</string>
     <!-- Foglio PARTITA: cio che si consulta, a un tocco dalla schermata di gioco. -->
     <string name="label_match_sheet">Partita</string>
-    <string name="label_open_match_sheet">≡</string>
     <string name="cd_open_match_sheet">Apri il foglio della partita</string>
     <string name="label_close_sheet">Chiudi</string>
     <string name="label_statistics">Statistiche</string>
@@ -158,14 +156,14 @@
     <string name="cd_match_over">Partita finita</string>
     <string name="btn_discard_match">Scarta</string>
     <string name="match_discarded">Partita scartata</string>
-    <string name="log_goal_unattributed">GOL! %1$s - tocca per il marcatore</string>
+    <string name="log_goal_unattributed">Gol! %1$s - tocca per il marcatore</string>
     <string name="log_point">Punto - %1$s</string>
-    <string name="log_game">GAME %1$s · %2$s</string>
-    <string name="log_game_held">TENUTO</string>
-    <string name="log_game_break">BREAK</string>
-    <string name="log_game_tiebreak">TIE-BREAK %1$s</string>
-    <string name="log_game_set">SET %1$s · %2$s</string>
-    <string name="log_game_match">PARTITA %1$s</string>
+    <string name="log_game">Game %1$s · %2$s</string>
+    <string name="log_game_held">Tenuto</string>
+    <string name="log_game_break">Break</string>
+    <string name="log_game_tiebreak">Tie-break %1$s</string>
+    <string name="log_game_set">Set %1$s · %2$s</string>
+    <string name="log_game_match">Partita %1$s</string>
     <string name="cd_log_game">Game vinto da %1$s, %2$d a %3$d nel set</string>
     <string name="cd_log_game_held">Servizio tenuto</string>
     <string name="cd_log_game_break">Break sul servizio</string>

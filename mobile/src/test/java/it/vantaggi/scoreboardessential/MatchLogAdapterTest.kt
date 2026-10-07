@@ -155,7 +155,7 @@ class MatchLogAdapterTest {
     fun `la riga di un game dice chi l'ha vinto e i game del set`() {
         val riga = rigaDelGame(game(winner = 2, gamesAfter = listOf(2, 3)), nome = "Bianchi")
 
-        assertEquals("GAME BIANCHI · 2-3", testo(riga, R.id.game_title).text.toString())
+        assertEquals("Game Bianchi · 2-3", testo(riga, R.id.game_title).text.toString())
         assertEquals(View.GONE, testo(riga, R.id.game_detail).visibility)
         assertEquals(View.GONE, testo(riga, R.id.game_closing).visibility)
     }
@@ -165,8 +165,8 @@ class MatchLogAdapterTest {
         val tenuto = rigaDelGame(game(outcome = GameOutcome.HELD))
         val rotto = rigaDelGame(game(outcome = GameOutcome.BROKEN))
 
-        assertEquals("HELD", testo(tenuto, R.id.game_detail).text.toString())
-        assertEquals("BREAK", testo(rotto, R.id.game_detail).text.toString())
+        assertEquals("Held", testo(tenuto, R.id.game_detail).text.toString())
+        assertEquals("Break", testo(rotto, R.id.game_detail).text.toString())
         assertEquals(View.VISIBLE, testo(rotto, R.id.game_detail).visibility)
     }
 
@@ -182,16 +182,16 @@ class MatchLogAdapterTest {
                 ),
             )
 
-        assertEquals("GAME ROSSI · 7-6", testo(riga, R.id.game_title).text.toString())
-        assertEquals("TIE-BREAK 7-5", testo(riga, R.id.game_detail).text.toString())
-        assertEquals("SET ROSSI · 7-6", testo(riga, R.id.game_closing).text.toString())
+        assertEquals("Game Rossi · 7-6", testo(riga, R.id.game_title).text.toString())
+        assertEquals("Tie-break 7-5", testo(riga, R.id.game_detail).text.toString())
+        assertEquals("Set Rossi · 7-6", testo(riga, R.id.game_closing).text.toString())
     }
 
     @Test
     fun `l'ultimo game della partita dice PARTITA`() {
         val riga = rigaDelGame(game(gamesAfter = listOf(6, 4), closesSet = true, closesMatch = true))
 
-        assertEquals("MATCH ROSSI", testo(riga, R.id.game_closing).text.toString())
+        assertEquals("Match Rossi", testo(riga, R.id.game_closing).text.toString())
     }
 
     @Test
@@ -220,7 +220,7 @@ class MatchLogAdapterTest {
             "Game won by Bianchi, 6 to 4 in the set. Break of serve. Set won by Bianchi, 6 to 4",
             riga.contentDescription.toString(),
         )
-        assertEquals("GAME BIANCHI · 4-6", testo(riga, R.id.game_title).text.toString())
+        assertEquals("Game Bianchi · 4-6", testo(riga, R.id.game_title).text.toString())
     }
 
     @Test

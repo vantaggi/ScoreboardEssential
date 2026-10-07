@@ -176,7 +176,7 @@ class ContornoDelTelefonoG4Test {
             "TextAppearance.App.SectionHeading",
             "TextAppearance.App.RowTitle",
             "TextAppearance.App.Caption",
-            "TextAppearance.App.HeadlineMedium.Street",
+            "TextAppearance.App.HeadlineMedium",
         )) {
             val corpo = Regex("""<style name="${Regex.escape(stile)}".*?</style>""", RegexOption.DOT_MATCHES_ALL).find(themes)!!.value
             assertFalse("$stile e' in maiuscolo", corpo.contains("textAllCaps\">true"))

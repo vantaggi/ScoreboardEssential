@@ -3,15 +3,14 @@ package it.vantaggi.scoreboardessential
 import android.content.Context
 import it.vantaggi.scoreboardessential.core.GameLine
 import it.vantaggi.scoreboardessential.core.GameOutcome
-import java.util.Locale
 
 /**
  * I testi della riga di un game: tre righe a schermo e una frase sola per TalkBack.
  *
- * @property titolo «GAME ROSSI · 3-2»: chi ha vinto il game e i game del set, lato 1 per primo come
+ * @property titolo «Game Rossi · 3-2»: chi ha vinto il game e i game del set, lato 1 per primo come
  *   il tabellone.
- * @property dettaglio «TENUTO», «BREAK» o «TIE-BREAK 7-5»; null quando non si sa chi serviva.
- * @property chiusura «SET ROSSI · 6-4» se il game chiude il set, «PARTITA ROSSI» se chiude la
+ * @property dettaglio «Tenuto», «Break» o «Tie-break 7-5»; null quando non si sa chi serviva.
+ * @property chiusura «Set Rossi · 6-4» se il game chiude il set, «Partita Rossi» se chiude la
  *   partita; null per un game qualsiasi.
  * @property descrizione la frase che TalkBack legge, con i numeri a voce e non come «3-2».
  */
@@ -28,7 +27,6 @@ internal fun testiDelGame(
     game: GameLine,
     nomeVincitore: String,
 ): TestiDelGame {
-    val maiuscolo = nomeVincitore.uppercase(Locale.getDefault())
     val (lato1, lato2) = game.gamesAfter
     val inGame = "$lato1-$lato2"
     val tieBreak = game.tieBreakScore?.let { (a, b) -> Triple("$a-$b", a, b) }
@@ -44,8 +42,8 @@ internal fun testiDelGame(
         }
     val chiusura =
         when {
-            game.closesMatch -> context.getString(R.string.log_game_match, maiuscolo)
-            game.closesSet -> context.getString(R.string.log_game_set, maiuscolo, inGame)
+            game.closesMatch -> context.getString(R.string.log_game_match, nomeVincitore)
+            game.closesSet -> context.getString(R.string.log_game_set, nomeVincitore, inGame)
             else -> null
         }
 
@@ -78,7 +76,7 @@ internal fun testiDelGame(
         }
 
     return TestiDelGame(
-        titolo = context.getString(R.string.log_game, maiuscolo, inGame),
+        titolo = context.getString(R.string.log_game, nomeVincitore, inGame),
         dettaglio = dettaglio,
         chiusura = chiusura,
         descrizione = frasi.joinToString(". "),

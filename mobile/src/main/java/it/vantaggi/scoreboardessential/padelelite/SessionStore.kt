@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import androidx.core.content.edit
 import org.json.JSONObject
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -107,7 +108,7 @@ class SessionStore(
                 .put("u", session.userId)
                 .put("m", session.email)
         val cifrata = box.seal(json.toString().toByteArray(Charsets.UTF_8))
-        prefs.edit().putString(KEY_SESSION, Base64.encodeToString(cifrata, Base64.NO_WRAP)).apply()
+        prefs.edit { putString(KEY_SESSION, Base64.encodeToString(cifrata, Base64.NO_WRAP)) }
     }
 
     /** Il gruppo scelto per l'invio: id e nome, o null se non se n'e' scelto uno. */
@@ -117,29 +118,26 @@ class SessionStore(
     }
 
     fun selectGroup(group: PadelEliteGroup) {
-        prefs
-            .edit()
-            .putString(KEY_GROUP_ID, group.id)
-            .putString(KEY_GROUP_NAME, group.name)
-            .apply()
+        prefs.edit {
+            putString(KEY_GROUP_ID, group.id)
+            putString(KEY_GROUP_NAME, group.name)
+        }
     }
 
     fun clearGroup() {
-        prefs
-            .edit()
-            .remove(KEY_GROUP_ID)
-            .remove(KEY_GROUP_NAME)
-            .apply()
+        prefs.edit {
+            remove(KEY_GROUP_ID)
+            remove(KEY_GROUP_NAME)
+        }
     }
 
     /** Esci: via sessione e gruppo. */
     fun clear() {
-        prefs
-            .edit()
-            .remove(KEY_SESSION)
-            .remove(KEY_GROUP_ID)
-            .remove(KEY_GROUP_NAME)
-            .apply()
+        prefs.edit {
+            remove(KEY_SESSION)
+            remove(KEY_GROUP_ID)
+            remove(KEY_GROUP_NAME)
+        }
     }
 
     companion object {

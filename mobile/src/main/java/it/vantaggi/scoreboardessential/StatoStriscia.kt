@@ -6,7 +6,6 @@ import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportCapabilities
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
-import java.util.Locale
 
 /**
  * Cosa dice la striscia dell'ultima azione e cosa succede se la si tocca.
@@ -27,19 +26,19 @@ internal data class StatoStriscia(
  * Il testo base della striscia, dall'ultima azione del registro (il registro e' in ordine
  * cronologico inverso, quindi il primo SCORE e' l'ultimo segnato).
  *
- * Nel calcio e' «GOL ROSSI · MARCO B.», oppure «GOL ROSSI · CHI HA SEGNATO? ›» quando il marcatore
+ * Nel calcio e' «Gol Rossi · Marco B.», oppure «Gol Rossi · chi ha segnato? ›» quando il marcatore
  * manca: in quel caso il gol e' anche [StatoStriscia.daAttribuire], la stessa cosa che apre la riga
- * del registro. Se il marcatore non e' noto e non c'e' niente da attribuire resta «GOL ROSSI».
- * Negli sport senza marcatore e' «PUNTO ROSSI · 40-30», con i primari del display, oppure
- * «GAME ROSSI · 5-3» al punto che chiude un game (i primari sono gia' tornati a 0-0).
- * Senza punti: «NESSUN GOL» o «NESSUN PUNTO». Se dopo l'ultimo gol c'e' una correzione (il -1), la
+ * del registro. Se il marcatore non e' noto e non c'e' niente da attribuire resta «Gol Rossi».
+ * Negli sport senza marcatore e' «Punto Rossi · 40-30», con i primari del display, oppure
+ * «Game Rossi · 5-3» al punto che chiude un game (i primari sono gia' tornati a 0-0).
+ * Senza punti: «Nessun gol» o «Nessun punto». Se dopo l'ultimo gol c'e' una correzione (il -1), la
  * striscia dice la correzione e non si tocca: il gol tolto non e' piu' da attribuire. Dopo un
  * ANNULLA il punto tolto non e' piu' nel registro, quindi la striscia torna da sola al precedente.
  * Sta fuori dall'Activity perche' sotto Robolectric MainActivity non si monta: cosi' il testo si
  * prova da solo.
  *
- * A partita dichiarata finita (display.matchOver) il testo base e' sempre «PARTITA FINITA ·
- * TERMINA ›», qualunque sia l'ultima azione, e la striscia apre il dialogo di fine partita.
+ * A partita dichiarata finita (display.matchOver) il testo base e' sempre «Partita finita ·
+ * termina ›», qualunque sia l'ultima azione, e la striscia apre il dialogo di fine partita.
  *
  * Le capacita' non ancora arrivate valgono il calcio, come per ANNULLA.
  */
@@ -61,7 +60,7 @@ internal fun statoDellaStriscia(
     // altre righe senza indice del motore non sono azioni di punteggio e non contano.
     val ultimaDelMotore = registro.firstOrNull { it.engineIndex != null }
     if (ultimaDelMotore != null && ultimaDelMotore.type != MatchEventType.SCORE) {
-        val nome = (if (ultimaDelMotore.team == 2) nomeSquadra2 else nomeSquadra1).maiuscolo()
+        val nome = if (ultimaDelMotore.team == 2) nomeSquadra2 else nomeSquadra1
         return StatoStriscia(context.getString(R.string.strip_msg_correction, nome))
     }
     val ultimo = registro.firstOrNull { it.type == MatchEventType.SCORE }
@@ -69,7 +68,7 @@ internal fun statoDellaStriscia(
         return StatoStriscia(context.getString(if (conMarcatore) R.string.strip_none_goal else R.string.strip_none_point))
     }
     val nomeDellaSquadra = if (ultimo.team == 2) nomeSquadra2 else nomeSquadra1
-    val squadra = nomeDellaSquadra.maiuscolo()
+    val squadra = nomeDellaSquadra
     if (!conMarcatore) return StatoStriscia(testoDelPuntoARacchetta(context, squadra, display))
     // Il marcatore e' noto solo se c'e' un nome che non sia quello della squadra: senza marcatore, o
     // con un giocatore uscito dalla rosa, il registro scrive il nome della squadra al suo posto.
@@ -86,7 +85,7 @@ internal fun statoDellaStriscia(
     return StatoStriscia(testo, daAttribuire)
 }
 
-/** «GOL ROSSI · MARCO B.», o solo «GOL ROSSI» quando il marcatore non e' noto. */
+/** «Gol Rossi · Marco B.», o solo «Gol Rossi» quando il marcatore non e' noto. */
 private fun golDi(
     context: Context,
     squadra: String,
@@ -95,12 +94,12 @@ private fun golDi(
     if (marcatore == null) {
         context.getString(R.string.strip_goal, squadra)
     } else {
-        context.getString(R.string.strip_goal_by, squadra, marcatore.maiuscolo())
+        context.getString(R.string.strip_goal_by, squadra, marcatore)
     }
 
 /**
- * «PUNTO ROSSI · 40-30» con i primari del display. Al punto che chiude un game i primari tornano a
- * 0-0: mostrarli direbbe «PUNTO ROSSI · 0-0», quindi si dice il game appena chiuso, «GAME ROSSI ·
+ * «Punto Rossi · 40-30» con i primari del display. Al punto che chiude un game i primari tornano a
+ * 0-0: mostrarli direbbe «Punto Rossi · 0-0», quindi si dice il game appena chiuso, «Game Rossi ·
  * 5-3», dai secondari. Un punto che lascia i primari a 0-0 ha chiuso un game, e i game del set in
  * corso possono essere 0-0 solo se quel game ha chiuso il set: allora il game e' l'ultimo dei set
  * chiusi, il penultimo dei secondari.
@@ -128,8 +127,6 @@ private fun ultimoGameChiuso(display: ScoreDisplay): String? {
 // Il separatore dei set nei secondari di :core (RacketRules.SEPARATOR, privato): middot fra spazi.
 internal const val SEPARATORE_DEI_SET = " · "
 
-private fun String.maiuscolo(): String = uppercase(Locale.getDefault())
-
 /**
  * ANNULLA chiede conferma solo dove l'azione da annullare puo' essere un gol con un marcatore da
  * perdere: nel calcio. Nel padel e nel tennis e' un tocco solo (DESIGN.md, Decisioni prese,
@@ -152,8 +149,8 @@ internal fun toccoAnnullaRipetuto(
 ): Boolean = precedente != null && adesso - precedente < FINESTRA_TOCCHI_ANNULLA_MS
 
 /**
- * Il messaggio di 3 secondi dopo ANNULLA: cosa e' stato tolto e a chi, «ANNULLATO: PUNTO ROSSI».
- * Una correzione tolta (il -1 del calcio) e' una «CORREZIONE», non un gol.
+ * Il messaggio di 3 secondi dopo ANNULLA: cosa e' stato tolto e a chi, «Annullato: punto Rossi».
+ * Una correzione tolta (il -1 del calcio) e' una «correzione», non un gol.
  */
 internal fun testoDellAnnullamento(
     context: Context,
@@ -162,7 +159,7 @@ internal fun testoDellAnnullamento(
     nomeSquadra1: String,
     nomeSquadra2: String,
 ): String {
-    val squadra = (if (tolto.side == 2) nomeSquadra2 else nomeSquadra1).maiuscolo()
+    val squadra = if (tolto.side == 2) nomeSquadra2 else nomeSquadra1
     val formato =
         when {
             tolto is ScoringEvent.Correction -> R.string.strip_msg_undone_correction
