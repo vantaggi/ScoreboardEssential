@@ -164,13 +164,12 @@ class CaratteriDelTelefonoTest {
     fun `una TextView del contorno e' in Inter, non nel condensato di sistema`() {
         val riga = gonfia(R.layout.match_item)
         val data = riga.findViewById<TextView>(R.id.timestamp_textview)
-        // Nel layout e' textFontWeight 600: Inter semibold.
-        val inter600 = carattere(SharedR.font.inter, 600)
-        assertEquals(600, data.paint.typeface.weight)
-        // La vista ha la sua spaziatura (0,12 em): il confronto la porta anche sul file.
-        assertEquals(larghezza(inter600, "PADEL 12/09", data.letterSpacing), larghezzaDellaVista(data, "PADEL 12/09"), 0.5f)
+        // Nel layout e' la didascalia (G-4): Inter regular, in minuscolo, senza spaziatura forzata.
+        val inter400 = carattere(SharedR.font.inter, 400)
+        assertEquals(400, data.paint.typeface.weight)
+        assertEquals(larghezza(inter400, "Padel 12/09", data.letterSpacing), larghezzaDellaVista(data, "Padel 12/09"), 0.5f)
         val condensato = Typeface.create("sans-serif-condensed", Typeface.BOLD)
-        assertNotEquals(larghezza(condensato, "PADEL 12/09", data.letterSpacing), larghezzaDellaVista(data, "PADEL 12/09"), 1f)
+        assertNotEquals(larghezza(condensato, "Padel 12/09", data.letterSpacing), larghezzaDellaVista(data, "Padel 12/09"), 1f)
 
         // Il testo dei giocatori: Inter 400.
         val giocatori = riga.findViewById<TextView>(R.id.players_textview)
@@ -211,14 +210,14 @@ class CaratteriDelTelefonoTest {
     }
 
     @Test
-    fun `il minuto del registro e' Inter 500 e le cifre delle statistiche Inter 600, tutti e due tabulari`() {
+    fun `il minuto del registro e' Inter 500 e i gol delle statistiche Inter 600, tutti e due tabulari`() {
         val minuto = gonfia(R.layout.match_event_item).findViewById<TextView>(R.id.event_timestamp)
         assertEquals("tnum", minuto.fontFeatureSettings)
         assertEquals(500, minuto.paint.typeface.weight)
         assertEquals(larghezzaDellaVista(minuto, "11'"), larghezzaDellaVista(minuto, "88'"), 0.01f)
 
         val statistica = gonfia(R.layout.item_player_stat)
-        listOf(R.id.text_rank, R.id.text_goals).forEach { id ->
+        listOf(R.id.text_goals).forEach { id ->
             val cifra = statistica.findViewById<TextView>(id)
             assertEquals("tnum", cifra.fontFeatureSettings)
             assertEquals(600, cifra.paint.typeface.weight)

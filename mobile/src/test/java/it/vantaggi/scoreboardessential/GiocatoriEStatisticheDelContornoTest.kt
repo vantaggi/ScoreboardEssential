@@ -8,7 +8,6 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -54,64 +53,69 @@ class GiocatoriEStatisticheDelContornoTest {
 
     private fun giocatore(nome: String) = PlayerWithRoles(Player(playerName = nome, appearances = 3, goals = 2), emptyList())
 
-    // Podio: la card gialla col rank in ciano faceva 1,09:1.
+    // Prima il podio era una card rosa piena con testo nero; ora e' una riga come le altre e solo i gol sono lime.
     @Test
-    fun `il podio delle statistiche e' rosa pieno con testo nero`() {
+    fun `il primo della classifica ha i gol in lime e il resto e' una riga normale`() {
         val vista = LayoutInflater.from(tema).inflate(R.layout.item_player_stat, FrameLayout(tema), false)
         val riga = StatisticsAdapter.ViewHolder(vista)
         riga.bind(PlayerStatsDTO(playerId = 1, playerName = "Mario", goals = 12, appearances = 15, winRate = 0.6f), 0)
 
-        val scheda = vista.findViewById<MaterialCardView>(R.id.card_player_stat)
-        val rosa = base.getColor(R.color.graffiti_pink)
-        assertEquals(rosa, scheda.cardBackgroundColor.defaultColor)
-        for (id in listOf(R.id.text_rank, R.id.text_player_name, R.id.text_goals, R.id.text_appearances)) {
-            val inchiostro = vista.findViewById<TextView>(id).currentTextColor
-            leggibile("testo $id", inchiostro, rosa)
-        }
+        val lime = base.getColor(R.color.elite_lime)
+        assertEquals(lime, vista.findViewById<TextView>(R.id.text_goals).currentTextColor)
+        // Lime su superficie e nome in testo primario: tutti e due leggibili sul fondo del gruppo.
+        val fondoDelGruppo = base.getColor(R.color.elite_surface)
+        leggibile("gol del primo", lime, fondoDelGruppo)
+        leggibile("nome", vista.findViewById<TextView>(R.id.text_player_name).currentTextColor, fondoDelGruppo)
+        assertEquals("12 goals", vista.findViewById<TextView>(R.id.text_goals).text.toString())
     }
 
-    // Fuori dal podio i gol non sono verdi: il verde e' il colore della squadra 2, non un evidenziatore.
+    // Falsificazione: dal secondo in poi il lime non c'e' (se fosse su tutte le righe non direbbe piu' niente).
     @Test
-    fun `fuori dal podio i gol sono chiari`() {
+    fun `fuori dal primo posto i gol sono in testo primario`() {
         val vista = LayoutInflater.from(tema).inflate(R.layout.item_player_stat, FrameLayout(tema), false)
         StatisticsAdapter.ViewHolder(vista).bind(PlayerStatsDTO(2, "Luca", 4, 10, 0.5f), 1)
 
-        assertEquals(base.getColor(R.color.stencil_white), vista.findViewById<TextView>(R.id.text_goals).currentTextColor)
+        assertEquals(base.getColor(R.color.elite_text_primary), vista.findViewById<TextView>(R.id.text_goals).currentTextColor)
     }
 
-    // Le iniziali erano #E0E0E0 su dodici colori pastello: fino a 1,04:1.
+    // Rango e presenze non sono a vista: TalkBack le sente nella descrizione della riga.
     @Test
-    fun `le iniziali dell'avatar si leggono su qualsiasi colore dell'elenco`() {
-        val colori = base.resources.getIntArray(R.array.avatar_colors)
-        val visti = mutableSetOf<Int>()
-        // Nomi diversi pescano colori diversi dall'elenco: se ne provano abbastanza da coprirlo.
-        for (n in 0 until 400) {
-            val vista = LayoutInflater.from(tema).inflate(R.layout.item_player_management, FrameLayout(tema), false)
-            PlayersManagementAdapter.PlayerViewHolder(vista, {}, {}).bind(giocatore("Giocatore $n"))
-            val sfondo = vista.findViewById<MaterialCardView>(R.id.player_avatar_card).cardBackgroundColor.defaultColor
-            val iniziali = vista.findViewById<TextView>(R.id.player_avatar).currentTextColor
-            visti.add(sfondo)
-            leggibile("$n: iniziali su ${Integer.toHexString(sfondo)}", iniziali, sfondo)
-        }
-        assertEquals("la prova non ha coperto tutti i colori", colori.toSet(), visti)
+    fun `la riga della classifica dice rango nome gol e presenze a TalkBack`() {
+        val vista = LayoutInflater.from(tema).inflate(R.layout.item_player_stat, FrameLayout(tema), false)
+        StatisticsAdapter.ViewHolder(vista).bind(PlayerStatsDTO(2, "Luca", 4, 10, 0.5f), 1)
+
+        assertEquals("2. Luca, 4 goals, 10 appearances", vista.contentDescription.toString())
     }
 
-    // L'elenco aveva #C9B1FF, l'unico viola rimasto in una palette che il viola lo esclude.
+    // Una riga dei giocatori e' il nome e i ruoli: niente avatar colorato, niente numeri.
     @Test
-    fun `nessun colore degli avatar e' viola e sono tutti diversi`() {
-        val colori = base.resources.getIntArray(R.array.avatar_colors)
-        val hsv = FloatArray(3)
-        for (colore in colori) {
-            android.graphics.Color.colorToHSV(colore, hsv)
-            // Stessa soglia di TemaDelTelefonoTest: tonalita' fra 250 e 300 gradi con saturazione che si nota.
-            assertTrue("${Integer.toHexString(colore)} e' viola", !(hsv[0] in 250f..300f && hsv[1] > 0.15f))
-        }
-        assertEquals("colori ripetuti", colori.size, colori.toSet().size)
+    fun `la riga dei giocatori ha nome e ruoli e basta`() {
+        val vista = LayoutInflater.from(tema).inflate(R.layout.item_player_management, FrameLayout(tema), false)
+        PlayersManagementAdapter.PlayerViewHolder(vista, {}, {}).bind(
+            PlayerWithRoles(Player(playerName = "Mario Rossi", appearances = 3, goals = 2), listOf(Role(1, "Portiere", "PORTA"))),
+        )
+
+        assertEquals("Mario Rossi", vista.findViewById<TextView>(R.id.player_name).text.toString())
+        val ruoli = vista.findViewById<ChipGroup>(R.id.player_roles_group)
+        assertEquals(1, ruoli.childCount)
+        assertEquals("POR", (ruoli.getChildAt(0) as Chip).text.toString())
+        assertEquals("Portiere", ruoli.getChildAt(0).contentDescription.toString())
+        // I numeri e l'avatar non sono in riga: stanno nel dettaglio.
+        assertEquals(0, vista.resources.getIdentifier("player_goals", "id", base.packageName))
+        assertEquals(0, vista.resources.getIdentifier("player_avatar", "id", base.packageName))
     }
 
-    // I chip dei ruoli: #E0E0E0 su rosa, ciano, giallo e verde faceva 3,17 / 1,17 / 1,07 / 1,01.
+    // Un giocatore senza ruoli e' il nome e basta: niente chip "N/A".
     @Test
-    fun `i chip dei ruoli si leggono su ogni categoria`() {
+    fun `senza ruoli non c'e' nessun chip`() {
+        val gruppo = ChipGroup(tema)
+        gruppo.setRoles(emptyList())
+        assertEquals(0, gruppo.childCount)
+    }
+
+    // I chip dei ruoli: solo bordo e testo, lo stesso per ogni categoria. Prima rosa, ciano, giallo e verde.
+    @Test
+    fun `i chip dei ruoli sono neutri e si leggono su ogni categoria`() {
         val gruppo = ChipGroup(tema)
         gruppo.setRoles(
             listOf(
@@ -122,21 +126,26 @@ class GiocatoriEStatisticheDelContornoTest {
             ),
         )
         assertEquals(4, gruppo.childCount)
+        val sfondo = base.getColor(R.color.elite_surface)
+        val testi = mutableSetOf<Int>()
         for (i in 0 until gruppo.childCount) {
             val chip = gruppo.getChildAt(i) as Chip
-            val sfondo = chip.chipBackgroundColor!!.defaultColor
+            testi.add(chip.currentTextColor)
             leggibile("chip $i", chip.currentTextColor, sfondo)
+            assertEquals("il chip non e' dipinto", 0, chip.chipBackgroundColor!!.defaultColor ushr 24)
         }
+        assertEquals("tutte le categorie hanno lo stesso colore di testo", 1, testi.size)
     }
 
-    // Il FAB giocatori: icona #E0E0E0 sul rosa faceva 3,17:1.
+    // Il tasto "aggiungi" e' lime con l'icona sul fondo: l'unico primario dell'elenco, mai rosa.
     @Test
-    fun `l'icona del FAB dei giocatori passa AA sul rosa`() {
+    fun `l'icona del FAB dei giocatori passa AA sul lime`() {
         val schermo = LayoutInflater.from(tema).inflate(R.layout.activity_players_management, FrameLayout(tema), false)
         val fab = schermo.findViewById<FloatingActionButton>(R.id.add_player_fab)
 
         val icona = fab.imageTintList!!.defaultColor
         val fondo = fab.backgroundTintList!!.defaultColor
+        assertEquals(base.getColor(R.color.elite_lime), fondo)
         leggibile("icona del FAB", icona, fondo)
     }
 

@@ -1,44 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    Una riga dei giocatori (G-4): il nome e il ruolo; si tocca per modificare. L'unico comando in riga e'
+    il dettaglio (presenze, gol, ruoli, azzera): la modifica e' la riga stessa, quindi non ha un secondo
+    bottone. Sta dentro un gruppo, non e' una card.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/player_card" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="16dp" android:layout_marginVertical="8dp" style="@style/Widget.App.Card" android:clickable="true" android:focusable="true" android:foreground="@drawable/bg_focus_ring">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/player_card"
+    style="@style/Widget.App.Pressable"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="@drawable/bg_focus_ring"
+    android:minHeight="56dp"
+    android:paddingStart="@dimen/space_16"
+    android:paddingEnd="@dimen/space_4"
+    android:paddingVertical="@dimen/space_8">
 
-    <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp">
+    <LinearLayout
+        android:id="@+id/info_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/stats_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Avatar -->
-        <com.google.android.material.card.MaterialCardView android:id="@+id/player_avatar_card" android:layout_width="48dp" android:layout_height="48dp" app:shapeAppearance="@style/ShapeAppearance.App.Badge" app:cardBackgroundColor="@color/graffiti_dark_gray" app:cardElevation="0dp" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent">
+        <TextView
+            android:id="@+id/player_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textAppearance="@style/TextAppearance.App.RowTitle"
+            tools:text="Johnathan Doe" />
 
-            <TextView android:id="@+id/player_avatar" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:textAppearance="?attr/textAppearanceHeadlineSmall" android:textColor="@color/stencil_white" android:textStyle="bold" tools:text="JD"/>
-        </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/player_roles_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_4"
+            app:chipSpacingHorizontal="@dimen/space_4"
+            app:chipSpacingVertical="0dp"
+            app:selectionRequired="false"
+            app:singleLine="true">
+            <!-- I chip dei ruoli si aggiungono da codice -->
+        </com.google.android.material.chip.ChipGroup>
 
-        <!-- Name and Roles Container -->
-        <LinearLayout android:id="@+id/info_container" android:layout_width="0dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginStart="16dp" android:layout_marginEnd="8dp" app:layout_constraintStart_toEndOf="@id/player_avatar_card" app:layout_constraintEnd_toStartOf="@id/action_container" app:layout_constraintTop_toTopOf="@id/player_avatar_card" app:layout_constraintBottom_toBottomOf="@id/player_avatar_card">
+    </LinearLayout>
 
-            <TextView android:id="@+id/player_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="@color/stencil_white" android:maxLines="1" android:ellipsize="end" tools:text="Johnathan Doe"/>
+    <ImageButton
+        android:id="@+id/stats_button"
+        style="@style/Widget.App.Pressable"
+        android:layout_width="@dimen/control_touch"
+        android:layout_height="@dimen/control_touch"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/cd_player_stats"
+        android:foreground="@drawable/bg_focus_ring"
+        android:src="@drawable/ic_bar_chart"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/elite_text_secondary" />
 
-            <com.google.android.material.chip.ChipGroup android:id="@+id/player_roles_group" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" app:singleLine="true" app:chipSpacingHorizontal="4dp" app:chipSpacingVertical="0dp" app:selectionRequired="false">
-                <!-- Chips added dynamically -->
-            </com.google.android.material.chip.ChipGroup>
-
-        </LinearLayout>
-
-        <!-- Stats Row -->
-        <LinearLayout android:id="@+id/stats_row" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal" app:layout_constraintTop_toBottomOf="@id/info_container" app:layout_constraintStart_toStartOf="@id/info_container" app:layout_constraintEnd_toEndOf="@id/info_container">
-
-            <TextView android:id="@+id/player_goals" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="16dp" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/team_spray_yellow" app:drawableStartCompat="@drawable/ic_sports_soccer" android:drawablePadding="4dp" app:drawableTint="@color/team_spray_yellow" android:gravity="center_vertical" tools:text="12"/>
-
-            <TextView android:id="@+id/player_appearances" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="@color/team_electric_green" app:drawableStartCompat="@drawable/ic_event_available" android:drawablePadding="4dp" app:drawableTint="@color/team_electric_green" android:gravity="center_vertical" tools:text="24"/>
-        </LinearLayout>
-
-        <!-- Actions -->
-        <LinearLayout android:id="@+id/action_container" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="vertical" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent">
-
-            <ImageButton android:id="@+id/stats_button" android:layout_width="48dp" android:layout_height="48dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_bar_chart" android:contentDescription="@string/cd_player_stats" app:tint="@color/neon_cyan"/>
-
-            <ImageButton android:id="@+id/edit_button" android:layout_width="48dp" android:layout_height="48dp" android:background="?attr/selectableItemBackgroundBorderless" android:src="@drawable/ic_edit" android:contentDescription="@string/cd_edit_player" app:tint="@color/sidewalk_gray"/>
-
-        </LinearLayout>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</com.google.android.material.card.MaterialCardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

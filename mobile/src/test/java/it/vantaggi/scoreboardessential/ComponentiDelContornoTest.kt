@@ -195,7 +195,7 @@ class ComponentiDelContornoTest {
 
     @Test
     fun `i gruppi tonali del contorno non hanno elevazione ne' ombra`() {
-        for (layout in listOf(R.layout.activity_match_settings, R.layout.content_scoreboard_details, R.layout.activity_match_history)) {
+        for (layout in listOf(R.layout.activity_match_settings, R.layout.content_scoreboard_details, R.layout.activity_statistics, R.layout.activity_players_management)) {
             val radice = LayoutInflater.from(contesto).inflate(layout, null)
             val gruppi = tutti(radice, MaterialCardView::class.java).map { it as MaterialCardView }
             assertTrue("nessun gruppo in ${contesto.resources.getResourceEntryName(layout)}", gruppi.isNotEmpty())

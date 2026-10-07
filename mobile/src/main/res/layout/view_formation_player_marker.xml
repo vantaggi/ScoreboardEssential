@@ -12,18 +12,19 @@
         android:id="@+id/card_avatar"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        app:cardBackgroundColor="@color/graffiti_pink"
+        app:cardBackgroundColor="@color/elite_surface_raised"
         app:shapeAppearance="@style/ShapeAppearance.App.Badge"
-        app:strokeWidth="0dp">
+        app:strokeColor="@color/elite_outline"
+        app:strokeWidth="@dimen/border_width">
 
         <TextView
             android:id="@+id/text_initial"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:textColor="@color/stencil_white"
+            android:textColor="@color/elite_text_primary"
             android:textSize="18sp"
-            android:textStyle="bold"
+            android:textFontWeight="600"
             tools:text="P" />
 
     </com.google.android.material.card.MaterialCardView>
@@ -35,7 +36,7 @@
         android:layout_marginTop="2dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:textColor="@color/stencil_white"
+        android:textColor="@color/elite_text_primary"
         android:textSize="12sp"
         tools:text="Player Name" />
 

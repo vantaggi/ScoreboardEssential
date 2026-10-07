@@ -1,22 +1,10 @@
 package it.vantaggi.scoreboardessential.utils
 
-import android.content.Context
-import androidx.core.content.ContextCompat
-import it.vantaggi.scoreboardessential.R
-
+/**
+ * I ruoli si distinguono per la sigla e per il nome, mai per il colore: la categoria non ha piu' una
+ * tinta (rosa, ciano, giallo e verde erano colori Street, e il colore da solo non dice un ruolo).
+ */
 object RoleUtils {
-    fun getCategoryColor(
-        context: Context,
-        category: String,
-    ): Int =
-        when (category.uppercase()) {
-            "ATTACCO" -> ContextCompat.getColor(context, R.color.graffiti_pink)
-            "CENTROCAMPO" -> ContextCompat.getColor(context, R.color.neon_cyan)
-            "DIFESA" -> ContextCompat.getColor(context, R.color.team_spray_yellow)
-            "PORTA" -> ContextCompat.getColor(context, R.color.team_electric_green)
-            else -> ContextCompat.getColor(context, R.color.sidewalk_gray)
-        }
-
     fun getRoleAbbreviation(roleName: String): String =
         when (roleName) {
             // PORTA
