@@ -50,15 +50,20 @@ fun TextView.etichettaDiSquadra(
  * squadra solo come barretta di 4dp sul bordo iniziale (G-6). Niente blocco pieno con il testo sopra:
  * il colore sta nella grafica e la leggibilita' non dipende da lui. La barretta e' il colore scelto, o
  * [TeamInk.graphicOn] se sul fondo del gruppo non arriva a 3:1.
+ *
+ * Il report PDF sta su carta chiara (G-8): li' [sfondoChiaro] fa scurire la barretta con
+ * [TeamInk.graphicOnLight] invece di schiarirla, e [testo] e' l'inchiostro della carta.
  */
 fun TextView.etichettaConBarretta(
     colore: Int,
     sfondo: Int = context.getColor(R.color.elite_surface),
+    testo: Int = context.getColor(R.color.elite_text_primary),
+    sfondoChiaro: Boolean = false,
 ) {
     val densita = resources.displayMetrics.density
     val barretta =
         GradientDrawable().apply {
-            setColor(TeamInk.graphicOn(colore, sfondo))
+            setColor(if (sfondoChiaro) TeamInk.graphicOnLight(colore, sfondo) else TeamInk.graphicOn(colore, sfondo))
             cornerRadius = 2 * densita
         }
     background =
@@ -67,12 +72,12 @@ fun TextView.etichettaConBarretta(
             setLayerGravity(0, Gravity.START or Gravity.FILL_VERTICAL)
         }
     setPaddingRelative((12 * densita).toInt(), (2 * densita).toInt(), 0, (2 * densita).toInt())
-    setTextColor(context.getColor(R.color.elite_text_primary))
+    setTextColor(testo)
 }
 
 /**
  * Il riempimento StreetBadge nel colore della squadra, col contorno se non si stacca da [sfondo].
- * Lo usano le etichette e le bande del PDF: chi ci scrive sopra sceglie l'inchiostro con [TeamInk].
+ * Lo usano le etichette di squadra: chi ci scrive sopra sceglie l'inchiostro con [TeamInk].
  */
 fun View.riempiDiSquadra(
     colore: Int,

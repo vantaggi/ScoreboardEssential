@@ -194,9 +194,10 @@
     <string name="report_best_run">Longest run</string>
     <string name="report_wins">Winner</string>
     <string name="report_scorers">Scorers</string>
-    <string name="report_pdf_title">MATCH REPORT</string>
-    <string name="report_pdf_scorers_title">SCORERS</string>
+    <string name="report_pdf_title">Match report</string>
+    <string name="report_pdf_scorers_title">Scorers</string>
     <string name="report_pdf_no_scorers">No scorers</string>
+    <string name="report_pdf_no_players">No players</string>
     <string name="report_pdf_failed">Could not create the PDF report</string>
 
     <!-- Multi-sport -->

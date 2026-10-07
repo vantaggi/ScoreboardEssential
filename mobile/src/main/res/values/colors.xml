@@ -60,21 +60,37 @@
     <color name="elite_chart_4">#D79BDB</color>
     <color name="elite_chart_5">#A4A9B0</color>
 
-    <!--
-        STREET (eredita'): i colori di prima. Il contorno (G-4), la schermata di gioco e il foglio PARTITA
-        (G-6) e la Cronaca (G-5) non ne citano piu' nessuno. Restano finche' li cita qualcuno: il PDF (G-8:
-        asphalt_black, asphalt_dark, stencil_white, sidewalk_gray, con asphalt_dark anche nello sfondo
-        dell'icona) e l'icona dell'app (G-9: team_spray_yellow e team_electric_green). Quando non li cita
-        piu' nessuno si tolgono. Con G-5 sono usciti concrete_gray, graffiti_dark_gray e outline_gray.
-    -->
-    <color name="asphalt_black">#000000</color>
     <!-- Cifre del punteggio e pallino del servizio: il bianco PURO, mai altrove (DESIGN.md, Colori). -->
     <color name="ink_white">#FFFFFF</color>
     <!-- background-watch: il nero del gioco sul telefono e del quadrante. -->
     <color name="ink_black">#000000</color>
+
+    <!--
+        CARTA (report PDF, G-8): gli stessi ruoli del tema scuro, nei valori chiari della Constitution.
+        Il PDF esce dal telefono e si stampa: pagina bianca, testo quasi nero, gruppi in un grigio
+        appena piu' scuro della carta. Il lime e il ciano di squadra non sono mai testo qui (1,31:1 e
+        1,54:1 sul bianco): sono barrette, scurite da TeamInk.graphicOnLight fino a 3:1.
+        Contrasti: testo primario 17,08:1 sulla carta e 15,65:1 sul gruppo; secondario 6,43:1 e 5,90:1.
+    -->
+    <!-- background-canvas su carta. -->
+    <color name="print_background">#FFFFFF</color>
+    <!-- background-surface su carta: il gruppo tonale. -->
+    <color name="print_surface">#F4F5F7</color>
+    <!-- border-group su carta: la linea sottile fra le righe e il bordo del gruppo (decorativa). -->
+    <color name="print_border">#D0D3D9</color>
+    <!-- text-primary su carta. -->
+    <color name="print_text_primary">#1A1C1F</color>
+    <!-- text-secondary su carta: didascalie e stati vuoti. -->
+    <color name="print_text_secondary">#5A5F66</color>
+
+    <!--
+        STREET (eredita'): i colori di prima. Il contorno (G-4), la schermata di gioco e il foglio PARTITA
+        (G-6), la Cronaca (G-5) e il PDF (G-8) non ne citano piu' nessuno. Restano finche' li cita qualcuno:
+        l'icona dell'app (G-9: asphalt_dark nello sfondo, team_spray_yellow e team_electric_green). Quando
+        non li cita piu' nessuno si tolgono. Con G-5 sono usciti concrete_gray, graffiti_dark_gray e
+        outline_gray; con G-8 asphalt_black, stencil_white e sidewalk_gray.
+    -->
     <color name="asphalt_dark">#121212</color>
-    <color name="stencil_white">#E0E0E0</color>
-    <color name="sidewalk_gray">#9E9E9E</color>
     <!--
         Colori predefiniti delle squadre (G-6, decisione G2): lato 1 lime e lato 2 ciano, gli stessi della
         Cronaca e della dashboard di Padel Elite. Restano personalizzabili: contano solo finche' l'utente

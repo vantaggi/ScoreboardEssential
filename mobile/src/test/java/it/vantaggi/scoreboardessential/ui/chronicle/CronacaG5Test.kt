@@ -119,20 +119,22 @@ class CronacaG5Test {
     // --- Colori Street usciti con questo passo ---
 
     @Test
-    fun `i colori Street che nessuno citava piu' sono stati tolti da colors xml e quelli rimasti li cita il PDF`() {
+    fun `i colori Street che nessuno citava piu' sono stati tolti da colors xml e quello rimasto lo cita solo l'icona`() {
         val colori = file("res/values/colors.xml").readText()
-        for (nome in listOf("concrete_gray", "graffiti_dark_gray", "outline_gray")) {
+        // Usciti con G-5 (la Cronaca) e con G-8 (il PDF).
+        for (nome in listOf("concrete_gray", "graffiti_dark_gray", "outline_gray", "asphalt_black", "stencil_white", "sidewalk_gray")) {
             assertTrue("$nome e' ancora definito", !colori.contains("name=\"$nome\""))
         }
-        // Quelli rimasti li cita ancora qualcuno fuori dalla Cronaca (G-8, il PDF); se nessuno li cita vanno tolti.
+        // Quello rimasto lo cita l'icona (G-9); se nessuno lo cita piu' va tolto, e la Cronaca non lo deve citare.
         val sorgenti =
             file(
                 "",
             ).walkTopDown().filter { it.isFile && (it.extension == "kt" || it.extension == "xml") && it.name != "colors.xml" }.toList()
-        for (nome in listOf("asphalt_black", "asphalt_dark", "stencil_white", "sidewalk_gray")) {
+        for (nome in listOf("asphalt_dark")) {
             val citanti = sorgenti.filter { it.readText().contains("color/$nome") || it.readText().contains("color.$nome") }
             assertTrue("$nome non lo cita nessuno: toglierlo", citanti.isNotEmpty())
             assertTrue("$nome e' citato dalla Cronaca: ${citanti.map { it.name }}", citanti.none { "chronic" in it.name.lowercase() })
+            assertEquals("$nome deve restare solo all'icona (G-9)", listOf("ic_launcher_background_vs.xml"), citanti.map { it.name })
         }
     }
 }

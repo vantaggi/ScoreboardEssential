@@ -1,131 +1,191 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    La pagina del report PDF (G-8). Esce dal telefono e si stampa, quindi sta su carta chiara: gli
+    stessi ruoli del tema scuro nei valori print_* (DESIGN.md, conflitto 14). Un solo compito: il
+    risultato. Il resto sono due gruppi tonali con righe sottili. Il colore di squadra e' solo la
+    barretta accanto al nome (si mette dal codice); il testo e' sempre text-primary. Numeri e testi
+    in Inter con cifre tabulari, pesi 400 e 600, niente maiuscolo, niente ombre.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@color/print_background"
     android:orientation="vertical"
-    android:background="@color/asphalt_dark"
-    android:padding="24dp"
+    android:padding="@dimen/space_24"
     tools:ignore="Overdraw">
 
-    <!-- Header Section -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
+        android:layout_marginBottom="@dimen/space_16"
+        android:fontFeatureSettings="tnum"
         android:text="@string/report_pdf_title"
-        android:textAppearance="?attr/textAppearanceDisplayLarge"
-        android:textColor="@color/stencil_white"
-        android:layout_marginBottom="16dp"/>
+        android:textAppearance="?attr/textAppearanceHeadlineLarge"
+        android:textColor="@color/print_text_primary"
+        android:textFontWeight="600" />
 
-    <!-- Result Section: una banda per squadra nel suo colore, nome e punteggio in TeamInk.
-         Il colore grezzo come testo su #121212 non si leggeva (il blu #0D47A1 fa 2,17:1). -->
+    <!-- Il risultato: un gruppo, una riga per squadra, il punteggio a destra. -->
     <LinearLayout
-        android:id="@+id/pdf_team1_band"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="16dp">
+        android:background="@drawable/bg_print_group"
+        android:divider="@drawable/print_divider"
+        android:orientation="vertical"
+        android:paddingHorizontal="@dimen/space_16"
+        android:showDividers="middle">
 
-        <TextView
-            android:id="@+id/pdf_team1_name"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:id="@+id/pdf_team1_band"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textAppearance="?attr/textAppearanceHeadlineMedium"
-            android:textColor="@color/asphalt_black"
-            tools:text="TEAM 1"/>
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingVertical="@dimen/space_8">
 
-        <TextView
-            android:id="@+id/pdf_team1_score"
-            android:layout_width="wrap_content"
+            <TextView
+                android:id="@+id/pdf_team1_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFeatureSettings="tnum"
+                android:textAppearance="@style/TextAppearance.App.SectionHeading"
+                android:textColor="@color/print_text_primary"
+                tools:text="Squadra 1" />
+
+            <TextView
+                android:id="@+id/pdf_team1_score"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.App.Punteggio"
+                android:textColor="@color/print_text_primary"
+                android:textSize="32sp"
+                tools:text="10" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/pdf_team2_band"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceDisplayLarge"
-            android:textColor="@color/asphalt_black"
-            tools:text="10"/>
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingVertical="@dimen/space_8">
+
+            <TextView
+                android:id="@+id/pdf_team2_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFeatureSettings="tnum"
+                android:textAppearance="@style/TextAppearance.App.SectionHeading"
+                android:textColor="@color/print_text_primary"
+                tools:text="Squadra 2" />
+
+            <TextView
+                android:id="@+id/pdf_team2_score"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.App.Punteggio"
+                android:textColor="@color/print_text_primary"
+                android:textSize="32sp"
+                tools:text="8" />
+        </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/pdf_team2_band"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="24dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="16dp">
-
-        <TextView
-            android:id="@+id/pdf_team2_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textAppearance="?attr/textAppearanceHeadlineMedium"
-            android:textColor="@color/asphalt_black"
-            tools:text="TEAM 2"/>
-
-        <TextView
-            android:id="@+id/pdf_team2_score"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceDisplayLarge"
-            android:textColor="@color/asphalt_black"
-            tools:text="8"/>
-    </LinearLayout>
-
-    <!-- Formations Section -->
+    <!-- Formazioni: due colonne in un gruppo, ciascuna col nome della squadra e la sua barretta. -->
     <TextView
         android:id="@+id/pdf_formations_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_16"
+        android:layout_marginBottom="@dimen/space_8"
+        android:fontFeatureSettings="tnum"
         android:text="@string/label_formations"
-        android:textAppearance="?attr/textAppearanceHeadlineSmall"
-        android:textColor="@color/sidewalk_gray"
-        android:gravity="center"
-        android:layout_marginBottom="8dp"/>
+        android:textAppearance="@style/TextAppearance.App.SectionHeading"
+        android:textColor="@color/print_text_primary" />
 
     <LinearLayout
         android:id="@+id/pdf_formations"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_print_group"
+        android:baselineAligned="false"
         android:orientation="horizontal"
-        android:layout_marginBottom="24dp"
-        android:baselineAligned="false">
+        android:padding="@dimen/space_16">
 
         <LinearLayout
-            android:id="@+id/pdf_team1_players_list"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/space_8"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"/>
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/pdf_team1_players_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_8"
+                android:fontFeatureSettings="tnum"
+                android:textAppearance="@style/TextAppearance.App.Caption"
+                android:textColor="@color/print_text_secondary"
+                tools:text="Squadra 1" />
+
+            <LinearLayout
+                android:id="@+id/pdf_team1_players_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@drawable/print_divider"
+                android:orientation="vertical"
+                android:showDividers="middle" />
+        </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/pdf_team2_players_list"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_8"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"/>
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/pdf_team2_players_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_8"
+                android:fontFeatureSettings="tnum"
+                android:textAppearance="@style/TextAppearance.App.Caption"
+                android:textColor="@color/print_text_secondary"
+                tools:text="Squadra 2" />
+
+            <LinearLayout
+                android:id="@+id/pdf_team2_players_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@drawable/print_divider"
+                android:orientation="vertical"
+                android:showDividers="middle" />
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- Scorers Section -->
+    <!-- Marcatori: solo dove si chiede chi ha segnato; il titolo e il gruppo spariscono insieme. -->
     <TextView
         android:id="@+id/pdf_scorers_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_16"
+        android:layout_marginBottom="@dimen/space_8"
+        android:fontFeatureSettings="tnum"
         android:text="@string/report_pdf_scorers_title"
-        android:textAppearance="?attr/textAppearanceHeadlineSmall"
-        android:textColor="@color/sidewalk_gray"
-        android:gravity="center"
-        android:layout_marginBottom="8dp"/>
+        android:textAppearance="@style/TextAppearance.App.SectionHeading"
+        android:textColor="@color/print_text_primary" />
 
     <LinearLayout
         android:id="@+id/pdf_scorers_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_print_group"
+        android:divider="@drawable/print_divider"
         android:orientation="vertical"
-        android:gravity="center_horizontal"/>
+        android:paddingHorizontal="@dimen/space_16"
+        android:showDividers="middle" />
 
 </LinearLayout>
