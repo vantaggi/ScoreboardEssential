@@ -1,37 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Una sezione della Cronaca: card street con la didascalia e un corpo che riempie il codice. -->
-<com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<!--
+    Una sezione della Cronaca (G-5): l'intestazione in testo secondario sopra e, sotto, un gruppo tonale
+    (surface su canvas con border-group, senza ombra) il cui corpo riempie il codice con righe e linee
+    sottili rientrate. Il corpo non ha margini: ogni riga porta i suoi space_16 e space_12.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="8dp"
-    android:layout_marginVertical="4dp">
+    android:orientation="vertical">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/section_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_marginStart="@dimen/space_16"
+        android:layout_marginTop="@dimen/space_24"
+        android:layout_marginEnd="@dimen/space_16"
+        android:layout_marginBottom="@dimen/space_8"
+        android:accessibilityHeading="true"
+        android:textAppearance="@style/TextAppearance.App.Caption"
+        tools:text="Andamento" />
 
-        <TextView
-            android:id="@+id/section_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:accessibilityHeading="true"
-            android:fontFamily="@font/inter"
-            android:letterSpacing="0.12"
-            android:textAllCaps="true"
-            android:textColor="@color/sidewalk_gray"
-            android:textSize="12sp"
-            android:textFontWeight="600"
-            tools:text="Andamento" />
+    <com.google.android.material.card.MaterialCardView
+        style="@style/Widget.App.Group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/space_16"
+        android:layout_marginEnd="@dimen/space_16">
 
         <LinearLayout
             android:id="@+id/section_body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" />
-    </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+    </com.google.android.material.card.MaterialCardView>
+</LinearLayout>

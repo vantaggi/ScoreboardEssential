@@ -80,12 +80,13 @@ class ChronicleTextTest {
     }
 
     /**
-     * Barrette e linea dell'andamento stanno sulla card #1E1E1E, non sul nero: il blu notte va
-     * schiarito fino a 3:1 contro la card; il giallo, che li' ha gia' contrasto, resta il suo.
+     * Barrette e linea dell'andamento stanno sul gruppo #161618 (elite_surface), non sul nero: il
+     * blu notte va schiarito fino a 3:1 contro il gruppo; il giallo, il lime e il ciano, che li'
+     * hanno gia' contrasto, restano i loro.
      */
     @Test
-    fun `il colore di squadra come grafica regge sulla card`() {
-        val card = 0xFF1E1E1E.toInt()
+    fun `il colore di squadra come grafica regge sul gruppo`() {
+        val card = 0xFF161618.toInt()
         val bluNotte = 0xFF1A237E.toInt()
         val giallo = 0xFFFFD600.toInt()
 
@@ -93,6 +94,9 @@ class ChronicleTextTest {
 
         assertTrue("contrasto ${TeamInk.contrast(schiarito, card)}", TeamInk.contrast(schiarito, card) >= 3.0)
         assertEquals(giallo, ChronicleText.graphicOn(giallo, card))
+        // I predefiniti dei lati (chart-1 e chart-2) non si toccano.
+        assertEquals(0xFFC8F135.toInt(), ChronicleText.graphicOn(0xFFC8F135.toInt(), card))
+        assertEquals(0xFF00E5FF.toInt(), ChronicleText.graphicOn(0xFF00E5FF.toInt(), card))
     }
 
     /** Arrotondate come `formatDuration` della dashboard. */
