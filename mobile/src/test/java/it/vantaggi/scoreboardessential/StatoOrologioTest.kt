@@ -95,8 +95,8 @@ class StatoOrologioTest {
         ) = bitmap.getPixel((xDp * densita).toInt(), (yDp * densita).toInt())
 
         // Centro del badge: 4dp dal bordo destro e dall'alto, 16dp di diametro totale.
-        assertEquals("il centro e' #FF1744", 0xFFFF1744.toInt(), pixel(36f, 12f))
-        assertEquals("l'anello e' nero", Color.BLACK, pixel(36f + 7.5f, 12f))
+        assertEquals("il centro e' elite_error", 0xFFE05252.toInt(), pixel(36f, 12f))
+        assertEquals("l'anello e' elite_background", 0xFF0D0D0F.toInt(), pixel(36f + 7.5f, 12f))
         assertEquals("fuori dal badge e' trasparente", 0, Color.alpha(pixel(6f, 42f)))
         assertTrue("il badge sta in alto, non in basso", Color.alpha(pixel(36f, 12f)) == 255 && Color.alpha(pixel(36f, 40f)) == 0)
     }

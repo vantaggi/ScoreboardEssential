@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/main_root" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/asphalt_black" tools:context=".MainActivity" tools:ignore="Overdraw">
+    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/main_root" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/ink_black" tools:context=".MainActivity" tools:ignore="Overdraw">
 
     <!--
         Due livelli in un solo file: la schermata di gioco resta in verticale (MainActivity e'
@@ -60,7 +60,8 @@
         app:paddingLeftSystemWindowInsets="true"
         app:paddingRightSystemWindowInsets="true"
         app:shouldRemoveExpandedCorners="false"
-        app:backgroundTint="@color/asphalt_dark"
+        android:elevation="0dp"
+        app:backgroundTint="@color/elite_background"
         app:shapeAppearance="@style/ShapeAppearance.App.MatchSheet">
 
         <include

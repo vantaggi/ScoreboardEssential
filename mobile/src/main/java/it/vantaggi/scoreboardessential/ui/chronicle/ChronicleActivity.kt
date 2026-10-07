@@ -109,8 +109,8 @@ class ChronicleActivity : AppCompatActivity() {
         // Il colore con cui si e' giocato; i predefiniti solo se la squadra non c'e' piu'.
         val paints =
             listOf(
-                riga.team1?.color ?: color(R.color.team_spray_yellow),
-                riga.team2?.color ?: color(R.color.team_electric_green),
+                riga.team1?.color ?: color(R.color.team_side_1),
+                riga.team2?.color ?: color(R.color.team_side_2),
             )
         supportActionBar?.subtitle = subtitle(riga.match, s)
         findViewById<View>(R.id.chronicle_sections).visibility = View.VISIBLE

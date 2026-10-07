@@ -155,17 +155,15 @@ class TemaDelTelefonoTest {
         assertFalse(eViola(attributo(contestoDelDialogo, androidx.appcompat.R.attr.colorPrimary)))
     }
 
-    // Gli avatar delle rose usavano colorPrimaryContainer, il viola #4F378B di M3.
+    // Gli avatar delle rose usavano colorPrimaryContainer, il viola #4F378B di M3; con G-6 la riga non ha
+    // piu' l'avatar: il nome e' testo primario sul gruppo e non c'e' nessuna card.
     @Test
-    fun `l'avatar di un giocatore della rosa e' grigio con iniziali leggibili`() {
+    fun `la riga di un giocatore della rosa non ha avatar e il nome si legge sul gruppo`() {
         val riga = LayoutInflater.from(context).inflate(R.layout.team_player_item, null)
-        val avatar = riga.findViewById<MaterialCardView>(R.id.player_avatar_container)
-        val iniziali = riga.findViewById<TextView>(R.id.player_initials)
 
-        val fondo = avatar.cardBackgroundColor.defaultColor
-        assertEquals(token(R.color.elite_surface_raised), fondo)
-        assertFalse(eViola(fondo))
-        assertTrue(TeamInk.contrast(iniziali.currentTextColor, fondo) >= 4.5)
+        assertFalse(riga is MaterialCardView)
+        val nome = riga.findViewById<TextView>(R.id.player_name)
+        assertTrue(TeamInk.contrast(nome.currentTextColor, token(R.color.elite_surface)) >= 4.5)
     }
 
     // G-0: i testi del tema (onSurface, onSurfaceVariant) restano leggibili su ogni fondo che il tema

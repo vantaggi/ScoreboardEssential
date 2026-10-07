@@ -3,7 +3,7 @@
     <!-- Field Background -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@color/team_electric_green" />
+            <solid android:color="@color/elite_background" />
             <corners android:radius="20dp" />
         </shape>
     </item>
@@ -13,7 +13,7 @@
         <shape android:shape="rectangle">
             <stroke
                 android:width="4dp"
-                android:color="@color/stencil_white" />
+                android:color="@color/elite_outline" />
             <corners android:radius="20dp" />
             <solid android:color="@android:color/transparent" />
         </shape>
@@ -24,7 +24,7 @@
          <shape android:shape="line">
             <stroke
                 android:width="2dp"
-                android:color="@color/stencil_white"
+                android:color="@color/elite_outline"
                 android:dashWidth="10dp"
                 android:dashGap="10dp" />
             <size android:height="2dp" />
@@ -34,7 +34,7 @@
     <!-- Center Circle (Optional, for realism) -->
     <item android:width="60dp" android:height="60dp" android:gravity="center">
         <shape android:shape="oval">
-            <stroke android:width="2dp" android:color="@color/stencil_white" />
+            <stroke android:width="2dp" android:color="@color/elite_outline" />
             <solid android:color="@android:color/transparent" />
         </shape>
     </item>

@@ -28,7 +28,6 @@ import androidx.activity.viewModels
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnNextLayout
@@ -55,16 +54,16 @@ import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
+import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
 import it.vantaggi.scoreboardessential.utils.ExportBlocked
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import it.vantaggi.scoreboardessential.utils.MatchReportUtils
+import it.vantaggi.scoreboardessential.utils.NumberRoll
 import it.vantaggi.scoreboardessential.utils.TimeUtils
-import it.vantaggi.scoreboardessential.utils.animateScoreNumber
-import it.vantaggi.scoreboardessential.utils.animateZoneTap
-import it.vantaggi.scoreboardessential.utils.etichettaDiSquadra
+import it.vantaggi.scoreboardessential.utils.etichettaConBarretta
 import it.vantaggi.scoreboardessential.views.FormationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -122,9 +121,6 @@ internal fun didascaliaDelDettaglio(
         testo.contains(SEPARATORE_SET_GAME) -> R.string.caption_set_game
         else -> R.string.caption_game
     }
-
-// L'increspatura sulla zona premuta: l'inchiostro della squadra al 24% (61 su 255).
-private const val RIPPLE_ALPHA = 61
 
 // Il secondo argomento di VibrationEffect.createWaveform: -1 e' "suona una volta e basta".
 private const val NON_RIPETERE = -1
@@ -210,6 +206,14 @@ class MainActivity :
 
     // L'istante dell'ultimo tocco su ANNULLA accettato, per ignorare il rimbalzo del dito.
     private var ultimoToccoAnnulla: Long? = null
+
+    // Il punteggio che rotola (G-6): uno per lato. Il verso lo da' chi ha provocato il cambio (un punto
+    // sale, una correzione o un annullamento scende) e vale solo dentro quella chiamata; senza, il verso
+    // si ricava confrontando i due punteggi (un punto dell'orologio).
+    private lateinit var rotolo1: NumberRoll
+    private lateinit var rotolo2: NumberRoll
+    private var versoDelCambio: Int? = null
+    private var latoDelCambio: Int? = null
 
     private val requestPermissionLauncher =
         registerForActivityResult(
@@ -322,6 +326,8 @@ class MainActivity :
         // Core views
         team1ScoreTextView = findViewById(R.id.team1_score_textview)
         team2ScoreTextView = findViewById(R.id.team2_score_textview)
+        rotolo1 = NumberRoll(team1ScoreTextView)
+        rotolo2 = NumberRoll(team2ScoreTextView)
         scoreDetailValue = findViewById(R.id.score_detail_value)
         scoreDetailCaption = findViewById(R.id.score_detail_caption)
         matchPeriodTextView = findViewById(R.id.match_period_textview)
@@ -368,6 +374,7 @@ class MainActivity :
         team1RosterRecyclerView.apply {
             adapter = team1RosterAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
+            addItemDecoration(InsetDividerDecoration(this@MainActivity, 0))
         }
 
         team2RosterAdapter =
@@ -377,12 +384,14 @@ class MainActivity :
         team2RosterRecyclerView.apply {
             adapter = team2RosterAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
+            addItemDecoration(InsetDividerDecoration(this@MainActivity, 0))
         }
 
         matchLogAdapter = MatchLogAdapter { evento -> apriAttribuzione(evento) }
         matchLogRecyclerView.apply {
             adapter = matchLogAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
+            addItemDecoration(InsetDividerDecoration(this@MainActivity, 0))
         }
     }
 
@@ -391,8 +400,8 @@ class MainActivity :
         // e' la stessa cifra di prima, per gli sport a set e' "40"/"AV" con il dettaglio dei set
         // sotto. La schermata non sa che sport si sta giocando.
         viewModel.scoreDisplay.observe(this) { display ->
-            team1ScoreTextView.text = display.side1Primary
-            team2ScoreTextView.text = display.side2Primary
+            rollaIlPunteggio(1, rotolo1, team1ScoreTextView, display.side1Primary)
+            rollaIlPunteggio(2, rotolo2, team2ScoreTextView, display.side2Primary)
             bindScoreDetail(display.side1Secondary, display.matchOver)
             bindPeriod(display)
             applyMatchOver(display)
@@ -424,18 +433,18 @@ class MainActivity :
             // mentre la sua card sopra aveva quello scelto dall'utente: le stesse due
             // squadre con due coppie di colori diverse sulla stessa schermata. Rose e
             // formazioni portano il colore come riempimento del tag, mai come testo.
-            findViewById<TextView>(R.id.team1_roster_label).etichettaDiSquadra(color)
-            findViewById<TextView>(R.id.team1_pair_label).etichettaDiSquadra(color)
-            team1FormationLabel.etichettaDiSquadra(color)
+            findViewById<TextView>(R.id.team1_roster_label).etichettaConBarretta(color)
+            findViewById<TextView>(R.id.team1_pair_label).etichettaConBarretta(color)
+            team1FormationLabel.etichettaConBarretta(color)
             matchLogAdapter.team1Color = color
             matchLogAdapter.notifyDataSetChanged()
         }
 
         viewModel.team2Color.observe(this) { color ->
             aggiornaZona(2, color)
-            findViewById<TextView>(R.id.team2_roster_label).etichettaDiSquadra(color)
-            findViewById<TextView>(R.id.team2_pair_label).etichettaDiSquadra(color)
-            team2FormationLabel.etichettaDiSquadra(color)
+            findViewById<TextView>(R.id.team2_roster_label).etichettaConBarretta(color)
+            findViewById<TextView>(R.id.team2_pair_label).etichettaConBarretta(color)
+            team2FormationLabel.etichettaConBarretta(color)
             matchLogAdapter.team2Color = color
             matchLogAdapter.notifyDataSetChanged()
         }
@@ -503,7 +512,7 @@ class MainActivity :
         // Lo stato si legge dal glifo e dal colore del tempo, non da una parola che cambia larghezza.
         viewModel.isMatchTimerRunning.observe(this) { isRunning ->
             timerStartButton.setIconResource(if (isRunning) R.drawable.ic_pause else R.drawable.ic_play_arrow)
-            timerStartButton.setTextColor(ContextCompat.getColor(this, if (isRunning) R.color.ink_white else R.color.sidewalk_gray))
+            timerStartButton.setTextColor(ContextCompat.getColor(this, if (isRunning) R.color.ink_white else R.color.elite_text_secondary))
             ViewCompat.setStateDescription(
                 timerStartButton,
                 getString(if (isRunning) R.string.timer_state_running else R.string.timer_state_stopped),
@@ -752,6 +761,9 @@ class MainActivity :
             val pixel = dimensioneDelNumero(team1ScoreTextView.paint, token, riga.width / 2f, riga.height.toFloat())
             team1ScoreTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, pixel)
             team2ScoreTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, pixel)
+            // La scatola della cifra ha la larghezza del token piu' largo: fra "1" e "15" niente si sposta.
+            NumberRoll.fissaLaScatola(team1ScoreTextView, token)
+            NumberRoll.fissaLaScatola(team2ScoreTextView, token)
         }
     }
 
@@ -912,14 +924,14 @@ class MainActivity :
             )
         }
 
-        team1Zone.setOnClickListener { toccaLaZona(1, it) }
+        team1Zone.setOnClickListener { toccaLaZona(1) }
 
-        // Il -1 non ha animazione: e' una correzione rara e voluta, il ripple basta.
+        // Il -1 e' una correzione rara e voluta: ha la pressione condivisa e niente altro.
         findViewById<View>(R.id.team1_subtract_button_card).setOnClickListener {
             decrementScore(1)
         }
 
-        team2Zone.setOnClickListener { toccaLaZona(2, it) }
+        team2Zone.setOnClickListener { toccaLaZona(2) }
 
         findViewById<View>(R.id.team2_subtract_button_card).setOnClickListener {
             decrementScore(2)
@@ -932,19 +944,16 @@ class MainActivity :
      * (game chiuso, partita finita) si decide dai due display attorno alla chiamata: il ViewModel
      * aggiorna lo stato in modo sincrono, e un punto dell'orologio non passa da qui.
      */
-    private fun toccaLaZona(
-        team: Int,
-        zona: View,
-    ) {
+    private fun toccaLaZona(team: Int) {
         if (viewModel.scoreDisplay.value?.matchOver == true) {
             vibrator?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_INERT_TAP, NON_RIPETERE))
             mostraMessaggioInStriscia(getString(R.string.strip_msg_match_over))
             return
         }
-        zona.animateZoneTap()
+        // Il riscontro del tocco (scala 0,97 e opacita' 0,85) e' lo StateListAnimator condiviso della zona.
         chiudiMessaggioInStriscia()
         val prima = viewModel.scoreDisplay.value
-        viewModel.addScore(team)
+        coneIlVerso(NumberRoll.SU, team) { viewModel.addScore(team) }
         val riscontro =
             riscontroDelPunto(
                 prima,
@@ -952,7 +961,43 @@ class MainActivity :
                 capabilities?.decrementIsUndo == true,
                 modalitaAGame(viewModel.activeSport.value ?: SportRegistry.FOOTBALL),
             )
-        playGoalAnimation(team, riscontro)
+        playGoalVibrationPattern(riscontro)
+    }
+
+    /**
+     * Esegue [azione] dicendo al punteggio che rotola in che verso cambia: [verso] vale per il [lato]
+     * (o per tutti e due se null) e solo finche' l'azione non ritorna, cosi' un cambio che arriva da
+     * altrove (l'orologio) non lo eredita.
+     */
+    private fun <T> coneIlVerso(
+        verso: Int,
+        lato: Int?,
+        azione: () -> T,
+    ): T {
+        versoDelCambio = verso
+        latoDelCambio = lato
+        try {
+            return azione()
+        } finally {
+            versoDelCambio = null
+            latoDelCambio = null
+        }
+    }
+
+    /**
+     * Scrive il punteggio di un lato facendolo rotolare nel verso del cambio: quello dichiarato da chi
+     * l'ha provocato, altrimenti quello che dicono i due valori.
+     */
+    private fun rollaIlPunteggio(
+        lato: Int,
+        rotolo: NumberRoll,
+        cifra: TextView,
+        nuovo: String,
+    ) {
+        val verso =
+            versoDelCambio?.takeIf { latoDelCambio == null || latoDelCambio == lato }
+                ?: NumberRoll.direzione(cifra.text.toString(), nuovo)
+        rotolo.mostra(nuovo, verso)
     }
 
     /**
@@ -962,10 +1007,10 @@ class MainActivity :
      */
     private fun decrementScore(team: Int) {
         if (capabilities?.decrementIsUndo == true) {
-            viewModel.undoLastGoal()
+            coneIlVerso(NumberRoll.GIU, null) { viewModel.undoLastGoal() }
         } else {
             val prima = viewModel.scoreDisplay.value
-            viewModel.subtractScore(team)
+            coneIlVerso(NumberRoll.GIU, team) { viewModel.subtractScore(team) }
             // A zero la correzione non fa niente, e la striscia non deve dire che e' successo.
             if (viewModel.scoreDisplay.value != prima) {
                 val nome = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
@@ -1034,7 +1079,7 @@ class MainActivity :
         ultimoToccoAnnulla = adesso
         // Rimandarlo non serve: durante il ripristino a schermo non c'e' ancora niente da annullare,
         // e a ripristino finito toglierebbe un punto che chi tocca non ha mai visto, senza segnale.
-        val tolto = viewModel.annullaUltimaAzione(rimandabile = false) ?: return
+        val tolto = coneIlVerso(NumberRoll.GIU, null) { viewModel.annullaUltimaAzione(rimandabile = false) } ?: return
         vibrator?.vibrate(VibrationEffect.createWaveform(HapticFeedbackManager.PATTERN_UNDO, NON_RIPETERE))
         mostraMessaggioInStriscia(
             testoDellAnnullamento(
@@ -1150,7 +1195,7 @@ class MainActivity :
     private fun applyMatchOver(display: ScoreDisplay) {
         aggiornaZone()
         val bianco = ContextCompat.getColor(this, R.color.ink_white)
-        val grigio = ContextCompat.getColor(this, R.color.sidewalk_gray)
+        val grigio = ContextCompat.getColor(this, R.color.elite_text_secondary)
         team1ScoreTextView.setTextColor(coloreDelNumero(1, display, bianco, grigio))
         team2ScoreTextView.setTextColor(coloreDelNumero(2, display, bianco, grigio))
     }
@@ -1172,7 +1217,9 @@ class MainActivity :
         val rifiutato = viewModel.watchNotice.value is WatchNotice.Rejected
         statusIcon.setImageResource(if (collegato) R.drawable.ic_watch else R.drawable.ic_watch_off)
         statusIcon.imageTintList =
-            ColorStateList.valueOf(ContextCompat.getColor(this, if (collegato) R.color.stencil_white else R.color.sidewalk_gray))
+            ColorStateList.valueOf(
+                ContextCompat.getColor(this, if (collegato) R.color.elite_text_primary else R.color.elite_text_secondary),
+            )
         statusIcon.foreground = if (rifiutato) ContextCompat.getDrawable(this, R.drawable.bg_watch_notice_badge) else null
         // Il tooltip si vede solo tenendo premuto, e chi usa TalkBack non lo incontra:
         // la contentDescription restava quella cablata nel layout, uguale nei due stati. Con un
@@ -1272,14 +1319,6 @@ class MainActivity :
     ) {
         scoreDetailValue.text = testo.orEmpty()
         scoreDetailCaption.text = didascaliaDelDettaglio(testo, partitaFinita)?.let { getString(it) }.orEmpty()
-    }
-
-    private fun playGoalAnimation(
-        team: Int,
-        riscontro: RiscontroDelPunto = RiscontroDelPunto.NESSUNO,
-    ) {
-        (if (team == 1) team1ScoreTextView else team2ScoreTextView).animateScoreNumber()
-        playGoalVibrationPattern(riscontro)
     }
 
     /**
@@ -1437,7 +1476,9 @@ class MainActivity :
                     snackbarSopraLaStriscia(getString(messaggio), Snackbar.LENGTH_LONG).show()
                 }.setNegativeButton(getString(R.string.continue_action), null)
                 .show()
-        dialogo.getButton(DialogInterface.BUTTON_NEUTRAL).setTextColor(ContextCompat.getColor(this, R.color.error_text))
+        // Un solo primario nel dialogo: SALVA e' lime, SCARTA e CONTINUA sono testo primario (la parola dice il resto).
+        dialogo.getButton(DialogInterface.BUTTON_NEUTRAL).setTextColor(ContextCompat.getColor(this, R.color.elite_text_primary))
+        dialogo.getButton(DialogInterface.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.elite_text_primary))
     }
 
     // Il tempo sta nel testo del pulsante della barra: e' il pulsante a dire se corre, col glifo.
@@ -1456,20 +1497,20 @@ class MainActivity :
         val inCorso = timeInMillis > 0 && viewModel.isKeeperTimerRunning.value == true
         val stato = statoDelPortiere(inCorso, viewModel.isKeeperTimerExpired.value == true)
         val scaduto = stato == StatoPortiere.SCADUTO
-        // SCADUTO: slot pieno #FF1744 con «CAMBIO» in #000000 (5,46:1). Il rosso e' un riempimento e
-        // il nero l'inchiostro, come nelle zone +; il rosa resta solo del conto in corso.
-        val nero = ContextCompat.getColor(this, R.color.asphalt_black)
-        val rosso = ContextCompat.getColor(this, R.color.error_red)
+        // SCADUTO: slot pieno elite_error con «CAMBIO» in elite_background (5,08:1). L'errore e' un riempimento e
+        // lo sfondo l'inchiostro, come nelle zone +; il lime resta solo del conto in corso.
+        val nero = ContextCompat.getColor(this, R.color.elite_background)
+        val rosso = ContextCompat.getColor(this, R.color.elite_error)
         keeperSlot.setCardBackgroundColor(if (scaduto) rosso else Color.TRANSPARENT)
-        keeperSlot.strokeColor = if (scaduto) rosso else ContextCompat.getColor(this, R.color.outline_gray)
-        keeperTimerLabel.setTextColor(if (scaduto) nero else ContextCompat.getColor(this, R.color.sidewalk_gray))
+        keeperSlot.strokeColor = if (scaduto) rosso else ContextCompat.getColor(this, R.color.elite_outline)
+        keeperTimerLabel.setTextColor(if (scaduto) nero else ContextCompat.getColor(this, R.color.elite_text_secondary))
         keeperTimerTextView.text = if (scaduto) getString(R.string.label_keeper_change) else conto
         keeperTimerTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, if (scaduto) dimensioneDelCambio() else dimensioneDelConto)
         keeperTimerTextView.setTextColor(
             when {
                 scaduto -> nero
-                inCorso -> ContextCompat.getColor(this, R.color.graffiti_pink)
-                else -> ContextCompat.getColor(this, R.color.sidewalk_gray)
+                inCorso -> ContextCompat.getColor(this, R.color.elite_lime)
+                else -> ContextCompat.getColor(this, R.color.elite_text_secondary)
             },
         )
         keeperSlot.contentDescription = descrizioneDelPortiere(this, stato, conto)
@@ -1598,8 +1639,9 @@ internal fun applicaColoreDiSquadra(
 ) {
     val inchiostro = TeamInk.on(colore)
     zona.setCardBackgroundColor(colore)
-    zona.rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(inchiostro, RIPPLE_ALPHA))
-    zona.strokeColor = ContextCompat.getColor(zona.context, R.color.stencil_white)
+    // Nessuna increspatura: il riscontro del tocco e' la pressione condivisa (scala 0,97 e opacita' 0,85).
+    zona.rippleColor = ColorStateList.valueOf(Color.TRANSPARENT)
+    zona.strokeColor = ContextCompat.getColor(zona.context, R.color.elite_text_primary)
     zona.strokeWidth =
         if (TeamInk.contrast(colore, TeamInk.NERO) < CONTRASTO_MINIMO_GRAFICA) {
             (STROKE_ZONA_DP * zona.resources.displayMetrics.density).toInt()
@@ -1632,11 +1674,14 @@ internal fun applicaStatoDellaZona(
     glifo.alpha = if (finita) 0f else 1f
     barraDellaZona.alpha = if (finita) 1f else 0f
     if (!finita) return
-    zona.setCardBackgroundColor(ContextCompat.getColor(zona.context, R.color.graffiti_dark_gray))
-    zona.strokeWidth = 0
-    zona.rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(TeamInk.BIANCO, RIPPLE_ALPHA))
-    // La barra sta sulla zona grigia, non sul nero: il 3:1 si misura contro #2C2C2C.
-    barraDellaZona.setBackgroundColor(TeamInk.graphicOn(colore, ContextCompat.getColor(zona.context, R.color.graffiti_dark_gray)))
+    // Spenta: superficie rialzata con la sua linea (la zona resta una forma sul nero), senza ripple.
+    val rialzata = ContextCompat.getColor(zona.context, R.color.elite_surface_raised)
+    zona.setCardBackgroundColor(rialzata)
+    zona.strokeColor = ContextCompat.getColor(zona.context, R.color.elite_border_strong)
+    zona.strokeWidth = zona.resources.getDimensionPixelSize(R.dimen.border_width)
+    zona.rippleColor = ColorStateList.valueOf(Color.TRANSPARENT)
+    // La barra sta sulla zona grigia, non sul nero: il 3:1 si misura contro la zona spenta.
+    barraDellaZona.setBackgroundColor(TeamInk.graphicOn(colore, rialzata))
 }
 
 /**
@@ -1651,7 +1696,7 @@ internal fun mostraNomeSquadra(
     testo: TextView,
     nome: String,
 ) {
-    testo.text = nome.uppercase(Locale.getDefault())
+    testo.text = nome
     contenitore.contentDescription = contenitore.context.getString(R.string.cd_edit_team_name, nome)
 }
 

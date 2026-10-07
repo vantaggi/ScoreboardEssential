@@ -52,8 +52,8 @@ class ContrastiDelTelefonoTest {
     // TEAM 1 COLOR e TEAM 2 COLOR: sul giallo e sul verde predefiniti la scritta era a 1,07 e 1,01.
     @Test
     fun `il pulsante colore scrive nero sul giallo e bianco sul blu notte`() {
-        val giallo = context.getColor(R.color.team_spray_yellow)
-        val verde = context.getColor(R.color.team_electric_green)
+        val giallo = context.getColor(R.color.team_side_1)
+        val verde = context.getColor(R.color.team_side_2)
         val bluNotte = 0xFF1A237E.toInt()
 
         for (colore in listOf(giallo, verde, bluNotte)) {

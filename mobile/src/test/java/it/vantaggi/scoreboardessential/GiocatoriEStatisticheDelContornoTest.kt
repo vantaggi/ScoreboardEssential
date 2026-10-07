@@ -192,7 +192,7 @@ class GiocatoriEStatisticheDelContornoTest {
         val senzaColori = rapporto(0, 0).copy(team1Color = null, team2Color = null)
         val vista = MatchReportUtils.buildReportView(tema, senzaColori, attributesScorer = true)
 
-        assertEquals(base.getColor(R.color.team_spray_yellow), sfondoPieno(vista.findViewById(R.id.pdf_team1_band)))
-        assertEquals(base.getColor(R.color.team_electric_green), sfondoPieno(vista.findViewById(R.id.pdf_team2_band)))
+        assertEquals(base.getColor(R.color.team_side_1), sfondoPieno(vista.findViewById(R.id.pdf_team1_band)))
+        assertEquals(base.getColor(R.color.team_side_2), sfondoPieno(vista.findViewById(R.id.pdf_team2_band)))
     }
 }

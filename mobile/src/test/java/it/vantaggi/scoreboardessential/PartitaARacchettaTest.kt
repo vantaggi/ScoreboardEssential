@@ -237,7 +237,7 @@ class PartitaARacchettaTest {
     @Test
     fun `lo sconfitto passa al grigio, il vincitore e chi gioca ancora restano bianchi`() {
         val bianco = context.getColor(R.color.ink_white)
-        val grigio = context.getColor(R.color.sidewalk_gray)
+        val grigio = context.getColor(R.color.elite_text_secondary)
         val finita = padel.display(padelFinito(1))
         assertEquals(bianco, coloreDelNumero(1, finita, bianco, grigio))
         assertEquals(grigio, coloreDelNumero(2, finita, bianco, grigio))
@@ -251,16 +251,16 @@ class PartitaARacchettaTest {
     }
 
     @Test
-    fun `il grigio dello sconfitto si legge sul nero e SCARTA si legge sul dialogo`() {
-        val grigio = context.getColor(R.color.sidewalk_gray)
+    fun `il grigio dello sconfitto si legge sul nero e i bottoni del dialogo si leggono sul dialogo`() {
+        val grigio = context.getColor(R.color.elite_text_secondary)
         val bianco = context.getColor(R.color.ink_white)
         assertTrue("grigio su nero %.2f".format(TeamInk.contrast(grigio, TeamInk.NERO)), TeamInk.contrast(grigio, TeamInk.NERO) >= 4.5)
         val suNero = TeamInk.contrast(grigio, TeamInk.NERO)
         assertTrue("il grigio deve restare piu' spento del bianco", suNero < TeamInk.contrast(bianco, TeamInk.NERO))
-        val scarta = context.getColor(R.color.error_text)
-        val dialogo = context.getColor(R.color.graffiti_dark_gray)
-        assertEquals(0xFFFF6E6E.toInt(), scarta)
-        assertTrue("SCARTA su #2C2C2C %.2f".format(TeamInk.contrast(scarta, dialogo)), TeamInk.contrast(scarta, dialogo) >= 4.5)
+        // SCARTA e CONTINUA sono testo primario sul fondo rialzato del dialogo (un solo primario, SALVA in lime).
+        val scarta = context.getColor(R.color.elite_text_primary)
+        val dialogo = context.getColor(R.color.elite_surface_raised)
+        assertTrue("SCARTA sul dialogo %.2f".format(TeamInk.contrast(scarta, dialogo)), TeamInk.contrast(scarta, dialogo) >= 4.5)
     }
 
     @Test

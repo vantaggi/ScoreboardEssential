@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Badge dell'arretrato rifiutato, in alto a destra sull'icona dell'orologio: 12dp di #FF1744 dentro
-     un anello di 2dp #000000, che lo stacca dal glifo. E' il foreground dell'icona: non prende il tint. -->
+<!-- Badge dell'arretrato rifiutato, in alto a destra sull'icona dell'orologio: 12dp di elite_error dentro
+     un anello di 2dp elite_background, che lo stacca dal glifo. E' il foreground dell'icona: non prende il tint. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:width="16dp"
@@ -9,10 +9,10 @@
         android:top="4dp"
         android:end="4dp">
         <shape android:shape="oval">
-            <solid android:color="@color/error_red" />
+            <solid android:color="@color/elite_error" />
             <stroke
                 android:width="2dp"
-                android:color="@color/asphalt_black" />
+                android:color="@color/elite_background" />
         </shape>
     </item>
 </layer-list>

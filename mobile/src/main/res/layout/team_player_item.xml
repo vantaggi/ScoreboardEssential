@@ -1,24 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    Una riga delle rose nel foglio PARTITA (G-6): il nome e, sotto, i ruoli. Si tocca per togliere il
+    giocatore dalla squadra. E' una riga di un gruppo e non una card: la separa dalle altre una linea
+    rientrata (InsetDividerDecoration), niente bordo e niente ombra. L'avatar con le iniziali e' uscito
+    come nel resto del contorno (G-4): un quadrato con due lettere non dice cio' che il nome non dice.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="16dp" android:layout_marginVertical="4dp" android:minHeight="48dp" app:cardElevation="0dp" app:strokeWidth="1dp" app:strokeColor="?attr/colorOutlineVariant" app:cardBackgroundColor="?attr/colorSurface" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackground">
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.App.Pressable"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="@drawable/bg_focus_ring"
+    android:minHeight="@dimen/control_touch"
+    android:paddingVertical="@dimen/space_8">
 
-    <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="12dp">
+    <TextView
+        android:id="@+id/player_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textAppearance="@style/TextAppearance.App.RowTitle"
+        app:layout_constraintBottom_toTopOf="@id/player_roles"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        tools:text="Johnathan Doe" />
 
-        <!-- Avatar (Initials) -->
-        <com.google.android.material.card.MaterialCardView android:id="@+id/player_avatar_container" android:layout_width="40dp" android:layout_height="40dp" app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" app:cardBackgroundColor="?attr/colorPrimaryContainer" app:strokeWidth="0dp" app:cardElevation="0dp" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent">
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/player_roles"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_4"
+        app:chipSpacingHorizontal="@dimen/space_4"
+        app:chipSpacingVertical="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/player_name"
+        app:singleLine="true"
+        tools:visibility="visible">
+        <!-- I chip dei ruoli si aggiungono da codice -->
+    </com.google.android.material.chip.ChipGroup>
 
-            <TextView android:id="@+id/player_initials" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:textAppearance="?attr/textAppearanceTitleMedium" android:textColor="?attr/colorOnPrimaryContainer" tools:text="JD"/>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Player Name -->
-        <TextView android:id="@+id/player_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_marginEnd="8dp" android:textAppearance="?attr/textAppearanceBodyLarge" android:textColor="?attr/colorOnSurface" android:maxLines="1" android:ellipsize="end" app:layout_constraintStart_toEndOf="@id/player_avatar_container" app:layout_constraintTop_toTopOf="@id/player_avatar_container" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toTopOf="@id/player_roles" app:layout_constraintVertical_chainStyle="packed" tools:text="Johnathan Doe"/>
-
-        <!-- Roles -->
-        <com.google.android.material.chip.ChipGroup android:id="@+id/player_roles" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="4dp" app:singleLine="true" app:chipSpacingHorizontal="4dp" app:chipSpacingVertical="0dp" app:layout_constraintStart_toStartOf="@id/player_name" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toBottomOf="@id/player_name" app:layout_constraintBottom_toBottomOf="@id/player_avatar_container" tools:visibility="visible">
-            <!-- Chips are added dynamically -->
-        </com.google.android.material.chip.ChipGroup>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</com.google.android.material.card.MaterialCardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

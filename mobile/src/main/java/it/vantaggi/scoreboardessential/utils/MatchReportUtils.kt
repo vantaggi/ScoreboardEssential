@@ -140,14 +140,14 @@ object MatchReportUtils {
         dipingiBanda(
             context,
             view.findViewById(R.id.pdf_team1_band),
-            data.team1Color ?: context.getColor(R.color.team_spray_yellow),
+            data.team1Color ?: context.getColor(R.color.team_side_1),
             team1NameTextView,
             team1ScoreTextView,
         )
         dipingiBanda(
             context,
             view.findViewById(R.id.pdf_team2_band),
-            data.team2Color ?: context.getColor(R.color.team_electric_green),
+            data.team2Color ?: context.getColor(R.color.team_side_2),
             team2NameTextView,
             team2ScoreTextView,
         )
