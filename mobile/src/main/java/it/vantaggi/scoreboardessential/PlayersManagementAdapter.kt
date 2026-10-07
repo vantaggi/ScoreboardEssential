@@ -57,8 +57,12 @@ class PlayersManagementAdapter(
 
             rolesGroup.setRoles(playerWithRoles.roles)
 
-            goalsTextView.text = "⚽ ${player.goals}"
-            appearancesTextView.text = "🎮 ${player.appearances}"
+            goalsTextView.text = player.goals.toString()
+            goalsTextView.contentDescription =
+                itemView.resources.getQuantityString(R.plurals.stats_goals, player.goals, player.goals)
+            appearancesTextView.text = player.appearances.toString()
+            appearancesTextView.contentDescription =
+                itemView.resources.getQuantityString(R.plurals.stats_appearances, player.appearances, player.appearances)
 
             // Initials for Avatar
             val initials =

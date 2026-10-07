@@ -9,8 +9,9 @@
 
         <ImageView
             android:id="@+id/onboarding_icon"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
+            android:layout_width="@dimen/icon_prominent"
+            android:layout_height="@dimen/icon_prominent"
+            android:importantForAccessibility="no"
             android:layout_marginTop="64dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

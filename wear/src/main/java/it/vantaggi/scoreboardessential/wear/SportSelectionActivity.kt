@@ -2,6 +2,7 @@ package it.vantaggi.scoreboardessential.wear
 
 import android.app.Activity
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -98,10 +99,18 @@ class SportAdapter(
             onClick: (SportChoice) -> Unit,
         ) {
             nome.text = scelta.label
-            // Quale sport si stia giocando si legge a parole, non dal colore di una riga: la spunta
-            // e' nel testo, e il ciano (10.84:1 su #1E1E1E) e' solo un rinforzo. Il colore sta qui e
-            // non nel layout, che il menu riusa per sottotitoli grigi.
-            stato.setTextColor(ContextCompat.getColor(stato.context, R.color.neon_cyan))
+            // Quale sport si stia giocando si legge a parole ("in uso") e dalla spunta, non dal colore
+            // di una riga: il ciano (10.84:1 su #1E1E1E) e' solo un rinforzo. Colore e spunta stanno
+            // qui e non nel layout, che il menu riusa per sottotitoli grigi e senza icona. La spunta
+            // e' il simbolo check di Material Symbols a icon-compact (16dp), non un carattere.
+            val colore = ContextCompat.getColor(stato.context, R.color.neon_cyan)
+            val lato = stato.resources.getDimensionPixelSize(R.dimen.icon_compact)
+            val spunta = ContextCompat.getDrawable(stato.context, R.drawable.ic_check)!!.mutate()
+            spunta.setBounds(0, 0, lato, lato)
+            stato.setTextColor(colore)
+            stato.setCompoundDrawablesRelative(spunta, null, null, null)
+            stato.compoundDrawablePadding = stato.resources.getDimensionPixelSize(R.dimen.icon_text_gap)
+            stato.compoundDrawableTintList = ColorStateList.valueOf(colore)
             stato.visibility = if (scelta.current) View.VISIBLE else View.GONE
             itemView.setOnClickListener { onClick(scelta) }
         }
