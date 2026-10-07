@@ -1407,45 +1407,75 @@ Il passo che porta la Constitution nel tema; i passi dopo lo usano.
 
 La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Material Symbols, outlined, un solo peso). **Non Heroicons** (la decisione del 5 ottobre cade). Vettoriali scaricati dal catalogo Material Symbols uno per uno (outlined, peso 400, riempimento 0, 24dp), nome `ic_<concetto>.xml`, colore `?attr/...` o `currentColor`, tre misure 16, 20 e 24dp (`icon-compact`, `-standard`, `-prominent`); **niente emoji ne' altre famiglie**; i comandi di sola icona hanno `contentDescription`, quelle decorative `importantForAccessibility="no"`. Selezione: l'icona selezionata **tiene la forma a contorno**: la selezione si mostra con l'indicatore e il lime, non col riempimento. Progresso: sempre `progress_activity` che gira; successo `check_circle` o `check` disegnato; errore `cancel`.
 
-| Concetto | Material Symbols (outlined) | Icona dell'app oggi |
-|---|---|---|
-| Indietro | `arrow_back` | `ic_arrow_back` |
-| Chiudi | `close` | |
-| Menu | `menu` | |
-| Vai al dettaglio | `chevron_right` | |
-| Espandi / comprimi | `expand_more` / `expand_less` | |
-| Altre azioni | `more_horiz` | `ic_menu_dots` (orologio) |
-| Apre fuori dall'app | `open_in_new` | |
-| Aggiungi | `add` | `ic_plus` |
-| Modifica | `edit` | `ic_edit` |
-| Elimina | `delete` | `ic_delete` |
-| Cerca / filtra / ordina | `search` / `filter_list` / `swap_vert` | |
-| Condividi | `share` | `ic_share` |
-| Scarica, esporta | `download` | |
-| Copia | `content_copy` | |
-| Salva | `save` | `ic_save` |
-| Annulla (undo) | `undo` | `ic_undo` |
-| Aggiorna | `refresh` | |
-| Mostra / nascondi | `visibility` / `visibility_off` | |
-| Avvia, riprendi / pausa | `play_arrow` / `pause` | `ic_play` / `ic_pause` |
-| Fatto, selezionato | `check` | |
-| Successo | `check_circle` | |
-| Avviso | `warning` | |
-| Errore | `cancel` | |
-| Informazione | `info` | |
-| In corso | `progress_activity` | |
-| Statistiche | `bar_chart` | `ic_stats` |
-| Data | `calendar_today` | |
-| Persona | `person` | |
-| Squadra, gruppo | `group` | |
-| Impostazioni | `settings` | |
-| Notifiche | `notifications` | |
+| Concetto | Simbolo (Material Symbols outlined) | Drawable del telefono | Drawable dell'orologio |
+|---|---|---|---|
+| Indietro | `arrow_back` | `ic_arrow_back` | - |
+| Chiudi | `close` | - | - |
+| Menu | `menu` | - | - |
+| Casa | `home` | - | - |
+| Vai al dettaglio | `chevron_right` | - | - |
+| Espandi | `expand_more` | - | - |
+| Comprimi | `expand_less` | - | - |
+| Altre azioni | `more_horiz` | - | `ic_more_horiz` |
+| Apre fuori dall'app | `open_in_new` | - | - |
+| Aggiungi | `add` | `ic_add` | - |
+| Modifica | `edit` | `ic_edit` | - |
+| Elimina | `delete` | `ic_delete` | - |
+| Cerca | `search` | `ic_search` | - |
+| Filtra | `filter_list` | - | - |
+| Ordina | `swap_vert` | `ic_swap_vert` | - |
+| Condividi | `share` | `ic_share` | - |
+| Scarica, esporta | `download` | - | - |
+| Importa | `upload` | - | - |
+| Copia | `content_copy` | - | - |
+| Salva | `save` | `ic_save` | - |
+| Annulla (undo) | `undo` | `ic_undo` | - |
+| Aggiorna | `refresh` | - | - |
+| Mostra | `visibility` | - | - |
+| Nascondi | `visibility_off` | - | - |
+| Avvia, riprendi | `play_arrow` | `ic_play_arrow` | - |
+| Pausa | `pause` | `ic_pause` | - |
+| Fatto, selezionato | `check` | `ic_check` | `ic_check` |
+| Successo | `check_circle` | - | - |
+| Avviso | `warning` | - | - |
+| Errore | `cancel` | - | - |
+| Informazione | `info` | - | - |
+| In corso | `progress_activity` | - | - |
+| Statistiche | `bar_chart` | `ic_bar_chart` | - |
+| Data | `calendar_today` | - | - |
+| Persona | `person` | - | - |
+| Squadra, gruppo | `group` | - | - |
+| Impostazioni | `settings` | - | - |
+| Notifiche | `notifications` | - | - |
+| Sport, palla, gol | `sports_soccer` | `ic_sports_soccer` | - |
+| Racchetta (padel, tennis) | `sports_tennis` | - | - |
+| Portiere | `sports_handball` | - | - |
+| Cronometro | `timer` | - | - |
+| Storico delle partite | `history` | - | - |
+| Cronaca della partita | `timeline` | `ic_timeline` | - |
+| Presenze | `event_available` | `ic_event_available` | - |
+| Scambio dei posti | `swap_horiz` | `ic_swap_horiz` | - |
+| Aggiungi giocatore | `person_add` | `ic_person_add` | - |
+| Blocco | `lock` | `ic_lock` | - |
+| Colore della squadra | `palette` | `ic_palette` | - |
+| Orologio collegato | `watch` | `ic_watch` | - |
+| Orologio scollegato | `watch_off` | `ic_watch_off` | - |
 
-Icone di dominio, che la tabella non ha e che sono del progetto (stesso peso e stessa geometria): scambio dei posti `swap_horiz` (`ic_swap`), aggiungi giocatore `person_add` (`ic_person_add`), blocco `lock` (`ic_lock`), colore `palette` (`ic_color_picker`), orologio collegato `watch` e scollegato `watch_off` (`ic_watch_connected`, `ic_watch_disconnected`: colore lime e testo secondario, mai il verde `#76FF03`). Le icone del launcher sono G5. `ic_play`, `ic_pause`, `ic_plus` e `ic_undo` stanno nella schermata di gioco e passano in G-6.
+Le righe da `sports_soccer` in giu' sono le **icone di dominio**: la tabella della Constitution non le ha, sono del progetto e vengono dallo stesso catalogo (stesso peso, stessa geometria). Il colore dell'orologio collegato e' il lime e quello dello scollegato il testo secondario, mai il verde `#76FF03`. Le icone del launcher sono G5. Una riga con `-` e' un concetto fissato ma non ancora usato da nessuna schermata: il suo vettoriale non c'e' (non si tengono file morti) e si scarica dal catalogo, col nome `ic_<simbolo>`, quando serve. `IconeDelTelefonoTest` legge questa tabella: ogni `ic_*` in `drawable/` e' una sua riga, ogni riga con un drawable ha il file, e un concetto ha un solo simbolo e un solo file.
+
+**Come e' stato fatto.**
+
+- **Vettoriali.** Scaricati uno per uno dal catalogo ufficiale `google/material-design-icons` (cartella `symbols/android/<nome>/materialsymbolsoutlined/<nome>_24px.xml`, che e' il file di peso 400, grade 0, optical size 24, riempimento 0), non ridisegnati e non modificati: viewport 960, 24dp, `@android:color/white` con `android:tint="?attr/colorControlNormal"` (il bianco di base e' il segnale per il tint, non un colore), piu' una riga di commento in testa. Il colore lo decide chi usa l'icona (`app:tint`, `app:iconTint`, `drawableTint`); `ic_arrow_back` ha anche `autoMirrored`. Sono 22 nel telefono e 2 nell'orologio (`ic_more_horiz`, `ic_check`), che ha le sue copie perche' i moduli non condividono le risorse.
+- **Rinomi e tolti.** Il nome del file e' quello del simbolo: `ic_plus` -> `ic_add`, `ic_play` -> `ic_play_arrow`, `ic_stats` -> `ic_bar_chart`, `ic_swap` -> `ic_swap_horiz`, `ic_color_picker` -> `ic_palette`, `ic_watch_connected` / `ic_watch_disconnected` -> `ic_watch` / `ic_watch_off` (prima erano un orologio da muro e un cerchio, non un orologio da polso), `ic_menu_dots` (tre cerchi a mano) -> `ic_more_horiz`. `ic_switch_check`, la spunta scritta a mano in G-2 con un `fillColor` proprio, e' tolta: il pomello dell'interruttore usa `ic_check` e il colore sul lime (`elite_on_lime`) viene dall'attributo `thumbIconTint` dello stile `Widget.App.Switch`. Le icone di sistema `@android:drawable/ic_menu_search` e `ic_menu_sort_by_size` del menu dei giocatori sono `ic_search` e `ic_swap_vert`.
+- **Un concetto, un'icona.** La Cronaca aveva lo stesso glifo delle statistiche (`ic_stats`): ora la Cronaca e' `timeline` e le statistiche `bar_chart`. Le emoji usate come icone sono tolte: la riga dei giocatori mostrava "⚽ 12" e "🎮 24" come testo, ora e' il numero con `sports_soccer` e `event_available` come `drawableStart` (il significato sta nella `contentDescription`, da `stats_goals` e `stats_appearances`); la spunta "✓ in uso" della scelta dello sport sull'orologio e' `ic_check` a 16dp con il tint del testo (il menu dell'orologio riusa la stessa riga per sottotitoli grigi, senza icona, perche' la spunta si mette da codice).
+- **Misure.** `icon_compact` 16dp, `icon_standard` 20dp, `icon_prominent` 24dp in `dimens.xml` del telefono e dell'orologio. I bottoni con testo e icona hanno `app:iconSize="@dimen/icon_standard"`; le tre illustrazioni da 120dp (stato vuoto dei giocatori, delle statistiche, passo dell'onboarding) sono a `icon_prominent` e `importantForAccessibility="no"`. Restano a 48dp la zona + della schermata di gioco (e' un glifo che riempie una zona, non un'icona di comando: lo decide G-6) e i comandi di sola icona (bersaglio di 48dp con l'icona da 24 dentro).
+- **Accessibilita'.** I comandi di sola icona (`ImageButton`, `FloatingActionButton`, il pulsante dello stato dell'orologio, il menu dell'orologio) hanno `contentDescription`; i glifi decorativi `importantForAccessibility="no"`. Il test lo controlla su tutti i layout.
+- **Fondo del dialogo.** Difetto visto a schermo: "Termina partita?" aveva il fondo verde oliva e non `background-elevated` #1E1E22. Non e' un colore sbagliato ma la **tinta di elevazione** di Material 3: nel tema `elevationOverlayEnabled` era vero e `elevationOverlayColor` e' `colorPrimary`, il lime, che Material mescola nelle superfici sollevate. `colorSurfaceTint` non c'entra in questa versione (material 1.13 non lo espone come attributo). Ora `elevationOverlayEnabled` e' falso nel tema e negli overlay `ThemeOverlay.App.MaterialAlertDialog` e `ThemeOverlay.App.Dialog`: le superfici si alzano di tono coi token (`elite_surface_raised`), mai di tinta. `TintaDelleSuperficiTest` disegna il fondo vero del dialogo del builder M3 su una bitmap e legge un pixel: era `#303424` (prima), ora e' esattamente `elite_surface_raised`; la falsificazione fa la stessa misura sul tema stock di M3 e deve vedere il fondo cambiare.
+- **Non fatto.** Le icone di sistema delle notifiche del servizio del cronometro (`android.R.drawable.ic_dialog_info`, `ic_media_pause`, `ic_menu_close_clear_cancel`, `ic_dialog_alert` in `MatchTimerService.kt`) restano: una icona di notifica la carica il sistema fuori dal tema dell'app e `?attr/colorControlNormal` non si risolverebbe; serve una variante senza attributi, che per la nostra regola (nessun colore scritto nel vettore) e' una decisione da prendere. I `app:tint` e `iconTint` dei layout che citano ancora i vecchi colori (`neon_cyan`, `sidewalk_gray`, `stencil_white`, `team_spray_yellow`) sono di G-4 (contorno) e G-6 (gioco). Nessuno screenshot: il passo e' stato fatto senza emulatore.
 
 - **Costo:** piccolo
-- **File:** `mobile/src/main/res/drawable/ic_*.xml` (quelle in tabella), `mobile/src/main/res/menu/menu_add_edit_player.xml`, `menu_players_management.xml`, `wear/src/main/res/drawable/ic_menu_dots.xml`
-- **Verifica:** lint senza voci nuove; test che ogni `ic_*` ha viewport 24, nessun `fillColor` che non sia il colore del tema, e un test della tabella (ogni concetto ha un solo file); bersagli di 48dp invariati; screenshot.
+- **File:** `mobile/src/main/res/drawable/ic_*.xml` (quelle in tabella), `values/dimens.xml` (telefono e orologio), `values/styles.xml` (`Widget.App.Switch`), `values/themes.xml` (overlay di elevazione), `menu/menu_players_management.xml`, i layout che citano le icone, `PlayersManagementAdapter.kt`, `SportSelectionActivity.kt` (orologio), `wear/src/main/res/drawable/ic_more_horiz.xml`, `ic_check.xml`; test `IconeDelTelefonoTest`, `IconeDelPolsoTest`, `TintaDelleSuperficiTest`, `SelezioneSportTest`
+- **Verifica:** lint senza voci nuove; `IconeDelTelefonoTest` (ogni `ic_*` e' una riga della tabella con viewport 960 e senza colori scritti a mano, un concetto un solo file, comandi di sola icona con `contentDescription`, misure delle tre dimensioni, falsificato su vettori e layout sbagliati); `TintaDelleSuperficiTest`; bersagli di 48dp invariati; screenshot da fare sul dispositivo.
 
 #### G-4. Contorno: foglio PARTITA, storico, statistiche, giocatori, impostazioni, onboarding, e "Essential information".
 
