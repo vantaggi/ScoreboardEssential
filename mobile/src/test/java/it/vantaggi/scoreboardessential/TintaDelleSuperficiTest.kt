@@ -7,8 +7,8 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.InsetDrawable
 import android.view.ContextThemeWrapper
 import androidx.test.core.app.ApplicationProvider
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.shape.MaterialShapeDrawable
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals

@@ -34,7 +34,13 @@ class IconeDelTelefonoTest {
             .lines()
             .filter { it.startsWith("| ") && !it.startsWith("| Concetto") && !it.startsWith("|---") }
             .map { riga ->
-                val c = riga.trim().trim('|').split("|").map { it.trim() }
+                val c =
+                    riga
+                        .trim()
+                        .trim('|')
+                        .split("|")
+                        .map { it.trim() }
+
                 fun nome(x: String) = x.trim('`').takeIf { it != "-" && it.isNotEmpty() }
                 Riga(c[0], c[1].trim('`'), nome(c[2]), nome(c[3]))
             }
@@ -168,18 +174,22 @@ class IconeDelTelefonoTest {
             val descrizione = v.attr(android, "contentDescription")
             val nascosta = v.attr(android, "importantForAccessibility") == "no"
             when (v.tagName.substringAfterLast('.')) {
-                "ImageButton", "FloatingActionButton" ->
+                "ImageButton", "FloatingActionButton" -> {
                     if (descrizione == null) difetti += "$nomeFile $id: comando di sola icona senza contentDescription"
+                }
+
                 "ImageView" -> {
                     val sorgente = v.attr(android, "src") ?: v.attr(app, "srcCompat") ?: v.attr(tools, "src")
                     if (sorgente != null && sorgente.contains("ic_") && descrizione == null && !nascosta) {
                         difetti += "$nomeFile $id: icona ne' descritta ne' nascosta"
                     }
                 }
-                "MaterialButton" ->
+
+                "MaterialButton" -> {
                     if (v.attr(app, "icon") != null && v.attr(android, "text") == null && descrizione == null) {
                         difetti += "$nomeFile $id: bottone di sola icona senza contentDescription"
                     }
+                }
             }
         }
         return difetti
@@ -195,8 +205,7 @@ class IconeDelTelefonoTest {
 
     @Test
     fun `falsificazione - il controllo di accessibilita' vede i comandi senza nome`() {
-        fun layout(corpo: String) =
-            "<FrameLayout xmlns:android=\"$android\" xmlns:app=\"$app\">$corpo</FrameLayout>"
+        fun layout(corpo: String) = "<FrameLayout xmlns:android=\"$android\" xmlns:app=\"$app\">$corpo</FrameLayout>"
 
         assertEquals(
             1,
@@ -239,14 +248,25 @@ class IconeDelTelefonoTest {
             }
             // Le notifiche del servizio sono l'unica eccezione dichiarata in DESIGN.md (G-3, "Non fatto").
             if (f.name != "MatchTimerService.kt") {
-                assertFalse("${f.name} usa un'icona di sistema", testo.contains("@android:drawable/ic_") || testo.contains("android.R.drawable.ic_"))
+                assertFalse(
+                    "${f.name} usa un'icona di sistema",
+                    testo.contains("@android:drawable/ic_") || testo.contains("android.R.drawable.ic_"),
+                )
             }
         }
     }
 
     @Test
     fun `nelle risorse non c'e' piu' nessun vettore di prima`() {
-        listOf("ic_plus", "ic_play", "ic_stats", "ic_swap", "ic_color_picker", "ic_watch_connected", "ic_watch_disconnected", "ic_switch_check")
-            .forEach { assertFalse("$it c'e' ancora", File(drawable, "$it.xml").exists()) }
+        listOf(
+            "ic_plus",
+            "ic_play",
+            "ic_stats",
+            "ic_swap",
+            "ic_color_picker",
+            "ic_watch_connected",
+            "ic_watch_disconnected",
+            "ic_switch_check",
+        ).forEach { assertFalse("$it c'e' ancora", File(drawable, "$it.xml").exists()) }
     }
 }

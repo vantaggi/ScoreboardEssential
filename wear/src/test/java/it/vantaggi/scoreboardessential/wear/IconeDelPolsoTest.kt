@@ -25,7 +25,13 @@ class IconeDelPolsoTest {
             .lines()
             .filter { it.startsWith("| ") && !it.startsWith("| Concetto") && !it.startsWith("|---") }
             .mapNotNull { riga ->
-                riga.trim().trim('|').split("|").map { it.trim() }[3].trim('`').takeIf { it != "-" && it.isNotEmpty() }
+                riga
+                    .trim()
+                    .trim('|')
+                    .split("|")
+                    .map { it.trim() }[3]
+                    .trim('`')
+                    .takeIf { it != "-" && it.isNotEmpty() }
             }.toSet()
     }
 
