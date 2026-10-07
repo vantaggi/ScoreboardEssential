@@ -338,3 +338,11 @@ Ogni passo che tocca la dashboard o il database resta **[AUTORIZZAZIONE]** come 
 **Decisioni del proprietario (7 ottobre 2026, sera):** si' al token d'invito; la diretta la trasmettono
 solo gli admin del gruppo; la lettura pubblica (`?g=`) resta com'e' (non decisa). Ordine: token d'invito
 (dashboard) -> rose dalla dashboard e serate (app) -> modificabilita' -> diretta solo admin -> gironi.
+
+**Avanzamento della sezione 4.**
+
+| Passo | Stato |
+|---|---|
+| Token d'invito (dashboard) | fatto il 7 ottobre 2026: PR https://github.com/vantaggi/padel-dashboard/pull/215 unita in `development` (CI: contratto 125/125, Playwright 309/309). Migrazione 66: tabella `v2_group_invites` (un token attivo per gruppo, 64 esadecimali, leggibile solo da owner/admin), RPC `get_or_create_group_invite`, `rotate_group_invite`, `join_group_with_invite`; tolta la policy che faceva entrare chiunque con l'id del gruppo; si rifiuta se manca la 65. Dashboard: `?join=<token>`, Copia e Rigenera in Gestione Membri; i vecchi `?join=<id>` dicono di chiedere un nuovo invito. Revisione Opus in corso. **In produzione, dal proprietario:** 65, poi 66 (insieme al rilascio della dashboard), poi 64; dopo la 66 nessuno entra in un gruppo finche' un admin non apre Gestione Membri e ridistribuisce il link. L'app non cambia |
+| R-1 rose dalla dashboard (app) | in corso |
+| R-2 serata a coppie che ruotano (app) | in corso |
