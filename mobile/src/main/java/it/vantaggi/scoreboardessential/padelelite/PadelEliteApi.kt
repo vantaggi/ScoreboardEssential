@@ -167,12 +167,25 @@ class PadelEliteApi(
                 .lowercase()
         val motivo =
             when {
-                reply.status == 429 || "rate_limit" in codice -> AuthFailure.RATE_LIMITED
-                "email_not_confirmed" in codice || "email not confirmed" in codice -> AuthFailure.EMAIL_NOT_CONFIRMED
-                grant == "refresh_token" -> AuthFailure.SESSION_EXPIRED
-                "invalid_credentials" in codice || "invalid_grant" in codice || "invalid login" in codice ->
+                reply.status == 429 || "rate_limit" in codice -> {
+                    AuthFailure.RATE_LIMITED
+                }
+
+                "email_not_confirmed" in codice || "email not confirmed" in codice -> {
+                    AuthFailure.EMAIL_NOT_CONFIRMED
+                }
+
+                grant == "refresh_token" -> {
+                    AuthFailure.SESSION_EXPIRED
+                }
+
+                "invalid_credentials" in codice || "invalid_grant" in codice || "invalid login" in codice -> {
                     AuthFailure.INVALID_CREDENTIALS
-                else -> AuthFailure.OTHER
+                }
+
+                else -> {
+                    AuthFailure.OTHER
+                }
             }
         return AuthResult.Rejected(motivo)
     }
@@ -198,8 +211,14 @@ class PadelEliteApi(
         val path = "/rest/v1/group_members?select=group_id,role,groups(name)&user_id=$filtro"
         val reply = send("GET", path, accessToken, null) ?: return GroupsResult.Network
         return when {
-            reply.status == 401 -> GroupsResult.NotAuthenticated
-            reply.status >= 500 || reply.status !in 200..299 -> GroupsResult.Network
+            reply.status == 401 -> {
+                GroupsResult.NotAuthenticated
+            }
+
+            reply.status >= 500 || reply.status !in 200..299 -> {
+                GroupsResult.Network
+            }
+
             else -> {
                 val righe = parseArray(reply.body) ?: return GroupsResult.Network
                 GroupsResult.Ok(
@@ -224,8 +243,14 @@ class PadelEliteApi(
         val path = "/rest/v1/v2_scoreboard_inbox?select=status,match_id&external_id=$filtro"
         val reply = send("GET", path, accessToken, null) ?: return StatusResult.Network
         return when {
-            reply.status == 401 -> StatusResult.NotAuthenticated
-            reply.status >= 500 || reply.status !in 200..299 -> StatusResult.Network
+            reply.status == 401 -> {
+                StatusResult.NotAuthenticated
+            }
+
+            reply.status >= 500 || reply.status !in 200..299 -> {
+                StatusResult.Network
+            }
+
             else -> {
                 val riga = parseArray(reply.body)?.optJSONObject(0) ?: return StatusResult.NotFound
                 StatusResult.Found(riga.optString("status"), riga.optString("match_id").takeIf { it.isNotEmpty() && it != "null" })
@@ -273,17 +298,33 @@ class PadelEliteApi(
         val json = parseObject(body)
         val dettagli = json?.optString("details")?.takeIf { it.isNotEmpty() && it != "null" }
         return when (json?.optString("message")) {
-            "not_authenticated" -> SubmitResult.NotAuthenticated
-            "not_authorized" -> SubmitResult.NotAuthorized
-            "invalid_payload" -> SubmitResult.InvalidPayload(dettagli)
-            "payload_too_large" -> SubmitResult.PayloadTooLarge
-            "inbox_full" -> SubmitResult.InboxFull(dettagli)
-            else ->
+            "not_authenticated" -> {
+                SubmitResult.NotAuthenticated
+            }
+
+            "not_authorized" -> {
+                SubmitResult.NotAuthorized
+            }
+
+            "invalid_payload" -> {
+                SubmitResult.InvalidPayload(dettagli)
+            }
+
+            "payload_too_large" -> {
+                SubmitResult.PayloadTooLarge
+            }
+
+            "inbox_full" -> {
+                SubmitResult.InboxFull(dettagli)
+            }
+
+            else -> {
                 when {
                     status == 401 -> SubmitResult.NotAuthenticated
                     status >= 500 || status == 408 || status == 429 -> SubmitResult.Network
                     else -> SubmitResult.Unexpected(status)
                 }
+            }
         }
     }
 

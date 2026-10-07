@@ -117,16 +117,29 @@ class SessionStore(
     }
 
     fun selectGroup(group: PadelEliteGroup) {
-        prefs.edit().putString(KEY_GROUP_ID, group.id).putString(KEY_GROUP_NAME, group.name).apply()
+        prefs
+            .edit()
+            .putString(KEY_GROUP_ID, group.id)
+            .putString(KEY_GROUP_NAME, group.name)
+            .apply()
     }
 
     fun clearGroup() {
-        prefs.edit().remove(KEY_GROUP_ID).remove(KEY_GROUP_NAME).apply()
+        prefs
+            .edit()
+            .remove(KEY_GROUP_ID)
+            .remove(KEY_GROUP_NAME)
+            .apply()
     }
 
     /** Esci: via sessione e gruppo. */
     fun clear() {
-        prefs.edit().remove(KEY_SESSION).remove(KEY_GROUP_ID).remove(KEY_GROUP_NAME).apply()
+        prefs
+            .edit()
+            .remove(KEY_SESSION)
+            .remove(KEY_GROUP_ID)
+            .remove(KEY_GROUP_NAME)
+            .apply()
     }
 
     companion object {

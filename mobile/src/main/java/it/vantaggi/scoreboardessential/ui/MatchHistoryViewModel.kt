@@ -8,10 +8,14 @@ import androidx.lifecycle.viewModelScope
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
+import it.vantaggi.scoreboardessential.padelelite.InvioInfo
+import it.vantaggi.scoreboardessential.padelelite.PadelEliteServices
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -27,6 +31,10 @@ class MatchHistoryViewModel(
     private val repository: MatchRepository,
     /** Il calcolo della riga dei set; iniettabile solo perche' il test conta le chiamate. */
     private val calcolaRiga: (Match) -> String? = RigaDeiSet::of,
+    /** Padel Elite configurato: senza, nessun comando e nessuno stato di invio sulle card. */
+    private val padelEliteEnabled: Boolean = false,
+    /** Lo stato di invio di ogni partita per `matchUuid`; vuoto con la funzione spenta. */
+    private val invii: Flow<Map<String, InvioInfo>> = flowOf(emptyMap()),
 ) : ViewModel() {
     /**
      * Cio' che determina la riga dei set di una partita. Room rilegge tutta la query a ogni punto
@@ -44,13 +52,15 @@ class MatchHistoryViewModel(
 
     /** Le partite chiuse, pronte per la lista. */
     val matchHistory: LiveData<List<MatchHistoryUiState>> =
-        repository.allMatches
-            .map { elenco(it) }
+        combine(repository.allMatches, invii) { matches, stati -> elenco(matches, stati) }
             .flowOn(Dispatchers.Default)
             .asLiveData()
 
     /** Una partita chiusa non cambia registro: la sua riga si calcola una volta sola. */
-    internal fun elenco(matches: List<MatchWithTeams>): List<MatchHistoryUiState> =
+    internal fun elenco(
+        matches: List<MatchWithTeams>,
+        stati: Map<String, InvioInfo> = emptyMap(),
+    ): List<MatchHistoryUiState> =
         synchronized(righe) {
             val correnti = HashSet<ChiaveRiga>()
             val stati =
@@ -62,7 +72,7 @@ class MatchHistoryViewModel(
                     val riga = righe[chiave]
                     // Senza etichetta: «Giocatori:» o «Players:» lo mette la card, da risorsa.
                     val nomi = match.players.joinToString(", ") { it.playerName }
-                    MatchHistoryUiState(match, nomi, riga)
+                    MatchHistoryUiState(match, nomi, riga, m.matchUuid?.let { stati[it] }, padelEliteEnabled)
                 }
             // Le partite cancellate e i registri superati escono dalla cache.
             righe.keys.retainAll(correnti)
@@ -81,11 +91,17 @@ class MatchHistoryViewModel(
 
 class MatchHistoryViewModelFactory(
     private val repository: MatchRepository,
+    private val padelElite: PadelEliteServices? = null,
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MatchHistoryViewModel::class.java)) {
+            val acceso = padelElite?.isEnabled == true
             @Suppress("UNCHECKED_CAST")
-            return MatchHistoryViewModel(repository) as T
+            return MatchHistoryViewModel(
+                repository,
+                padelEliteEnabled = acceso,
+                invii = if (acceso) padelElite!!.invii.states else flowOf(emptyMap()),
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

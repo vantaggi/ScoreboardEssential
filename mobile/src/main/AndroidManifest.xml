@@ -32,6 +32,9 @@
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".MainActivity" />
         </activity>
         <activity android:name=".ui.chronicle.ChronicleActivity" android:exported="false" android:label="@string/chronicle_title" />
+        <activity android:name=".padelelite.PadelEliteActivity" android:exported="false" android:label="@string/padel_elite_title" android:parentActivityName=".ui.MatchSettingsActivity">
+            <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".ui.MatchSettingsActivity" />
+        </activity>
         <activity android:name=".AddEditPlayerActivity" android:exported="false" android:label="@string/title_player" android:parentActivityName=".PlayersManagementActivity">
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".PlayersManagementActivity" />
         </activity>

@@ -46,10 +46,17 @@ class InvioRunner(
     ): RunOutcome {
         val file =
             when (val esito = payload(matchUuid)) {
-                is PayloadOutcome.Json -> esito.text
-                PayloadOutcome.Missing ->
+                is PayloadOutcome.Json -> {
+                    esito.text
+                }
+
+                PayloadOutcome.Missing -> {
                     return if (attempt < MAX_MISSING_ATTEMPTS) waiting(matchUuid, null) else fail(matchUuid, InvioReason.NO_FILE)
-                PayloadOutcome.Incomplete -> return fail(matchUuid, InvioReason.NO_FILE)
+                }
+
+                PayloadOutcome.Incomplete -> {
+                    return fail(matchUuid, InvioReason.NO_FILE)
+                }
             }
         if (file.toByteArray(Charsets.UTF_8).size > MAX_PAYLOAD_BYTES) return fail(matchUuid, InvioReason.TOO_LARGE)
 
@@ -70,13 +77,29 @@ class InvioRunner(
                 RunOutcome.DONE
             }
 
-            SubmitResult.NotAuthorized -> fail(matchUuid, InvioReason.NOT_MEMBER)
-            is SubmitResult.InvalidPayload -> fail(matchUuid, InvioReason.INVALID_PAYLOAD, esito.details)
-            SubmitResult.PayloadTooLarge -> fail(matchUuid, InvioReason.TOO_LARGE)
-            is SubmitResult.InboxFull -> waiting(matchUuid, InvioReason.INBOX_FULL)
-            SubmitResult.Network -> waiting(matchUuid, null)
-            is SubmitResult.Unexpected ->
+            SubmitResult.NotAuthorized -> {
+                fail(matchUuid, InvioReason.NOT_MEMBER)
+            }
+
+            is SubmitResult.InvalidPayload -> {
+                fail(matchUuid, InvioReason.INVALID_PAYLOAD, esito.details)
+            }
+
+            SubmitResult.PayloadTooLarge -> {
+                fail(matchUuid, InvioReason.TOO_LARGE)
+            }
+
+            is SubmitResult.InboxFull -> {
+                waiting(matchUuid, InvioReason.INBOX_FULL)
+            }
+
+            SubmitResult.Network -> {
+                waiting(matchUuid, null)
+            }
+
+            is SubmitResult.Unexpected -> {
                 if (attempt < MAX_UNEXPECTED_ATTEMPTS) waiting(matchUuid, null) else fail(matchUuid, InvioReason.SERVER)
+            }
         }
     }
 
@@ -106,14 +129,20 @@ class InvioRunner(
         for ((uuid, info) in store.states.value) {
             if (info.state != InvioState.SENT) continue
             when (val esito = account.status(uuid)) {
-                is StatusResult.Found ->
+                is StatusResult.Found -> {
                     when (esito.status) {
                         "imported" -> store.set(uuid, InvioInfo(InvioState.IMPORTED))
                         "discarded" -> store.set(uuid, InvioInfo(InvioState.DISCARDED))
                     }
+                }
 
-                StatusResult.NotFound -> Unit
-                StatusResult.NotAuthenticated, StatusResult.Network -> return
+                StatusResult.NotFound -> {
+                    Unit
+                }
+
+                StatusResult.NotAuthenticated, StatusResult.Network -> {
+                    return
+                }
             }
         }
     }

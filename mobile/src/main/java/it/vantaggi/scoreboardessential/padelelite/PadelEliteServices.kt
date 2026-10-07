@@ -45,12 +45,39 @@ class PadelEliteServices(
     val runner: InvioRunner by lazy {
         InvioRunner(account, invii) { uuid ->
             when (val esito = repository.buildSavedExportByUuid(uuid)) {
-                null -> PayloadOutcome.Missing
-                is ExportResult.Incomplete -> PayloadOutcome.Incomplete
-                is ExportResult.Ready ->
+                null -> {
+                    PayloadOutcome.Missing
+                }
+
+                is ExportResult.Incomplete -> {
+                    PayloadOutcome.Incomplete
+                }
+
+                is ExportResult.Ready -> {
                     // Senza matchId il server rifiuta il file: meglio dirlo qui che dopo la rete.
-                    if (esito.export.matchId.isNullOrEmpty()) PayloadOutcome.Incomplete else PayloadOutcome.Json(MatchExporter.toJson(esito.export))
+                    if (esito.export.matchId.isNullOrEmpty()) {
+                        PayloadOutcome.Incomplete
+                    } else {
+                        PayloadOutcome.Json(
+                            MatchExporter.toJson(esito.export),
+                        )
+                    }
+                }
             }
+        }
+    }
+
+    /**
+     * Il comando dall'interfaccia: mette in coda la partita, oppure, se manca l'accesso o il gruppo,
+     * apre la schermata di Padel Elite. Lo stesso per la card dello storico e il dialogo di fine partita.
+     */
+    fun sendOrOpenLogin(
+        activity: Context,
+        matchUuid: String,
+    ) {
+        when (send(matchUuid)) {
+            SendOutcome.NEED_LOGIN, SendOutcome.NEED_GROUP -> activity.startActivity(PadelEliteActivity.intent(activity))
+            SendOutcome.QUEUED, SendOutcome.DISABLED -> Unit
         }
     }
 

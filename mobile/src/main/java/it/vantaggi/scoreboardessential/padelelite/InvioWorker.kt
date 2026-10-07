@@ -50,8 +50,13 @@ class InvioWorker(
             groupId: String,
         ): OneTimeWorkRequest =
             OneTimeWorkRequestBuilder<InvioWorker>()
-                .setInputData(Data.Builder().putString(KEY_MATCH, matchUuid).putString(KEY_GROUP, groupId).build())
-                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .setInputData(
+                    Data
+                        .Builder()
+                        .putString(KEY_MATCH, matchUuid)
+                        .putString(KEY_GROUP, groupId)
+                        .build(),
+                ).setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_SECONDS, TimeUnit.SECONDS)
                 .build()
 

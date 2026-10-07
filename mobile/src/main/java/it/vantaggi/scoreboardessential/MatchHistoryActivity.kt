@@ -40,7 +40,8 @@ class MatchHistoryActivity : AppCompatActivity() {
         // Un ViewModel suo, sul solo repository: un MainViewModel qui ne faceva due vivi insieme,
         // e ogni evento dell'orologio veniva applicato da entrambi.
         val application = application as ScoreboardEssentialApplication
-        val viewModelFactory = MatchHistoryViewModelFactory(application.matchRepository)
+        val padelElite = application.padelElite
+        val viewModelFactory = MatchHistoryViewModelFactory(application.matchRepository, padelElite)
         val viewModel = ViewModelProvider(this, viewModelFactory)[MatchHistoryViewModel::class.java]
 
         val summaryTextView = findViewById<TextView>(R.id.summary_textview)
@@ -62,9 +63,19 @@ class MatchHistoryActivity : AppCompatActivity() {
                 onChronicleClicked = { matchWithTeams ->
                     startActivity(ChronicleActivity.intent(this, matchWithTeams.match.matchId))
                 },
+                onSendClicked = { matchWithTeams ->
+                    matchWithTeams.match.matchUuid?.let { padelElite.sendOrOpenLogin(this, it) }
+                },
             )
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
+
+        // Le partite inviate e in attesa possono essere state importate o scartate nel frattempo.
+        if (padelElite.isEnabled) {
+            lifecycleScope.launch {
+                if (padelElite.account.session() != null) padelElite.runner.refreshStatuses()
+            }
+        }
 
         viewModel.matchHistory.observe(this) { matches ->
             matches?.let {

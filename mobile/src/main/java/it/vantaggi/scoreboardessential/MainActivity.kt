@@ -43,6 +43,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import it.vantaggi.scoreboardessential.core.ClockMode
+import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchSummarizer
 import it.vantaggi.scoreboardessential.core.ReportLabels
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
@@ -1391,13 +1392,40 @@ class MainActivity :
         val sport = viewModel.activeSport.value ?: SportRegistry.FOOTBALL
         val testo = testoDelDialogoDiFine(this, sport, display, team1Name, team2Name, modalitaAGame(sport))
 
+        // "Invia anche a Padel Elite": solo con la funzione configurata, nel padel e con un file
+        // esportabile. L'identificativo si prende ORA: la chiusura azzera la partita in corso.
+        val padelElite = (application as ScoreboardEssentialApplication).padelElite
+        val uuidDaInviare = viewModel.currentMatchUuid
+        val inviaBox =
+            if (padelElite.isEnabled && sport == SportRegistry.PADEL && uuidDaInviare != null &&
+                viewModel.buildExport() is ExportResult.Ready
+            ) {
+                android.widget.CheckBox(this).apply {
+                    setText(R.string.padel_elite_send_in_dialog)
+                    minHeight = resources.getDimensionPixelSize(R.dimen.control_touch)
+                }
+            } else {
+                null
+            }
+
         val dialogo =
             MaterialAlertDialogBuilder(this)
                 .setTitle(testo.titolo)
                 .setMessage(testo.messaggio)
-                .setPositiveButton(getString(if (testo.salva) R.string.btn_save_match else R.string.btn_end_match)) { _, _ ->
+                .apply {
+                    if (inviaBox != null) {
+                        val margine = (resources.displayMetrics.density * 24).toInt()
+                        setView(
+                            android.widget.FrameLayout(this@MainActivity).apply {
+                                setPadding(margine, 0, margine, 0)
+                                addView(inviaBox)
+                            },
+                        )
+                    }
+                }.setPositiveButton(getString(if (testo.salva) R.string.btn_save_match else R.string.btn_end_match)) { _, _ ->
                     if (viewModel.endMatch()) {
                         snackbarSopraLaStriscia(getString(R.string.match_saved), Snackbar.LENGTH_LONG).show()
+                        if (inviaBox?.isChecked == true && uuidDaInviare != null) padelElite.sendOrOpenLogin(this, uuidDaInviare)
                     } else {
                         snackbarSopraLaStriscia(getString(R.string.match_not_started_error), Snackbar.LENGTH_LONG).show()
                     }

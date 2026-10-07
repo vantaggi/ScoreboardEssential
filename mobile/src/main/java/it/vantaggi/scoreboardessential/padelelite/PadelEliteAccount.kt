@@ -52,6 +52,8 @@ class PadelEliteAccount(
 
     fun selectGroup(group: PadelEliteGroup) = store.selectGroup(group)
 
+    fun clearSelectedGroup() = store.clearGroup()
+
     suspend fun signIn(
         email: String,
         password: String,
@@ -92,7 +94,9 @@ class PadelEliteAccount(
                     TokenResult.NeedLogin
                 }
 
-                AuthResult.Network -> TokenResult.Network
+                AuthResult.Network -> {
+                    TokenResult.Network
+                }
             }
         }
 

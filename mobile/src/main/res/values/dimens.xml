@@ -17,4 +17,6 @@
     -->
     <dimen name="score_text_max">150dp</dimen>
     <dimen name="score_text_min">72dp</dimen>
+    <!-- Ruolo control-touch della UI Constitution: altezza minima di ogni comando toccabile (DESIGN.md, mappatura dei ruoli). -->
+    <dimen name="control_touch">48dp</dimen>
 </resources>

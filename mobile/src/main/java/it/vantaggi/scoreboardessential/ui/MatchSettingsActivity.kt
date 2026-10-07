@@ -3,6 +3,7 @@ package it.vantaggi.scoreboardessential.ui
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.view.View
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -11,8 +12,10 @@ import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
 import it.vantaggi.scoreboardessential.R
+import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.databinding.ActivityMatchSettingsBinding
+import it.vantaggi.scoreboardessential.padelelite.PadelEliteActivity
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.sportLabel
 import it.vantaggi.scoreboardessential.sportRulesLine
@@ -46,6 +49,47 @@ class MatchSettingsActivity : AppCompatActivity() {
         setupSportDropdown()
         observeViewModel()
         setupListeners()
+        setupPadelElite()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Si torna dalla schermata di accesso: la card dice chi e' collegato e il gruppo.
+        showPadelEliteStatus()
+    }
+
+    private val padelElite get() = (application as ScoreboardEssentialApplication).padelElite
+
+    /** La card di Padel Elite c'e' solo se la build conosce il Supabase: senza, l'app e' identica a prima. */
+    private fun setupPadelElite() {
+        if (!padelElite.isEnabled) return
+        binding.padelEliteCard.visibility = View.VISIBLE
+        val apri = View.OnClickListener { startActivity(PadelEliteActivity.intent(this)) }
+        binding.padelEliteSignInButton.setOnClickListener(apri)
+        binding.padelEliteGroupButton.setOnClickListener(apri)
+        binding.padelEliteSignOutButton.setOnClickListener {
+            padelElite.account.signOut()
+            showPadelEliteStatus()
+        }
+    }
+
+    private fun showPadelEliteStatus() {
+        if (!padelElite.isEnabled) return
+        val sessione = padelElite.account.session()
+        val collegato = sessione != null
+        binding.padelEliteSignInButton.visibility = if (collegato) View.GONE else View.VISIBLE
+        binding.padelEliteAccountRow.visibility = if (collegato) View.VISIBLE else View.GONE
+        binding.padelEliteStatus.text =
+            if (sessione == null) {
+                getString(R.string.padel_elite_settings_signed_out)
+            } else {
+                val gruppo =
+                    padelElite.account
+                        .selectedGroup()
+                        ?.second
+                        ?.ifEmpty { null } ?: getString(R.string.padel_elite_settings_no_group)
+                getString(R.string.padel_elite_settings_signed_in, sessione.email, gruppo)
+            }
     }
 
     /**
