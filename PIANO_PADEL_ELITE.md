@@ -331,3 +331,7 @@ li consegna alla dashboard senza passaggi a mano.
 
 Ordine proposto: 1 (sicurezza) -> applicare 65 e 64 in produzione -> 2 e 3 (app) -> 4 -> 6 -> 5.
 Ogni passo che tocca la dashboard o il database resta **[AUTORIZZAZIONE]** come sopra.
+
+**Decisioni del proprietario (7 ottobre 2026, sera):** si' al token d'invito; la diretta la trasmettono
+solo gli admin del gruppo; la lettura pubblica (`?g=`) resta com'e' (non decisa). Ordine: token d'invito
+(dashboard) -> rose dalla dashboard e serate (app) -> modificabilita' -> diretta solo admin -> gironi.
