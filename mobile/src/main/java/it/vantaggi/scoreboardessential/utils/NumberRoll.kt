@@ -34,7 +34,8 @@ import it.vantaggi.scoreboardessential.R
 class NumberRoll(
     private val cifra: TextView,
 ) {
-    private var corsa: AnimatorSet? = null
+    internal var corsa: AnimatorSet? = null
+        private set
     private var fantasma: TextView? = null
 
     /** `true` mentre il rotolo e' in corso: serve ai test. */

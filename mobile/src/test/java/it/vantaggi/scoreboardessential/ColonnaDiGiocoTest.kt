@@ -278,7 +278,7 @@ class ColonnaDiGiocoTest {
         // #1A237E sul nero fa 1,59:1: senza contorno la zona quasi non si vede.
         val (zona, glifo, _) = applica(0xFF1A237E.toInt())
         assertTrue("manca lo stroke sulla zona scura", zona.strokeWidth > 0)
-        assertEquals("lo stroke e' #E0E0E0", 0xFFE0E0E0.toInt(), zona.strokeColor)
+        assertEquals("lo stroke e' il testo primario", 0xFFD1D1D8.toInt(), zona.strokeColor)
         assertEquals("il glifo e' bianco su un blu notte", TeamInk.BIANCO, glifo.imageTintList?.defaultColor)
         assertEquals("la zona ha il colore vero", 0xFF1A237E.toInt(), zona.cardBackgroundColor.defaultColor)
     }

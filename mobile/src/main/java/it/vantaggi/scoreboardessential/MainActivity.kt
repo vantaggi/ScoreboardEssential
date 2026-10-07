@@ -761,6 +761,9 @@ class MainActivity :
             val pixel = dimensioneDelNumero(team1ScoreTextView.paint, token, riga.width / 2f, riga.height.toFloat())
             team1ScoreTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, pixel)
             team2ScoreTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, pixel)
+            // La scatola della cifra ha la larghezza del token piu' largo: fra "1" e "15" niente si sposta.
+            NumberRoll.fissaLaScatola(team1ScoreTextView, token)
+            NumberRoll.fissaLaScatola(team2ScoreTextView, token)
         }
     }
 
