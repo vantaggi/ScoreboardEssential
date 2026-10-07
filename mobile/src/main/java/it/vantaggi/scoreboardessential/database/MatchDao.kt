@@ -173,6 +173,13 @@ interface MatchDao {
         eventLog: String,
     )
 
+    /** L'inizio della riga viva, quando il primo punto arriva su una riga rimasta senza eventi. */
+    @Query("UPDATE matches SET startedAt = :startedAt WHERE matchId = :matchId")
+    suspend fun updateLiveStartedAt(
+        matchId: Int,
+        startedAt: Long,
+    )
+
     /** L'ordine di servizio della riga viva, quando cambia con le rose a registro vuoto. */
     @Query("UPDATE matches SET serveOrder = :serveOrder WHERE matchId = :matchId")
     suspend fun updateLiveServeOrder(

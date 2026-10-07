@@ -24,10 +24,12 @@ import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchDao
+import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.database.PlayerWinCount
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.database.Team
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.repository.ColorRepository
@@ -38,6 +40,7 @@ import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
+import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.CompletableDeferred
@@ -831,6 +834,103 @@ class MainViewModelTest {
                 chiudiDatabase(db)
             }
         }
+
+    /**
+     * Visto su emulatore: una partita di calcio giocata in meno di due minuti sopra una riga viva
+     * del giorno prima (l'app reinstallata sui dati di prova) finiva nello storico con
+     * "12 h 30 min". La durata della card dev'essere il tempo di gioco del registro, che la ripresa
+     * non fa avanzare, e non la distanza fra l'inizio salvato e la chiusura.
+     */
+    @Test
+    fun `una partita ripresa il giorno dopo mostra nello storico il tempo di gioco e non le ore di pausa`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                usaDao(matchDao = db.matchDao())
+                val ieriSera = System.currentTimeMillis() - 750 * 60_000L
+                val riga =
+                    Match(
+                        team1Id = 1,
+                        team2Id = 2,
+                        team1Score = 1,
+                        team2Score = 0,
+                        timestamp = ieriSera + 30_000L,
+                        isActive = true,
+                        sportId = SportRegistry.FOOTBALL,
+                        eventLog = "1|1@0",
+                        startedAt = ieriSera,
+                        matchUuid = "3f2a9c1e-5b7d-4e8a-9c01-2d4f6a8b0c1e",
+                    )
+                val id = db.matchDao().insertLiveMatch(riga, emptyList(), emptyList()).toInt()
+                val ripristino = MainViewModel::class.java.getDeclaredMethod("restoreActiveMatchIfAny")
+                ripristino.isAccessible = true
+                ripristino.invoke(viewModel)
+                advanceUntilIdle()
+
+                viewModel.addScore(2)
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                assertEquals(true, viewModel.endMatch())
+                advanceUntilIdle()
+
+                val chiusa = db.matchDao().getMatchById(id)!!
+                val durata = durataDellaCard(chiusa)
+                assertTrue("la durata della card era $durata ms", durata == null || durata < 5 * 60_000L)
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    /**
+     * Stessa cosa con la riga viva rimasta SENZA eventi (un gol e ANNULLA): l'inizio salvato e' del
+     * giorno prima, ma la partita vera comincia al primo tocco di adesso.
+     */
+    @Test
+    fun `una riga viva vuota del giorno prima non da' la sua ora d'inizio alla partita nuova`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                usaDao(matchDao = db.matchDao())
+                val ieriSera = System.currentTimeMillis() - 750 * 60_000L
+                val riga =
+                    Match(
+                        team1Id = 1,
+                        team2Id = 2,
+                        team1Score = 0,
+                        team2Score = 0,
+                        timestamp = ieriSera,
+                        isActive = true,
+                        sportId = SportRegistry.FOOTBALL,
+                        eventLog = "1|",
+                        startedAt = ieriSera,
+                        matchUuid = "3f2a9c1e-5b7d-4e8a-9c01-2d4f6a8b0c1e",
+                    )
+                val id = db.matchDao().insertLiveMatch(riga, emptyList(), emptyList()).toInt()
+                val ripristino = MainViewModel::class.java.getDeclaredMethod("restoreActiveMatchIfAny")
+                ripristino.isAccessible = true
+                ripristino.invoke(viewModel)
+                advanceUntilIdle()
+
+                viewModel.addScore(1)
+                viewModel.addScore(2)
+                advanceUntilIdle()
+                assertEquals(true, viewModel.endMatch())
+                advanceUntilIdle()
+
+                val chiusa = db.matchDao().getMatchById(id)!!
+                val durata = durataDellaCard(chiusa)
+                assertTrue("la durata della card era $durata ms", durata == null || durata < 5 * 60_000L)
+                assertTrue("l'inizio e' quello di ieri sera: ${chiusa.startedAt}", chiusa.startedAt!! > ieriSera + 60 * 60_000L)
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    /** La durata come la legge la card dello storico per questa riga chiusa. */
+    private fun durataDellaCard(match: Match): Long? {
+        val squadra = Team(id = 1, name = "A", color = 0, logoUri = null)
+        return MatchHistoryUiState(MatchWithTeams(match, squadra, squadra.copy(id = 2), emptyList()), "").durationMillis
+    }
 
     /**
      * Con uno sport diverso dal calcio gia' salvato, il ViewModel si costruisce senza crash.

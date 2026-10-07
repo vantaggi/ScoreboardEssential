@@ -529,6 +529,7 @@ class MainViewModel(
         setWatchNotice(null)
         matchUuid = null
         matchStartedAt = null
+        inizioDaFissare = false
         ripresaAlle = null
         _team1Score.value = 0
         _team2Score.value = 0
@@ -686,6 +687,13 @@ class MainViewModel(
     val currentMatchUuid: String? get() = matchUuid
 
     private var matchStartedAt: Long? = null
+
+    /**
+     * Vero quando il ripristino ha trovato una riga viva senza nessun evento: il suo inizio salvato e'
+     * di una partita che non ha avuto un punto, e quello della partita di adesso e' il primo tocco, che
+     * [persistLiveMatch] scrive sulla riga.
+     */
+    private var inizioDaFissare = false
 
     /**
      * Quando e' stata ripresa la partita dal database; null se non e' stata ripresa. Dopo il ripristino
@@ -890,6 +898,7 @@ class MainViewModel(
         // sospeso lo riscriveva dopo, oppure SCARTA non trovava piu' la riga da cancellare.
         matchUuid = null
         matchStartedAt = null
+        inizioDaFissare = false
         ripresaAlle = null
         // Le cifre del telefono leggono scoreDisplay, non i due punteggi di testata: senza questa
         // riga, dopo la chiusura restava il risultato vecchio sopra "nessun gol".
@@ -1214,6 +1223,12 @@ class MainViewModel(
                         _team2Players.value.orEmpty().map { it.player.playerId },
                     )
             } else {
+                if (inizioDaFissare && engine.log.isNotEmpty()) {
+                    val inizio = matchClock.startEpoch ?: System.currentTimeMillis()
+                    matchStartedAt = inizio
+                    matchDao.updateLiveStartedAt(id.toInt(), inizio)
+                    inizioDaFissare = false
+                }
                 matchDao.updateLiveMatch(id.toInt(), uno, due, log)
             }
         }
@@ -1268,6 +1283,12 @@ class MainViewModel(
         // spostato apposta, per non contare il tempo in cui l'app e' rimasta chiusa.
         matchUuid = attiva.matchUuid
         matchStartedAt = attiva.startedAt
+        // Una riga senza eventi (un gol e ANNULLA) non ha avuto una partita: il suo inizio non e'
+        // quello di adesso, e se e' di ieri sera la partita nuova risultava cominciata ieri sera.
+        if (MatchLogCodec.decode(attiva.eventLog)?.isEmpty() == true) {
+            matchStartedAt = null
+            inizioDaFissare = true
+        }
         // Direttamente nelle LiveData, senza refreshServeOrder: l'ordine di servizio e' quello
         // della riga, gia' nelle regole qui sopra.
         _team1Players.value = schieramento.filter { it.side == 1 }.mapNotNull { giocatori[it.localId] }

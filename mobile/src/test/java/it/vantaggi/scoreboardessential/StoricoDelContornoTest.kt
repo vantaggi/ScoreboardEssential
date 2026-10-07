@@ -128,6 +128,29 @@ class StoricoDelContornoTest {
         assertTrue(metaSenza, Regex("""Calcio · \d\d/\d\d \d\d:\d\d""").matches(metaSenza))
     }
 
+    /**
+     * Visto su emulatore: una partita di calcio di due minuti, ripresa sopra una riga viva del
+     * giorno prima, mostrava "12 h 30 min". La card sottraeva l'inizio dalla chiusura, cioe' contava
+     * anche il tempo in cui l'app era chiusa; il registro porta invece il tempo di gioco, che
+     * l'orologio della partita non fa avanzare mentre nessuno gioca.
+     */
+    @Test
+    @Config(qualifiers = "it")
+    fun `la durata e' il tempo di gioco del registro, non quello fra inizio e chiusura`() {
+        val registro =
+            listOf(
+                LoggedEvent(ScoringEvent.Point(side = 1), 0L),
+                LoggedEvent(ScoringEvent.Point(side = 2), 45_000L),
+                LoggedEvent(ScoringEvent.Point(side = 1), 100_000L),
+            )
+        val ripresa = partita(SportRegistry.FOOTBALL, 2 to 1, registro).copy(startedAt = fine - 750 * 60_000L)
+
+        val (_, vista) = scheda(ripresa)
+
+        val meta = testo(vista, R.id.timestamp_textview).text.toString()
+        assertTrue(meta, Regex("""Calcio · \d\d/\d\d \d\d:\d\d · 2 min""").matches(meta))
+    }
+
     @Test
     @Config(qualifiers = "it")
     fun `l'elenco dei giocatori ha l'etichetta nella lingua dell'app`() {
