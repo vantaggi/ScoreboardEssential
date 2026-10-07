@@ -1217,7 +1217,9 @@ class MainActivity :
         val rifiutato = viewModel.watchNotice.value is WatchNotice.Rejected
         statusIcon.setImageResource(if (collegato) R.drawable.ic_watch else R.drawable.ic_watch_off)
         statusIcon.imageTintList =
-            ColorStateList.valueOf(ContextCompat.getColor(this, if (collegato) R.color.elite_text_primary else R.color.elite_text_secondary))
+            ColorStateList.valueOf(
+                ContextCompat.getColor(this, if (collegato) R.color.elite_text_primary else R.color.elite_text_secondary),
+            )
         statusIcon.foreground = if (rifiutato) ContextCompat.getDrawable(this, R.drawable.bg_watch_notice_badge) else null
         // Il tooltip si vede solo tenendo premuto, e chi usa TalkBack non lo incontra:
         // la contentDescription restava quella cablata nel layout, uguale nei due stati. Con un

@@ -57,7 +57,11 @@ class GiocoG6Test {
 
     @Test
     fun `chi non ha mai scelto un colore passa ai nuovi, chi l'ha scelto tiene la sua scelta anche se era il vecchio predefinito`() {
-        app.getSharedPreferences("match_settings_prefs", Context.MODE_PRIVATE).edit().clear().commit()
+        app
+            .getSharedPreferences("match_settings_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .commit()
         val deposito = MatchSettingsRepository(app, ColorRepository(app))
         runBlocking {
             assertEquals("senza scelta: lime", 0xFFC8F135.toInt(), deposito.getTeam1Color())
@@ -67,7 +71,11 @@ class GiocoG6Test {
             assertEquals(0xFFFFD600.toInt(), deposito.getTeam1Color())
             assertEquals("il lato 2 non scelto segue il predefinito", 0xFF00E5FF.toInt(), deposito.getTeam2Color())
         }
-        app.getSharedPreferences("match_settings_prefs", Context.MODE_PRIVATE).edit().clear().commit()
+        app
+            .getSharedPreferences("match_settings_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .commit()
     }
 
     @Test
@@ -93,7 +101,11 @@ class GiocoG6Test {
         assertNotEquals(contesto().getColor(R.color.ink_white), colore)
         // Il lime non e' l'unico segno: il pallino sta nello slot accanto al nome, che e' una forma e una posizione.
         val radice = LayoutInflater.from(contesto()).inflate(R.layout.content_scoreboard_live, null)
-        assertEquals(12f, radice.findViewById<View>(R.id.team1_serve_dot).layoutParams.width / contesto().resources.displayMetrics.density, 0.5f)
+        assertEquals(
+            12f,
+            radice.findViewById<View>(R.id.team1_serve_dot).layoutParams.width / contesto().resources.displayMetrics.density,
+            0.5f,
+        )
     }
 
     // --- NumberRoll ---
@@ -114,8 +126,14 @@ class GiocoG6Test {
                 gravity = Gravity.CENTER
                 fontFeatureSettings = "tnum"
             }
-        genitore.addView(cifra, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
-        genitore.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY))
+        genitore.addView(
+            cifra,
+            FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER),
+        )
+        genitore.measure(
+            View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY),
+        )
         genitore.layout(0, 0, 600, 600)
         return Scena(genitore, cifra, NumberRoll(cifra))
     }
@@ -201,6 +219,7 @@ class GiocoG6Test {
     fun `la scatola della cifra non cambia di larghezza fra 1 e 15`() {
         val s = montaLaCifra("1")
         NumberRoll.fissaLaScatola(s.cifra, "88")
+
         fun larghezza(testo: String): Int {
             s.cifra.text = testo
             s.cifra.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.AT_MOST), View.MeasureSpec.UNSPECIFIED)
@@ -211,6 +230,7 @@ class GiocoG6Test {
         assertEquals(uno, larghezza("88"))
         // Falsificazione: senza la scatola fissa "1" e "15" misurano diverso.
         val libera = montaLaCifra("1").cifra
+
         fun libera(testo: String): Int {
             libera.text = testo
             libera.measure(View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.AT_MOST), View.MeasureSpec.UNSPECIFIED)
@@ -242,7 +262,9 @@ class GiocoG6Test {
     private fun sorgente(nome: String) = File("src/main/res/layout/$nome.xml").readText()
 
     private val colorStreet =
-        Regex("@color/(concrete_gray|stencil_white|sidewalk_gray|graffiti_[a-z_]+|asphalt_[a-z]+|outline_gray|neon_cyan|team_spray_yellow|team_electric_green|error_red|error_text)")
+        Regex(
+            "@color/(concrete_gray|stencil_white|sidewalk_gray|graffiti_[a-z_]+|asphalt_[a-z]+|outline_gray|neon_cyan|team_spray_yellow|team_electric_green|error_red|error_text)",
+        )
 
     private fun difetti(xml: String): List<String> {
         val trovati = mutableListOf<String>()
@@ -285,8 +307,14 @@ class GiocoG6Test {
     fun `gli alias Street dei bottoni e delle forme non esistono piu'`() {
         for (nome in listOf("themes.xml", "styles.xml")) {
             val testo = File("src/main/res/values/$nome").readText()
-            assertFalse("$nome ha ancora Widget.App.Button...Street", Regex("""Widget\.App\.Button\.[A-Za-z.]*Street""").containsMatchIn(testo))
-            assertFalse("$nome ha ancora ShapeAppearance.App.StreetButton o StreetBadge", Regex("""ShapeAppearance\.App\.Street(Button|Badge)""").containsMatchIn(testo))
+            assertFalse(
+                "$nome ha ancora Widget.App.Button...Street",
+                Regex("""Widget\.App\.Button\.[A-Za-z.]*Street""").containsMatchIn(testo),
+            )
+            assertFalse(
+                "$nome ha ancora ShapeAppearance.App.StreetButton o StreetBadge",
+                Regex("""ShapeAppearance\.App\.Street(Button|Badge)""").containsMatchIn(testo),
+            )
         }
     }
 

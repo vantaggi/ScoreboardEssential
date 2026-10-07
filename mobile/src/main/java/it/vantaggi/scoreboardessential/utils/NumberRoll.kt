@@ -65,7 +65,14 @@ class NumberRoll(
         }
         val corsaInPixel = cifra.height * cifra.resources.getFraction(R.fraction.number_roll_travel, 1, 1)
         val uscente = copiaDellaCifra(vecchio)
-        genitore!!.addView(uscente, FrameLayout.LayoutParams(cifra.width, cifra.height, (cifra.layoutParams as? FrameLayout.LayoutParams)?.gravity ?: 0))
+        genitore!!.addView(
+            uscente,
+            FrameLayout.LayoutParams(
+                cifra.width,
+                cifra.height,
+                (cifra.layoutParams as? FrameLayout.LayoutParams)?.gravity ?: 0,
+            ),
+        )
         fantasma = uscente
         cifra.text = testo
 

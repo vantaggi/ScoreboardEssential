@@ -131,7 +131,11 @@ class ContornoDelTelefonoG4Test {
         // E non scambia per difetti un'ombra a zero.
         assertEquals(emptyList<String>(), difetti("""<View android:elevation="0dp" />"""))
         // Con G-6 la schermata di gioco e il foglio non ne hanno piu': il controllo vede il difetto in un esempio.
-        assertTrue(difetti("""<View android:background="@color/concrete_gray" android:foreground="?attr/selectableItemBackground" />""").isNotEmpty())
+        assertTrue(
+            difetti(
+                """<View android:background="@color/concrete_gray" android:foreground="?attr/selectableItemBackground" />""",
+            ).isNotEmpty(),
+        )
     }
 
     @Test

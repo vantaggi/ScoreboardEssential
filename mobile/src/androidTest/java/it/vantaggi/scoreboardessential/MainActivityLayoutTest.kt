@@ -693,7 +693,11 @@ class MainActivityLayoutTest {
                 scenario.onActivity {
                     val slot = it.findViewById<com.google.android.material.card.MaterialCardView>(R.id.keeper_slot)
                     val valore = it.findViewById<TextView>(R.id.keeper_timer_textview)
-                    assertEquals("lo slot scaduto e' pieno elite_error", it.getColor(R.color.elite_error), slot.cardBackgroundColor.defaultColor)
+                    assertEquals(
+                        "lo slot scaduto e' pieno elite_error",
+                        it.getColor(R.color.elite_error),
+                        slot.cardBackgroundColor.defaultColor,
+                    )
                     assertEquals("CAMBIO e' in elite_background", it.getColor(R.color.elite_background), valore.currentTextColor)
                     assertEquals("lo slot scaduto dice CAMBIO", it.getString(R.string.label_keeper_change), valore.text.toString())
                     assertEquals(
