@@ -281,3 +281,53 @@ Il filone 1 (prova sul campo) e il filone 2 (coerenza grafica) non ne chiedono n
 | A-7 prova sul campo | da fare, del proprietario: in `local.properties` `PADEL_ELITE_SUPABASE_URL` e `PADEL_ELITE_SUPABASE_KEY` (chiave publishable), mai in produzione prima di E-4 |
 
 **7 ottobre 2026 - pubblicato su main** il blocco coerenza grafica G-0..G-4 e G-6 (G-5 Cronaca, G-7 orologio, G-8 PDF, G-9 verifica e maiuscolo dei messaggi composti, G-10 alto contrasto restano da fare), l'adattamento alla UI Constitution (`CLAUDE.md`), l'invio a Padel Elite dall'app (A-1..A-4, spento finche' `local.properties` non ha URL e chiave) e la correzione della durata nello storico (tempo di gioco del registro, non tempo fra inizio e chiusura). Suite verde, **1199 test JVM distinti**, strumentati 38 su 38 su `Pixel_9a_Test`. Schermate in `docs/coerenza/`. Dashboard: PR #213 (casella d'arrivo, migrazione 64) e #214 (falla di `group_members`, migrazione 65) unite in `development`; in produzione nessuna migrazione applicata (prima la 65, poi la 64, dal proprietario).
+
+---
+
+## 4. Rose dalla dashboard, serate a coppie che ruotano, diretta (proposta del 7 ottobre 2026)
+
+Richiesta del proprietario. Principio fermo: **app e dashboard vivono anche da sole** (l'app senza
+account e senza rete, la dashboard senza l'app); quando ci sono tutte e due, l'app prende i punteggi e
+li consegna alla dashboard senza passaggi a mano.
+
+### Come funziona oggi (7 ottobre)
+
+| Cosa | Stato |
+|---|---|
+| Accesso | l'app usa lo stesso account della dashboard (Supabase Auth, email e password); la sessione e' cifrata sul telefono. Senza URL e chiave in `local.properties` la funzione non c'e' |
+| Cosa vede l'app | solo i gruppi di cui l'account e' membro (`group_members`, filtrato dalle policy RLS). Oggi l'app NON legge i giocatori del gruppo: era la scelta di settembre ("l'app non conosce niente del gruppo") |
+| Chi puo' inviare | `submit_scoreboard_match` accetta solo un membro del gruppo (owner, admin o member). Ma oggi **chiunque abbia un account puo' diventare member di qualunque gruppo** (link `?join=` con l'id del gruppo, id pubblici): finche' non c'e' un token d'invito, "solo se sono nella dashboard" non e' una garanzia |
+| Chi conferma | la casella d'arrivo (PR #213, in `development`): l'admin vede le partite in attesa, apre l'import gia' esistente precompilato, sceglie i quattro giocatori nell'ordine di servizio, conferma; nasce la partita con la Cronaca, come un inserimento manuale. Oppure scarta |
+| Senza casella | export del file JSON dall'app e import da file nella dashboard (anche questo solo in `development`, versione 4.12.0) |
+| Lettura pubblica | per la migrazione 07 della dashboard gruppi, giocatori e partite sono leggibili anche senza account (link `?g=`): oggi la riservatezza dei giocatori non c'e' per scelta della dashboard |
+| In produzione | niente di tutto questo: migrazioni 64 e 65 non applicate, 4.12.0 non su `main` |
+
+### Cosa serve per quello che hai chiesto
+
+1. **Token d'invito** (dashboard, prima di tutto): il join richiede un codice per gruppo che solo gli
+   admin vedono e possono rigenerare; cosi' "membro" vuol dire davvero "invitato". Facoltativo: chiudere
+   la lettura pubblica (`?g=`) o limitarla.
+2. **Rose dalla dashboard nell'app**: con l'accesso, l'app legge i giocatori del gruppo scelto
+   (`v2_players` del gruppo, permesso dalle policy). Cambia la decisione di settembre: ora l'app conosce
+   i giocatori, ma solo dei gruppi dell'account, e solo con l'accesso. Senza accesso restano le rose
+   locali di oggi.
+3. **Serata a coppie che ruotano** (app): si sceglie una volta chi c'e' (per esempio Vantaggi,
+   Trinari, Nudi, Porcacchia dalla rosa del gruppo, piu' eventuali ospiti scritti a mano), poi ogni set e'
+   una partita a se': prima di ogni partita si compongono le due coppie con pochi tocchi (scambia,
+   rigioca la coppia di prima, metti dentro un altro), con l'ordine di servizio. Ogni partita si salva e
+   si invia da sola, col `padelPlayerId` dei giocatori della rosa: nella casella l'admin trova i nomi
+   gia' giusti e conferma; un ospite che non e' nella dashboard resta da scegliere o da creare.
+4. **Modificabile dopo**: fino alla conferma la voce nella casella si corregge (giocatori, scarto); dopo
+   l'import la partita e' una partita normale della dashboard e si modifica come oggi da admin (da
+   verificare che la modifica tocchi anche la Cronaca, `v2_match_logs`). Nell'app si puo' rimandare una
+   partita corretta: la casella la riapre se non e' ancora importata.
+5. **Gironi e iscritti**: la dashboard sa chi si e' iscritto alla serata o al torneo (RSVP, gironi):
+   l'app puo' proporre i presenti e le partite del girone gia' composte. Dopo il punto 3.
+6. **Diretta**: la dashboard ha gia' una sezione live (`v2_live_matches`, Realtime, stato jsonb e codice
+   d'accesso; oggi scrivono solo owner e admin). L'app puo' pubblicare lo stato a ogni punto se l'account
+   ha i permessi: serve una RPC che accetti lo stato dall'app (per l'admin, o per chi ha il codice della
+   diretta), la traduzione fra lo stato del motore dell'app e quello di `LiveScoring` della dashboard, e
+   la chiusura della diretta che diventa la voce nella casella (o la partita, se chi gioca e' admin).
+
+Ordine proposto: 1 (sicurezza) -> applicare 65 e 64 in produzione -> 2 e 3 (app) -> 4 -> 6 -> 5.
+Ogni passo che tocca la dashboard o il database resta **[AUTORIZZAZIONE]** come sopra.
