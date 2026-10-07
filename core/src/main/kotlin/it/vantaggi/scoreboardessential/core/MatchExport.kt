@@ -7,8 +7,10 @@ import java.time.format.DateTimeFormatter
 /**
  * Un giocatore cosi' come il tabellone lo conosce: l'id della sua riga locale, il nome e il lato.
  *
- * E' anche la forma in cui finisce nel file. Non c'e' nessun id esterno: l'app e' a se', e chi
- * importa sceglie i giocatori del proprio gruppo seguendo l'ordine di servizio.
+ * E' anche la forma in cui finisce nel file. Di norma non c'e' nessun id esterno: l'app e' a se',
+ * e chi importa sceglie i giocatori del proprio gruppo seguendo l'ordine di servizio. L'id di
+ * Padel Elite (`padelPlayerId`) non sta qui ma in [MatchExport.padelPlayerIds]: arriva solo se chi
+ * esporta lo passa (l'invio a un gruppo), e questa classe e' anche la proiezione di una query Room.
  */
 data class MatchPlayer(
     val localId: Int,
@@ -85,6 +87,13 @@ data class MatchExport(
     /** Un `[gamesTeam1, gamesTeam2]` per ogni set CHIUSO, nell'ordine in cui sono stati giocati. */
     val setScores: List<List<Int>>,
     val timeline: List<TimelinePoint>,
+    /**
+     * Opzionale: da id locale (`MatchPlayer.localId`) a id del giocatore nella dashboard di Padel
+     * Elite. Vuota di default, e allora il file e' identico a quello senza collegamenti. Ogni voce
+     * diventa `padelPlayerId` del giocatore corrispondente; le chiavi che non sono fra i
+     * [players] e gli id che la dashboard non conserva (interi da 1 a 9 cifre) non entrano.
+     */
+    val padelPlayerIds: Map<Int, Int> = emptyMap(),
 )
 
 /**
@@ -143,7 +152,9 @@ object MatchExporter {
     /**
      * Versione del formato del file. Un bump la incrementa; chi importa deve controllarla.
      *
-     * La 2 aggiunge `matchId`, `startedAt` e `appVersion` e toglie `padelPlayerId` dai giocatori.
+     * La 2 aggiunge `matchId`, `startedAt` e `appVersion` e **di norma** non scrive piu'
+     * `padelPlayerId` nei giocatori: ricompare soltanto se chi esporta passa i collegamenti di un
+     * gruppo ([build], `padelPlayerIds`), cioe' nell'invio a Padel Elite e mai nel file condiviso.
      * Tutti gli altri campi hanno lo stesso nome e lo stesso significato della 1.
      */
     const val FORMAT_VERSION = 2
@@ -156,6 +167,9 @@ object MatchExporter {
     private val STARTED_AT_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssxxx")
 
     private const val PLAYERS_PER_MATCH = 4
+
+    /** La dashboard conserva `padelPlayerId` solo se e' un intero da 1 a 9 cifre (migrazione 64). */
+    private const val MAX_PADEL_PLAYER_ID = 999_999_999
 
     /**
      * Elenca cio' che manca senza costruire niente: e' la forma che serve all'interfaccia per
@@ -176,11 +190,15 @@ object MatchExporter {
      * di un'altra, e l'export ne uscirebbe plausibile e sbagliato. Per la stessa ragione qui il
      * punteggio finale non viene letto da `engine.state` ma dal fold che produce la timeline: la
      * partita esportata e' esattamente quella che i punti elencati raccontano.
+     *
+     * [padelPlayerIds] (id locale -> id nella dashboard) e' facoltativo e il default e' nessuno:
+     * senza, il file e' quello di sempre. Si filtra qui, una volta, a cio' che la dashboard accetta.
      */
     fun build(
         engine: MatchEngine,
         players: List<MatchPlayer>,
         origin: ExportOrigin,
+        padelPlayerIds: Map<Int, Int> = emptyMap(),
     ): ExportResult {
         val replayed = replay(engine)
         val missing = problems(players, replayed.timeline)
@@ -205,6 +223,10 @@ object MatchExporter {
                 winnerTeam = state.wonBy,
                 setScores = (state as? RacketScore)?.closedSets?.map { it.games } ?: emptyList(),
                 timeline = replayed.timeline,
+                padelPlayerIds =
+                    padelPlayerIds.filter { (localId, padelId) ->
+                        padelId in 1..MAX_PADEL_PLAYER_ID && players.any { it.localId == localId }
+                    },
             )
         return ExportResult.Ready(export)
     }
@@ -230,6 +252,7 @@ object MatchExporter {
             sb.append("{\"localId\":").append(player.localId)
             sb.append(",\"name\":").append(quote(player.name))
             sb.append(",\"side\":").append(player.side)
+            export.padelPlayerIds[player.localId]?.let { sb.append(",\"padelPlayerId\":").append(it) }
             sb.append('}')
         }
         sb.append("],\"scoreTeam1\":").append(export.scoreTeam1)
