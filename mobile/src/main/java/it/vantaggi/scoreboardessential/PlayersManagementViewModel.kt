@@ -3,6 +3,7 @@ package it.vantaggi.scoreboardessential
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import it.vantaggi.scoreboardessential.database.PadelEliteLink
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.database.Role
@@ -107,8 +108,13 @@ class PlayersManagementViewModel(
 
     fun getPlayer(playerId: Long): Flow<PlayerWithRoles?> = playerRepository.getPlayerWithRoles(playerId)
 
+    /** I collegamenti a Padel Elite dei giocatori appena cancellati, per rimetterli se l'utente annulla (R-1). */
+    private val removedLinks = mutableMapOf<Int, List<PadelEliteLink>>()
+
     fun deletePlayer(playerWithRoles: PlayerWithRoles) {
         viewModelScope.launch {
+            // La cancellazione porta via i collegamenti (CASCADE): si leggono prima.
+            removedLinks[playerWithRoles.player.playerId] = playerRepository.linksOf(playerWithRoles.player.playerId)
             playerRepository.deletePlayer(playerWithRoles.player)
         }
     }
@@ -118,7 +124,7 @@ class PlayersManagementViewModel(
         roleIds: List<Int>,
     ) {
         viewModelScope.launch {
-            playerRepository.insertPlayerWithRoles(player, roleIds)
+            playerRepository.restorePlayer(player, roleIds, removedLinks.remove(player.playerId).orEmpty())
         }
     }
 

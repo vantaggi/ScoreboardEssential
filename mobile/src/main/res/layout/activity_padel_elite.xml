@@ -195,6 +195,83 @@
                     android:text="@string/padel_elite_retry"
                     android:visibility="gone" />
 
+                <!--
+                    R-1, "Giocatori del gruppo": la rosa della dashboard, riga per riga, e a chi e' collegata
+                    nell'app. Un gruppo tonale con righe (non card). Stati: scegli un gruppo, in caricamento,
+                    vuota e errore di rete (EmptyStateView), con righe. Nessun primario: e' una scelta.
+                -->
+                <LinearLayout
+                    android:id="@+id/rosa_section"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_32"
+                        android:accessibilityHeading="true"
+                        android:text="@string/padel_elite_rosa_title"
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        android:textColor="@color/elite_text_primary" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_4"
+                        android:text="@string/padel_elite_rosa_hint"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="@color/elite_text_secondary" />
+
+                    <TextView
+                        android:id="@+id/rosa_message"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_8"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="@color/elite_text_secondary"
+                        tools:text="Carico i giocatori del gruppo" />
+
+                    <it.vantaggi.scoreboardessential.ui.EmptyStateView
+                        android:id="@+id/rosa_empty_state"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/rosa_group"
+                        style="@style/Widget.App.Group"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_8"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:id="@+id/rosa_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Compare solo con nomi uguali da proporre: la proposta si conferma con questo comando. -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/rosa_same_names_button"
+                        style="@style/Widget.App.Button.Secondary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_8"
+                        android:visibility="gone" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/rosa_refresh_button"
+                        style="@style/Widget.App.Button.Text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/padel_elite_rosa_refresh"
+                        android:visibility="gone" />
+                </LinearLayout>
+
                 <!-- Esci non e' l'azione della schermata: testuale, in fondo, senza peso. -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/logout_button"

@@ -148,15 +148,60 @@ class MatchExportTest {
     }
 
     /**
-     * Il numero Padel Elite non esiste piu', per scelta del proprietario: l'app e' a se'. Bastano
-     * i nomi del tabellone, e nel file non resta traccia del campo: i giocatori li sceglie chi
-     * importa, seguendo l'ordine di servizio.
+     * Di norma il numero Padel Elite non c'e': l'app e' a se'. Bastano i nomi del tabellone, e
+     * nel file non resta traccia del campo: i giocatori li sceglie chi importa, seguendo l'ordine
+     * di servizio. Ricompare solo se chi esporta lo passa (R-1, l'invio a un gruppo).
      */
     @Test
     fun bastanoINomiDelTabelloneENelFileNonCeIlNumeroPadelElite() {
         assertEquals(emptyList<ExportProblem>(), MatchExporter.validate(setVinto(), roster))
         val json = MatchExporter.toJson(ready(MatchExporter.build(setVinto(), roster, origin)))
         assertFalse(json, json.contains("padelPlayerId"))
+    }
+
+    /**
+     * R-1: con i collegamenti di un gruppo (id locale -> id della dashboard) i giocatori collegati
+     * portano `padelPlayerId`, gli altri no; tutto il resto del file e' lo stesso.
+     */
+    @Test
+    fun conICollegamentiIGiocatoriCollegatiPortanoPadelPlayerId() {
+        val senza = MatchExporter.toJson(ready(MatchExporter.build(setVinto(), roster, origin)))
+        val con = MatchExporter.toJson(ready(MatchExporter.build(setVinto(), roster, origin, mapOf(1 to 17, 4 to 230))))
+
+        assertTrue(con, con.contains("{\"localId\":1,\"name\":\"Marco\",\"side\":1,\"padelPlayerId\":17}"))
+        assertTrue(con, con.contains("{\"localId\":2,\"name\":\"Anna\",\"side\":2}"))
+        assertTrue(con, con.contains("{\"localId\":3,\"name\":\"Luca\",\"side\":1}"))
+        assertTrue(con, con.contains("{\"localId\":4,\"name\":\"Sara\",\"side\":2,\"padelPlayerId\":230}"))
+        assertEquals(2, "padelPlayerId".toRegex().findAll(con).count())
+        assertEquals(senza, con.replace(Regex(",\"padelPlayerId\":\\d+"), ""))
+    }
+
+    /** Senza collegamenti il file e' byte per byte quello di prima: nessun campo nuovo, ne' null. */
+    @Test
+    fun senzaCollegamentiIlFileNonCambiaDiUnByte() {
+        val predefinito = MatchExporter.toJson(ready(MatchExporter.build(setVinto(), roster, origin)))
+        val vuoto = MatchExporter.toJson(ready(MatchExporter.build(setVinto(), roster, origin, emptyMap())))
+
+        assertEquals(predefinito, vuoto)
+        assertFalse(vuoto, vuoto.contains("padelPlayerId"))
+        assertTrue(ready(MatchExporter.build(setVinto(), roster, origin)).padelPlayerIds.isEmpty())
+    }
+
+    /** La dashboard conserva solo interi da 1 a 9 cifre: il resto non entra nel file, e un id di chi non gioca nemmeno. */
+    @Test
+    fun siScrivonoSoloGliIdCheLaDashboardConserva() {
+        val export =
+            ready(
+                MatchExporter.build(
+                    setVinto(),
+                    roster,
+                    origin,
+                    mapOf(1 to 0, 2 to -5, 3 to 1_000_000_000, 4 to 999_999_999, 99 to 7),
+                ),
+            )
+
+        assertEquals(mapOf(4 to 999_999_999), export.padelPlayerIds)
+        assertEquals(1, "padelPlayerId".toRegex().findAll(MatchExporter.toJson(export)).count())
     }
 
     /** I tre campi del formato 2, nella forma che la dashboard valida. */

@@ -130,6 +130,87 @@ class PadelEliteApiTest {
         }
 
     @Test
+    fun `la rosa del gruppo filtra per gruppo, ordina per nome e legge id, nome e account`() =
+        runBlocking {
+            val api =
+                api { _, _ ->
+                    json(
+                        200,
+                        """[{"id":3,"name":"Anna Bianchi"},""" +
+                            """{"id":12,"name":"  Marco Rossi "},""" +
+                            """{"id":0,"name":"Rotto"},""" +
+                            """{"id":15,"name":"   "}]""",
+                    )
+                }
+
+            val rosa = (api.fetchRoster("A1", "g-1") as RosterResult.Ok).players
+
+            // Le righe senza id positivo o senza nome non si possono collegare: restano fuori.
+            assertEquals(listOf(RemotePlayer(3, "Anna Bianchi"), RemotePlayer(12, "Marco Rossi")), rosa)
+            val richiesta = finto!!.richieste.single()
+            assertEquals("/rest/v1/v2_players?group_id=eq.g-1&select=id,name&order=name", richiesta.path)
+            assertEquals("Bearer A1", richiesta.getHeader("Authorization"))
+            assertEquals(CHIAVE_DI_PROVA, richiesta.getHeader("apikey"))
+        }
+
+    @Test
+    fun `un gruppo senza giocatori e' una rosa vuota, non un errore`() =
+        runBlocking {
+            assertEquals(RosterResult.Ok(emptyList()), api { _, _ -> json(200, "[]") }.fetchRoster("A1", "g-1"))
+        }
+
+    @Test
+    fun `la rosa con un token rifiutato dice di rinnovare`() =
+        runBlocking {
+            assertEquals(RosterResult.NotAuthenticated, api { _, _ -> json(401, """{"message":"JWT expired"}""") }.fetchRoster("A", "g"))
+        }
+
+    @Test
+    fun `un 403 sulla rosa non e' un errore di rete, non si e' piu' nel gruppo`() =
+        runBlocking {
+            assertEquals(
+                RosterResult.NotAuthorized,
+                api {
+                    _,
+                    _,
+                    ->
+                    json(403, """{"message":"permission denied"}""")
+                }.fetchRoster("A1", "g-1"),
+            )
+        }
+
+    @Test
+    fun `la rosa chiede solo id e nome, niente dell'account dei giocatori`() =
+        runBlocking {
+            api { _, _ -> json(200, "[]") }.fetchRoster("A1", "g-1")
+
+            assertTrue(
+                finto!!
+                    .richieste
+                    .single()
+                    .path!!
+                    .contains("select=id,name&"),
+            )
+            assertTrue(
+                !finto!!
+                    .richieste
+                    .single()
+                    .path!!
+                    .contains("linked_user_id"),
+            )
+        }
+
+    @Test
+    fun `la rosa senza rete, con un 5xx o con un corpo che non e' una lista e' un errore di rete`() =
+        runBlocking {
+            assertEquals(RosterResult.Network, api { _, _ -> json(503, "") }.fetchRoster("A1", "g-1"))
+            assertEquals(RosterResult.Network, api { _, _ -> json(200, """{"message":"non una lista"}""") }.fetchRoster("A1", "g-1"))
+            val spento = api { _, _ -> json(200, "[]") }
+            finto!!.chiudi()
+            assertEquals(RosterResult.Network, spento.fetchRoster("A1", "g-1"))
+        }
+
+    @Test
     fun `l'invio riuscito manda il file intatto con gruppo e token`() =
         runBlocking {
             val api = api { _, _ -> rispostaDiInvio() }

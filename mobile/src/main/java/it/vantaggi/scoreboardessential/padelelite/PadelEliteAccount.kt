@@ -25,6 +25,19 @@ sealed interface GroupsOutcome {
     data object Network : GroupsOutcome
 }
 
+sealed interface RosterOutcome {
+    data class Ok(
+        val players: List<RemotePlayer>,
+    ) : RosterOutcome
+
+    data object NeedLogin : RosterOutcome
+
+    /** Non si e' piu' membri del gruppo: va scelto un altro gruppo. */
+    data object NotAuthorized : RosterOutcome
+
+    data object Network : RosterOutcome
+}
+
 /**
  * L'account Padel Elite dell'utente: accesso, uscita, rinnovo automatico del token, gruppo scelto
  * e le chiamate che richiedono di essere autenticati.
@@ -139,6 +152,22 @@ class PadelEliteAccount(
             is GroupsResult.Ok -> GroupsOutcome.Ok(esito.groups)
             GroupsResult.NotAuthenticated -> GroupsOutcome.NeedLogin
             GroupsResult.Network -> GroupsOutcome.Network
+        }
+
+    /** La rosa del gruppo [groupId] dalla dashboard, con lo stesso rinnovo del token delle altre chiamate. */
+    suspend fun roster(groupId: String): RosterOutcome =
+        when (
+            val esito =
+                authenticated<RosterResult>(
+                    needLogin = RosterResult.NotAuthenticated,
+                    network = RosterResult.Network,
+                    isUnauthorized = { it == RosterResult.NotAuthenticated },
+                ) { api.fetchRoster(it.accessToken, groupId) }
+        ) {
+            is RosterResult.Ok -> RosterOutcome.Ok(esito.players)
+            RosterResult.NotAuthenticated -> RosterOutcome.NeedLogin
+            RosterResult.NotAuthorized -> RosterOutcome.NotAuthorized
+            RosterResult.Network -> RosterOutcome.Network
         }
 
     suspend fun submit(

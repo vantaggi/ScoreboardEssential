@@ -45,15 +45,20 @@ object MatchExportUtils {
      *
      * Un registro illeggibile vale come "niente da esportare": meglio nessun file che un file
      * con una partita ricostruita a meta'.
+     *
+     * [padelPlayerIds] (id locale -> id nella dashboard) lo passa solo l'invio a Padel Elite, col
+     * collegamento del gruppo di destinazione; il file da condividere non lo passa mai.
      */
     fun savedMatchExport(
         match: Match,
         lineup: List<MatchPlayer>,
         appVersion: String,
         zone: ZoneId,
+        padelPlayerIds: Map<Int, Int> = emptyMap(),
     ): ExportResult {
         val engine = savedEngine(match) ?: return ExportResult.Incomplete(listOf(ExportProblem.NoPoints))
-        return MatchExporter.build(engine, lineup, ExportOrigin(match.matchUuid, match.startedAt, zone, appVersion))
+        val origin = ExportOrigin(match.matchUuid, match.startedAt, zone, appVersion)
+        return MatchExporter.build(engine, lineup, origin, padelPlayerIds)
     }
 
     /**

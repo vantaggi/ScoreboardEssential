@@ -17,8 +17,8 @@ import it.vantaggi.scoreboardessential.utils.MovimentoRidotto
 class ScoreboardEssentialApplication : Application() {
     val database by lazy { AppDatabase.getDatabase(this) }
     val colorRepository by lazy { ColorRepository(this) }
-    val playerRepository by lazy { PlayerRepository(database.playerDao()) }
-    val matchRepository by lazy { MatchRepository(database.matchDao(), this, colorRepository) }
+    val playerRepository by lazy { PlayerRepository(database.playerDao(), database.padelEliteLinkDao()) }
+    val matchRepository by lazy { MatchRepository(database.matchDao(), this, colorRepository, database.padelEliteLinkDao()) }
     val userPreferencesRepository by lazy { UserPreferencesRepository(this) }
     val matchSettingsRepository by lazy { MatchSettingsRepository(this, colorRepository) }
 

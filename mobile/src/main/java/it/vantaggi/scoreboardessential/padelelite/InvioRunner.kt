@@ -37,7 +37,11 @@ enum class RunOutcome {
 class InvioRunner(
     private val account: PadelEliteAccount,
     private val store: InvioStore,
-    private val payload: suspend (matchUuid: String) -> PayloadOutcome,
+    /**
+     * Il file della partita per il gruppo di destinazione: i `padelPlayerId` sono quelli dei
+     * collegamenti di QUEL gruppo (R-1), perche' un id della dashboard vale solo nel suo gruppo.
+     */
+    private val payload: suspend (matchUuid: String, groupId: String) -> PayloadOutcome,
 ) {
     suspend fun run(
         matchUuid: String,
@@ -45,7 +49,7 @@ class InvioRunner(
         attempt: Int,
     ): RunOutcome {
         val file =
-            when (val esito = payload(matchUuid)) {
+            when (val esito = payload(matchUuid, groupId)) {
                 is PayloadOutcome.Json -> {
                     esito.text
                 }

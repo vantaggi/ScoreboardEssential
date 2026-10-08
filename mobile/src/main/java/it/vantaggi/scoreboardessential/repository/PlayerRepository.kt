@@ -1,5 +1,7 @@
 package it.vantaggi.scoreboardessential.repository
 
+import it.vantaggi.scoreboardessential.database.PadelEliteLink
+import it.vantaggi.scoreboardessential.database.PadelEliteLinkDao
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
@@ -14,7 +16,22 @@ import kotlinx.coroutines.flow.Flow
  */
 class PlayerRepository(
     private val playerDao: PlayerDao,
+    /** I collegamenti ai giocatori di Padel Elite (R-1): la cancellazione li porta via, l'annulla li deve rimettere. */
+    private val padelLinkDao: PadelEliteLinkDao? = null,
 ) {
+    /** I collegamenti del giocatore, da leggere PRIMA di cancellarlo (la CASCADE li toglie). */
+    suspend fun linksOf(playerId: Int): List<PadelEliteLink> = padelLinkDao?.linksOfPlayer(playerId).orEmpty()
+
+    /** Ripristina un giocatore cancellato col suo id, i suoi ruoli e i collegamenti che aveva. */
+    suspend fun restorePlayer(
+        player: Player,
+        roleIds: List<Int>,
+        links: List<PadelEliteLink>,
+    ) {
+        playerDao.insertPlayerWithRoles(player, roleIds)
+        if (links.isNotEmpty()) padelLinkDao?.restore(links)
+    }
+
     /** Flow of all players currently in the database, including their assigned roles. */
     val allPlayers: Flow<List<PlayerWithRoles>> = playerDao.getAllPlayers()
 

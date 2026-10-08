@@ -95,7 +95,7 @@ class InvioWorkerTest {
         val store = SessionStore(preferenze(context, "sessione_worker"), SoftwareSecretBox())
         store.save(PadelEliteSession("A1", "R1", Long.MAX_VALUE / 2, "u-1", "a@b.it"))
         val account = PadelEliteAccount(s.config(), PadelEliteApi(s.config()), store)
-        val runner = InvioRunner(account, InvioStore(preferenze(context, "invii_worker"))) { PayloadOutcome.Json(FILE_V2) }
+        val runner = InvioRunner(account, InvioStore(preferenze(context, "invii_worker"))) { _, _ -> PayloadOutcome.Json(FILE_V2) }
         val dati =
             androidx.work.Data
                 .Builder()
