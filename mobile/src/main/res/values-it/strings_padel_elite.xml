@@ -39,8 +39,10 @@
     <string name="padel_elite_status_queued">In coda: parte appena c\'e\' rete</string>
     <string name="padel_elite_status_queued_full">In coda: la casella del gruppo e\' piena, riprovo piu\' tardi</string>
     <string name="padel_elite_status_sent">Inviata: in attesa di un admin</string>
+    <string name="padel_elite_status_updated">Aggiornata nella casella: in attesa di un admin</string>
+    <string name="padel_elite_status_present">Gia\' nella casella: in attesa di un admin</string>
     <string name="padel_elite_status_imported">Importata da un admin</string>
-    <string name="padel_elite_status_discarded">Scartata da un admin: puoi rimandarla</string>
+    <string name="padel_elite_status_discarded">Scartata da un admin</string>
     <string name="padel_elite_status_login_again">Accedi di nuovo a Padel Elite</string>
     <string name="padel_elite_status_unsendable_invalid">Non inviabile: il file non e\' valido (%1$s)</string>
     <string name="padel_elite_status_unsendable_invalid_plain">Non inviabile: il file non e\' valido</string>

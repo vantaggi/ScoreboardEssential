@@ -39,8 +39,10 @@
     <string name="padel_elite_status_queued">Queued: it leaves as soon as there is a connection</string>
     <string name="padel_elite_status_queued_full">Queued: the group inbox is full, trying again later</string>
     <string name="padel_elite_status_sent">Sent: waiting for an admin</string>
+    <string name="padel_elite_status_updated">Updated in the inbox: waiting for an admin</string>
+    <string name="padel_elite_status_present">Already in the inbox: waiting for an admin</string>
     <string name="padel_elite_status_imported">Imported by an admin</string>
-    <string name="padel_elite_status_discarded">Discarded by an admin: you can send it again</string>
+    <string name="padel_elite_status_discarded">Discarded by an admin</string>
     <string name="padel_elite_status_login_again">Sign in to Padel Elite again</string>
     <string name="padel_elite_status_unsendable_invalid">Cannot be sent: the file is not valid (%1$s)</string>
     <string name="padel_elite_status_unsendable_invalid_plain">Cannot be sent: the file is not valid</string>

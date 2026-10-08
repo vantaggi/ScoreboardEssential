@@ -125,11 +125,13 @@ class InvioNelloStoricoTest {
     }
 
     @Test
-    fun `il comando sparisce in coda, inviata e importata e torna dove si puo' rimandare`() {
-        for (s in listOf(InvioState.QUEUED, InvioState.SENT, InvioState.IMPORTED)) {
-            assertFalse("$s", stato(invio = InvioInfo(s)).canSendToPadelElite)
+    fun `il comando "Invia a Padel Elite" torna solo dove l'invio e' fallito`() {
+        val altri = InvioState.entries - listOf(InvioState.UNSENDABLE, InvioState.LOGIN_AGAIN)
+        for (s in altri) {
+            assertFalse("$s", InvioInfo(s).canSend)
         }
-        for (s in listOf(InvioState.UNSENDABLE, InvioState.LOGIN_AGAIN, InvioState.DISCARDED)) {
+        for (s in listOf(InvioState.UNSENDABLE, InvioState.LOGIN_AGAIN)) {
+            assertTrue("$s", InvioInfo(s).canSend)
             assertTrue("$s", stato(invio = InvioInfo(s)).canSendToPadelElite)
         }
     }
@@ -142,6 +144,8 @@ class InvioNelloStoricoTest {
                 InvioInfo(InvioState.QUEUED) to "In coda",
                 InvioInfo(InvioState.QUEUED, InvioReason.INBOX_FULL) to "casella del gruppo e' piena",
                 InvioInfo(InvioState.SENT) to "in attesa di un admin",
+                InvioInfo(InvioState.UPDATED) to "Aggiornata nella casella",
+                InvioInfo(InvioState.PRESENT) to "nella casella",
                 InvioInfo(InvioState.IMPORTED) to "Importata",
                 InvioInfo(InvioState.DISCARDED) to "Scartata",
                 InvioInfo(InvioState.LOGIN_AGAIN) to "Accedi di nuovo",

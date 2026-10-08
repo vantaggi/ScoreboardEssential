@@ -13,6 +13,15 @@ enum class InvioState {
     /** Consegnata: aspetta che un admin del gruppo la apra e scelga i giocatori. */
     SENT,
 
+    /** Rimandata: il server ha sostituito il file della voce ancora in attesa (giocatori collegati, correzioni). */
+    UPDATED,
+
+    /**
+     * Rimandata o ritentata, e la voce c'era gia' ancora in attesa: il server non ha cambiato niente (file
+     * identico, o un server che non sostituisce, o l'ha inviata un altro). Non dice "aggiornata" per non mentire.
+     */
+    PRESENT,
+
     /** Un admin l'ha importata: e' nello storico del gruppo. */
     IMPORTED,
 
@@ -53,9 +62,19 @@ data class InvioInfo(
     /** Il pezzo del file che non tornava (`matchId`, `players`...), se il server l'ha detto. */
     val detail: String? = null,
 ) {
-    /** Il comando "Invia a Padel Elite" compare solo dove ha senso: mai mentre e' in coda o gia' arrivata. */
+    /**
+     * Il comando "Invia a Padel Elite" compare solo dove ha senso: mai mentre e' in coda o gia' arrivata.
+     * Una voce scartata dall'admin resta scartata (il server non la riapre): niente comando.
+     */
     val canSend: Boolean
-        get() = state == InvioState.UNSENDABLE || state == InvioState.LOGIN_AGAIN || state == InvioState.DISCARDED
+        get() = state == InvioState.UNSENDABLE || state == InvioState.LOGIN_AGAIN
+
+    /** La voce e' nella casella e aspetta un admin: ci si puo' ancora cambiare il file con "Invia di nuovo". */
+    val isPending: Boolean
+        get() = state == InvioState.SENT || state == InvioState.UPDATED || state == InvioState.PRESENT
+
+    /** "Invia di nuovo": solo per una voce in attesa; importata e scartata non cambiano piu'. */
+    val canResend: Boolean get() = isPending
 }
 
 /**

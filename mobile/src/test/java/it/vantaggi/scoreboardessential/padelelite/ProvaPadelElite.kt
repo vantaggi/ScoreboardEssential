@@ -58,13 +58,16 @@ internal const val FILE_V2 =
 
 internal const val UUID_PARTITA = "3f2a9c1e-5b7d-4e8a-9c01-2d4f6a8b0c1e"
 
+/** [aggiornata] null = la chiave `updated` manca, come in un server vecchio. */
 internal fun rispostaDiInvio(
     stato: String = "pending",
     giaInviata: Boolean = false,
+    aggiornata: Boolean? = null,
 ) = json(
     200,
     """{"item":{"id":"i-1","group_id":"g-1","external_id":"match:$UUID_PARTITA","status":"$stato","match_id":null,""" +
-        """"created_at":"2026-10-07T10:00:00+00:00"},"already_submitted":$giaInviata}""",
+        """"created_at":"2026-10-07T10:00:00+00:00"},"already_submitted":$giaInviata""" +
+        (aggiornata?.let { ",\"updated\":$it" } ?: "") + "}",
 )
 
 internal fun erroreRpc(

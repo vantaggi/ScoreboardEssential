@@ -72,8 +72,47 @@ class InvioRunnerTest {
 
             assertEquals(RunOutcome.DONE, runner.run(UUID_PARTITA, "g-1", 0))
 
-            assertEquals(InvioState.SENT, stato()?.state)
+            // Non e' un invio nuovo e il server non ha detto "aggiornata": si legge "gia' presente".
+            assertEquals(InvioState.PRESENT, stato()?.state)
             assertEquals(1, inviiAlServer)
+        }
+
+    @Test
+    fun `se il server ha sostituito il file della voce in attesa la partita e' aggiornata`() =
+        runBlocking {
+            val runner = runner { _, _ -> rispostaDiInvio("pending", giaInviata = true, aggiornata = true) }
+
+            assertEquals(RunOutcome.DONE, runner.run(UUID_PARTITA, "g-1", 0))
+
+            assertEquals(InvioInfo(InvioState.UPDATED), stato())
+        }
+
+    @Test
+    fun `updated falso su una voce in attesa e' gia' presente, e un server vecchio senza la chiave lo stesso`() =
+        runBlocking {
+            val identico = runner { _, _ -> rispostaDiInvio("pending", giaInviata = true, aggiornata = false) }
+            assertEquals(RunOutcome.DONE, identico.run(UUID_PARTITA, "g-1", 0))
+            assertEquals(InvioState.PRESENT, stato()?.state)
+            finto!!.chiudi()
+
+            val vecchio = runner { _, _ -> rispostaDiInvio("pending", giaInviata = true) }
+            assertEquals(RunOutcome.DONE, vecchio.run(UUID_PARTITA, "g-1", 0))
+            assertEquals(InvioState.PRESENT, stato()?.state)
+        }
+
+    @Test
+    fun `una voce importata o scartata resta tale anche se il server dice updated`() =
+        runBlocking {
+            // Per il contratto non succede (updated vale solo per una voce in attesa), ma lo stato
+            // della voce comanda sempre: mai "aggiornata" su una voce che l'admin ha gia' chiusa.
+            val importata = runner { _, _ -> rispostaDiInvio("imported", giaInviata = true, aggiornata = true) }
+            importata.run(UUID_PARTITA, "g-1", 0)
+            assertEquals(InvioState.IMPORTED, stato()?.state)
+            finto!!.chiudi()
+
+            val scartata = runner { _, _ -> rispostaDiInvio("discarded", giaInviata = true, aggiornata = false) }
+            scartata.run(UUID_PARTITA, "g-1", 0)
+            assertEquals(InvioState.DISCARDED, stato()?.state)
         }
 
     @Test
@@ -241,11 +280,12 @@ class InvioRunnerTest {
                         rispostaDiInvio()
                     }
                 }
-            invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT))
+            invii.set(UUID_PARTITA, InvioInfo(InvioState.UPDATED))
             invii.set("altra", InvioInfo(InvioState.UNSENDABLE, InvioReason.TOO_LARGE))
 
             runner.refreshStatuses()
 
+            // Anche una voce aggiornata o gia' presente e' ancora in attesa: la casella dice se l'admin l'ha chiusa.
             assertEquals(InvioState.IMPORTED, stato()?.state)
             // Chi non era in attesa non si tocca e non si interroga.
             assertEquals(InvioState.UNSENDABLE, invii.get("altra")?.state)

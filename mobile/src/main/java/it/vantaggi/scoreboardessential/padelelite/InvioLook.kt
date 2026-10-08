@@ -37,6 +37,14 @@ fun invioLook(
             InvioLook(context.getString(R.string.padel_elite_status_sent), R.drawable.ic_hourglass_empty, R.color.elite_text_secondary)
         }
 
+        InvioState.UPDATED -> {
+            InvioLook(context.getString(R.string.padel_elite_status_updated), R.drawable.ic_hourglass_empty, R.color.elite_text_secondary)
+        }
+
+        InvioState.PRESENT -> {
+            InvioLook(context.getString(R.string.padel_elite_status_present), R.drawable.ic_hourglass_empty, R.color.elite_text_secondary)
+        }
+
         InvioState.IMPORTED -> {
             InvioLook(context.getString(R.string.padel_elite_status_imported), R.drawable.ic_check_circle, R.color.elite_lime)
         }

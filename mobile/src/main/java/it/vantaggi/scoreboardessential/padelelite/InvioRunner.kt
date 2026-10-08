@@ -70,7 +70,7 @@ class InvioRunner(
                     when (esito.item.status) {
                         "imported" -> InvioState.IMPORTED
                         "discarded" -> InvioState.DISCARDED
-                        else -> InvioState.SENT
+                        else -> pendingState(esito)
                     }
                 store.set(matchUuid, InvioInfo(stato))
                 RunOutcome.DONE
@@ -107,6 +107,14 @@ class InvioRunner(
         }
     }
 
+    /** Una voce in attesa: sostituita dal server (`updated`), gia' li' senza cambiare, o appena consegnata. */
+    private fun pendingState(esito: SubmitResult.Accepted) =
+        when {
+            esito.updated -> InvioState.UPDATED
+            esito.alreadySubmitted -> InvioState.PRESENT
+            else -> InvioState.SENT
+        }
+
     private fun waiting(
         matchUuid: String,
         reason: InvioReason?,
@@ -125,13 +133,13 @@ class InvioRunner(
     }
 
     /**
-     * Per le partite SENT chiede alla casella com'e' andata: importata o scartata dall'admin. Si
+     * Per le partite in attesa (inviate, aggiornate, gia' presenti) chiede alla casella com'e' andata: importata o scartata dall'admin. Si
      * ferma al primo errore di rete o di accesso (le altre falliranno uguale). Non cambia lo
      * stato di chi non e' piu' in attesa.
      */
     suspend fun refreshStatuses() {
         for ((uuid, info) in store.states.value) {
-            if (info.state != InvioState.SENT) continue
+            if (!info.isPending) continue
             when (val esito = account.status(uuid)) {
                 is StatusResult.Found -> {
                     when (esito.status) {
