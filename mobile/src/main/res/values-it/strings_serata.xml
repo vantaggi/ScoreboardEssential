@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Serata: chi gioca la prossima. Una schermata, un compito. -->
+    <string name="title_serata">Serata</string>
+    <string name="state_selected">Selezionato</string>
+
+    <string name="serata_next_title">Partita %1$d</string>
+    <string name="serata_pair_title">Coppia %1$d</string>
+    <string name="serata_seat_description">Coppia %1$d, posto %2$d: %3$s</string>
+    <string name="serata_seats_hint">Il posto 1 di ogni coppia serve per primo. Tocca due nomi per scambiarli.</string>
+    <string name="serata_rotate">Ruota le coppie</string>
+    <string name="serata_same_pairs">Stesse coppie</string>
+    <string name="serata_swap_sides">Scambia i lati</string>
+
+    <string name="serata_bench_title">In panchina</string>
+    <string name="serata_bench_empty">Nessuno in panchina. Tutti i presenti giocano.</string>
+    <string name="serata_bench_description">%1$s, in panchina, %2$d partite giocate</string>
+
+    <plurals name="serata_present_title">
+        <item quantity="one">%1$d presente</item>
+        <item quantity="many">%1$d presenti</item>
+        <item quantity="other">%1$d presenti</item>
+    </plurals>
+    <string name="serata_present_title_none">Chi c\'è stasera</string>
+    <string name="serata_roster_empty">Non ci sono ancora giocatori. Aggiungi un ospite, o crea i giocatori da Giocatori.</string>
+    <string name="serata_present_description">%1$s, presente. Tocca per togliere</string>
+    <string name="serata_absent_description">%1$s, assente. Tocca per aggiungere</string>
+    <string name="serata_add_guest">Aggiungi un ospite</string>
+    <string name="serata_guest_hint">Nome dell\'ospite</string>
+    <string name="serata_guest_add">Aggiungi</string>
+
+    <plurals name="serata_games_played">
+        <item quantity="one">%1$d partita</item>
+        <item quantity="many">%1$d partite</item>
+        <item quantity="other">%1$d partite</item>
+    </plurals>
+
+    <string name="serata_readonly">C\'è una partita in corso. La prossima si compone a fine partita.</string>
+    <plurals name="serata_start_missing">
+        <item quantity="one">Servono almeno 4 presenti. Ne manca %1$d.</item>
+        <item quantity="many">Servono almeno 4 presenti. Ne mancano %1$d.</item>
+        <item quantity="other">Servono almeno 4 presenti. Ne mancano %1$d.</item>
+    </plurals>
+    <string name="serata_start_match">Inizia la partita</string>
+    <string name="serata_close">Chiudi la serata</string>
+    <string name="serata_close_title">Chiudere la serata?</string>
+    <string name="serata_close_message">Le partite già giocate restano nello storico.</string>
+    <string name="serata_closed">Serata chiusa</string>
+
+    <!-- Foglio PARTITA e dialogo di fine partita. -->
+    <string name="serata_sheet_title">Serata</string>
+    <string name="serata_sheet_none">Nessuna serata. Coppie che cambiano a ogni partita.</string>
+    <plurals name="serata_sheet_summary">
+        <item quantity="one">%1$d presente, %2$d giocate</item>
+        <item quantity="many">%1$d presenti, %2$d giocate</item>
+        <item quantity="other">%1$d presenti, %2$d giocate</item>
+    </plurals>
+    <string name="serata_sheet_open">Apri la serata</string>
+    <string name="serata_sheet_new">Inizia una serata</string>
+    <string name="serata_next_in_dialog">Prossima partita della serata</string>
+    <string name="serata_started">Coppie pronte per la partita %1$d</string>
+    <string name="serata_cannot_start">Le coppie non cambiano mentre si gioca.</string>
+</resources>

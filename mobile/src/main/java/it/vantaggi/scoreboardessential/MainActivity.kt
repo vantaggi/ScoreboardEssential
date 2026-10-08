@@ -223,6 +223,20 @@ class MainActivity :
             }
         }
 
+    // La Serata torna con OK quando l'utente preme "Inizia la partita": le coppie composte diventano le rose.
+    private val serataLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { risultato ->
+            if (risultato.resultCode != RESULT_OK) return@registerForActivityResult
+            if (viewModel.avviaPartitaDellaSerata()) {
+                matchSheet.state = BottomSheetBehavior.STATE_HIDDEN
+                val numero = viewModel.serataInCorso()?.numeroDellaProssima ?: 1
+                snackbarSopraLaStriscia(getString(R.string.serata_started, numero), Snackbar.LENGTH_LONG).show()
+            } else {
+                snackbarSopraLaStriscia(getString(R.string.serata_cannot_start), Snackbar.LENGTH_LONG).show()
+            }
+            aggiornaLaSerata()
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // La lingua non si applica piu' qui ma per tutta l'app (vedi LocaleHelper): resta solo
@@ -312,6 +326,7 @@ class MainActivity :
         // Il Bluetooth puo' essere caduto mentre l'app era in secondo piano, e nessun listener lo
         // segnala: senza questo l'icona dell'orologio restava "collegato".
         lifecycleScope.launch { viewModel.connectionManager.refreshConnection() }
+        if (::matchSheet.isInitialized) aggiornaLaSerata()
     }
 
     override fun onDestroy() {
@@ -597,6 +612,7 @@ class MainActivity :
         rostersCard.visibility = View.VISIBLE
         formationsCard.visibility = if (sportCapabilities.hasFormations) View.VISIBLE else View.GONE
         aggiornaLeCoppie()
+        aggiornaLaSerata()
         refreshUndoButtonState()
         // Negli sport senza marcatore non esistono gol: il dialogo e il registro parlano di punti, e
         // le righe del registro smettono di offrire un marcatore da scegliere.
@@ -605,6 +621,31 @@ class MainActivity :
         aggiornaDescrizioni()
         aggiornaStriscia()
         dimensionaINumeri(if (sportASet) TOKEN_PIU_LARGO_RACCHETTA else TOKEN_PIU_LARGO_CALCIO)
+    }
+
+    /**
+     * Il gruppo Serata del foglio: c'e' solo negli sport a coppie (padel, tennis). Dice se la serata c'e' e
+     * quanti sono; il comando la apre (la crea al primo tocco sui presenti).
+     */
+    private fun aggiornaLaSerata() {
+        findViewById<View>(R.id.serata_card).visibility = if (viewModel.sportDellaSerata()) View.VISIBLE else View.GONE
+        val serata = viewModel.serataInCorso()
+        val riassunto = findViewById<TextView>(R.id.serata_summary)
+        val comando = findViewById<MaterialButton>(R.id.serata_open_button)
+        if (serata == null || serata.presenti.isEmpty()) {
+            riassunto.text = getString(R.string.serata_sheet_none)
+            comando.setText(R.string.serata_sheet_new)
+        } else {
+            riassunto.text =
+                resources.getQuantityString(R.plurals.serata_sheet_summary, serata.presenti.size, serata.presenti.size, serata.giocate.size)
+            comando.setText(R.string.serata_sheet_open)
+        }
+    }
+
+    /** Apre la Serata; con una partita in corso e' di sola lettura. */
+    private fun apriLaSerata() {
+        val inCorso = viewModel.canUndo.value == true
+        serataLauncher.launch(Intent(this, SerataActivity::class.java).putExtra(SerataActivity.EXTRA_PARTITA_IN_CORSO, inCorso))
     }
 
     /**
@@ -1103,6 +1144,8 @@ class MainActivity :
         findViewById<Button>(R.id.team1_swap_button).setOnClickListener { viewModel.swapPlayers(1) }
         findViewById<Button>(R.id.team2_swap_button).setOnClickListener { viewModel.swapPlayers(2) }
 
+        findViewById<Button>(R.id.serata_open_button).setOnClickListener { apriLaSerata() }
+
         findViewById<Button>(R.id.players_button).setOnClickListener {
             startActivity(Intent(this, PlayersManagementActivity::class.java))
         }
@@ -1445,17 +1488,32 @@ class MainActivity :
                 null
             }
 
+        // "Prossima partita della serata": con una serata in corso e acceso di default; dopo il salvataggio
+        // apre la Serata, che ha gia' proposto le coppie successive.
+        val serataBox =
+            if (viewModel.sportDellaSerata() && viewModel.serataInCorso()?.inGioco != null) {
+                MaterialCheckBox(this).apply {
+                    setText(R.string.serata_next_in_dialog)
+                    isChecked = true
+                    minHeight = resources.getDimensionPixelSize(R.dimen.control_touch)
+                }
+            } else {
+                null
+            }
+
         val dialogo =
             MaterialAlertDialogBuilder(this)
                 .setTitle(testo.titolo)
                 .setMessage(testo.messaggio)
                 .apply {
-                    if (inviaBox != null) {
+                    val caselle = listOfNotNull(inviaBox, serataBox)
+                    if (caselle.isNotEmpty()) {
                         val margine = resources.getDimensionPixelSize(R.dimen.space_24)
                         setView(
-                            android.widget.FrameLayout(this@MainActivity).apply {
+                            android.widget.LinearLayout(this@MainActivity).apply {
+                                orientation = android.widget.LinearLayout.VERTICAL
                                 setPadding(margine, 0, margine, 0)
-                                addView(inviaBox)
+                                caselle.forEach { addView(it) }
                             },
                         )
                     }
@@ -1463,6 +1521,7 @@ class MainActivity :
                     if (viewModel.endMatch()) {
                         snackbarSopraLaStriscia(getString(R.string.match_saved), Snackbar.LENGTH_LONG).show()
                         if (inviaBox?.isChecked == true && uuidDaInviare != null) padelElite.sendOrOpenLogin(this, uuidDaInviare)
+                        if (serataBox?.isChecked == true) apriLaSerata()
                     } else {
                         snackbarSopraLaStriscia(getString(R.string.match_not_started_error), Snackbar.LENGTH_LONG).show()
                     }

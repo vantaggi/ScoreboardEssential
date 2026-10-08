@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Serata. Il compito: decidere chi gioca la prossima partita. Il valore piu' importante: le due coppie.
+    Quattro gruppi tonali con righe, uno sotto l'altro, che si accendono solo quando servono: la prossima
+    partita (i quattro posti e i tre comandi di rotazione), la panchina, chi c'e'. Il primario e' uno solo
+    e sta fuori dallo scorrimento, sempre alla portata del pollice: "Inizia la partita". Sotto, "Chiudi la
+    serata" e' solo testo (distruttivo): non cancella nessuna partita. Mentre si gioca la schermata e' di
+    sola lettura e lo dice in testa. Tutto scorre insieme: a carattere grande e a schermo stretto le righe
+    vanno a capo e il gruppo cresce, mai il contrario.
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/elite_background"
+    android:fitsSystemWindows="true"
+    tools:context=".SerataActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:elevation="0dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            style="@style/Widget.App.Toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Dark" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/serata_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingHorizontal="@dimen/space_16"
+            android:paddingTop="@dimen/space_8"
+            android:paddingBottom="@dimen/space_16">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Sola lettura: c'e' una partita in corso. Descrive, non prescrive; il colore non e' l'unico segno. -->
+                <LinearLayout
+                    android:id="@+id/serata_readonly_notice"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/elite_info_subtle"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <View
+                        android:layout_width="4dp"
+                        android:layout_height="match_parent"
+                        android:background="@color/elite_info" />
+
+                    <TextView
+                        android:id="@+id/serata_readonly_text"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:accessibilityLiveRegion="polite"
+                        android:gravity="center_vertical"
+                        android:minHeight="@dimen/control_touch"
+                        android:padding="@dimen/space_12"
+                        android:text="@string/serata_readonly"
+                        android:textAppearance="@style/TextAppearance.App.Caption"
+                        android:textColor="@color/elite_text_primary" />
+                </LinearLayout>
+
+                <!-- Prossima partita: i quattro posti, e i tre comandi che la cambiano. -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/serata_next_group"
+                    style="@style/Widget.App.Group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_8"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingBottom="@dimen/space_4">
+
+                        <TextView
+                            android:id="@+id/serata_next_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:accessibilityHeading="true"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingTop="@dimen/space_16"
+                            android:textAppearance="@style/TextAppearance.App.SectionHeading" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/serata_seats"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false" />
+
+                        <TextView
+                            android:id="@+id/serata_seats_hint"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_8"
+                            android:text="@string/serata_seats_hint"
+                            android:textAppearance="@style/TextAppearance.App.Caption" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/serata_commands"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Panchina: chi c'e' e non gioca. Vuota, lo dice. -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/serata_bench_group"
+                    style="@style/Widget.App.Group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_16"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingBottom="@dimen/space_4">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:accessibilityHeading="true"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingTop="@dimen/space_16"
+                            android:paddingBottom="@dimen/space_4"
+                            android:text="@string/serata_bench_title"
+                            android:textAppearance="@style/TextAppearance.App.SectionHeading" />
+
+                        <TextView
+                            android:id="@+id/serata_bench_empty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_8"
+                            android:text="@string/serata_bench_empty"
+                            android:textAppearance="@style/TextAppearance.App.Caption"
+                            android:visibility="gone" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/serata_bench"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Chi c'e': tutta la rosa, un tocco per far arrivare o andare via; l'ospite si scrive a mano. -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/serata_present_group"
+                    style="@style/Widget.App.Group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_16">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingBottom="@dimen/space_4">
+
+                        <TextView
+                            android:id="@+id/serata_present_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:accessibilityHeading="true"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingTop="@dimen/space_16"
+                            android:paddingBottom="@dimen/space_4"
+                            android:textAppearance="@style/TextAppearance.App.SectionHeading" />
+
+                        <TextView
+                            android:id="@+id/serata_present_empty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_8"
+                            android:text="@string/serata_roster_empty"
+                            android:textAppearance="@style/TextAppearance.App.Caption"
+                            android:visibility="gone" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/serata_present"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/serata_close_button"
+                    style="@style/Widget.App.Button.Destructive"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_16"
+                    android:text="@string/serata_close"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- Il primario della regione, fuori dallo scorrimento. Senza una bozza e' spento e il motivo sta sopra. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/elite_background"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/space_16"
+            android:paddingBottom="@dimen/space_16">
+
+            <TextView
+                android:id="@+id/serata_start_hint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="@dimen/space_8"
+                android:textAppearance="@style/TextAppearance.App.Caption" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/serata_start_button"
+                style="@style/Widget.App.Button.Primary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/serata_start_match" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

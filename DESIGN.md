@@ -1462,6 +1462,10 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Presenze | `event_available` | - | - |
 | Scambio dei posti | `swap_horiz` | `ic_swap_horiz` | - |
 | Aggiungi giocatore | `person_add` | `ic_person_add` | - |
+| Serata, chi c'e' stasera | `groups` | `ic_groups` | - |
+| Ruota le coppie | `autorenew` | `ic_autorenew` | - |
+| Stesse coppie | `repeat` | `ic_repeat` | - |
+| Scambia i lati | `sync_alt` | `ic_sync_alt` | - |
 | Blocco, accedi di nuovo | `lock` | `ic_lock` | - |
 | Colore della squadra | `palette` | `ic_palette` | - |
 | Orologio collegato | `watch` | `ic_watch` | - |

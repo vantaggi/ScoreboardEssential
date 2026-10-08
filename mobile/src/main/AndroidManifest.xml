@@ -42,6 +42,9 @@
         <activity android:name=".ui.MatchSettingsActivity" android:exported="false" android:label="@string/title_match_settings" android:parentActivityName=".MainActivity">
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".MainActivity" />
         </activity>
+        <activity android:name=".SerataActivity" android:exported="false" android:label="@string/title_serata" android:parentActivityName=".MainActivity">
+            <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".MainActivity" />
+        </activity>
         <activity android:name=".PlayersManagementActivity" android:exported="false" android:label="@string/title_manage_players" android:parentActivityName=".MainActivity">
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".MainActivity" />
         </activity>

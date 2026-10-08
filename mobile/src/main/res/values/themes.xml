@@ -269,6 +269,10 @@
         <item name="android:textFontWeight">500</item>
         <item name="android:textColor">@color/elite_text_primary</item>
     </style>
+    <!-- Il titolo di una riga selezionata (Serata): stesso corpo, peso 600. E' il secondo segno della selezione. -->
+    <style name="TextAppearance.App.RowTitleSelected" parent="TextAppearance.App.RowTitle">
+        <item name="android:textFontWeight">600</item>
+    </style>
     <style name="TextAppearance.App.Caption" parent="TextAppearance.Material3.BodyMedium">
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">400</item>

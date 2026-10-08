@@ -2076,6 +2076,13 @@ class MainViewModel(
         if (chiusuraInCorso) return true
         chiusuraInCorso = true
 
+        // La serata si chiude subito e non dentro la fila: chi salva puo' aprire la Serata un attimo dopo, e
+        // deve trovarci gia' la partita giocata e la successiva proposta.
+        chiudiLaPartitaDellaSerata(
+            _team1Players.value.orEmpty().map { it.player.playerId },
+            _team2Players.value.orEmpty().map { it.player.playerId },
+        )
+
         // In fila con le scritture della riga viva: END MATCH subito dopo il primo punto trovava
         // l'insert ancora sospeso e currentMatchId null, e closeMatch inseriva una seconda riga.
         inFilaSullaRigaViva {
@@ -2118,7 +2125,6 @@ class MainViewModel(
                     team2PlayerIds = team2Roster.map { it.player.playerId },
                 )
                 currentMatchId = null
-                chiudiLaPartitaDellaSerata(team1Roster.map { it.player.playerId }, team2Roster.map { it.player.playerId })
 
                 addMatchEvent("Match ended - Final Score: ${team1Score.value} - ${team2Score.value}")
 

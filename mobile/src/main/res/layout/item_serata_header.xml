@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Intestazione di una coppia dentro il gruppo della prossima partita: non e' un comando. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/serata_header"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:accessibilityHeading="true"
+    android:paddingHorizontal="@dimen/space_16"
+    android:paddingTop="@dimen/space_12"
+    android:paddingBottom="@dimen/space_4"
+    android:textAppearance="@style/TextAppearance.App.Caption" />
