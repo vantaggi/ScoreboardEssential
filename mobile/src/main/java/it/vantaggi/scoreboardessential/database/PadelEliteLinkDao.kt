@@ -11,8 +11,16 @@ interface PadelEliteLinkDao {
     @Query("SELECT * FROM padel_elite_links WHERE groupId = :groupId")
     suspend fun linksOf(groupId: String): List<PadelEliteLink>
 
+    /** Tutti i collegamenti di un giocatore locale, in ogni gruppo: servono a rimetterli se si annulla la cancellazione. */
+    @Query("SELECT * FROM padel_elite_links WHERE localPlayerId = :localPlayerId")
+    suspend fun linksOfPlayer(localPlayerId: Int): List<PadelEliteLink>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(link: PadelEliteLink)
+
+    /** Rimette i collegamenti di un giocatore ripristinato; quelli che occuperebbero un'unicita' gia' presa si saltano. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun restore(links: List<PadelEliteLink>)
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertPlayer(player: Player): Long

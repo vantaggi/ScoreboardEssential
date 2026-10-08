@@ -69,8 +69,9 @@ class PlayersManagementActivity : AppCompatActivity() {
         setContentView(R.layout.activity_players_management)
 
         // Setup ViewModel using the factory
-        val playerDao = AppDatabase.getDatabase(application).playerDao()
-        val playerRepository = PlayerRepository(playerDao)
+        val database = AppDatabase.getDatabase(application)
+        val playerDao = database.playerDao()
+        val playerRepository = PlayerRepository(playerDao, database.padelEliteLinkDao())
         val factory = PlayersManagementViewModelFactory(application, playerRepository)
         viewModel = ViewModelProvider(this, factory).get(PlayersManagementViewModel::class.java)
 
