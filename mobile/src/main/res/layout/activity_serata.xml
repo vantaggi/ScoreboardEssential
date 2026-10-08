@@ -64,7 +64,7 @@
                     android:visibility="gone">
 
                     <View
-                        android:layout_width="4dp"
+                        android:layout_width="@dimen/space_4"
                         android:layout_height="match_parent"
                         android:background="@color/elite_info" />
 

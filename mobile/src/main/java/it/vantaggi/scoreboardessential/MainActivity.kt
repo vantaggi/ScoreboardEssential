@@ -1526,9 +1526,22 @@ class MainActivity :
                 }.setPositiveButton(getString(if (testo.salva) R.string.btn_save_match else R.string.btn_end_match)) { _, _ ->
                     if (viewModel.endMatch()) {
                         snackbarSopraLaStriscia(getString(R.string.match_saved), Snackbar.LENGTH_LONG).show()
-                        if (inviaBox?.isChecked == true && uuidDaInviare != null) padelElite.sendOrOpenLogin(this, uuidDaInviare)
+                        // Se l'invio ha bisogno dell'accesso apre la sua schermata: la Serata non le si mette sopra
+                        // (le due schermate in fila), si riapre dalla scheda quando l'accesso e' fatto.
+                        var invioHaApertoUnaSchermata = false
+                        if (inviaBox?.isChecked == true && uuidDaInviare != null) {
+                            when (padelElite.send(uuidDaInviare)) {
+                                it.vantaggi.scoreboardessential.padelelite.SendOutcome.NEED_LOGIN,
+                                it.vantaggi.scoreboardessential.padelelite.SendOutcome.NEED_GROUP,
+                                -> {
+                                    startActivity(it.vantaggi.scoreboardessential.padelelite.PadelEliteActivity.intent(this))
+                                    invioHaApertoUnaSchermata = true
+                                }
+                                else -> Unit
+                            }
+                        }
                         // Salvata: la partita e' finita, anche se il motore si svuota un attimo dopo.
-                        if (serataBox?.isChecked == true) apriLaSerata(inCorso = false)
+                        if (serataBox?.isChecked == true && !invioHaApertoUnaSchermata) apriLaSerata(inCorso = false)
                     } else {
                         snackbarSopraLaStriscia(getString(R.string.match_not_started_error), Snackbar.LENGTH_LONG).show()
                     }
