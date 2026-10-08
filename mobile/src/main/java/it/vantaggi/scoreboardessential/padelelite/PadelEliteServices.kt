@@ -98,7 +98,7 @@ class PadelEliteServices(
     fun send(matchUuid: String): SendOutcome {
         if (!isEnabled) return SendOutcome.DISABLED
         if (account.session() == null) return SendOutcome.NEED_LOGIN
-        val voce = invii.get(matchUuid)?.takeIf { it.isPending }
+        val voce = invii.get(matchUuid)?.takeIf { it.hasEntryToResend }
         if (voce != null) {
             val gruppoDellaVoce = voce.group ?: return SendOutcome.NOT_RESENDABLE
             InvioWorker.enqueue(context, invii, matchUuid, gruppoDellaVoce)

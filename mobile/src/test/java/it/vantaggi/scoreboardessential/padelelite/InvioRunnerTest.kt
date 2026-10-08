@@ -9,6 +9,7 @@ import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -348,6 +349,49 @@ class InvioRunnerTest {
             assertEquals(inviataPrima, stato())
             rotta.refreshStatuses()
             assertEquals(InvioState.IMPORTED, stato()?.state)
+        }
+
+    @Test
+    fun `una voce scartata rimandata torna in attesa col file nuovo e si legge come inviata`() =
+        runBlocking {
+            // Contratto: una scartata rimandata dallo stesso gruppo torna in attesa, already_submitted false e updated false.
+            val runner = runner { _, _ -> rispostaDiInvio("pending", giaInviata = false, aggiornata = false) }
+            invii.set(UUID_PARTITA, InvioInfo(InvioState.QUEUED, group = "g-1", links = "1:11", previous = InvioState.DISCARDED))
+
+            assertEquals(RunOutcome.DONE, runner.run(UUID_PARTITA, "g-1", 0))
+
+            assertEquals(InvioInfo(InvioState.SENT, group = "g-1"), stato())
+            // Ora e' di nuovo in attesa: lo segue la casella e ha "Invia di nuovo".
+            assertTrue(stato()!!.isPending && stato()!!.canResend)
+        }
+
+    @Test
+    fun `una scartata che si rimanda e fallisce resta scartata, con gruppo e firma, e non si riapre da sola`() =
+        runBlocking {
+            val runner = runner { _, _ -> erroreRpc(400, "22023", "invalid_payload", "players") }
+            invii.set(UUID_PARTITA, InvioInfo(InvioState.QUEUED, group = "g-1", links = "1:11", previous = InvioState.DISCARDED))
+
+            runner.run(UUID_PARTITA, "g-1", 0)
+            runner.refreshStatuses()
+
+            assertEquals(InvioInfo(InvioState.DISCARDED, group = "g-1", links = "1:11"), stato())
+            assertTrue(stato()!!.canResend)
+            // refreshStatuses non interroga le scartate: per la casella sono gia' chiuse.
+            assertEquals(0, finto!!.quante("/rest/v1/v2_scoreboard_inbox"))
+        }
+
+    @Test
+    fun `la casella che dice scartata o importata conserva gruppo e firma della voce`() =
+        runBlocking {
+            val runner =
+                runner { richiesta, _ ->
+                    rispondeImportata(richiesta) ?: rispostaDiInvio()
+                }
+            invii.set(UUID_PARTITA, inviataPrima)
+
+            runner.refreshStatuses()
+
+            assertEquals(InvioInfo(InvioState.IMPORTED, group = "g-1", links = "1:11"), stato())
         }
 
     @Test

@@ -80,8 +80,8 @@ data class InvioInfo(
     fun linksChanged(current: String?): Boolean = isPending && links != null && current != null && current != links
 
     /**
-     * Il comando "Invia a Padel Elite" compare solo dove ha senso: mai mentre e' in coda o gia' arrivata.
-     * Una voce scartata dall'admin resta scartata (il server non la riapre): niente comando.
+     * Il comando "Invia a Padel Elite" compare solo dove l'invio e' fallito: mai mentre e' in coda o gia'
+     * arrivata (per una voce gia' in casella, anche scartata, c'e' [canResend]).
      */
     val canSend: Boolean
         get() = state == InvioState.UNSENDABLE || state == InvioState.LOGIN_AGAIN
@@ -91,12 +91,19 @@ data class InvioInfo(
         get() = state == InvioState.SENT || state == InvioState.UPDATED || state == InvioState.PRESENT
 
     /**
-     * "Invia di nuovo": solo per una voce in attesa di cui si conosce il gruppo; importata e scartata
-     * non cambiano piu'. Il rimando va SEMPRE al gruppo della voce ([group]), mai a quello scelto
-     * adesso: con un gruppo cambiato nascerebbe un doppione in un'altra casella. Se il gruppo non e'
-     * noto (stato scritto da una versione precedente) la regola piu' sicura e' non offrire il comando.
+     * La voce e' nella casella e si puo' ancora rimandare: in attesa (il server sostituisce il file) o
+     * scartata dall'admin (il server la rimette in attesa col file nuovo, `already_submitted: false`:
+     * serve a recuperare uno scarto sbagliato). Importata no: non cambia piu'.
      */
-    val canResend: Boolean get() = isPending && group != null
+    val hasEntryToResend: Boolean get() = isPending || state == InvioState.DISCARDED
+
+    /**
+     * "Invia di nuovo": per una voce in attesa o scartata di cui si conosce il gruppo. Il rimando va
+     * SEMPRE al gruppo della voce ([group]), mai a quello scelto adesso: con un gruppo cambiato
+     * nascerebbe un doppione in un'altra casella. Se il gruppo non e' noto (stato scritto da una
+     * versione precedente) la regola piu' sicura e' non offrire il comando.
+     */
+    val canResend: Boolean get() = hasEntryToResend && group != null
 }
 
 /**

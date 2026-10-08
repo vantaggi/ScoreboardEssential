@@ -177,22 +177,22 @@ class InvioNelloStoricoTest {
 
     @Test
     @Config(qualifiers = "it")
-    fun `una voce in attesa ha Invia di nuovo nello stesso bottone, importata e scartata niente`() {
-        for (s in listOf(InvioState.SENT, InvioState.UPDATED, InvioState.PRESENT)) {
+    fun `una voce in attesa ha Invia di nuovo nello stesso bottone, importata e in coda niente`() {
+        for (s in listOf(InvioState.SENT, InvioState.UPDATED, InvioState.PRESENT, InvioState.DISCARDED)) {
             val vista = scheda(stato(invio = InvioInfo(s, group = "g-1")))
             val bottone = vista.findViewById<android.widget.Button>(R.id.send_match_button)
             assertEquals("$s", View.VISIBLE, bottone.visibility)
             assertEquals("$s", "Invia di nuovo", bottone.text.toString())
             assertTrue("$s", stato(invio = InvioInfo(s, group = "g-1")).canSendAgain)
         }
-        for (s in listOf(InvioState.IMPORTED, InvioState.DISCARDED, InvioState.QUEUED)) {
+        for (s in listOf(InvioState.IMPORTED, InvioState.QUEUED)) {
             val vista = scheda(stato(invio = InvioInfo(s, group = "g-1")))
             assertEquals("$s", View.GONE, vista.findViewById<View>(R.id.send_match_button).visibility)
             assertFalse("$s", stato(invio = InvioInfo(s, group = "g-1")).canSendAgain)
         }
         // Una voce in attesa di cui non si conosce il gruppo (stato di una versione precedente): niente comando,
         // perche' il rimando andrebbe al gruppo scelto adesso e potrebbe fare un doppione altrove.
-        for (s in listOf(InvioState.SENT, InvioState.UPDATED, InvioState.PRESENT)) {
+        for (s in listOf(InvioState.SENT, InvioState.UPDATED, InvioState.PRESENT, InvioState.DISCARDED)) {
             assertFalse("$s", stato(invio = InvioInfo(s)).canSendAgain)
             assertEquals("$s", View.GONE, scheda(stato(invio = InvioInfo(s))).findViewById<View>(R.id.send_match_button).visibility)
         }

@@ -197,6 +197,23 @@ class InvioDiNuovoTest {
     }
 
     @Test
+    fun `una voce scartata si rimanda al suo gruppo, una importata no`() {
+        val servizi = servizi()
+        servizi.account.selectGroup(PadelEliteGroup("g-2", "Altro", "member"))
+        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.DISCARDED, group = "g-1", links = ""))
+
+        assertEquals(SendOutcome.QUEUED, servizi.send(UUID_PARTITA))
+
+        assertEquals("g-1", gruppoDelLavoro())
+        assertEquals(
+            InvioInfo(InvioState.QUEUED, group = "g-1", links = "", previous = InvioState.DISCARDED),
+            servizi.invii.get(UUID_PARTITA),
+        )
+        // Una importata non e' piu' una voce da rimandare: e' un invio "nuovo" e il comando non c'e' (la card non lo offre).
+        assertFalse(InvioInfo(InvioState.IMPORTED, group = "g-1").canResend)
+    }
+
+    @Test
     fun `una voce in attesa di cui non si conosce il gruppo non si rimanda`() {
         val servizi = servizi()
         servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT))

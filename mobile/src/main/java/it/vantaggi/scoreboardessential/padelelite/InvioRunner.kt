@@ -166,8 +166,10 @@ class InvioRunner(
             when (val esito = account.status(uuid)) {
                 is StatusResult.Found -> {
                     when (esito.status) {
-                        "imported" -> store.set(uuid, InvioInfo(InvioState.IMPORTED))
-                        "discarded" -> store.set(uuid, InvioInfo(InvioState.DISCARDED))
+                        // Gruppo e firma restano: una scartata si puo' rimandare al suo gruppo.
+                        "imported" -> store.set(uuid, InvioInfo(InvioState.IMPORTED, group = info.group, links = info.links))
+
+                        "discarded" -> store.set(uuid, InvioInfo(InvioState.DISCARDED, group = info.group, links = info.links))
                     }
                 }
 

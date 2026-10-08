@@ -41,8 +41,9 @@ data class MatchHistoryUiState(
 
     /**
      * "Invia di nuovo": per una partita gia' nella casella e ancora in attesa (inviata, aggiornata,
-     * gia' presente), con l'accesso e il gruppo. Importata e scartata non cambiano piu'. Sta nello
-     * stesso posto del comando di invio e lo sostituisce: un solo bottone per volta.
+     * gia' presente) o scartata dall'admin (il server la rimette in attesa), con l'accesso e il gruppo
+     * della voce noto. Importata non cambia piu'. Sta nello stesso posto del comando di invio e lo
+     * sostituisce: un solo bottone per volta.
      */
     val canSendAgain: Boolean
         get() = padelEliteEnabled && padelEliteAccess && canExport && matchWithTeams.match.matchUuid != null && invio?.canResend == true
