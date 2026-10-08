@@ -49,11 +49,12 @@ class RosaGruppoViewModelTest {
     }
 
     private fun rosaJson(vararg giocatori: Pair<Int, String>) =
-        giocatori.joinToString(prefix = "[", postfix = "]") { (id, nome) -> """{"id":$id,"name":"$nome","linked_user_id":null}""" }
+        giocatori.joinToString(prefix = "[", postfix = "]") { (id, nome) -> """{"id":$id,"name":"$nome"}""" }
 
     /** Un account gia' collegato, con il gruppo "g-1" scelto (o nessuno), e la rosa data dal server finto. */
     private fun viewModel(
         gruppoScelto: Boolean = true,
+        onSessionLost: () -> Unit = {},
         rosa: (RecordedRequest, Int) -> MockResponse,
     ): RosaGruppoViewModel {
         val s = ServerFinto(rosa).also { finto = it }
@@ -61,7 +62,7 @@ class RosaGruppoViewModelTest {
         store.save(PadelEliteSession("A1", "R1", Long.MAX_VALUE / 2, "u-1", "a@b.it"))
         account = PadelEliteAccount(s.config(), PadelEliteApi(s.config()), store)
         if (gruppoScelto) account.selectGroup(PadelEliteGroup("g-1", "Padel", "member"))
-        return RosaGruppoViewModel(account, RosaGruppo(db.padelEliteLinkDao(), db.playerDao()))
+        return RosaGruppoViewModel(account, RosaGruppo(db.padelEliteLinkDao(), db.playerDao()), onSessionLost)
     }
 
     private fun giocatore(nome: String): Int =
@@ -124,6 +125,56 @@ class RosaGruppoViewModelTest {
     }
 
     @Test
+    fun `un 403 e' uno stato a se, non sei piu' nel gruppo`() {
+        val vm = viewModel { _, _ -> json(403, "{}") }
+
+        vm.load()
+
+        assertEquals(RosaUi.NotAuthorized, vm.attendi())
+    }
+
+    @Test
+    fun `la sessione persa si segnala una volta sola per lettura e senza rifare richieste`() {
+        var persa = 0
+        val vm =
+            viewModel(onSessionLost = {
+                persa++
+            }) { r, _ -> if (r.path!!.contains("/auth/")) json(400, """{"error":"invalid_grant"}""") else json(401, "{}") }
+
+        vm.load()
+        assertEquals(RosaUi.NeedLogin, vm.attendi())
+        val richieste = finto!!.richieste.size
+        // La schermata puo' riconsegnare lo stato quante volte vuole: nessun effetto.
+        repeat(3) { vm.state.value }
+
+        assertEquals(1, persa)
+        assertEquals(richieste, finto!!.richieste.size)
+    }
+
+    @Test
+    fun `una scrittura che fallisce non manda in crash e la lista resta com'e'`() {
+        val vm = viewModel { _, _ -> json(200, rosaJson(100 to "Anna", 101 to "Marco")) }
+        val esistente = giocatore("Anna")
+        vm.load()
+        vm.pronta()
+
+        // Un giocatore locale che non esiste piu' (cancellato da un'altra schermata): la chiave esterna non regge.
+        runBlocking { vm.link(100, 9_999).join() }
+
+        val dopo = vm.state.value as RosaUi.Ready
+        assertEquals(listOf<String?>(null, null), dopo.rows.map { it.linkedLocalName })
+        // E la schermata funziona ancora.
+        assertEquals(
+            "Anna",
+            vm
+                .comanda { vm.link(100, esistente) }
+                .rows
+                .first()
+                .linkedLocalName,
+        )
+    }
+
+    @Test
     fun `le righe dicono chi e' collegato, chi e' proposto per nome e chi non e' collegato`() {
         val vm = viewModel { _, _ -> json(200, rosaJson(100 to "Anna Bianchi", 101 to "Marco Rossi", 102 to "Luca Verdi")) }
         val annaId = giocatore("Anna Bianchi")
@@ -137,9 +188,9 @@ class RosaGruppoViewModelTest {
         // Anna e' collegata a "Vecchio" (scelto a mano, il nome diverso non conta), Marco e' solo proposto, Luca non e' collegato.
         assertEquals(
             listOf(
-                RosaRow(RemotePlayer(100, "Anna Bianchi", null), "Vecchio", null),
-                RosaRow(RemotePlayer(101, "Marco Rossi", null), null, "marco rossi"),
-                RosaRow(RemotePlayer(102, "Luca Verdi", null), null, null),
+                RosaRow(RemotePlayer(100, "Anna Bianchi"), "Vecchio", null),
+                RosaRow(RemotePlayer(101, "Marco Rossi"), null, "marco rossi"),
+                RosaRow(RemotePlayer(102, "Luca Verdi"), null, null),
             ),
             pronta.rows,
         )

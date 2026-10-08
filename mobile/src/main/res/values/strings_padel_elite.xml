@@ -58,6 +58,9 @@
     <string name="padel_elite_rosa_empty_reason">The group has no players yet. Add them in the dashboard, then refresh.</string>
     <string name="padel_elite_rosa_error_title">Could not read the players</string>
     <string name="padel_elite_rosa_error_reason">Check the connection and try again.</string>
+    <string name="padel_elite_rosa_forbidden_title">You cannot see these players</string>
+    <string name="padel_elite_rosa_forbidden_reason">You are no longer a member of this group. Refresh the groups and choose another.</string>
+    <string name="padel_elite_rosa_forbidden_action">Refresh groups</string>
     <string name="padel_elite_rosa_refresh">Refresh players</string>
     <string name="padel_elite_rosa_not_linked">Not linked</string>
     <string name="padel_elite_rosa_linked">Linked to %1$s</string>

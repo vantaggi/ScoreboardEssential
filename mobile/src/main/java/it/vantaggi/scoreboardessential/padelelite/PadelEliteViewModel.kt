@@ -137,6 +137,14 @@ class PadelEliteViewModel(
         }
     }
 
+    /**
+     * Un'altra parte della schermata (la rosa) ha scoperto che la sessione e' finita: si torna al
+     * modulo di accesso. Non rilegge niente (nessuna richiesta, nessun ciclo) ed e' idempotente.
+     */
+    fun sessionLost() {
+        _signedInEmail.value = null
+    }
+
     fun selectGroup(group: PadelEliteGroup) {
         account.selectGroup(group)
         val corrente = _groups.value

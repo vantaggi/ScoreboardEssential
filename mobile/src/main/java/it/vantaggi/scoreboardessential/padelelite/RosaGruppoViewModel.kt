@@ -3,6 +3,7 @@ package it.vantaggi.scoreboardessential.padelelite
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +40,9 @@ sealed interface RosaUi {
     /** La sessione e' scaduta e il rinnovo e' stato rifiutato: la schermata torna all'accesso. */
     data object NeedLogin : RosaUi
 
+    /** Il server rifiuta la lettura (403): non si e' piu' membri di questo gruppo, serve sceglierne un altro. */
+    data object NotAuthorized : RosaUi
+
     /**
      * La rosa. [freeLocals] sono i giocatori dell'app non ancora collegati in questo gruppo, da
      * offrire quando si sceglie; [proposals] quanti nomi uguali il comando "Collega i nomi uguali"
@@ -59,6 +63,8 @@ sealed interface RosaUi {
 class RosaGruppoViewModel(
     private val account: PadelEliteAccount,
     private val rosa: RosaGruppo,
+    /** Chiamata una volta per lettura quando la sessione e' scaduta e il rinnovo rifiutato: la schermata torna all'accesso. */
+    private val onSessionLost: () -> Unit = {},
 ) : ViewModel() {
     private val _state = MutableStateFlow<RosaUi>(RosaUi.Loading)
     val state: StateFlow<RosaUi> = _state
@@ -75,7 +81,7 @@ class RosaGruppoViewModel(
      */
     fun loadIfNeeded() {
         val gruppo = account.selectedGroup()?.first
-        val fallita = _state.value is RosaUi.Error || _state.value is RosaUi.NeedLogin
+        val fallita = _state.value is RosaUi.Error || _state.value is RosaUi.NeedLogin || _state.value is RosaUi.NotAuthorized
         if (started && gruppo == groupId && !fallita) return
         load()
     }
@@ -105,12 +111,18 @@ class RosaGruppoViewModel(
                 when (val esito = account.roster(gruppo)) {
                     is RosterOutcome.Ok -> {
                         roster = esito.players
-                        rosa.sync(gruppo, roster)
+                        provaAScrivere { rosa.sync(gruppo, roster) }
                         refresh()
                     }
 
                     RosterOutcome.NeedLogin -> {
+                        // Una volta sola, qui: la schermata mostra solo lo stato e non reagisce a ogni riconsegna.
                         _state.value = RosaUi.NeedLogin
+                        onSessionLost()
+                    }
+
+                    RosterOutcome.NotAuthorized -> {
+                        _state.value = RosaUi.NotAuthorized
                     }
 
                     RosterOutcome.Network -> {
@@ -130,10 +142,10 @@ class RosaGruppoViewModel(
     fun createLocal(remoteId: Int) = scrivi(remoteId) { gruppo, remoto -> rosa.createLocalAndLink(gruppo, remoto) }
 
     /** Il comando "Collega i nomi uguali": scrive le proposte che la schermata ha mostrato. */
-    fun linkSameNames() {
-        val gruppo = groupId ?: return
-        viewModelScope.launch {
-            rosa.linkProposals(gruppo, roster)
+    fun linkSameNames(): Job {
+        val gruppo = groupId ?: return Job().apply { complete() }
+        return viewModelScope.launch {
+            provaAScrivere { rosa.linkProposals(gruppo, roster) }
             refresh()
         }
     }
@@ -141,12 +153,28 @@ class RosaGruppoViewModel(
     private fun scrivi(
         remoteId: Int,
         azione: suspend (groupId: String, remote: RemotePlayer) -> Unit,
-    ) {
-        val gruppo = groupId ?: return
-        val remoto = roster.firstOrNull { it.id == remoteId } ?: return
-        viewModelScope.launch {
-            azione(gruppo, remoto)
+    ): Job {
+        val gruppo = groupId
+        val remoto = roster.firstOrNull { it.id == remoteId }
+        if (gruppo == null || remoto == null) return Job().apply { complete() }
+        return viewModelScope.launch {
+            provaAScrivere { azione(gruppo, remoto) }
             refresh()
+        }
+    }
+
+    /**
+     * Una scrittura puo' fallire per cose che la schermata non vede (un giocatore locale cancellato
+     * nel frattempo da un'altra schermata: la chiave esterna non regge): non e' un crash, la lista
+     * si rilegge dal database e mostra com'e'. L'annullamento della coroutine non si inghiotte.
+     */
+    private suspend fun provaAScrivere(scrittura: suspend () -> Unit) {
+        try {
+            scrittura()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            Unit
         }
     }
 
@@ -186,7 +214,8 @@ class RosaGruppoViewModel(
 class RosaGruppoViewModelFactory(
     private val account: PadelEliteAccount,
     private val rosa: RosaGruppo,
+    private val onSessionLost: () -> Unit = {},
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T = RosaGruppoViewModel(account, rosa) as T
+    override fun <T : ViewModel> create(modelClass: Class<T>): T = RosaGruppoViewModel(account, rosa, onSessionLost) as T
 }

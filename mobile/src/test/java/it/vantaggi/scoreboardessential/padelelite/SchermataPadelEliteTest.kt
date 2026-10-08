@@ -149,6 +149,21 @@ class SchermataPadelEliteTest {
         }
 
     @Test
+    fun `una sessione persa scoperta altrove riporta al modulo senza rifare richieste, anche se ripetuta`() =
+        runBlocking {
+            val vm = viewModel(account(accessoEGruppi(gruppi(riga("g-1", "Padel")))))
+            vm.signIn("a@b.it", "x")
+            withTimeout(5_000) { vm.groups.first { it is GroupsUi.Ready } }
+            val richieste = finto!!.richieste.size
+
+            vm.sessionLost()
+            vm.sessionLost()
+
+            assertNull(vm.signedInEmail.value)
+            assertEquals(richieste, finto!!.richieste.size)
+        }
+
+    @Test
     fun `esci toglie utente e gruppo e riporta al modulo`() =
         runBlocking {
             val account = account(accessoEGruppi(gruppi(riga("g-1", "Padel"))))

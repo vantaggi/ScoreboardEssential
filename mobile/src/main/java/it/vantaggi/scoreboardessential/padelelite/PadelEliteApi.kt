@@ -64,8 +64,6 @@ sealed interface GroupsResult {
 data class RemotePlayer(
     val id: Int,
     val name: String,
-    /** L'account che il giocatore ha collegato, o null. */
-    val linkedUserId: String?,
 )
 
 sealed interface RosterResult {
@@ -75,6 +73,9 @@ sealed interface RosterResult {
     ) : RosterResult
 
     data object NotAuthenticated : RosterResult
+
+    /** 403: l'account non puo' leggere la rosa di questo gruppo (non ne e' piu' membro). */
+    data object NotAuthorized : RosterResult
 
     data object Network : RosterResult
 }
@@ -254,20 +255,26 @@ class PadelEliteApi(
     }
 
     /**
-     * La rosa del gruppo [groupId]: i `v2_players` che i membri possono leggere. Gli stessi errori
-     * di [fetchGroups]: 401 e' [RosterResult.NotAuthenticated], il resto che non va e' rete.
-     * Una riga senza id positivo o senza nome non e' un giocatore che si possa collegare: si salta.
+     * La rosa del gruppo [groupId]: i `v2_players` che i membri possono leggere (solo id e nome:
+     * il resto non serve e non si chiede). Gli errori come [fetchGroups]: 401 e'
+     * [RosterResult.NotAuthenticated], 403 e' [RosterResult.NotAuthorized] (non e' la rete e
+     * riprovare non serve: non si e' piu' nel gruppo), il resto che non va e' rete. Una riga senza
+     * id positivo o senza nome non e' un giocatore che si possa collegare: si salta.
      */
     suspend fun fetchRoster(
         accessToken: String,
         groupId: String,
     ): RosterResult {
         val filtro = URLEncoder.encode("eq.$groupId", "UTF-8")
-        val path = "/rest/v1/v2_players?group_id=$filtro&select=id,name,linked_user_id&order=name"
+        val path = "/rest/v1/v2_players?group_id=$filtro&select=id,name&order=name"
         val reply = send("GET", path, accessToken, null) ?: return RosterResult.Network
         return when {
             reply.status == 401 -> {
                 RosterResult.NotAuthenticated
+            }
+
+            reply.status == 403 -> {
+                RosterResult.NotAuthorized
             }
 
             reply.status >= 500 || reply.status !in 200..299 -> {
@@ -282,16 +289,7 @@ class PadelEliteApi(
                         val id = riga.optInt("id", 0)
                         val nome = riga.optString("name").trim()
                         if (id <= 0 || nome.isEmpty()) return@mapNotNull null
-                        val utente =
-                            if (riga.isNull(
-                                    "linked_user_id",
-                                )
-                            ) {
-                                null
-                            } else {
-                                riga.optString("linked_user_id").takeIf { it.isNotEmpty() }
-                            }
-                        RemotePlayer(id, nome, utente)
+                        RemotePlayer(id, nome)
                     },
                 )
             }

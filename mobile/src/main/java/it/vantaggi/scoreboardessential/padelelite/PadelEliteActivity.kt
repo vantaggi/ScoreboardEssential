@@ -46,7 +46,7 @@ class PadelEliteActivity : AppCompatActivity() {
         val rosa = RosaGruppo(app.database.padelEliteLinkDao(), app.database.playerDao())
         androidx.lifecycle.ViewModelProvider(
             this,
-            RosaGruppoViewModelFactory(app.padelElite.account, rosa),
+            RosaGruppoViewModelFactory(app.padelElite.account, rosa) { viewModel.sessionLost() },
         )[RosaGruppoViewModel::class.java]
     }
 
@@ -80,8 +80,10 @@ class PadelEliteActivity : AppCompatActivity() {
         findViewById<View>(R.id.groups_retry_button).setOnClickListener { viewModel.loadGroups() }
         findViewById<View>(R.id.rosa_refresh_button).setOnClickListener { rosaViewModel.load() }
         findViewById<View>(R.id.rosa_same_names_button).setOnClickListener { rosaViewModel.linkSameNames() }
-        // Vuota e in errore hanno lo stesso comando: rileggere la rosa.
-        findViewById<EmptyStateView>(R.id.rosa_empty_state).actionButton.setOnClickListener { rosaViewModel.load() }
+        // Vuota e in errore rileggono la rosa; "non sei piu' membro" rilegge i gruppi (quello scelto cade e se ne sceglie un altro).
+        findViewById<EmptyStateView>(R.id.rosa_empty_state).actionButton.setOnClickListener {
+            if (rosaViewModel.state.value == RosaUi.NotAuthorized) viewModel.loadGroups() else rosaViewModel.load()
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -174,7 +176,7 @@ class PadelEliteActivity : AppCompatActivity() {
 
         messaggio.isVisible = stato == RosaUi.NoGroup || stato == RosaUi.Loading
         messaggio.setText(if (stato == RosaUi.NoGroup) R.string.padel_elite_rosa_no_group else R.string.padel_elite_rosa_loading)
-        vuoto.isVisible = stato == RosaUi.Empty || stato == RosaUi.Error
+        vuoto.isVisible = stato == RosaUi.Empty || stato == RosaUi.Error || stato == RosaUi.NotAuthorized
         when (stato) {
             RosaUi.Empty -> {
                 vuoto.setMessage(getString(R.string.padel_elite_rosa_empty_title), getString(R.string.padel_elite_rosa_empty_reason))
@@ -186,10 +188,15 @@ class PadelEliteActivity : AppCompatActivity() {
                 vuoto.actionButton.setText(R.string.padel_elite_retry)
             }
 
-            RosaUi.NeedLogin -> {
-                viewModel.loadGroups()
+            RosaUi.NotAuthorized -> {
+                vuoto.setMessage(
+                    getString(R.string.padel_elite_rosa_forbidden_title),
+                    getString(R.string.padel_elite_rosa_forbidden_reason),
+                )
+                vuoto.actionButton.setText(R.string.padel_elite_rosa_forbidden_action)
             }
 
+            // La sessione scaduta la gestisce il ViewModel (una volta sola): qui non c'e' niente da disegnare.
             else -> {
                 Unit
             }
@@ -238,7 +245,7 @@ class PadelEliteActivity : AppCompatActivity() {
         locali: List<LocalChoice>,
     ) {
         val voci = mutableListOf(getString(R.string.padel_elite_rosa_create_local, riga.remote.name))
-        val azioni = mutableListOf({ rosaViewModel.createLocal(riga.remote.id) })
+        val azioni = mutableListOf<() -> Unit>({ rosaViewModel.createLocal(riga.remote.id) })
         riga.linkedLocalName?.let {
             voci += getString(R.string.padel_elite_rosa_unlink, it)
             azioni += { rosaViewModel.unlink(riga.remote.id) }

@@ -32,6 +32,9 @@ sealed interface RosterOutcome {
 
     data object NeedLogin : RosterOutcome
 
+    /** Non si e' piu' membri del gruppo: va scelto un altro gruppo. */
+    data object NotAuthorized : RosterOutcome
+
     data object Network : RosterOutcome
 }
 
@@ -163,6 +166,7 @@ class PadelEliteAccount(
         ) {
             is RosterResult.Ok -> RosterOutcome.Ok(esito.players)
             RosterResult.NotAuthenticated -> RosterOutcome.NeedLogin
+            RosterResult.NotAuthorized -> RosterOutcome.NotAuthorized
             RosterResult.Network -> RosterOutcome.Network
         }
 
