@@ -4,6 +4,8 @@ package it.vantaggi.scoreboardessential.padelelite
 sealed interface PayloadOutcome {
     data class Json(
         val text: String,
+        /** I collegamenti che il file porta ([FirmaCollegamenti]); null dove non interessa (nei test dell'invio semplice). */
+        val links: String? = null,
     ) : PayloadOutcome
 
     /** La partita non e' (ancora) nel database: la riga si scrive un attimo dopo la chiusura. */
@@ -48,9 +50,11 @@ class InvioRunner(
         groupId: String,
         attempt: Int,
     ): RunOutcome {
+        var firma: String? = null
         val file =
             when (val esito = payload(matchUuid, groupId)) {
                 is PayloadOutcome.Json -> {
+                    firma = esito.links
                     esito.text
                 }
 
@@ -72,7 +76,8 @@ class InvioRunner(
                         "discarded" -> InvioState.DISCARDED
                         else -> pendingState(esito)
                     }
-                store.set(matchUuid, InvioInfo(stato))
+                // Con la firma dei collegamenti del file partito: se poi cambiano, la card lo suggerisce.
+                store.set(matchUuid, InvioInfo(stato, group = groupId.takeIf { firma != null }, links = firma))
                 RunOutcome.DONE
             }
 

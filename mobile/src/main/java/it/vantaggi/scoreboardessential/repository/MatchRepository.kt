@@ -7,11 +7,13 @@ import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
+import it.vantaggi.scoreboardessential.database.PadelEliteLink
 import it.vantaggi.scoreboardessential.database.PadelEliteLinkDao
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
 import java.time.ZoneId
 
 class MatchRepository(
@@ -106,6 +108,13 @@ class MatchRepository(
                 .orEmpty()
         return MatchExportUtils.savedMatchExport(partita, schieramento, BuildConfig.VERSION_NAME, ZoneId.systemDefault(), collegati)
     }
+
+    /** I collegamenti di un gruppo (R-1): servono alla firma di cio' che un invio ha portato. */
+    suspend fun padelLinksOf(groupId: String): List<PadelEliteLink> = padelLinkDao?.linksOf(groupId).orEmpty()
+
+    /** Tutti i collegamenti, e si rinnovano a ogni cambiamento: la card dello storico suggerisce "Invia di nuovo". */
+    val padelLinks: Flow<List<PadelEliteLink>>
+        get() = padelLinkDao?.observeAll() ?: flowOf(emptyList())
 
     /**
      * Lo stesso export, trovando la partita dal suo identificativo del file: e' la chiave dell'invio.

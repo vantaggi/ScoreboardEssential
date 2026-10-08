@@ -21,7 +21,15 @@ data class MatchHistoryUiState(
     val padelEliteEnabled: Boolean = false,
     /** C'e' l'accesso a Padel Elite e un gruppo scelto: solo allora "Invia di nuovo" ha senso. */
     val padelEliteAccess: Boolean = false,
+    /** Un giocatore della partita ha un collegamento diverso da quello del file in casella (vedi [InvioInfo.linksChanged]). */
+    val linksChanged: Boolean = false,
 ) {
+    /**
+     * Il suggerimento discreto: la voce e' in attesa, i collegamenti sono cambiati dopo l'invio e
+     * "Invia di nuovo" e' disponibile. L'app non rimanda da sola: lo fa chi tocca il comando.
+     */
+    val showLinksHint: Boolean get() = linksChanged && canSendAgain
+
     /**
      * Il comando "Invia a Padel Elite": solo con la funzione configurata, solo padel chiuso con un
      * registro e con l'identificativo del file (le partite di prima della versione 14 non lo hanno

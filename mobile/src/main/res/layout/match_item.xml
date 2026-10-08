@@ -131,6 +131,20 @@
             tools:text="Inviata: in attesa di un admin"
             tools:visibility="visible" />
 
+        <!-- Il suggerimento discreto: solo per una voce in attesa i cui giocatori collegati sono cambiati
+             dopo l'invio. Solo testo, sotto lo stato; il comando "Invia di nuovo" e' il bottone qui sotto. -->
+        <TextView
+            android:id="@+id/send_hint_textview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_4"
+            android:paddingHorizontal="@dimen/space_16"
+            android:text="@string/padel_elite_links_changed_hint"
+            android:textAppearance="@style/TextAppearance.App.Caption"
+            android:textColor="@color/elite_text_secondary"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/send_match_button"
             style="@style/Widget.App.Button.Text"

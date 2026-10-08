@@ -61,7 +61,17 @@ data class InvioInfo(
     val reason: InvioReason? = null,
     /** Il pezzo del file che non tornava (`matchId`, `players`...), se il server l'ha detto. */
     val detail: String? = null,
+    /** Il gruppo a cui e' partito l'ultimo file, e [links] i collegamenti che portava ([FirmaCollegamenti]); null = non si sa. */
+    val group: String? = null,
+    val links: String? = null,
 ) {
+    /**
+     * I collegamenti dei giocatori sono cambiati dopo l'invio, e la voce e' ancora in attesa: nella
+     * casella c'e' un file con i collegamenti di prima. [current] e' la firma di adesso per quel gruppo.
+     * Senza firma salvata (stati di prima, o file senza firma) non si sa e non si dice niente.
+     */
+    fun linksChanged(current: String?): Boolean = isPending && links != null && current != null && current != links
+
     /**
      * Il comando "Invia a Padel Elite" compare solo dove ha senso: mai mentre e' in coda o gia' arrivata.
      * Una voce scartata dall'admin resta scartata (il server non la riapre): niente comando.
@@ -106,17 +116,31 @@ class InvioStore(
             .mapNotNull { (uuid, raw) -> decode(raw as? String)?.let { uuid to it } }
             .toMap()
 
-    private fun encode(info: InvioInfo) = listOf(info.state.name, info.reason?.name.orEmpty(), info.detail.orEmpty()).joinToString(SEP)
+    /**
+     * `STATO|MOTIVO|DETTAGLIO`, e se c'e' la firma dei collegamenti `<EXT>GRUPPO<EXT>FIRMA` in coda: un
+     * valore scritto prima di questo campo si legge com'era (nessuna firma), e il dettaglio, che
+     * puo' contenere `|`, resta l'ultimo dei tre.
+     */
+    private fun encode(info: InvioInfo): String {
+        val base = listOf(info.state.name, info.reason?.name.orEmpty(), info.detail.orEmpty().replace(EXT, ' ')).joinToString(SEP)
+        return if (info.group != null && info.links != null) "$base$EXT${info.group}$EXT${info.links}" else base
+    }
 
     private fun decode(raw: String?): InvioInfo? {
-        val pezzi = raw?.split(SEP, limit = 3) ?: return null
+        val teste = raw?.split(EXT, limit = 3) ?: return null
+        val pezzi = teste[0].split(SEP, limit = 3)
         val stato = InvioState.entries.firstOrNull { it.name == pezzi[0] } ?: return null
         val motivo = InvioReason.entries.firstOrNull { it.name == pezzi.getOrNull(1) }
-        return InvioInfo(stato, motivo, pezzi.getOrNull(2)?.takeIf { it.isNotEmpty() })
+        val gruppo = teste.getOrNull(1)?.takeIf { teste.size == 3 && it.isNotEmpty() }
+        val firma = teste.getOrNull(2).takeIf { gruppo != null }
+        return InvioInfo(stato, motivo, pezzi.getOrNull(2)?.takeIf { it.isNotEmpty() }, gruppo, firma)
     }
 
     companion object {
         const val FILE = "padel_elite_invii"
         private const val SEP = "|"
+
+        /** Separatore di unita' (U+001F): non sta in un gruppo, in una firma ne' in un dettaglio del server. */
+        private const val EXT = '\u001F'
     }
 }

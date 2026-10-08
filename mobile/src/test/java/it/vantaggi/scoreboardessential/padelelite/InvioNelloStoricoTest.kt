@@ -126,7 +126,7 @@ class InvioNelloStoricoTest {
     }
 
     @Test
-    fun `il comando "Invia a Padel Elite" torna solo dove l'invio e' fallito`() {
+    fun `il comando Invia a Padel Elite torna solo dove l'invio e' fallito`() {
         val altri = InvioState.entries - listOf(InvioState.UNSENDABLE, InvioState.LOGIN_AGAIN)
         for (s in altri) {
             assertFalse("$s", InvioInfo(s).canSend)
@@ -177,7 +177,7 @@ class InvioNelloStoricoTest {
 
     @Test
     @Config(qualifiers = "it")
-    fun `una voce in attesa ha "Invia di nuovo" nello stesso bottone, importata e scartata niente`() {
+    fun `una voce in attesa ha Invia di nuovo nello stesso bottone, importata e scartata niente`() {
         for (s in listOf(InvioState.SENT, InvioState.UPDATED, InvioState.PRESENT)) {
             val vista = scheda(stato(invio = InvioInfo(s)))
             val bottone = vista.findViewById<android.widget.Button>(R.id.send_match_button)
@@ -196,7 +196,34 @@ class InvioNelloStoricoTest {
     }
 
     @Test
-    fun `senza accesso, o con la funzione spenta, "Invia di nuovo" non c'e'`() {
+    @Config(qualifiers = "it")
+    fun `il suggerimento sui collegamenti cambiati compare sulla card solo con il comando di rimando`() {
+        fun suggerimento(vista: View) = vista.findViewById<TextView>(R.id.send_hint_textview)
+
+        fun card(
+            invio: InvioInfo,
+            cambiati: Boolean,
+            entrato: Boolean = true,
+        ) = MatchHistoryUiState(
+            MatchWithTeams(partita(), null, null, emptyList()),
+            "",
+            null,
+            invio,
+            true,
+            entrato,
+            cambiati,
+        )
+
+        val visibile = suggerimento(scheda(card(InvioInfo(InvioState.SENT), cambiati = true)))
+        assertEquals(View.VISIBLE, visibile.visibility)
+        assertTrue(visibile.text.toString(), visibile.text.contains("invia di nuovo per aggiornare la casella"))
+        assertEquals(View.GONE, suggerimento(scheda(card(InvioInfo(InvioState.SENT), cambiati = false))).visibility)
+        assertEquals(View.GONE, suggerimento(scheda(card(InvioInfo(InvioState.IMPORTED), cambiati = true))).visibility)
+        assertEquals(View.GONE, suggerimento(scheda(card(InvioInfo(InvioState.SENT), cambiati = true, entrato = false))).visibility)
+    }
+
+    @Test
+    fun `senza accesso, o con la funzione spenta, Invia di nuovo non c'e'`() {
         val inAttesa = InvioInfo(InvioState.SENT)
 
         assertFalse(stato(invio = inAttesa, entrato = false).canSendAgain)

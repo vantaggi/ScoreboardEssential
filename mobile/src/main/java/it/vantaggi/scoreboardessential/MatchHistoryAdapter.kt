@@ -72,6 +72,7 @@ class MatchHistoryAdapter(
         private val chronicleButton: View = itemView.findViewById(R.id.chronicle_match_button)
         private val sendButton: com.google.android.material.button.MaterialButton = itemView.findViewById(R.id.send_match_button)
         private val sendStatusTextView: TextView = itemView.findViewById(R.id.send_status_textview)
+        private val sendHintTextView: TextView = itemView.findViewById(R.id.send_hint_textview)
 
         /** Apre o chiude il dettaglio: la freccia cambia verso e TalkBack sente lo stato e l'azione. */
         private fun mostraDettaglio(aperto: Boolean) {
@@ -164,6 +165,7 @@ class MatchHistoryAdapter(
             sendButton.visibility = if (item.canSendToPadelElite || item.canSendAgain) View.VISIBLE else View.GONE
             sendButton.setText(if (item.canSendAgain) R.string.padel_elite_resend else R.string.padel_elite_send)
             sendButton.setOnClickListener { onSendClicked(matchWithTeams) }
+            sendHintTextView.visibility = if (item.showLinksHint) View.VISIBLE else View.GONE
             val invio = item.shownInvio
             sendStatusTextView.visibility = if (invio != null) View.VISIBLE else View.GONE
             if (invio != null) {

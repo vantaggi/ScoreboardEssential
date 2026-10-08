@@ -60,6 +60,7 @@ class PadelEliteServices(
                     } else {
                         PayloadOutcome.Json(
                             MatchExporter.toJson(esito.export),
+                            FirmaCollegamenti.of(repository.padelLinksOf(groupId), groupId, esito.export.players.map { it.localId }),
                         )
                     }
                 }
