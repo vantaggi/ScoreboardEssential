@@ -72,7 +72,8 @@ class InvioNelloStoricoTest {
         match: Match = partita(),
         invio: InvioInfo? = null,
         acceso: Boolean = true,
-    ) = MatchHistoryUiState(MatchWithTeams(match, null, null, emptyList()), "", null, invio, acceso)
+        entrato: Boolean = true,
+    ) = MatchHistoryUiState(MatchWithTeams(match, null, null, emptyList()), "", null, invio, acceso, entrato)
 
     private fun scheda(stato: MatchHistoryUiState): View {
         val vista = LayoutInflater.from(tema).inflate(R.layout.match_item, FrameLayout(tema), false)
@@ -125,11 +126,13 @@ class InvioNelloStoricoTest {
     }
 
     @Test
-    fun `il comando sparisce in coda, inviata e importata e torna dove si puo' rimandare`() {
-        for (s in listOf(InvioState.QUEUED, InvioState.SENT, InvioState.IMPORTED)) {
-            assertFalse("$s", stato(invio = InvioInfo(s)).canSendToPadelElite)
+    fun `il comando Invia a Padel Elite torna solo dove l'invio e' fallito`() {
+        val altri = InvioState.entries - listOf(InvioState.UNSENDABLE, InvioState.LOGIN_AGAIN)
+        for (s in altri) {
+            assertFalse("$s", InvioInfo(s).canSend)
         }
-        for (s in listOf(InvioState.UNSENDABLE, InvioState.LOGIN_AGAIN, InvioState.DISCARDED)) {
+        for (s in listOf(InvioState.UNSENDABLE, InvioState.LOGIN_AGAIN)) {
+            assertTrue("$s", InvioInfo(s).canSend)
             assertTrue("$s", stato(invio = InvioInfo(s)).canSendToPadelElite)
         }
     }
@@ -142,6 +145,8 @@ class InvioNelloStoricoTest {
                 InvioInfo(InvioState.QUEUED) to "In coda",
                 InvioInfo(InvioState.QUEUED, InvioReason.INBOX_FULL) to "casella del gruppo e' piena",
                 InvioInfo(InvioState.SENT) to "in attesa di un admin",
+                InvioInfo(InvioState.UPDATED) to "Aggiornata nella casella",
+                InvioInfo(InvioState.PRESENT) to "nella casella",
                 InvioInfo(InvioState.IMPORTED) to "Importata",
                 InvioInfo(InvioState.DISCARDED) to "Scartata",
                 InvioInfo(InvioState.LOGIN_AGAIN) to "Accedi di nuovo",
@@ -168,6 +173,74 @@ class InvioNelloStoricoTest {
 
         assertTrue(importata.text != errore.text)
         assertTrue(importata.compoundDrawablesRelative[0].constantState != errore.compoundDrawablesRelative[0].constantState)
+    }
+
+    @Test
+    @Config(qualifiers = "it")
+    fun `una voce in attesa ha Invia di nuovo nello stesso bottone, importata e in coda niente`() {
+        for (s in listOf(InvioState.SENT, InvioState.UPDATED, InvioState.PRESENT, InvioState.DISCARDED)) {
+            val vista = scheda(stato(invio = InvioInfo(s, group = "g-1")))
+            val bottone = vista.findViewById<android.widget.Button>(R.id.send_match_button)
+            assertEquals("$s", View.VISIBLE, bottone.visibility)
+            assertEquals("$s", "Invia di nuovo", bottone.text.toString())
+            assertTrue("$s", stato(invio = InvioInfo(s, group = "g-1")).canSendAgain)
+        }
+        for (s in listOf(InvioState.IMPORTED, InvioState.QUEUED)) {
+            val vista = scheda(stato(invio = InvioInfo(s, group = "g-1")))
+            assertEquals("$s", View.GONE, vista.findViewById<View>(R.id.send_match_button).visibility)
+            assertFalse("$s", stato(invio = InvioInfo(s, group = "g-1")).canSendAgain)
+        }
+        // Una voce in attesa di cui non si conosce il gruppo (stato di una versione precedente): niente comando,
+        // perche' il rimando andrebbe al gruppo scelto adesso e potrebbe fare un doppione altrove.
+        for (s in listOf(InvioState.SENT, InvioState.UPDATED, InvioState.PRESENT, InvioState.DISCARDED)) {
+            assertFalse("$s", stato(invio = InvioInfo(s)).canSendAgain)
+            assertEquals("$s", View.GONE, scheda(stato(invio = InvioInfo(s))).findViewById<View>(R.id.send_match_button).visibility)
+        }
+        // Dove l'invio e' fallito resta il comando di prima, con la sua parola.
+        val fallita = scheda(stato(invio = InvioInfo(InvioState.UNSENDABLE, InvioReason.INVALID_PAYLOAD)))
+        assertEquals("Invia a Padel Elite", fallita.findViewById<android.widget.Button>(R.id.send_match_button).text.toString())
+    }
+
+    @Test
+    @Config(qualifiers = "it")
+    fun `il suggerimento sui collegamenti cambiati compare sulla card solo con il comando di rimando`() {
+        fun suggerimento(vista: View) = vista.findViewById<TextView>(R.id.send_hint_textview)
+
+        fun card(
+            invio: InvioInfo,
+            cambiati: Boolean,
+            entrato: Boolean = true,
+        ) = MatchHistoryUiState(
+            MatchWithTeams(partita(), null, null, emptyList()),
+            "",
+            null,
+            invio,
+            true,
+            entrato,
+            cambiati,
+        )
+
+        val visibile = suggerimento(scheda(card(InvioInfo(InvioState.SENT, group = "g-1"), cambiati = true)))
+        assertEquals(View.VISIBLE, visibile.visibility)
+        assertTrue(visibile.text.toString(), visibile.text.contains("invia di nuovo per aggiornare la casella"))
+        assertEquals(View.GONE, suggerimento(scheda(card(InvioInfo(InvioState.SENT, group = "g-1"), cambiati = false))).visibility)
+        assertEquals(View.GONE, suggerimento(scheda(card(InvioInfo(InvioState.IMPORTED), cambiati = true))).visibility)
+        assertEquals(
+            View.GONE,
+            suggerimento(scheda(card(InvioInfo(InvioState.SENT, group = "g-1"), cambiati = true, entrato = false))).visibility,
+        )
+    }
+
+    @Test
+    fun `senza accesso, o con la funzione spenta, Invia di nuovo non c'e'`() {
+        val inAttesa = InvioInfo(InvioState.SENT, group = "g-1")
+
+        assertFalse(stato(invio = inAttesa, entrato = false).canSendAgain)
+        assertFalse(stato(invio = inAttesa, acceso = false, entrato = true).canSendAgain)
+        assertEquals(View.GONE, scheda(stato(invio = inAttesa, entrato = false)).findViewById<View>(R.id.send_match_button).visibility)
+        // Una partita che non si puo' esportare (non padel, senza registro) non ha il comando.
+        assertFalse(stato(partita(sport = SportRegistry.TENNIS), invio = inAttesa).canSendAgain)
+        assertFalse(stato(partita(registro = false), invio = inAttesa).canSendAgain)
     }
 
     @Test

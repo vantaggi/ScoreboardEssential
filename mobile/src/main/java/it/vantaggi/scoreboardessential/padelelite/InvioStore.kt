@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 
 /** A che punto e' una partita nel suo viaggio verso Padel Elite. Sempre detto con una parola e un'icona. */
 enum class InvioState {
@@ -12,6 +13,15 @@ enum class InvioState {
 
     /** Consegnata: aspetta che un admin del gruppo la apra e scelga i giocatori. */
     SENT,
+
+    /** Rimandata: il server ha sostituito il file della voce ancora in attesa (giocatori collegati, correzioni). */
+    UPDATED,
+
+    /**
+     * Rimandata o ritentata, e la voce c'era gia' ancora in attesa: il server non ha cambiato niente (file
+     * identico, o un server che non sostituisce, o l'ha inviata un altro). Non dice "aggiornata" per non mentire.
+     */
+    PRESENT,
 
     /** Un admin l'ha importata: e' nello storico del gruppo. */
     IMPORTED,
@@ -52,10 +62,48 @@ data class InvioInfo(
     val reason: InvioReason? = null,
     /** Il pezzo del file che non tornava (`matchId`, `players`...), se il server l'ha detto. */
     val detail: String? = null,
+    /** Il gruppo a cui e' partito l'ultimo file, e [links] i collegamenti che portava ([FirmaCollegamenti]); null = non si sa. */
+    val group: String? = null,
+    val links: String? = null,
+    /**
+     * Solo mentre un "Invia di nuovo" e' in coda: la voce in attesa (SENT, UPDATED, PRESENT) a cui si
+     * torna se il rimando fallisce in modo definitivo, perche' nella casella il file di prima c'e' ancora.
+     * [group] e [links] restano quelli della voce.
+     */
+    val previous: InvioState? = null,
 ) {
-    /** Il comando "Invia a Padel Elite" compare solo dove ha senso: mai mentre e' in coda o gia' arrivata. */
+    /**
+     * I collegamenti dei giocatori sono cambiati dopo l'invio, e la voce e' ancora in attesa: nella
+     * casella c'e' un file con i collegamenti di prima. [current] e' la firma di adesso per quel gruppo.
+     * Senza firma salvata (stati di prima, o file senza firma) non si sa e non si dice niente.
+     */
+    fun linksChanged(current: String?): Boolean = isPending && links != null && current != null && current != links
+
+    /**
+     * Il comando "Invia a Padel Elite" compare solo dove l'invio e' fallito: mai mentre e' in coda o gia'
+     * arrivata (per una voce gia' in casella, anche scartata, c'e' [canResend]).
+     */
     val canSend: Boolean
-        get() = state == InvioState.UNSENDABLE || state == InvioState.LOGIN_AGAIN || state == InvioState.DISCARDED
+        get() = state == InvioState.UNSENDABLE || state == InvioState.LOGIN_AGAIN
+
+    /** La voce e' nella casella e aspetta un admin: ci si puo' ancora cambiare il file con "Invia di nuovo". */
+    val isPending: Boolean
+        get() = state == InvioState.SENT || state == InvioState.UPDATED || state == InvioState.PRESENT
+
+    /**
+     * La voce e' nella casella e si puo' ancora rimandare: in attesa (il server sostituisce il file) o
+     * scartata dall'admin (il server la rimette in attesa col file nuovo, `already_submitted: false`:
+     * serve a recuperare uno scarto sbagliato). Importata no: non cambia piu'.
+     */
+    val hasEntryToResend: Boolean get() = isPending || state == InvioState.DISCARDED
+
+    /**
+     * "Invia di nuovo": per una voce in attesa o scartata di cui si conosce il gruppo. Il rimando va
+     * SEMPRE al gruppo della voce ([group]), mai a quello scelto adesso: con un gruppo cambiato
+     * nascerebbe un doppione in un'altra casella. Se il gruppo non e' noto (stato scritto da una
+     * versione precedente) la regola piu' sicura e' non offrire il comando.
+     */
+    val canResend: Boolean get() = hasEntryToResend && group != null
 }
 
 /**
@@ -79,7 +127,7 @@ class InvioStore(
         info: InvioInfo,
     ) {
         prefs.edit { putString(matchUuid, encode(info)) }
-        flow.value = flow.value + (matchUuid to info)
+        flow.update { it + (matchUuid to info) }
     }
 
     private fun carica(): Map<String, InvioInfo> =
@@ -87,17 +135,34 @@ class InvioStore(
             .mapNotNull { (uuid, raw) -> decode(raw as? String)?.let { uuid to it } }
             .toMap()
 
-    private fun encode(info: InvioInfo) = listOf(info.state.name, info.reason?.name.orEmpty(), info.detail.orEmpty()).joinToString(SEP)
+    /**
+     * `STATO|MOTIVO|DETTAGLIO`, e se c'e' qualcosa da ricordare `<EXT>GRUPPO<EXT>=FIRMA<EXT>PRECEDENTE` in
+     * coda (la firma ha un `=` davanti per distinguere "nessun collegamento" da "non si sa"): un valore
+     * scritto prima si legge com'era, e il dettaglio, che puo' contenere `|`, resta l'ultimo dei tre.
+     */
+    private fun encode(info: InvioInfo): String {
+        val base = listOf(info.state.name, info.reason?.name.orEmpty(), info.detail.orEmpty().replace(EXT, ' ')).joinToString(SEP)
+        if (info.group == null && info.links == null && info.previous == null) return base
+        val firma = info.links?.let { "=$it" }.orEmpty()
+        return listOf(base, info.group.orEmpty(), firma, info.previous?.name.orEmpty()).joinToString(EXT.toString())
+    }
 
     private fun decode(raw: String?): InvioInfo? {
-        val pezzi = raw?.split(SEP, limit = 3) ?: return null
+        val teste = raw?.split(EXT, limit = 4) ?: return null
+        val pezzi = teste[0].split(SEP, limit = 3)
         val stato = InvioState.entries.firstOrNull { it.name == pezzi[0] } ?: return null
         val motivo = InvioReason.entries.firstOrNull { it.name == pezzi.getOrNull(1) }
-        return InvioInfo(stato, motivo, pezzi.getOrNull(2)?.takeIf { it.isNotEmpty() })
+        val gruppo = teste.getOrNull(1)?.takeIf { it.isNotEmpty() }
+        val firma = teste.getOrNull(2)?.takeIf { it.startsWith("=") }?.substring(1)
+        val prima = InvioState.entries.firstOrNull { it.name == teste.getOrNull(3) }
+        return InvioInfo(stato, motivo, pezzi.getOrNull(2)?.takeIf { it.isNotEmpty() }, gruppo, firma, prima)
     }
 
     companion object {
         const val FILE = "padel_elite_invii"
         private const val SEP = "|"
+
+        /** Separatore di unita' (U+001F): non sta in un gruppo, in una firma ne' in un dettaglio del server. */
+        private const val EXT = '\u001F'
     }
 }

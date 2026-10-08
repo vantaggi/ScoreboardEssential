@@ -9,6 +9,7 @@ import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -52,7 +53,7 @@ class InvioRunnerTest {
 
             assertEquals(RunOutcome.DONE, runner.run(UUID_PARTITA, "g-1", 0))
 
-            assertEquals(InvioInfo(InvioState.SENT), stato())
+            assertEquals(InvioInfo(InvioState.SENT, group = "g-1"), stato())
         }
 
     @Test
@@ -72,8 +73,47 @@ class InvioRunnerTest {
 
             assertEquals(RunOutcome.DONE, runner.run(UUID_PARTITA, "g-1", 0))
 
-            assertEquals(InvioState.SENT, stato()?.state)
+            // Non e' un invio nuovo e il server non ha detto "aggiornata": si legge "gia' presente".
+            assertEquals(InvioState.PRESENT, stato()?.state)
             assertEquals(1, inviiAlServer)
+        }
+
+    @Test
+    fun `se il server ha sostituito il file della voce in attesa la partita e' aggiornata`() =
+        runBlocking {
+            val runner = runner { _, _ -> rispostaDiInvio("pending", giaInviata = true, aggiornata = true) }
+
+            assertEquals(RunOutcome.DONE, runner.run(UUID_PARTITA, "g-1", 0))
+
+            assertEquals(InvioInfo(InvioState.UPDATED, group = "g-1"), stato())
+        }
+
+    @Test
+    fun `updated falso su una voce in attesa e' gia' presente, e un server vecchio senza la chiave lo stesso`() =
+        runBlocking {
+            val identico = runner { _, _ -> rispostaDiInvio("pending", giaInviata = true, aggiornata = false) }
+            assertEquals(RunOutcome.DONE, identico.run(UUID_PARTITA, "g-1", 0))
+            assertEquals(InvioState.PRESENT, stato()?.state)
+            finto!!.chiudi()
+
+            val vecchio = runner { _, _ -> rispostaDiInvio("pending", giaInviata = true) }
+            assertEquals(RunOutcome.DONE, vecchio.run(UUID_PARTITA, "g-1", 0))
+            assertEquals(InvioState.PRESENT, stato()?.state)
+        }
+
+    @Test
+    fun `una voce importata o scartata resta tale anche se il server dice updated`() =
+        runBlocking {
+            // Per il contratto non succede (updated vale solo per una voce in attesa), ma lo stato
+            // della voce comanda sempre: mai "aggiornata" su una voce che l'admin ha gia' chiusa.
+            val importata = runner { _, _ -> rispostaDiInvio("imported", giaInviata = true, aggiornata = true) }
+            importata.run(UUID_PARTITA, "g-1", 0)
+            assertEquals(InvioState.IMPORTED, stato()?.state)
+            finto!!.chiudi()
+
+            val scartata = runner { _, _ -> rispostaDiInvio("discarded", giaInviata = true, aggiornata = false) }
+            scartata.run(UUID_PARTITA, "g-1", 0)
+            assertEquals(InvioState.DISCARDED, stato()?.state)
         }
 
     @Test
@@ -241,15 +281,128 @@ class InvioRunnerTest {
                         rispostaDiInvio()
                     }
                 }
-            invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT))
+            invii.set(UUID_PARTITA, InvioInfo(InvioState.UPDATED))
             invii.set("altra", InvioInfo(InvioState.UNSENDABLE, InvioReason.TOO_LARGE))
 
             runner.refreshStatuses()
 
+            // Anche una voce aggiornata o gia' presente e' ancora in attesa: la casella dice se l'admin l'ha chiusa.
             assertEquals(InvioState.IMPORTED, stato()?.state)
             // Chi non era in attesa non si tocca e non si interroga.
             assertEquals(InvioState.UNSENDABLE, invii.get("altra")?.state)
             assertEquals(1, finto!!.quante("/rest/v1/v2_scoreboard_inbox"))
+        }
+
+    /** Un rimando di una voce inviata, in coda: lo stato che scrive `InvioWorker.enqueue`. */
+    private fun rimandoDaInviata() = InvioInfo(InvioState.QUEUED, group = "g-1", links = "1:11", previous = InvioState.SENT)
+
+    private val inviataPrima = InvioInfo(InvioState.SENT, group = "g-1", links = "1:11")
+
+    private fun rispondeImportata(richiesta: RecordedRequest) =
+        if (richiesta.path!!.startsWith("/rest/v1/v2_scoreboard_inbox")) {
+            json(200, """[{"status":"imported","match_id":"m-1"}]""")
+        } else {
+            null
+        }
+
+    @Test
+    fun `un rimando che fallisce in modo definitivo torna alla voce in attesa e la casella la segue ancora`() =
+        runBlocking {
+            val errori =
+                mapOf(
+                    "invalid_payload" to erroreRpc(400, "22023", "invalid_payload", "players"),
+                    "not_member" to erroreRpc(403, "42501", "not_authorized"),
+                    "too_large" to erroreRpc(500, "54000", "payload_too_large"),
+                )
+            for ((nome, errore) in errori) {
+                finto?.chiudi()
+                val runner = runner { richiesta, _ -> rispondeImportata(richiesta) ?: errore }
+                invii.set(UUID_PARTITA, rimandoDaInviata())
+
+                assertEquals(nome, RunOutcome.DONE, runner.run(UUID_PARTITA, "g-1", 0))
+
+                // Torna "inviata", con gruppo e firma di prima: nessun errore, il comando e' ancora li.
+                assertEquals(nome, inviataPrima, stato())
+                // E la casella la segue ancora: l'admin la importa, lo stato lo dice.
+                runner.refreshStatuses()
+                assertEquals(nome, InvioState.IMPORTED, stato()?.state)
+            }
+        }
+
+    @Test
+    fun `un rimando senza accesso, o oltre i cinque errori inattesi, torna alla voce in attesa`() =
+        runBlocking {
+            val senzaAccesso = runner { _, _ -> erroreRpc(403, "28000", "not_authenticated") }
+            invii.set(UUID_PARTITA, rimandoDaInviata())
+            assertEquals(RunOutcome.DONE, senzaAccesso.run(UUID_PARTITA, "g-1", 0))
+            assertEquals(inviataPrima, stato())
+            finto!!.chiudi()
+
+            val rotta = runner { richiesta, _ -> rispondeImportata(richiesta) ?: json(404, """{"code":"PGRST202"}""") }
+            invii.set(UUID_PARTITA, rimandoDaInviata())
+            for (tentativo in 0 until InvioRunner.MAX_UNEXPECTED_ATTEMPTS) {
+                assertEquals(RunOutcome.RETRY, rotta.run(UUID_PARTITA, "g-1", tentativo))
+                // Mentre riprova resta in coda e si ricorda a cosa tornare.
+                assertEquals(rimandoDaInviata(), stato())
+            }
+            assertEquals(RunOutcome.DONE, rotta.run(UUID_PARTITA, "g-1", InvioRunner.MAX_UNEXPECTED_ATTEMPTS))
+            assertEquals(inviataPrima, stato())
+            rotta.refreshStatuses()
+            assertEquals(InvioState.IMPORTED, stato()?.state)
+        }
+
+    @Test
+    fun `una voce scartata rimandata torna in attesa col file nuovo e si legge come inviata`() =
+        runBlocking {
+            // Contratto: una scartata rimandata dallo stesso gruppo torna in attesa, already_submitted false e updated false.
+            val runner = runner { _, _ -> rispostaDiInvio("pending", giaInviata = false, aggiornata = false) }
+            invii.set(UUID_PARTITA, InvioInfo(InvioState.QUEUED, group = "g-1", links = "1:11", previous = InvioState.DISCARDED))
+
+            assertEquals(RunOutcome.DONE, runner.run(UUID_PARTITA, "g-1", 0))
+
+            assertEquals(InvioInfo(InvioState.SENT, group = "g-1"), stato())
+            // Ora e' di nuovo in attesa: lo segue la casella e ha "Invia di nuovo".
+            assertTrue(stato()!!.isPending && stato()!!.canResend)
+        }
+
+    @Test
+    fun `una scartata che si rimanda e fallisce resta scartata, con gruppo e firma, e non si riapre da sola`() =
+        runBlocking {
+            val runner = runner { _, _ -> erroreRpc(400, "22023", "invalid_payload", "players") }
+            invii.set(UUID_PARTITA, InvioInfo(InvioState.QUEUED, group = "g-1", links = "1:11", previous = InvioState.DISCARDED))
+
+            runner.run(UUID_PARTITA, "g-1", 0)
+            runner.refreshStatuses()
+
+            assertEquals(InvioInfo(InvioState.DISCARDED, group = "g-1", links = "1:11"), stato())
+            assertTrue(stato()!!.canResend)
+            // refreshStatuses non interroga le scartate: per la casella sono gia' chiuse.
+            assertEquals(0, finto!!.quante("/rest/v1/v2_scoreboard_inbox"))
+        }
+
+    @Test
+    fun `la casella che dice scartata o importata conserva gruppo e firma della voce`() =
+        runBlocking {
+            val runner =
+                runner { richiesta, _ ->
+                    rispondeImportata(richiesta) ?: rispostaDiInvio()
+                }
+            invii.set(UUID_PARTITA, inviataPrima)
+
+            runner.refreshStatuses()
+
+            assertEquals(InvioInfo(InvioState.IMPORTED, group = "g-1", links = "1:11"), stato())
+        }
+
+    @Test
+    fun `un invio nuovo che fallisce resta un errore, senza voce a cui tornare`() =
+        runBlocking {
+            val runner = runner { _, _ -> erroreRpc(400, "22023", "invalid_payload", "players") }
+            invii.set(UUID_PARTITA, InvioInfo(InvioState.QUEUED))
+
+            runner.run(UUID_PARTITA, "g-1", 0)
+
+            assertEquals(InvioInfo(InvioState.UNSENDABLE, InvioReason.INVALID_PAYLOAD, "players"), stato())
         }
 
     @Test

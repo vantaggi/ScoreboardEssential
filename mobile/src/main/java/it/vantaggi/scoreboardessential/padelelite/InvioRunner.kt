@@ -4,6 +4,8 @@ package it.vantaggi.scoreboardessential.padelelite
 sealed interface PayloadOutcome {
     data class Json(
         val text: String,
+        /** I collegamenti che il file porta ([FirmaCollegamenti]); null dove non interessa (nei test dell'invio semplice). */
+        val links: String? = null,
     ) : PayloadOutcome
 
     /** La partita non e' (ancora) nel database: la riga si scrive un attimo dopo la chiusura. */
@@ -48,9 +50,11 @@ class InvioRunner(
         groupId: String,
         attempt: Int,
     ): RunOutcome {
+        var firma: String? = null
         val file =
             when (val esito = payload(matchUuid, groupId)) {
                 is PayloadOutcome.Json -> {
+                    firma = esito.links
                     esito.text
                 }
 
@@ -70,15 +74,16 @@ class InvioRunner(
                     when (esito.item.status) {
                         "imported" -> InvioState.IMPORTED
                         "discarded" -> InvioState.DISCARDED
-                        else -> InvioState.SENT
+                        else -> pendingState(esito)
                     }
-                store.set(matchUuid, InvioInfo(stato))
+                // Con il gruppo della voce (un rimando va li') e la firma dei collegamenti del file partito
+                // (se poi cambiano, la card lo suggerisce).
+                store.set(matchUuid, InvioInfo(stato, group = groupId, links = firma))
                 RunOutcome.DONE
             }
 
             SubmitResult.NotAuthenticated -> {
-                store.set(matchUuid, InvioInfo(InvioState.LOGIN_AGAIN))
-                RunOutcome.DONE
+                settle(matchUuid, InvioInfo(InvioState.LOGIN_AGAIN))
             }
 
             SubmitResult.NotAuthorized -> {
@@ -107,11 +112,24 @@ class InvioRunner(
         }
     }
 
+    /** Una voce in attesa: sostituita dal server (`updated`), gia' li' senza cambiare, o appena consegnata. */
+    private fun pendingState(esito: SubmitResult.Accepted) =
+        when {
+            esito.updated -> InvioState.UPDATED
+            esito.alreadySubmitted -> InvioState.PRESENT
+            else -> InvioState.SENT
+        }
+
     private fun waiting(
         matchUuid: String,
         reason: InvioReason?,
     ): RunOutcome {
-        store.set(matchUuid, InvioInfo(InvioState.QUEUED, reason))
+        // Un rimando che aspetta ricorda ancora la voce a cui tornare (gruppo, firma, stato di prima).
+        val prima = store.get(matchUuid)
+        store.set(
+            matchUuid,
+            InvioInfo(InvioState.QUEUED, reason, group = prima?.group, links = prima?.links, previous = prima?.previous),
+        )
         return RunOutcome.RETRY
     }
 
@@ -119,24 +137,39 @@ class InvioRunner(
         matchUuid: String,
         reason: InvioReason,
         detail: String? = null,
+    ): RunOutcome = settle(matchUuid, InvioInfo(InvioState.UNSENDABLE, reason, detail))
+
+    /**
+     * Un esito definitivo che non e' una consegna. Per un invio nuovo e' lo stato di errore. Per un
+     * "Invia di nuovo" ([InvioInfo.previous]) la voce nella casella c'e' ancora col file di prima:
+     * si torna allo stato in attesa precedente, con gruppo e firma, e [refreshStatuses] continua a
+     * seguirla (importata o scartata dall'admin). L'errore non resta scritto: il comando e' ancora li.
+     */
+    private fun settle(
+        matchUuid: String,
+        errore: InvioInfo,
     ): RunOutcome {
-        store.set(matchUuid, InvioInfo(InvioState.UNSENDABLE, reason, detail))
+        val adesso = store.get(matchUuid)
+        val prima = adesso?.previous
+        store.set(matchUuid, if (prima != null) InvioInfo(prima, group = adesso.group, links = adesso.links) else errore)
         return RunOutcome.DONE
     }
 
     /**
-     * Per le partite SENT chiede alla casella com'e' andata: importata o scartata dall'admin. Si
+     * Per le partite in attesa (inviate, aggiornate, gia' presenti) chiede alla casella com'e' andata: importata o scartata dall'admin. Si
      * ferma al primo errore di rete o di accesso (le altre falliranno uguale). Non cambia lo
      * stato di chi non e' piu' in attesa.
      */
     suspend fun refreshStatuses() {
         for ((uuid, info) in store.states.value) {
-            if (info.state != InvioState.SENT) continue
+            if (!info.isPending) continue
             when (val esito = account.status(uuid)) {
                 is StatusResult.Found -> {
                     when (esito.status) {
-                        "imported" -> store.set(uuid, InvioInfo(InvioState.IMPORTED))
-                        "discarded" -> store.set(uuid, InvioInfo(InvioState.DISCARDED))
+                        // Gruppo e firma restano: una scartata si puo' rimandare al suo gruppo.
+                        "imported" -> store.set(uuid, InvioInfo(InvioState.IMPORTED, group = info.group, links = info.links))
+
+                        "discarded" -> store.set(uuid, InvioInfo(InvioState.DISCARDED, group = info.group, links = info.links))
                     }
                 }
 

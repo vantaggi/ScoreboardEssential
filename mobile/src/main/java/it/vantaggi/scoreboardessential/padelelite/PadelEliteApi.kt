@@ -93,6 +93,12 @@ sealed interface SubmitResult {
     data class Accepted(
         val item: InboxItem,
         val alreadySubmitted: Boolean,
+        /**
+         * Il server ha sostituito il file di una voce ancora in attesa (migrazione 64 corretta: lo
+         * stesso utente rimanda la stessa partita). `false` se il file era identico, se la voce e'
+         * gia' importata o scartata o se l'ha inviata un altro; manca (e vale `false`) in un server vecchio.
+         */
+        val updated: Boolean = false,
     ) : SubmitResult
 
     /** `not_authenticated` o un 401 (token scaduto): chi chiama rinnova il token e riprova una volta. */
@@ -343,6 +349,7 @@ class PadelEliteApi(
                     matchId = item.optString("match_id").takeIf { it.isNotEmpty() && it != "null" },
                 ),
                 alreadySubmitted = json.optBoolean("already_submitted", false),
+                updated = json.optBoolean("updated", false),
             )
         }
         return classifyError(reply.status, reply.body)

@@ -236,6 +236,19 @@ class PadelEliteApiTest {
         }
 
     @Test
+    fun `la chiave updated si legge, e se manca vale false`() =
+        runBlocking {
+            fun accettata(risposta: okhttp3.mockwebserver.MockResponse) =
+                runBlocking { api { _, _ -> risposta }.submit("A1", "g-1", FILE_V2) } as SubmitResult.Accepted
+
+            assertEquals(true, accettata(rispostaDiInvio(giaInviata = true, aggiornata = true)).updated)
+            assertEquals(false, accettata(rispostaDiInvio(giaInviata = true, aggiornata = false)).updated)
+            // Server vecchio: nessuna chiave.
+            assertEquals(false, accettata(rispostaDiInvio(giaInviata = true)).updated)
+            assertEquals(false, accettata(rispostaDiInvio()).updated)
+        }
+
+    @Test
     fun `ogni errore della RPC e' letto dal messaggio e non dallo stato HTTP`() =
         runBlocking {
             fun esito(risposta: okhttp3.mockwebserver.MockResponse) = runBlocking { api { _, _ -> risposta }.submit("A1", "g-1", FILE_V2) }

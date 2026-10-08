@@ -7,11 +7,13 @@ import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
+import it.vantaggi.scoreboardessential.database.PadelEliteLink
 import it.vantaggi.scoreboardessential.database.PadelEliteLinkDao
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
 import java.time.ZoneId
 
 class MatchRepository(
@@ -94,18 +96,31 @@ class MatchRepository(
     suspend fun buildSavedExport(
         matchId: Int,
         padelGroupId: String? = null,
-    ): ExportResult? {
+    ): ExportResult? = buildSavedExportWithLinks(matchId, padelGroupId)?.result
+
+    /** L'export e i collegamenti del gruppo con cui e' stato costruito (una lettura sola: la firma dell'invio e il file coincidono). */
+    class SavedExport(
+        val result: ExportResult,
+        val links: List<PadelEliteLink>,
+    )
+
+    suspend fun buildSavedExportWithLinks(
+        matchId: Int,
+        padelGroupId: String? = null,
+    ): SavedExport? {
         val partita = matchDao.getMatchById(matchId) ?: return null
         val schieramento = matchDao.getMatchLineup(matchId)
         // Il file da condividere resta anonimo (nessun gruppo): i collegamenti sono di UN gruppo, e
         // solo l'invio a quel gruppo li porta, come `padelPlayerId` dei giocatori collegati.
-        val collegati =
-            padelGroupId
-                ?.let { padelLinkDao?.linksOf(it) }
-                ?.associate { it.localPlayerId to it.remotePlayerId }
-                .orEmpty()
-        return MatchExportUtils.savedMatchExport(partita, schieramento, BuildConfig.VERSION_NAME, ZoneId.systemDefault(), collegati)
+        val legami = padelGroupId?.let { padelLinkDao?.linksOf(it) }.orEmpty()
+        val collegati = legami.associate { it.localPlayerId to it.remotePlayerId }
+        val esito = MatchExportUtils.savedMatchExport(partita, schieramento, BuildConfig.VERSION_NAME, ZoneId.systemDefault(), collegati)
+        return SavedExport(esito, legami)
     }
+
+    /** Tutti i collegamenti, e si rinnovano a ogni cambiamento: la card dello storico suggerisce "Invia di nuovo". */
+    val padelLinks: Flow<List<PadelEliteLink>>
+        get() = padelLinkDao?.observeAll() ?: flowOf(emptyList())
 
     /**
      * Lo stesso export, trovando la partita dal suo identificativo del file: e' la chiave dell'invio.
@@ -114,5 +129,10 @@ class MatchRepository(
     suspend fun buildSavedExportByUuid(
         matchUuid: String,
         padelGroupId: String? = null,
-    ): ExportResult? = matchDao.getMatchByUuid(matchUuid)?.let { buildSavedExport(it.matchId, padelGroupId) }
+    ): ExportResult? = buildSavedExportByUuidWithLinks(matchUuid, padelGroupId)?.result
+
+    suspend fun buildSavedExportByUuidWithLinks(
+        matchUuid: String,
+        padelGroupId: String? = null,
+    ): SavedExport? = matchDao.getMatchByUuid(matchUuid)?.let { buildSavedExportWithLinks(it.matchId, padelGroupId) }
 }

@@ -5,11 +5,16 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PadelEliteLinkDao {
     @Query("SELECT * FROM padel_elite_links WHERE groupId = :groupId")
     suspend fun linksOf(groupId: String): List<PadelEliteLink>
+
+    /** Tutti i collegamenti, in ogni gruppo, e la lista si rinnova a ogni cambiamento (lo storico suggerisce "Invia di nuovo"). */
+    @Query("SELECT * FROM padel_elite_links")
+    fun observeAll(): Flow<List<PadelEliteLink>>
 
     /** Tutti i collegamenti di un giocatore locale, in ogni gruppo: servono a rimetterli se si annulla la cancellazione. */
     @Query("SELECT * FROM padel_elite_links WHERE localPlayerId = :localPlayerId")
