@@ -117,8 +117,9 @@ class RosaGruppoViewModel(
 
                     RosterOutcome.NeedLogin -> {
                         // Una volta sola, qui: la schermata mostra solo lo stato e non reagisce a ogni riconsegna.
-                        _state.value = RosaUi.NeedLogin
+                        // Prima la segnalazione e poi lo stato: chi aspetta NeedLogin trova la sessione gia' segnalata.
                         onSessionLost()
+                        _state.value = RosaUi.NeedLogin
                     }
 
                     RosterOutcome.NotAuthorized -> {
