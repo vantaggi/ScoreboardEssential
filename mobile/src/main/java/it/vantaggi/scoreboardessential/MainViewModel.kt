@@ -1015,6 +1015,13 @@ class MainViewModel(
     /** La serata in corso, o null: una sola, ricordata fra due aperture dell'app finche' non si chiude. */
     fun serataInCorso(): Serata? = serataStore.load()
 
+    /**
+     * Si sta giocando una partita: il registro del motore non e' vuoto e non si sta chiudendo. Sincrono, a
+     * differenza di [canUndo] (postValue) e del motore, che [endMatch] svuota solo dentro la fila: chi
+     * chiede subito dopo il salvataggio deve leggere "no".
+     */
+    fun partitaInCorso(): Boolean = engine.log.isNotEmpty() && !chiusuraInCorso
+
     /** La serata si gioca solo negli sport a coppie: padel e tennis (il tennis diventa doppio con le rose di due). */
     fun sportDellaSerata(): Boolean = _activeSport.value in SPORT_DELLA_SERATA
 

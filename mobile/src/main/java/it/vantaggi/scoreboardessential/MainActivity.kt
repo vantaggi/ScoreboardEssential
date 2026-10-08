@@ -643,8 +643,7 @@ class MainActivity :
     }
 
     /** Apre la Serata; con una partita in corso e' di sola lettura. */
-    private fun apriLaSerata() {
-        val inCorso = viewModel.canUndo.value == true
+    private fun apriLaSerata(inCorso: Boolean = viewModel.partitaInCorso()) {
         serataLauncher.launch(Intent(this, SerataActivity::class.java).putExtra(SerataActivity.EXTRA_PARTITA_IN_CORSO, inCorso))
     }
 
@@ -1521,7 +1520,8 @@ class MainActivity :
                     if (viewModel.endMatch()) {
                         snackbarSopraLaStriscia(getString(R.string.match_saved), Snackbar.LENGTH_LONG).show()
                         if (inviaBox?.isChecked == true && uuidDaInviare != null) padelElite.sendOrOpenLogin(this, uuidDaInviare)
-                        if (serataBox?.isChecked == true) apriLaSerata()
+                        // Salvata: la partita e' finita, anche se il motore si svuota un attimo dopo.
+                        if (serataBox?.isChecked == true) apriLaSerata(inCorso = false)
                     } else {
                         snackbarSopraLaStriscia(getString(R.string.match_not_started_error), Snackbar.LENGTH_LONG).show()
                     }

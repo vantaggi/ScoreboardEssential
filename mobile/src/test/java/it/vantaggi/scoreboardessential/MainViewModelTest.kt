@@ -4306,6 +4306,34 @@ class MainViewModelTest {
             }
         }
 
+    /**
+     * Il dialogo di fine partita apre la Serata subito dopo il salvataggio: il motore si svuota solo dentro
+     * la fila, e canUndo e' un postValue. partitaInCorso() deve gia' dire "no" in quell'istante, altrimenti
+     * la Serata si apre sempre in sola lettura.
+     */
+    @Test
+    fun `subito dopo il salvataggio la partita non e' piu' in corso, anche prima che la fila giri`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                usaDao(playerDao = db.playerDao(), matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                assertEquals(false, viewModel.partitaInCorso())
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                assertEquals(true, viewModel.partitaInCorso())
+
+                assertEquals(true, viewModel.endMatch())
+                // Ancora niente advanceUntilIdle: e' il momento in cui il dialogo apre la Serata.
+                assertEquals(false, viewModel.partitaInCorso())
+                advanceUntilIdle()
+                assertEquals(false, viewModel.partitaInCorso())
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
     @Test
     fun `salvare la partita della serata la conta e propone la successiva, che porta altre coppie`() =
         runTest {
