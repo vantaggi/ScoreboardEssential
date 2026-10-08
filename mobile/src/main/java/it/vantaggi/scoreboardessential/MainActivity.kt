@@ -234,11 +234,23 @@ class MainActivity :
                         val numero = viewModel.serataInCorso()?.numeroDellaProssima ?: 1
                         getString(R.string.serata_started, numero)
                     }
+
                     // Rimandato dal ripristino: se poi parte, le rose cambiano; se no, niente da dire.
-                    EsitoAvvioSerata.RIMANDATA -> null
-                    EsitoAvvioSerata.PARTITA_IN_CORSO -> getString(R.string.serata_cannot_start)
-                    EsitoAvvioSerata.SPORT_NON_AMMESSO -> getString(R.string.serata_wrong_sport)
-                    EsitoAvvioSerata.NESSUNA_BOZZA -> getString(R.string.serata_no_pairs)
+                    EsitoAvvioSerata.RIMANDATA -> {
+                        null
+                    }
+
+                    EsitoAvvioSerata.PARTITA_IN_CORSO -> {
+                        getString(R.string.serata_cannot_start)
+                    }
+
+                    EsitoAvvioSerata.SPORT_NON_AMMESSO -> {
+                        getString(R.string.serata_wrong_sport)
+                    }
+
+                    EsitoAvvioSerata.NESSUNA_BOZZA -> {
+                        getString(R.string.serata_no_pairs)
+                    }
                 }
             if (messaggio != null) snackbarSopraLaStriscia(messaggio, Snackbar.LENGTH_LONG).show()
             aggiornaLaSerata()
@@ -1534,10 +1546,16 @@ class MainActivity :
                                 it.vantaggi.scoreboardessential.padelelite.SendOutcome.NEED_LOGIN,
                                 it.vantaggi.scoreboardessential.padelelite.SendOutcome.NEED_GROUP,
                                 -> {
-                                    startActivity(it.vantaggi.scoreboardessential.padelelite.PadelEliteActivity.intent(this))
+                                    startActivity(
+                                        it.vantaggi.scoreboardessential.padelelite.PadelEliteActivity
+                                            .intent(this),
+                                    )
                                     invioHaApertoUnaSchermata = true
                                 }
-                                else -> Unit
+
+                                else -> {
+                                    Unit
+                                }
                             }
                         }
                         // Salvata: la partita e' finita, anche se il motore si svuota un attimo dopo.

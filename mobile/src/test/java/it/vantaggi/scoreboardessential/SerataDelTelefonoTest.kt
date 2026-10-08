@@ -249,7 +249,11 @@ class SerataDelTelefonoTest {
             store.save(Serata.nuova(ids).consegna())
             val vm = nuovoViewModel()
             advanceUntilIdle()
-            assertNull(vm.stato.value.serata!!.giocate.firstOrNull())
+            assertNull(
+                vm.stato.value.serata!!
+                    .giocate
+                    .firstOrNull(),
+            )
 
             // Scrive "l'altro processo": la partita e' chiusa, e la bozza e' un'altra.
             store.save(store.load()!!.chiudiPartita())
@@ -279,7 +283,11 @@ class SerataDelTelefonoTest {
 
             vm.ricarica()
 
-            assertEquals(1, vm.stato.value.serata!!.giocate.size)
+            assertEquals(
+                1,
+                vm.stato.value.serata!!
+                    .giocate.size,
+            )
             assertNull(vm.stato.value.selezione)
         }
 

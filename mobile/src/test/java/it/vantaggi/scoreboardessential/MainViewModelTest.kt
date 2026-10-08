@@ -4477,7 +4477,10 @@ class MainViewModelTest {
                 advanceUntilIdle()
                 assertEquals(EsitoAvvioSerata.NESSUNA_BOZZA, viewModel.avviaPartitaDellaSerata())
                 val (a, b, c) = quattroPresenti(playerDao)
-                memoriaDellaSerata().save(it.vantaggi.scoreboardessential.core.Serata.nuova(listOf(a, b, c)))
+                memoriaDellaSerata().save(
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c)),
+                )
                 assertEquals("con tre presenti non c'e' una bozza", EsitoAvvioSerata.NESSUNA_BOZZA, viewModel.avviaPartitaDellaSerata())
             } finally {
                 chiudiDatabase(db)
@@ -4495,7 +4498,10 @@ class MainViewModelTest {
                 viewModel.selectSport(SportRegistry.PADEL)
                 advanceUntilIdle()
                 val (a, b, c, d) = quattroPresenti(playerDao)
-                memoriaDellaSerata().save(it.vantaggi.scoreboardessential.core.Serata.nuova(listOf(a, b, c, d)))
+                memoriaDellaSerata().save(
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d)),
+                )
                 viewModel.avviaPartitaDellaSerata()
                 advanceUntilIdle()
 
@@ -4525,7 +4531,10 @@ class MainViewModelTest {
                 viewModel.selectSport(SportRegistry.PADEL)
                 advanceUntilIdle()
                 val (a, b, c, d) = quattroPresenti(playerDao)
-                memoriaDellaSerata().save(it.vantaggi.scoreboardessential.core.Serata.nuova(listOf(a, b, c, d)))
+                memoriaDellaSerata().save(
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d)),
+                )
                 viewModel.avviaPartitaDellaSerata()
                 advanceUntilIdle()
                 viewModel.removePlayerFromTeam(viewModel.team1Players.value!!.last(), 1)
@@ -4538,7 +4547,13 @@ class MainViewModelTest {
                 val serata = memoriaDellaSerata().load()!!
                 assertEquals(emptyList<it.vantaggi.scoreboardessential.core.Composizione>(), serata.giocate)
                 assertEquals(null, serata.inGioco)
-                assertEquals("la bozza resta per riprovare", serata.bozza, it.vantaggi.scoreboardessential.core.Serata.nuova(listOf(a, b, c, d)).bozza)
+                assertEquals(
+                    "la bozza resta per riprovare",
+                    serata.bozza,
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d))
+                        .bozza,
+                )
             } finally {
                 chiudiDatabase(db)
             }
