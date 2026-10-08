@@ -22,6 +22,7 @@ import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.ClockMode
+import it.vantaggi.scoreboardessential.core.Composizione
 import it.vantaggi.scoreboardessential.core.ExportOrigin
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchClock
@@ -34,6 +35,7 @@ import it.vantaggi.scoreboardessential.core.MatchSummarizer
 import it.vantaggi.scoreboardessential.core.MatchSummary
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.ScoringEvent
+import it.vantaggi.scoreboardessential.core.Serata
 import it.vantaggi.scoreboardessential.core.SportCapabilities
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.core.SportRules
@@ -50,6 +52,8 @@ import it.vantaggi.scoreboardessential.repository.ColorRepository
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
+import it.vantaggi.scoreboardessential.repository.SerataPrefsStore
+import it.vantaggi.scoreboardessential.repository.SerataStore
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
@@ -66,6 +70,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.ZoneId
 import java.util.UUID
+
+// Gli sport in cui si gioca a coppie e quindi si puo' fare una serata.
+private val SPORT_DELLA_SERATA = setOf(SportRegistry.PADEL, SportRegistry.TENNIS)
 
 // Chiavi in app_prefs: l'ultimo arretrato dell'orologio applicato (per nodo, e l'ultimo di tutti).
 private const val PREF_BATCH_APPLICATO = "batch_applicato_"
@@ -96,6 +103,9 @@ class MainViewModel(
     private val matchDao: MatchDao = AppDatabase.getDatabase(application).matchDao(),
     /** Component handling efficient data synchronization with Wear OS nodes. */
     val connectionManager: OptimizedWearDataSync = OptimizedWearDataSync(application),
+    // La serata in corso (una sola, ricordata fra due aperture): il ViewModel la consegna al motore e la
+    // chiude a fine partita. Come i DAO, si inietta: il default e' quello della produzione.
+    private val serataStore: SerataStore = SerataPrefsStore(application.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)),
 ) : AndroidViewModel(application) {
     private var matchTimerService: MatchTimerService? = null
     private var isServiceBound = false
@@ -865,6 +875,8 @@ class MainViewModel(
     fun discardMatch(): Boolean {
         if (currentMatchId == null && engine.log.isEmpty()) return false
         scartaRigaViva()
+        // Una partita scartata non conta per la serata, e la composizione resta com'era.
+        serataStore.load()?.let { if (it.inGioco != null) serataStore.save(it.annullaPartita()) }
         startNewMatch()
         sendResetUpdate()
         return true
@@ -998,6 +1010,56 @@ class MainViewModel(
         rosa.value = listOf(giocatori[1], giocatori[0]) + giocatori.drop(2)
         refreshServeOrder()
         salvaRoseDellaRigaViva()
+    }
+
+    /** La serata in corso, o null: una sola, ricordata fra due aperture dell'app finche' non si chiude. */
+    fun serataInCorso(): Serata? = serataStore.load()
+
+    /** La serata si gioca solo negli sport a coppie: padel e tennis (il tennis diventa doppio con le rose di due). */
+    fun sportDellaSerata(): Boolean = _activeSport.value in SPORT_DELLA_SERATA
+
+    /**
+     * "Inizia la partita" della serata: le due coppie composte diventano le rose di questa partita.
+     *
+     * E' solo un modo di riempire le rose: il resto (ordine di servizio dai posti, riga viva, storico,
+     * invio a Padel Elite) e' quello di ogni partita, perche' passa dalle stesse [refreshServeOrder] e
+     * [salvaRoseDellaRigaViva] di [addPlayerToTeam]. Come lo scambio, si fa solo a registro vuoto: dal
+     * primo punto le coppie sono quelle della partita. Ritorna false se non c'e' una serata con la
+     * prossima partita composta, se lo sport non e' a coppie o se si sta gia' giocando.
+     *
+     * La serata ricorda che questa partita e' sua ([Serata.inGioco]): [endMatch] la chiude e propone la
+     * successiva, [discardMatch] la scarta.
+     */
+    fun avviaPartitaDellaSerata(): Boolean {
+        if (rimandataDalRipristino { avviaPartitaDellaSerata() }) return true
+        if (engine.log.isNotEmpty() || !sportDellaSerata()) return false
+        val serata = serataStore.load() ?: return false
+        val bozza = serata.bozza ?: return false
+        serataStore.save(serata.consegna())
+        viewModelScope.launch {
+            val giocatori = playerDao.getPlayersWithRoles(bozza.posti).associateBy { it.player.playerId }
+            // Nel frattempo e' partito un punto: le coppie sono quelle della partita, non si toccano piu'.
+            if (engine.log.isNotEmpty()) return@launch
+            _team1Players.value = bozza.squadra1.mapNotNull { giocatori[it] }
+            _team2Players.value = bozza.squadra2.mapNotNull { giocatori[it] }
+            refreshServeOrder()
+            salvaRoseDellaRigaViva()
+        }
+        return true
+    }
+
+    /**
+     * La partita salvata chiude quella della serata, se era sua, con le coppie con cui si e' giocato
+     * davvero (le rose di adesso, se sono due contro due; altrimenti quelle consegnate).
+     */
+    private fun chiudiLaPartitaDellaSerata(
+        uno: List<Int>,
+        due: List<Int>,
+    ) {
+        val serata = serataStore.load() ?: return
+        val consegnata = serata.inGioco ?: return
+        val giocata = if (uno.size == 2 && due.size == 2 && (uno + due).toSet().size == 4) Composizione(uno, due) else consegnata
+        serataStore.save(serata.chiudiPartita(giocata))
     }
 
     /**
@@ -2056,6 +2118,7 @@ class MainViewModel(
                     team2PlayerIds = team2Roster.map { it.player.playerId },
                 )
                 currentMatchId = null
+                chiudiLaPartitaDellaSerata(team1Roster.map { it.player.playerId }, team2Roster.map { it.player.playerId })
 
                 addMatchEvent("Match ended - Final Score: ${team1Score.value} - ${team2Score.value}")
 
