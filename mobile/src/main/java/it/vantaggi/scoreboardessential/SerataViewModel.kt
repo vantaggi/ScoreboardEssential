@@ -82,18 +82,28 @@ class SerataViewModel(
 
     /** Un giocatore eliminato dalla rosa esce dalla serata: non si puo' mandare in campo chi non c'e' piu'. */
     private fun esceChiNonEPiuInRosa(rosa: List<GiocatoreDellaSerata>) {
-        val serata = _stato.value.serata ?: return
+        val serata = store.load() ?: return
         val ids = rosa.map { it.id }.toSet()
         val usciti = serata.presenti.filter { it !in ids }
         if (usciti.isEmpty() || _stato.value.inCorso) return
         cambia { usciti.fold(it) { s, id -> s.togli(id) } }
     }
 
+    /**
+     * Rilegge la serata dalla memoria: chi torna sulla schermata (onStart) vede la partita chiusa o
+     * avviata nel frattempo da MainViewModel. La selezione, un gesto a meta', si butta.
+     */
+    fun ricarica() {
+        _stato.update { it.copy(serata = store.load(), selezione = null) }
+    }
+
     /** Applica [modifica] alla serata, la ricorda e azzera la selezione. Non fa niente in sola lettura. */
     private fun cambia(modifica: (Serata) -> Serata) {
         val stato = _stato.value
         if (stato.inCorso) return
-        val nuova = modifica(stato.serata ?: Serata(presenti = emptyList()))
+        // Sempre dalla memoria e non dalla copia letta all'apertura: la partita puo' essere stata chiusa nel
+        // frattempo da MainViewModel (anche dall'orologio), e riscriverla da una copia vecchia la rifarebbe.
+        val nuova = modifica(store.load() ?: Serata(presenti = emptyList()))
         // Una serata vuota e mai giocata non c'e': non si ricorda.
         val daRicordare = nuova.takeUnless { it.presenti.isEmpty() && it.giocate.isEmpty() }
         store.save(daRicordare)
@@ -102,7 +112,7 @@ class SerataViewModel(
 
     /** Un tocco sulla riga di un giocatore della rosa: arriva o se ne va. */
     fun scambiaPresente(id: Int) {
-        val serata = _stato.value.serata
+        val serata = store.load()
         if (serata != null && id in serata.presenti) cambia { it.togli(id) } else cambia { it.aggiungi(id) }
     }
 

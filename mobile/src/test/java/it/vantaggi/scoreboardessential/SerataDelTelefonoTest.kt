@@ -237,6 +237,52 @@ class SerataDelTelefonoTest {
             assertEquals(prima2, vm.stato.value.serata)
         }
 
+    /**
+     * La Serata e' aperta con la copia letta all'apertura, e intanto MainViewModel chiude la partita (anche
+     * dall'orologio). Un comando fatto dopo parte dalla memoria, non dalla copia vecchia: la partita
+     * chiusa non sparisce.
+     */
+    @Test
+    fun `un comando dopo che MainViewModel ha chiuso la partita non la perde`() =
+        runTest {
+            val ids = rosa("A", "B", "C", "D", "E")
+            store.save(Serata.nuova(ids).consegna())
+            val vm = nuovoViewModel()
+            advanceUntilIdle()
+            assertNull(vm.stato.value.serata!!.giocate.firstOrNull())
+
+            // Scrive "l'altro processo": la partita e' chiusa, e la bozza e' un'altra.
+            store.save(store.load()!!.chiudiPartita())
+            vm.ruota()
+
+            val dopo = store.load()!!
+            assertEquals("la partita chiusa resta", 1, dopo.giocate.size)
+            assertNull("e non torna in gioco", dopo.inGioco)
+            assertEquals(dopo, vm.stato.value.serata)
+
+            // Anche scambiare un presente parte dalla memoria.
+            store.save(dopo.chiudiPartita(dopo.bozza))
+            vm.scambiaPresente(ids[4])
+            assertEquals(2, store.load()!!.giocate.size)
+            assertFalse(ids[4] in store.load()!!.presenti)
+        }
+
+    @Test
+    fun `ricarica legge la serata cambiata nel frattempo e butta la selezione`() =
+        runTest {
+            val ids = rosa("A", "B", "C", "D")
+            store.save(Serata.nuova(ids))
+            val vm = nuovoViewModel()
+            advanceUntilIdle()
+            vm.toccaIlPosto(0)
+            store.save(store.load()!!.consegna().chiudiPartita())
+
+            vm.ricarica()
+
+            assertEquals(1, vm.stato.value.serata!!.giocate.size)
+            assertNull(vm.stato.value.selezione)
+        }
+
     @Test
     fun `in sola lettura nessun comando cambia la serata`() =
         runTest {

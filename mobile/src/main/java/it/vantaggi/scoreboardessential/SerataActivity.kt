@@ -94,6 +94,12 @@ class SerataActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        // Tornando sulla schermata la serata puo' essere cambiata: una partita chiusa, anche dall'orologio.
+        viewModel.ricarica()
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
             finish()
