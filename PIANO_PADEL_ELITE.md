@@ -336,3 +336,9 @@ Ogni passo che tocca la dashboard o il database resta **[AUTORIZZAZIONE]** come 
 **Decisioni del proprietario (7 ottobre 2026, sera):** si' al token d'invito; la diretta la trasmettono
 solo gli admin del gruppo; la lettura pubblica (`?g=`) resta com'e' (non decisa). Ordine: token d'invito
 (dashboard) -> rose dalla dashboard e serate (app) -> modificabilita' -> diretta solo admin -> gironi.
+
+**8 ottobre 2026 - R-2, serata a coppie che ruotano (`wf47/serata`).**
+
+| Passo | Stato |
+|---|---|
+| R-2 serata | fatto (solo app, padel e tennis): schermata Serata (si apre dal foglio PARTITA, gruppo "Serata", e dal dialogo di fine partita con la casella "Prossima partita della serata"), presenti dalla rosa locale piu' ospiti (un `Player` creato al volo), composizione delle due coppie con ordine di servizio dai posti, comandi Ruota, Stesse coppie, Scambia i lati, scambio di due nomi o con la panchina; ogni partita e' una partita normale (stesso motore, storico, invio a Padel Elite). Logica pura in `core/Serata.kt` (regola di rotazione scritta in `DESIGN.md`, sezione "Serata"), memoria nelle preferenze (`SerataCodec`, nessuna tabella Room e nessuna migrazione). Orologio, protocollo, `padelelite/` e `MatchExport` non toccati. Non visto sugli emulatori: schermata provata con Robolectric. Restano: gironi e iscritti dalla dashboard, rose dalla dashboard e `padelPlayerId` (ramo `wf46/rose-dashboard`). |
