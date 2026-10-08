@@ -18,6 +18,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -159,7 +160,10 @@ class RosaGruppoViewModelTest {
         vm.pronta()
 
         // Un giocatore locale che non esiste piu' (cancellato da un'altra schermata): la chiave esterna non regge.
-        runBlocking { vm.link(100, 9_999).join() }
+        val comando = vm.link(100, 9_999)
+        runBlocking { comando.join() }
+        // Un'eccezione scappata dalla scrittura cancellerebbe il lavoro: qui deve essere finito bene.
+        assertFalse("la scrittura fallita non deve far fallire il comando", comando.isCancelled)
 
         val dopo = vm.state.value as RosaUi.Ready
         assertEquals(listOf<String?>(null, null), dopo.rows.map { it.linkedLocalName })
