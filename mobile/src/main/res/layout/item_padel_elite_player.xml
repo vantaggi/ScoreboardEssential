@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Una riga della rosa del gruppo di Padel Elite (R-1): il nome della dashboard e, sotto, a chi e'
+    collegato nell'app. Si tocca per scegliere. Sta dentro un gruppo, non e' una card. Lo stato si
+    dice con una parola (e con la spunta quando e' collegato), mai col solo colore.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rosa_row"
+    style="@style/Widget.App.Pressable"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="@drawable/bg_focus_ring"
+    android:minHeight="@dimen/control_touch"
+    android:orientation="vertical"
+    android:paddingHorizontal="@dimen/space_16"
+    android:paddingVertical="@dimen/space_8">
+
+    <TextView
+        android:id="@+id/rosa_remote_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textAppearance="@style/TextAppearance.App.RowTitle"
+        tools:text="Marco Rossi" />
+
+    <TextView
+        android:id="@+id/rosa_link_state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_4"
+        android:drawablePadding="@dimen/space_4"
+        android:gravity="center_vertical"
+        android:textAppearance="@style/TextAppearance.App.Caption"
+        tools:text="Non collegato" />
+</LinearLayout>

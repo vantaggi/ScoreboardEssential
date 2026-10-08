@@ -48,4 +48,22 @@
     <string name="padel_elite_status_unsendable_not_member">Non inviabile: non sei piu\' nel gruppo, scegline un altro</string>
     <string name="padel_elite_status_unsendable_no_file">Non inviabile: alla partita servono un identificativo e quattro giocatori</string>
     <string name="padel_elite_status_unsendable_server">Non inviabile: il server risponde in modo inatteso</string>
+
+    <!-- R-1: i giocatori del gruppo e il loro collegamento con quelli dell'app. -->
+    <string name="padel_elite_rosa_title">Giocatori del gruppo</string>
+    <string name="padel_elite_rosa_hint">Collega ogni giocatore della dashboard a uno dell\'app: nel file inviato l\'admin trova i nomi gia\' scelti.</string>
+    <string name="padel_elite_rosa_no_group">Scegli un gruppo per vedere i suoi giocatori.</string>
+    <string name="padel_elite_rosa_loading">Carico i giocatori del gruppo</string>
+    <string name="padel_elite_rosa_empty_title">Nessun giocatore nel gruppo</string>
+    <string name="padel_elite_rosa_empty_reason">Il gruppo non ha ancora giocatori. Aggiungili nella dashboard, poi aggiorna.</string>
+    <string name="padel_elite_rosa_error_title">Non riesco a leggere i giocatori</string>
+    <string name="padel_elite_rosa_error_reason">Controlla la connessione e riprova.</string>
+    <string name="padel_elite_rosa_refresh">Aggiorna i giocatori</string>
+    <string name="padel_elite_rosa_not_linked">Non collegato</string>
+    <string name="padel_elite_rosa_linked">Collegato a %1$s</string>
+    <string name="padel_elite_rosa_proposed">Stesso nome di %1$s, da confermare</string>
+    <string name="padel_elite_rosa_same_names">Collega i nomi uguali (%1$d)</string>
+    <string name="padel_elite_rosa_dialog_title">Collega %1$s a un giocatore dell\'app</string>
+    <string name="padel_elite_rosa_create_local">Crea %1$s nell\'app</string>
+    <string name="padel_elite_rosa_unlink">Scollega da %1$s</string>
 </resources>

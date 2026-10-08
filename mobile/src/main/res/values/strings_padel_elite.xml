@@ -48,4 +48,22 @@
     <string name="padel_elite_status_unsendable_not_member">Cannot be sent: you are no longer in this group, choose another</string>
     <string name="padel_elite_status_unsendable_no_file">Cannot be sent: the match needs an id and four players</string>
     <string name="padel_elite_status_unsendable_server">Cannot be sent: the server answers in an unexpected way</string>
+
+    <!-- R-1: group players and how they are linked to the app players. -->
+    <string name="padel_elite_rosa_title">Group players</string>
+    <string name="padel_elite_rosa_hint">Link each dashboard player to one in the app: in the file you send, the admin finds the names already chosen.</string>
+    <string name="padel_elite_rosa_no_group">Choose a group to see its players.</string>
+    <string name="padel_elite_rosa_loading">Loading the group players</string>
+    <string name="padel_elite_rosa_empty_title">No players in the group</string>
+    <string name="padel_elite_rosa_empty_reason">The group has no players yet. Add them in the dashboard, then refresh.</string>
+    <string name="padel_elite_rosa_error_title">Could not read the players</string>
+    <string name="padel_elite_rosa_error_reason">Check the connection and try again.</string>
+    <string name="padel_elite_rosa_refresh">Refresh players</string>
+    <string name="padel_elite_rosa_not_linked">Not linked</string>
+    <string name="padel_elite_rosa_linked">Linked to %1$s</string>
+    <string name="padel_elite_rosa_proposed">Same name as %1$s, to confirm</string>
+    <string name="padel_elite_rosa_same_names">Link matching names (%1$d)</string>
+    <string name="padel_elite_rosa_dialog_title">Link %1$s to an app player</string>
+    <string name="padel_elite_rosa_create_local">Create %1$s in the app</string>
+    <string name="padel_elite_rosa_unlink">Unlink from %1$s</string>
 </resources>

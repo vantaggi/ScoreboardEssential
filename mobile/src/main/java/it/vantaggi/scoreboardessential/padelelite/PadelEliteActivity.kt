@@ -5,20 +5,25 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.isNotEmpty
 import androidx.core.view.isVisible
+import androidx.core.widget.TextViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
+import it.vantaggi.scoreboardessential.ui.EmptyStateView
 import kotlinx.coroutines.launch
 
 /**
@@ -33,6 +38,16 @@ class PadelEliteActivity : AppCompatActivity() {
     private val viewModel: PadelEliteViewModel by lazy {
         val account = (application as ScoreboardEssentialApplication).padelElite.account
         androidx.lifecycle.ViewModelProvider(this, PadelEliteViewModelFactory(account))[PadelEliteViewModel::class.java]
+    }
+
+    /** I giocatori del gruppo scelto e il loro collegamento con quelli dell'app (R-1). */
+    private val rosaViewModel: RosaGruppoViewModel by lazy {
+        val app = application as ScoreboardEssentialApplication
+        val rosa = RosaGruppo(app.database.padelEliteLinkDao(), app.database.playerDao())
+        androidx.lifecycle.ViewModelProvider(
+            this,
+            RosaGruppoViewModelFactory(app.padelElite.account, rosa),
+        )[RosaGruppoViewModel::class.java]
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,8 +73,15 @@ class PadelEliteActivity : AppCompatActivity() {
                 false
             }
         }
-        findViewById<View>(R.id.logout_button).setOnClickListener { viewModel.signOut() }
+        findViewById<View>(R.id.logout_button).setOnClickListener {
+            rosaViewModel.reset()
+            viewModel.signOut()
+        }
         findViewById<View>(R.id.groups_retry_button).setOnClickListener { viewModel.loadGroups() }
+        findViewById<View>(R.id.rosa_refresh_button).setOnClickListener { rosaViewModel.load() }
+        findViewById<View>(R.id.rosa_same_names_button).setOnClickListener { rosaViewModel.linkSameNames() }
+        // Vuota e in errore hanno lo stesso comando: rileggere la rosa.
+        findViewById<EmptyStateView>(R.id.rosa_empty_state).actionButton.setOnClickListener { rosaViewModel.load() }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -85,7 +107,15 @@ class PadelEliteActivity : AppCompatActivity() {
                         findViewById<TextView>(R.id.account_email).text = email?.let { getString(R.string.padel_elite_signed_in_as, it) }
                     }
                 }
-                launch { viewModel.groups.collect { mostraGruppi(it) } }
+                launch {
+                    viewModel.groups.collect { stato ->
+                        mostraGruppi(stato)
+                        // La rosa si vede solo con i gruppi caricati, e si rilegge se il gruppo scelto cambia.
+                        findViewById<View>(R.id.rosa_section).isVisible = stato is GroupsUi.Ready
+                        if (stato is GroupsUi.Ready) rosaViewModel.loadIfNeeded()
+                    }
+                }
+                launch { rosaViewModel.state.collect { mostraRosa(it) } }
             }
         }
     }
@@ -126,6 +156,113 @@ class PadelEliteActivity : AppCompatActivity() {
         }
         elenco.setOnCheckedChangeListener { gruppo, id ->
             (gruppo.findViewById<View>(id)?.tag as? PadelEliteGroup)?.let(viewModel::selectGroup)
+        }
+    }
+
+    /**
+     * "Giocatori del gruppo". Stati: scegli un gruppo, in caricamento (una riga di testo), vuota e
+     * errore di rete (EmptyStateView col suo comando), pronta (un gruppo tonale con una riga per
+     * giocatore). La sessione scaduta riporta al modulo di accesso.
+     */
+    private fun mostraRosa(stato: RosaUi) {
+        val messaggio = findViewById<TextView>(R.id.rosa_message)
+        val vuoto = findViewById<EmptyStateView>(R.id.rosa_empty_state)
+        val gruppo = findViewById<View>(R.id.rosa_group)
+        val elenco = findViewById<LinearLayout>(R.id.rosa_list)
+        val stessiNomi = findViewById<MaterialButton>(R.id.rosa_same_names_button)
+        val aggiorna = findViewById<View>(R.id.rosa_refresh_button)
+
+        messaggio.isVisible = stato == RosaUi.NoGroup || stato == RosaUi.Loading
+        messaggio.setText(if (stato == RosaUi.NoGroup) R.string.padel_elite_rosa_no_group else R.string.padel_elite_rosa_loading)
+        vuoto.isVisible = stato == RosaUi.Empty || stato == RosaUi.Error
+        when (stato) {
+            RosaUi.Empty -> {
+                vuoto.setMessage(getString(R.string.padel_elite_rosa_empty_title), getString(R.string.padel_elite_rosa_empty_reason))
+                vuoto.actionButton.setText(R.string.padel_elite_rosa_refresh)
+            }
+
+            RosaUi.Error -> {
+                vuoto.setMessage(getString(R.string.padel_elite_rosa_error_title), getString(R.string.padel_elite_rosa_error_reason))
+                vuoto.actionButton.setText(R.string.padel_elite_retry)
+            }
+
+            RosaUi.NeedLogin -> {
+                viewModel.loadGroups()
+            }
+
+            else -> {
+                Unit
+            }
+        }
+        gruppo.isVisible = stato is RosaUi.Ready
+        aggiorna.isVisible = stato is RosaUi.Ready
+        elenco.removeAllViews()
+        stessiNomi.isVisible = stato is RosaUi.Ready && stato.proposals > 0
+        if (stato !is RosaUi.Ready) return
+
+        stessiNomi.text = getString(R.string.padel_elite_rosa_same_names, stato.proposals)
+        stato.rows.forEach { riga ->
+            if (elenco.isNotEmpty()) elenco.addView(divisoreDellaRosa())
+            val vista = layoutInflater.inflate(R.layout.item_padel_elite_player, elenco, false)
+            vista.findViewById<TextView>(R.id.rosa_remote_name).text = riga.remote.name
+            val stati = vista.findViewById<TextView>(R.id.rosa_link_state)
+            when {
+                riga.linkedLocalName != null -> {
+                    stati.text = getString(R.string.padel_elite_rosa_linked, riga.linkedLocalName)
+                    // Collegato: la parola e la spunta (16dp, tinta del testo), mai il solo colore.
+                    val spunta = AppCompatResources.getDrawable(this, R.drawable.ic_check)?.mutate()
+                    val lato = resources.getDimensionPixelSize(R.dimen.icon_compact)
+                    spunta?.setBounds(0, 0, lato, lato)
+                    stati.setCompoundDrawablesRelative(spunta, null, null, null)
+                    TextViewCompat.setCompoundDrawableTintList(stati, stati.textColors)
+                }
+
+                riga.proposedLocalName != null -> {
+                    stati.text = getString(R.string.padel_elite_rosa_proposed, riga.proposedLocalName)
+                    stati.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
+                }
+
+                else -> {
+                    stati.setText(R.string.padel_elite_rosa_not_linked)
+                    stati.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
+                }
+            }
+            vista.setOnClickListener { scegliGiocatore(riga, stato.freeLocals) }
+            elenco.addView(vista)
+        }
+    }
+
+    /** Il giocatore dell'app per un giocatore della dashboard: crearlo, scollegarlo, oppure sceglierne uno non ancora collegato. */
+    private fun scegliGiocatore(
+        riga: RosaRow,
+        locali: List<LocalChoice>,
+    ) {
+        val voci = mutableListOf(getString(R.string.padel_elite_rosa_create_local, riga.remote.name))
+        val azioni = mutableListOf({ rosaViewModel.createLocal(riga.remote.id) })
+        riga.linkedLocalName?.let {
+            voci += getString(R.string.padel_elite_rosa_unlink, it)
+            azioni += { rosaViewModel.unlink(riga.remote.id) }
+        }
+        locali.forEach { locale ->
+            voci += locale.name
+            azioni += { rosaViewModel.link(riga.remote.id, locale.id) }
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.padel_elite_rosa_dialog_title, riga.remote.name))
+            .setItems(voci.toTypedArray()) { _, posizione -> azioni[posizione]() }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    /** La linea sottile fra due righe della rosa, rientrata come quella dei gruppi. */
+    private fun divisoreDellaRosa(): View {
+        val parametri =
+            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, resources.getDimensionPixelSize(R.dimen.border_width))
+        parametri.marginStart = resources.getDimensionPixelSize(R.dimen.space_16)
+        return View(this).apply {
+            setBackgroundColor(getColor(R.color.elite_border_strong))
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            layoutParams = parametri
         }
     }
 
