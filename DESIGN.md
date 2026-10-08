@@ -1462,6 +1462,10 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Presenze | `event_available` | - | - |
 | Scambio dei posti | `swap_horiz` | `ic_swap_horiz` | - |
 | Aggiungi giocatore | `person_add` | `ic_person_add` | - |
+| Serata, chi c'e' stasera | `groups` | `ic_groups` | - |
+| Ruota le coppie | `autorenew` | `ic_autorenew` | - |
+| Stesse coppie | `repeat` | `ic_repeat` | - |
+| Scambia i lati | `sync_alt` | `ic_sync_alt` | - |
 | Blocco, accedi di nuovo | `lock` | `ic_lock` | - |
 | Colore della squadra | `palette` | `ic_palette` | - |
 | Orologio collegato | `watch` | `ic_watch` | - |
@@ -1865,3 +1869,67 @@ Punto 2 della sezione 4 di `PIANO_PADEL_ELITE.md`. Con l'accesso e un gruppo sce
 **Debiti dichiarati.** (1) La rosa non si tiene in cache: senza rete la sezione dice l'errore e non mostra i collegamenti gia' fatti (restano nel database e partono comunque nell'invio). (2) `linked_user_id` non si legge piu' (servira' alla proposta "chi invia" della sezione 4, punto 3, quando A-6 sara' chiuso). (3) Un collegamento a un giocatore della dashboard che sparisce si toglie alla lettura successiva; fino ad allora un invio porta un id che il gruppo non ha, e la dashboard chiede all'admin di scegliere. (4) Dall'elenco di scelta non si ricerca per nome (le rose reali sono di decine di nomi). (5) **Un collegamento cambiato dopo la consegna non aggiorna la voce gia' nella casella d'arrivo**: la voce e' idempotente su (gruppo, `external_id`) e `already_submitted` non la riscrive, quindi se l'utente collega un giocatore dopo aver inviato la partita, l'admin trova ancora il file di prima (senza `padelPlayerId`, o con quello vecchio). Si risolve solo se la dashboard permette di aggiornare una voce ancora in attesa (sezione 4, punto 4, "modificabile dopo").
 
 **Correzioni dalla revisione (8 ottobre 2026).** (a) "Annulla" dopo lo swipe di cancellazione di un giocatore rimette anche i suoi collegamenti: `PlayersManagementViewModel` li legge prima e `PlayerRepository.restorePlayer` li reinserisce (la CASCADE li aveva tolti). (b) La proposta per nome conta gli omonimi su tutta la rosa e su tutti i giocatori locali, anche collegati. (c) `sync` non scollega nessuno con 1000 righe o piu' (`max_rows` di PostgREST: la rosa puo' essere troncata). (d) La sessione scaduta scoperta dalla rosa la segnala una volta il ViewModel (`onSessionLost` -> `PadelEliteViewModel.sessionLost()`), non il disegno: nessun ciclo di rilettura. (e) Le scritture dei collegamenti non mandano in crash se falliscono (chiave esterna): la lista si rilegge. (f) Il 403 e' uno stato proprio.
+
+## Serata - 8 ottobre 2026 (R-2)
+
+Richiesta del proprietario: una sera giocano in quattro (o piu'), le coppie cambiano a ogni set e ogni set e' una partita a se'; cambiare chi gioca con chi deve essere facilissimo, e si deve poter mettere dentro un ospite. Piano di `PIANO_PADEL_ELITE.md`, sezione 4, punto 3. Questa sottosezione e' il piano dell'interfaccia (CLAUDE.md, "Prima di ogni modifica all'interfaccia") e il registro di cio' che e' stato fatto. Lavora solo sull'app e sui giocatori locali: l'orologio, il protocollo, `padelelite/` e il collegamento con la dashboard non si toccano.
+
+### Dove si apre, e perche' li'
+
+- **Dal foglio PARTITA**, in un gruppo "Serata" sopra le Rose (visibile solo in padel e tennis). E' il punto piu' naturale perche' il foglio e' gia' il posto dove si compongono rose e coppie e si scambiano i posti; oggi non esiste un "come iniziare" separato, e metterne uno davanti al gioco sarebbe un passo in piu' per chi non fa la serata.
+- **Dal dialogo di fine partita**, con la casella "Prossima partita della serata" (accesa se la partita veniva dalla serata): dopo il salvataggio apre la schermata Serata, che ha gia' proposto le coppie successive. Non e' un quarto bottone: il dialogo ne ha tre, e la casella e' una scelta, come "Invia anche a Padel Elite".
+- La schermata torna alla partita con "Inizia la partita": le coppie diventano le rose.
+
+### Piano (CLAUDE.md, punto 3)
+
+- **Un compito, un valore.** "Chi gioca la prossima": il valore piu' importante sono le due coppie. Il resto (panchina, presenti) sta sotto e si toglie prima di rimpicciolire.
+- **Gerarchia e layout.** Una colonna che scorre, tre gruppi tonali con righe rientrate (`Widget.App.Group`, linee di `InsetDividerDecoration`), nessuna card: (1) *Partita n* con le intestazioni "Coppia 1" e "Coppia 2", i quattro posti e i tre comandi; (2) *In panchina*; (3) *N presenti*, tutta la rosa con la spunta e "Aggiungi un ospite" in fondo; poi "Chiudi la serata" (solo testo, distruttivo). Il **primario** e' uno solo, "Inizia la partita", fuori dallo scorrimento in fondo, sempre alla portata del pollice, con sopra il motivo per cui e' spento ("Servono almeno 4 presenti. Ne mancano 2."). Il foglio PARTITA tiene Fine partita come primario: il gruppo Serata ha un solo comando secondario.
+- **Componenti riusati.** `Widget.App.Group`, `Widget.App.Pressable` (la pressione condivisa: scala 0,97, opacita' 0,85), `bg_focus_ring`, `InsetDividerDecoration`, `Widget.App.Button.Primary/Secondary/Destructive`, `Widget.App.TextInputLayout`, toolbar come le altre schermate, la nota di sola lettura come `watch_notice_card` (fondo `elite_info_subtle`, barretta `elite_info`). Nuovi: `item_serata_row` (la riga: icona, numero del posto, nome fino a due righe, nota, spunta), `bg_row_selected`, `TextAppearance.App.RowTitleSelected` (RowTitle a 600). Le righe sono un solo adapter (`SerataRigheAdapter`) per i quattro elenchi.
+- **Tutto token.** Colori `elite_*`, spazi `space_*`, nessun valore scritto a mano; tre pesi (400 caption, 500 titolo di riga, 600 titolo di gruppo e riga selezionata); niente maiuscolo; niente emoji; niente ombre; nessuna animazione nuova.
+- **Icone** (tabella G-3, quattro righe nuove, tutte da `google/material-design-icons` come le altre): Serata `groups`, Ruota `autorenew`, Stesse coppie `repeat`, Scambia i lati `sync_alt`. I comandi sono righe con icona e testo, quindi non ci sono comandi di sola icona; le icone nelle righe sono decorative (`importantForAccessibility="no"`).
+
+| Stato | Cosa si vede |
+|---|---|
+| Vuoto (nessuna serata) | solo il gruppo dei presenti con la rosa (nessuno spuntato) e "Aggiungi un ospite"; primario spento, sopra "Servono almeno 4 presenti. Ne mancano 4." |
+| Rosa vuota | nel gruppo dei presenti una frase che dice cosa fare ("Non ci sono ancora giocatori. Aggiungi un ospite, o crea i giocatori da Giocatori.") e comunque "Aggiungi un ospite" |
+| Meno di 4 presenti | come il vuoto, ma con la serata ricordata: i presenti restano spuntati, nessuna bozza, "Chiudi la serata" visibile |
+| Quattro o piu' presenti | compaiono *Partita n*, *In panchina* e il primario acceso |
+| Panchina vuota | con quattro presenti il gruppo c'e' e dice "Nessuno in panchina. Tutti i presenti giocano." |
+| Normale / premuto | riga a riposo / pressione condivisa |
+| Fuoco | anello lime di 2dp (`bg_focus_ring`) |
+| Selezionato | sfondo `elite_surface_raised`, spunta lime, nome a 600: tre segni, e `stateDescription` "Selezionato" per TalkBack |
+| Disattivo | testo `elite_text_disabled`, icona a 0,5 ("Stesse coppie" prima di una partita giocata, o se uno dei quattro se n'e' andato) |
+| Sola lettura (partita in corso) | nota in testa "C'e' una partita in corso. La prossima si compone a fine partita.", tutte le righe spente, niente "Chiudi la serata", primario spento |
+| Errore | un ospite senza nome non chiude il dialogo: il messaggio sta sotto il campo e il testo scritto resta |
+| In corso (lavoro) | nessuno: i comandi sono sincroni; la creazione dell'ospite e' una scrittura locale |
+| Movimento ridotto | non applicabile: la schermata non muove niente da se' |
+
+- **Movimento.** Nessuno nuovo: le righe cambiano contenuto senza animazione (`itemAnimator` spento, per non far scattare il gruppo a ogni scambio). La sola animazione e' la pressione condivisa.
+- **Accessibilita'.** Ogni riga ha una `contentDescription` che dice il posto ("Coppia 2, posto 1: Nudi"), la panchina e le partite, e se un giocatore e' presente o assente e cosa fa il tocco. Le intestazioni dei gruppi sono `accessibilityHeading`. Bersagli di almeno 48dp. La nota di sola lettura e' una regione live.
+- **Schermo stretto e carattere al 200%.** Una colonna sola, nessuna coppia di colonne per lato: i due nomi di una coppia stanno in due righe, non affiancati, e il nome puo' andare a capo fino a due righe. I tre comandi di rotazione sono righe, non tre bottoni in fila (che a 360dp non sarebbero entrati). Il primario sta fuori dallo scorrimento ma e' alto una riga: a 200% la nota sopra puo' andare a capo senza coprire le righe.
+- **Conflitti dichiarati.** (1) Nessuno nuovo sui token. (2) La spunta e' lime come il fuoco e l'accento, quindi la selezione ha il secondo segno del peso. (3) Come in G-4, i componenti `Tabs`, `RowDetail` e `SegmentedControl` della Constitution non erano fra i file letti e non servono: si e' seguito il README e `layout.md`.
+
+### La regola di rotazione
+
+Una sola, in `core/Serata.kt` (`RotazioneSerata`), funzione pura dei presenti e delle partite fatte:
+
+1. **Chi gioca.** Giocano i quattro che hanno giocato meno partite; a parita' chi ha giocato piu' tempo fa (chi non ha mai giocato per primo); a parita' chi e' arrivato prima. Con quattro presenti giocano tutti.
+2. **Con chi.** I quattro hanno tre modi di dividersi in coppie (A+B/C+D, A+C/B+D, A+D/B+C, con A..D nell'ordine di arrivo). Si sceglie quello che ripete meno coppie gia' fatte; a parita' quello giocato meno di recente; a parita' il primo dell'elenco. Con quattro presenti e' un ciclo di tre che non ripete una combinazione prima di averle fatte tutte; con piu' presenti nessuno gioca due partite piu' di un altro.
+3. **Posti.** Dentro ogni coppia il primo posto, che serve per primo, e' di chi e' arrivato prima; la coppia col primo arrivato e' la prima. L'ordine di servizio della partita e' quello dei posti (A1, B1, A2, B2), come in `CoppieNelFoglio`.
+
+**Ruota** propone la successiva trattando la bozza di adesso come gia' fatta (cosi' percorre tutte le combinazioni invece di rimbalzare fra due); **Stesse coppie** rimette le coppie dell'ultima partita (spento se uno dei quattro se n'e' andato); **Scambia i lati** porta ogni coppia dall'altra parte; **toccare due nomi** li scambia (anche fra coppie, o con uno in panchina). Chi arriva a meta' serata sta in panchina finche' la bozza non si cambia (poi, non avendo giocato, gioca); chi esce dalla bozza e' sostituito dal primo della panchina, nello stesso posto.
+
+### Come vive la serata
+
+- **E' un valore** (`Serata`: presenti, partite giocate, bozza, proposte saltate, partita in gioco) con il suo testo versionato (`SerataCodec`, `serata1`), ricordato nelle preferenze dell'app (`app_prefs`, chiave `serata`) da `SerataPrefsStore` a ogni comando: sopravvive al riavvio. **Nessuna tabella Room, nessuna migrazione:** le partite giocate sono nello storico come ogni altra e non hanno un legame con la serata; chiudere la serata toglie il testo e non cancella niente. Un testo illeggibile vale come serata assente.
+- **Versione del testo.** La prima riga e' `serata1`. Un'app piu' vecchia che incontri un testo di una versione futura lo legge come illeggibile e quindi come serata assente: se il formato cambia, la versione nuova deve saper leggere `serata1`, e conviene non scendere di versione (la serata si perde, le partite no).
+- **Ogni comando parte dalla memoria**, non dalla copia letta all'apertura della schermata (`store.load()` a ogni modifica), perche' `MainViewModel` puo' chiudere la partita nel frattempo (anche dall'orologio) e riscriverla da una copia vecchia la rifarebbe. `onStart` rilegge la serata. La sola lettura, invece, la decide l'intent all'apertura: la schermata non puo' sapere se una partita parte mentre e' aperta.
+- **Una partita senza due coppie non e' della serata.** Se l'avvio e' seguito da un cambio di sport, o a fine partita le rose non sono due contro due, `inGioco` si annulla e la partita non si registra con la composizione consegnata. Il dialogo di fine partita apre la Serata con "partita in corso" falso (`MainViewModel.partitaInCorso()` e' sincrono) e non la apre se l'invio a Padel Elite ha appena aperto la sua schermata di accesso.
+- **Un ospite** e' un `Player` locale creato al volo (`PlayerDao.insert`), quindi statistiche, storico ed export funzionano come oggi. Lo stesso nome (senza badare alle maiuscole) e' la stessa persona: nessun doppione.
+- **Una partita della serata e' una partita normale.** `MainViewModel.avviaPartitaDellaSerata()` mette le due coppie nelle rose (solo a registro vuoto, solo in padel e tennis) passando da `refreshServeOrder` e `salvaRoseDellaRigaViva`, come `addPlayerToTeam`; il tennis con quattro nomi diventa doppio da solo. `endMatch()` chiude la partita della serata (con le coppie con cui si e' giocato davvero, non con quelle proposte) e propone la successiva; `discardMatch()` la scarta e lascia la bozza. Una partita giocata fuori dalla serata non la tocca.
+- **Durante la partita** la schermata e' di sola lettura e le coppie seguono le regole di oggi (scambio solo a registro vuoto).
+- **Un giocatore eliminato dalla rosa** esce dalla serata.
+
+### Non fatto
+
+Gironi e iscritti dalla dashboard, rose dalla dashboard e `padelPlayerId` (altro ramo); gli strumentati e gli screenshot (nessun emulatore in questo passo: la schermata e' provata con Robolectric sul layout vero); il tennis in doppio e' gratis ma provato solo fino alla creazione del doppio dal ViewModel; la scelta fra piu' serate (ce n'e' una).

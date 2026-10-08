@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Serata: chi gioca la prossima. Una schermata, un compito. -->
+    <string name="title_serata">Evening</string>
+    <string name="state_selected">Selected</string>
+
+    <string name="serata_next_title">Match %1$d</string>
+    <string name="serata_pair_title">Pair %1$d</string>
+    <string name="serata_seat_description">Pair %1$d, place %2$d: %3$s</string>
+    <string name="serata_seats_hint">Place 1 of each pair serves first. Touch two names to swap them.</string>
+    <string name="serata_rotate">Rotate the pairs</string>
+    <string name="serata_same_pairs">Same pairs</string>
+    <string name="serata_swap_sides">Swap sides</string>
+
+    <string name="serata_bench_title">On the bench</string>
+    <string name="serata_bench_empty">Nobody on the bench. Everyone present is playing.</string>
+    <string name="serata_bench_description">%1$s, on the bench, %2$d matches played</string>
+
+    <plurals name="serata_present_title">
+        <item quantity="one">%1$d person here</item>
+        <item quantity="other">%1$d people here</item>
+    </plurals>
+    <string name="serata_present_title_none">Who is here tonight</string>
+    <string name="serata_roster_empty">There are no players yet. Add a guest, or create players from Players.</string>
+    <string name="serata_present_description">%1$s, here. Touch to remove</string>
+    <string name="serata_absent_description">%1$s, not here. Touch to add</string>
+    <string name="serata_add_guest">Add a guest</string>
+    <string name="serata_guest_hint">Guest name</string>
+    <string name="serata_guest_add">Add</string>
+
+    <plurals name="serata_games_played">
+        <item quantity="one">%1$d match</item>
+        <item quantity="other">%1$d matches</item>
+    </plurals>
+
+    <string name="serata_readonly">A match is in progress. The next one is composed when it ends.</string>
+    <plurals name="serata_start_missing">
+        <item quantity="one">At least 4 people are needed. %1$d more to go.</item>
+        <item quantity="other">At least 4 people are needed. %1$d more to go.</item>
+    </plurals>
+    <string name="serata_start_match">Start the match</string>
+    <string name="serata_close">Close the evening</string>
+    <string name="serata_close_title">Close the evening?</string>
+    <string name="serata_close_message">The matches already played stay in the history.</string>
+
+    <!-- Foglio PARTITA e dialogo di fine partita. -->
+    <string name="serata_sheet_title">Evening</string>
+    <string name="serata_sheet_none">No evening. Pairs that change every match.</string>
+    <plurals name="serata_sheet_summary">
+        <item quantity="one">%1$d person here, %2$d played</item>
+        <item quantity="other">%1$d people here, %2$d played</item>
+    </plurals>
+    <string name="serata_sheet_open">Open the evening</string>
+    <string name="serata_sheet_new">Start an evening</string>
+    <string name="serata_next_in_dialog">Next match of the evening</string>
+    <string name="serata_started">Pairs ready for match %1$d</string>
+    <string name="serata_cannot_start">The pairs cannot change while a match is in progress.</string>
+    <string name="serata_wrong_sport">The evening is played in padel or tennis. Change the sport in Settings.</string>
+    <string name="serata_no_pairs">No pairs to start yet. At least 4 people are needed.</string>
+</resources>

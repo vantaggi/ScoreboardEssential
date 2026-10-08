@@ -22,6 +22,7 @@ import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.ClockMode
+import it.vantaggi.scoreboardessential.core.Composizione
 import it.vantaggi.scoreboardessential.core.ExportOrigin
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchClock
@@ -34,6 +35,7 @@ import it.vantaggi.scoreboardessential.core.MatchSummarizer
 import it.vantaggi.scoreboardessential.core.MatchSummary
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.ScoringEvent
+import it.vantaggi.scoreboardessential.core.Serata
 import it.vantaggi.scoreboardessential.core.SportCapabilities
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.core.SportRules
@@ -50,6 +52,8 @@ import it.vantaggi.scoreboardessential.repository.ColorRepository
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
+import it.vantaggi.scoreboardessential.repository.SerataPrefsStore
+import it.vantaggi.scoreboardessential.repository.SerataStore
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
@@ -66,6 +70,27 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.ZoneId
 import java.util.UUID
+
+/** Com'e' andato "Inizia la partita" della serata. */
+enum class EsitoAvvioSerata {
+    /** Le coppie sono nelle rose. */
+    AVVIATA,
+
+    /** Il ripristino di una partita e' in corso: l'avvio segue alla sua fine, se lecito. */
+    RIMANDATA,
+
+    /** Si sta gia' giocando: le coppie sono quelle della partita. */
+    PARTITA_IN_CORSO,
+
+    /** Lo sport non e' a coppie (calcio). */
+    SPORT_NON_AMMESSO,
+
+    /** Niente serata o niente partita composta (meno di quattro presenti). */
+    NESSUNA_BOZZA,
+}
+
+// Gli sport in cui si gioca a coppie e quindi si puo' fare una serata.
+private val SPORT_DELLA_SERATA = setOf(SportRegistry.PADEL, SportRegistry.TENNIS)
 
 // Chiavi in app_prefs: l'ultimo arretrato dell'orologio applicato (per nodo, e l'ultimo di tutti).
 private const val PREF_BATCH_APPLICATO = "batch_applicato_"
@@ -96,6 +121,9 @@ class MainViewModel(
     private val matchDao: MatchDao = AppDatabase.getDatabase(application).matchDao(),
     /** Component handling efficient data synchronization with Wear OS nodes. */
     val connectionManager: OptimizedWearDataSync = OptimizedWearDataSync(application),
+    // La serata in corso (una sola, ricordata fra due aperture): il ViewModel la consegna al motore e la
+    // chiude a fine partita. Come i DAO, si inietta: il default e' quello della produzione.
+    private val serataStore: SerataStore = SerataPrefsStore(application.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)),
 ) : AndroidViewModel(application) {
     private var matchTimerService: MatchTimerService? = null
     private var isServiceBound = false
@@ -515,6 +543,9 @@ class MainViewModel(
     }
 
     private fun applySport(sportId: String) {
+        // Si cambia sport solo a registro vuoto: una partita consegnata dalla serata e mai cominciata
+        // non e' piu' sua (il calcio non ha coppie).
+        if (sportId != _activeSport.value) annullaLaPartitaDellaSerata()
         sportRules = SportRegistry.byId(sportId)
         engine = MatchEngine(sportRules)
         matchClock.reset()
@@ -865,6 +896,8 @@ class MainViewModel(
     fun discardMatch(): Boolean {
         if (currentMatchId == null && engine.log.isEmpty()) return false
         scartaRigaViva()
+        // Una partita scartata non conta per la serata, e la composizione resta com'era.
+        serataStore.load()?.let { if (it.inGioco != null) serataStore.save(it.annullaPartita()) }
         startNewMatch()
         sendResetUpdate()
         return true
@@ -998,6 +1031,71 @@ class MainViewModel(
         rosa.value = listOf(giocatori[1], giocatori[0]) + giocatori.drop(2)
         refreshServeOrder()
         salvaRoseDellaRigaViva()
+    }
+
+    /** La serata in corso, o null: una sola, ricordata fra due aperture dell'app finche' non si chiude. */
+    fun serataInCorso(): Serata? = serataStore.load()
+
+    /**
+     * Si sta giocando una partita: il registro del motore non e' vuoto e non si sta chiudendo. Sincrono, a
+     * differenza di [canUndo] (postValue) e del motore, che [endMatch] svuota solo dentro la fila: chi
+     * chiede subito dopo il salvataggio deve leggere "no".
+     */
+    fun partitaInCorso(): Boolean = engine.log.isNotEmpty() && !chiusuraInCorso
+
+    /** La serata si gioca solo negli sport a coppie: padel e tennis (il tennis diventa doppio con le rose di due). */
+    fun sportDellaSerata(): Boolean = _activeSport.value in SPORT_DELLA_SERATA
+
+    /**
+     * "Inizia la partita" della serata: le due coppie composte diventano le rose di questa partita.
+     *
+     * E' solo un modo di riempire le rose: il resto (ordine di servizio dai posti, riga viva, storico,
+     * invio a Padel Elite) e' quello di ogni partita, perche' passa dalle stesse [refreshServeOrder] e
+     * [salvaRoseDellaRigaViva] di [addPlayerToTeam]. Come lo scambio, si fa solo a registro vuoto: dal
+     * primo punto le coppie sono quelle della partita. L'esito dice perche' non si e' avviata (partita in
+     * corso, sport non a coppie, niente bozza) o che l'avvio e' rimandato alla fine del ripristino.
+     *
+     * La serata ricorda che questa partita e' sua ([Serata.inGioco]): [endMatch] la chiude e propone la
+     * successiva, [discardMatch] la scarta, un cambio di sport la annulla.
+     */
+    fun avviaPartitaDellaSerata(): EsitoAvvioSerata {
+        if (rimandataDalRipristino { avviaPartitaDellaSerata() }) return EsitoAvvioSerata.RIMANDATA
+        if (engine.log.isNotEmpty()) return EsitoAvvioSerata.PARTITA_IN_CORSO
+        if (!sportDellaSerata()) return EsitoAvvioSerata.SPORT_NON_AMMESSO
+        val serata = serataStore.load() ?: return EsitoAvvioSerata.NESSUNA_BOZZA
+        val bozza = serata.bozza ?: return EsitoAvvioSerata.NESSUNA_BOZZA
+        serataStore.save(serata.consegna())
+        viewModelScope.launch {
+            val giocatori = playerDao.getPlayersWithRoles(bozza.posti).associateBy { it.player.playerId }
+            // Nel frattempo e' partito un punto: le coppie sono quelle della partita, non si toccano piu'.
+            if (engine.log.isNotEmpty()) return@launch
+            _team1Players.value = bozza.squadra1.mapNotNull { giocatori[it] }
+            _team2Players.value = bozza.squadra2.mapNotNull { giocatori[it] }
+            refreshServeOrder()
+            salvaRoseDellaRigaViva()
+        }
+        return EsitoAvvioSerata.AVVIATA
+    }
+
+    /**
+     * La partita salvata chiude quella della serata, se era sua, con le coppie con cui si e' giocato
+     * davvero. Se non si e' giocato in coppia (sport cambiato, una rosa scesa a uno) non e' una partita
+     * della serata: si annulla invece di registrarla con la composizione consegnata.
+     */
+    private fun chiudiLaPartitaDellaSerata(
+        uno: List<Int>,
+        due: List<Int>,
+    ) {
+        val serata = serataStore.load() ?: return
+        if (serata.inGioco == null) return
+        val inCoppia = sportDellaSerata() && uno.size == 2 && due.size == 2 && (uno + due).toSet().size == 4
+        serataStore.save(if (inCoppia) serata.chiudiPartita(Composizione(uno, due)) else serata.annullaPartita())
+    }
+
+    /** La partita consegnata alla serata non e' piu' sua (sport cambiato): la serata la dimentica. */
+    private fun annullaLaPartitaDellaSerata() {
+        val serata = serataStore.load() ?: return
+        if (serata.inGioco != null) serataStore.save(serata.annullaPartita())
     }
 
     /**
@@ -2013,6 +2111,13 @@ class MainViewModel(
         // e dice si', perche' la partita si sta salvando davvero (lo snackbar del telefono).
         if (chiusuraInCorso) return true
         chiusuraInCorso = true
+
+        // La serata si chiude subito e non dentro la fila: chi salva puo' aprire la Serata un attimo dopo, e
+        // deve trovarci gia' la partita giocata e la successiva proposta.
+        chiudiLaPartitaDellaSerata(
+            _team1Players.value.orEmpty().map { it.player.playerId },
+            _team2Players.value.orEmpty().map { it.player.playerId },
+        )
 
         // In fila con le scritture della riga viva: END MATCH subito dopo il primo punto trovava
         // l'insert ancora sospeso e currentMatchId null, e closeMatch inseriva una seconda riga.

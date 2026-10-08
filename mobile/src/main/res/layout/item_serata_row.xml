@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Una riga della schermata Serata: un posto della prossima partita, uno della panchina, un presente, un
+    comando. Sta dentro un gruppo tonale, non e' una card. Da sinistra: icona (solo i comandi), numero del
+    posto, il nome (fino a due righe: a carattere grande non si taglia in una riga sola), una nota
+    (le partite giocate) e la spunta della selezione. La spunta tiene il posto anche spenta, cosi' toccare
+    una riga non sposta niente. Selezionata: sfondo rialzato (bg_row_selected), spunta lime, nome a 600.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/serata_row"
+    style="@style/Widget.App.Pressable"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_row_selected"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="@drawable/bg_focus_ring"
+    android:gravity="center_vertical"
+    android:minHeight="@dimen/control_touch"
+    android:orientation="horizontal"
+    android:paddingHorizontal="@dimen/space_16"
+    android:paddingVertical="@dimen/space_8">
+
+    <ImageView
+        android:id="@+id/serata_row_icon"
+        android:layout_width="@dimen/icon_standard"
+        android:layout_height="@dimen/icon_standard"
+        android:layout_marginEnd="@dimen/space_12"
+        android:importantForAccessibility="no"
+        android:visibility="gone"
+        app:tint="@color/elite_text_primary" />
+
+    <TextView
+        android:id="@+id/serata_row_lead"
+        android:layout_width="@dimen/space_24"
+        android:layout_height="wrap_content"
+        android:importantForAccessibility="no"
+        android:textAppearance="@style/TextAppearance.App.Caption"
+        android:visibility="gone"
+        tools:text="1" />
+
+    <TextView
+        android:id="@+id/serata_row_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:importantForAccessibility="no"
+        android:maxLines="2"
+        android:textAppearance="@style/TextAppearance.App.RowTitle"
+        tools:text="Vantaggi" />
+
+    <TextView
+        android:id="@+id/serata_row_note"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/space_8"
+        android:importantForAccessibility="no"
+        android:textAppearance="@style/TextAppearance.App.Caption"
+        android:visibility="gone"
+        tools:text="2 partite" />
+
+    <ImageView
+        android:id="@+id/serata_row_check"
+        android:layout_width="@dimen/icon_standard"
+        android:layout_height="@dimen/icon_standard"
+        android:layout_marginStart="@dimen/space_8"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_check"
+        android:visibility="invisible"
+        app:tint="@color/elite_lime" />
+</LinearLayout>

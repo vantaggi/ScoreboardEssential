@@ -48,7 +48,10 @@ class StatoOrologioTest {
         assertEquals("di norma la card non si vede", View.GONE, card.visibility)
 
         val rose = foglio.findViewById<View>(R.id.rosters_card).layoutParams as ConstraintLayout.LayoutParams
-        assertEquals("le rose stanno sotto la card, che sta sotto la testata", R.id.watch_notice_card, rose.topToBottom)
+        // Il gruppo Serata (R-2) sta fra la card e le rose: l'avviso resta il primo gruppo sotto la testata.
+        val serata = foglio.findViewById<View>(R.id.serata_card).layoutParams as ConstraintLayout.LayoutParams
+        assertEquals("il gruppo Serata sta sotto la card dell'orologio", R.id.watch_notice_card, serata.topToBottom)
+        assertEquals("le rose stanno sotto il gruppo Serata", R.id.serata_card, rose.topToBottom)
         val params = card.layoutParams as ConstraintLayout.LayoutParams
         assertEquals("la card sta sotto la testata del foglio", R.id.match_sheet_close_button, params.topToBottom)
 

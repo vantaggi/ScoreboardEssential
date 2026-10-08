@@ -4247,4 +4247,341 @@ class MainViewModelTest {
             val lunghe = versioni.map { it as Long }
             assertEquals("strettamente crescenti: $lunghe", lunghe.sorted().distinct(), lunghe)
         }
+
+    // ---- Serata: "Prossima partita della serata" ----
+
+    private val preferenzeDellApp
+        get() =
+            ApplicationProvider.getApplicationContext<Application>().getSharedPreferences(
+                "app_prefs",
+                android.content.Context.MODE_PRIVATE,
+            )
+
+    /** La memoria della serata, la stessa che il ViewModel di [creaViewModel] legge (preferenze dell'app). */
+    private fun memoriaDellaSerata() =
+        it.vantaggi.scoreboardessential.repository
+            .SerataPrefsStore(preferenzeDellApp)
+
+    private suspend fun quattroPresenti(playerDao: PlayerDao): List<Int> =
+        listOf(
+            "Vantaggi",
+            "Trinari",
+            "Nudi",
+            "Porcacchia",
+        ).map { playerDao.insert(Player(playerName = it, appearances = 0, goals = 0)).toInt() }
+
+    @Test
+    fun `Prossima partita della serata mette le coppie composte nelle rose e l'ordine di servizio e' quello dei posti`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (a, b, c, d) = quattroPresenti(playerDao)
+                // Una composizione non banale: i posti scambiati rispetto all'ordine di arrivo.
+                memoriaDellaSerata().save(
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d))
+                        .scambia(0, 1)
+                        .scambiaLati(),
+                )
+
+                assertEquals(EsitoAvvioSerata.AVVIATA, viewModel.avviaPartitaDellaSerata())
+                advanceUntilIdle()
+
+                assertEquals(listOf(c, d), rosa(viewModel, 1))
+                assertEquals(listOf(b, a), rosa(viewModel, 2))
+                // A1, B1, A2, B2: il primo posto di ogni coppia serve per primo.
+                assertEquals(listOf(c, b, d, a), motore().rules.config.serveOrder)
+                assertEquals(2, viewModel.sportCapabilities.value?.playersPerSide)
+                assertEquals(
+                    "la serata sa che questa partita e' sua",
+                    memoriaDellaSerata().load()?.bozza,
+                    memoriaDellaSerata().load()?.inGioco,
+                )
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    /**
+     * Il dialogo di fine partita apre la Serata subito dopo il salvataggio: il motore si svuota solo dentro
+     * la fila, e canUndo e' un postValue. partitaInCorso() deve gia' dire "no" in quell'istante, altrimenti
+     * la Serata si apre sempre in sola lettura.
+     */
+    @Test
+    fun `subito dopo il salvataggio la partita non e' piu' in corso, anche prima che la fila giri`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                usaDao(playerDao = db.playerDao(), matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                assertEquals(false, viewModel.partitaInCorso())
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                assertEquals(true, viewModel.partitaInCorso())
+
+                assertEquals(true, viewModel.endMatch())
+                // Ancora niente advanceUntilIdle: e' il momento in cui il dialogo apre la Serata.
+                assertEquals(false, viewModel.partitaInCorso())
+                advanceUntilIdle()
+                assertEquals(false, viewModel.partitaInCorso())
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    @Test
+    fun `salvare la partita della serata la conta e propone la successiva, che porta altre coppie`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (a, b, c, d) = quattroPresenti(playerDao)
+                memoriaDellaSerata().save(
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d)),
+                )
+                viewModel.avviaPartitaDellaSerata()
+                advanceUntilIdle()
+                viewModel.addScore(1)
+                advanceUntilIdle()
+
+                assertEquals(true, viewModel.endMatch())
+                advanceUntilIdle()
+
+                val serata = memoriaDellaSerata().load()!!
+                assertEquals(
+                    listOf(
+                        it.vantaggi.scoreboardessential.core
+                            .Composizione(listOf(a, b), listOf(c, d)),
+                    ),
+                    serata.giocate,
+                )
+                assertEquals(null, serata.inGioco)
+                assertEquals(setOf(setOf(a, c), setOf(b, d)), serata.bozza!!.coppie)
+                // La partita e' una partita normale: sta nello storico con le sue formazioni.
+                assertEquals(
+                    1,
+                    db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM matches").use {
+                        it.moveToFirst()
+                        it.getInt(0)
+                    },
+                )
+
+                // E la successiva, avviata, porta le nuove coppie nelle rose.
+                assertEquals(EsitoAvvioSerata.AVVIATA, viewModel.avviaPartitaDellaSerata())
+                advanceUntilIdle()
+                assertEquals(listOf(a, c), rosa(viewModel, 1))
+                assertEquals(listOf(b, d), rosa(viewModel, 2))
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    @Test
+    fun `scartare la partita della serata non la conta e la bozza resta`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (a, b, c, d) = quattroPresenti(playerDao)
+                val iniziale =
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d))
+                memoriaDellaSerata().save(iniziale)
+                viewModel.avviaPartitaDellaSerata()
+                advanceUntilIdle()
+                viewModel.addScore(2)
+                advanceUntilIdle()
+
+                assertEquals(true, viewModel.discardMatch())
+                advanceUntilIdle()
+
+                assertEquals(iniziale, memoriaDellaSerata().load())
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    @Test
+    fun `una partita fuori dalla serata non tocca la serata`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (a, b, c, d) = quattroPresenti(playerDao)
+                val iniziale =
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d))
+                memoriaDellaSerata().save(iniziale)
+                viewModel.addScore(1)
+                advanceUntilIdle()
+
+                assertEquals(true, viewModel.endMatch())
+                advanceUntilIdle()
+
+                assertEquals(iniziale, memoriaDellaSerata().load())
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    @Test
+    fun `le coppie della serata non entrano a partita iniziata ne' nel calcio`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                val (a, b, c, d) = quattroPresenti(playerDao)
+                memoriaDellaSerata().save(
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d)),
+                )
+                // Calcio: lo sport della serata e' un altro.
+                assertEquals(EsitoAvvioSerata.SPORT_NON_AMMESSO, viewModel.avviaPartitaDellaSerata())
+
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                assertEquals(EsitoAvvioSerata.PARTITA_IN_CORSO, viewModel.avviaPartitaDellaSerata())
+                assertEquals(emptyList<Int>(), rosa(viewModel, 1))
+                assertEquals(null, memoriaDellaSerata().load()?.inGioco)
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    @Test
+    fun `l'esito dell'avvio dice perche' non parte, con tre presenti non c'e' bozza`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                assertEquals(EsitoAvvioSerata.NESSUNA_BOZZA, viewModel.avviaPartitaDellaSerata())
+                val (a, b, c) = quattroPresenti(playerDao)
+                memoriaDellaSerata().save(
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c)),
+                )
+                assertEquals("con tre presenti non c'e' una bozza", EsitoAvvioSerata.NESSUNA_BOZZA, viewModel.avviaPartitaDellaSerata())
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    /** Dopo "Inizia" si passa al calcio: la partita non e' piu' della serata, e non si registra a fine partita. */
+    @Test
+    fun `cambiare sport dopo l'avvio annulla la partita della serata`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (a, b, c, d) = quattroPresenti(playerDao)
+                memoriaDellaSerata().save(
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d)),
+                )
+                viewModel.avviaPartitaDellaSerata()
+                advanceUntilIdle()
+
+                assertEquals(true, viewModel.selectSport(SportRegistry.FOOTBALL))
+                advanceUntilIdle()
+                assertEquals(null, memoriaDellaSerata().load()?.inGioco)
+
+                // E se il calcio si gioca e si salva, la serata non conta niente.
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                assertEquals(true, viewModel.endMatch())
+                advanceUntilIdle()
+                assertEquals(emptyList<it.vantaggi.scoreboardessential.core.Composizione>(), memoriaDellaSerata().load()!!.giocate)
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    /** Una rosa scesa a uno: non e' un due contro due, quindi non e' la partita composta dalla serata. */
+    @Test
+    fun `una partita della serata finita in singolare non si registra con la composizione consegnata`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (a, b, c, d) = quattroPresenti(playerDao)
+                memoriaDellaSerata().save(
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d)),
+                )
+                viewModel.avviaPartitaDellaSerata()
+                advanceUntilIdle()
+                viewModel.removePlayerFromTeam(viewModel.team1Players.value!!.last(), 1)
+                viewModel.addScore(1)
+                advanceUntilIdle()
+
+                assertEquals(true, viewModel.endMatch())
+                advanceUntilIdle()
+
+                val serata = memoriaDellaSerata().load()!!
+                assertEquals(emptyList<it.vantaggi.scoreboardessential.core.Composizione>(), serata.giocate)
+                assertEquals(null, serata.inGioco)
+                assertEquals(
+                    "la bozza resta per riprovare",
+                    serata.bozza,
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d))
+                        .bozza,
+                )
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    @Test
+    fun `nel tennis le coppie della serata fanno un doppio`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.TENNIS)
+                advanceUntilIdle()
+                assertEquals(1, viewModel.sportCapabilities.value?.playersPerSide)
+                val (a, b, c, d) = quattroPresenti(playerDao)
+                memoriaDellaSerata().save(
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d)),
+                )
+
+                assertEquals(EsitoAvvioSerata.AVVIATA, viewModel.avviaPartitaDellaSerata())
+                advanceUntilIdle()
+
+                assertEquals(2, viewModel.sportCapabilities.value?.playersPerSide)
+                assertEquals(listOf(a, c, b, d), motore().rules.config.serveOrder)
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
 }

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Il nome di un ospite: un campo solo. Un nome vuoto non chiude il dialogo e dice cosa manca sotto il campo. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/space_24">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/serata_guest_layout"
+        style="@style/Widget.App.TextInputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/serata_guest_hint">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/serata_guest_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionDone"
+            android:inputType="textPersonName|textCapWords" />
+    </com.google.android.material.textfield.TextInputLayout>
+</LinearLayout>
