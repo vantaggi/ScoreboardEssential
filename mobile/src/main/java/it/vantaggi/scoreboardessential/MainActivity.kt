@@ -227,13 +227,20 @@ class MainActivity :
     private val serataLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { risultato ->
             if (risultato.resultCode != RESULT_OK) return@registerForActivityResult
-            if (viewModel.avviaPartitaDellaSerata()) {
-                matchSheet.state = BottomSheetBehavior.STATE_HIDDEN
-                val numero = viewModel.serataInCorso()?.numeroDellaProssima ?: 1
-                snackbarSopraLaStriscia(getString(R.string.serata_started, numero), Snackbar.LENGTH_LONG).show()
-            } else {
-                snackbarSopraLaStriscia(getString(R.string.serata_cannot_start), Snackbar.LENGTH_LONG).show()
-            }
+            val messaggio =
+                when (viewModel.avviaPartitaDellaSerata()) {
+                    EsitoAvvioSerata.AVVIATA -> {
+                        matchSheet.state = BottomSheetBehavior.STATE_HIDDEN
+                        val numero = viewModel.serataInCorso()?.numeroDellaProssima ?: 1
+                        getString(R.string.serata_started, numero)
+                    }
+                    // Rimandato dal ripristino: se poi parte, le rose cambiano; se no, niente da dire.
+                    EsitoAvvioSerata.RIMANDATA -> null
+                    EsitoAvvioSerata.PARTITA_IN_CORSO -> getString(R.string.serata_cannot_start)
+                    EsitoAvvioSerata.SPORT_NON_AMMESSO -> getString(R.string.serata_wrong_sport)
+                    EsitoAvvioSerata.NESSUNA_BOZZA -> getString(R.string.serata_no_pairs)
+                }
+            if (messaggio != null) snackbarSopraLaStriscia(messaggio, Snackbar.LENGTH_LONG).show()
             aggiornaLaSerata()
         }
 

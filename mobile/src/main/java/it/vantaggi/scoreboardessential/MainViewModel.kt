@@ -71,6 +71,24 @@ import kotlinx.coroutines.sync.withLock
 import java.time.ZoneId
 import java.util.UUID
 
+/** Com'e' andato "Inizia la partita" della serata. */
+enum class EsitoAvvioSerata {
+    /** Le coppie sono nelle rose. */
+    AVVIATA,
+
+    /** Il ripristino di una partita e' in corso: l'avvio segue alla sua fine, se lecito. */
+    RIMANDATA,
+
+    /** Si sta gia' giocando: le coppie sono quelle della partita. */
+    PARTITA_IN_CORSO,
+
+    /** Lo sport non e' a coppie (calcio). */
+    SPORT_NON_AMMESSO,
+
+    /** Niente serata o niente partita composta (meno di quattro presenti). */
+    NESSUNA_BOZZA,
+}
+
 // Gli sport in cui si gioca a coppie e quindi si puo' fare una serata.
 private val SPORT_DELLA_SERATA = setOf(SportRegistry.PADEL, SportRegistry.TENNIS)
 
@@ -525,6 +543,9 @@ class MainViewModel(
     }
 
     private fun applySport(sportId: String) {
+        // Si cambia sport solo a registro vuoto: una partita consegnata dalla serata e mai cominciata
+        // non e' piu' sua (il calcio non ha coppie).
+        if (sportId != _activeSport.value) annullaLaPartitaDellaSerata()
         sportRules = SportRegistry.byId(sportId)
         engine = MatchEngine(sportRules)
         matchClock.reset()
@@ -1031,17 +1052,18 @@ class MainViewModel(
      * E' solo un modo di riempire le rose: il resto (ordine di servizio dai posti, riga viva, storico,
      * invio a Padel Elite) e' quello di ogni partita, perche' passa dalle stesse [refreshServeOrder] e
      * [salvaRoseDellaRigaViva] di [addPlayerToTeam]. Come lo scambio, si fa solo a registro vuoto: dal
-     * primo punto le coppie sono quelle della partita. Ritorna false se non c'e' una serata con la
-     * prossima partita composta, se lo sport non e' a coppie o se si sta gia' giocando.
+     * primo punto le coppie sono quelle della partita. L'esito dice perche' non si e' avviata (partita in
+     * corso, sport non a coppie, niente bozza) o che l'avvio e' rimandato alla fine del ripristino.
      *
      * La serata ricorda che questa partita e' sua ([Serata.inGioco]): [endMatch] la chiude e propone la
-     * successiva, [discardMatch] la scarta.
+     * successiva, [discardMatch] la scarta, un cambio di sport la annulla.
      */
-    fun avviaPartitaDellaSerata(): Boolean {
-        if (rimandataDalRipristino { avviaPartitaDellaSerata() }) return true
-        if (engine.log.isNotEmpty() || !sportDellaSerata()) return false
-        val serata = serataStore.load() ?: return false
-        val bozza = serata.bozza ?: return false
+    fun avviaPartitaDellaSerata(): EsitoAvvioSerata {
+        if (rimandataDalRipristino { avviaPartitaDellaSerata() }) return EsitoAvvioSerata.RIMANDATA
+        if (engine.log.isNotEmpty()) return EsitoAvvioSerata.PARTITA_IN_CORSO
+        if (!sportDellaSerata()) return EsitoAvvioSerata.SPORT_NON_AMMESSO
+        val serata = serataStore.load() ?: return EsitoAvvioSerata.NESSUNA_BOZZA
+        val bozza = serata.bozza ?: return EsitoAvvioSerata.NESSUNA_BOZZA
         serataStore.save(serata.consegna())
         viewModelScope.launch {
             val giocatori = playerDao.getPlayersWithRoles(bozza.posti).associateBy { it.player.playerId }
@@ -1052,21 +1074,28 @@ class MainViewModel(
             refreshServeOrder()
             salvaRoseDellaRigaViva()
         }
-        return true
+        return EsitoAvvioSerata.AVVIATA
     }
 
     /**
      * La partita salvata chiude quella della serata, se era sua, con le coppie con cui si e' giocato
-     * davvero (le rose di adesso, se sono due contro due; altrimenti quelle consegnate).
+     * davvero. Se non si e' giocato in coppia (sport cambiato, una rosa scesa a uno) non e' una partita
+     * della serata: si annulla invece di registrarla con la composizione consegnata.
      */
     private fun chiudiLaPartitaDellaSerata(
         uno: List<Int>,
         due: List<Int>,
     ) {
         val serata = serataStore.load() ?: return
-        val consegnata = serata.inGioco ?: return
-        val giocata = if (uno.size == 2 && due.size == 2 && (uno + due).toSet().size == 4) Composizione(uno, due) else consegnata
-        serataStore.save(serata.chiudiPartita(giocata))
+        if (serata.inGioco == null) return
+        val inCoppia = sportDellaSerata() && uno.size == 2 && due.size == 2 && (uno + due).toSet().size == 4
+        serataStore.save(if (inCoppia) serata.chiudiPartita(Composizione(uno, due)) else serata.annullaPartita())
+    }
+
+    /** La partita consegnata alla serata non e' piu' sua (sport cambiato): la serata la dimentica. */
+    private fun annullaLaPartitaDellaSerata() {
+        val serata = serataStore.load() ?: return
+        if (serata.inGioco != null) serataStore.save(serata.annullaPartita())
     }
 
     /**

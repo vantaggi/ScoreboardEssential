@@ -42,7 +42,6 @@
     <string name="serata_close">Close the evening</string>
     <string name="serata_close_title">Close the evening?</string>
     <string name="serata_close_message">The matches already played stay in the history.</string>
-    <string name="serata_closed">Evening closed</string>
 
     <!-- Foglio PARTITA e dialogo di fine partita. -->
     <string name="serata_sheet_title">Evening</string>
@@ -56,4 +55,6 @@
     <string name="serata_next_in_dialog">Next match of the evening</string>
     <string name="serata_started">Pairs ready for match %1$d</string>
     <string name="serata_cannot_start">The pairs cannot change while a match is in progress.</string>
+    <string name="serata_wrong_sport">The evening is played in padel or tennis. Change the sport in Settings.</string>
+    <string name="serata_no_pairs">No pairs to start yet. At least 4 people are needed.</string>
 </resources>

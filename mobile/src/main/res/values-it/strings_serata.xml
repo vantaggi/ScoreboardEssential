@@ -45,7 +45,6 @@
     <string name="serata_close">Chiudi la serata</string>
     <string name="serata_close_title">Chiudere la serata?</string>
     <string name="serata_close_message">Le partite già giocate restano nello storico.</string>
-    <string name="serata_closed">Serata chiusa</string>
 
     <!-- Foglio PARTITA e dialogo di fine partita. -->
     <string name="serata_sheet_title">Serata</string>
@@ -60,4 +59,6 @@
     <string name="serata_next_in_dialog">Prossima partita della serata</string>
     <string name="serata_started">Coppie pronte per la partita %1$d</string>
     <string name="serata_cannot_start">Le coppie non cambiano mentre si gioca.</string>
+    <string name="serata_wrong_sport">La serata si gioca a padel o a tennis. Cambia sport dalle Impostazioni.</string>
+    <string name="serata_no_pairs">Non ci sono ancora coppie da avviare. Servono almeno 4 presenti.</string>
 </resources>
