@@ -35,6 +35,7 @@
 
     <!-- Il comando e lo stato sulla card dello storico: ogni stato ha una parola e un icona. -->
     <string name="padel_elite_send">Invia a Padel Elite</string>
+    <string name="padel_elite_resend">Invia di nuovo</string>
     <string name="padel_elite_send_in_dialog">Invia anche a Padel Elite</string>
     <string name="padel_elite_status_queued">In coda: parte appena c\'e\' rete</string>
     <string name="padel_elite_status_queued_full">In coda: la casella del gruppo e\' piena, riprovo piu\' tardi</string>

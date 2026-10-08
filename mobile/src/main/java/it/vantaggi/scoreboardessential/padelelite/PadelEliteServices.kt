@@ -81,12 +81,20 @@ class PadelEliteServices(
         }
     }
 
-    /** Il comando: mette in coda la partita o dice dove andare per poterlo fare. */
+    /**
+     * Il comando: mette in coda la partita o dice dove andare per poterlo fare. Per una partita
+     * gia' nella casella e ancora in attesa e' "Invia di nuovo": il lavoro rifa' il file con i
+     * collegamenti di adesso e sostituisce quello in coda (un lavoro solo per partita).
+     */
     fun send(matchUuid: String): SendOutcome {
         if (!isEnabled) return SendOutcome.DISABLED
         if (account.session() == null) return SendOutcome.NEED_LOGIN
         val gruppo = account.selectedGroup() ?: return SendOutcome.NEED_GROUP
-        InvioWorker.enqueue(context, invii, matchUuid, gruppo.first)
+        val rimanda = invii.get(matchUuid)?.canResend == true
+        InvioWorker.enqueue(context, invii, matchUuid, gruppo.first, replace = rimanda)
         return SendOutcome.QUEUED
     }
+
+    /** Con l'accesso fatto e un gruppo scelto "Invia di nuovo" parte; senza, la card non lo offre. */
+    fun hasAccess(): Boolean = isEnabled && account.session() != null && account.selectedGroup() != null
 }

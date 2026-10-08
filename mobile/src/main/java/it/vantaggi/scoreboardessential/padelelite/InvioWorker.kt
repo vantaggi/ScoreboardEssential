@@ -64,17 +64,27 @@ class InvioWorker(
          * Mette la partita in coda. KEEP: se per questa partita c'e' gia' un lavoro in attesa o in
          * corso, il comando ripetuto non ne crea un secondo; un lavoro finito si sostituisce, ed e'
          * cosi' che "rimanda" funziona dopo un errore.
+         *
+         * [replace] e' "Invia di nuovo" su una voce gia' nella casella: REPLACE annulla il lavoro in
+         * attesa o in corso e ne mette uno nuovo, col gruppo di adesso. Resta un solo lavoro per
+         * partita: due tocchi non fanno due invii in parallelo. Il file lo rifa' il lavoro al momento
+         * dell'invio, quindi porta i collegamenti di quel momento.
          */
         fun enqueue(
             context: Context,
             store: InvioStore,
             matchUuid: String,
             groupId: String,
+            replace: Boolean = false,
         ) {
             store.set(matchUuid, InvioInfo(InvioState.QUEUED))
             WorkManager
                 .getInstance(context)
-                .enqueueUniqueWork(workName(matchUuid), ExistingWorkPolicy.KEEP, request(matchUuid, groupId))
+                .enqueueUniqueWork(
+                    workName(matchUuid),
+                    if (replace) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP,
+                    request(matchUuid, groupId),
+                )
         }
     }
 }

@@ -6,6 +6,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -70,6 +72,16 @@ class MatchHistoryActivity : AppCompatActivity() {
             )
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
+
+        // L'accesso o il gruppo di Padel Elite possono cambiare nella sua schermata: al ritorno
+        // "Invia di nuovo" si riconsidera (senza accesso non c'e').
+        if (padelElite.isEnabled) {
+            lifecycle.addObserver(
+                object : DefaultLifecycleObserver {
+                    override fun onResume(owner: LifecycleOwner) = viewModel.rileggiAccesso()
+                },
+            )
+        }
 
         // Le partite inviate e in attesa possono essere state importate o scartate nel frattempo.
         if (padelElite.isEnabled) {

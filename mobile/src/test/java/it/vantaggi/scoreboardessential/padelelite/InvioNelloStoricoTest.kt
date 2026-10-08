@@ -72,7 +72,8 @@ class InvioNelloStoricoTest {
         match: Match = partita(),
         invio: InvioInfo? = null,
         acceso: Boolean = true,
-    ) = MatchHistoryUiState(MatchWithTeams(match, null, null, emptyList()), "", null, invio, acceso)
+        entrato: Boolean = true,
+    ) = MatchHistoryUiState(MatchWithTeams(match, null, null, emptyList()), "", null, invio, acceso, entrato)
 
     private fun scheda(stato: MatchHistoryUiState): View {
         val vista = LayoutInflater.from(tema).inflate(R.layout.match_item, FrameLayout(tema), false)
@@ -172,6 +173,38 @@ class InvioNelloStoricoTest {
 
         assertTrue(importata.text != errore.text)
         assertTrue(importata.compoundDrawablesRelative[0].constantState != errore.compoundDrawablesRelative[0].constantState)
+    }
+
+    @Test
+    @Config(qualifiers = "it")
+    fun `una voce in attesa ha "Invia di nuovo" nello stesso bottone, importata e scartata niente`() {
+        for (s in listOf(InvioState.SENT, InvioState.UPDATED, InvioState.PRESENT)) {
+            val vista = scheda(stato(invio = InvioInfo(s)))
+            val bottone = vista.findViewById<android.widget.Button>(R.id.send_match_button)
+            assertEquals("$s", View.VISIBLE, bottone.visibility)
+            assertEquals("$s", "Invia di nuovo", bottone.text.toString())
+            assertTrue("$s", stato(invio = InvioInfo(s)).canSendAgain)
+        }
+        for (s in listOf(InvioState.IMPORTED, InvioState.DISCARDED, InvioState.QUEUED)) {
+            val vista = scheda(stato(invio = InvioInfo(s)))
+            assertEquals("$s", View.GONE, vista.findViewById<View>(R.id.send_match_button).visibility)
+            assertFalse("$s", stato(invio = InvioInfo(s)).canSendAgain)
+        }
+        // Dove l'invio e' fallito resta il comando di prima, con la sua parola.
+        val fallita = scheda(stato(invio = InvioInfo(InvioState.UNSENDABLE, InvioReason.INVALID_PAYLOAD)))
+        assertEquals("Invia a Padel Elite", fallita.findViewById<android.widget.Button>(R.id.send_match_button).text.toString())
+    }
+
+    @Test
+    fun `senza accesso, o con la funzione spenta, "Invia di nuovo" non c'e'`() {
+        val inAttesa = InvioInfo(InvioState.SENT)
+
+        assertFalse(stato(invio = inAttesa, entrato = false).canSendAgain)
+        assertFalse(stato(invio = inAttesa, acceso = false, entrato = true).canSendAgain)
+        assertEquals(View.GONE, scheda(stato(invio = inAttesa, entrato = false)).findViewById<View>(R.id.send_match_button).visibility)
+        // Una partita che non si puo' esportare (non padel, senza registro) non ha il comando.
+        assertFalse(stato(partita(sport = SportRegistry.TENNIS), invio = inAttesa).canSendAgain)
+        assertFalse(stato(partita(registro = false), invio = inAttesa).canSendAgain)
     }
 
     @Test

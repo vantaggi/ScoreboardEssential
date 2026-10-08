@@ -35,6 +35,7 @@
 
     <!-- Il comando e lo stato sulla card dello storico: ogni stato ha una parola e un icona. -->
     <string name="padel_elite_send">Send to Padel Elite</string>
+    <string name="padel_elite_resend">Send again</string>
     <string name="padel_elite_send_in_dialog">Also send to Padel Elite</string>
     <string name="padel_elite_status_queued">Queued: it leaves as soon as there is a connection</string>
     <string name="padel_elite_status_queued_full">Queued: the group inbox is full, trying again later</string>
