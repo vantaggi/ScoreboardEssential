@@ -94,14 +94,20 @@ class SerataDelTelefonoTest {
                 vm.scambiaPresente(id)
                 assertEquals(i == 3, vm.stato.value.puoIniziare)
             }
-            val bozza = vm.stato.value.serata!!.bozza!!
+            val bozza =
+                vm.stato.value.serata!!
+                    .bozza!!
             assertEquals(ids.toSet(), bozza.posti.toSet())
 
             // Riavvio: un ViewModel nuovo ritrova presenti e bozza dalle preferenze.
             val dopo = nuovoViewModel()
             advanceUntilIdle()
             assertEquals(vm.stato.value.serata, dopo.stato.value.serata)
-            assertEquals(bozza, dopo.stato.value.serata!!.bozza)
+            assertEquals(
+                bozza,
+                dopo.stato.value.serata!!
+                    .bozza,
+            )
         }
 
     @Test
@@ -110,7 +116,8 @@ class SerataDelTelefonoTest {
             rosa("Vantaggi", "Trinari", "Nudi", "Porcacchia")
             val vm = nuovoViewModel()
             advanceUntilIdle()
-            vm.stato.value.rosa.forEach { vm.scambiaPresente(it.id) }
+            vm.stato.value.rosa
+                .forEach { vm.scambiaPresente(it.id) }
 
             assertFalse("un nome vuoto non fa un ospite", vm.aggiungiOspite("   "))
             assertTrue(vm.aggiungiOspite("  Marco  "))
@@ -119,14 +126,33 @@ class SerataDelTelefonoTest {
             val giocatori = db.playerDao().getAllPlayers().first()
             val marco = giocatori.single { it.player.playerName == "Marco" }.player
             assertEquals("e' un Player come gli altri, con le statistiche a zero", 0, marco.appearances)
-            assertTrue(marco.playerId in vm.stato.value.serata!!.presenti)
-            assertEquals(listOf(marco.playerId), vm.stato.value.serata!!.panchina)
+            assertTrue(
+                marco.playerId in
+                    vm.stato.value.serata!!
+                        .presenti,
+            )
+            assertEquals(
+                listOf(marco.playerId),
+                vm.stato.value.serata!!
+                    .panchina,
+            )
 
             // Lo stesso nome (anche con altre maiuscole) e' la stessa persona.
             assertTrue(vm.aggiungiOspite("marco"))
             advanceUntilIdle()
-            assertEquals(5, db.playerDao().getAllPlayers().first().size)
-            assertEquals(5, vm.stato.value.serata!!.presenti.size)
+            assertEquals(
+                5,
+                db
+                    .playerDao()
+                    .getAllPlayers()
+                    .first()
+                    .size,
+            )
+            assertEquals(
+                5,
+                vm.stato.value.serata!!
+                    .presenti.size,
+            )
         }
 
     @Test
@@ -136,7 +162,9 @@ class SerataDelTelefonoTest {
             val vm = nuovoViewModel()
             advanceUntilIdle()
             ids.forEach { vm.scambiaPresente(it) }
-            val prima = vm.stato.value.serata!!.bozza!!
+            val prima =
+                vm.stato.value.serata!!
+                    .bozza!!
 
             vm.toccaIlPosto(0)
             assertEquals(SelezioneSerata.Posto(0), vm.stato.value.selezione)
@@ -145,20 +173,44 @@ class SerataDelTelefonoTest {
 
             vm.toccaIlPosto(0)
             vm.toccaIlPosto(3)
-            assertEquals(prima.scambia(0, 3), vm.stato.value.serata!!.bozza)
+            assertEquals(
+                prima.scambia(0, 3),
+                vm.stato.value.serata!!
+                    .bozza,
+            )
             assertNull(vm.stato.value.selezione)
 
-            val fuori = vm.stato.value.serata!!.panchina.single()
+            val fuori =
+                vm.stato.value.serata!!
+                    .panchina
+                    .single()
             vm.toccaLaPanchina(fuori)
             vm.toccaIlPosto(1)
-            assertEquals(fuori, vm.stato.value.serata!!.bozza!!.posti[1])
-            assertEquals(1, vm.stato.value.serata!!.panchina.size)
+            assertEquals(
+                fuori,
+                vm.stato.value.serata!!
+                    .bozza!!
+                    .posti[1],
+            )
+            assertEquals(
+                1,
+                vm.stato.value.serata!!
+                    .panchina.size,
+            )
 
             // Prima la panchina e poi il posto: lo stesso scambio.
-            val nuovoFuori = vm.stato.value.serata!!.panchina.single()
+            val nuovoFuori =
+                vm.stato.value.serata!!
+                    .panchina
+                    .single()
             vm.toccaIlPosto(2)
             vm.toccaLaPanchina(nuovoFuori)
-            assertEquals(nuovoFuori, vm.stato.value.serata!!.bozza!!.posti[2])
+            assertEquals(
+                nuovoFuori,
+                vm.stato.value.serata!!
+                    .bozza!!
+                    .posti[2],
+            )
         }
 
     @Test
@@ -168,10 +220,14 @@ class SerataDelTelefonoTest {
             val vm = nuovoViewModel()
             advanceUntilIdle()
             ids.forEach { vm.scambiaPresente(it) }
-            val prima = vm.stato.value.serata!!.bozza!!
+            val prima =
+                vm.stato.value.serata!!
+                    .bozza!!
 
             vm.ruota()
-            val ruotata = vm.stato.value.serata!!.bozza!!
+            val ruotata =
+                vm.stato.value.serata!!
+                    .bozza!!
             assertTrue(ruotata.coppie != prima.coppie)
             vm.scambiaILati()
             assertEquals(ruotata.scambiaLati(), store.load()!!.bozza)
@@ -218,11 +274,26 @@ class SerataDelTelefonoTest {
             advanceUntilIdle()
 
             vm2.scambiaPresente(ids[4])
-            assertEquals(5, vm2.stato.value.serata!!.presenti.size)
+            assertEquals(
+                5,
+                vm2.stato.value.serata!!
+                    .presenti.size,
+            )
             vm2.scambiaPresente(ids[0])
-            assertEquals(4, vm2.stato.value.serata!!.presenti.size)
-            assertEquals(1, vm2.stato.value.serata!!.giocate.size)
-            assertNotNull(vm2.stato.value.serata!!.bozza)
+            assertEquals(
+                4,
+                vm2.stato.value.serata!!
+                    .presenti.size,
+            )
+            assertEquals(
+                1,
+                vm2.stato.value.serata!!
+                    .giocate.size,
+            )
+            assertNotNull(
+                vm2.stato.value.serata!!
+                    .bozza,
+            )
         }
 
     @Test
@@ -234,7 +305,11 @@ class SerataDelTelefonoTest {
             advanceUntilIdle()
             db.playerDao().delete(Player(ids[4], "E", 0, 0))
             advanceUntilIdle()
-            assertEquals(ids.take(4), vm.stato.value.serata!!.presenti)
+            assertEquals(
+                ids.take(4),
+                vm.stato.value.serata!!
+                    .presenti,
+            )
         }
 
     @Test
@@ -250,7 +325,11 @@ class SerataDelTelefonoTest {
 
             assertNull(store.load())
             assertNull(vm.stato.value.serata)
-            val conta = db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM matches").use { it.moveToFirst(); it.getInt(0) }
+            val conta =
+                db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM matches").use {
+                    it.moveToFirst()
+                    it.getInt(0)
+                }
             assertEquals(1, conta)
         }
 

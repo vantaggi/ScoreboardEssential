@@ -86,7 +86,9 @@ class SerataRigheAdapter(
             lead.text = riga.lead
             titolo.text = riga.titolo
             // Tre pesi in tutto: la selezione porta il titolo dal 500 al 600.
-            titolo.setTextAppearance(if (riga.selezionata) R.style.TextAppearance_App_RowTitleSelected else R.style.TextAppearance_App_RowTitle)
+            titolo.setTextAppearance(
+                if (riga.selezionata) R.style.TextAppearance_App_RowTitleSelected else R.style.TextAppearance_App_RowTitle,
+            )
             titolo.setTextColor(
                 ContextCompat.getColor(contesto, if (riga.attiva) R.color.elite_text_primary else R.color.elite_text_disabled),
             )
@@ -200,7 +202,12 @@ object RigheDellaSerata {
                 icona = R.drawable.ic_repeat,
                 attiva = vivi && serata.puoRigiocareLeStesseCoppie(),
             ),
-            RigaSerata(ChiaviSerata.SCAMBIA_LATI, contesto.getString(R.string.serata_swap_sides), icona = R.drawable.ic_sync_alt, attiva = vivi),
+            RigaSerata(
+                ChiaviSerata.SCAMBIA_LATI,
+                contesto.getString(R.string.serata_swap_sides),
+                icona = R.drawable.ic_sync_alt,
+                attiva = vivi,
+            ),
         )
     }
 

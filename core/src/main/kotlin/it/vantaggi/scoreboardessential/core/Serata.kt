@@ -275,8 +275,7 @@ data class Serata(
 
     companion object {
         /** Una serata nuova con questi presenti nell'ordine di arrivo. */
-        fun nuova(presenti: List<Int>): Serata =
-            Serata(presenti = presenti, bozza = RotazioneSerata.prossima(presenti, emptyList()))
+        fun nuova(presenti: List<Int>): Serata = Serata(presenti = presenti, bozza = RotazioneSerata.prossima(presenti, emptyList()))
     }
 }
 

@@ -7,8 +7,8 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -68,7 +68,13 @@ class SerataActivity : AppCompatActivity() {
         panchina = SerataRigheAdapter { chiave -> ChiaviSerata.panchinaDa(chiave)?.let(viewModel::toccaLaPanchina) }
         presenti =
             SerataRigheAdapter { chiave ->
-                if (chiave == ChiaviSerata.OSPITE) mostraIlDialogoDellOspite() else ChiaviSerata.presenteDa(chiave)?.let(viewModel::scambiaPresente)
+                if (chiave ==
+                    ChiaviSerata.OSPITE
+                ) {
+                    mostraIlDialogoDellOspite()
+                } else {
+                    ChiaviSerata.presenteDa(chiave)?.let(viewModel::scambiaPresente)
+                }
             }
         collega(R.id.serata_seats, posti)
         collega(R.id.serata_commands, comandi)

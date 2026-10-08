@@ -104,7 +104,11 @@ class SerataTest {
         assertEquals(nuova, nuova.stesseCoppie())
         val giocata = nuova.consegna().chiudiPartita()
         assertTrue(giocata.puoRigiocareLeStesseCoppie())
-        val uno = giocata.giocate.last().posti.first()
+        val uno =
+            giocata.giocate
+                .last()
+                .posti
+                .first()
         assertFalse(giocata.togli(uno).puoRigiocareLeStesseCoppie())
     }
 
@@ -156,7 +160,14 @@ class SerataTest {
         assertEquals(bozzaPrima, s.bozza)
         assertEquals(listOf(5), s.panchina)
         // Dopo quella partita il nuovo, che non ha giocato, gioca.
-        assertTrue(5 in s.consegna().chiudiPartita().bozza!!.posti)
+        assertTrue(
+            5 in
+                s
+                    .consegna()
+                    .chiudiPartita()
+                    .bozza!!
+                    .posti,
+        )
     }
 
     @Test
@@ -298,7 +309,12 @@ class SerataTest {
 
     @Test
     fun `la serata scritta e riletta e' la stessa, a meta' serata con tutto dentro`() {
-        var s = Serata.nuova(listOf(11, 22, 33, 44, 55)).gioca(2).ruota().aggiungi(66)
+        var s =
+            Serata
+                .nuova(listOf(11, 22, 33, 44, 55))
+                .gioca(2)
+                .ruota()
+                .aggiungi(66)
         s = s.consegna().scambiaLati()
         assertEquals(s, SerataCodec.decode(SerataCodec.encode(s)))
         // Anche vuota e con meno di quattro presenti.
@@ -326,7 +342,14 @@ class SerataTest {
         val ripresa = SerataCodec.decode(SerataCodec.encode(prima))!!
         assertEquals(prima.bozza, ripresa.bozza)
         assertEquals(coppie(1, 4, 2, 3), ripresa.bozza.coppie())
-        assertEquals(coppie(1, 2, 3, 4), ripresa.consegna().chiudiPartita().bozza.coppie())
+        assertEquals(
+            coppie(1, 2, 3, 4),
+            ripresa
+                .consegna()
+                .chiudiPartita()
+                .bozza
+                .coppie(),
+        )
     }
 
     // ---- La regola in se' ----

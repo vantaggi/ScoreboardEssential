@@ -144,14 +144,21 @@ class SerataViewModel(
         val stato = _stato.value
         if (stato.inCorso || stato.serata?.bozza == null) return
         when (val scelta = stato.selezione) {
-            null -> _stato.value = stato.copy(selezione = SelezioneSerata.Posto(posto))
-            is SelezioneSerata.Posto ->
+            null -> {
+                _stato.value = stato.copy(selezione = SelezioneSerata.Posto(posto))
+            }
+
+            is SelezioneSerata.Posto -> {
                 if (scelta.posto == posto) {
                     _stato.value = stato.copy(selezione = null)
                 } else {
                     cambia { it.scambia(scelta.posto, posto) }
                 }
-            is SelezioneSerata.Panchina -> cambia { it.sostituisci(posto, scelta.id) }
+            }
+
+            is SelezioneSerata.Panchina -> {
+                cambia { it.sostituisci(posto, scelta.id) }
+            }
         }
     }
 
@@ -160,11 +167,18 @@ class SerataViewModel(
         val stato = _stato.value
         if (stato.inCorso || stato.serata?.bozza == null) return
         when (val scelta = stato.selezione) {
-            null -> _stato.value = stato.copy(selezione = SelezioneSerata.Panchina(id))
-            is SelezioneSerata.Posto -> cambia { it.sostituisci(scelta.posto, id) }
-            is SelezioneSerata.Panchina ->
+            null -> {
+                _stato.value = stato.copy(selezione = SelezioneSerata.Panchina(id))
+            }
+
+            is SelezioneSerata.Posto -> {
+                cambia { it.sostituisci(scelta.posto, id) }
+            }
+
+            is SelezioneSerata.Panchina -> {
                 _stato.value =
                     stato.copy(selezione = if (scelta.id == id) null else SelezioneSerata.Panchina(id))
+            }
         }
     }
 
