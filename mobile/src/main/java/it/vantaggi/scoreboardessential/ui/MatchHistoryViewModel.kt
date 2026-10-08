@@ -57,11 +57,20 @@ class MatchHistoryViewModel(
     // La riga puo' essere null e va ricordata lo stesso: per questo containsKey e non getOrPut.
     private val righe = HashMap<ChiaveRiga, String?>()
 
-    private val conAccesso = MutableStateFlow(accesso())
+    private val conAccesso = MutableStateFlow(false)
 
-    /** L'accesso o il gruppo possono cambiare in un'altra schermata: la lista lo rilegge al ritorno. */
+    /**
+     * L'accesso puo' cambiare in un'altra schermata: la lista lo rilegge al ritorno. La sessione sta
+     * in un file cifrato col Keystore: si legge fuori dal thread principale (nel frattempo "Invia di
+     * nuovo" non c'e', e compare appena la lettura finisce).
+     */
     fun rileggiAccesso() {
-        conAccesso.value = accesso()
+        viewModelScope.launch(Dispatchers.IO) { conAccesso.value = accesso() }
+    }
+
+    init {
+        // Senza la funzione l'accesso non si legge mai (e non si tocca nessuna scrittura di sessione).
+        if (padelEliteEnabled) rileggiAccesso()
     }
 
     /** Le partite chiuse, pronte per la lista. */
