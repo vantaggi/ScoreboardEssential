@@ -108,6 +108,9 @@ android {
         }
         unitTests.all {
             useJUnitPlatform()
+            // Robolectric carica android-all per ogni configurazione: con i test di R-1 e R-2
+            // i 512 MB predefiniti finiscono (OutOfMemoryError in LinguaUnicaTest).
+            maxHeapSize = "2g"
             testLogging {
                 events "passed", "skipped", "failed"
             }
