@@ -33,18 +33,22 @@ class RosaGruppo(
      * Allinea i collegamenti alla rosa appena letta: il nome della dashboard si aggiorna, e un
      * collegamento a un giocatore che la dashboard non ha piu' si toglie. Una rosa vuota non
      * cancella niente: o il gruppo e' davvero vuoto, o la lettura non ha visto le righe (un
-     * permesso che manca), e in dubbio un collegamento si tiene.
+     * permesso che manca), e in dubbio un collegamento si tiene. Lo stesso per una rosa di
+     * [MAX_ROWS] righe o piu': PostgREST ne restituisce al massimo 1000, quindi puo' essere
+     * troncata e chi non c'e' potrebbe solo non essere stato letto; allora si aggiornano i nomi e
+     * non si scollega nessuno.
      */
     suspend fun sync(
         groupId: String,
         roster: List<RemotePlayer>,
     ) {
         if (roster.isEmpty()) return
+        val troncata = roster.size >= MAX_ROWS
         val perId = roster.associateBy { it.id }
         for (collegamento in links.linksOf(groupId)) {
             val remoto = perId[collegamento.remotePlayerId]
             when {
-                remoto == null -> links.unlinkRemote(groupId, collegamento.remotePlayerId)
+                remoto == null -> if (!troncata) links.unlinkRemote(groupId, collegamento.remotePlayerId)
                 remoto.name != collegamento.remoteName -> links.renameRemote(groupId, remoto.id, remoto.name)
             }
         }
@@ -85,31 +89,39 @@ class RosaGruppo(
     }
 
     companion object {
+        /** Il tetto di righe di una risposta di PostgREST (`max_rows`): a questo punto la rosa puo' essere troncata. */
+        const val MAX_ROWS = 1000
+
         /** Maiuscole e spazi non contano: "  marco   rossi" e "Marco Rossi" sono lo stesso nome. */
         fun normalizeName(name: String): String = name.filterNot { it.isWhitespace() }.lowercase(Locale.ROOT)
 
         /**
          * Per ogni giocatore della dashboard non ancora collegato, il giocatore locale non ancora
-         * collegato in questo gruppo che ha lo stesso nome (senza maiuscole e spazi). Se il nome
-         * non e' univoco da una delle due parti (due Marco in locale, o due nella rosa) non si
-         * propone niente: indovinare l'omonimo sbagliato manderebbe una partita sul giocatore
-         * sbagliato, e chi ha omonimi li collega a mano.
+         * collegato in questo gruppo che ha lo stesso nome (senza maiuscole e spazi). L'unicita' del
+         * nome si conta su TUTTA la rosa e su TUTTI i giocatori locali, anche quelli gia' collegati:
+         * se un omonimo esiste da una delle due parti (due Marco nella rosa, o due Marco in locale,
+         * uno dei quali gia' collegato) non si propone niente, perche' indovinare l'omonimo sbagliato
+         * manderebbe una partita sul giocatore sbagliato, e chi ha omonimi li collega a mano.
          */
         fun proposals(
             roster: List<RemotePlayer>,
             locals: List<Player>,
             links: List<PadelEliteLink>,
         ): List<NameProposal> {
-            val remotiLiberi = roster.filter { r -> links.none { it.remotePlayerId == r.id } }
-            val localiLiberi = locals.filter { p -> links.none { it.localPlayerId == p.playerId } }
-            val remotiPerNome = remotiLiberi.groupBy { normalizeName(it.name) }
-            val localiPerNome = localiLiberi.groupBy { normalizeName(it.playerName) }
-            return remotiLiberi.mapNotNull { remoto ->
-                val nome = normalizeName(remoto.name)
-                val remoti = remotiPerNome[nome].orEmpty()
-                val locali = localiPerNome[nome].orEmpty()
-                if (nome.isNotEmpty() && remoti.size == 1 && locali.size == 1) NameProposal(remoto, locali.single()) else null
-            }
+            val remotiPerNome = roster.groupBy { normalizeName(it.name) }
+            val localiPerNome = locals.groupBy { normalizeName(it.playerName) }
+            return roster
+                .filter { r -> links.none { it.remotePlayerId == r.id } }
+                .mapNotNull { remoto ->
+                    val nome = normalizeName(remoto.name)
+                    val locale = localiPerNome[nome].orEmpty().singleOrNull()
+                    val libero = locale != null && links.none { it.localPlayerId == locale.playerId }
+                    if (nome.isNotEmpty() && remotiPerNome[nome].orEmpty().size == 1 && locale != null && libero) {
+                        NameProposal(remoto, locale)
+                    } else {
+                        null
+                    }
+                }
         }
     }
 }

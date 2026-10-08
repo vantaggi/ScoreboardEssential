@@ -25,9 +25,9 @@ class RosaGruppoTest {
     private lateinit var db: AppDatabase
     private lateinit var rosa: RosaGruppo
 
-    private val anna = RemotePlayer(100, "Anna Bianchi", null)
-    private val marco = RemotePlayer(101, "Marco Rossi", "u-1")
-    private val luca = RemotePlayer(102, "Luca Verdi", null)
+    private val anna = RemotePlayer(100, "Anna Bianchi")
+    private val marco = RemotePlayer(101, "Marco Rossi")
+    private val luca = RemotePlayer(102, "Luca Verdi")
 
     @Before
     fun apri() {
@@ -82,7 +82,7 @@ class RosaGruppoTest {
             val a = giocatore("Anna")
 
             rosa.link("g-1", anna, a)
-            rosa.link("g-2", RemotePlayer(7, "Anna B.", null), a)
+            rosa.link("g-2", RemotePlayer(7, "Anna B."), a)
             rosa.unlink("g-1", anna)
 
             assertTrue(collegamenti("g-1").isEmpty())
@@ -122,9 +122,37 @@ class RosaGruppoTest {
             giocatore("Luca Verdi")
 
             // Due Anna in locale: ambigua. Due Luca nella dashboard: ambigua anche se in locale e' uno solo.
-            val proposte = rosa.proposals("g-1", listOf(anna, luca, RemotePlayer(103, "LUCA VERDI", null)))
+            val proposte = rosa.proposals("g-1", listOf(anna, luca, RemotePlayer(103, "LUCA VERDI")))
 
             assertTrue(proposte.isEmpty())
+        }
+
+    @Test
+    fun `l'omonimo gia' collegato conta, due Marco in locale e uno collegato, non si propone l'altro`() =
+        runBlocking {
+            val primo = giocatore("Marco Rossi")
+            giocatore("marco rossi")
+            // Il primo Marco e' gia' collegato a un altro giocatore della dashboard.
+            rosa.link("g-1", RemotePlayer(555, "Marco R."), primo)
+
+            val proposte = rosa.proposals("g-1", listOf(marco))
+
+            assertTrue("con due Marco in locale non si indovina", proposte.isEmpty())
+        }
+
+    @Test
+    fun `l'omonimo gia' collegato conta anche nella rosa, due Marco nella dashboard e uno collegato`() =
+        runBlocking {
+            val locale = giocatore("Marco Rossi")
+            val altro = giocatore("Altro")
+            val marcoUno = RemotePlayer(101, "Marco Rossi")
+            val marcoDue = RemotePlayer(105, "marco  rossi")
+            rosa.link("g-1", marcoUno, altro)
+
+            val proposte = rosa.proposals("g-1", listOf(marcoUno, marcoDue))
+
+            assertTrue("due Marco nella rosa: nessuna proposta, nemmeno per quello non collegato", proposte.isEmpty())
+            assertTrue(locale > 0)
         }
 
     @Test
@@ -135,7 +163,7 @@ class RosaGruppoTest {
             giocatore("Luca Verdi")
             rosa.link("g-1", anna, a)
             // Marco locale e' collegato a un altro giocatore della dashboard: non e' libero.
-            rosa.link("g-1", RemotePlayer(555, "Altro", null), m)
+            rosa.link("g-1", RemotePlayer(555, "Altro"), m)
 
             val proposte = rosa.proposals("g-1", listOf(anna, marco, luca))
 
@@ -196,9 +224,35 @@ class RosaGruppoTest {
             rosa.link("g-1", anna, a)
             rosa.link("g-1", marco, m)
 
-            rosa.sync("g-1", listOf(RemotePlayer(100, "Anna B.", null), luca))
+            rosa.sync("g-1", listOf(RemotePlayer(100, "Anna B."), luca))
 
             assertEquals(listOf(PadelEliteLink(a, "g-1", 100, "Anna B.")), collegamenti())
+        }
+
+    @Test
+    fun `una rosa che ha toccato il tetto di PostgREST puo' essere troncata e non scollega nessuno`() =
+        runBlocking {
+            val a = giocatore("Anna")
+            val m = giocatore("Marco")
+            rosa.link("g-1", RemotePlayer(5000, "Anna vecchia"), a)
+            rosa.link("g-1", RemotePlayer(101, "Marco"), m)
+            val piena = (1..RosaGruppo.MAX_ROWS).map { RemotePlayer(it + 100, if (it == 1) "Marco nuovo" else "G$it") }
+
+            rosa.sync("g-1", piena)
+
+            // Il nome si aggiorna, ma 5000 (assente dalle prime 1000 righe) non e' per questo sparito.
+            assertEquals(listOf(101 to "Marco nuovo", 5000 to "Anna vecchia"), collegamenti().map { it.remotePlayerId to it.remoteName })
+        }
+
+    @Test
+    fun `sotto il tetto invece chi non c'e' piu' si scollega`() =
+        runBlocking {
+            val a = giocatore("Anna")
+            rosa.link("g-1", RemotePlayer(5000, "Anna vecchia"), a)
+
+            rosa.sync("g-1", (1 until RosaGruppo.MAX_ROWS).map { RemotePlayer(it + 100, "G$it") })
+
+            assertTrue(collegamenti().isEmpty())
         }
 
     @Test
