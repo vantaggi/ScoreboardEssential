@@ -23,7 +23,6 @@ import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -125,6 +124,17 @@ class InvioDiNuovoTest {
             .associate { it.getString("name") to it.getInt("padelPlayerId") }
     }
 
+    /** Il gruppo scritto nei dati del lavoro in coda (WorkInfo non espone l'input: si legge dal database di WorkManager). */
+    private fun gruppoDelLavoro(uuid: String = UUID_PARTITA): String? {
+        val id = lavori(uuid).single().id.toString()
+        val manager = WorkManager.getInstance(context) as androidx.work.impl.WorkManagerImpl
+        return manager.workDatabase
+            .workSpecDao()
+            .getWorkSpec(id)
+            ?.input
+            ?.getString(InvioWorker.KEY_GROUP)
+    }
+
     private fun lavori(uuid: String = UUID_PARTITA) =
         WorkManager.getInstance(context).getWorkInfosForUniqueWork(InvioWorker.workName(uuid)).get()
 
@@ -141,7 +151,10 @@ class InvioDiNuovoTest {
             collega("g-2", ids[0], 99)
             assertEquals(SendOutcome.QUEUED, servizi.send(UUID_PARTITA))
             assertEquals(1, lavori().count { it.state == WorkInfo.State.ENQUEUED })
-            assertEquals(InvioInfo(InvioState.QUEUED), servizi.invii.get(UUID_PARTITA))
+            assertEquals(
+                InvioInfo(InvioState.QUEUED, group = "g-1", links = "", previous = InvioState.SENT),
+                servizi.invii.get(UUID_PARTITA),
+            )
             // Il lavoro che parte e' quello che il worker eseguira': stesso runner, gruppo scelto adesso.
             assertEquals(RunOutcome.DONE, servizi.runner.run(UUID_PARTITA, "g-1", 0))
 
@@ -153,20 +166,45 @@ class InvioDiNuovoTest {
         }
 
     @Test
-    fun `due richieste di invia di nuovo sono un solo lavoro, il secondo sostituisce il primo`() {
+    fun `due richieste di invia di nuovo sono un solo lavoro e il secondo non ne crea un altro`() {
         val servizi = servizi()
-        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT))
+        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT, group = "g-1"))
 
         assertEquals(SendOutcome.QUEUED, servizi.send(UUID_PARTITA))
         val primo = lavori().single().id
-        // Il tocco ripetuto mentre la card ancora mostra il comando: lo stato era tornato "inviata".
-        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT))
+        // Un secondo tocco su una card non ancora aggiornata: lo stato era ancora "inviata".
+        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT, group = "g-1"))
         assertEquals(SendOutcome.QUEUED, servizi.send(UUID_PARTITA))
 
         val vivi = lavori().filter { it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING }
         assertEquals("un solo lavoro attivo per la partita", 1, vivi.size)
-        // REPLACE: non e' piu' quello di prima.
-        assertNotEquals(primo, vivi.single().id)
+        assertEquals(primo, vivi.single().id)
+    }
+
+    @Test
+    fun `invia di nuovo va al gruppo della voce anche se adesso e' scelto un altro`() {
+        val servizi = servizi()
+        servizi.account.selectGroup(PadelEliteGroup("g-2", "Altro", "member"))
+        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT, group = "g-1", links = ""))
+
+        assertEquals(SendOutcome.QUEUED, servizi.send(UUID_PARTITA))
+
+        assertEquals("g-1", gruppoDelLavoro())
+        // Un invio nuovo (nessuna voce nella casella) va invece al gruppo scelto.
+        servizi.invii.set("altra-partita-1234", InvioInfo(InvioState.UNSENDABLE, InvioReason.NO_FILE))
+        assertEquals(SendOutcome.QUEUED, servizi.send("altra-partita-1234"))
+        assertEquals("g-2", gruppoDelLavoro("altra-partita-1234"))
+    }
+
+    @Test
+    fun `una voce in attesa di cui non si conosce il gruppo non si rimanda`() {
+        val servizi = servizi()
+        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT))
+
+        assertEquals(SendOutcome.NOT_RESENDABLE, servizi.send(UUID_PARTITA))
+
+        assertTrue(lavori().isEmpty())
+        assertEquals(InvioInfo(InvioState.SENT), servizi.invii.get(UUID_PARTITA))
     }
 
     @Test
@@ -183,9 +221,9 @@ class InvioDiNuovoTest {
     @Test
     fun `lo stato e' per partita e rimandarne una non tocca le altre`() {
         val servizi = servizi()
-        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT))
-        servizi.invii.set("altra-partita-1234", InvioInfo(InvioState.IMPORTED))
-        servizi.invii.set("terza-partita-1234", InvioInfo(InvioState.UPDATED))
+        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT, group = "g-1"))
+        servizi.invii.set("altra-partita-1234", InvioInfo(InvioState.IMPORTED, group = "g-1"))
+        servizi.invii.set("terza-partita-1234", InvioInfo(InvioState.UPDATED, group = "g-1"))
 
         servizi.send(UUID_PARTITA)
 
@@ -199,13 +237,13 @@ class InvioDiNuovoTest {
     @Test
     fun `senza accesso non c'e' nessun comando e la richiesta porta all'accesso senza mettere in coda`() {
         val servizi = servizi(accesso = false)
-        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT))
+        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.SENT, group = "g-1"))
 
         assertFalse(servizi.hasAccess())
         assertEquals(SendOutcome.NEED_LOGIN, servizi.send(UUID_PARTITA))
         assertTrue(lavori().isEmpty())
         // Lo stato non cambia: la partita resta "inviata".
-        assertEquals(InvioInfo(InvioState.SENT), servizi.invii.get(UUID_PARTITA))
+        assertEquals(InvioInfo(InvioState.SENT, group = "g-1"), servizi.invii.get(UUID_PARTITA))
         assertEquals(0, finto!!.richieste.size)
     }
 
@@ -219,13 +257,16 @@ class InvioDiNuovoTest {
     }
 
     @Test
-    fun `con l'accesso ma senza gruppo scelto il comando porta al gruppo`() {
+    fun `senza gruppo scelto un invio nuovo porta al gruppo, un rimando va comunque alla voce`() {
         val servizi = servizi()
         servizi.account.clearSelectedGroup()
-        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.UPDATED))
 
-        assertFalse(servizi.hasAccess())
+        assertTrue(servizi.hasAccess())
         assertEquals(SendOutcome.NEED_GROUP, servizi.send(UUID_PARTITA))
         assertTrue(lavori().isEmpty())
+
+        servizi.invii.set(UUID_PARTITA, InvioInfo(InvioState.UPDATED, group = "g-1"))
+        assertEquals(SendOutcome.QUEUED, servizi.send(UUID_PARTITA))
+        assertEquals("g-1", gruppoDelLavoro())
     }
 }

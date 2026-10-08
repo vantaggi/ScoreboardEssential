@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 
 /** A che punto e' una partita nel suo viaggio verso Padel Elite. Sempre detto con una parola e un'icona. */
 enum class InvioState {
@@ -64,6 +65,12 @@ data class InvioInfo(
     /** Il gruppo a cui e' partito l'ultimo file, e [links] i collegamenti che portava ([FirmaCollegamenti]); null = non si sa. */
     val group: String? = null,
     val links: String? = null,
+    /**
+     * Solo mentre un "Invia di nuovo" e' in coda: la voce in attesa (SENT, UPDATED, PRESENT) a cui si
+     * torna se il rimando fallisce in modo definitivo, perche' nella casella il file di prima c'e' ancora.
+     * [group] e [links] restano quelli della voce.
+     */
+    val previous: InvioState? = null,
 ) {
     /**
      * I collegamenti dei giocatori sono cambiati dopo l'invio, e la voce e' ancora in attesa: nella
@@ -83,8 +90,13 @@ data class InvioInfo(
     val isPending: Boolean
         get() = state == InvioState.SENT || state == InvioState.UPDATED || state == InvioState.PRESENT
 
-    /** "Invia di nuovo": solo per una voce in attesa; importata e scartata non cambiano piu'. */
-    val canResend: Boolean get() = isPending
+    /**
+     * "Invia di nuovo": solo per una voce in attesa di cui si conosce il gruppo; importata e scartata
+     * non cambiano piu'. Il rimando va SEMPRE al gruppo della voce ([group]), mai a quello scelto
+     * adesso: con un gruppo cambiato nascerebbe un doppione in un'altra casella. Se il gruppo non e'
+     * noto (stato scritto da una versione precedente) la regola piu' sicura e' non offrire il comando.
+     */
+    val canResend: Boolean get() = isPending && group != null
 }
 
 /**
@@ -108,7 +120,7 @@ class InvioStore(
         info: InvioInfo,
     ) {
         prefs.edit { putString(matchUuid, encode(info)) }
-        flow.value = flow.value + (matchUuid to info)
+        flow.update { it + (matchUuid to info) }
     }
 
     private fun carica(): Map<String, InvioInfo> =
@@ -117,23 +129,26 @@ class InvioStore(
             .toMap()
 
     /**
-     * `STATO|MOTIVO|DETTAGLIO`, e se c'e' la firma dei collegamenti `<EXT>GRUPPO<EXT>FIRMA` in coda: un
-     * valore scritto prima di questo campo si legge com'era (nessuna firma), e il dettaglio, che
-     * puo' contenere `|`, resta l'ultimo dei tre.
+     * `STATO|MOTIVO|DETTAGLIO`, e se c'e' qualcosa da ricordare `<EXT>GRUPPO<EXT>=FIRMA<EXT>PRECEDENTE` in
+     * coda (la firma ha un `=` davanti per distinguere "nessun collegamento" da "non si sa"): un valore
+     * scritto prima si legge com'era, e il dettaglio, che puo' contenere `|`, resta l'ultimo dei tre.
      */
     private fun encode(info: InvioInfo): String {
         val base = listOf(info.state.name, info.reason?.name.orEmpty(), info.detail.orEmpty().replace(EXT, ' ')).joinToString(SEP)
-        return if (info.group != null && info.links != null) "$base$EXT${info.group}$EXT${info.links}" else base
+        if (info.group == null && info.links == null && info.previous == null) return base
+        val firma = info.links?.let { "=$it" }.orEmpty()
+        return listOf(base, info.group.orEmpty(), firma, info.previous?.name.orEmpty()).joinToString(EXT.toString())
     }
 
     private fun decode(raw: String?): InvioInfo? {
-        val teste = raw?.split(EXT, limit = 3) ?: return null
+        val teste = raw?.split(EXT, limit = 4) ?: return null
         val pezzi = teste[0].split(SEP, limit = 3)
         val stato = InvioState.entries.firstOrNull { it.name == pezzi[0] } ?: return null
         val motivo = InvioReason.entries.firstOrNull { it.name == pezzi.getOrNull(1) }
-        val gruppo = teste.getOrNull(1)?.takeIf { teste.size == 3 && it.isNotEmpty() }
-        val firma = teste.getOrNull(2).takeIf { gruppo != null }
-        return InvioInfo(stato, motivo, pezzi.getOrNull(2)?.takeIf { it.isNotEmpty() }, gruppo, firma)
+        val gruppo = teste.getOrNull(1)?.takeIf { it.isNotEmpty() }
+        val firma = teste.getOrNull(2)?.takeIf { it.startsWith("=") }?.substring(1)
+        val prima = InvioState.entries.firstOrNull { it.name == teste.getOrNull(3) }
+        return InvioInfo(stato, motivo, pezzi.getOrNull(2)?.takeIf { it.isNotEmpty() }, gruppo, firma, prima)
     }
 
     companion object {

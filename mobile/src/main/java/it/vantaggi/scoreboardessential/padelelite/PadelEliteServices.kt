@@ -18,6 +18,9 @@ enum class SendOutcome {
 
     /** In coda: parte da sola. */
     QUEUED,
+
+    /** Voce in attesa di cui non si conosce il gruppo (stato di una versione precedente): non si rimanda. */
+    NOT_RESENDABLE,
 }
 
 /**
@@ -44,7 +47,9 @@ class PadelEliteServices(
 
     val runner: InvioRunner by lazy {
         InvioRunner(account, invii) { uuid, groupId ->
-            when (val esito = repository.buildSavedExportByUuid(uuid, groupId)) {
+            // Una lettura sola dei collegamenti: il file e la sua firma non possono divergere.
+            val salvato = repository.buildSavedExportByUuidWithLinks(uuid, groupId)
+            when (val esito = salvato?.result) {
                 null -> {
                     PayloadOutcome.Missing
                 }
@@ -60,7 +65,7 @@ class PadelEliteServices(
                     } else {
                         PayloadOutcome.Json(
                             MatchExporter.toJson(esito.export),
-                            FirmaCollegamenti.of(repository.padelLinksOf(groupId), groupId, esito.export.players.map { it.localId }),
+                            FirmaCollegamenti.of(salvato?.links.orEmpty(), groupId, esito.export.players.map { it.localId }),
                         )
                     }
                 }
@@ -78,24 +83,32 @@ class PadelEliteServices(
     ) {
         when (send(matchUuid)) {
             SendOutcome.NEED_LOGIN, SendOutcome.NEED_GROUP -> activity.startActivity(PadelEliteActivity.intent(activity))
-            SendOutcome.QUEUED, SendOutcome.DISABLED -> Unit
+            SendOutcome.QUEUED, SendOutcome.DISABLED, SendOutcome.NOT_RESENDABLE -> Unit
         }
     }
 
     /**
-     * Il comando: mette in coda la partita o dice dove andare per poterlo fare. Per una partita
-     * gia' nella casella e ancora in attesa e' "Invia di nuovo": il lavoro rifa' il file con i
-     * collegamenti di adesso e sostituisce quello in coda (un lavoro solo per partita).
+     * Il comando: mette in coda la partita o dice dove andare per poterlo fare.
+     *
+     * Per una partita gia' nella casella e ancora in attesa e' "Invia di nuovo": va **al gruppo della
+     * voce** ([InvioInfo.group]), non a quello scelto adesso (un gruppo cambiato creerebbe un doppione
+     * in un'altra casella), e il lavoro rifa' il file coi collegamenti di quel gruppo. Se della voce non
+     * si conosce il gruppo (stato di una versione precedente) non si rimanda: [SendOutcome.NOT_RESENDABLE].
      */
     fun send(matchUuid: String): SendOutcome {
         if (!isEnabled) return SendOutcome.DISABLED
         if (account.session() == null) return SendOutcome.NEED_LOGIN
+        val voce = invii.get(matchUuid)?.takeIf { it.isPending }
+        if (voce != null) {
+            val gruppoDellaVoce = voce.group ?: return SendOutcome.NOT_RESENDABLE
+            InvioWorker.enqueue(context, invii, matchUuid, gruppoDellaVoce)
+            return SendOutcome.QUEUED
+        }
         val gruppo = account.selectedGroup() ?: return SendOutcome.NEED_GROUP
-        val rimanda = invii.get(matchUuid)?.canResend == true
-        InvioWorker.enqueue(context, invii, matchUuid, gruppo.first, replace = rimanda)
+        InvioWorker.enqueue(context, invii, matchUuid, gruppo.first)
         return SendOutcome.QUEUED
     }
 
-    /** Con l'accesso fatto e un gruppo scelto "Invia di nuovo" parte; senza, la card non lo offre. */
-    fun hasAccess(): Boolean = isEnabled && account.session() != null && account.selectedGroup() != null
+    /** Con l'accesso fatto "Invia di nuovo" puo' partire (va al gruppo della voce, non serve un gruppo scelto); senza, la card non lo offre. */
+    fun hasAccess(): Boolean = isEnabled && account.session() != null
 }

@@ -76,14 +76,14 @@ class InvioRunner(
                         "discarded" -> InvioState.DISCARDED
                         else -> pendingState(esito)
                     }
-                // Con la firma dei collegamenti del file partito: se poi cambiano, la card lo suggerisce.
-                store.set(matchUuid, InvioInfo(stato, group = groupId.takeIf { firma != null }, links = firma))
+                // Con il gruppo della voce (un rimando va li') e la firma dei collegamenti del file partito
+                // (se poi cambiano, la card lo suggerisce).
+                store.set(matchUuid, InvioInfo(stato, group = groupId, links = firma))
                 RunOutcome.DONE
             }
 
             SubmitResult.NotAuthenticated -> {
-                store.set(matchUuid, InvioInfo(InvioState.LOGIN_AGAIN))
-                RunOutcome.DONE
+                settle(matchUuid, InvioInfo(InvioState.LOGIN_AGAIN))
             }
 
             SubmitResult.NotAuthorized -> {
@@ -124,7 +124,12 @@ class InvioRunner(
         matchUuid: String,
         reason: InvioReason?,
     ): RunOutcome {
-        store.set(matchUuid, InvioInfo(InvioState.QUEUED, reason))
+        // Un rimando che aspetta ricorda ancora la voce a cui tornare (gruppo, firma, stato di prima).
+        val prima = store.get(matchUuid)
+        store.set(
+            matchUuid,
+            InvioInfo(InvioState.QUEUED, reason, group = prima?.group, links = prima?.links, previous = prima?.previous),
+        )
         return RunOutcome.RETRY
     }
 
@@ -132,8 +137,21 @@ class InvioRunner(
         matchUuid: String,
         reason: InvioReason,
         detail: String? = null,
+    ): RunOutcome = settle(matchUuid, InvioInfo(InvioState.UNSENDABLE, reason, detail))
+
+    /**
+     * Un esito definitivo che non e' una consegna. Per un invio nuovo e' lo stato di errore. Per un
+     * "Invia di nuovo" ([InvioInfo.previous]) la voce nella casella c'e' ancora col file di prima:
+     * si torna allo stato in attesa precedente, con gruppo e firma, e [refreshStatuses] continua a
+     * seguirla (importata o scartata dall'admin). L'errore non resta scritto: il comando e' ancora li.
+     */
+    private fun settle(
+        matchUuid: String,
+        errore: InvioInfo,
     ): RunOutcome {
-        store.set(matchUuid, InvioInfo(InvioState.UNSENDABLE, reason, detail))
+        val adesso = store.get(matchUuid)
+        val prima = adesso?.previous
+        store.set(matchUuid, if (prima != null) InvioInfo(prima, group = adesso.group, links = adesso.links) else errore)
         return RunOutcome.DONE
     }
 

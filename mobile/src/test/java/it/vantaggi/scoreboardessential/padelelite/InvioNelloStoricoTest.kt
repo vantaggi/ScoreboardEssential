@@ -179,16 +179,22 @@ class InvioNelloStoricoTest {
     @Config(qualifiers = "it")
     fun `una voce in attesa ha Invia di nuovo nello stesso bottone, importata e scartata niente`() {
         for (s in listOf(InvioState.SENT, InvioState.UPDATED, InvioState.PRESENT)) {
-            val vista = scheda(stato(invio = InvioInfo(s)))
+            val vista = scheda(stato(invio = InvioInfo(s, group = "g-1")))
             val bottone = vista.findViewById<android.widget.Button>(R.id.send_match_button)
             assertEquals("$s", View.VISIBLE, bottone.visibility)
             assertEquals("$s", "Invia di nuovo", bottone.text.toString())
-            assertTrue("$s", stato(invio = InvioInfo(s)).canSendAgain)
+            assertTrue("$s", stato(invio = InvioInfo(s, group = "g-1")).canSendAgain)
         }
         for (s in listOf(InvioState.IMPORTED, InvioState.DISCARDED, InvioState.QUEUED)) {
-            val vista = scheda(stato(invio = InvioInfo(s)))
+            val vista = scheda(stato(invio = InvioInfo(s, group = "g-1")))
             assertEquals("$s", View.GONE, vista.findViewById<View>(R.id.send_match_button).visibility)
+            assertFalse("$s", stato(invio = InvioInfo(s, group = "g-1")).canSendAgain)
+        }
+        // Una voce in attesa di cui non si conosce il gruppo (stato di una versione precedente): niente comando,
+        // perche' il rimando andrebbe al gruppo scelto adesso e potrebbe fare un doppione altrove.
+        for (s in listOf(InvioState.SENT, InvioState.UPDATED, InvioState.PRESENT)) {
             assertFalse("$s", stato(invio = InvioInfo(s)).canSendAgain)
+            assertEquals("$s", View.GONE, scheda(stato(invio = InvioInfo(s))).findViewById<View>(R.id.send_match_button).visibility)
         }
         // Dove l'invio e' fallito resta il comando di prima, con la sua parola.
         val fallita = scheda(stato(invio = InvioInfo(InvioState.UNSENDABLE, InvioReason.INVALID_PAYLOAD)))
@@ -214,17 +220,20 @@ class InvioNelloStoricoTest {
             cambiati,
         )
 
-        val visibile = suggerimento(scheda(card(InvioInfo(InvioState.SENT), cambiati = true)))
+        val visibile = suggerimento(scheda(card(InvioInfo(InvioState.SENT, group = "g-1"), cambiati = true)))
         assertEquals(View.VISIBLE, visibile.visibility)
         assertTrue(visibile.text.toString(), visibile.text.contains("invia di nuovo per aggiornare la casella"))
-        assertEquals(View.GONE, suggerimento(scheda(card(InvioInfo(InvioState.SENT), cambiati = false))).visibility)
+        assertEquals(View.GONE, suggerimento(scheda(card(InvioInfo(InvioState.SENT, group = "g-1"), cambiati = false))).visibility)
         assertEquals(View.GONE, suggerimento(scheda(card(InvioInfo(InvioState.IMPORTED), cambiati = true))).visibility)
-        assertEquals(View.GONE, suggerimento(scheda(card(InvioInfo(InvioState.SENT), cambiati = true, entrato = false))).visibility)
+        assertEquals(
+            View.GONE,
+            suggerimento(scheda(card(InvioInfo(InvioState.SENT, group = "g-1"), cambiati = true, entrato = false))).visibility,
+        )
     }
 
     @Test
     fun `senza accesso, o con la funzione spenta, Invia di nuovo non c'e'`() {
-        val inAttesa = InvioInfo(InvioState.SENT)
+        val inAttesa = InvioInfo(InvioState.SENT, group = "g-1")
 
         assertFalse(stato(invio = inAttesa, entrato = false).canSendAgain)
         assertFalse(stato(invio = inAttesa, acceso = false, entrato = true).canSendAgain)

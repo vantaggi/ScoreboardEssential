@@ -62,29 +62,33 @@ class InvioWorker(
 
         /**
          * Mette la partita in coda. KEEP: se per questa partita c'e' gia' un lavoro in attesa o in
-         * corso, il comando ripetuto non ne crea un secondo; un lavoro finito si sostituisce, ed e'
-         * cosi' che "rimanda" funziona dopo un errore.
+         * corso, il comando ripetuto non ne crea un secondo (un solo lavoro per partita, due tocchi
+         * non fanno due invii in parallelo); un lavoro finito si sostituisce, ed e' cosi' che
+         * "rimanda" funziona dopo un errore.
          *
-         * [replace] e' "Invia di nuovo" su una voce gia' nella casella: REPLACE annulla il lavoro in
-         * attesa o in corso e ne mette uno nuovo, col gruppo di adesso. Resta un solo lavoro per
-         * partita: due tocchi non fanno due invii in parallelo. Il file lo rifa' il lavoro al momento
-         * dell'invio, quindi porta i collegamenti di quel momento.
+         * Se la partita e' una voce gia' in attesa nella casella ("Invia di nuovo") lo stato in coda
+         * ne ricorda gruppo, firma dei collegamenti e stato di prima ([InvioInfo.previous]): se il
+         * rimando fallisce in modo definitivo si torna li', perche' nella casella il file c'e' ancora.
+         * Il file lo rifa' il lavoro al momento dell'invio, coi collegamenti di quel momento.
          */
         fun enqueue(
             context: Context,
             store: InvioStore,
             matchUuid: String,
             groupId: String,
-            replace: Boolean = false,
         ) {
-            store.set(matchUuid, InvioInfo(InvioState.QUEUED))
+            val prima = store.get(matchUuid)
+            store.set(
+                matchUuid,
+                if (prima?.canResend == true) {
+                    InvioInfo(InvioState.QUEUED, group = prima.group, links = prima.links, previous = prima.state)
+                } else {
+                    InvioInfo(InvioState.QUEUED)
+                },
+            )
             WorkManager
                 .getInstance(context)
-                .enqueueUniqueWork(
-                    workName(matchUuid),
-                    if (replace) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP,
-                    request(matchUuid, groupId),
-                )
+                .enqueueUniqueWork(workName(matchUuid), ExistingWorkPolicy.KEEP, request(matchUuid, groupId))
         }
     }
 }

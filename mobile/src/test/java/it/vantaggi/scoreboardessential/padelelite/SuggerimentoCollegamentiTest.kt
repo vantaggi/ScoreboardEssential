@@ -188,6 +188,8 @@ class SuggerimentoCollegamentiTest {
         InvioStore(prefs).set("a", InvioInfo(InvioState.UPDATED, group = "g-1", links = "3:11,4:12"))
         InvioStore(prefs).set("b", InvioInfo(InvioState.SENT, group = "g-1", links = ""))
         InvioStore(prefs).set("c", InvioInfo(InvioState.UNSENDABLE, InvioReason.INVALID_PAYLOAD, "players|0"))
+        InvioStore(prefs).set("d", InvioInfo(InvioState.QUEUED, group = "g-1", links = "3:11", previous = InvioState.UPDATED))
+        InvioStore(prefs).set("e", InvioInfo(InvioState.SENT, group = "g-1"))
         // Il formato scritto prima della firma: tre campi e basta.
         prefs.edit().putString("vecchio", "SENT||").commit()
 
@@ -196,6 +198,10 @@ class SuggerimentoCollegamentiTest {
         assertEquals(InvioInfo(InvioState.UPDATED, group = "g-1", links = "3:11,4:12"), riletto.get("a"))
         assertEquals(InvioInfo(InvioState.SENT, group = "g-1", links = ""), riletto.get("b"))
         assertEquals(InvioInfo(InvioState.UNSENDABLE, InvioReason.INVALID_PAYLOAD, "players|0"), riletto.get("c"))
+        assertEquals(InvioInfo(InvioState.QUEUED, group = "g-1", links = "3:11", previous = InvioState.UPDATED), riletto.get("d"))
+        // Gruppo noto, firma non nota: resta "non si sa", non diventa "nessun collegamento".
+        assertEquals(InvioInfo(InvioState.SENT, group = "g-1"), riletto.get("e"))
+        assertNull(riletto.get("e")?.links)
         assertEquals(InvioInfo(InvioState.SENT), riletto.get("vecchio"))
         assertNull(riletto.get("vecchio")?.links)
     }

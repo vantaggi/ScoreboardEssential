@@ -52,7 +52,7 @@ class InvioRunnerTest {
 
             assertEquals(RunOutcome.DONE, runner.run(UUID_PARTITA, "g-1", 0))
 
-            assertEquals(InvioInfo(InvioState.SENT), stato())
+            assertEquals(InvioInfo(InvioState.SENT, group = "g-1"), stato())
         }
 
     @Test
@@ -84,7 +84,7 @@ class InvioRunnerTest {
 
             assertEquals(RunOutcome.DONE, runner.run(UUID_PARTITA, "g-1", 0))
 
-            assertEquals(InvioInfo(InvioState.UPDATED), stato())
+            assertEquals(InvioInfo(InvioState.UPDATED, group = "g-1"), stato())
         }
 
     @Test
@@ -290,6 +290,75 @@ class InvioRunnerTest {
             // Chi non era in attesa non si tocca e non si interroga.
             assertEquals(InvioState.UNSENDABLE, invii.get("altra")?.state)
             assertEquals(1, finto!!.quante("/rest/v1/v2_scoreboard_inbox"))
+        }
+
+    /** Un rimando di una voce inviata, in coda: lo stato che scrive `InvioWorker.enqueue`. */
+    private fun rimandoDaInviata() = InvioInfo(InvioState.QUEUED, group = "g-1", links = "1:11", previous = InvioState.SENT)
+
+    private val inviataPrima = InvioInfo(InvioState.SENT, group = "g-1", links = "1:11")
+
+    private fun rispondeImportata(richiesta: RecordedRequest) =
+        if (richiesta.path!!.startsWith("/rest/v1/v2_scoreboard_inbox")) {
+            json(200, """[{"status":"imported","match_id":"m-1"}]""")
+        } else {
+            null
+        }
+
+    @Test
+    fun `un rimando che fallisce in modo definitivo torna alla voce in attesa e la casella la segue ancora`() =
+        runBlocking {
+            val errori =
+                mapOf(
+                    "invalid_payload" to erroreRpc(400, "22023", "invalid_payload", "players"),
+                    "not_member" to erroreRpc(403, "42501", "not_authorized"),
+                    "too_large" to erroreRpc(500, "54000", "payload_too_large"),
+                )
+            for ((nome, errore) in errori) {
+                finto?.chiudi()
+                val runner = runner { richiesta, _ -> rispondeImportata(richiesta) ?: errore }
+                invii.set(UUID_PARTITA, rimandoDaInviata())
+
+                assertEquals(nome, RunOutcome.DONE, runner.run(UUID_PARTITA, "g-1", 0))
+
+                // Torna "inviata", con gruppo e firma di prima: nessun errore, il comando e' ancora li.
+                assertEquals(nome, inviataPrima, stato())
+                // E la casella la segue ancora: l'admin la importa, lo stato lo dice.
+                runner.refreshStatuses()
+                assertEquals(nome, InvioState.IMPORTED, stato()?.state)
+            }
+        }
+
+    @Test
+    fun `un rimando senza accesso, o oltre i cinque errori inattesi, torna alla voce in attesa`() =
+        runBlocking {
+            val senzaAccesso = runner { _, _ -> erroreRpc(403, "28000", "not_authenticated") }
+            invii.set(UUID_PARTITA, rimandoDaInviata())
+            assertEquals(RunOutcome.DONE, senzaAccesso.run(UUID_PARTITA, "g-1", 0))
+            assertEquals(inviataPrima, stato())
+            finto!!.chiudi()
+
+            val rotta = runner { richiesta, _ -> rispondeImportata(richiesta) ?: json(404, """{"code":"PGRST202"}""") }
+            invii.set(UUID_PARTITA, rimandoDaInviata())
+            for (tentativo in 0 until InvioRunner.MAX_UNEXPECTED_ATTEMPTS) {
+                assertEquals(RunOutcome.RETRY, rotta.run(UUID_PARTITA, "g-1", tentativo))
+                // Mentre riprova resta in coda e si ricorda a cosa tornare.
+                assertEquals(rimandoDaInviata(), stato())
+            }
+            assertEquals(RunOutcome.DONE, rotta.run(UUID_PARTITA, "g-1", InvioRunner.MAX_UNEXPECTED_ATTEMPTS))
+            assertEquals(inviataPrima, stato())
+            rotta.refreshStatuses()
+            assertEquals(InvioState.IMPORTED, stato()?.state)
+        }
+
+    @Test
+    fun `un invio nuovo che fallisce resta un errore, senza voce a cui tornare`() =
+        runBlocking {
+            val runner = runner { _, _ -> erroreRpc(400, "22023", "invalid_payload", "players") }
+            invii.set(UUID_PARTITA, InvioInfo(InvioState.QUEUED))
+
+            runner.run(UUID_PARTITA, "g-1", 0)
+
+            assertEquals(InvioInfo(InvioState.UNSENDABLE, InvioReason.INVALID_PAYLOAD, "players"), stato())
         }
 
     @Test
