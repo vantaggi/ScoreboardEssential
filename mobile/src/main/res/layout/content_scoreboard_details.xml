@@ -121,6 +121,89 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!--
+        Diretta (D-2, solo owner e admin del gruppo di Padel Elite, solo padel): un interruttore che si accende
+        prima o durante la partita, e sotto lo stato in parole con un'icona (in diretta, non trasmette col motivo,
+        spenta col motivo, chiusa). Sta nel foglio e non in gioco: in gioco c'e' un numero per lato, e la
+        diretta si prepara dove si compongono le coppie. Nessun bottone primario (il primario del foglio resta
+        Fine partita). Nascosto di norma: a GONE il foglio resta identico.
+    -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/diretta_card"
+        style="@style/Widget.App.Group"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_8"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/serata_card">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/space_16">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/space_8"
+                android:text="@string/diretta_title"
+                android:textAppearance="@style/TextAppearance.App.Caption" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/diretta_label"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/diretta_switch"
+                    android:textAppearance="@style/TextAppearance.App.RowTitle" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/diretta_switch"
+                    style="@style/Widget.App.Switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_16"
+                    android:contentDescription="@string/diretta_switch" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/diretta_status_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_8"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/diretta_status_icon"
+                    android:layout_width="@dimen/icon_standard"
+                    android:layout_height="@dimen/icon_standard"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_sensors" />
+
+                <TextView
+                    android:id="@+id/diretta_status_text"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_8"
+                    android:layout_weight="1"
+                    android:accessibilityLiveRegion="polite"
+                    android:textAppearance="@style/TextAppearance.App.Caption"
+                    android:textColor="@color/elite_text_primary" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
     <!-- Rose -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/rosters_card"
@@ -130,7 +213,7 @@
         android:layout_marginTop="@dimen/space_8"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/serata_card">
+        app:layout_constraintTop_toBottomOf="@id/diretta_card">
 
         <LinearLayout
             android:layout_width="match_parent"

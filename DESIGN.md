@@ -1473,6 +1473,7 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Invio a Padel Elite | `send` | `ic_send` | - |
 | In coda (invio) | `schedule` | `ic_schedule` | - |
 | In attesa dell'admin | `hourglass_empty` | `ic_hourglass_empty` | - |
+| Diretta, in onda | `sensors` | `ic_sensors` | - |
 
 Le righe da `sports_soccer` in giu' sono le **icone di dominio**: la tabella della Constitution non le ha, sono del progetto e vengono dallo stesso catalogo (stesso peso, stessa geometria). Il colore dell'orologio collegato e' il lime e quello dello scollegato il testo secondario, mai il verde `#76FF03`. Le icone del launcher sono G5. Una riga con `-` e' un concetto fissato ma non ancora usato da nessuna schermata: il suo vettoriale non c'e' (non si tengono file morti) e si scarica dal catalogo, col nome `ic_<simbolo>`, quando serve. `IconeDelTelefonoTest` legge questa tabella: ogni `ic_*` in `drawable/` e' una sua riga, ogni riga con un drawable ha il file, e un concetto ha un solo simbolo e un solo file.
 

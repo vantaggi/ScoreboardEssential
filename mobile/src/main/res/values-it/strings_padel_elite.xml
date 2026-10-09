@@ -73,4 +73,30 @@
     <string name="padel_elite_rosa_dialog_title">Collega %1$s a un giocatore dell\'app</string>
     <string name="padel_elite_rosa_create_local">Crea %1$s nell\'app</string>
     <string name="padel_elite_rosa_unlink">Scollega da %1$s</string>
+
+    <!-- Diretta (D-2): il gruppo del foglio PARTITA, riservato a owner e admin del gruppo. -->
+    <string name="diretta_title">Diretta</string>
+    <string name="diretta_switch">Trasmetti in diretta</string>
+    <string name="diretta_live">In diretta su %1$s</string>
+    <string name="diretta_closed">Diretta chiusa</string>
+    <string name="diretta_wait_network">Non trasmette: manca la rete. Riprovo da solo</string>
+    <string name="diretta_wait_login">Non trasmette: accedi di nuovo a Padel Elite</string>
+    <string name="diretta_wait_players">Non trasmette ancora: servono quattro giocatori, due per lato</string>
+    <string name="diretta_wait_name">Non trasmette: il nome %1$s supera i 60 caratteri</string>
+    <string name="diretta_wait_full">Non trasmette: nel gruppo ci sono troppe dirette. Riprovo tra poco</string>
+    <string name="diretta_wait_code">Non trasmette: il server non ha un codice libero. Riprovo tra poco</string>
+    <string name="diretta_wait_server">Non trasmette: il server non risponde come previsto. Riprovo</string>
+    <string name="diretta_stop_not_admin">Diretta spenta: non sei admin di questo gruppo</string>
+    <string name="diretta_stop_invalid">Diretta spenta: il server ha rifiutato il file</string>
+    <string name="diretta_stop_invalid_detail">Diretta spenta: il server ha rifiutato il file (%1$s)</string>
+    <string name="diretta_stop_large">Diretta spenta: il file supera i 200 KB</string>
+    <string name="diretta_stop_points">Diretta spenta: la partita supera i 3000 punti</string>
+    <string name="diretta_stop_other_admin">Diretta spenta: un altro admin trasmette questa partita</string>
+    <string name="diretta_stop_already_closed">Diretta spenta: risulta già chiusa sul server</string>
+    <string name="diretta_stop_server">Diretta spenta: il server non risponde come previsto</string>
+    <string name="diretta_stop_title">Interrompere la diretta?</string>
+    <string name="diretta_stop_message">La diretta di questa partita si chiude e non si può riaprire.</string>
+    <string name="diretta_stop_confirm">Interrompi</string>
+    <string name="diretta_stop_keep">Continua</string>
+    <string name="diretta_cannot_reopen">La diretta di questa partita è chiusa e non si può riaprire.</string>
 </resources>

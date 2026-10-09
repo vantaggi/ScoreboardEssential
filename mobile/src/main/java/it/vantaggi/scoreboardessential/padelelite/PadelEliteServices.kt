@@ -3,7 +3,11 @@ package it.vantaggi.scoreboardessential.padelelite
 import android.content.Context
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchExporter
+import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.repository.MatchRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /** Cosa succede al comando "Invia a Padel Elite". */
 enum class SendOutcome {
@@ -38,6 +42,12 @@ class PadelEliteServices(
     invioStoreFactory: () -> InvioStore = {
         InvioStore(context.getSharedPreferences(InvioStore.FILE, Context.MODE_PRIVATE))
     },
+    direttaStoreFactory: () -> DirettaStore = {
+        DirettaStore(context.getSharedPreferences(DirettaStore.FILE, Context.MODE_PRIVATE))
+    },
+    /** Dove vive la diretta: lo scope dell'applicazione (sopravvive a rotazione e a un ViewModel ricreato). I test ne danno uno loro. */
+    private val direttaScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    private val direttaMinIntervalMs: Long = Diretta.MIN_INTERVAL_MS,
 ) {
     /** La funzione e' accesa solo con la configurazione completa. */
     val isEnabled: Boolean get() = config.isConfigured
@@ -74,6 +84,57 @@ class PadelEliteServices(
     }
 
     /**
+     * La diretta (D-2). Pigra: con la funzione spenta o senza ruolo non si crea e non apre rete. La chiusura passa
+     * da WorkManager (unica per partita); le pubblicazioni dei punti no, sono un flusso vivo legato alla partita.
+     */
+    val diretta: Diretta by lazy {
+        Diretta(
+            account,
+            direttaStoreFactory(),
+            direttaScope,
+            collegamenti = { repository.padelLinkMap(it) },
+            allaChiusura = { DirettaChiusuraWorker.enqueue(context, it) },
+            minIntervalMs = direttaMinIntervalMs,
+        )
+    }
+
+    val chiusuraDiretta: DirettaChiusuraRunner by lazy {
+        DirettaChiusuraRunner(account) { matchId, groupId ->
+            val salvato = repository.buildSavedExportByUuidWithLinks(matchId, groupId)
+            when (val esito = salvato?.result) {
+                null -> {
+                    PayloadOutcome.Missing
+                }
+
+                is ExportResult.Incomplete -> {
+                    PayloadOutcome.Incomplete
+                }
+
+                // Il file FINALE ha il vincitore: una partita interrotta (senza) si chiude senza risultato.
+                is ExportResult.Ready -> {
+                    if (esito.export.winnerTeam == null) {
+                        PayloadOutcome.Incomplete
+                    } else {
+                        PayloadOutcome.Json(MatchExporter.toJson(esito.export))
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * "Trasmetti in diretta" c'e' solo con la funzione accesa, l'accesso fatto, un gruppo scelto di cui si e'
+     * **owner o admin** (lo dice l'ultimo ruolo letto: il server comanda comunque, `not_authorized`) e lo
+     * sport padel. In tutti gli altri casi l'app e' identica a oggi: nessun comando, nessuna richiesta.
+     */
+    fun puoTrasmettere(sportId: String): Boolean =
+        isEnabled &&
+            sportId == SportRegistry.PADEL &&
+            account.session() != null &&
+            account.selectedGroup() != null &&
+            account.selectedGroupRole() in RUOLI_CHE_TRASMETTONO
+
+    /**
      * Il comando dall'interfaccia: mette in coda la partita, oppure, se manca l'accesso o il gruppo,
      * apre la schermata di Padel Elite. Lo stesso per la card dello storico e il dialogo di fine partita.
      */
@@ -107,6 +168,10 @@ class PadelEliteServices(
         val gruppo = account.selectedGroup() ?: return SendOutcome.NEED_GROUP
         InvioWorker.enqueue(context, invii, matchUuid, gruppo.first)
         return SendOutcome.QUEUED
+    }
+
+    private companion object {
+        val RUOLI_CHE_TRASMETTONO = setOf("owner", "admin")
     }
 
     /** Con l'accesso fatto "Invia di nuovo" puo' partire (va al gruppo della voce, non serve un gruppo scelto); senza, la card non lo offre. */

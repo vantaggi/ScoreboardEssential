@@ -142,6 +142,65 @@ sealed interface StatusResult {
     data object Network : StatusResult
 }
 
+/** La riga della diretta, com'e' restituita da `publish_live_from_app` e `end_live_from_app` (solo cio' che serve). */
+data class LiveInfo(
+    val id: String,
+    val externalId: String,
+    /** `live` o `ended`. */
+    val status: String,
+)
+
+/**
+ * L'esito di una chiamata della diretta (`publish_live_from_app`, `end_live_from_app`). Si decide dal
+ * `message` della risposta, mai dallo stato HTTP: PostgREST manda 54xxx, 55xxx e P0002 come 500.
+ */
+sealed interface LiveResult {
+    /** Pubblicato. [written] falso = file identico al salvato, oppure la diretta e' gia' chiusa (e [live] lo dice). */
+    data class Published(
+        val live: LiveInfo?,
+        val created: Boolean,
+        val written: Boolean,
+    ) : LiveResult
+
+    /** Chiusa. [alreadyEnded] vero = lo era gia' (altro admin, o un ritentativo che era andato a buon fine). */
+    data class Ended(
+        val live: LiveInfo?,
+        val alreadyEnded: Boolean,
+    ) : LiveResult
+
+    /** `not_authenticated` o un 401: chi chiama rinnova il token e riprova una volta. */
+    data object NotAuthenticated : LiveResult
+
+    /** Non sei admin del gruppo: la diretta si spegne. */
+    data object NotAuthorized : LiveResult
+
+    /** Un difetto del file (o del corpo): non si riprova. */
+    data class InvalidPayload(
+        val details: String?,
+    ) : LiveResult
+
+    data object PayloadTooLarge : LiveResult
+
+    /** Un altro admin trasmette questa partita. */
+    data object LiveConflict : LiveResult
+
+    /** Troppe dirette nel gruppo: piu' tardi. */
+    data object LiveFull : LiveResult
+
+    /** Il codice d'accesso della diretta non si e' potuto generare: piu' tardi. */
+    data object JoinCodeExhausted : LiveResult
+
+    /** Solo per la chiusura: la diretta non c'e' (piu'). */
+    data object NotFound : LiveResult
+
+    /** Rete assente, 5xx senza messaggio noto, 408, 429, conflitti transitori (23505, 40P01): si riprova. */
+    data object Network : LiveResult
+
+    data class Unexpected(
+        val httpStatus: Int,
+    ) : LiveResult
+}
+
 /**
  * Le chiamate a Supabase che l'app usa, scritte a mano su `HttpURLConnection`.
  *
@@ -392,6 +451,84 @@ class PadelEliteApi(
                     status == 401 -> SubmitResult.NotAuthenticated
                     status >= 500 || status == 408 || status == 429 -> SubmitResult.Network
                     else -> SubmitResult.Unexpected(status)
+                }
+            }
+        }
+    }
+
+    /**
+     * Pubblica lo stato della partita in diretta: [payloadJson] e' il file v2 PARZIALE, com'e' scritto da
+     * `MatchExporter.toJson`, nel corpo senza rileggerlo. Idempotente: lo stesso file due volte risponde
+     * `written: false`, e anche questo e' un successo.
+     */
+    suspend fun publishLive(
+        accessToken: String,
+        groupId: String,
+        payloadJson: String,
+    ): LiveResult {
+        val body = "{\"p_group\":${JSONObject.quote(groupId)},\"p_payload\":$payloadJson}"
+        val reply = send("POST", "/rest/v1/rpc/publish_live_from_app", accessToken, body) ?: return LiveResult.Network
+        if (reply.status !in 200..299) return classifyLiveError(reply.status, reply.body)
+        val json = parseObject(reply.body) ?: return LiveResult.Unexpected(reply.status)
+        return LiveResult.Published(
+            live = parseLive(json),
+            created = json.optBoolean("created", false),
+            // Una risposta senza la chiave non dice che il file non e' stato scritto: vale "scritto".
+            written = json.optBoolean("written", true),
+        )
+    }
+
+    /**
+     * Chiude la diretta di [matchId]: col file FINALE ([payloadJson], col vincitore) a partita finita, senza
+     * (null, il corpo ha `p_payload: null`) a partita scartata o abbandonata.
+     */
+    suspend fun endLive(
+        accessToken: String,
+        groupId: String,
+        matchId: String,
+        payloadJson: String?,
+    ): LiveResult {
+        val body =
+            "{\"p_group\":${JSONObject.quote(groupId)},\"p_match_id\":${JSONObject.quote(matchId)}," +
+                "\"p_payload\":${payloadJson ?: "null"}}"
+        val reply = send("POST", "/rest/v1/rpc/end_live_from_app", accessToken, body) ?: return LiveResult.Network
+        if (reply.status !in 200..299) return classifyLiveError(reply.status, reply.body)
+        val json = parseObject(reply.body) ?: return LiveResult.Unexpected(reply.status)
+        return LiveResult.Ended(live = parseLive(json), alreadyEnded = json.optBoolean("already_ended", false))
+    }
+
+    private fun parseLive(json: JSONObject): LiveInfo? =
+        json.optJSONObject("live")?.let {
+            LiveInfo(it.optString("id"), it.optString("external_id"), it.optString("status"))
+        }
+
+    /**
+     * Come [classifyError], per la diretta: il `message` comanda (anche con HTTP 500), lo stato HTTP decide
+     * solo per cio' che il contratto non nomina. 23505 e 40P01 sono conflitti transitori di Postgres
+     * (indice unico, deadlock): si ritenta.
+     */
+    private fun classifyLiveError(
+        status: Int,
+        body: String,
+    ): LiveResult {
+        val json = parseObject(body)
+        val dettagli = json?.optString("details")?.takeIf { it.isNotEmpty() && it != "null" }
+        return when (json?.optString("message")) {
+            "not_authenticated" -> LiveResult.NotAuthenticated
+            "not_authorized" -> LiveResult.NotAuthorized
+            "invalid_payload" -> LiveResult.InvalidPayload(dettagli)
+            "payload_too_large" -> LiveResult.PayloadTooLarge
+            "live_conflict" -> LiveResult.LiveConflict
+            "live_full" -> LiveResult.LiveFull
+            "join_code_exhausted" -> LiveResult.JoinCodeExhausted
+            "not_found" -> LiveResult.NotFound
+            else -> {
+                val sqlstate = json?.optString("code").orEmpty()
+                when {
+                    sqlstate == "23505" || sqlstate == "40P01" -> LiveResult.Network
+                    status == 401 -> LiveResult.NotAuthenticated
+                    status >= 500 || status == 408 || status == 429 -> LiveResult.Network
+                    else -> LiveResult.Unexpected(status)
                 }
             }
         }

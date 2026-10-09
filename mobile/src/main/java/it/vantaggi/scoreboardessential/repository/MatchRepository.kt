@@ -118,6 +118,10 @@ class MatchRepository(
         return SavedExport(esito, legami)
     }
 
+    /** I collegamenti di un gruppo (id locale -> id della dashboard): li porta anche il file della diretta, come l'invio (R-1). */
+    suspend fun padelLinkMap(padelGroupId: String): Map<Int, Int> =
+        padelLinkDao?.linksOf(padelGroupId).orEmpty().associate { it.localPlayerId to it.remotePlayerId }
+
     /** Tutti i collegamenti, e si rinnovano a ogni cambiamento: la card dello storico suggerisce "Invia di nuovo". */
     val padelLinks: Flow<List<PadelEliteLink>>
         get() = padelLinkDao?.observeAll() ?: flowOf(emptyList())
