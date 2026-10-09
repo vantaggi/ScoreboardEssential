@@ -292,7 +292,9 @@ class Diretta(
             val foto = ultima ?: continue
             val file =
                 when (val costruito = costruisci(a, foto)) {
-                    is Costruito.Pronto -> costruito.json
+                    is Costruito.Pronto -> {
+                        costruito.json
+                    }
 
                     is Costruito.Attesa -> {
                         inAttesa(a, costruito.motivo, costruito.dettaglio)

@@ -514,14 +514,38 @@ class PadelEliteApi(
         val json = parseObject(body)
         val dettagli = json?.optString("details")?.takeIf { it.isNotEmpty() && it != "null" }
         return when (json?.optString("message")) {
-            "not_authenticated" -> LiveResult.NotAuthenticated
-            "not_authorized" -> LiveResult.NotAuthorized
-            "invalid_payload" -> LiveResult.InvalidPayload(dettagli)
-            "payload_too_large" -> LiveResult.PayloadTooLarge
-            "live_conflict" -> LiveResult.LiveConflict
-            "live_full" -> LiveResult.LiveFull
-            "join_code_exhausted" -> LiveResult.JoinCodeExhausted
-            "not_found" -> LiveResult.NotFound
+            "not_authenticated" -> {
+                LiveResult.NotAuthenticated
+            }
+
+            "not_authorized" -> {
+                LiveResult.NotAuthorized
+            }
+
+            "invalid_payload" -> {
+                LiveResult.InvalidPayload(dettagli)
+            }
+
+            "payload_too_large" -> {
+                LiveResult.PayloadTooLarge
+            }
+
+            "live_conflict" -> {
+                LiveResult.LiveConflict
+            }
+
+            "live_full" -> {
+                LiveResult.LiveFull
+            }
+
+            "join_code_exhausted" -> {
+                LiveResult.JoinCodeExhausted
+            }
+
+            "not_found" -> {
+                LiveResult.NotFound
+            }
+
             else -> {
                 val sqlstate = json?.optString("code").orEmpty()
                 when {
