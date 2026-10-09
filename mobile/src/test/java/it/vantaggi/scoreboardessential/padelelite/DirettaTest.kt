@@ -164,6 +164,8 @@ class DirettaTest {
             Thread.sleep(30)
         }
         attendi("l'ultimo stato") { corpi().last().let { payloadDi(it).getJSONArray("timeline").length() } == 10 }
+        // Il tempo che eventuali richieste in piu' (segnali non fusi) hanno per arrivare: senza conflazione sarebbero undici.
+        Thread.sleep(1_000)
 
         // Una a vuoto, una per l'ultimo stato (al piu' una in mezzo): mai dieci.
         assertTrue("richieste: $inviiAlServer", inviiAlServer in 2..4)
