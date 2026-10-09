@@ -166,6 +166,8 @@ sealed interface LiveResult {
     data class Ended(
         val live: LiveInfo?,
         val alreadyEnded: Boolean,
+        /** Il file finale e' stato scritto (contratto finale, PR #221); manca in una risposta senza la chiave e allora vale falso. */
+        val written: Boolean = false,
     ) : LiveResult
 
     /** `not_authenticated` o un 401: chi chiama rinnova il token e riprova una volta. */
@@ -494,7 +496,11 @@ class PadelEliteApi(
         val reply = send("POST", "/rest/v1/rpc/end_live_from_app", accessToken, body) ?: return LiveResult.Network
         if (reply.status !in 200..299) return classifyLiveError(reply.status, reply.body)
         val json = parseObject(reply.body) ?: return LiveResult.Unexpected(reply.status)
-        return LiveResult.Ended(live = parseLive(json), alreadyEnded = json.optBoolean("already_ended", false))
+        return LiveResult.Ended(
+            live = parseLive(json),
+            alreadyEnded = json.optBoolean("already_ended", false),
+            written = json.optBoolean("written", false),
+        )
     }
 
     private fun parseLive(json: JSONObject): LiveInfo? =

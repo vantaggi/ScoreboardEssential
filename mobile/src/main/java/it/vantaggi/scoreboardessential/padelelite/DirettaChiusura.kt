@@ -55,7 +55,14 @@ class DirettaChiusuraRunner(
         }
         if (file != null && file.toByteArray(Charsets.UTF_8).size > InvioRunner.MAX_PAYLOAD_BYTES) file = null
         var esito = account.endLive(groupId, matchId, file)
-        if (file != null && (esito is LiveResult.InvalidPayload || esito == LiveResult.PayloadTooLarge)) {
+        // Un file rifiutato non blocca la chiusura. Anche se il file lo puo' scrivere solo chi ha APERTO la diretta
+        // (un altro admin la vede rifiutata): senza file chiude qualunque owner o admin del gruppo.
+        val rifiutato =
+            esito is LiveResult.InvalidPayload ||
+                esito == LiveResult.PayloadTooLarge ||
+                esito == LiveResult.NotAuthorized ||
+                esito == LiveResult.LiveConflict
+        if (file != null && rifiutato) {
             esito = account.endLive(groupId, matchId, null)
         }
         return when (esito) {

@@ -188,6 +188,39 @@ class DirettaChiusuraTest {
         }
 
     @Test
+    fun `se il file finale lo puo' scrivere solo chi ha aperto la diretta, un altro admin chiude senza file`() =
+        runBlocking {
+            salvaPartita(24)
+            val s = servizi { n -> if (n == 0) erroreRpc(500, "42501", "not_authorized") else rispostaDiChiusura(scritto = false) }
+
+            assertEquals(RunOutcome.DONE, s.chiusuraDiretta.run(UUID_PARTITA, "g-1", true, 0))
+
+            val corpi = chiusureAlServer()
+            assertEquals(2, corpi.size)
+            assertFalse(corpi[0].isNull("p_payload"))
+            // Il matchId del file e' quello della chiusura (il server li vuole uguali).
+            assertEquals(UUID_PARTITA, corpi[0].getJSONObject("p_payload").getString("matchId"))
+            assertTrue(corpi[1].isNull("p_payload"))
+        }
+
+    @Test
+    fun `la risposta della chiusura dice se il file finale e' stato scritto`() =
+        runBlocking {
+            val s = servizi { rispostaDiChiusura() }
+            val api = PadelEliteApi(s.config)
+
+            val scritto = api.endLive("A1", "g-1", UUID_PARTITA, FILE_V2)
+            finto!!.chiudi()
+            finto = ServerFinto { _, _ -> rispostaDiChiusura(giaChiusa = true) }
+            val gia = PadelEliteApi(finto!!.config()).endLive("A1", "g-1", UUID_PARTITA, FILE_V2)
+
+            assertEquals(true, (scritto as LiveResult.Ended).written)
+            assertEquals(false, scritto.alreadyEnded)
+            assertEquals(true, (gia as LiveResult.Ended).alreadyEnded)
+            assertEquals(false, gia.written)
+        }
+
+    @Test
     fun `la riga non ancora scritta si aspetta, poi si chiude senza risultato`() =
         runBlocking {
             val s = servizi()

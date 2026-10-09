@@ -89,12 +89,14 @@ internal fun rispostaDiPubblicazione(
 )
 
 /** La risposta di `end_live_from_app`. */
-internal fun rispostaDiChiusura(giaChiusa: Boolean = false) =
-    json(
-        200,
-        """{"live":{"id":"l-1","group_id":"g-1","external_id":"match:$UUID_PARTITA","status":"ended",""" +
-            """"updated_at":"2026-10-09T10:30:00+00:00"},"ended":true,"already_ended":$giaChiusa}""",
-    )
+internal fun rispostaDiChiusura(
+    giaChiusa: Boolean = false,
+    scritto: Boolean = !giaChiusa,
+) = json(
+    200,
+    """{"live":{"id":"l-1","group_id":"g-1","external_id":"match:$UUID_PARTITA","status":"ended",""" +
+        """"updated_at":"2026-10-09T10:30:00+00:00"},"ended":true,"already_ended":$giaChiusa,"written":$scritto}""",
+)
 
 /** Un server finto con una coda di risposte e il registro delle richieste, per percorso. */
 internal class ServerFinto(
