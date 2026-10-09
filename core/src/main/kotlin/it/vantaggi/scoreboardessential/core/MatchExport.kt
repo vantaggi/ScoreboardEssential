@@ -199,9 +199,30 @@ object MatchExporter {
         players: List<MatchPlayer>,
         origin: ExportOrigin,
         padelPlayerIds: Map<Int, Int> = emptyMap(),
+    ): ExportResult = assemble(engine, players, origin, padelPlayerIds, requirePoints = true)
+
+    /**
+     * Il file PARZIALE di una partita in corso (la diretta): la stessa costruzione di [build], quindi lo
+     * stesso rigioco del registro e lo stesso formato, ma la timeline puo' essere vuota (inizio partita) e
+     * `winnerTeam` resta null finche' la partita non finisce. `setScores` contiene solo i set chiusi, come
+     * per ogni export. Servono comunque quattro giocatori, due per lato.
+     */
+    fun buildPartial(
+        engine: MatchEngine,
+        players: List<MatchPlayer>,
+        origin: ExportOrigin,
+        padelPlayerIds: Map<Int, Int> = emptyMap(),
+    ): ExportResult = assemble(engine, players, origin, padelPlayerIds, requirePoints = false)
+
+    private fun assemble(
+        engine: MatchEngine,
+        players: List<MatchPlayer>,
+        origin: ExportOrigin,
+        padelPlayerIds: Map<Int, Int>,
+        requirePoints: Boolean,
     ): ExportResult {
         val replayed = replay(engine)
-        val missing = problems(players, replayed.timeline)
+        val missing = problems(players, replayed.timeline, requirePoints)
         if (missing.isNotEmpty()) return ExportResult.Incomplete(missing)
 
         val state = replayed.finalState
@@ -330,6 +351,7 @@ object MatchExporter {
     private fun problems(
         players: List<MatchPlayer>,
         timeline: List<TimelinePoint>,
+        requirePoints: Boolean = true,
     ): List<ExportProblem> {
         val found = mutableListOf<ExportProblem>()
         if (players.size != PLAYERS_PER_MATCH) {
@@ -348,7 +370,7 @@ object MatchExporter {
                 .filter { it.size > 1 }
                 .map { it.first().name }
         if (duplicates.isNotEmpty()) found.add(ExportProblem.DuplicatePlayers(duplicates))
-        if (timeline.isEmpty()) found.add(ExportProblem.NoPoints)
+        if (requirePoints && timeline.isEmpty()) found.add(ExportProblem.NoPoints)
         return found
     }
 

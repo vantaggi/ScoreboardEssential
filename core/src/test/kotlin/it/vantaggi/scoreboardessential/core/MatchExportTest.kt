@@ -46,6 +46,48 @@ class MatchExportTest {
     }
 
     @Test
+    fun ilFileParzialeAInizioPartitaHaLaTimelineVuotaEIlVincitoreNullo() {
+        val engine = MatchEngine(SportRegistry.forMatch(SportRegistry.PADEL, serveOrder))
+
+        // Il file della partita finita non esiste senza punti; quello parziale si'.
+        assertTrue(MatchExporter.build(engine, roster, origin) is ExportResult.Incomplete)
+        val export = ready(MatchExporter.buildPartial(engine, roster, origin))
+
+        assertEquals(emptyList<TimelinePoint>(), export.timeline)
+        assertEquals(emptyList<List<Int>>(), export.setScores)
+        assertEquals(null, export.winnerTeam)
+        assertTrue(MatchExporter.toJson(export).contains("\"timeline\":[]"))
+    }
+
+    @Test
+    fun ilFileParzialeASetApertoHaSoloISetChiusiEIlRigiocoCoincide() {
+        // 24 punti al lato 1 chiudono il set unico: a meta' (12 punti, 3 game) il set e' aperto.
+        val engine = MatchEngine(SportRegistry.forMatch(SportRegistry.PADEL, serveOrder))
+        repeat(12) { engine.apply(ScoringEvent.Point(side = 1), atMillis = it * 30_000L) }
+
+        val parziale = ready(MatchExporter.buildPartial(engine, roster, origin))
+        repeat(12) { engine.apply(ScoringEvent.Point(side = 1), atMillis = (12 + it) * 30_000L) }
+        val finale = ready(MatchExporter.build(engine, roster, origin))
+
+        assertEquals(12, parziale.timeline.size)
+        assertEquals(emptyList<List<Int>>(), parziale.setScores)
+        assertEquals(null, parziale.winnerTeam)
+        // La timeline parziale e' il prefisso di quella finale: stesso rigioco, nessuna logica doppia.
+        assertEquals(finale.timeline.take(12), parziale.timeline)
+        assertEquals(1, finale.winnerTeam)
+    }
+
+    @Test
+    fun ilFileParzialeVuoleComunqueQuattroGiocatori() {
+        val engine = MatchEngine(SportRegistry.forMatch(SportRegistry.PADEL, serveOrder))
+
+        val esito = MatchExporter.buildPartial(engine, roster.take(3), origin)
+
+        assertTrue(esito is ExportResult.Incomplete)
+        assertEquals(listOf(ExportProblem.WrongPlayerCount(3)), (esito as ExportResult.Incomplete).problems)
+    }
+
+    @Test
     fun costruzioneDaUnSetVinto() {
         val export = ready(MatchExporter.build(setVinto(), roster, origin))
         assertEquals(MatchExporter.FORMAT_VERSION, export.formatVersion)
