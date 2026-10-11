@@ -702,7 +702,8 @@ class MainActivity :
         if (!viewModel.accendiLaDiretta()) {
             // Gia' chiusa per questa partita (la chiusura e' definitiva anche sul server): resta spenta e lo dice.
             aggiornaLaDiretta()
-            Snackbar.make(findViewById(R.id.diretta_card), R.string.diretta_cannot_reopen, Snackbar.LENGTH_LONG).show()
+            val messaggio = if (viewModel.direttaDisponibile()) R.string.diretta_cannot_reopen else R.string.diretta_unavailable
+            Snackbar.make(findViewById(R.id.diretta_card), messaggio, Snackbar.LENGTH_LONG).show()
         }
     }
 

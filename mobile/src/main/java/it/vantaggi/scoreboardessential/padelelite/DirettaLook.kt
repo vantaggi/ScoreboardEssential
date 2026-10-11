@@ -50,6 +50,8 @@ private fun attesa(
         DirettaMotivo.TROPPE_DIRETTE -> context.getString(R.string.diretta_wait_full)
         DirettaMotivo.CODICE_ESAURITO -> context.getString(R.string.diretta_wait_code)
         DirettaMotivo.RISPOSTA_INATTESA -> context.getString(R.string.diretta_wait_server)
+        DirettaMotivo.ERRORE_INATTESO -> context.getString(R.string.diretta_wait_error, stato.dettaglio.orEmpty())
+        DirettaMotivo.GIOCATORE_SOSTITUITO -> context.getString(R.string.diretta_wait_replaced)
         else -> context.getString(R.string.diretta_wait_network)
     }
 

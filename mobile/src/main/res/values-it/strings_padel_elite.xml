@@ -86,6 +86,9 @@
     <string name="diretta_wait_full">Non trasmette: nel gruppo ci sono troppe dirette. Riprovo tra poco</string>
     <string name="diretta_wait_code">Non trasmette: il server non ha un codice libero. Riprovo tra poco</string>
     <string name="diretta_wait_server">Non trasmette: il server non risponde come previsto. Riprovo</string>
+    <string name="diretta_wait_error">Non trasmette: errore imprevisto (%1$s). Riprovo</string>
+    <string name="diretta_wait_replaced">Non trasmette: un giocatore è stato sostituito a partita iniziata. Rimetti quello di prima</string>
+    <string name="diretta_unavailable">Diretta non disponibile: serve accedere a Padel Elite, scegliere un gruppo di cui sei admin e giocare a padel</string>
     <string name="diretta_stop_not_admin">Diretta spenta: non sei admin di questo gruppo</string>
     <string name="diretta_stop_invalid">Diretta spenta: il server ha rifiutato il file</string>
     <string name="diretta_stop_invalid_detail">Diretta spenta: il server ha rifiutato il file (%1$s)</string>

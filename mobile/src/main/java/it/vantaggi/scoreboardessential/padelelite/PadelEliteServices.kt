@@ -1,10 +1,12 @@
 package it.vantaggi.scoreboardessential.padelelite
 
 import android.content.Context
+import android.util.Log
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.repository.MatchRepository
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,7 +48,13 @@ class PadelEliteServices(
         DirettaStore(context.getSharedPreferences(DirettaStore.FILE, Context.MODE_PRIVATE))
     },
     /** Dove vive la diretta: lo scope dell'applicazione (sopravvive a rotazione e a un ViewModel ricreato). I test ne danno uno loro. */
-    private val direttaScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    private val direttaScope: CoroutineScope =
+        CoroutineScope(
+            SupervisorJob() + Dispatchers.Default +
+                // Rete di sicurezza: la diretta gia' prende le sue eccezioni (aspetta e riprova), ma una che sfuggisse
+                // non deve buttare giu' l'app a meta' partita.
+                CoroutineExceptionHandler { _, errore -> Log.e("Diretta", "eccezione non gestita nella diretta", errore) },
+        ),
     private val direttaMinIntervalMs: Long = Diretta.MIN_INTERVAL_MS,
 ) {
     /** La funzione e' accesa solo con la configurazione completa. */
@@ -100,7 +108,8 @@ class PadelEliteServices(
 
     val chiusuraDiretta: DirettaChiusuraRunner by lazy {
         DirettaChiusuraRunner(account) { matchId, groupId ->
-            val salvato = repository.buildSavedExportByUuidWithLinks(matchId, groupId)
+            // La riga viva (partita non ancora salvata, registro a meta') non e' il file finale: si aspetta closeMatch.
+            val salvato = if (repository.isClosedByUuid(matchId)) repository.buildSavedExportByUuidWithLinks(matchId, groupId) else null
             when (val esito = salvato?.result) {
                 null -> {
                     PayloadOutcome.Missing
@@ -110,13 +119,9 @@ class PadelEliteServices(
                     PayloadOutcome.Incomplete
                 }
 
-                // Il file FINALE ha il vincitore: una partita interrotta (senza) si chiude senza risultato.
+                // Anche una partita interrotta senza vincitore porta il suo file (winnerTeam nullo): il server lo accetta.
                 is ExportResult.Ready -> {
-                    if (esito.export.winnerTeam == null) {
-                        PayloadOutcome.Incomplete
-                    } else {
-                        PayloadOutcome.Json(MatchExporter.toJson(esito.export))
-                    }
+                    PayloadOutcome.Json(MatchExporter.toJson(esito.export))
                 }
             }
         }

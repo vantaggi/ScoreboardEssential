@@ -7,9 +7,11 @@ import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchPlayer
 import it.vantaggi.scoreboardessential.core.SportRules
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +46,8 @@ enum class DirettaMotivo {
     TROPPE_DIRETTE,
     CODICE_ESAURITO,
     RISPOSTA_INATTESA,
+    ERRORE_INATTESO,
+    GIOCATORE_SOSTITUITO,
 
     // Ferma
     NON_ADMIN,
@@ -198,10 +202,10 @@ class Diretta(
     fun chiudi(conRisultato: Boolean) {
         synchronized(lock) {
             val a = attiva ?: return
-            fermaIlCiclo()
+            val vecchio = fermaIlCiclo()
             store.clear()
             _stato.value = DirettaStato(DirettaFase.CHIUSA, gruppo = a.groupName, matchId = a.matchId)
-            allaChiusura(DirettaChiusuraRichiesta(a.matchId, a.groupId, conRisultato))
+            chiudiDopo(vecchio, DirettaChiusuraRichiesta(a.matchId, a.groupId, conRisultato))
         }
     }
 
@@ -224,14 +228,35 @@ class Diretta(
         nuova.segnale.trySend(Unit)
     }
 
-    private fun fermaIlCiclo() {
-        ciclo?.cancel()
+    /** Ferma il ciclo e restituisce il suo lavoro: una richiesta in volo non e' annullabile, la chiusura la aspetta. */
+    private fun fermaIlCiclo(): Job? {
+        val vecchio = ciclo
+        vecchio?.cancel()
         ritentativo?.cancel()
         ciclo = null
         ritentativo = null
         attiva?.segnale?.close()
         attiva = null
         ultima = null
+        return vecchio
+    }
+
+    /**
+     * Consegna la chiusura DOPO la fine dell'eventuale richiesta in volo: una pubblicazione che crea la riga
+     * non deve arrivare al server dopo l'end (la diretta chiusa e' definitiva, ma la riga nascerebbe aperta).
+     */
+    private fun chiudiDopo(
+        vecchio: Job?,
+        richiesta: DirettaChiusuraRichiesta,
+    ) {
+        if (vecchio == null || vecchio.isCompleted) {
+            allaChiusura(richiesta)
+        } else {
+            scope.launch {
+                vecchio.join()
+                allaChiusura(richiesta)
+            }
+        }
     }
 
     /** Un'accensione finita male: ferma e non riparte da sola. [chiudiSulServer] solo se il file c'era e il server lo sa. */
@@ -243,10 +268,10 @@ class Diretta(
     ) {
         synchronized(lock) {
             if (attiva !== a) return
-            fermaIlCiclo()
+            val vecchio = fermaIlCiclo()
             store.clear()
             _stato.value = DirettaStato(DirettaFase.FERMA, motivo, dettaglio, a.groupName, a.matchId)
-            if (chiudiSulServer) allaChiusura(DirettaChiusuraRichiesta(a.matchId, a.groupId, conRisultato = false))
+            if (chiudiSulServer) chiudiDopo(vecchio, DirettaChiusuraRichiesta(a.matchId, a.groupId, conRisultato = false))
         }
     }
 
@@ -282,105 +307,140 @@ class Diretta(
         }
     }
 
-    /** Il consumatore: un segnale alla volta, in serie, con la pausa minima fra una richiesta e l'altra. */
-    private suspend fun trasmetti(a: Attiva) {
+    /** Quanto la diretta ha gia' provato e fallito: serve al ritentativo con attesa crescente e ai file identici. */
+    private class Andamento {
         var ultimoInviato: String? = null
         var inattese = 0
-        var tentativiFalliti = 0
+        var falliti = 0
+    }
+
+    /** Il consumatore: un segnale alla volta, in serie, con la pausa minima fra una richiesta e l'altra. */
+    private suspend fun trasmetti(a: Attiva) {
+        val andamento = Andamento()
         for (segnale in a.segnale) {
             if (attiva !== a) return
             val foto = ultima ?: continue
-            val file =
-                when (val costruito = costruisci(a, foto)) {
-                    is Costruito.Pronto -> {
-                        costruito.json
-                    }
-
-                    is Costruito.Attesa -> {
-                        inAttesa(a, costruito.motivo, costruito.dettaglio)
-                        continue
-                    }
-
-                    is Costruito.Ferma -> {
-                        ferma(a, costruito.motivo, costruito.dettaglio, chiudiSulServer = true)
-                        return
-                    }
-                }
-            // Un file uguale all'ultimo consegnato non rifa' la richiesta (il server direbbe written: false).
-            if (file == ultimoInviato) {
-                inCorso(a)
-                continue
-            }
-            val esito = account.publishLive(a.groupId, file)
-            if (attiva !== a) return
-            when (esito) {
-                is LiveResult.Published -> {
-                    inattese = 0
-                    tentativiFalliti = 0
-                    if (!esito.written && esito.live?.status == "ended") {
-                        // Definitiva: la diretta di questa partita e' chiusa sul server.
-                        ferma(a, DirettaMotivo.GIA_CHIUSA)
-                        return
-                    }
-                    ultimoInviato = file
-                    inCorso(a)
-                }
-
-                LiveResult.NotAuthenticated -> {
-                    inAttesa(a, DirettaMotivo.ACCEDI_DI_NUOVO)
-                    riprovaTra(a, retryLentoMs)
-                }
-
-                LiveResult.NotAuthorized -> {
-                    ferma(a, DirettaMotivo.NON_ADMIN)
-                    return
-                }
-
-                is LiveResult.InvalidPayload -> {
-                    ferma(a, DirettaMotivo.FILE_NON_VALIDO, esito.details, chiudiSulServer = true)
-                    return
-                }
-
-                LiveResult.PayloadTooLarge -> {
-                    ferma(a, DirettaMotivo.FILE_TROPPO_GRANDE, chiudiSulServer = true)
-                    return
-                }
-
-                LiveResult.LiveConflict -> {
-                    // E' la diretta di un altro admin: non la si chiude.
-                    ferma(a, DirettaMotivo.ALTRO_ADMIN)
-                    return
-                }
-
-                LiveResult.LiveFull -> {
-                    inAttesa(a, DirettaMotivo.TROPPE_DIRETTE)
-                    riprovaTra(a, retryLentoMs)
-                }
-
-                LiveResult.JoinCodeExhausted -> {
-                    inAttesa(a, DirettaMotivo.CODICE_ESAURITO)
-                    riprovaTra(a, retryLentoMs)
-                }
-
-                LiveResult.Network -> {
-                    inAttesa(a, DirettaMotivo.RETE)
-                    tentativiFalliti++
-                    riprovaTra(a, (retryBaseMs shl (tentativiFalliti - 1).coerceAtMost(MAX_SHIFT)).coerceAtMost(retryLentoMs))
-                }
-
-                is LiveResult.Ended, LiveResult.NotFound, is LiveResult.Unexpected -> {
-                    // Fuori contratto (un 404 se la migrazione 67 non c'e' ancora): cinque giri, poi si ferma.
-                    inattese++
-                    if (inattese >= MAX_INATTESE) {
-                        ferma(a, DirettaMotivo.SERVER)
-                        return
-                    }
-                    inAttesa(a, DirettaMotivo.RISPOSTA_INATTESA)
-                    riprovaTra(a, retryBaseMs)
-                }
+            try {
+                if (!giro(a, foto, andamento)) return
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Un'eccezione qualunque (il Keystore nel rinnovo del token, un file che non si costruisce) non deve
+                // buttare giu' l'app a meta' partita: la diretta aspetta e riprova.
+                if (attiva !== a) return
+                attesaCrescente(a, andamento, DirettaMotivo.ERRORE_INATTESO, e.javaClass.simpleName)
             }
             delay(minIntervalMs)
         }
+    }
+
+    private fun attesaCrescente(
+        a: Attiva,
+        andamento: Andamento,
+        motivo: DirettaMotivo,
+        dettaglio: String? = null,
+    ) {
+        andamento.falliti++
+        inAttesa(a, motivo, dettaglio)
+        riprovaTra(a, (retryBaseMs shl (andamento.falliti - 1).coerceAtMost(MAX_SHIFT)).coerceAtMost(retryLentoMs))
+    }
+
+    /** Una pubblicazione. False = la diretta e' finita (ferma): il ciclo esce. */
+    private suspend fun giro(
+        a: Attiva,
+        foto: DirettaFoto,
+        andamento: Andamento,
+    ): Boolean {
+        val file =
+            when (val costruito = costruisci(a, foto)) {
+                is Costruito.Pronto -> {
+                    costruito.json
+                }
+
+                is Costruito.Attesa -> {
+                    inAttesa(a, costruito.motivo, costruito.dettaglio)
+                    return true
+                }
+
+                is Costruito.Ferma -> {
+                    ferma(a, costruito.motivo, costruito.dettaglio, chiudiSulServer = true)
+                    return false
+                }
+            }
+        // Un file uguale all'ultimo consegnato non rifa' la richiesta (il server direbbe written: false).
+        if (file == andamento.ultimoInviato) {
+            inCorso(a)
+            return true
+        }
+        // La richiesta in volo non si annulla: interrotta durante il rinnovo del token perderebbe il refresh token
+        // ruotato, e l'utente verrebbe scollegato. La chiusura aspetta che finisca ([chiudiDopo]).
+        val esito = withContext(NonCancellable) { account.publishLive(a.groupId, file) }
+        if (attiva !== a) return false
+        when (esito) {
+            is LiveResult.Published -> {
+                andamento.inattese = 0
+                andamento.falliti = 0
+                if (!esito.written && esito.live?.status == "ended") {
+                    // Definitiva: la diretta di questa partita e' chiusa sul server.
+                    ferma(a, DirettaMotivo.GIA_CHIUSA)
+                    return false
+                }
+                andamento.ultimoInviato = file
+                inCorso(a)
+            }
+
+            LiveResult.NotAuthenticated -> {
+                inAttesa(a, DirettaMotivo.ACCEDI_DI_NUOVO)
+                riprovaTra(a, retryLentoMs)
+            }
+
+            LiveResult.NotAuthorized -> {
+                ferma(a, DirettaMotivo.NON_ADMIN)
+                return false
+            }
+
+            is LiveResult.InvalidPayload -> {
+                ferma(a, DirettaMotivo.FILE_NON_VALIDO, esito.details, chiudiSulServer = true)
+                return false
+            }
+
+            LiveResult.PayloadTooLarge -> {
+                ferma(a, DirettaMotivo.FILE_TROPPO_GRANDE, chiudiSulServer = true)
+                return false
+            }
+
+            LiveResult.LiveConflict -> {
+                // E' la diretta di un altro admin: non la si chiude.
+                ferma(a, DirettaMotivo.ALTRO_ADMIN)
+                return false
+            }
+
+            LiveResult.LiveFull -> {
+                inAttesa(a, DirettaMotivo.TROPPE_DIRETTE)
+                riprovaTra(a, retryLentoMs)
+            }
+
+            LiveResult.JoinCodeExhausted -> {
+                inAttesa(a, DirettaMotivo.CODICE_ESAURITO)
+                riprovaTra(a, retryLentoMs)
+            }
+
+            LiveResult.Network -> {
+                attesaCrescente(a, andamento, DirettaMotivo.RETE)
+            }
+
+            is LiveResult.Ended, LiveResult.NotFound, is LiveResult.Unexpected -> {
+                // Fuori contratto (un 404 se la migrazione 67 non c'e' ancora): cinque giri, poi si ferma.
+                andamento.inattese++
+                if (andamento.inattese >= MAX_INATTESE) {
+                    ferma(a, DirettaMotivo.SERVER)
+                    return false
+                }
+                inAttesa(a, DirettaMotivo.RISPOSTA_INATTESA)
+                riprovaTra(a, retryBaseMs)
+            }
+        }
+        return true
     }
 
     private sealed interface Costruito {
@@ -410,7 +470,14 @@ class Diretta(
     ): Costruito {
         val lungo = foto.players.firstOrNull { it.name.length > MAX_NOME }
         if (lungo != null) return Costruito.Attesa(DirettaMotivo.NOME_TROPPO_LUNGO, lungo.name.take(ANTEPRIMA_NOME))
-        val legami = runCatching { collegamenti(a.groupId) }.getOrDefault(emptyMap())
+        val legami =
+            try {
+                collegamenti(a.groupId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                emptyMap()
+            }
         return withContext(Dispatchers.Default) {
             val motore = MatchEngine(foto.rules).also { it.restoreLog(foto.log) }
             when (val esito = MatchExporter.buildPartial(motore, foto.players, foto.origin, legami)) {
@@ -419,7 +486,19 @@ class Diretta(
                 }
 
                 is ExportResult.Ready -> {
-                    if (esito.export.timeline.size > MAX_PUNTI) {
+                    val ids =
+                        esito.export.players
+                            .map { it.localId }
+                            .toSet()
+                    val fuori =
+                        esito.export.config.serveOrder
+                            .any { it !in ids } ||
+                            esito.export.timeline.any { it.servingPlayerId != null && it.servingPlayerId !in ids }
+                    if (fuori) {
+                        // Un giocatore sostituito a meta' partita: l'ordine di servizio ha ancora il vecchio id e il server
+                        // rifiuterebbe il file (invalid_payload, e la chiusura sarebbe definitiva). Si aspetta, senza chiudere.
+                        Costruito.Attesa(DirettaMotivo.GIOCATORE_SOSTITUITO)
+                    } else if (esito.export.timeline.size > MAX_PUNTI) {
                         Costruito.Ferma(DirettaMotivo.TROPPI_PUNTI)
                     } else {
                         val json = MatchExporter.toJson(esito.export)

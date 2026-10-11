@@ -66,16 +66,33 @@ class DirettaChiusuraRunner(
             esito = account.endLive(groupId, matchId, null)
         }
         return when (esito) {
-            is LiveResult.Ended, LiveResult.NotFound -> RunOutcome.DONE
+            is LiveResult.Ended, LiveResult.NotFound -> {
+                RunOutcome.DONE
+            }
 
-            LiveResult.Network, LiveResult.LiveFull, LiveResult.JoinCodeExhausted -> RunOutcome.RETRY
+            LiveResult.Network, LiveResult.LiveFull, LiveResult.JoinCodeExhausted -> {
+                RunOutcome.RETRY
+            }
 
-            is LiveResult.Unexpected -> if (attempt < MAX_UNEXPECTED_ATTEMPTS) RunOutcome.RETRY else RunOutcome.DONE
+            // Senza accesso valido (la sessione puo' tornare se l'utente accede di nuovo) si ritenta con un tetto.
+            is LiveResult.Unexpected, LiveResult.NotAuthenticated -> {
+                if (attempt <
+                    MAX_UNEXPECTED_ATTEMPTS
+                ) {
+                    RunOutcome.RETRY
+                } else {
+                    RunOutcome.DONE
+                }
+            }
 
-            // Senza accesso valido, senza permesso, o la diretta e' di un altro admin: non c'e' niente da ritentare.
-            LiveResult.NotAuthenticated, LiveResult.NotAuthorized, LiveResult.LiveConflict -> RunOutcome.DONE
+            // Senza permesso, o la diretta e' di un altro admin: non c'e' niente da ritentare.
+            LiveResult.NotAuthorized, LiveResult.LiveConflict -> {
+                RunOutcome.DONE
+            }
 
-            is LiveResult.InvalidPayload, LiveResult.PayloadTooLarge, is LiveResult.Published -> RunOutcome.DONE
+            is LiveResult.InvalidPayload, LiveResult.PayloadTooLarge, is LiveResult.Published -> {
+                RunOutcome.DONE
+            }
         }
     }
 

@@ -34,7 +34,10 @@ class DirettaTest {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
     private var finto: ServerFinto? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val chiusure = mutableListOf<DirettaChiusuraRichiesta>()
+    private val chiusure = java.util.Collections.synchronizedList(mutableListOf<DirettaChiusuraRichiesta>())
+    private val ultimaChiusuraNs =
+        java.util.concurrent.atomic
+            .AtomicLong(0)
     private lateinit var diretta: Diretta
     private lateinit var store: DirettaStore
 
@@ -74,7 +77,10 @@ class DirettaTest {
                 store,
                 scope,
                 collegamenti = { mapOf(1 to 101) },
-                allaChiusura = { chiusure += it },
+                allaChiusura = {
+                    chiusure += it
+                    ultimaChiusuraNs.set(System.nanoTime())
+                },
                 minIntervalMs = intervalloMs,
                 retryBaseMs = 60,
                 retryLentoMs = 120,
@@ -87,10 +93,11 @@ class DirettaTest {
         giocatori: Int = 4,
         nome: String = "Marco",
         matchId: String = UUID_PARTITA,
+        idMarco: Int = 1,
     ): DirettaFoto {
         val rose =
             listOf(
-                MatchPlayer(1, nome, 1),
+                MatchPlayer(idMarco, nome, 1),
                 MatchPlayer(2, "Anna", 2),
                 MatchPlayer(3, "Luca", 1),
                 MatchPlayer(4, "Sara", 2),
@@ -241,7 +248,8 @@ class DirettaTest {
 
         assertEquals(DirettaMotivo.FILE_NON_VALIDO, d.stato.value.motivo)
         assertEquals("players", d.stato.value.dettaglio)
-        assertEquals(listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = false)), chiusure)
+        attendi("la chiusura") { chiusure.isNotEmpty() }
+        assertEquals(listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = false)), chiusure.toList())
     }
 
     @Test
@@ -372,7 +380,8 @@ class DirettaTest {
 
         assertEquals(prima, inviiAlServer)
         assertEquals(DirettaFase.CHIUSA, d.stato.value.fase)
-        assertEquals(listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = true)), chiusure)
+        attendi("la chiusura") { chiusure.isNotEmpty() }
+        assertEquals(listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = true)), chiusure.toList())
         assertNull(store.load())
         // La chiusura e' definitiva: per la stessa partita non si riapre; per un'altra si'.
         assertFalse(d.accendi("g-1", "Padel", foto(2)))
@@ -386,7 +395,8 @@ class DirettaTest {
 
         d.spegni()
 
-        assertEquals(listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = false)), chiusure)
+        attendi("la chiusura") { chiusure.isNotEmpty() }
+        assertEquals(listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = false)), chiusure.toList())
         assertEquals(DirettaFase.CHIUSA, d.stato.value.fase)
     }
 
@@ -427,5 +437,97 @@ class DirettaTest {
         assertEquals(0, inviiAlServer)
         assertTrue(chiusure.isEmpty())
         assertEquals(DirettaFase.SPENTA, d.stato.value.fase)
+    }
+
+    @Test
+    fun `un giocatore sostituito a meta' partita mette la diretta in attesa senza chiuderla`() {
+        val d = accendiIlServer()
+
+        // L'ordine di servizio ha ancora l'id 1, ma fra i quattro del file c'e' il 9: il server direbbe invalid_payload.
+        d.accendi("g-1", "Padel", foto(2, idMarco = 9))
+        attendi("l'attesa") { d.stato.value.motivo == DirettaMotivo.GIOCATORE_SOSTITUITO }
+
+        assertEquals(DirettaFase.IN_ATTESA, d.stato.value.fase)
+        Thread.sleep(300)
+        assertEquals(0, inviiAlServer)
+        assertTrue(chiusure.isEmpty())
+        assertEquals(DirettaSalvata(UUID_PARTITA, "g-1", "Padel"), store.load())
+        // Rimesso il giocatore di prima, la diretta riprende da sola.
+        d.cambiata(foto(2))
+        attendi("la pubblicazione") { inviiAlServer == 1 }
+        assertEquals(DirettaFase.IN_CORSO, d.stato.value.fase)
+    }
+
+    @Test
+    fun `un'eccezione nella pubblicazione (il Keystore nel rinnovo del token) non butta giu' niente, attende e riprova`() {
+        var rotta = false
+        val scatola =
+            object : SecretBox {
+                private val vera = SoftwareSecretBox()
+
+                override fun seal(plain: ByteArray): ByteArray {
+                    check(!rotta) { "Keystore non disponibile" }
+                    return vera.seal(plain)
+                }
+
+                override fun open(sealed: ByteArray) = vera.open(sealed)
+            }
+        val s =
+            ServerFinto { richiesta, _ ->
+                if (richiesta.path!!.contains("refresh_token")) {
+                    json(200, rispostaDiSessione("A2", "R2", Long.MAX_VALUE / 2))
+                } else {
+                    rispostaDiPubblicazione()
+                }
+            }.also { finto = it }
+        val sessione = SessionStore(preferenze(context, "sessione_eccezione"), scatola)
+        // Scaduta: il rinnovo si fa, e salvare la sessione nuova lancia.
+        sessione.save(PadelEliteSession("A1", "R1", 0L, "u-1", "a@b.it"))
+        rotta = true
+        store = DirettaStore(preferenze(context, "diretta_eccezione"))
+        val d =
+            Diretta(
+                PadelEliteAccount(s.config(), PadelEliteApi(s.config()), sessione),
+                store,
+                scope,
+                minIntervalMs = 50,
+                retryBaseMs = 60,
+                retryLentoMs = 120,
+            )
+
+        d.accendi("g-1", "Padel", foto(1))
+        attendi("l'attesa per l'errore") { d.stato.value.motivo == DirettaMotivo.ERRORE_INATTESO }
+        assertEquals("IllegalStateException", d.stato.value.dettaglio)
+        assertEquals(0, inviiAlServer)
+
+        rotta = false
+        attendi("la ripresa") { d.stato.value.fase == DirettaFase.IN_CORSO }
+        assertEquals(1, inviiAlServer)
+    }
+
+    @Test
+    fun `la chiusura aspetta la pubblicazione in volo e arriva al server dopo`() {
+        val fineDelServer =
+            java.util.concurrent.atomic
+                .AtomicLong(0)
+        val arrivata = AtomicInteger()
+        val d =
+            accendiIlServer { _, _ ->
+                arrivata.incrementAndGet()
+                Thread.sleep(500)
+                fineDelServer.set(System.nanoTime())
+                rispostaDiPubblicazione()
+            }
+        d.accendi("g-1", "Padel", foto(1))
+        attendi("la richiesta in volo") { arrivata.get() == 1 }
+
+        d.chiudi(conRisultato = true)
+
+        // Subito dopo la chiamata la richiesta e' ancora in volo: la chiusura non e' partita.
+        assertTrue(chiusure.isEmpty())
+        assertEquals(DirettaFase.CHIUSA, d.stato.value.fase)
+        attendi("la chiusura") { chiusure.isNotEmpty() }
+        assertTrue("l'end e' partito prima che la pubblicazione finisse", ultimaChiusuraNs.get() >= fineDelServer.get())
+        assertEquals(1, inviiAlServer)
     }
 }

@@ -907,7 +907,10 @@ class MainViewModel(
     fun discardMatch(): Boolean {
         // Scartata: la diretta si chiude senza risultato (anche se la partita non era ancora cominciata).
         chiudiLaDiretta(conRisultato = false)
-        if (currentMatchId == null && engine.log.isEmpty()) return false
+        if (currentMatchId == null && engine.log.isEmpty()) {
+            dimenticaLIdSeLaPartitaNonE()
+            return false
+        }
         scartaRigaViva()
         // Una partita scartata non conta per la serata, e la composizione resta com'era.
         serataStore.load()?.let { if (it.inGioco != null) serataStore.save(it.annullaPartita()) }
@@ -2132,14 +2135,32 @@ class MainViewModel(
     fun accendiLaDiretta(): Boolean {
         if (!direttaDisponibile()) return false
         val gruppo = padelElite.account.selectedGroup() ?: return false
-        if (matchUuid == null) matchUuid = UUID.randomUUID().toString()
+        if (matchUuid == null) {
+            // Una riga viva senza identificativo (di una versione vecchia) non si puo' trasmettere: l'id nuovo non
+            // finirebbe sulla riga e la chiusura non troverebbe la partita.
+            if (currentMatchId != null) return false
+            matchUuid = UUID.randomUUID().toString()
+        }
         val foto = fotoDellaDiretta() ?: return false
         return padelElite.diretta.accendi(gruppo.first, gruppo.second, foto)
     }
 
     /** Spegne la diretta a mano: si chiude senza risultato e per questa partita non si riapre. */
     fun spegniLaDiretta() {
-        if (padelElite.isEnabled) padelElite.diretta.spegni()
+        if (!padelElite.isEnabled) return
+        padelElite.diretta.spegni()
+        dimenticaLIdSeLaPartitaNonE()
+    }
+
+    /**
+     * Accesa e spenta prima del primo punto: la diretta con quell'id e' chiusa sul server per sempre, e la partita
+     * (che non ha riga ne' punti) non ha motivo di tenerlo. Si azzera, cosi' la prossima accensione ha un id nuovo.
+     */
+    private fun dimenticaLIdSeLaPartitaNonE() {
+        if (engine.log.isEmpty() && currentMatchId == null) {
+            matchUuid = null
+            matchStartedAt = null
+        }
     }
 
     /** Il file parziale si rifa' da qui: una foto immutabile del registro, delle rose e dell'origine. Null senza identificativo. */

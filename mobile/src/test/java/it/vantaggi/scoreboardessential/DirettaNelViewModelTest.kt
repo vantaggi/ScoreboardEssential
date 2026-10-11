@@ -60,6 +60,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
+import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 
@@ -242,9 +243,60 @@ class DirettaNelViewModelTest {
         Thread.sleep(300)
 
         assertEquals(DirettaFase.CHIUSA, viewModel.direttaStato.value.fase)
-        assertEquals(1, lavoriDiChiusura(id).size)
+        attendi("il lavoro di chiusura") { lavoriDiChiusura(id).size == 1 }
         assertNull(diretta.load())
         assertEquals(prima, pubblicazioni().size)
+    }
+
+    @Test
+    fun `la fine partita chiude la riga con lo stesso identificativo della diretta`() {
+        costruisci(servizi())
+        partitaDiPadel()
+        viewModel.accendiLaDiretta()
+        viewModel.addScore(1)
+        val id = viewModel.currentMatchUuid!!
+
+        assertTrue(viewModel.endMatch())
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val chiusa = org.mockito.kotlin.argumentCaptor<Match>()
+        kotlinx.coroutines.runBlocking {
+            org.mockito.kotlin
+                .verify(
+                    matchDao,
+                ).closeMatch(chiusa.capture(), any<List<Int>>(), any<List<Int>>())
+        }
+        assertEquals(id, chiusa.firstValue.matchUuid)
+    }
+
+    @Test
+    fun `accesa e spenta prima del primo punto la partita si scorda l'id, la prossima accensione ne ha uno nuovo`() {
+        costruisci(servizi())
+        partitaDiPadel()
+        assertTrue(viewModel.accendiLaDiretta())
+        val primo = viewModel.currentMatchUuid
+        assertNotNull(primo)
+
+        viewModel.spegniLaDiretta()
+
+        assertNull(viewModel.currentMatchUuid)
+        assertTrue(viewModel.accendiLaDiretta())
+        val secondo = viewModel.currentMatchUuid
+        assertNotNull(secondo)
+        assertFalse(primo == secondo)
+    }
+
+    @Test
+    fun `accesa e scartata prima del primo punto la partita si scorda l'id`() {
+        costruisci(servizi())
+        partitaDiPadel()
+        viewModel.accendiLaDiretta()
+
+        assertFalse(viewModel.discardMatch())
+
+        assertNull(viewModel.currentMatchUuid)
+        assertEquals(DirettaFase.CHIUSA, viewModel.direttaStato.value.fase)
+        assertTrue(viewModel.accendiLaDiretta())
     }
 
     @Test
@@ -258,8 +310,7 @@ class DirettaNelViewModelTest {
         assertTrue(viewModel.discardMatch())
 
         assertEquals(DirettaFase.CHIUSA, viewModel.direttaStato.value.fase)
-        val lavori = lavoriDiChiusura(id)
-        assertEquals(1, lavori.size)
+        attendi("il lavoro di chiusura") { lavoriDiChiusura(id).size == 1 }
         assertNull(diretta.load())
     }
 
@@ -268,6 +319,7 @@ class DirettaNelViewModelTest {
         costruisci(servizi())
         partitaDiPadel()
         viewModel.accendiLaDiretta()
+        viewModel.addScore(1)
 
         viewModel.spegniLaDiretta()
 

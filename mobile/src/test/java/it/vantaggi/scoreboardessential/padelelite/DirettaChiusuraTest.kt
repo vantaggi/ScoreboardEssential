@@ -149,14 +149,37 @@ class DirettaChiusuraTest {
         }
 
     @Test
-    fun `una partita interrotta senza vincitore si chiude senza file`() =
+    fun `una partita interrotta senza vincitore porta comunque il suo file, col vincitore nullo`() =
         runBlocking {
             salvaPartita(8)
             val s = servizi()
 
             assertEquals(RunOutcome.DONE, s.chiusuraDiretta.run(UUID_PARTITA, "g-1", conRisultato = true, attempt = 0))
 
-            assertTrue(chiusureAlServer().single().isNull("p_payload"))
+            val file = chiusureAlServer().single().getJSONObject("p_payload")
+            assertTrue(file.isNull("winnerTeam"))
+            assertEquals(8, file.getJSONArray("timeline").length())
+        }
+
+    @Test
+    fun `la riga ancora viva non e' il file finale, si aspetta che la partita sia chiusa`() =
+        runBlocking {
+            salvaPartita(24)
+            db.openHelper.writableDatabase.execSQL("UPDATE matches SET isActive = 1")
+            val s = servizi()
+
+            assertEquals(RunOutcome.RETRY, s.chiusuraDiretta.run(UUID_PARTITA, "g-1", true, 0))
+            assertEquals(0, chiusureAlServer().size)
+        }
+
+    @Test
+    fun `senza accesso valido la chiusura ritenta con un tetto`() =
+        runBlocking {
+            salvaPartita(24)
+            val s = servizi { json(401, """{"message":"not_authenticated"}""") }
+
+            assertEquals(RunOutcome.RETRY, s.chiusuraDiretta.run(UUID_PARTITA, "g-1", false, 0))
+            assertEquals(RunOutcome.DONE, s.chiusuraDiretta.run(UUID_PARTITA, "g-1", false, DirettaChiusuraRunner.MAX_UNEXPECTED_ATTEMPTS))
         }
 
     @Test
