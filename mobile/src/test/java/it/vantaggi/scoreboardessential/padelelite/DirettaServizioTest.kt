@@ -30,20 +30,15 @@ import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import java.time.ZoneId
 
-/** Un avviatore che conta: nessun servizio vero, solo quante volte il controllo ha chiesto di avviare e di fermare. */
+/** Un avviatore che conta: nessun servizio vero, solo quante volte il controllo ha chiesto di avviare. Fermare non esiste: il servizio si ferma da solo. */
 private class AvviatoreFinto(
     var nega: Boolean = false,
 ) : DirettaAvviatore {
     var avvii = 0
-    var arresti = 0
 
     override fun avvia(): Boolean {
         avvii++
         return !nega
-    }
-
-    override fun ferma() {
-        arresti++
     }
 }
 
@@ -114,12 +109,11 @@ class DirettaServizioTest {
     private fun serveIlServizio() {
         attendi("l'avvio del servizio") { avviatore.avvii == 1 }
         assertEquals(DirettaServizioFase.ATTIVO, controllo.fase.value)
-        assertEquals(0, avviatore.arresti)
     }
 
     private fun ilServizioSiFerma() {
-        attendi("l'arresto del servizio") { avviatore.arresti == 1 }
-        assertEquals(DirettaServizioFase.SPENTO, controllo.fase.value)
+        // Il controllo torna a "spento" e non chiede mai di fermare il servizio: se ne va da solo (DirettaServiceTest).
+        attendi("il controllo a riposo") { controllo.fase.value == DirettaServizioFase.SPENTO }
         assertEquals("un solo avvio", 1, avviatore.avvii)
     }
 
@@ -134,7 +128,6 @@ class DirettaServizioTest {
         attendi("l'attesa") { diretta.stato.value.fase == DirettaFase.IN_ATTESA }
         attendi("la ripresa") { diretta.stato.value.fase == DirettaFase.IN_CORSO && controllo.fase.value == DirettaServizioFase.ATTIVO }
         assertEquals(1, avviatore.avvii)
-        assertEquals(0, avviatore.arresti)
     }
 
     @Test
@@ -177,7 +170,7 @@ class DirettaServizioTest {
     // --- Quando si ferma: tutti i modi in cui la diretta finisce ---
 
     @Test
-    fun `si ferma a fine partita`() {
+    fun `il controllo torna a riposo a fine partita`() {
         accendi()
         serveIlServizio()
 
@@ -187,7 +180,7 @@ class DirettaServizioTest {
     }
 
     @Test
-    fun `si ferma quando la partita e' scartata o cambia sport`() {
+    fun `il controllo torna a riposo quando la partita e' scartata o cambia sport`() {
         accendi()
         serveIlServizio()
 
@@ -197,7 +190,7 @@ class DirettaServizioTest {
     }
 
     @Test
-    fun `si ferma con l'interruttore e con la notifica, che arrivano allo stesso spegni`() {
+    fun `il controllo torna a riposo con l'interruttore e con la notifica, che arrivano allo stesso spegni`() {
         accendi()
         serveIlServizio()
 
@@ -207,7 +200,7 @@ class DirettaServizioTest {
     }
 
     @Test
-    fun `si ferma per un errore definitivo del server`() {
+    fun `il controllo torna a riposo per un errore definitivo del server`() {
         accendi({ _, _ -> erroreRpc(500, "42501", "not_authorized") })
         attendi("l'avvio") { avviatore.avvii == 1 }
 
@@ -217,7 +210,7 @@ class DirettaServizioTest {
     }
 
     @Test
-    fun `si ferma quando il ciclo cade per un Error`() {
+    fun `il controllo torna a riposo quando il ciclo cade per un Error`() {
         val vere = SportRegistry.forMatch(SportRegistry.PADEL, listOf(1, 2, 3, 4))
         accendi(
             regole =
@@ -265,7 +258,6 @@ class DirettaServizioTest {
         stato.value = DirettaStato(DirettaFase.SPENTA)
 
         assertEquals(0, a.avvii)
-        assertEquals(0, a.arresti)
         assertEquals(DirettaServizioFase.SPENTO, c.fase.value)
     }
 
@@ -286,7 +278,6 @@ class DirettaServizioTest {
 
         stato.value = DirettaStato(DirettaFase.CHIUSA)
         assertEquals(DirettaServizioFase.SPENTO, c.fase.value)
-        assertEquals(1, a.arresti)
 
         // Un avvio negato dopo la chiusura non resuscita lo stato.
         c.avvioNegato()
@@ -297,18 +288,13 @@ class DirettaServizioTest {
     // --- L'avviatore vero ---
 
     @Test
-    fun `l'avviatore vero avvia DirettaService in primo piano e lo ferma`() {
+    fun `l'avviatore vero avvia DirettaService in primo piano e non ha modo di fermarlo da fuori`() {
         val avviatoreVero = DirettaServiceAvviatore(context)
 
         assertTrue(avviatoreVero.avvia())
         val avviato: Intent? = shadowOf(context as android.app.Application).nextStartedService
         assertNotNull(avviato)
         assertEquals(DirettaService::class.java.name, avviato!!.component!!.className)
-
-        avviatoreVero.ferma()
-        val fermato: Intent? = shadowOf(context as android.app.Application).nextStoppedService
-        assertNotNull(fermato)
-        assertEquals(DirettaService::class.java.name, fermato!!.component!!.className)
     }
 
     @Test

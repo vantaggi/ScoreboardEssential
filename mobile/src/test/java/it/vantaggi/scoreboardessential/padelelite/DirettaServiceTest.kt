@@ -101,8 +101,6 @@ class DirettaServiceTest {
 
     private object NullAvviatore : DirettaAvviatore {
         override fun avvia() = true
-
-        override fun ferma() = Unit
     }
 
     private fun foto(punti: Int) =
@@ -230,7 +228,7 @@ class DirettaServiceTest {
     }
 
     @Test
-    fun `l'azione Interrompi chiede la conferma e solo la conferma chiude la diretta, senza risultato e con la chiusura in coda`() {
+    fun `l'intento di Interrompi si legge una volta e lo spegni confermato chiude senza risultato con la chiusura in coda`() {
         creaServizi()
         servizi.diretta.accendi("g-1", "Padel", foto(1))
         val interrompi =
@@ -260,6 +258,21 @@ class DirettaServiceTest {
                 .size == 1
         }
         assertEquals(ChiusuraFase.IN_CORSO, runBlocking { servizi.chiusuraDellaDiretta(UUID_PARTITA).first() })
+    }
+
+    @Test
+    fun `l'azione della notifica non si riesegue se l'activity e' ricreata o riaperta dalla cronologia`() {
+        val interrompi = DirettaIntent.per(context, DirettaAzione.INTERROMPI)
+
+        assertEquals(DirettaAzione.INTERROMPI, DirettaIntent.azioneDaEseguire(interrompi, ricreata = false))
+        // Ricreata (processo morto, rotazione): l'intento e' quello di prima.
+        assertNull(DirettaIntent.azioneDaEseguire(interrompi, ricreata = true))
+        // Riaperta dalle app recenti: l'intento e' quello di prima.
+        val dallaCronologia =
+            DirettaIntent.per(context, DirettaAzione.INTERROMPI).addFlags(android.content.Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY)
+        assertNull(DirettaIntent.azioneDaEseguire(dallaCronologia, ricreata = false))
+        assertNull(DirettaIntent.azioneDaEseguire(null, ricreata = false))
+        assertNull(DirettaIntent.azioneDaEseguire(android.content.Intent(), ricreata = false))
     }
 
     @Test
@@ -321,7 +334,8 @@ class DirettaServiceTest {
         assertFalse(shadowOf(servizio).isStoppedBySelf)
 
         servizi.diretta.chiudi(conRisultato = true)
-        passa(1_000)
+        // Subito, senza aspettare la pausa di un secondo fra due notifiche.
+        passa(1)
 
         assertTrue(shadowOf(servizio).isStoppedBySelf)
         assertTrue(shadowOf(servizio).isForegroundStopped)
@@ -336,6 +350,32 @@ class DirettaServiceTest {
         val servizio = avviaIlServizio()
 
         // Il sistema vuole comunque startForeground dopo startForegroundService: lo fa, e subito dopo il servizio se ne va.
+        assertTrue(shadowOf(servizio).isForegroundStopped)
+        assertTrue(shadowOf(servizio).isStoppedBySelf)
+    }
+
+    @Test
+    fun `una diretta fermata prima che il servizio parta non ha uno stopService e il servizio se ne va da solo`() {
+        creaServizi()
+        val applicazione = app
+        // Il controllo con l'avviatore vero, sincrono: vede l'accensione e subito dopo la chiusura, come in pochi millisecondi reali.
+        val controllo =
+            DirettaServizioControllo(
+                servizi.diretta.stato,
+                DirettaServiceAvviatore(context),
+                CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined),
+            )
+
+        servizi.diretta.accendi("g-1", "Padel", foto(1))
+        servizi.diretta.chiudi(conRisultato = false)
+
+        assertEquals(DirettaServizioFase.SPENTO, controllo.fase.value)
+        val ombraApp = shadowOf(applicazione)
+        assertNotNull("l'avvio e' stato chiesto", ombraApp.peekNextStartedService())
+        assertNull("nessuno ferma il servizio da fuori: crollerebbe l'app", ombraApp.nextStoppedService)
+
+        // Quando il sistema lo avvia, entra in primo piano (obbligatorio) e subito dopo si ferma da solo.
+        val servizio = avviaIlServizio()
         assertTrue(shadowOf(servizio).isForegroundStopped)
         assertTrue(shadowOf(servizio).isStoppedBySelf)
     }

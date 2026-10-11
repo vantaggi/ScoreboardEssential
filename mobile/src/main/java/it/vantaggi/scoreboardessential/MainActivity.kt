@@ -315,7 +315,7 @@ class MainActivity :
         setupImprovedViews() // Call new setup method
         requestNotificationPermission()
         // Aperta dalla notifica fissa della diretta (D-3): il foglio PARTITA, ed eventualmente la conferma di interruzione.
-        gestisciLIntentDellaDiretta(intent)
+        gestisciLIntentDellaDiretta(intent, ricreata = savedInstanceState != null)
 
         lifecycleScope.launch {
             delay(2000) // Aspetta che il servizio si registri
@@ -725,9 +725,13 @@ class MainActivity :
      * «Interrompi diretta» ci porta e mostra la stessa conferma dell'interruttore (una notifica non puo' mostrare un
      * dialogo). Se la diretta intanto si e' chiusa non c'e' niente da chiedere: si apre solo il foglio.
      */
-    private fun gestisciLIntentDellaDiretta(intent: Intent?) {
-        val azione = DirettaIntent.azioneDi(intent) ?: return
+    private fun gestisciLIntentDellaDiretta(
+        intent: Intent?,
+        ricreata: Boolean = false,
+    ) {
+        val azione = DirettaIntent.azioneDaEseguire(intent, ricreata)
         DirettaIntent.consuma(intent)
+        if (azione == null) return
         findViewById<NestedScrollView>(R.id.match_sheet).scrollTo(0, 0)
         matchSheet.state = BottomSheetBehavior.STATE_EXPANDED
         if (azione == DirettaAzione.INTERROMPI && viewModel.direttaAccesa()) chiediDiSpegnereLaDiretta()

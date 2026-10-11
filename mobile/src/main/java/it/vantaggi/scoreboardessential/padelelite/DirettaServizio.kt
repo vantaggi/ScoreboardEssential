@@ -24,18 +24,22 @@ enum class DirettaServizioFase {
     SCADUTO,
 }
 
-/** Chi avvia e ferma il servizio vero: un'interfaccia perche' i test provano il controllo senza Android. */
+/** Chi avvia il servizio vero: un'interfaccia perche' i test provano il controllo senza Android. */
 interface DirettaAvviatore {
     /** False se il sistema nega l'avvio (app in secondo piano). Non lancia mai. */
     fun avvia(): Boolean
 
-    fun ferma()
+    // Niente `ferma()`: dall'esterno il servizio non si ferma mai. `stopService()` prima che il servizio abbia chiamato
+    // `startForeground()` fa cadere l'app ("startForegroundService() did not then call startForeground()"): si ferma
+    // da solo, in `DirettaService`, dopo essere entrato in primo piano.
 }
 
 /**
- * Tiene il servizio in primo piano accordato alla diretta (D-3): parte quando la diretta si accende o riprende, si
- * ferma quando si chiude o si spegne, comunque succeda (fine partita, scarto, cambio sport, errore definitivo,
- * interruttore, notifica). Guarda solo lo stato della [Diretta]: non ha logica sua, e un solo punto decide.
+ * Tiene il servizio in primo piano accordato alla diretta (D-3): lo avvia quando la diretta si accende o riprende.
+ * Guarda solo lo stato della [Diretta]: non ha logica sua. **Non lo ferma mai**: il servizio si ferma da solo
+ * (DirettaService, appena la diretta non e' piu' accesa: fine partita, scarto, cambio sport, errore definitivo,
+ * interruttore, notifica), perche' uno `stopService` prima di `startForeground` fa cadere l'app. Qui si tiene
+ * solo la fase detta nel foglio.
  *
  * Una diretta che passa da "in corso" a "in attesa" non riavvia niente; dopo un avvio negato o un tetto delle 6 ore
  * il servizio non si ritenta fino alla diretta dopo.
@@ -62,8 +66,8 @@ class DirettaServizioControllo(
                 richiesto = true
                 _fase.value = if (avviatore.avvia()) DirettaServizioFase.ATTIVO else DirettaServizioFase.NON_AVVIATO
             } else if (!serve && richiesto) {
+                // Non si ferma il servizio da qui (vedi DirettaAvviatore): lo vede da solo e se ne va.
                 richiesto = false
-                avviatore.ferma()
                 _fase.value = DirettaServizioFase.SPENTO
             }
         }
@@ -102,10 +106,6 @@ class DirettaServiceAvviatore(
             Log.w(TAG, "avvio in primo piano rifiutato: la diretta prosegue senza servizio", e)
             false
         }
-
-    override fun ferma() {
-        context.stopService(intent())
-    }
 
     private companion object {
         const val TAG = "DirettaServizio"

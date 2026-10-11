@@ -42,6 +42,19 @@ object DirettaIntent {
         return DirettaAzione.entries.firstOrNull { it.name == nome }
     }
 
+    /**
+     * L'azione da eseguire adesso, o null. Un'azione vecchia non si riesegue: se l'activity e' ricreata ([ricreata], per
+     * esempio dopo la morte del processo, con l'intento originale che il sistema le ridaa) o riaperta dalla cronologia
+     * delle app recenti, l'intento della notifica e' di prima e il dialogo non deve ricomparire.
+     */
+    fun azioneDaEseguire(
+        intent: Intent?,
+        ricreata: Boolean,
+    ): DirettaAzione? {
+        if (ricreata || intent == null || intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return null
+        return azioneDi(intent)
+    }
+
     /** Toglie l'azione dall'intento: una rotazione ricrea l'activity con lo stesso intento e il dialogo non deve ricomparire. */
     fun consuma(intent: Intent?) {
         intent?.removeExtra(EXTRA)

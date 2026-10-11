@@ -130,7 +130,10 @@ class Diretta(
         val groupId: String,
         val groupName: String,
         val segnale: Channel<Unit> = Channel(Channel.CONFLATED),
-    )
+    ) {
+        /** Il server ha ricevuto almeno un file di questa diretta (o potrebbe: dopo un ripristino non si sa): allora c'e' qualcosa da chiudere. */
+        @Volatile var pubblicata = false
+    }
 
     private val lock = Any()
 
@@ -151,8 +154,13 @@ class Diretta(
      */
     val punteggio: StateFlow<String> = _punteggio
 
-    /** Le chiusure consegnate ma non ancora accodate (aspettano la fine di una richiesta in volo): [riprendi] non le tocca. */
-    private val inVolo = HashSet<String>()
+    private val _chiusureInVolo = MutableStateFlow<Set<String>>(emptySet())
+
+    /**
+     * Le partite la cui chiusura e' decisa ma non ancora accodata (aspetta la fine di una richiesta in volo): [riprendi] non
+     * le tocca e il foglio dice gia' "Chiusura in corso" invece di "Diretta chiusa".
+     */
+    val chiusureInVolo: StateFlow<Set<String>> = _chiusureInVolo
 
     /** C'e' una diretta accesa (anche in attesa): il ViewModel puo' risparmiarsi di costruire la foto se no. */
     val acceso: Boolean get() = attiva != null
@@ -186,7 +194,7 @@ class Diretta(
         synchronized(lock) {
             val pendenti = store.pendenti()
             // Una chiusura rimasta in sospeso (processo ucciso fra il segno e l'accodamento) si accoda adesso.
-            pendenti.filter { it.matchId !in inVolo }.forEach { consegnaSubito(it) }
+            pendenti.filter { it.matchId !in _chiusureInVolo.value }.forEach { consegnaSubito(it) }
             val corrente = attiva
             if (corrente != null) {
                 // Stesso processo, ViewModel nuovo: la diretta c'e' gia', basta darle la foto di adesso.
@@ -198,7 +206,7 @@ class Diretta(
                 // Chiusa un attimo prima della morte del processo: non si riaccende, la chiusura e' gia' in coda.
                 store.clear()
             } else if (foto != null && foto.matchId == salvata.matchId) {
-                avvia(Attiva(salvata.matchId, salvata.groupId, salvata.groupName), foto)
+                avvia(Attiva(salvata.matchId, salvata.groupId, salvata.groupName).also { it.pubblicata = true }, foto)
             } else {
                 val abbandonata = DirettaChiusuraRichiesta(salvata.matchId, salvata.groupId, conRisultato = false)
                 store.segnaPendente(abbandonata)
@@ -282,11 +290,11 @@ class Diretta(
         if (vecchio == null || vecchio.isCompleted) {
             consegnaSubito(richiesta)
         } else {
-            inVolo += richiesta.matchId
+            _chiusureInVolo.value = _chiusureInVolo.value + richiesta.matchId
             scope.launch {
                 vecchio.join()
                 synchronized(lock) {
-                    inVolo -= richiesta.matchId
+                    _chiusureInVolo.value = _chiusureInVolo.value - richiesta.matchId
                     consegnaSubito(richiesta)
                 }
             }
@@ -384,7 +392,7 @@ class Diretta(
                     andamento.eccezioni++
                     Log.w(TAG, "eccezione nel giro della diretta (${andamento.eccezioni} di fila)", e)
                     if (andamento.eccezioni >= maxEccezioni) {
-                        ferma(a, DirettaMotivo.ERRORE_GRAVE, nomeDi(e), chiudiSulServer = true)
+                        ferma(a, DirettaMotivo.ERRORE_GRAVE, nomeDi(e), chiudiSulServer = a.pubblicata)
                         return
                     }
                     attesaCrescente(a, andamento, DirettaMotivo.ERRORE_INATTESO, nomeDi(e))
@@ -400,7 +408,7 @@ class Diretta(
             // Nelle uscite pulite la diretta e' gia' ferma e `ferma` non fa niente (guarda che sia ancora questa).
             if (errore != null) {
                 Log.e(TAG, "il ciclo della diretta e' caduto", errore)
-                ferma(a, DirettaMotivo.ERRORE_GRAVE, nomeDi(errore), chiudiSulServer = true)
+                ferma(a, DirettaMotivo.ERRORE_GRAVE, nomeDi(errore), chiudiSulServer = a.pubblicata)
             }
         }
     }
@@ -454,6 +462,7 @@ class Diretta(
             is LiveResult.Published -> {
                 andamento.inattese = 0
                 andamento.falliti = 0
+                a.pubblicata = true
                 if (!esito.written && esito.live?.status == "ended") {
                     // Definitiva: la diretta di questa partita e' chiusa sul server.
                     ferma(a, DirettaMotivo.GIA_CHIUSA)

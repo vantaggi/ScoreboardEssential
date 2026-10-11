@@ -77,6 +77,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -2156,8 +2157,16 @@ class MainViewModel(
             direttaStato
                 .map { if (it.fase == DirettaFase.CHIUSA) it.matchId else null }
                 .distinctUntilChanged()
-                .flatMapLatest { id -> if (id == null) flowOf(ChiusuraFase.NESSUNA) else padelElite.chiusuraDellaDiretta(id) }
-                .stateIn(viewModelScope, SharingStarted.Eagerly, ChiusuraFase.NESSUNA)
+                .flatMapLatest { id ->
+                    if (id == null) {
+                        flowOf(ChiusuraFase.NESSUNA)
+                    } else {
+                        // Finche' la chiusura aspetta la richiesta in volo il lavoro non c'e' ancora, ma "chiusa" sarebbe una bugia.
+                        combine(padelElite.diretta.chiusureInVolo, padelElite.chiusuraDellaDiretta(id)) { inVolo, fase ->
+                            if (id in inVolo && fase == ChiusuraFase.NESSUNA) ChiusuraFase.IN_CORSO else fase
+                        }
+                    }
+                }.stateIn(viewModelScope, SharingStarted.Eagerly, ChiusuraFase.NESSUNA)
         }
     }
 

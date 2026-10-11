@@ -84,9 +84,10 @@ class DirettaChiusuraRunner(
                 if (attempt < MAX_UNEXPECTED_ATTEMPTS) RunOutcome.RETRY else RunOutcome.GIVE_UP
             }
 
-            // Senza permesso, o la diretta e' di un altro admin: non c'e' niente da ritentare.
+            // Senza permesso, o la diretta e' di un altro admin: non c'e' niente da ritentare, ma NON e' chiusa. Il lavoro
+            // finisce in FAILED e il foglio dice che la chiude la dashboard (o la pulizia delle 6 ore), non "Diretta chiusa".
             LiveResult.NotAuthorized, LiveResult.LiveConflict -> {
-                RunOutcome.DONE
+                RunOutcome.GIVE_UP
             }
 
             is LiveResult.InvalidPayload, LiveResult.PayloadTooLarge, is LiveResult.Published -> {

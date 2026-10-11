@@ -155,6 +155,40 @@ class RuoloEChiusuraVisibileTest {
         }
 
     @Test
+    fun `se nel frattempo si e' scelto un altro gruppo il risultato vecchio non si scrive`() =
+        runBlocking {
+            lateinit var s: PadelEliteServices
+            s =
+                servizi(ruoloSalvato = "member") { _, _ ->
+                    // La risposta sta per arrivare: intanto l'utente sceglie un altro gruppo.
+                    s.account.selectGroup(PadelEliteGroup("g-2", "Altro", "owner"))
+                    gruppi("admin")
+                }
+
+            assertFalse(s.aggiornaIlRuolo())
+
+            assertEquals("g-2", s.account.selectedGroup()?.first)
+            assertEquals("owner", s.account.selectedGroupRole())
+        }
+
+    @Test
+    fun `se nel frattempo si e' usciti dall'account non si riscrive il gruppo`() =
+        runBlocking {
+            lateinit var s: PadelEliteServices
+            s =
+                servizi(ruoloSalvato = "member") { _, _ ->
+                    s.account.signOut()
+                    gruppi("admin")
+                }
+
+            assertFalse(s.aggiornaIlRuolo())
+
+            assertNull(s.account.session())
+            assertNull(s.account.selectedGroup())
+            assertNull(s.account.selectedGroupRole())
+        }
+
+    @Test
     fun `una sola lettura per avvio, anche se la si chiede piu' volte`() =
         runBlocking {
             val s = servizi(ruoloSalvato = "member") { _, _ -> gruppi("admin") }

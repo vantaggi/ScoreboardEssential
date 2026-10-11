@@ -142,6 +142,8 @@ class PadelEliteServices(
             val esito = account.groups()
             if (esito !is GroupsOutcome.Ok) return false
             val gruppo = esito.groups.firstOrNull { it.id == scelto } ?: return false
+            // Nel frattempo l'utente puo' aver scelto un altro gruppo, o essere uscito: il risultato vecchio non si scrive.
+            if (account.session() == null || account.selectedGroup()?.first != scelto) return false
             account.selectGroup(gruppo)
             gruppo.role != prima
         } catch (e: CancellationException) {

@@ -89,10 +89,15 @@ class DirettaLimitiTest {
     )
 
     /** Le stesse regole del padel, ma `display` lancia [errore]: il file si costruisce dallo stesso motore, quindi il giro cade. */
-    private fun regoleCheLanciano(errore: () -> Throwable): SportRules {
+    private fun regoleCheLanciano(
+        dopo: Int = 0,
+        errore: () -> Throwable,
+    ): SportRules {
         val vere = SportRegistry.forMatch(SportRegistry.PADEL, listOf(1, 2, 3, 4))
+        val chiamate = AtomicInteger()
         return object : SportRules by vere {
-            override fun display(state: ScoreState): ScoreDisplay = throw errore()
+            override fun display(state: ScoreState): ScoreDisplay =
+                if (chiamate.getAndIncrement() < dopo) vere.display(state) else throw errore()
         }
     }
 
@@ -130,6 +135,8 @@ class DirettaLimitiTest {
         assertTrue("la chiusura non e' ancora partita", chiusure.isEmpty())
         assertEquals(listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = true)), store.pendenti())
         assertNull("la diretta salvata non c'e' piu'", store.load())
+        // Il foglio puo' gia' dire "Chiusura in corso" invece di "Diretta chiusa".
+        assertEquals(setOf(UUID_PARTITA), d.chiusureInVolo.value)
 
         // Il processo muore qui: lo scope e tutto cio' che aspettava spariscono. Resta solo il disco.
         scope.cancel()
@@ -179,6 +186,7 @@ class DirettaLimitiTest {
 
         attendi("la chiusura") { chiusure.isNotEmpty() }
         attendi("il segno tolto") { store.pendenti().isEmpty() }
+        assertTrue(d.chiusureInVolo.value.isEmpty())
     }
 
     @Test
@@ -214,10 +222,26 @@ class DirettaLimitiTest {
         assertEquals("ErroreFinto", d.stato.value.dettaglio)
         assertFalse(d.acceso)
         assertNull("niente da riprendere", store.load())
-        attendi("la chiusura senza risultato") { chiusure.isNotEmpty() }
-        assertEquals(listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = false)), chiusure.toList())
+        // Nessun file e' mai arrivato al server: non c'e' niente da chiudere li' (come dice il KDoc di `ferma`).
+        Thread.sleep(200)
+        assertTrue(chiusure.isEmpty())
+        assertTrue(store.pendenti().isEmpty())
         // L'Error non e' inghiottito: arriva al gestore dello scope (che in produzione lo scrive nel log).
         attendi("l'Error al gestore") { sfuggiti.any { it is ErroreFinto } }
+    }
+
+    @Test
+    fun `un Error dopo che il server ha ricevuto un file chiude la diretta anche sul server`() {
+        store = DirettaStore(preferenze(context, "diretta_limiti_error_dopo"))
+        val d = nuovaDiretta(server())
+
+        d.accendi("g-1", "Padel", foto(1, regole = regoleCheLanciano(dopo = 1) { ErroreFinto() }))
+        attendi("il primo file al server") { finto!!.quante("/rest/v1/rpc/publish_live_from_app") == 1 }
+        d.cambiata(foto(2, regole = regoleCheLanciano { ErroreFinto() }))
+
+        attendi("lo stato fermo") { d.stato.value.motivo == DirettaMotivo.ERRORE_GRAVE }
+        attendi("la chiusura senza risultato") { chiusure.isNotEmpty() }
+        assertEquals(listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = false)), chiusure.toList())
     }
 
     // --- Eccezione persistente (debito 10) ---
@@ -245,7 +269,9 @@ class DirettaLimitiTest {
                 .orEmpty()
                 .isNotEmpty(),
         )
-        attendi("la chiusura") { chiusure.isNotEmpty() }
+        // Mai arrivato un file al server: niente da chiudere li'.
+        Thread.sleep(200)
+        assertTrue(chiusure.isEmpty())
         assertFalse(d.acceso)
     }
 

@@ -24,6 +24,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -32,9 +33,10 @@ import kotlinx.coroutines.launch
  * secondo piano.
  *
  * **Non contiene la logica della diretta.** La [Diretta] vive nello scope dell'applicazione e resta dov'e';
- * il servizio la tiene viva (esistendo) e ne mostra lo stato. Parte e si ferma da [DirettaServizioControllo], che
- * guarda lo stato della diretta in un punto solo; qui c'e' solo la cintura: se la diretta non e' piu' accesa
- * (o non c'e' proprio) il servizio si ferma da se'.
+ * il servizio la tiene viva (esistendo) e ne mostra lo stato. Parte da [DirettaServizioControllo], che guarda lo
+ * stato della diretta; **si ferma sempre da solo**, dopo essere entrato in primo piano: se la diretta non e' piu'
+ * accesa (allo start, o dopo, appena lo stato cambia) se ne va. Nessuno lo ferma da fuori: uno `stopService`
+ * prima di `startForeground` fa cadere l'app.
  *
  * **Separato dal cronometro** ([it.vantaggi.scoreboardessential.service.MatchTimerService], `specialUse`): un tipo
  * e una notifica ciascuno, e nel padel il cronometro non parte.
@@ -83,10 +85,13 @@ open class DirettaService : Service() {
         aggiornamento?.cancel()
         aggiornamento =
             scope.launch {
+                // Appena la diretta non e' piu' accesa il servizio se ne va, senza aspettare la pausa fra due notifiche.
+                launch {
+                    diretta.stato.first { !accesa(it) }
+                    esci()
+                }
                 combine(diretta.stato, diretta.punteggio) { st, pt -> st to pt }.conflate().collect { (st, pt) ->
-                    if (!accesa(st)) {
-                        esci()
-                    } else {
+                    if (accesa(st)) {
                         aggiorna(st, pt)
                         delay(MIN_NOTIFICA_MS)
                     }
