@@ -1,11 +1,13 @@
 package it.vantaggi.scoreboardessential.padelelite
 
+import android.util.Log
 import it.vantaggi.scoreboardessential.core.ExportOrigin
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.LoggedEvent
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchPlayer
+import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.SportRules
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +59,9 @@ enum class DirettaMotivo {
     ALTRO_ADMIN,
     GIA_CHIUSA,
     SERVER,
+
+    /** Un errore fuori dal previsto (un `Error`, o la stessa eccezione per troppi giri di fila): il dettaglio e' il nome della classe. */
+    ERRORE_GRAVE,
 }
 
 data class DirettaStato(
@@ -101,7 +106,9 @@ data class DirettaChiusuraRichiesta(
  * ViewModel ricreato. Con l'app in background durante un padel (il cronometro non e' un servizio in
  * primo piano: nel padel non c'e') il sistema puo' sospendere il processo, e con lui la diretta.
  *
- * **Cosa persiste.** Solo [DirettaSalvata] (partita, gruppo): al ripristino [riprendi] la riaccende.
+ * **Cosa persiste.** [DirettaSalvata] (partita, gruppo): al ripristino [riprendi] la riaccende. E le chiusure
+ * in sospeso ([DirettaStore.pendenti]): una chiusura si segna PRIMA di consegnarla e si toglie DOPO che e'
+ * stata accodata, cosi' un processo ucciso nel mezzo la ritrova al riavvio.
  *
  * La chiusura non passa di qui: [chiudi] ferma la trasmissione e consegna la richiesta a [allaChiusura]
  * (WorkManager, unico per partita), perche' il risultato finale non deve perdersi.
@@ -116,13 +123,17 @@ class Diretta(
     private val minIntervalMs: Long = MIN_INTERVAL_MS,
     private val retryBaseMs: Long = RETRY_BASE_MS,
     private val retryLentoMs: Long = RETRY_LENTO_MS,
+    private val maxEccezioni: Int = MAX_ECCEZIONI,
 ) {
     private class Attiva(
         val matchId: String,
         val groupId: String,
         val groupName: String,
         val segnale: Channel<Unit> = Channel(Channel.CONFLATED),
-    )
+    ) {
+        /** Il server ha ricevuto almeno un file di questa diretta (o potrebbe: dopo un ripristino non si sa): allora c'e' qualcosa da chiudere. */
+        @Volatile var pubblicata = false
+    }
 
     private val lock = Any()
 
@@ -134,6 +145,22 @@ class Diretta(
 
     private val _stato = MutableStateFlow(DirettaStato())
     val stato: StateFlow<DirettaStato> = _stato
+
+    private val _punteggio = MutableStateFlow("")
+
+    /**
+     * Il punteggio dell'ultimo file costruito ("40-15 · 6-4 · 3-2"), vuoto prima del primo. Lo scrive il ciclo
+     * insieme alla pubblicazione, quindi cambia al piu' una volta al secondo: la notifica fissa lo legge da qui.
+     */
+    val punteggio: StateFlow<String> = _punteggio
+
+    private val _chiusureInVolo = MutableStateFlow<Set<String>>(emptySet())
+
+    /**
+     * Le partite la cui chiusura e' decisa ma non ancora accodata (aspetta la fine di una richiesta in volo): [riprendi] non
+     * le tocca e il foglio dice gia' "Chiusura in corso" invece di "Diretta chiusa".
+     */
+    val chiusureInVolo: StateFlow<Set<String>> = _chiusureInVolo
 
     /** C'e' una diretta accesa (anche in attesa): il ViewModel puo' risparmiarsi di costruire la foto se no. */
     val acceso: Boolean get() = attiva != null
@@ -165,6 +192,9 @@ class Diretta(
      */
     fun riprendi(foto: DirettaFoto?) {
         synchronized(lock) {
+            val pendenti = store.pendenti()
+            // Una chiusura rimasta in sospeso (processo ucciso fra il segno e l'accodamento) si accoda adesso.
+            pendenti.filter { it.matchId !in _chiusureInVolo.value }.forEach { consegnaSubito(it) }
             val corrente = attiva
             if (corrente != null) {
                 // Stesso processo, ViewModel nuovo: la diretta c'e' gia', basta darle la foto di adesso.
@@ -172,11 +202,16 @@ class Diretta(
                 return
             }
             val salvata = store.load() ?: return
-            if (foto != null && foto.matchId == salvata.matchId) {
-                avvia(Attiva(salvata.matchId, salvata.groupId, salvata.groupName), foto)
-            } else {
+            if (pendenti.any { it.matchId == salvata.matchId }) {
+                // Chiusa un attimo prima della morte del processo: non si riaccende, la chiusura e' gia' in coda.
                 store.clear()
-                allaChiusura(DirettaChiusuraRichiesta(salvata.matchId, salvata.groupId, conRisultato = false))
+            } else if (foto != null && foto.matchId == salvata.matchId) {
+                avvia(Attiva(salvata.matchId, salvata.groupId, salvata.groupName).also { it.pubblicata = true }, foto)
+            } else {
+                val abbandonata = DirettaChiusuraRichiesta(salvata.matchId, salvata.groupId, conRisultato = false)
+                store.segnaPendente(abbandonata)
+                store.clear()
+                consegnaSubito(abbandonata)
             }
         }
     }
@@ -203,9 +238,11 @@ class Diretta(
         synchronized(lock) {
             val a = attiva ?: return
             val vecchio = fermaIlCiclo()
+            val richiesta = DirettaChiusuraRichiesta(a.matchId, a.groupId, conRisultato)
+            store.segnaPendente(richiesta)
             store.clear()
             _stato.value = DirettaStato(DirettaFase.CHIUSA, gruppo = a.groupName, matchId = a.matchId)
-            chiudiDopo(vecchio, DirettaChiusuraRichiesta(a.matchId, a.groupId, conRisultato))
+            chiudiDopo(vecchio, richiesta)
         }
     }
 
@@ -238,6 +275,7 @@ class Diretta(
         attiva?.segnale?.close()
         attiva = null
         ultima = null
+        _punteggio.value = ""
         return vecchio
     }
 
@@ -250,13 +288,23 @@ class Diretta(
         richiesta: DirettaChiusuraRichiesta,
     ) {
         if (vecchio == null || vecchio.isCompleted) {
-            allaChiusura(richiesta)
+            consegnaSubito(richiesta)
         } else {
+            _chiusureInVolo.value = _chiusureInVolo.value + richiesta.matchId
             scope.launch {
                 vecchio.join()
-                allaChiusura(richiesta)
+                synchronized(lock) {
+                    _chiusureInVolo.value = _chiusureInVolo.value - richiesta.matchId
+                    consegnaSubito(richiesta)
+                }
             }
         }
+    }
+
+    /** Accoda la chiusura e, solo dopo, toglie il segno di quella in sospeso: se il processo muore nel mezzo, al riavvio si ritrova. */
+    private fun consegnaSubito(richiesta: DirettaChiusuraRichiesta) {
+        allaChiusura(richiesta)
+        store.togliPendente(richiesta.matchId)
     }
 
     /** Un'accensione finita male: ferma e non riparte da sola. [chiudiSulServer] solo se il file c'era e il server lo sa. */
@@ -269,9 +317,11 @@ class Diretta(
         synchronized(lock) {
             if (attiva !== a) return
             val vecchio = fermaIlCiclo()
+            val richiesta = DirettaChiusuraRichiesta(a.matchId, a.groupId, conRisultato = false)
+            if (chiudiSulServer) store.segnaPendente(richiesta)
             store.clear()
             _stato.value = DirettaStato(DirettaFase.FERMA, motivo, dettaglio, a.groupName, a.matchId)
-            if (chiudiSulServer) chiudiDopo(vecchio, DirettaChiusuraRichiesta(a.matchId, a.groupId, conRisultato = false))
+            if (chiudiSulServer) chiudiDopo(vecchio, richiesta)
         }
     }
 
@@ -312,27 +362,59 @@ class Diretta(
         var ultimoInviato: String? = null
         var inattese = 0
         var falliti = 0
+
+        /** Le eccezioni di fila, senza un giro riuscito in mezzo. */
+        var eccezioni = 0
     }
 
-    /** Il consumatore: un segnale alla volta, in serie, con la pausa minima fra una richiesta e l'altra. */
+    /**
+     * Il consumatore: un segnale alla volta, in serie, con la pausa minima fra una richiesta e l'altra.
+     *
+     * Se il ciclo esce per un `Error` (non un'`Exception`, che il giro prende da se') la diretta non resta
+     * "in diretta" a parole e ferma nei fatti: il `finally` la ferma con un motivo, e lo stato lo dice.
+     */
     private suspend fun trasmetti(a: Attiva) {
         val andamento = Andamento()
-        for (segnale in a.segnale) {
-            if (attiva !== a) return
-            val foto = ultima ?: continue
-            try {
-                if (!giro(a, foto, andamento)) return
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // Un'eccezione qualunque (il Keystore nel rinnovo del token, un file che non si costruisce) non deve
-                // buttare giu' l'app a meta' partita: la diretta aspetta e riprova.
+        var errore: Throwable? = null
+        try {
+            for (segnale in a.segnale) {
                 if (attiva !== a) return
-                attesaCrescente(a, andamento, DirettaMotivo.ERRORE_INATTESO, e.javaClass.simpleName)
+                val foto = ultima ?: continue
+                try {
+                    if (!giro(a, foto, andamento)) return
+                    andamento.eccezioni = 0
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // Un'eccezione qualunque (il Keystore nel rinnovo del token, un file che non si costruisce) non deve
+                    // buttare giu' l'app a meta' partita: la diretta aspetta e riprova, ma non per sempre.
+                    if (attiva !== a) return
+                    andamento.eccezioni++
+                    Log.w(TAG, "eccezione nel giro della diretta (${andamento.eccezioni} di fila)", e)
+                    if (andamento.eccezioni >= maxEccezioni) {
+                        ferma(a, DirettaMotivo.ERRORE_GRAVE, nomeDi(e), chiudiSulServer = a.pubblicata)
+                        return
+                    }
+                    attesaCrescente(a, andamento, DirettaMotivo.ERRORE_INATTESO, nomeDi(e))
+                }
+                delay(minIntervalMs)
             }
-            delay(minIntervalMs)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            errore = e
+            throw e
+        } finally {
+            // Nelle uscite pulite la diretta e' gia' ferma e `ferma` non fa niente (guarda che sia ancora questa).
+            if (errore != null) {
+                Log.e(TAG, "il ciclo della diretta e' caduto", errore)
+                ferma(a, DirettaMotivo.ERRORE_GRAVE, nomeDi(errore), chiudiSulServer = a.pubblicata)
+            }
         }
     }
+
+    /** Il nome della classe dell'errore; per una classe anonima `simpleName` e' vuoto, e si usa il nome intero. */
+    private fun nomeDi(e: Throwable): String = e.javaClass.simpleName.ifEmpty { e.javaClass.name }
 
     private fun attesaCrescente(
         a: Attiva,
@@ -380,6 +462,7 @@ class Diretta(
             is LiveResult.Published -> {
                 andamento.inattese = 0
                 andamento.falliti = 0
+                a.pubblicata = true
                 if (!esito.written && esito.live?.status == "ended") {
                     // Definitiva: la diretta di questa partita e' chiusa sul server.
                     ferma(a, DirettaMotivo.GIA_CHIUSA)
@@ -480,6 +563,8 @@ class Diretta(
             }
         return withContext(Dispatchers.Default) {
             val motore = MatchEngine(foto.rules).also { it.restoreLog(foto.log) }
+            // Il punteggio per la notifica nasce qui, dallo stesso motore del file: un giro solo, al ritmo della pubblicazione.
+            if (attiva === a) _punteggio.value = punteggioInTesto(foto.rules.display(motore.state))
             when (val esito = MatchExporter.buildPartial(motore, foto.players, foto.origin, legami)) {
                 is ExportResult.Incomplete -> {
                     Costruito.Attesa(DirettaMotivo.SERVONO_QUATTRO)
@@ -520,10 +605,22 @@ class Diretta(
         const val RETRY_LENTO_MS = 30_000L
         private const val MAX_SHIFT = 4
         private const val MAX_INATTESE = 5
+        private const val TAG = "Diretta"
+
+        /** Le eccezioni di fila dopo le quali la diretta si ferma (con i ritentativi da 5 a 30 s sono circa quattro minuti e mezzo). */
+        const val MAX_ECCEZIONI = 10
 
         /** I tetti del server: nomi, punti (200 KB sono `InvioRunner.MAX_PAYLOAD_BYTES`). */
         const val MAX_NOME = 60
         const val MAX_PUNTI = 3_000
         private const val ANTEPRIMA_NOME = 24
     }
+}
+
+/** "40-15 · 6-4 · 3-2": il punto corrente e, dietro, il dettaglio dei set e dei game. Vuoto se il motore non ha niente da dire. */
+internal fun punteggioInTesto(display: ScoreDisplay): String {
+    if (display.side1Primary.isEmpty() && display.side2Primary.isEmpty()) return ""
+    val punto = "${display.side1Primary}-${display.side2Primary}"
+    val dettaglio = display.side1Secondary?.takeIf { it.isNotEmpty() }
+    return if (dettaglio == null) punto else "$punto · $dettaglio"
 }

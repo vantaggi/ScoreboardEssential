@@ -12,10 +12,16 @@ data class DirettaLook(
     @ColorRes val tint: Int,
 )
 
-/** Null quando non c'e' niente da dire (nessuna diretta). */
+/**
+ * Null quando non c'e' niente da dire (nessuna diretta). Una riga sola: [chiusura] (D-3) sostituisce "Diretta chiusa"
+ * mentre il lavoro di chiusura ritenta o dopo che ha rinunciato; [servizio] sostituisce "In diretta su" quando la
+ * notifica fissa non c'e' (avvio negato o tetto delle 6 ore), perche' l'utente deve sapere di tenere l'app aperta.
+ */
 fun direttaLook(
     context: Context,
     stato: DirettaStato,
+    chiusura: ChiusuraFase = ChiusuraFase.NESSUNA,
+    servizio: DirettaServizioFase = DirettaServizioFase.SPENTO,
 ): DirettaLook? =
     when (stato.fase) {
         DirettaFase.SPENTA -> {
@@ -23,11 +29,17 @@ fun direttaLook(
         }
 
         DirettaFase.IN_CORSO -> {
-            DirettaLook(context.getString(R.string.diretta_live, stato.gruppo), R.drawable.ic_sensors, R.color.elite_lime)
+            val testo =
+                when (servizio) {
+                    DirettaServizioFase.NON_AVVIATO -> context.getString(R.string.diretta_live_no_service, stato.gruppo)
+                    DirettaServizioFase.SCADUTO -> context.getString(R.string.diretta_live_service_timeout, stato.gruppo)
+                    else -> context.getString(R.string.diretta_live, stato.gruppo)
+                }
+            DirettaLook(testo, R.drawable.ic_sensors, R.color.elite_lime)
         }
 
         DirettaFase.IN_ATTESA -> {
-            DirettaLook(attesa(context, stato), R.drawable.ic_schedule, R.color.elite_warning)
+            DirettaLook(testoDiAttesa(context, stato), R.drawable.ic_schedule, R.color.elite_warning)
         }
 
         DirettaFase.FERMA -> {
@@ -35,11 +47,24 @@ fun direttaLook(
         }
 
         DirettaFase.CHIUSA -> {
-            DirettaLook(context.getString(R.string.diretta_closed), R.drawable.ic_check_circle, R.color.elite_text_secondary)
+            when (chiusura) {
+                ChiusuraFase.IN_CORSO -> {
+                    DirettaLook(context.getString(R.string.diretta_closing), R.drawable.ic_schedule, R.color.elite_text_secondary)
+                }
+
+                ChiusuraFase.FALLITA -> {
+                    DirettaLook(context.getString(R.string.diretta_close_failed), R.drawable.ic_warning, R.color.elite_warning)
+                }
+
+                ChiusuraFase.NESSUNA -> {
+                    DirettaLook(context.getString(R.string.diretta_closed), R.drawable.ic_check_circle, R.color.elite_text_secondary)
+                }
+            }
         }
     }
 
-private fun attesa(
+/** Perche' la diretta e' accesa ma non trasmette, in una frase: la usano anche la riga del foglio e la notifica fissa. */
+internal fun testoDiAttesa(
     context: Context,
     stato: DirettaStato,
 ): String =
@@ -86,6 +111,10 @@ private fun ferma(
 
         DirettaMotivo.GIA_CHIUSA -> {
             context.getString(R.string.diretta_stop_already_closed)
+        }
+
+        DirettaMotivo.ERRORE_GRAVE -> {
+            context.getString(R.string.diretta_stop_crash, stato.dettaglio.orEmpty())
         }
 
         else -> {

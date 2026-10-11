@@ -102,4 +102,15 @@
     <string name="diretta_stop_confirm">Interrompi</string>
     <string name="diretta_stop_keep">Continua</string>
     <string name="diretta_cannot_reopen">La diretta di questa partita è chiusa e non si può riaprire.</string>
+
+    <!-- Diretta (D-3): servizio in primo piano, notifica fissa, ruolo, chiusura in coda. -->
+    <string name="diretta_channel_name">Diretta Padel Elite</string>
+    <string name="diretta_channel_description">La notifica fissa che tiene viva la diretta con l\'app in secondo piano</string>
+    <string name="diretta_notif_stop">Interrompi diretta</string>
+    <string name="diretta_live_no_service">In diretta su %1$s. Senza notifica fissa: tieni l\'app aperta</string>
+    <string name="diretta_live_service_timeout">In diretta su %1$s. La notifica fissa si è fermata dopo 6 ore: tieni l\'app aperta</string>
+    <string name="diretta_stop_crash">Diretta spenta: errore interno (%1$s)</string>
+    <string name="diretta_closing">Chiusura della diretta in corso</string>
+    <string name="diretta_close_failed">La diretta non si è chiusa: la chiude la dashboard o si chiude da sola entro 6 ore</string>
+    <string name="diretta_unavailable_old_match">Diretta non disponibile per questa partita: è cominciata con una versione precedente</string>
 </resources>

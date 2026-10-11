@@ -54,7 +54,9 @@ import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
+import it.vantaggi.scoreboardessential.padelelite.DirettaAzione
 import it.vantaggi.scoreboardessential.padelelite.DirettaFase
+import it.vantaggi.scoreboardessential.padelelite.DirettaIntent
 import it.vantaggi.scoreboardessential.padelelite.direttaLook
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
@@ -312,6 +314,8 @@ class MainActivity :
         observeViewModel()
         setupImprovedViews() // Call new setup method
         requestNotificationPermission()
+        // Aperta dalla notifica fissa della diretta (D-3): il foglio PARTITA, ed eventualmente la conferma di interruzione.
+        gestisciLIntentDellaDiretta(intent, ricreata = savedInstanceState != null)
 
         lifecycleScope.launch {
             delay(2000) // Aspetta che il servizio si registri
@@ -438,6 +442,10 @@ class MainActivity :
     private fun observeViewModel() {
         // Lo stato della diretta (D-2) aggiorna il gruppo del foglio; con la funzione spenta non emette mai altro che "spenta".
         lifecycleScope.launch { viewModel.direttaStato.collect { aggiornaLaDiretta() } }
+        // Anche lo stato della chiusura finale, del servizio in primo piano e il ruolo riletto all'avvio (D-3) ridisegnano il gruppo.
+        lifecycleScope.launch { viewModel.direttaChiusura.collect { aggiornaLaDiretta() } }
+        lifecycleScope.launch { viewModel.direttaServizio.collect { aggiornaLaDiretta() } }
+        lifecycleScope.launch { viewModel.ruoloDirettaAggiornato.collect { aggiornaLaDiretta() } }
         // Il punteggio a schermo viene dalle regole dello sport, non dagli interi: per il calcio
         // e' la stessa cifra di prima, per gli sport a set e' "40"/"AV" con il dettaglio dei set
         // sotto. La schermata non sa che sport si sta giocando.
@@ -687,7 +695,7 @@ class MainActivity :
         interruttore.isChecked = stato.fase == DirettaFase.IN_CORSO || stato.fase == DirettaFase.IN_ATTESA
         interruttore.setOnCheckedChangeListener { _, acceso -> if (acceso) accendiLaDiretta() else chiediDiSpegnereLaDiretta() }
         val riga = findViewById<View>(R.id.diretta_status_row)
-        val aspetto = direttaLook(this, stato)
+        val aspetto = direttaLook(this, stato, viewModel.direttaChiusura.value, viewModel.direttaServizio.value)
         riga.visibility = if (aspetto == null) View.GONE else View.VISIBLE
         if (aspetto != null) {
             findViewById<TextView>(R.id.diretta_status_text).text = aspetto.text
@@ -702,9 +710,37 @@ class MainActivity :
         if (!viewModel.accendiLaDiretta()) {
             // Gia' chiusa per questa partita (la chiusura e' definitiva anche sul server): resta spenta e lo dice.
             aggiornaLaDiretta()
-            val messaggio = if (viewModel.direttaDisponibile()) R.string.diretta_cannot_reopen else R.string.diretta_unavailable
+            val messaggio =
+                when {
+                    !viewModel.direttaDisponibile() -> R.string.diretta_unavailable
+                    viewModel.partitaSenzaIdentificativo() -> R.string.diretta_unavailable_old_match
+                    else -> R.string.diretta_cannot_reopen
+                }
             Snackbar.make(findViewById(R.id.diretta_card), messaggio, Snackbar.LENGTH_LONG).show()
         }
+    }
+
+    /**
+     * La notifica fissa della diretta (D-3) apre l'app: il tocco porta al foglio PARTITA, dove sta il gruppo Diretta;
+     * «Interrompi diretta» ci porta e mostra la stessa conferma dell'interruttore (una notifica non puo' mostrare un
+     * dialogo). Se la diretta intanto si e' chiusa non c'e' niente da chiedere: si apre solo il foglio.
+     */
+    private fun gestisciLIntentDellaDiretta(
+        intent: Intent?,
+        ricreata: Boolean = false,
+    ) {
+        val azione = DirettaIntent.azioneDaEseguire(intent, ricreata)
+        DirettaIntent.consuma(intent)
+        if (azione == null) return
+        findViewById<NestedScrollView>(R.id.match_sheet).scrollTo(0, 0)
+        matchSheet.state = BottomSheetBehavior.STATE_EXPANDED
+        if (azione == DirettaAzione.INTERROMPI && viewModel.direttaAccesa()) chiediDiSpegnereLaDiretta()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        gestisciLIntentDellaDiretta(intent)
     }
 
     /** Spegnere chiude la diretta per questa partita e non si puo' disfare: si chiede, e "Continua" lascia l'interruttore acceso. */

@@ -179,7 +179,10 @@ class DirettaChiusuraTest {
             val s = servizi { json(401, """{"message":"not_authenticated"}""") }
 
             assertEquals(RunOutcome.RETRY, s.chiusuraDiretta.run(UUID_PARTITA, "g-1", false, 0))
-            assertEquals(RunOutcome.DONE, s.chiusuraDiretta.run(UUID_PARTITA, "g-1", false, DirettaChiusuraRunner.MAX_UNEXPECTED_ATTEMPTS))
+            assertEquals(
+                RunOutcome.GIVE_UP,
+                s.chiusuraDiretta.run(UUID_PARTITA, "g-1", false, DirettaChiusuraRunner.MAX_UNEXPECTED_ATTEMPTS),
+            )
         }
 
     @Test
@@ -224,6 +227,19 @@ class DirettaChiusuraTest {
             // Il matchId del file e' quello della chiusura (il server li vuole uguali).
             assertEquals(UUID_PARTITA, corpi[0].getJSONObject("p_payload").getString("matchId"))
             assertTrue(corpi[1].isNull("p_payload"))
+        }
+
+    @Test
+    fun `senza permesso o con la diretta di un altro admin la chiusura non e' riuscita, rinuncia e non risulta chiusa`() =
+        runBlocking {
+            salvaPartita(24)
+            val negata = servizi { _ -> erroreRpc(500, "42501", "not_authorized") }
+            // Anche dopo il tentativo senza file il server dice no: la diretta e' ancora aperta, il lavoro finisce in FAILED.
+            assertEquals(RunOutcome.GIVE_UP, negata.chiusuraDiretta.run(UUID_PARTITA, "g-1", true, 0))
+
+            // (Un'altra istanza dopo: le preferenze di prova si azzerano a ogni costruzione.)
+            val dellAltro = servizi { _ -> erroreRpc(500, "P0001", "live_conflict") }
+            assertEquals(RunOutcome.GIVE_UP, dellAltro.chiusuraDiretta.run(UUID_PARTITA, "g-1", false, 0))
         }
 
     @Test

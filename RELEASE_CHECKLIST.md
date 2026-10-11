@@ -47,6 +47,13 @@ Use this checklist before every release to ensure quality and compliance.
       distribution).
 - [ ] **Feature graphic**: 1024×500.
 - [ ] **What's New**: update from `CHANGELOG.md`.
+- [ ] **Foreground service declaration (Padel Elite live, `dataSync`)**: in the Play Console, App content >
+      Foreground service permissions, declare `FOREGROUND_SERVICE_DATA_SYNC` for `DirettaService`.
+      Use the description, the impact-if-interrupted text and the required video from `DESIGN.md`
+      ("Diretta, i limiti - D-3", "Nota per la Play Console"). The video shows: live switch on, the ongoing
+      notification, app sent to the background, "Interrompi diretta" tapped.
+- [ ] **Release note (D-3)**: whoever chose their Padel Elite group before the live broadcast shipped now sees the
+      switch after the first launch (the role is re-read once per launch).
 
 ## 6. Upload
 - [ ] Upload the mobile App Bundle to the Production/Beta track.

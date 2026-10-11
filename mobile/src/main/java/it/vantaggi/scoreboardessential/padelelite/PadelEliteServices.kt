@@ -6,10 +6,13 @@ import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.repository.MatchRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** Cosa succede al comando "Invia a Padel Elite". */
 enum class SendOutcome {
@@ -56,6 +59,8 @@ class PadelEliteServices(
                 CoroutineExceptionHandler { _, errore -> Log.e("Diretta", "eccezione non gestita nella diretta", errore) },
         ),
     private val direttaMinIntervalMs: Long = Diretta.MIN_INTERVAL_MS,
+    /** Chi avvia il servizio in primo piano della diretta (D-3): i test ne danno uno finto. */
+    private val direttaAvviatore: DirettaAvviatore = DirettaServiceAvviatore(context),
 ) {
     /** La funzione e' accesa solo con la configurazione completa. */
     val isEnabled: Boolean get() = config.isConfigured
@@ -95,15 +100,57 @@ class PadelEliteServices(
      * La diretta (D-2). Pigra: con la funzione spenta o senza ruolo non si crea e non apre rete. La chiusura passa
      * da WorkManager (unica per partita); le pubblicazioni dei punti no, sono un flusso vivo legato alla partita.
      */
-    val diretta: Diretta by lazy {
-        Diretta(
-            account,
-            direttaStoreFactory(),
-            direttaScope,
-            collegamenti = { repository.padelLinkMap(it) },
-            allaChiusura = { DirettaChiusuraWorker.enqueue(context, it) },
-            minIntervalMs = direttaMinIntervalMs,
-        )
+    val diretta: Diretta get() = direttaEServizio.first
+
+    /**
+     * Il servizio in primo piano della diretta (D-3), nato insieme alla diretta: guarda il suo stato e lo avvia e lo
+     * ferma. Nato qui e non a parte perche' deve esserci dalla prima accensione, anche se nessuno lo chiede.
+     */
+    val direttaServizio: DirettaServizioControllo get() = direttaEServizio.second
+
+    private val direttaEServizio: Pair<Diretta, DirettaServizioControllo> by lazy {
+        val d =
+            Diretta(
+                account,
+                direttaStoreFactory(),
+                direttaScope,
+                collegamenti = { repository.padelLinkMap(it) },
+                allaChiusura = { DirettaChiusuraWorker.enqueue(context, it) },
+                minIntervalMs = direttaMinIntervalMs,
+            )
+        d to DirettaServizioControllo(d.stato, direttaAvviatore, direttaScope)
+    }
+
+    /** Come sta la chiusura finale della diretta di [matchId] (lavoro in coda): "in corso" mentre ritenta, "fallita" se rinuncia. */
+    fun chiusuraDellaDiretta(matchId: String): Flow<ChiusuraFase> = DirettaChiusuraWorker.fase(context, matchId)
+
+    private val ruoloLetto = AtomicBoolean(false)
+
+    /**
+     * Rilegge il ruolo nel gruppo scelto, UNA volta per avvio dell'app (D-3). Chi aveva scelto il gruppo prima di D-2 non ha
+     * il ruolo salvato e non vedrebbe l'interruttore; un admin declassato lo vedrebbe ancora. Una richiesta sola, nessun errore
+     * mostrato se fallisce (rete, sessione scaduta, qualunque eccezione): resta l'ultimo ruolo letto, e il server comanda
+     * comunque (`not_authorized`). Senza configurazione, accesso o gruppo scelto non fa niente, ne' consuma la lettura.
+     * True se il ruolo salvato e' cambiato (l'interfaccia puo' ridisegnarsi).
+     */
+    suspend fun aggiornaIlRuolo(): Boolean {
+        if (!isEnabled || account.session() == null) return false
+        val scelto = account.selectedGroup()?.first ?: return false
+        if (!ruoloLetto.compareAndSet(false, true)) return false
+        val prima = account.selectedGroupRole()
+        return try {
+            val esito = account.groups()
+            if (esito !is GroupsOutcome.Ok) return false
+            val gruppo = esito.groups.firstOrNull { it.id == scelto } ?: return false
+            // Nel frattempo l'utente puo' aver scelto un altro gruppo, o essere uscito: il risultato vecchio non si scrive.
+            if (account.session() == null || account.selectedGroup()?.first != scelto) return false
+            account.selectGroup(gruppo)
+            gruppo.role != prima
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            false
+        }
     }
 
     val chiusuraDiretta: DirettaChiusuraRunner by lazy {
