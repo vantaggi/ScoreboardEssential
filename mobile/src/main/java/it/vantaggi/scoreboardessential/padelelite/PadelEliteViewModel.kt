@@ -114,6 +114,8 @@ class PadelEliteViewModel(
                     // Un gruppo scelto di cui non si e' piu' membri non conta come scelto.
                     val valido = scelto?.takeIf { id -> esito.groups.any { it.id == id } }
                     if (scelto != null && valido == null) account.clearSelectedGroup()
+                    // Il ruolo puo' essere cambiato (un admin tolto, o fatto): quello salvato e' l'ultimo letto.
+                    if (valido != null) esito.groups.firstOrNull { it.id == valido }?.let(account::selectGroup)
                     _groups.value =
                         if (esito.groups.isEmpty()) {
                             GroupsUi.Empty

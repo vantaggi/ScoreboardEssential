@@ -40,6 +40,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.snackbar.Snackbar
 import it.vantaggi.scoreboardessential.core.ClockMode
 import it.vantaggi.scoreboardessential.core.ExportResult
@@ -53,6 +54,8 @@ import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
+import it.vantaggi.scoreboardessential.padelelite.DirettaFase
+import it.vantaggi.scoreboardessential.padelelite.direttaLook
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
@@ -345,7 +348,11 @@ class MainActivity :
         // Il Bluetooth puo' essere caduto mentre l'app era in secondo piano, e nessun listener lo
         // segnala: senza questo l'icona dell'orologio restava "collegato".
         lifecycleScope.launch { viewModel.connectionManager.refreshConnection() }
-        if (::matchSheet.isInitialized) aggiornaLaSerata()
+        if (::matchSheet.isInitialized) {
+            aggiornaLaSerata()
+            // L'accesso e il gruppo si cambiano in un'altra schermata: il ruolo si rilegge al ritorno.
+            aggiornaLaDiretta()
+        }
     }
 
     override fun onDestroy() {
@@ -429,6 +436,8 @@ class MainActivity :
     }
 
     private fun observeViewModel() {
+        // Lo stato della diretta (D-2) aggiorna il gruppo del foglio; con la funzione spenta non emette mai altro che "spenta".
+        lifecycleScope.launch { viewModel.direttaStato.collect { aggiornaLaDiretta() } }
         // Il punteggio a schermo viene dalle regole dello sport, non dagli interi: per il calcio
         // e' la stessa cifra di prima, per gli sport a set e' "40"/"AV" con il dettaglio dei set
         // sotto. La schermata non sa che sport si sta giocando.
@@ -632,6 +641,7 @@ class MainActivity :
         formationsCard.visibility = if (sportCapabilities.hasFormations) View.VISIBLE else View.GONE
         aggiornaLeCoppie()
         aggiornaLaSerata()
+        aggiornaLaDiretta()
         refreshUndoButtonState()
         // Negli sport senza marcatore non esistono gol: il dialogo e il registro parlano di punti, e
         // le righe del registro smettono di offrire un marcatore da scegliere.
@@ -659,6 +669,53 @@ class MainActivity :
                 resources.getQuantityString(R.plurals.serata_sheet_summary, serata.presenti.size, serata.presenti.size, serata.giocate.size)
             comando.setText(R.string.serata_sheet_open)
         }
+    }
+
+    /**
+     * Il gruppo Diretta del foglio (D-2): c'e' solo dove si puo' trasmettere (funzione accesa, accesso, gruppo
+     * con ruolo owner o admin, padel), o finche' una diretta ha uno stato da dire. L'interruttore segue lo
+     * stato; lo stato si dice in parole con un'icona (in diretta, non trasmette col motivo, spenta, chiusa).
+     */
+    private fun aggiornaLaDiretta() {
+        val stato = viewModel.direttaStato.value
+        val visibile = viewModel.direttaDisponibile() || stato.fase != DirettaFase.SPENTA
+        findViewById<View>(R.id.diretta_card).visibility = if (visibile) View.VISIBLE else View.GONE
+        if (!visibile) return
+        val interruttore = findViewById<MaterialSwitch>(R.id.diretta_switch)
+        // Allineare l'interruttore allo stato non deve accendere ne' spegnere niente: il listener esce mentre si imposta.
+        interruttore.setOnCheckedChangeListener(null)
+        interruttore.isChecked = stato.fase == DirettaFase.IN_CORSO || stato.fase == DirettaFase.IN_ATTESA
+        interruttore.setOnCheckedChangeListener { _, acceso -> if (acceso) accendiLaDiretta() else chiediDiSpegnereLaDiretta() }
+        val riga = findViewById<View>(R.id.diretta_status_row)
+        val aspetto = direttaLook(this, stato)
+        riga.visibility = if (aspetto == null) View.GONE else View.VISIBLE
+        if (aspetto != null) {
+            findViewById<TextView>(R.id.diretta_status_text).text = aspetto.text
+            findViewById<ImageView>(R.id.diretta_status_icon).apply {
+                setImageResource(aspetto.icon)
+                imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this@MainActivity, aspetto.tint))
+            }
+        }
+    }
+
+    private fun accendiLaDiretta() {
+        if (!viewModel.accendiLaDiretta()) {
+            // Gia' chiusa per questa partita (la chiusura e' definitiva anche sul server): resta spenta e lo dice.
+            aggiornaLaDiretta()
+            val messaggio = if (viewModel.direttaDisponibile()) R.string.diretta_cannot_reopen else R.string.diretta_unavailable
+            Snackbar.make(findViewById(R.id.diretta_card), messaggio, Snackbar.LENGTH_LONG).show()
+        }
+    }
+
+    /** Spegnere chiude la diretta per questa partita e non si puo' disfare: si chiede, e "Continua" lascia l'interruttore acceso. */
+    private fun chiediDiSpegnereLaDiretta() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.diretta_stop_title)
+            .setMessage(R.string.diretta_stop_message)
+            .setPositiveButton(R.string.diretta_stop_confirm) { _, _ -> viewModel.spegniLaDiretta() }
+            .setNegativeButton(R.string.diretta_stop_keep) { _, _ -> aggiornaLaDiretta() }
+            .setOnCancelListener { aggiornaLaDiretta() }
+            .show()
     }
 
     /** Apre la Serata; con una partita in corso e' di sola lettura. */

@@ -63,6 +63,9 @@ class PadelEliteAccount(
     /** Il gruppo scelto (id, nome), o null. */
     fun selectedGroup(): Pair<String, String>? = store.selectedGroup()
 
+    /** Il ruolo nel gruppo scelto (`owner`, `admin`, `member`): comanda chi puo' trasmettere in diretta. Null = non salvato. */
+    fun selectedGroupRole(): String? = store.selectedGroupRole()
+
     fun selectGroup(group: PadelEliteGroup) = store.selectGroup(group)
 
     fun clearSelectedGroup() = store.clearGroup()
@@ -179,6 +182,29 @@ class PadelEliteAccount(
             network = SubmitResult.Network,
             isUnauthorized = { it == SubmitResult.NotAuthenticated },
         ) { api.submit(it.accessToken, groupId, payloadJson) }
+
+    /** La diretta: pubblica il file parziale (D-2). Col rinnovo del token come ogni chiamata autenticata. */
+    suspend fun publishLive(
+        groupId: String,
+        payloadJson: String,
+    ): LiveResult =
+        authenticated(
+            needLogin = LiveResult.NotAuthenticated,
+            network = LiveResult.Network,
+            isUnauthorized = { it == LiveResult.NotAuthenticated },
+        ) { api.publishLive(it.accessToken, groupId, payloadJson) }
+
+    /** La diretta: la chiude, col file finale o senza (partita scartata). */
+    suspend fun endLive(
+        groupId: String,
+        matchId: String,
+        payloadJson: String?,
+    ): LiveResult =
+        authenticated(
+            needLogin = LiveResult.NotAuthenticated,
+            network = LiveResult.Network,
+            isUnauthorized = { it == LiveResult.NotAuthenticated },
+        ) { api.endLive(it.accessToken, groupId, matchId, payloadJson) }
 
     suspend fun status(matchUuid: String): StatusResult =
         authenticated(

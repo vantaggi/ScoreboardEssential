@@ -77,6 +77,27 @@ internal fun erroreRpc(
     dettagli: String? = null,
 ) = json(codice, """{"code":"$sqlstate","details":${dettagli?.let { "\"$it\"" } ?: "null"},"hint":null,"message":"$messaggio"}""")
 
+/** La risposta di `publish_live_from_app` (migrazione 67). */
+internal fun rispostaDiPubblicazione(
+    creata: Boolean = false,
+    scritto: Boolean = true,
+    stato: String = "live",
+) = json(
+    200,
+    """{"live":{"id":"l-1","group_id":"g-1","external_id":"match:$UUID_PARTITA","status":"$stato",""" +
+        """"updated_at":"2026-10-09T10:00:00+00:00"},"created":$creata,"written":$scritto}""",
+)
+
+/** La risposta di `end_live_from_app`. */
+internal fun rispostaDiChiusura(
+    giaChiusa: Boolean = false,
+    scritto: Boolean = !giaChiusa,
+) = json(
+    200,
+    """{"live":{"id":"l-1","group_id":"g-1","external_id":"match:$UUID_PARTITA","status":"ended",""" +
+        """"updated_at":"2026-10-09T10:30:00+00:00"},"ended":true,"already_ended":$giaChiusa,"written":$scritto}""",
+)
+
 /** Un server finto con una coda di risposte e il registro delle richieste, per percorso. */
 internal class ServerFinto(
     private val risposte: (RecordedRequest, Int) -> MockResponse,

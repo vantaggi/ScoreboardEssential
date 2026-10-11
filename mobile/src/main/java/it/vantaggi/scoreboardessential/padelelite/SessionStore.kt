@@ -117,10 +117,14 @@ class SessionStore(
         return id to prefs.getString(KEY_GROUP_NAME, "").orEmpty()
     }
 
+    /** Il ruolo che l'utente ha nel gruppo scelto (`owner`, `admin`, `member`), o null se non e' stato salvato (scelta di una versione precedente). */
+    fun selectedGroupRole(): String? = prefs.getString(KEY_GROUP_ROLE, null)?.takeIf { it.isNotEmpty() }
+
     fun selectGroup(group: PadelEliteGroup) {
         prefs.edit {
             putString(KEY_GROUP_ID, group.id)
             putString(KEY_GROUP_NAME, group.name)
+            putString(KEY_GROUP_ROLE, group.role)
         }
     }
 
@@ -128,6 +132,7 @@ class SessionStore(
         prefs.edit {
             remove(KEY_GROUP_ID)
             remove(KEY_GROUP_NAME)
+            remove(KEY_GROUP_ROLE)
         }
     }
 
@@ -137,6 +142,7 @@ class SessionStore(
             remove(KEY_SESSION)
             remove(KEY_GROUP_ID)
             remove(KEY_GROUP_NAME)
+            remove(KEY_GROUP_ROLE)
         }
     }
 
@@ -145,6 +151,7 @@ class SessionStore(
         private const val KEY_SESSION = "session"
         private const val KEY_GROUP_ID = "group_id"
         private const val KEY_GROUP_NAME = "group_name"
+        private const val KEY_GROUP_ROLE = "group_role"
 
         fun create(context: Context) = SessionStore(context.getSharedPreferences(FILE, Context.MODE_PRIVATE), KeystoreSecretBox())
     }

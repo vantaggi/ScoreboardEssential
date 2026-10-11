@@ -73,4 +73,33 @@
     <string name="padel_elite_rosa_dialog_title">Link %1$s to an app player</string>
     <string name="padel_elite_rosa_create_local">Create %1$s in the app</string>
     <string name="padel_elite_rosa_unlink">Unlink from %1$s</string>
+
+    <!-- Live broadcast (D-2): the match sheet group, for owners and admins of the group only. -->
+    <string name="diretta_title">Live</string>
+    <string name="diretta_switch">Broadcast live</string>
+    <string name="diretta_live">Live on %1$s</string>
+    <string name="diretta_closed">Live closed</string>
+    <string name="diretta_wait_network">Not broadcasting: no network. Retrying on its own</string>
+    <string name="diretta_wait_login">Not broadcasting: sign in to Padel Elite again</string>
+    <string name="diretta_wait_players">Not broadcasting yet: four players needed, two per side</string>
+    <string name="diretta_wait_name">Not broadcasting: the name %1$s is longer than 60 characters</string>
+    <string name="diretta_wait_full">Not broadcasting: the group has too many live matches. Retrying shortly</string>
+    <string name="diretta_wait_code">Not broadcasting: the server has no free code. Retrying shortly</string>
+    <string name="diretta_wait_server">Not broadcasting: the server answered in an unexpected way. Retrying</string>
+    <string name="diretta_wait_error">Not broadcasting: unexpected error (%1$s). Retrying</string>
+    <string name="diretta_wait_replaced">Not broadcasting: a player was replaced after the match started. Put the previous one back</string>
+    <string name="diretta_unavailable">Live broadcast not available: it needs a Padel Elite sign-in, a group where you are admin, and padel</string>
+    <string name="diretta_stop_not_admin">Live off: you are not an admin of this group</string>
+    <string name="diretta_stop_invalid">Live off: the server refused the file</string>
+    <string name="diretta_stop_invalid_detail">Live off: the server refused the file (%1$s)</string>
+    <string name="diretta_stop_large">Live off: the file is over 200 KB</string>
+    <string name="diretta_stop_points">Live off: the match is over 3000 points</string>
+    <string name="diretta_stop_other_admin">Live off: another admin is broadcasting this match</string>
+    <string name="diretta_stop_already_closed">Live off: the server had already closed it</string>
+    <string name="diretta_stop_server">Live off: the server answered in an unexpected way</string>
+    <string name="diretta_stop_title">Stop the live broadcast?</string>
+    <string name="diretta_stop_message">The live broadcast of this match closes and cannot be reopened.</string>
+    <string name="diretta_stop_confirm">Stop</string>
+    <string name="diretta_stop_keep">Keep going</string>
+    <string name="diretta_cannot_reopen">The live broadcast of this match is closed and cannot be reopened.</string>
 </resources>

@@ -48,6 +48,10 @@ import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.domain.models.MatchReportData
+import it.vantaggi.scoreboardessential.padelelite.DirettaFoto
+import it.vantaggi.scoreboardessential.padelelite.DirettaStato
+import it.vantaggi.scoreboardessential.padelelite.PadelEliteConfig
+import it.vantaggi.scoreboardessential.padelelite.PadelEliteServices
 import it.vantaggi.scoreboardessential.repository.ColorRepository
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
@@ -64,6 +68,8 @@ import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import it.vantaggi.scoreboardessential.utils.TimeUtils
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -124,6 +130,9 @@ class MainViewModel(
     // La serata in corso (una sola, ricordata fra due aperture): il ViewModel la consegna al motore e la
     // chiude a fine partita. Come i DAO, si inietta: il default e' quello della produzione.
     private val serataStore: SerataStore = SerataPrefsStore(application.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)),
+    // L'invio a Padel Elite e la diretta (D-2). Spento senza configurazione: allora nessun comando e nessuna richiesta.
+    private val padelElite: PadelEliteServices =
+        (application as? ScoreboardEssentialApplication)?.padelElite ?: PadelEliteServices(application, PadelEliteConfig.OFF, repository),
 ) : AndroidViewModel(application) {
     private var matchTimerService: MatchTimerService? = null
     private var isServiceBound = false
@@ -546,6 +555,8 @@ class MainViewModel(
         // Si cambia sport solo a registro vuoto: una partita consegnata dalla serata e mai cominciata
         // non e' piu' sua (il calcio non ha coppie).
         if (sportId != _activeSport.value) annullaLaPartitaDellaSerata()
+        // La diretta e' del padel e di QUESTA partita: cambiando sport non c'e' piu' niente da trasmettere.
+        chiudiLaDiretta(conRisultato = false)
         sportRules = SportRegistry.byId(sportId)
         engine = MatchEngine(sportRules)
         matchClock.reset()
@@ -894,7 +905,12 @@ class MainViewModel(
      * far finta di aver fatto qualcosa.
      */
     fun discardMatch(): Boolean {
-        if (currentMatchId == null && engine.log.isEmpty()) return false
+        // Scartata: la diretta si chiude senza risultato (anche se la partita non era ancora cominciata).
+        chiudiLaDiretta(conRisultato = false)
+        if (currentMatchId == null && engine.log.isEmpty()) {
+            dimenticaLIdSeLaPartitaNonE()
+            return false
+        }
         scartaRigaViva()
         // Una partita scartata non conta per la serata, e la composizione resta com'era.
         serataStore.load()?.let { if (it.inGioco != null) serataStore.save(it.annullaPartita()) }
@@ -1106,6 +1122,8 @@ class MainViewModel(
      * ne mancavano quattro. Senza riga viva non si scrive niente: le scrive chi la crea.
      */
     private fun salvaRoseDellaRigaViva() {
+        // Le rose fanno parte del file della diretta (servono quattro giocatori): chi trasmette lo aggiorna.
+        aggiornaLaDiretta()
         inFilaSullaRigaViva {
             currentMatchId?.let { scriviRose(it) }
         }
@@ -1194,7 +1212,8 @@ class MainViewModel(
         // arretrato calcolato su una partita poteva allora entrare in un'altra che cominciasse allo
         // stesso modo. Un registro vuoto non ha ancora una partita da identificare.
         if (partitaIniziata && matchUuid == null) matchUuid = UUID.randomUUID().toString()
-        val uuidDellaPartita = matchUuid.orEmpty()
+        // Prima del primo punto un id gia' nato per la diretta non e' ancora della partita agli occhi dell'orologio.
+        val uuidDellaPartita = if (partitaIniziata) matchUuid.orEmpty() else ""
         // Letto QUI, insieme al registro: dentro la coroutine arrivava dopo registraBatchApplicato, e uno
         // stato col registro di prima (un cambio sport nel batch, uno stato intermedio) portava l'id del
         // blocco appena applicato. Il polso lo prende come base delle voci rimaste e lo salva su disco (L5).
@@ -1267,6 +1286,8 @@ class MainViewModel(
         updateScore(uno, due)
         persistLiveMatch()
         aggiornaAnnullamento()
+        // Ogni cambiamento del registro (un punto, un annullamento, anche dall'orologio) passa di qui.
+        aggiornaLaDiretta()
     }
 
     /** Il pulsante di annullamento segue il motore: c'e' se il suo registro ha qualcosa da togliere. */
@@ -1431,6 +1452,8 @@ class MainViewModel(
         val rimandate = azioniRimandate.toList()
         azioniRimandate.clear()
         rimandate.forEach { it() }
+        // La diretta accesa prima della morte del processo riprende con la partita tornata (o si chiude se la partita non c'e' piu').
+        if (padelElite.isEnabled) padelElite.diretta.riprendi(fotoDellaDiretta())
     }
 
     /**
@@ -2094,6 +2117,77 @@ class MainViewModel(
         }
     }
 
+    // --- Diretta (D-2) ---
+
+    /** Lo stato della diretta per il foglio. Con la funzione spenta e' sempre "spenta", senza aprire niente. */
+    val direttaStato: StateFlow<DirettaStato> by lazy {
+        if (padelElite.isEnabled) padelElite.diretta.stato else MutableStateFlow(DirettaStato())
+    }
+
+    /** "Trasmetti in diretta" c'e': funzione accesa, accesso, gruppo scelto con ruolo owner o admin, sport padel. */
+    fun direttaDisponibile(): Boolean = padelElite.puoTrasmettere(_activeSport.value.orEmpty())
+
+    /**
+     * Accende la diretta, prima o durante la partita. L'identificativo della partita nasce QUI se manca
+     * (di norma nasce col primo punto): e' lo stesso che la riga viva, l'invio e la chiusura useranno.
+     * False se non si puo' (non disponibile, gia' accesa, gia' chiusa per questa partita).
+     */
+    fun accendiLaDiretta(): Boolean {
+        if (!direttaDisponibile()) return false
+        val gruppo = padelElite.account.selectedGroup() ?: return false
+        if (matchUuid == null) {
+            // Una riga viva senza identificativo (di una versione vecchia) non si puo' trasmettere: l'id nuovo non
+            // finirebbe sulla riga e la chiusura non troverebbe la partita.
+            if (currentMatchId != null) return false
+            matchUuid = UUID.randomUUID().toString()
+        }
+        val foto = fotoDellaDiretta() ?: return false
+        return padelElite.diretta.accendi(gruppo.first, gruppo.second, foto)
+    }
+
+    /** Spegne la diretta a mano: si chiude senza risultato e per questa partita non si riapre. */
+    fun spegniLaDiretta() {
+        if (!padelElite.isEnabled) return
+        padelElite.diretta.spegni()
+        dimenticaLIdSeLaPartitaNonE()
+    }
+
+    /**
+     * Accesa e spenta prima del primo punto: la diretta con quell'id e' chiusa sul server per sempre, e la partita
+     * (che non ha riga ne' punti) non ha motivo di tenerlo. Si azzera, cosi' la prossima accensione ha un id nuovo.
+     */
+    private fun dimenticaLIdSeLaPartitaNonE() {
+        if (engine.log.isEmpty() && currentMatchId == null) {
+            matchUuid = null
+            matchStartedAt = null
+        }
+    }
+
+    /** Il file parziale si rifa' da qui: una foto immutabile del registro, delle rose e dell'origine. Null senza identificativo. */
+    private fun fotoDellaDiretta(): DirettaFoto? {
+        val id = matchUuid ?: return null
+        val rosa =
+            _team1Players.value.orEmpty().map { MatchPlayer(it.player.playerId, it.player.playerName, 1) } +
+                _team2Players.value.orEmpty().map { MatchPlayer(it.player.playerId, it.player.playerName, 2) }
+        // L'inizio e' quello gia' fissato, o quello dell'orologio della partita (il primo punto); prima, ignoto.
+        val inizio = matchStartedAt ?: matchClock.startEpoch
+        return DirettaFoto(id, sportRules, engine.log, rosa, ExportOrigin(id, inizio, ZoneId.systemDefault(), BuildConfig.VERSION_NAME))
+    }
+
+    /** Il registro o le rose sono cambiati: la diretta accesa pubblica l'ultimo stato (conflazione e ritmo sono suoi). */
+    private fun aggiornaLaDiretta() {
+        if (!padelElite.isEnabled) return
+        val diretta = padelElite.diretta
+        if (engine.log.isNotEmpty()) diretta.dimenticaLaChiusa()
+        if (!diretta.acceso) return
+        fotoDellaDiretta()?.let(diretta::cambiata)
+    }
+
+    /** La partita finisce (con risultato) o viene scartata/cambia sport (senza): la diretta si chiude. */
+    private fun chiudiLaDiretta(conRisultato: Boolean) {
+        if (padelElite.isEnabled) padelElite.diretta.chiudi(conRisultato)
+    }
+
     // --- End Match ---
     fun endMatch(): Boolean {
         // Partita non iniziata: registro del motore vuoto e cronometro a zero, lo stesso criterio
@@ -2111,6 +2205,10 @@ class MainViewModel(
         // e dice si', perche' la partita si sta salvando davvero (lo snackbar del telefono).
         if (chiusuraInCorso) return true
         chiusuraInCorso = true
+
+        // Finita e salvata: la diretta si chiude COL FILE FINALE, che il lavoro in coda rifa' dal database (con il
+        // vincitore) appena la riga e' scritta. Da qui in poi nessuna pubblicazione per questa partita.
+        chiudiLaDiretta(conRisultato = true)
 
         // La serata si chiude subito e non dentro la fila: chi salva puo' aprire la Serata un attimo dopo, e
         // deve trovarci gia' la partita giocata e la successiva proposta.

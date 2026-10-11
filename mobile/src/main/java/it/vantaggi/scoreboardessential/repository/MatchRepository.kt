@@ -118,6 +118,13 @@ class MatchRepository(
         return SavedExport(esito, legami)
     }
 
+    /** La partita con questo identificativo e' nello storico, chiusa (non e' ancora la riga viva a meta'). */
+    suspend fun isClosedByUuid(matchUuid: String): Boolean = matchDao.getMatchByUuid(matchUuid)?.isActive == false
+
+    /** I collegamenti di un gruppo (id locale -> id della dashboard): li porta anche il file della diretta, come l'invio (R-1). */
+    suspend fun padelLinkMap(padelGroupId: String): Map<Int, Int> =
+        padelLinkDao?.linksOf(padelGroupId).orEmpty().associate { it.localPlayerId to it.remotePlayerId }
+
     /** Tutti i collegamenti, e si rinnovano a ogni cambiamento: la card dello storico suggerisce "Invia di nuovo". */
     val padelLinks: Flow<List<PadelEliteLink>>
         get() = padelLinkDao?.observeAll() ?: flowOf(emptyList())
