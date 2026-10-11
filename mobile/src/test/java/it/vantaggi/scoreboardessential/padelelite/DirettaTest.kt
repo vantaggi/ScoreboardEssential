@@ -333,9 +333,8 @@ class DirettaTest {
         d.accendi("g-1", "Padel", foto(1))
         attendi("la pubblicazione") { inviiAlServer >= 1 }
         d.cambiata(foto(2))
-        attendi("la seconda") { inviiAlServer >= 2 }
-
-        assertEquals(DirettaFase.IN_CORSO, d.stato.value.fase)
+        // Il server finto conta la richiesta appena arriva: lo stato cambia dopo la risposta.
+        attendi("la seconda, letta") { inviiAlServer >= 2 && d.stato.value.fase == DirettaFase.IN_CORSO }
     }
 
     @Test
@@ -347,8 +346,8 @@ class DirettaTest {
         assertEquals(0, inviiAlServer)
 
         d.cambiata(foto(0))
-        attendi("la pubblicazione") { inviiAlServer == 1 }
-        assertEquals(DirettaFase.IN_CORSO, d.stato.value.fase)
+        // Il server finto conta la richiesta appena arriva: lo stato cambia dopo la risposta.
+        attendi("la pubblicazione, letta") { inviiAlServer == 1 && d.stato.value.fase == DirettaFase.IN_CORSO }
     }
 
     @Test
@@ -454,8 +453,8 @@ class DirettaTest {
         assertEquals(DirettaSalvata(UUID_PARTITA, "g-1", "Padel"), store.load())
         // Rimesso il giocatore di prima, la diretta riprende da sola.
         d.cambiata(foto(2))
-        attendi("la pubblicazione") { inviiAlServer == 1 }
-        assertEquals(DirettaFase.IN_CORSO, d.stato.value.fase)
+        // Il server finto conta la richiesta appena arriva: lo stato cambia dopo la risposta.
+        attendi("la pubblicazione, letta") { inviiAlServer == 1 && d.stato.value.fase == DirettaFase.IN_CORSO }
     }
 
     @Test
