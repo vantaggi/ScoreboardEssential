@@ -2041,4 +2041,11 @@ Punto 6 della sezione 4 di `PIANO_PADEL_ELITE.md`, lato app. La diretta la trasm
 - **Eccezioni**: un'eccezione nella costruzione o nella pubblicazione (il Keystore nel rinnovo del token) mette la diretta in attesa ("errore imprevisto") e si riprova con attesa crescente; lo scope ha un `CoroutineExceptionHandler` di sicurezza; la `CancellationException` si rilancia sempre (anche nella lettura dei collegamenti).
 - **Richiesta in volo**: non si annulla (`NonCancellable`), per non perdere il refresh token ruotato; la chiusura ([`Diretta.chiudiDopo`]) parte **dopo** la sua fine, cosi' una pubblicazione che crea la riga non arriva dopo l'end. Conseguenza: `allaChiusura` e' asincrona rispetto a `chiudi`.
 - **Messaggio**: con la diretta non disponibile (sessione, ruolo, sport) il tocco dice perche', non "chiusa e non si puo' riaprire".
-- Il punto 10 della revisione non mi e' arrivato col testo: non e' stato fatto ne' annotato qui.
+- Punto 10 della revisione: chi ha scelto il gruppo prima di D-2 non ha il ruolo salvato e non vede il comando finche' non riapre la schermata "Padel Elite" (debito 3, da scrivere nelle note di rilascio).
+
+### Debiti dal controllo delle correzioni (11 ottobre 2026, Opus: unibile)
+
+8. **Chiusura persa se il processo muore con una richiesta in volo**: `chiudi` svuota subito `DirettaStore`, ma accoda il lavoro di chiusura solo dopo la fine della richiesta (di norma meno di un secondo, al massimo un paio di minuti con rete debole). Se l'app viene uccisa in quella finestra nessun end parte e la riga resta "in diretta" fino alla pulizia del server (dirette ferme da 6 ore, migrazione 67) o alla chiusura dalla dashboard. Correzione: salvare una "chiusura pendente" nello store prima di `chiudiDopo` e accodarla a `riprendi`.
+9. **Un `Error` (non `Exception`) nel ciclo** lo ferma senza aggiornare lo stato: il foglio direbbe ancora "In diretta". Correzione: un `finally` in `trasmetti` che chiami `ferma` se la diretta e' ancora quella attiva.
+10. **Eccezione persistente**: si ritenta ogni 30 s per tutta la partita senza tetto (lo stato lo dice); l'eccezione non va nel log e per una classe anonima il nome mostrato e' vuoto.
+11. Il KDoc di `DirettaChiusura` dice ancora che la partita senza vincitore si chiude senza file (ora porta il file); con una riga viva senza uuid la snackbar dice "non si puo' riaprire" invece di "non disponibile".
