@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- La diretta di Padel Elite (D-3): il servizio in primo piano di tipo dataSync, separato dal cronometro. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
     <application android:name=".ScoreboardEssentialApplication" android:allowBackup="false" android:dataExtractionRules="@xml/data_extraction_rules" android:enableOnBackInvokedCallback="true" android:fullBackupContent="@xml/backup_rules" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:label="@string/app_name" android:localeConfig="@xml/locales_config" android:supportsRtl="true" android:theme="@style/Theme.ScoreboardEssential" tools:targetApi="31">
@@ -75,6 +77,15 @@
                 android:name="android.app.property.FOREGROUND_SERVICE_TYPE_SPECIAL_USE_DESCRIPTION"
                 android:resource="@string/fgs_special_use_description" />
         </service>
+
+        <!--
+            La diretta (D-3): parte solo quando l'utente accende l'interruttore, o quando la diretta riprende dopo
+            la morte del processo, e si ferma con la diretta. Non esportato: lo avvia solo l'app.
+        -->
+        <service
+            android:name=".padelelite.DirettaService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <!--
             Sotto API 33 il sistema non conserva la lingua scelta nell'app: con autoStoreLocales

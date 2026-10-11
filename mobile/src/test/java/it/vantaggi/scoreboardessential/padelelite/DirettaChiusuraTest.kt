@@ -179,7 +179,10 @@ class DirettaChiusuraTest {
             val s = servizi { json(401, """{"message":"not_authenticated"}""") }
 
             assertEquals(RunOutcome.RETRY, s.chiusuraDiretta.run(UUID_PARTITA, "g-1", false, 0))
-            assertEquals(RunOutcome.DONE, s.chiusuraDiretta.run(UUID_PARTITA, "g-1", false, DirettaChiusuraRunner.MAX_UNEXPECTED_ATTEMPTS))
+            assertEquals(
+                RunOutcome.GIVE_UP,
+                s.chiusuraDiretta.run(UUID_PARTITA, "g-1", false, DirettaChiusuraRunner.MAX_UNEXPECTED_ATTEMPTS),
+            )
         }
 
     @Test

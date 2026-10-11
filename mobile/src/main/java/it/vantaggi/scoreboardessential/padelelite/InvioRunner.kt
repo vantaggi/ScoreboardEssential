@@ -22,6 +22,9 @@ enum class RunOutcome {
 
     /** Riprovare piu' tardi, con l'attesa crescente di WorkManager. */
     RETRY,
+
+    /** Rinuncia: non e' riuscito e non riuscira' da solo (la chiusura della diretta senza accesso valido dopo i suoi tentativi). Il lavoro finisce in FAILED, non in SUCCEEDED. */
+    GIVE_UP,
 }
 
 /**

@@ -102,4 +102,15 @@
     <string name="diretta_stop_confirm">Stop</string>
     <string name="diretta_stop_keep">Keep going</string>
     <string name="diretta_cannot_reopen">The live broadcast of this match is closed and cannot be reopened.</string>
+
+    <!-- Live (D-3): foreground service, ongoing notification, role, queued closing. -->
+    <string name="diretta_channel_name">Padel Elite live</string>
+    <string name="diretta_channel_description">The ongoing notification that keeps the live broadcast running while the app is in the background</string>
+    <string name="diretta_notif_stop">Stop live</string>
+    <string name="diretta_live_no_service">Live on %1$s. No ongoing notification: keep the app open</string>
+    <string name="diretta_live_service_timeout">Live on %1$s. The ongoing notification stopped after 6 hours: keep the app open</string>
+    <string name="diretta_stop_crash">Live off: internal error (%1$s)</string>
+    <string name="diretta_closing">Closing the live broadcast</string>
+    <string name="diretta_close_failed">The live broadcast did not close: the dashboard closes it, or it closes on its own within 6 hours</string>
+    <string name="diretta_unavailable_old_match">Live broadcast not available for this match: it started with an earlier version</string>
 </resources>

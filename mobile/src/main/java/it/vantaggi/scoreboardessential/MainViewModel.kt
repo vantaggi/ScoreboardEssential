@@ -48,7 +48,10 @@ import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.domain.models.MatchReportData
+import it.vantaggi.scoreboardessential.padelelite.ChiusuraFase
+import it.vantaggi.scoreboardessential.padelelite.DirettaFase
 import it.vantaggi.scoreboardessential.padelelite.DirettaFoto
+import it.vantaggi.scoreboardessential.padelelite.DirettaServizioFase
 import it.vantaggi.scoreboardessential.padelelite.DirettaStato
 import it.vantaggi.scoreboardessential.padelelite.PadelEliteConfig
 import it.vantaggi.scoreboardessential.padelelite.PadelEliteServices
@@ -67,10 +70,19 @@ import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import it.vantaggi.scoreboardessential.utils.TimeUtils
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -762,6 +774,12 @@ class MainViewModel(
      */
     val scoreDisplay: LiveData<ScoreDisplay> = _scoreDisplay
 
+    // Sopra init, come _scoreDisplay: la rilettura del ruolo, lanciata in init, lo scrive.
+    private val _ruoloDirettaAggiornato = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /** Emette quando la rilettura del ruolo (una per avvio) l'ha cambiato: il foglio rivede se mostrare l'interruttore. */
+    val ruoloDirettaAggiornato: SharedFlow<Unit> = _ruoloDirettaAggiornato
+
     init {
         viewModelScope.launch {
             matchSettingsRepository.getSettingsFlow().collect { settings ->
@@ -802,6 +820,8 @@ class MainViewModel(
         startNewMatch()
         restoreActiveMatchIfAny()
         checkIfOnboardingIsNeeded()
+        // Il ruolo nel gruppo scelto si rilegge una volta per avvio (D-3): niente errori se non riesce.
+        viewModelScope.launch { if (padelElite.aggiornaIlRuolo()) _ruoloDirettaAggiornato.tryEmit(Unit) }
 
         viewModelScope.launch {
             connectionManager.connectionState.collect { state ->
@@ -2126,6 +2146,31 @@ class MainViewModel(
 
     /** "Trasmetti in diretta" c'e': funzione accesa, accesso, gruppo scelto con ruolo owner o admin, sport padel. */
     fun direttaDisponibile(): Boolean = padelElite.puoTrasmettere(_activeSport.value.orEmpty())
+
+    /** Come sta la chiusura finale della diretta appena chiusa (lavoro in coda): per la riga del foglio. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val direttaChiusura: StateFlow<ChiusuraFase> by lazy {
+        if (!padelElite.isEnabled) {
+            MutableStateFlow(ChiusuraFase.NESSUNA)
+        } else {
+            direttaStato
+                .map { if (it.fase == DirettaFase.CHIUSA) it.matchId else null }
+                .distinctUntilChanged()
+                .flatMapLatest { id -> if (id == null) flowOf(ChiusuraFase.NESSUNA) else padelElite.chiusuraDellaDiretta(id) }
+                .stateIn(viewModelScope, SharingStarted.Eagerly, ChiusuraFase.NESSUNA)
+        }
+    }
+
+    /** Il servizio in primo piano della diretta: la riga del foglio dice quando manca (avvio negato, tetto delle 6 ore). */
+    val direttaServizio: StateFlow<DirettaServizioFase> by lazy {
+        if (padelElite.isEnabled) padelElite.direttaServizio.fase else MutableStateFlow(DirettaServizioFase.SPENTO)
+    }
+
+    /** C'e' una diretta accesa (anche in attesa): serve a «Interrompi diretta» della notifica, che senza non ha niente da chiedere. */
+    fun direttaAccesa(): Boolean = padelElite.isEnabled && padelElite.diretta.acceso
+
+    /** Una riga viva senza identificativo (partita cominciata con una versione vecchia) non si puo' trasmettere: non e' "chiusa". */
+    fun partitaSenzaIdentificativo(): Boolean = matchUuid == null && currentMatchId != null
 
     /**
      * Accende la diretta, prima o durante la partita. L'identificativo della partita nasce QUI se manca

@@ -32,6 +32,7 @@ import it.vantaggi.scoreboardessential.padelelite.ServerFinto
 import it.vantaggi.scoreboardessential.padelelite.SessionStore
 import it.vantaggi.scoreboardessential.padelelite.SoftwareSecretBox
 import it.vantaggi.scoreboardessential.padelelite.UUID_PARTITA
+import it.vantaggi.scoreboardessential.padelelite.json
 import it.vantaggi.scoreboardessential.padelelite.preferenze
 import it.vantaggi.scoreboardessential.padelelite.rispostaDiPubblicazione
 import it.vantaggi.scoreboardessential.repository.ColorRepository
@@ -45,9 +46,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.RecordedRequest
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -96,8 +100,11 @@ class DirettaNelViewModelTest {
         finto?.chiudi()
     }
 
-    private fun servizi(ruolo: String = "admin"): PadelEliteServices {
-        val s = ServerFinto { _, _ -> rispostaDiPubblicazione() }.also { finto = it }
+    private fun servizi(
+        ruolo: String = "admin",
+        risposta: (RecordedRequest, Int) -> MockResponse = { _, _ -> rispostaDiPubblicazione() },
+    ): PadelEliteServices {
+        val s = ServerFinto(risposta).also { finto = it }
         val sessione = SessionStore(preferenze(application, "sessione_vm_diretta"), SoftwareSecretBox())
         sessione.save(PadelEliteSession("A1", "R1", Long.MAX_VALUE / 2, "u-1", "a@b.it"))
         val account = PadelEliteAccount(s.config(), PadelEliteApi(s.config()), sessione)
@@ -184,6 +191,33 @@ class DirettaNelViewModelTest {
 
     private fun lavoriDiChiusura(matchId: String) =
         WorkManager.getInstance(application).getWorkInfosForUniqueWork(DirettaChiusuraWorker.workName(matchId)).get()
+
+    @Test
+    fun `all'avvio il ruolo si rilegge una volta, l'interruttore compare e il foglio e' avvertito`() {
+        val gruppi = """[{"group_id":"g-1","role":"admin","groups":{"name":"Padel"}}]"""
+        costruisci(servizi(ruolo = "") { _, _ -> json(200, gruppi) })
+        val avvisi =
+            java.util.concurrent.atomic
+                .AtomicInteger()
+        val ascolto =
+            kotlinx.coroutines
+                .CoroutineScope(Dispatchers.Unconfined)
+                .launch { viewModel.ruoloDirettaAggiornato.collect { avvisi.incrementAndGet() } }
+        try {
+            viewModel.selectSport(SportRegistry.PADEL)
+            assertFalse("prima della rilettura: nessun ruolo, nessun comando", viewModel.direttaDisponibile())
+
+            attendi("il ruolo riletto") {
+                testDispatcher.scheduler.advanceUntilIdle()
+                viewModel.direttaDisponibile()
+            }
+
+            assertEquals(1, avvisi.get())
+            assertEquals(1, finto!!.quante("/rest/v1/group_members"))
+        } finally {
+            ascolto.cancel()
+        }
+    }
 
     @Test
     fun `senza configurazione non c'e' il comando e non parte niente`() {

@@ -9,9 +9,12 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.util.concurrent.TimeUnit
 
 /**
@@ -19,9 +22,10 @@ import java.util.concurrent.TimeUnit
  * contratto si prova con un server finto.
  *
  * A partita finita ([conRisultato]) si chiude COL FILE FINALE, rifatto dal database con i collegamenti del
- * gruppo (lo stesso dell'invio alla casella, con il vincitore); se il file non c'e' (la riga non e'
- * ancora scritta: si aspetta tre giri) o non e' finale (partita interrotta, senza vincitore: il
- * server non lo vuole), si chiude senza. Scartata o interrotta: senza, sempre.
+ * gruppo (lo stesso dell'invio alla casella, con il vincitore). Anche una partita chiusa senza vincitore
+ * (interrotta a mano e salvata) porta il suo file, col `winnerTeam` nullo: il server lo accetta. Si chiude
+ * senza file se non c'e' (la riga non e' ancora scritta: si aspettano tre giri) o se il motore non lo costruisce
+ * ([PayloadOutcome.Incomplete]). Scartata, cambio sport o diretta interrotta con l'interruttore: senza file, sempre.
  *
  * Il risultato finale non deve perdersi: rete e 5xx si ritentano. Un file che il server rifiuta
  * (`invalid_payload`, `payload_too_large`) non si ritenta: si chiude senza, almeno la diretta finisce.
@@ -74,15 +78,10 @@ class DirettaChiusuraRunner(
                 RunOutcome.RETRY
             }
 
-            // Senza accesso valido (la sessione puo' tornare se l'utente accede di nuovo) si ritenta con un tetto.
+            // Senza accesso valido (la sessione puo' tornare se l'utente accede di nuovo) si ritenta con un tetto; finito il tetto
+            // si rinuncia davvero (FAILED): il foglio PARTITA lo dice, la diretta resta aperta sul server.
             is LiveResult.Unexpected, LiveResult.NotAuthenticated -> {
-                if (attempt <
-                    MAX_UNEXPECTED_ATTEMPTS
-                ) {
-                    RunOutcome.RETRY
-                } else {
-                    RunOutcome.DONE
-                }
+                if (attempt < MAX_UNEXPECTED_ATTEMPTS) RunOutcome.RETRY else RunOutcome.GIVE_UP
             }
 
             // Senza permesso, o la diretta e' di un altro admin: non c'e' niente da ritentare.
@@ -102,6 +101,26 @@ class DirettaChiusuraRunner(
         const val MAX_UNEXPECTED_ATTEMPTS = 5
     }
 }
+
+/** Come sta la chiusura finale di una diretta, vista dal foglio PARTITA (D-3): una riga, solo se c'e' qualcosa da dire. */
+enum class ChiusuraFase {
+    /** Chiusa (o niente da chiudere): il foglio dice solo "Diretta chiusa". */
+    NESSUNA,
+
+    /** Il lavoro in coda non e' ancora riuscito: aspetta la rete o ritenta. */
+    IN_CORSO,
+
+    /** Dieci tentativi e niente: la diretta resta aperta sul server finche' non la chiude la dashboard o la pulizia delle 6 ore. */
+    FALLITA,
+}
+
+/** Dallo stato del lavoro unico di chiusura (uno solo per partita, ma si guarda l'elenco) alla fase che il foglio mostra. */
+fun chiusuraFase(lavori: List<WorkInfo>): ChiusuraFase =
+    when {
+        lavori.any { it.state == WorkInfo.State.FAILED } -> ChiusuraFase.FALLITA
+        lavori.any { !it.state.isFinished } -> ChiusuraFase.IN_CORSO
+        else -> ChiusuraFase.NESSUNA
+    }
 
 /**
  * Il lavoro in coda della chiusura: **unico per partita** (`padel-elite-diretta-chiusura-<matchId>`, KEEP),
@@ -123,6 +142,7 @@ class DirettaChiusuraWorker(
         return when (esecutore.run(matchId, groupId, conRisultato, runAttemptCount)) {
             RunOutcome.DONE -> Result.success()
             RunOutcome.RETRY -> if (runAttemptCount + 1 >= MAX_ATTEMPTS) Result.failure() else Result.retry()
+            RunOutcome.GIVE_UP -> Result.failure()
         }
     }
 
@@ -147,6 +167,16 @@ class DirettaChiusuraWorker(
                 ).setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_SECONDS, TimeUnit.SECONDS)
                 .build()
+
+        /** La fase della chiusura di [matchId], dal lavoro in coda: cambia da sola quando WorkManager ritenta, riesce o rinuncia. */
+        fun fase(
+            context: Context,
+            matchId: String,
+        ): Flow<ChiusuraFase> =
+            WorkManager
+                .getInstance(context)
+                .getWorkInfosForUniqueWorkFlow(workName(matchId))
+                .map(::chiusuraFase)
 
         /** KEEP: una chiusura gia' in coda per questa partita non si sostituisce (un secondo tocco non ne fa due). */
         fun enqueue(

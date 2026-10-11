@@ -39,6 +39,9 @@ class ScoreboardEssentialApplication : Application() {
         const val CHANNEL_ID = "scoreboard_channel"
         const val CHANNEL_ID_ALARM = "scoreboard_alarm_channel"
         const val CHANNEL_ID_TIMER = "scoreboard_timer_channel"
+
+        /** La notifica fissa della diretta (D-3): importanza bassa, niente suono ne' vibrazione. */
+        const val CHANNEL_ID_DIRETTA = "scoreboard_diretta_channel"
     }
 
     private fun createNotificationChannel() {
@@ -65,6 +68,16 @@ class ScoreboardEssentialApplication : Application() {
                 setShowBadge(false)
             }
         notificationManager.createNotificationChannel(timerChannel)
+
+        // Diretta Channel (Low Importance - Silent): la notifica fissa del servizio in primo piano della diretta
+        val direttaChannel =
+            NotificationChannel(CHANNEL_ID_DIRETTA, getString(R.string.diretta_channel_name), NotificationManager.IMPORTANCE_LOW).apply {
+                description = getString(R.string.diretta_channel_description)
+                setShowBadge(false)
+                setSound(null, null)
+                enableVibration(false)
+            }
+        notificationManager.createNotificationChannel(direttaChannel)
 
         // Alarm Channel (High Importance - Sound & Pop-up)
         val alarmName = "Timer Alarms" // You might want to extract this to strings.xml later if strict localization is needed

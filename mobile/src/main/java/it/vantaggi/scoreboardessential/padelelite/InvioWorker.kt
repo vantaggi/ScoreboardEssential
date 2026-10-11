@@ -33,6 +33,7 @@ class InvioWorker(
         return when (esecutore.run(matchUuid, groupId, runAttemptCount)) {
             RunOutcome.DONE -> Result.success()
             RunOutcome.RETRY -> Result.retry()
+            RunOutcome.GIVE_UP -> Result.failure()
         }
     }
 
