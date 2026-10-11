@@ -209,7 +209,7 @@ class DirettaServizioTest {
     @Test
     fun `si ferma per un errore definitivo del server`() {
         accendi({ _, _ -> erroreRpc(500, "42501", "not_authorized") })
-        serveIlServizio()
+        attendi("l'avvio") { avviatore.avvii == 1 }
 
         attendi("la fermata") { diretta.stato.value.fase == DirettaFase.FERMA }
 
@@ -225,7 +225,7 @@ class DirettaServizioTest {
                     override fun display(state: ScoreState): ScoreDisplay = throw StackOverflowError("finto")
                 },
         )
-        serveIlServizio()
+        attendi("l'avvio") { avviatore.avvii == 1 }
 
         attendi("la fermata") { diretta.stato.value.motivo == DirettaMotivo.ERRORE_GRAVE }
 

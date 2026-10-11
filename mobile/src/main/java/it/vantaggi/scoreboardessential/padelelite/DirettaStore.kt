@@ -11,8 +11,9 @@ data class DirettaSalvata(
 )
 
 /**
- * Lo stato persistito della diretta: `matchId`, gruppo, e "accesa" (la presenza del valore). Non c'e'
- * altro: il punteggio vive nel registro della partita, la diretta si ricostruisce da quello.
+ * Lo stato persistito della diretta: `matchId`, gruppo, e "accesa" (la presenza del valore). Il punteggio
+ * vive nel registro della partita, la diretta si ricostruisce da quello. A parte, le chiusure segnate e non
+ * ancora accodate ([pendenti], D-3).
  *
  * Una sola diretta alla volta, come una sola partita in corso: [clear] la spegne.
  */
