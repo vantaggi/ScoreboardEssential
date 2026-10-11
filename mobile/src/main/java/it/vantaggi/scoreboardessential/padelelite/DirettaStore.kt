@@ -41,8 +41,43 @@ class DirettaStore(
         }
     }
 
+    /**
+     * Le chiusure segnate e non ancora accodate (D-3): una diretta chiusa il cui lavoro di chiusura non e' stato
+     * messo in coda, per esempio perche' il processo e' morto con una richiesta in volo. Al riavvio si accodano.
+     */
+    fun pendenti(): List<DirettaChiusuraRichiesta> =
+        prefs
+            .getStringSet(KEY_PENDING, emptySet())
+            .orEmpty()
+            .mapNotNull { voce ->
+                val parti = voce.split(SEP)
+                if (parti.size == 3 && parti[0].isNotEmpty() && parti[1].isNotEmpty()) {
+                    DirettaChiusuraRichiesta(parti[0], parti[1], conRisultato = parti[2] == "1")
+                } else {
+                    null
+                }
+            }
+
+    /** Segna la chiusura PRIMA di consegnarla. Scrive subito su disco: e' l'ultima cosa che un processo ucciso lascia. */
+    fun segnaPendente(richiesta: DirettaChiusuraRichiesta) {
+        val altre = pendenti().filter { it.matchId != richiesta.matchId } + richiesta
+        prefs.edit(commit = true) { putStringSet(KEY_PENDING, altre.map(::codifica).toSet()) }
+    }
+
+    /** Toglie il segno dopo che il lavoro di chiusura e' stato accodato. */
+    fun togliPendente(matchId: String) {
+        val restano = pendenti().filter { it.matchId != matchId }
+        prefs.edit(commit = true) {
+            if (restano.isEmpty()) remove(KEY_PENDING) else putStringSet(KEY_PENDING, restano.map(::codifica).toSet())
+        }
+    }
+
+    private fun codifica(r: DirettaChiusuraRichiesta) = listOf(r.matchId, r.groupId, if (r.conRisultato) "1" else "0").joinToString(SEP)
+
     companion object {
         const val FILE = "padel_elite_diretta"
+        private const val KEY_PENDING = "chiusure_pendenti"
+        private const val SEP = "|"
         private const val KEY_MATCH = "match_id"
         private const val KEY_GROUP = "group_id"
         private const val KEY_GROUP_NAME = "group_name"
