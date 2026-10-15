@@ -214,6 +214,17 @@ data class Serata(
         return copy(presenti = restanti, bozza = attuale.sostituisci(attuale.posti.indexOf(id), sostituto))
     }
 
+    /**
+     * I presenti diventano [nuovi] (nel loro ordine, senza doppioni), come se se ne andasse chi non c'e' e
+     * arrivasse chi manca: le partite giocate restano, e la regola di rotazione vale come per i tocchi a
+     * mano. Prima escono gli assenti e poi entrano i nuovi, cosi' la bozza si ricompone con chi c'e'.
+     */
+    fun conIPresenti(nuovi: List<Int>): Serata {
+        val unici = nuovi.distinct()
+        val senzaGliAssenti = presenti.filter { it !in unici }.fold(this) { s, id -> s.togli(id) }
+        return unici.fold(senzaGliAssenti) { s, id -> s.aggiungi(id) }
+    }
+
     /** La rotazione successiva: la bozza di adesso conta come proposta saltata. */
     fun ruota(): Serata {
         if (presenti.size < RotazioneSerata.MINIMO_PRESENTI) return this
