@@ -18,7 +18,9 @@ Use this checklist before every release to ensure quality and compliance.
 - [ ] **Lint**: `./gradlew lint` — review and address warnings.
 - [ ] **Unit tests**: `./gradlew test` — all green.
 - [ ] **Sensitive data**: no API keys/secrets hardcoded; `keystore.properties` is git-ignored and
-      not committed; release logging does not leak game/user data.
+      not committed; release logging does not leak game/user data (passo A-8 in
+      `PIANO_PADEL_ELITE.md`: `Log.d/v/i` removed by R8 on the phone, no player or device names in
+      the remaining messages).
 
 ## 3. Build & Signing
 - [ ] **Keystore**: create a git-ignored `keystore.properties` at the repo root with
@@ -67,7 +69,8 @@ Use this checklist before every release to ensure quality and compliance.
 ## 6. Play Console: Sicurezza dei dati (Data safety)
 
 Answers for App content > Data safety. They must match `PRIVACY_POLICY.md`; every answer comes from
-the code (`mobile/.../padelelite/`, manifest, `MatchExport.kt`). **Draft, to be reviewed by the owner.**
+the code (`mobile/.../padelelite/`, manifest, `MatchExport.kt`) and from the dashboard migrations
+(64, 07, 63, 21, 67). Owner's decisions of October 15, 2026.
 
 - [ ] **Which build?** The Play build includes Padel Elite (owner's decision, October 15, 2026;
       section 3): the answers below apply. Only a bundle built without `PADEL_ELITE_SUPABASE_URL`
@@ -79,16 +82,20 @@ the code (`mobile/.../padelelite/`, manifest, `MatchExport.kt`). **Draft, to be 
     blocks cleartext). Keep the configured URL `https://`.
   - Do you provide a way for users to request that their data is deleted? **Yes:** by email to
     the contact in the privacy policy (sections 2.7 and 7); on the phone, sign out / uninstall.
-  - Account creation: the app **does not create accounts** (the Padel Elite account is created in
-    the dashboard; the app only signs in). Confirm the matching option in the form and whether a
-    deletion URL is still requested.
+  - Account creation: **"My app does not allow users to create an account"** (the Padel Elite
+    account is created in the dashboard; the app only signs in). Check the form's wording when
+    filling it in.
+  - Deletion link (if the form asks for one, and in any case for the "Yes" above): the hosted
+    privacy policy at section 2.7, "Deleting your data" (e.g. `<privacy URL>#27-deleting-your-data`
+    on GitHub; check the anchor on the real page).
 - [ ] **Data types** (everything not listed: **not collected**; "collected" here means it leaves
       the phone, local data is not declared)
 
 | Type (Play) | Collected | Shared | Processed ephemerally | Required or optional | Purposes | What it is in the app |
 |---|---|---|---|---|---|---|
 | Personal info > **Email address** | Yes | No | No | Optional | App functionality, Account management | Sent to Supabase Auth at sign-in; returned with the session |
-| Personal info > **User IDs** (proposed) | Yes | No | No | Optional | App functionality, Account management | The account ID of the session, sent as a filter when reading the user's groups |
+| Personal info > **Name** | Yes | No | No | Optional | App functionality | Players' names in the match file, typed by the user; usually one of them is the user |
+| Personal info > **User IDs** | Yes | No | No | Optional | App functionality, Account management | The account ID of the session, sent as a filter when reading the user's groups |
 | App activity > **Other user-generated content** | Yes | No | No | Optional | App functionality | The match file: players' names as typed, sides, linked Padel Elite player IDs, rules, score, sets, winner, start time with offset, point by point; sent on "Send to Padel Elite", "Send again", the end-of-match checkbox, and after every point with "Broadcast live" |
 
   - **Shared: No.** The match reaches the group because the user sends it there (user-initiated
@@ -98,6 +105,8 @@ the code (`mobile/.../padelelite/`, manifest, `MatchExport.kt`). **Draft, to be 
     diagnostics, performance, device or other IDs. The app has no ads, analytics or crash-reporting
     libraries; system-log messages stay on the device.
   - The password goes to Supabase Auth over HTTPS and is not stored; Play has no data type for it.
+  - Where: Supabase, region eu-central-1 (Frankfurt, EU). Not a form question; it is in the
+    privacy policy (section 2.5).
 - [ ] **Coherence:** the hosted privacy policy is the current `PRIVACY_POLICY.md`; the store
       listing (`STORE_LISTING.md`, "Offline First") matches it; the `dataSync` declaration
       (section 5) describes the same data.

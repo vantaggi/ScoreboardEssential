@@ -4,12 +4,13 @@
 
 This Privacy Policy explains what information ScoreboardEssential ("we", "us", or "our") handles,
 where it goes and how you can delete it, when you use the phone app and its companion Wear OS app
-(collectively, the "App").
+(collectively, the "App"). The App and the Padel Elite dashboard are run by the same developer,
+who is responsible for the data described here and can be reached at the address in section 7.
 
 **In short.** The App works without an account and without an internet connection, and in that use
 nothing leaves your phone and watch. Sending matches to **Padel Elite** (a padel group dashboard)
-is optional: it exists only in builds configured for it, works only after you sign in with your
-Padel Elite account, and sends a match only when you ask. The App shows no ads and contains no
+is optional: it works only after you sign in with your Padel Elite account, and sends a match only
+when you ask. The App shows no ads and contains no
 analytics, crash-reporting or tracking libraries.
 
 ## 1. Using the App without Padel Elite
@@ -85,16 +86,19 @@ are stored on the phone. A link is made only by you (a proposal for identical na
 when you confirm it), and it is used only in what you send to that group.
 
 ### 2.5 Where the data goes
-To the Padel Elite database, hosted by Supabase (supabase.com), over HTTPS.
+To the Padel Elite database, hosted by Supabase (supabase.com) in the European Union (Frankfurt,
+Germany), over HTTPS.
 
 ### 2.6 Who can see it
 According to the rules of the Padel Elite dashboard:
-- A match in the **inbox** is visible to you (the sender) and to the owners and admins of the group.
-  An admin imports it, choosing the group's players, or discards it.
-- An **imported** match becomes a regular match of the group, with its point-by-point chronicle, and
-  is visible like the group's other matches: to the group's members and, as the dashboard is
-  configured today, to anyone who has the group's public link.
-- A **live broadcast** is visible in the group's live section of the dashboard.
+- A match in the **inbox** is visible to you (the sender, while you are in the group) and to the
+  owners and admins of the group. An admin imports it, choosing the group's players, or discards
+  it.
+- An **imported** match becomes a regular match of the group. Its result (players of the group,
+  score, sets, date) is **publicly readable**, like every match in the dashboard, also without an
+  account. Its **point by point** (the chronicle) is readable only by the group's members. The
+  names of the group's players in the dashboard are publicly readable too.
+- A **live broadcast** is readable only by the group's members.
 
 ### 2.7 Deleting your data
 On the phone:
@@ -108,16 +112,23 @@ On the phone:
   stored, including the encryption key of the session.
 
 On Padel Elite:
-- A group admin can discard a match in the inbox, and delete an imported match from the group's
-  history in the dashboard (its chronicle is deleted with it).
-- A live broadcast that is not closed is closed by the dashboard within 6 hours.
-- To delete your Padel Elite account, or the data you sent, write to the contact address below.
+- **Inbox:** the full match file is kept only while the match waits for an admin. Once it is
+  imported or discarded only a summary is kept, and summaries older than 90 days are deleted when
+  the same group or person sends again.
+- **Imported matches:** a group admin can delete one from the group's history in the dashboard;
+  its point by point is deleted with it.
+- **Live broadcasts:** a broadcast is closed at the end of the match, or by the dashboard after 6
+  hours without updates. A closed broadcast, with its match file, stays until a group admin deletes
+  it.
+- **Your account and the data you sent:** write to the contact address in section 7. The deletion
+  is done by hand. Matches already imported belong to the group's history and use the group's
+  player records, which the group's admins manage.
 
 ## 3. What the App does not do
 - No advertising, no analytics, no crash reporting, no tracking: the App contains no third-party
   libraries for these purposes.
-- No sale or sharing of your data. Match data reaches the members of a Padel Elite group only
-  because you send it to that group.
+- No sale or sharing of your data. Match data reaches Padel Elite only because you send it to a
+  group, and from there it is visible as described in section 2.6.
 - Diagnostic messages are written only to the device's system log, which the App does not send
   anywhere.
 
@@ -125,6 +136,10 @@ On Padel Elite:
 Android's automatic cloud backup is disabled for the phone app (`allowBackup="false"`). The Padel
 Elite session is also explicitly excluded from cloud backups, and it cannot be decrypted on another
 device: its key never leaves the phone's Keystore.
+
+If you move to a new phone with Android's own transfer tool (copying apps and data from the old
+phone), the App's local data, such as matches and players, may be copied to the new phone. The
+Padel Elite session is not usable there: you sign in again.
 
 ## 5. Security
 Connections to Padel Elite use HTTPS, and the session is encrypted on the phone as described above.
@@ -135,10 +150,11 @@ We may update this Privacy Policy from time to time. We will post the new versio
 update the date above.
 
 ## 7. Contact Us
-For questions about this Privacy Policy, or to ask for the deletion of your Padel Elite data, write
-to **mattiavantaggi@gmail.com**.
+For questions about this Privacy Policy, or to ask for the deletion of your Padel Elite account
+or data, write to **mattiavantaggi@gmail.com**.
 
 > **Note for publishing:** Google Play requires the privacy policy to be reachable at a public URL.
 > Host this document (e.g. via GitHub Pages) and enter that URL in the Play Console listing.
 > Keep the answers of the Play Console "Data safety" form consistent with this page
-> (`RELEASE_CHECKLIST.md`, "Play Console: Sicurezza dei dati").
+> (`RELEASE_CHECKLIST.md`, "Play Console: Sicurezza dei dati"). The URL of section 2.7 is the
+> link for deletion requests.
