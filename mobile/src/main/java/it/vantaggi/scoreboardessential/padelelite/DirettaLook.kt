@@ -89,6 +89,10 @@ private fun ferma(
             context.getString(R.string.diretta_stop_not_admin)
         }
 
+        DirettaMotivo.FUORI_DAL_GRUPPO -> {
+            context.getString(R.string.diretta_stop_left_group)
+        }
+
         DirettaMotivo.FILE_NON_VALIDO -> {
             if (stato.dettaglio != null) {
                 context.getString(R.string.diretta_stop_invalid_detail, stato.dettaglio)

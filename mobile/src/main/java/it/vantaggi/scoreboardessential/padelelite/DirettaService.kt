@@ -103,7 +103,8 @@ open class DirettaService : Service() {
 
     /**
      * Il sistema ha esaurito le 6 ore al giorno del tipo `dataSync` (Android 15): fermarsi subito, o il processo cade
-     * in ANR. La diretta continua; il foglio PARTITA dice che la notifica fissa non c'e' piu'.
+     * in ANR. La diretta continua; il foglio PARTITA dice che la notifica fissa non c'e' piu', e il controllo mostra un avviso
+     * ordinario che dice la condizione ([DirettaAvvisoNotifica]), tolto quando la diretta finisce.
      */
     override fun onTimeout(
         startId: Int,

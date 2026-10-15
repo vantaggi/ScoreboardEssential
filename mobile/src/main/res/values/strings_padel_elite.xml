@@ -109,6 +109,9 @@
     <string name="diretta_notif_stop">Stop live</string>
     <string name="diretta_live_no_service">Live on %1$s. No ongoing notification: keep the app open</string>
     <string name="diretta_live_service_timeout">Live on %1$s. The ongoing notification stopped after 6 hours: keep the app open</string>
+    <string name="diretta_avviso_title">Live broadcast: %1$s</string>
+    <string name="diretta_avviso_text">The live feed only continues with the app open</string>
+    <string name="diretta_stop_left_group">Live off: you are no longer in this group</string>
     <string name="diretta_stop_crash">Live off: internal error (%1$s)</string>
     <string name="diretta_closing">Closing the live broadcast</string>
     <string name="diretta_close_failed">The live broadcast did not close: the dashboard closes it, or it closes on its own within 6 hours</string>
