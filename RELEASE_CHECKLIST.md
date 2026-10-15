@@ -23,6 +23,10 @@ Use this checklist before every release to ensure quality and compliance.
 ## 3. Build & Signing
 - [ ] **Keystore**: create a git-ignored `keystore.properties` at the repo root with
       `storeFile`, `storePassword`, `keyAlias`, `keyPassword` (signing activates automatically).
+- [ ] **Padel Elite built in** (owner's decision, October 15, 2026: the Play build includes the
+      feature): `local.properties` at the repo root (git-ignored) has `PADEL_ELITE_SUPABASE_URL`
+      (`https://<project>.supabase.co`) and `PADEL_ELITE_SUPABASE_KEY` (the **publishable** key,
+      never the service-role key). Without them the bundle builds anyway, with the feature off.
 - [ ] **Build bundles**:
   - `./gradlew :mobile:bundleRelease` → `mobile/build/outputs/bundle/release/mobile-release.aab`
   - `./gradlew :wear:bundleRelease` → `wear/build/outputs/bundle/release/wear-release.aab`
@@ -39,6 +43,9 @@ Use this checklist before every release to ensure quality and compliance.
   - [ ] Team names **and colors** sync.
   - [ ] Scoring on the watch prompts scorer selection and the goal is attributed on the phone.
 - [ ] **Offline mode**: full functionality with no network.
+- [ ] **Padel Elite present**: Settings shows the "Padel Elite" card; sign in with a real account
+      lists only that account's groups (if the card is missing, the bundle was built without the
+      two values: rebuild).
 
 ## 5. Play Store Assets & Listing
 - [ ] **Privacy Policy**: host `PRIVACY_POLICY.md` at a public URL and keep it current in the
@@ -62,10 +69,9 @@ Use this checklist before every release to ensure quality and compliance.
 Answers for App content > Data safety. They must match `PRIVACY_POLICY.md`; every answer comes from
 the code (`mobile/.../padelelite/`, manifest, `MatchExport.kt`). **Draft, to be reviewed by the owner.**
 
-- [ ] **Which build?** If the release bundle is built **without** `PADEL_ELITE_SUPABASE_URL` and
-      `PADEL_ELITE_SUPABASE_KEY`, the Padel Elite feature is off, the app makes no network requests
-      of its own and the answer to "Does your app collect or share any of the required user data
-      types?" is **No**. The answers below are for a bundle built **with** them.
+- [ ] **Which build?** The Play build includes Padel Elite (owner's decision, October 15, 2026;
+      section 3): the answers below apply. Only a bundle built without `PADEL_ELITE_SUPABASE_URL`
+      and `PADEL_ELITE_SUPABASE_KEY` would answer **No** to data collection.
 - [ ] **Data collection and security**
   - Does your app collect or share any of the required user data types? **Yes.**
   - Is all of the user data collected by your app encrypted in transit? **Yes.** Only HTTPS to the
@@ -93,8 +99,7 @@ the code (`mobile/.../padelelite/`, manifest, `MatchExport.kt`). **Draft, to be 
     libraries; system-log messages stay on the device.
   - The password goes to Supabase Auth over HTTPS and is not stored; Play has no data type for it.
 - [ ] **Coherence:** the hosted privacy policy is the current `PRIVACY_POLICY.md`; the store
-      listing (`STORE_LISTING.md`, "Offline First") matches it, and if the bundle is built without
-      Padel Elite its last sentence (sending to Padel Elite) is removed; the `dataSync` declaration
+      listing (`STORE_LISTING.md`, "Offline First") matches it; the `dataSync` declaration
       (section 5) describes the same data.
 
 ## 7. Upload
