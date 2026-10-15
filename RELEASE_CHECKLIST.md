@@ -93,8 +93,9 @@ the code (`mobile/.../padelelite/`, manifest, `MatchExport.kt`). **Draft, to be 
     libraries; system-log messages stay on the device.
   - The password goes to Supabase Auth over HTTPS and is not stored; Play has no data type for it.
 - [ ] **Coherence:** the hosted privacy policy is the current `PRIVACY_POLICY.md`; the store
-      listing (`STORE_LISTING.md`, "Offline First") no longer says that data always stays on the
-      device; the `dataSync` declaration (section 5) describes the same data.
+      listing (`STORE_LISTING.md`, "Offline First") matches it, and if the bundle is built without
+      Padel Elite its last sentence (sending to Padel Elite) is removed; the `dataSync` declaration
+      (section 5) describes the same data.
 
 ## 7. Upload
 - [ ] Upload the mobile App Bundle to the Production/Beta track.

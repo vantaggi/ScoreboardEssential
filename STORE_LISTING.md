@@ -16,7 +16,7 @@ Progettata per arbitri amatoriali, allenatori e appassionati (**Football Manager
 *   **Gestione Squadre e Giocatori**: Crea le tue squadre, assegna i colori sociali e gestisci le convocazioni. Tieni traccia di chi ha segnato e chi è in campo.
 *   **Statistiche Avanzate**: Analizza l'andamento della partita con grafici e report dettagliati. Scopri chi è il MVP del match!
 *   **Esporta Report**: Salva i risultati e condividili con i tuoi amici o compagni di squadra.
-*   **Offline First**: Funziona perfettamente anche senza connessione internet. I tuoi dati rimangono sul tuo dispositivo.
+*   **Offline First**: Funziona perfettamente senza connessione internet e senza account: senza accesso a Padel Elite i tuoi dati restano sul telefono e sull'orologio. Con l'accesso (facoltativo) puoi inviare le partite di padel al tuo gruppo Padel Elite, solo quando lo chiedi.
 
 Smetti di chiedere "Quanto stiamo?" o "Quanto manca?". Con ScoreboardEssential, hai il controllo totale della partita. Perfetto per tornei amatoriali, partite tra amici o campionati locali.
 
