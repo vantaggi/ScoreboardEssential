@@ -172,6 +172,61 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!--
+                    Dalla dashboard: solo con l'accesso a Padel Elite e un gruppo scelto (senza, il gruppo non c'e').
+                    Dice la prossima serata del gruppo e quanti hanno confermato, e propone: "Usa i presenti" e, se la
+                    dashboard ha salvato i gironi di quella serata, un girone per riga. Niente si scrive da solo: la
+                    serata cambia al tocco e si puo' annullare. Sta sopra i presenti, perche' li riempie.
+                -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/serata_dashboard_group"
+                    style="@style/Widget.App.Group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_16"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingBottom="@dimen/space_4">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:accessibilityHeading="true"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingTop="@dimen/space_16"
+                            android:paddingBottom="@dimen/space_4"
+                            android:text="@string/serata_dashboard_title"
+                            android:textAppearance="@style/TextAppearance.App.SectionHeading" />
+
+                        <TextView
+                            android:id="@+id/serata_dashboard_status"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:accessibilityLiveRegion="polite"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingVertical="@dimen/space_8"
+                            android:textAppearance="@style/TextAppearance.App.Caption" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/serata_dashboard_rows"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/serata_dashboard_action"
+                            style="@style/Widget.App.Button.Text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="@dimen/space_8"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
                 <!-- Chi c'e': tutta la rosa, un tocco per far arrivare o andare via; l'ospite si scrive a mano. -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/serata_present_group"
@@ -227,6 +282,7 @@
 
         <!-- Il primario della regione, fuori dallo scorrimento. Senza una bozza e' spento e il motivo sta sopra. -->
         <LinearLayout
+            android:id="@+id/serata_start_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/elite_background"

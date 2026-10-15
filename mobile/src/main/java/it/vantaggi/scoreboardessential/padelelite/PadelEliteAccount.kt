@@ -1,7 +1,10 @@
 package it.vantaggi.scoreboardessential.padelelite
 
+import it.vantaggi.scoreboardessential.core.ConfigurazioneSerata
+import it.vantaggi.scoreboardessential.core.GironiSalvati
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.time.LocalDate
 
 /** Esito della richiesta di un token valido. */
 sealed interface TokenResult {
@@ -172,6 +175,27 @@ class PadelEliteAccount(
             RosterResult.NotAuthorized -> RosterOutcome.NotAuthorized
             RosterResult.Network -> RosterOutcome.Network
         }
+
+    /** La serata configurata del gruppo (`venue_config`), col rinnovo del token: `NotAuthenticated` vuol dire rifare l'accesso. */
+    suspend fun venueConfig(groupId: String): LetturaDashboard<ConfigurazioneSerata?> =
+        leggi { api.fetchVenueConfig(it.accessToken, groupId) }
+
+    /** I gironi salvati del gruppo (`gironi_serata`), col rinnovo del token. */
+    suspend fun gironi(groupId: String): LetturaDashboard<GironiSalvati?> = leggi { api.fetchGironi(it.accessToken, groupId) }
+
+    /** Gli id dei confermati del [giorno] nel gruppo (`v2_rsvp`), col rinnovo del token. */
+    suspend fun confirmed(
+        groupId: String,
+        giorno: LocalDate,
+    ): LetturaDashboard<List<Int>> = leggi { api.fetchConfirmed(it.accessToken, groupId, giorno) }
+
+    private suspend fun <T> leggi(call: suspend (PadelEliteSession) -> LetturaDashboard<T>): LetturaDashboard<T> =
+        authenticated<LetturaDashboard<T>>(
+            needLogin = LetturaDashboard.NotAuthenticated,
+            network = LetturaDashboard.Network,
+            isUnauthorized = { it == LetturaDashboard.NotAuthenticated },
+            call = call,
+        )
 
     suspend fun submit(
         groupId: String,

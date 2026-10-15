@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
+import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
@@ -15,9 +16,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import it.vantaggi.scoreboardessential.database.AppDatabase
+import it.vantaggi.scoreboardessential.padelelite.FonteSerataDashboard
+import it.vantaggi.scoreboardessential.padelelite.LettoreSerataDashboard
+import it.vantaggi.scoreboardessential.padelelite.PadelEliteActivity
+import it.vantaggi.scoreboardessential.padelelite.SerataDashboard
 import it.vantaggi.scoreboardessential.repository.SerataPrefsStore
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
 import kotlinx.coroutines.launch
@@ -28,6 +34,10 @@ import kotlinx.coroutines.launch
  * [MainViewModel.avviaPartitaDellaSerata] mette le coppie nelle rose. Il resto lo fa [SerataViewModel].
  *
  * [EXTRA_PARTITA_IN_CORSO] la rende di sola lettura: mentre si gioca le coppie sono quelle della partita.
+ *
+ * Con l'accesso a Padel Elite e un gruppo scelto c'e' anche il gruppo "Dalla dashboard": la prossima serata
+ * del gruppo, i presenti confermati e i gironi salvati, che diventano i presenti solo al tocco (e "Annulla"
+ * li toglie). Con la funzione spenta la schermata non apre la rete.
  */
 class SerataActivity : AppCompatActivity() {
     private lateinit var viewModel: SerataViewModel
@@ -35,6 +45,7 @@ class SerataActivity : AppCompatActivity() {
     private lateinit var comandi: SerataRigheAdapter
     private lateinit var panchina: SerataRigheAdapter
     private lateinit var presenti: SerataRigheAdapter
+    private lateinit var proposte: SerataRigheAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,13 +57,15 @@ class SerataActivity : AppCompatActivity() {
         }
 
         val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val database = AppDatabase.getDatabase(application)
         viewModel =
             ViewModelProvider(
                 this,
                 SerataViewModel.Factory(
-                    AppDatabase.getDatabase(application).playerDao(),
+                    database.playerDao(),
                     SerataPrefsStore(prefs),
                     intent.getBooleanExtra(EXTRA_PARTITA_IN_CORSO, false),
+                    fonteDiProva ?: fonteDellaDashboard(database),
                 ),
             )[SerataViewModel::class.java]
 
@@ -76,10 +89,25 @@ class SerataActivity : AppCompatActivity() {
                     ChiaviSerata.presenteDa(chiave)?.let(viewModel::scambiaPresente)
                 }
             }
+        proposte =
+            SerataRigheAdapter { chiave ->
+                when (chiave) {
+                    ChiaviSerata.DASHBOARD_PRESENTI -> viewModel.usaIPresenti()
+                    else -> ChiaviSerata.gironeDa(chiave)?.let(viewModel::usaIlGirone)
+                }
+            }
         collega(R.id.serata_seats, posti)
         collega(R.id.serata_commands, comandi)
         collega(R.id.serata_bench, panchina)
         collega(R.id.serata_present, presenti)
+        collega(R.id.serata_dashboard_rows, proposte)
+        findViewById<MaterialButton>(R.id.serata_dashboard_action).setOnClickListener {
+            if (viewModel.stato.value.dashboard == SerataDashboard.Errore) {
+                viewModel.riprovaLaDashboard()
+            } else {
+                startActivity(PadelEliteActivity.intent(this))
+            }
+        }
 
         findViewById<MaterialButton>(R.id.serata_start_button).setOnClickListener {
             setResult(Activity.RESULT_OK)
@@ -89,9 +117,37 @@ class SerataActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.stato.collect(::mostra)
+                launch { viewModel.stato.collect(::mostra) }
+                launch { viewModel.rapporti.collect(::diciCosaEArrivato) }
             }
         }
+    }
+
+    /**
+     * La fonte della serata della dashboard, solo con la funzione accesa (URL e chiave in local.properties):
+     * spenta, nessuna rete. Accesso e gruppo li controlla il lettore, fuori dal thread principale.
+     */
+    private fun fonteDellaDashboard(database: AppDatabase): FonteSerataDashboard? {
+        val padelElite = (application as ScoreboardEssentialApplication).padelElite
+        if (!padelElite.isEnabled) return null
+        return LettoreSerataDashboard(padelElite.account, database.padelEliteLinkDao(), database.playerDao())
+    }
+
+    /** Il rapporto di una proposta usata: quanti presenti e quanti ospiti, con "Annulla". */
+    private fun diciCosaEArrivato(rapporto: RapportoDashboard) {
+        val testo =
+            buildString {
+                append(resources.getQuantityString(R.plurals.serata_dashboard_used, rapporto.presenti, rapporto.presenti))
+                if (rapporto.ospiti > 0) {
+                    append(resources.getQuantityString(R.plurals.serata_dashboard_used_guests, rapporto.ospiti, rapporto.ospiti))
+                }
+            }
+        Snackbar
+            .make(findViewById(R.id.serata_scroll), testo, Snackbar.LENGTH_LONG)
+            .setAnchorView(R.id.serata_start_bar)
+            .setAnimationMode(Snackbar.ANIMATION_MODE_FADE)
+            .setAction(R.string.undo) { viewModel.annullaLaDashboard() }
+            .show()
     }
 
     override fun onStart() {
@@ -146,6 +202,8 @@ class SerataActivity : AppCompatActivity() {
         findViewById<View>(R.id.serata_present_empty).visibility = if (stato.rosa.isEmpty()) View.VISIBLE else View.GONE
         presenti.submitList(RigheDellaSerata.presenti(this, stato))
 
+        mostraLaDashboard(stato)
+
         findViewById<View>(R.id.serata_close_button).visibility = if (serata != null && !stato.inCorso) View.VISIBLE else View.GONE
 
         val avvio = findViewById<MaterialButton>(R.id.serata_start_button)
@@ -154,6 +212,26 @@ class SerataActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.serata_start_hint).apply {
             text = if (mancanti > 0) resources.getQuantityString(R.plurals.serata_start_missing, mancanti, mancanti) else ""
             visibility = if (mancanti > 0) View.VISIBLE else View.GONE
+        }
+    }
+
+    /** Il gruppo "Dalla dashboard": la riga di stato, le proposte, e il comando che serve (Riprova o Accedi). */
+    private fun mostraLaDashboard(stato: StatoDellaSerata) {
+        val dashboard = stato.dashboard
+        findViewById<View>(R.id.serata_dashboard_group).visibility =
+            if (dashboard == SerataDashboard.Spenta) View.GONE else View.VISIBLE
+        findViewById<TextView>(R.id.serata_dashboard_status).text = RigheDellaSerata.statoDashboard(this, stato).orEmpty()
+        proposte.submitList(RigheDellaSerata.dashboard(this, stato))
+        val comando =
+            when (dashboard) {
+                SerataDashboard.Errore -> R.string.padel_elite_retry
+                SerataDashboard.AccessoScaduto -> R.string.padel_elite_sign_in
+                SerataDashboard.FuoriDalGruppo -> R.string.serata_dashboard_open
+                else -> null
+            }
+        findViewById<MaterialButton>(R.id.serata_dashboard_action).apply {
+            visibility = if (comando != null) View.VISIBLE else View.GONE
+            if (comando != null) setText(comando)
         }
     }
 
@@ -190,5 +268,9 @@ class SerataActivity : AppCompatActivity() {
     companion object {
         /** Vero quando c'e' una partita in corso: la schermata e' di sola lettura. */
         const val EXTRA_PARTITA_IN_CORSO = "partita_in_corso"
+
+        /** Solo per i test: la serata della dashboard al posto di quella dell'applicazione (che e' spenta senza local.properties). */
+        @VisibleForTesting
+        internal var fonteDiProva: FonteSerataDashboard? = null
     }
 }
