@@ -310,7 +310,11 @@ class DirettaLimitiTest {
 
         assertNull(store.load())
         assertFalse(d.acceso)
-        assertEquals(DirettaFase.SPENTA, d.stato.value.fase)
+        // Il foglio dice perche' la diretta non riparte, anche se la rete ha risposto prima del ripristino.
+        assertEquals(DirettaFase.FERMA, d.stato.value.fase)
+        assertEquals(DirettaMotivo.FUORI_DAL_GRUPPO, d.stato.value.motivo)
+        assertEquals("Padel", d.stato.value.gruppo)
+        assertEquals(UUID_PARTITA, d.stato.value.matchId)
         Thread.sleep(200)
         assertEquals(0, finto!!.quante("/rest/v1/rpc/publish_live_from_app"))
     }

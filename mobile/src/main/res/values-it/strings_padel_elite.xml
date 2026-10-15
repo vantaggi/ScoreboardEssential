@@ -109,6 +109,8 @@
     <string name="diretta_notif_stop">Interrompi diretta</string>
     <string name="diretta_live_no_service">In diretta su %1$s. Senza notifica fissa: tieni l\'app aperta</string>
     <string name="diretta_live_service_timeout">In diretta su %1$s. La notifica fissa si è fermata dopo 6 ore: tieni l\'app aperta</string>
+    <string name="diretta_avviso_title">Diretta su %1$s</string>
+    <string name="diretta_avviso_text">La diretta continua solo con questa app aperta</string>
     <string name="diretta_stop_left_group">Diretta spenta: non fai più parte di questo gruppo</string>
     <string name="diretta_stop_crash">Diretta spenta: errore interno (%1$s)</string>
     <string name="diretta_closing">Chiusura della diretta in corso</string>

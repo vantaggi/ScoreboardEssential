@@ -76,8 +76,6 @@ open class DirettaService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        // Il servizio riparte: la notifica fissa e' tornata, l'avviso ordinario del tetto delle 6 ore (debito 15) non serve piu'.
-        DirettaAvvisoNotifica(this).togli()
         ultimaChiave = chiaveDi(stato, punteggio)
         if (!accesa(stato)) {
             // La diretta si e' chiusa fra la richiesta di avvio e adesso.
@@ -106,7 +104,7 @@ open class DirettaService : Service() {
     /**
      * Il sistema ha esaurito le 6 ore al giorno del tipo `dataSync` (Android 15): fermarsi subito, o il processo cade
      * in ANR. La diretta continua; il foglio PARTITA dice che la notifica fissa non c'e' piu', e il controllo mostra un avviso
-     * ordinario con lo stesso testo ([DirettaAvvisoNotifica]), tolto quando la diretta finisce o il servizio riparte.
+     * ordinario che dice la condizione ([DirettaAvvisoNotifica]), tolto quando la diretta finisce.
      */
     override fun onTimeout(
         startId: Int,

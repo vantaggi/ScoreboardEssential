@@ -20,6 +20,8 @@ data class DirettaSalvata(
 class DirettaStore(
     private val prefs: SharedPreferences,
 ) {
+    private val lock: Any = synchronized(blocchi) { blocchi.getOrPut(prefs) { Any() } }
+
     fun load(): DirettaSalvata? {
         val matchId = prefs.getString(KEY_MATCH, null)?.takeIf { it.isNotEmpty() } ?: return null
         val groupId = prefs.getString(KEY_GROUP, null)?.takeIf { it.isNotEmpty() } ?: return null
@@ -65,7 +67,7 @@ class DirettaStore(
      * segno di una chiusura gia' scritta in WorkManager gira su un altro thread, e non deve cancellare uno appena messo.
      */
     fun segnaPendente(richiesta: DirettaChiusuraRichiesta) {
-        synchronized(LOCK) {
+        synchronized(lock) {
             val altre = pendenti().filter { it.matchId != richiesta.matchId } + richiesta
             prefs.edit(commit = true) { putStringSet(KEY_PENDING, altre.map(::codifica).toSet()) }
         }
@@ -73,7 +75,7 @@ class DirettaStore(
 
     /** Toglie il segno dopo che il lavoro di chiusura e' stato scritto in WorkManager. */
     fun togliPendente(matchId: String) {
-        synchronized(LOCK) {
+        synchronized(lock) {
             val restano = pendenti().filter { it.matchId != matchId }
             prefs.edit(commit = true) {
                 if (restano.isEmpty()) remove(KEY_PENDING) else putStringSet(KEY_PENDING, restano.map(::codifica).toSet())
@@ -88,7 +90,7 @@ class DirettaStore(
      * qui: li toglie chi accoda, dopo che il lavoro e' stato scritto.
      */
     fun chiusureRimaste(): List<DirettaChiusuraRichiesta> =
-        synchronized(LOCK) {
+        synchronized(lock) {
             val rimaste = pendenti()
             val salvata = load()
             if (salvata != null && rimaste.any { it.matchId == salvata.matchId }) clear()
@@ -99,7 +101,9 @@ class DirettaStore(
 
     companion object {
         const val FILE = "padel_elite_diretta"
-        private val LOCK = Any()
+
+        /** Un blocco per file di preferenze (Android ne da' una sola istanza): due store sullo stesso file lo condividono. */
+        private val blocchi = java.util.WeakHashMap<SharedPreferences, Any>()
         private const val KEY_PENDING = "chiusure_pendenti"
         private const val SEP = "|"
         private const val KEY_MATCH = "match_id"

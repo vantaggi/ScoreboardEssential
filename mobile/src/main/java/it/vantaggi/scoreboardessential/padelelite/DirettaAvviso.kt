@@ -34,7 +34,9 @@ object NessunAvviso : DirettaAvviso {
 
 /**
  * L'avviso vero: una notifica **ordinaria** (non fissa, si puo' scorrere via, tocco = apre il foglio PARTITA) sullo stesso
- * canale a importanza bassa della notifica fissa, quindi senza suono ne' vibrazione, con lo stesso testo del foglio.
+ * canale a importanza bassa della notifica fissa, quindi senza suono ne' vibrazione. Il testo dice la condizione («la diretta
+ * continua solo con l'app aperta»), non lo stato: se il processo muore l'avviso resta nel cassetto fino al prossimo avvio
+ * ([ScoreboardEssentialApplication.onCreate] lo toglie), e fino ad allora non deve dire una cosa falsa.
  */
 class DirettaAvvisoNotifica(
     private val context: Context,
@@ -42,12 +44,12 @@ class DirettaAvvisoNotifica(
     override fun mostra(gruppo: String) {
         // Senza il permesso l'avviso e' sospeso dal sistema: non serve costruirlo.
         if (!puoNotificare()) return
-        val testo = context.getString(R.string.diretta_live_service_timeout, gruppo)
+        val testo = context.getString(R.string.diretta_avviso_text)
         val notifica =
             NotificationCompat
                 .Builder(context, ScoreboardEssentialApplication.CHANNEL_ID_DIRETTA)
                 .setSmallIcon(R.drawable.notifica_sensors)
-                .setContentTitle(context.getString(R.string.diretta_live, gruppo).trim())
+                .setContentTitle(context.getString(R.string.diretta_avviso_title, gruppo).trim())
                 .setContentText(testo)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(testo))
                 .setContentIntent(

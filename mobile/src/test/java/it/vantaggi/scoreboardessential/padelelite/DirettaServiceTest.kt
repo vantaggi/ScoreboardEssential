@@ -418,8 +418,8 @@ class DirettaServiceTest {
 
         val n = avviso()
         assertNotNull(n)
-        assertEquals(app.getString(R.string.diretta_live_service_timeout, "Padel"), testo(n!!))
-        assertEquals(app.getString(R.string.diretta_live, "Padel"), titolo(n))
+        assertEquals(app.getString(R.string.diretta_avviso_text), testo(n!!))
+        assertEquals(app.getString(R.string.diretta_avviso_title, "Padel"), titolo(n))
         assertEquals(
             "stesso canale della notifica fissa: importanza bassa, nessun suono",
             ScoreboardEssentialApplication.CHANNEL_ID_DIRETTA,
@@ -429,6 +429,36 @@ class DirettaServiceTest {
         assertEquals("ordinaria: si puo' scorrere via", 0, n.flags and Notification.FLAG_ONGOING_EVENT)
         assertEquals("la notifica fissa e' sparita", null, notificaInCorso())
         assertNotNull("tocco = apre l'app", n.contentIntent)
+    }
+
+    /** L'avviso resta nel cassetto se il processo muore: deve dire la condizione, non uno stato («In diretta su») che non e' piu' vero. */
+    private fun avvisoDopoIlTetto(): Notification {
+        creaServizi()
+        servizi.diretta.accendi("g-1", "Padel", foto(1))
+        attendi("l'avvio dal controllo") { servizi.direttaServizio.fase.value == DirettaServizioFase.ATTIVO }
+        avviaIlServizio().onTimeout(1, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        return avviso()!!
+    }
+
+    @Test
+    @Config(qualifiers = "it")
+    fun `l'avviso in italiano dice la condizione e non uno stato, senza apostrofi`() {
+        val n = avvisoDopoIlTetto()
+
+        assertEquals("Diretta su Padel", titolo(n))
+        assertEquals("La diretta continua solo con questa app aperta", testo(n))
+        assertFalse(titolo(n)!!.contains("In diretta"))
+        assertFalse(testo(n)!!.contains('\''))
+    }
+
+    @Test
+    @Config(qualifiers = "en")
+    fun `l'avviso in inglese dice la condizione e non uno stato, senza apostrofi`() {
+        val n = avvisoDopoIlTetto()
+
+        assertEquals("Live broadcast: Padel", titolo(n))
+        assertEquals("The live feed only continues with the app open", testo(n))
+        assertFalse(testo(n)!!.contains('\''))
     }
 
     @Test
@@ -442,20 +472,6 @@ class DirettaServiceTest {
         servizi.diretta.spegni()
 
         attendi("l'avviso tolto") { avviso() == null }
-    }
-
-    @Test
-    fun `l'avviso si toglie quando il servizio riparte`() {
-        creaServizi()
-        servizi.diretta.accendi("g-1", "Padel", foto(1))
-        attendi("l'avvio dal controllo") { servizi.direttaServizio.fase.value == DirettaServizioFase.ATTIVO }
-        avviaIlServizio().onTimeout(1, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
-        assertNotNull(avviso())
-
-        val riavviato = avviaIlServizio()
-
-        assertNull(avviso())
-        assertNotNull("la notifica fissa e' tornata", shadowOf(riavviato).lastForegroundNotification)
     }
 
     // --- Avvio negato in secondo piano ---

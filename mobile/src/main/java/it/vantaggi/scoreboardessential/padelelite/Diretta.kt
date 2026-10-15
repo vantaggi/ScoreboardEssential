@@ -244,7 +244,12 @@ class Diretta(
         synchronized(lock) {
             val a = attiva
             if (a == null) {
-                if (store.load()?.groupId == groupId) store.clear()
+                val salvata = store.load()
+                if (salvata?.groupId == groupId) {
+                    store.clear()
+                    // La rete puo' rispondere prima del ripristino: il foglio dice comunque perche' la diretta non riparte.
+                    _stato.value = DirettaStato(DirettaFase.FERMA, DirettaMotivo.FUORI_DAL_GRUPPO, null, salvata.groupName, salvata.matchId)
+                }
             } else if (a.groupId == groupId) {
                 ferma(a, DirettaMotivo.FUORI_DAL_GRUPPO)
             }
