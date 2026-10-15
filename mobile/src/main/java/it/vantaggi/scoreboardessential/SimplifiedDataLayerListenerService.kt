@@ -73,7 +73,8 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
             try {
                 Wearable.getMessageClient(context).sendMessage(nodo, path, dati)
             } catch (e: Exception) {
-                Log.w(TAG, "Risposta a $nodo non inviata: $path", e)
+                // Senza l'id del nodo: nella release i log non identificano il dispositivo (A-8).
+                Log.w(TAG, "Risposta all'orologio non inviata: $path", e)
             }
         }
     }

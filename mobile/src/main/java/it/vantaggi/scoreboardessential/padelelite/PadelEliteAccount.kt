@@ -1,5 +1,11 @@
 package it.vantaggi.scoreboardessential.padelelite
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -52,6 +58,8 @@ class PadelEliteAccount(
     private val api: PadelEliteApi,
     private val store: SessionStore,
     private val clock: () -> Long = { System.currentTimeMillis() / 1000 },
+    /** Dove gira la chiusura della sessione sul server dopo "Esci": non legata a una schermata. I test ne danno uno loro. */
+    private val background: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) {
     private val mutex = Mutex()
 
@@ -83,7 +91,36 @@ class PadelEliteAccount(
         return esito
     }
 
-    fun signOut() = store.clear()
+    /**
+     * Esci (A-8): sessione e gruppo spariscono dal telefono **subito**, senza aspettare la rete. Poi, in
+     * [background], la sessione si chiude anche sul server con [PadelEliteApi.logout]; se il token di accesso e'
+     * scaduto (o scade entro un minuto) prima si rinnova, perche' il logout di Supabase vuole un token valido.
+     * Senza rete, con un rifiuto o con un'eccezione non succede altro: la sessione sul server scade da sola.
+     *
+     * Restituisce il lavoro della chiusura sul server (null se non c'era una sessione o la funzione e' spenta):
+     * chi esce non lo aspetta, i test si'.
+     */
+    fun signOut(): Job? {
+        val cifrata = store.takeSealed() ?: return null
+        if (!isEnabled) return null
+        return background.launch {
+            try {
+                val sessione = store.decode(cifrata) ?: return@launch
+                val token =
+                    if (sessione.expiresAtSec - clock() > RENEW_MARGIN_SEC) {
+                        sessione.accessToken
+                    } else {
+                        // Il refresh token ruota: il nuovo non si salva (si sta uscendo), serve solo a chiudere.
+                        (api.refresh(sessione.refreshToken) as? AuthResult.Ok)?.session?.accessToken ?: return@launch
+                    }
+                api.logout(token)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Il Keystore o la rete: l'uscita dal telefono e' gia' fatta, il resto e' un di piu'.
+            }
+        }
+    }
 
     /**
      * Un token di accesso valido. Si rinnova se scade entro un minuto, o (con [force]) se il server

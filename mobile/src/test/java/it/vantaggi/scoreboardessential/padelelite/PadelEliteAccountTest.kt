@@ -304,4 +304,68 @@ class PadelEliteAccountTest {
                     .contains("user_id=eq.u-1"),
             )
         }
+
+    @Test
+    fun `esci chiude la sessione anche sul server, col token della sessione`() =
+        runBlocking {
+            val account = account({ _, _ -> accessoRiuscito() })
+            account.signIn("a@b.it", "x")
+
+            val lavoro = account.signOut()
+
+            // Sul telefono e' gia' fatto, prima e indipendentemente dal server.
+            assertNull(account.session())
+            assertNotNull(lavoro)
+            lavoro!!.join()
+            val logout = finto!!.richieste.single { it.path!!.startsWith("/auth/v1/logout") }
+            assertEquals("/auth/v1/logout?scope=local", logout.path)
+            assertEquals("Bearer A1", logout.getHeader("Authorization"))
+        }
+
+    @Test
+    fun `esci con il token scaduto lo rinnova e chiude con quello nuovo, senza salvarlo`() =
+        runBlocking {
+            val account =
+                account({ richiesta, _ ->
+                    if (richiesta.path!!.contains("refresh_token")) {
+                        json(200, rispostaDiSessione("A2", "R2", adesso + 7_200))
+                    } else {
+                        accessoRiuscito()
+                    }
+                })
+            account.signIn("a@b.it", "x")
+            adesso += 4_000
+
+            account.signOut()!!.join()
+
+            assertEquals(1, finto!!.quante("/auth/v1/token?grant_type=refresh_token"))
+            val logout = finto!!.richieste.single { it.path!!.startsWith("/auth/v1/logout") }
+            assertEquals("Bearer A2", logout.getHeader("Authorization"))
+            assertNull(account.session())
+        }
+
+    @Test
+    fun `esci senza rete toglie comunque sessione e gruppo dal telefono`() =
+        runBlocking {
+            val account = account({ _, _ -> accessoRiuscito() })
+            account.signIn("a@b.it", "x")
+            account.selectGroup(PadelEliteGroup("g-1", "Padel", "member"))
+            finto!!.chiudi()
+
+            val lavoro = account.signOut()
+
+            assertNull(account.session())
+            assertNull(account.selectedGroup())
+            // Il tentativo sul server finisce senza eccezioni e senza rimettere niente sul telefono.
+            lavoro!!.join()
+            assertNull(account.session())
+        }
+
+    @Test
+    fun `esci senza sessione non chiama la rete`() {
+        val account = account({ _, _ -> accessoRiuscito() })
+
+        assertNull(account.signOut())
+        assertEquals(0, finto!!.richieste.size)
+    }
 }

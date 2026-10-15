@@ -38,3 +38,12 @@
 
 # WearableListenerService subclasses are instantiated by the framework
 -keep class * extends com.google.android.gms.wearable.WearableListenerService { *; }
+
+# Privacy nel codice (A-8, PIANO_PADEL_ELITE.md): nella release i messaggi di debug e informativi
+# del log non esistono. Restano avvisi ed errori (Log.w, Log.e), che non portano nomi di giocatori
+# ne' del dispositivo. Funziona perche' la release usa proguard-android-optimize.txt.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}

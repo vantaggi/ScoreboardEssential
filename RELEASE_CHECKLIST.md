@@ -18,9 +18,9 @@ Use this checklist before every release to ensure quality and compliance.
 - [ ] **Lint**: `./gradlew lint` — review and address warnings.
 - [ ] **Unit tests**: `./gradlew test` — all green.
 - [ ] **Sensitive data**: no API keys/secrets hardcoded; `keystore.properties` is git-ignored and
-      not committed; release logging does not leak game/user data (passo A-8 in
-      `PIANO_PADEL_ELITE.md`: `Log.d/v/i` removed by R8 on the phone, no player or device names in
-      the remaining messages).
+      not committed; release logging does not leak game/user data (A-8: `Log.d/v/i` removed by R8
+      in `mobile/proguard-rules.pro`, no player or device names in `Log.w/e`; any new log line
+      keeps it that way).
 
 ## 3. Build & Signing
 - [ ] **Keystore**: create a git-ignored `keystore.properties` at the repo root with
@@ -48,6 +48,13 @@ Use this checklist before every release to ensure quality and compliance.
 - [ ] **Padel Elite present**: Settings shows the "Padel Elite" card; sign in with a real account
       lists only that account's groups (if the card is missing, the bundle was built without the
       two values: rebuild).
+- [ ] **Sign out (A-8)**: after "Esci" the session is gone from the phone and, with network, the
+      dashboard's Supabase Auth logs show a logout for that user; the dashboard in the browser stays
+      signed in.
+- [ ] **Release log (A-8)**: `adb logcat` during a match with the watch shows no `D`/`I` lines from
+      the app and no player or device names.
+- [ ] **New phone (A-8, Android 12+)**: a device-to-device transfer copies matches and players,
+      not the Padel Elite session (the app asks to sign in again).
 
 ## 5. Play Store Assets & Listing
 - [ ] **Privacy Policy**: host `PRIVACY_POLICY.md` at a public URL and keep it current in the

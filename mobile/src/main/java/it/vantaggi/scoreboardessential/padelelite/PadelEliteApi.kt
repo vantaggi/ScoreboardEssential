@@ -206,7 +206,7 @@ sealed interface LiveResult {
 /**
  * Le chiamate a Supabase che l'app usa, scritte a mano su `HttpURLConnection`.
  *
- * Sono tre famiglie, tutte REST: GoTrue (`/auth/v1/token`) per accesso e rinnovo, PostgREST
+ * Sono tre famiglie, tutte REST: GoTrue (`/auth/v1/token`, `/auth/v1/logout`) per accesso, rinnovo e uscita, PostgREST
  * (`/rest/v1/group_members`, `/rest/v1/v2_players`, `/rest/v1/v2_scoreboard_inbox`) per leggere, e la RPC
  * `submit_scoreboard_match` per consegnare la partita. Una libreria (supabase-kt, OkHttp) avrebbe
  * portato un'altra dozzina di dipendenze per quattro richieste; su Android `HttpURLConnection` e'
@@ -275,6 +275,17 @@ class PadelEliteApi(
                 }
             }
         return AuthResult.Rejected(motivo)
+    }
+
+    /**
+     * Chiude la sessione anche sul server (A-8): `POST /auth/v1/logout?scope=local` revoca il refresh token di
+     * QUESTA sessione; la dashboard e gli altri telefoni restano collegati (`global` li chiuderebbe tutti). Vuole
+     * un token di accesso valido. Vero se il server ha risposto 2xx; falso per rete assente, tempo scaduto o
+     * qualunque rifiuto. Tempo massimo breve: chi esce non aspetta, e una sessione rimasta aperta scade da sola.
+     */
+    suspend fun logout(accessToken: String): Boolean {
+        val reply = send("POST", "/auth/v1/logout?scope=local", accessToken, body = "{}", timeoutMs = LOGOUT_TIMEOUT_MS) ?: return false
+        return reply.status in 200..299
     }
 
     private fun parseSession(raw: String): PadelEliteSession? {
@@ -569,6 +580,7 @@ class PadelEliteApi(
         path: String,
         accessToken: String?,
         body: String?,
+        timeoutMs: Int = this.timeoutMs,
     ): Reply? =
         withContext(Dispatchers.IO) {
             var connection: HttpURLConnection? = null
@@ -603,6 +615,7 @@ class PadelEliteApi(
 
     private companion object {
         const val DEFAULT_LIFETIME_SEC = 3600L
+        const val LOGOUT_TIMEOUT_MS = 5_000
         const val ID_FALLBACK_LENGTH = 8
     }
 }

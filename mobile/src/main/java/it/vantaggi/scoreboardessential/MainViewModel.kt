@@ -1924,7 +1924,8 @@ class MainViewModel(
             playerId?.let { id -> roster?.find { it.player.playerId == id } }
                 ?: roster?.find { it.player.playerName == playerName }
         if (match == null) {
-            Log.w("MainViewModel", "Marcatore dall'orologio sconosciuto al telefono: $playerName")
+            // Senza il nome: nella release i log non portano dati dei giocatori (A-8).
+            Log.w("MainViewModel", "Marcatore dall'orologio sconosciuto al telefono (id ${playerId ?: "assente"})")
             return
         }
         val indice =

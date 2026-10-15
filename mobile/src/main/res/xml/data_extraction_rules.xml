@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
+   Regole di Android 12 e successivi per il backup e il trasferimento dei dati.
    See https://developer.android.com/about/versions/12/backup-restore#xml-changes
    for details.
+
+   Il backup nel cloud e spento dal manifest (allowBackup false). Il trasferimento diretto fra
+   dispositivi (telefono nuovo configurato copiando dal vecchio) invece non lo ferma allowBackup:
+   qui si dice cosa passa (A-8, PIANO_PADEL_ELITE.md, decisione del 15 ottobre 2026).
 -->
 <data-extraction-rules>
     <cloud-backup>
@@ -20,10 +24,19 @@
         <!-- La sessione di Padel Elite non lascia il telefono: e cifrata con una chiave del Keystore che altrove non c e. -->
         <exclude domain="sharedpref" path="padel_elite_session.xml"/>
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <!--
+            Passano partite, giocatori, rose, statistiche, collegamenti ai giocatori del gruppo
+            e impostazioni: chi cambia telefono si porta dietro lo storico. Nessun altro database
+            (per esempio la coda di WorkManager) e nessun file della cache.
+        -->
+        <include domain="database" path="match_database" />
+        <include domain="database" path="match_database-shm" />
+        <include domain="database" path="match_database-wal" />
+        <include domain="sharedpref" path="."/>
+        <!-- La sessione di Padel Elite no: sul telefono nuovo non si decifra, si rifa il login. -->
+        <exclude domain="sharedpref" path="padel_elite_session.xml"/>
+        <!-- Neanche la diretta accesa: appartiene al telefono che trasmette. -->
+        <exclude domain="sharedpref" path="padel_elite_diretta.xml"/>
     </device-transfer>
-    -->
 </data-extraction-rules>

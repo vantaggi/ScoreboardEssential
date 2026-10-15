@@ -84,9 +84,12 @@ class SessionStore(
 ) {
     fun load(): PadelEliteSession? {
         val cifrata = prefs.getString(KEY_SESSION, null) ?: return null
-        val chiaro =
-            runCatching { box.open(Base64.decode(cifrata, Base64.NO_WRAP)) }.getOrNull()
-                ?: return null.also { clear() }
+        return decode(cifrata) ?: null.also { clear() }
+    }
+
+    /** La sessione dal dato cifrato com'e' su disco, o null se non si decifra o non si legge. Non cancella niente. */
+    fun decode(cifrata: String): PadelEliteSession? {
+        val chiaro = runCatching { box.open(Base64.decode(cifrata, Base64.NO_WRAP)) }.getOrNull() ?: return null
         return runCatching {
             val json = JSONObject(chiaro.toString(Charsets.UTF_8))
             PadelEliteSession(
@@ -96,7 +99,17 @@ class SessionStore(
                 json.getString("u"),
                 json.optString("m"),
             )
-        }.getOrElse { null.also { clear() } }
+        }.getOrNull()
+    }
+
+    /**
+     * Esci (A-8): toglie sessione e gruppo come [clear] e restituisce la sessione cifrata com'era, senza
+     * decifrarla (il Keystore non lavora sul thread di chi chiama). Serve a chiuderla anche sul server, dopo.
+     */
+    fun takeSealed(): String? {
+        val cifrata = prefs.getString(KEY_SESSION, null)
+        clear()
+        return cifrata
     }
 
     fun save(session: PadelEliteSession) {

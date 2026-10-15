@@ -103,7 +103,9 @@ According to the rules of the Padel Elite dashboard:
 ### 2.7 Deleting your data
 On the phone:
 - **Sign out** (in Settings or on the Padel Elite screen) removes the session and the chosen group
-  from the phone. It does not delete what was already sent. The status of sent matches and the
+  from the phone at once, and then also ends that session on Padel Elite (your other devices and
+  the dashboard stay signed in). Without a network the session on Padel Elite expires by itself.
+  Signing out does not delete what was already sent. The status of sent matches and the
   player links stay on the phone, without being used, until you sign in again, uninstall the App or
   clear its data in Android settings.
 - **Unlink** removes the link between a group player and a player in the App; deleting a player in
@@ -130,7 +132,8 @@ On Padel Elite:
 - No sale or sharing of your data. Match data reaches Padel Elite only because you send it to a
   group, and from there it is visible as described in section 2.6.
 - Diagnostic messages are written only to the device's system log, which the App does not send
-  anywhere.
+  anywhere. In the published phone app they are limited to warnings and errors, which contain no
+  player or device names.
 
 ## 4. Backups
 Android's automatic cloud backup is disabled for the phone app (`allowBackup="false"`). The Padel
@@ -138,8 +141,8 @@ Elite session is also explicitly excluded from cloud backups, and it cannot be d
 device: its key never leaves the phone's Keystore.
 
 If you move to a new phone with Android's own transfer tool (copying apps and data from the old
-phone), the App's local data, such as matches and players, may be copied to the new phone. The
-Padel Elite session is not usable there: you sign in again.
+phone), the App's matches, players, statistics and settings are copied to the new phone. The Padel
+Elite session and a live broadcast in progress are not copied: you sign in again.
 
 ## 5. Security
 Connections to Padel Elite use HTTPS, and the session is encrypted on the phone as described above.

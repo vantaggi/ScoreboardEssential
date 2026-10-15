@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -285,5 +286,30 @@ class PadelEliteApiTest {
             )
 
             assertEquals(StatusResult.NotFound, api { _, _ -> json(200, "[]") }.fetchStatus("A1", UUID_PARTITA))
+        }
+
+    @Test
+    fun `il logout chiude solo questa sessione, col suo token`() =
+        runBlocking {
+            val api = api { _, _ -> okhttp3.mockwebserver.MockResponse().setResponseCode(204) }
+
+            assertTrue(api.logout("A1"))
+
+            val richiesta = finto!!.richieste.single()
+            assertEquals("POST", richiesta.method)
+            // scope=local: la dashboard e gli altri telefoni restano collegati.
+            assertEquals("/auth/v1/logout?scope=local", richiesta.path)
+            assertEquals("Bearer A1", richiesta.getHeader("Authorization"))
+            assertEquals(CHIAVE_DI_PROVA, richiesta.getHeader("apikey"))
+        }
+
+    @Test
+    fun `un logout rifiutato, un 5xx o senza rete e' falso, mai un'eccezione`() =
+        runBlocking {
+            assertFalse(api { _, _ -> json(401, """{"code":401,"error_code":"bad_jwt","msg":"invalid JWT"}""") }.logout("A1"))
+            assertFalse(api { _, _ -> json(503, "") }.logout("A1"))
+            val spento = api { _, _ -> json(204, "") }
+            finto!!.chiudi()
+            assertFalse(spento.logout("A1"))
         }
 }
