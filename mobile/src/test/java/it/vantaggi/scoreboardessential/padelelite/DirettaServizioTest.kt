@@ -42,6 +42,20 @@ private class AvviatoreFinto(
     }
 }
 
+/** Un avviso che ricorda cosa gli e' stato chiesto: nessuna notifica vera, solo l'elenco dei gruppi mostrati e quante volte e' stato tolto. */
+private class AvvisoFinto : DirettaAvviso {
+    val mostrati = mutableListOf<String>()
+    var tolti = 0
+
+    override fun mostra(gruppo: String) {
+        mostrati += gruppo
+    }
+
+    override fun togli() {
+        tolti++
+    }
+}
+
 /**
  * Il servizio in primo piano parte e si ferma con la diretta, in tutti i modi in cui la diretta nasce e finisce (D-3).
  * Il controllo non ha logica sua: guarda lo stato della [Diretta], quindi la prova passa dalla diretta vera, col server finto.
@@ -283,6 +297,55 @@ class DirettaServizioTest {
         c.avvioNegato()
         c.scaduto()
         assertEquals(DirettaServizioFase.SPENTO, c.fase.value)
+    }
+
+    // --- L'avviso dopo il tetto delle 6 ore (debito 15) ---
+
+    @Test
+    fun `allo scadere delle sei ore l'avviso compare col gruppo, e sparisce quando la diretta finisce`() {
+        val stato = MutableStateFlow(DirettaStato())
+        val avviso = AvvisoFinto()
+        val c = DirettaServizioControllo(stato, AvviatoreFinto(), CoroutineScope(Dispatchers.Unconfined), avviso)
+        stato.value = DirettaStato(DirettaFase.IN_CORSO, gruppo = "Padel Elite")
+        assertTrue("prima del tetto niente avviso", avviso.mostrati.isEmpty())
+
+        c.scaduto()
+
+        assertEquals(listOf("Padel Elite"), avviso.mostrati)
+        val toltiPrima = avviso.tolti
+        // La diretta passa in attesa e ritorna: l'avviso resta, la diretta e' ancora accesa.
+        stato.value = DirettaStato(DirettaFase.IN_ATTESA, gruppo = "Padel Elite")
+        assertEquals(toltiPrima, avviso.tolti)
+
+        stato.value = DirettaStato(DirettaFase.CHIUSA, gruppo = "Padel Elite")
+
+        assertEquals("la fine della diretta toglie l'avviso", toltiPrima + 1, avviso.tolti)
+    }
+
+    @Test
+    fun `lo scadere dopo la fine della diretta non lascia un avviso che nessuno toglie`() {
+        val stato = MutableStateFlow(DirettaStato())
+        val avviso = AvvisoFinto()
+        val c = DirettaServizioControllo(stato, AvviatoreFinto(), CoroutineScope(Dispatchers.Unconfined), avviso)
+        stato.value = DirettaStato(DirettaFase.IN_CORSO, gruppo = "Padel")
+        stato.value = DirettaStato(DirettaFase.CHIUSA, gruppo = "Padel")
+
+        // Il sistema chiama onTimeout un attimo dopo la chiusura.
+        c.scaduto()
+
+        assertTrue(avviso.mostrati.isEmpty())
+    }
+
+    @Test
+    fun `una diretta nuova non eredita l'avviso della precedente`() {
+        val stato = MutableStateFlow(DirettaStato())
+        val avviso = AvvisoFinto()
+        DirettaServizioControllo(stato, AvviatoreFinto(), CoroutineScope(Dispatchers.Unconfined), avviso)
+        val toltiAllInizio = avviso.tolti
+
+        stato.value = DirettaStato(DirettaFase.IN_CORSO, gruppo = "Padel")
+
+        assertEquals(toltiAllInizio + 1, avviso.tolti)
     }
 
     // --- L'avviatore vero ---

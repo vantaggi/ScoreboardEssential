@@ -11,6 +11,7 @@ import it.vantaggi.scoreboardessential.core.ScoreState
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.core.SportRules
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,12 +65,13 @@ class DirettaLimitiTest {
         account: PadelEliteAccount,
         nello: CoroutineScope = scope,
         maxEccezioni: Int = Diretta.MAX_ECCEZIONI,
+        allaChiusura: suspend (DirettaChiusuraRichiesta) -> Unit = { chiusure += it },
     ) = Diretta(
         account,
         store,
         nello,
         collegamenti = { mapOf(1 to 101) },
-        allaChiusura = { chiusure += it },
+        allaChiusura = allaChiusura,
         minIntervalMs = 50,
         retryBaseMs = 40,
         retryLentoMs = 80,
@@ -148,8 +150,9 @@ class DirettaLimitiTest {
             val dopo = nuovaDiretta(server(), nuovoScope)
             dopo.riprendi(foto = null)
 
+            // La consegna e' asincrona (il segno si toglie a lavoro scritto): si aspetta la fine.
+            attendi("il segno tolto") { store.pendenti().isEmpty() && dopo.chiusureInVolo.value.isEmpty() }
             assertEquals(listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = true)), chiusure.toList())
-            assertTrue("accodata: il segno si toglie", store.pendenti().isEmpty())
             // Una seconda ripresa non la accoda ancora.
             dopo.riprendi(foto = null)
             assertEquals(1, chiusure.size)
@@ -171,6 +174,7 @@ class DirettaLimitiTest {
         assertEquals(DirettaFase.SPENTA, d.stato.value.fase)
         assertFalse(d.acceso)
         assertNull(store.load())
+        attendi("la chiusura") { chiusure.isNotEmpty() }
         assertEquals(listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = false)), chiusure.toList())
         assertEquals(0, finto!!.quante("/rest/v1/rpc/publish_live_from_app"))
     }
@@ -186,7 +190,7 @@ class DirettaLimitiTest {
 
         attendi("la chiusura") { chiusure.isNotEmpty() }
         attendi("il segno tolto") { store.pendenti().isEmpty() }
-        assertTrue(d.chiusureInVolo.value.isEmpty())
+        attendi("la partita non e' piu' in volo") { d.chiusureInVolo.value.isEmpty() }
     }
 
     @Test
@@ -206,6 +210,109 @@ class DirettaLimitiTest {
         assertEquals(listOf(b), store.pendenti())
         store.togliPendente("m-b")
         assertTrue(store.pendenti().isEmpty())
+    }
+
+    // --- La finestra fra l'accodamento e il lavoro scritto (debito 13) ---
+
+    @Test
+    fun `il segno della chiusura resta finche' il lavoro non e' scritto, non finche' e' stato chiesto`() {
+        store = DirettaStore(preferenze(context, "diretta_limiti_scritto"))
+        val cancello = CompletableDeferred<Unit>()
+        val d =
+            nuovaDiretta(server(), allaChiusura = {
+                chiusure += it
+                cancello.await()
+            })
+        d.accendi("g-1", "Padel", foto(1))
+        attendi("la prima pubblicazione") { finto!!.quante("/rest/v1/rpc/publish_live_from_app") >= 1 }
+
+        d.chiudi(conRisultato = false)
+
+        // L'accodamento e' stato chiesto, ma WorkManager non ha ancora scritto il lavoro: un processo ucciso qui deve ritrovare il segno.
+        attendi("l'accodamento chiesto") { chiusure.isNotEmpty() }
+        Thread.sleep(150)
+        assertEquals(listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = false)), store.pendenti())
+        assertEquals("il ripristino non la accoda una seconda volta", setOf(UUID_PARTITA), d.chiusureInVolo.value)
+        d.riprendi(foto = null)
+        Thread.sleep(100)
+        assertEquals(1, chiusure.size)
+
+        // Il lavoro e' scritto: solo ora il segno si toglie.
+        cancello.complete(Unit)
+        attendi("il segno tolto") { store.pendenti().isEmpty() }
+        attendi("la partita non e' piu' in volo") { d.chiusureInVolo.value.isEmpty() }
+    }
+
+    @Test
+    fun `se il lavoro non si scrive il segno resta e il ripristino dopo lo riprova`() {
+        store = DirettaStore(preferenze(context, "diretta_limiti_fallita"))
+        val account = server()
+        val d = nuovaDiretta(account, allaChiusura = { throw IllegalStateException("WorkManager non risponde") })
+        d.accendi("g-1", "Padel", foto(1))
+        attendi("la prima pubblicazione") { finto!!.quante("/rest/v1/rpc/publish_live_from_app") >= 1 }
+
+        d.chiudi(conRisultato = true)
+
+        attendi("la partita non e' piu' in volo") { d.chiusureInVolo.value.isEmpty() }
+        assertEquals("il segno resta", listOf(DirettaChiusuraRichiesta(UUID_PARTITA, "g-1", conRisultato = true)), store.pendenti())
+        assertTrue("l'eccezione non arriva al gestore dello scope", sfuggiti.isEmpty())
+
+        // Il prossimo avvio la ritrova e, con WorkManager di nuovo vivo, la accoda.
+        val riuscita = nuovaDiretta(account)
+        riuscita.riprendi(foto = null)
+        attendi("la chiusura accodata") { chiusure.isNotEmpty() }
+        attendi("il segno tolto") { store.pendenti().isEmpty() }
+    }
+
+    // --- Un gruppo da cui si e' stati tolti (debito 16) ---
+
+    @Test
+    fun `fuoriDalGruppo spegne la diretta verso quel gruppo con un motivo suo e senza chiuderla sul server`() {
+        store = DirettaStore(preferenze(context, "diretta_limiti_fuori"))
+        val d = nuovaDiretta(server())
+        d.accendi("g-1", "Padel", foto(1))
+        attendi("la prima pubblicazione") { finto!!.quante("/rest/v1/rpc/publish_live_from_app") >= 1 }
+
+        d.fuoriDalGruppo("g-1")
+
+        assertEquals(DirettaFase.FERMA, d.stato.value.fase)
+        assertEquals(DirettaMotivo.FUORI_DAL_GRUPPO, d.stato.value.motivo)
+        assertFalse(d.acceso)
+        assertNull("niente da riprendere", store.load())
+        // Chi non e' piu' nel gruppo non puo' chiudere la riga: nessuna richiesta di chiusura, nessun segno.
+        Thread.sleep(200)
+        assertTrue(chiusure.isEmpty())
+        assertTrue(store.pendenti().isEmpty())
+    }
+
+    @Test
+    fun `fuoriDalGruppo non tocca la diretta verso un altro gruppo`() {
+        store = DirettaStore(preferenze(context, "diretta_limiti_altro_gruppo"))
+        val d = nuovaDiretta(server())
+        d.accendi("g-1", "Padel", foto(1))
+        attendi("la prima pubblicazione") { finto!!.quante("/rest/v1/rpc/publish_live_from_app") >= 1 }
+
+        d.fuoriDalGruppo("g-2")
+
+        assertTrue(d.acceso)
+        assertEquals(DirettaFase.IN_CORSO, d.stato.value.fase)
+        assertEquals(DirettaSalvata(UUID_PARTITA, "g-1", "Padel"), store.load())
+    }
+
+    @Test
+    fun `fuoriDalGruppo dimentica la diretta salvata verso quel gruppo prima che il ripristino la riprenda`() {
+        store = DirettaStore(preferenze(context, "diretta_limiti_salvata"))
+        store.save(DirettaSalvata(UUID_PARTITA, "g-1", "Padel"))
+        val d = nuovaDiretta(server())
+
+        d.fuoriDalGruppo("g-1")
+        d.riprendi(foto(3))
+
+        assertNull(store.load())
+        assertFalse(d.acceso)
+        assertEquals(DirettaFase.SPENTA, d.stato.value.fase)
+        Thread.sleep(200)
+        assertEquals(0, finto!!.quante("/rest/v1/rpc/publish_live_from_app"))
     }
 
     // --- Error nel ciclo (debito 9) ---

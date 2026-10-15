@@ -45,9 +45,11 @@ interface DirettaAvviatore {
  * il servizio non si ritenta fino alla diretta dopo.
  */
 class DirettaServizioControllo(
-    stato: StateFlow<DirettaStato>,
+    private val stato: StateFlow<DirettaStato>,
     private val avviatore: DirettaAvviatore,
     scope: CoroutineScope,
+    /** L'avviso ordinario dopo il tetto delle 6 ore (debito 15): lo mostra [scaduto], lo toglie la fine della diretta. */
+    private val avviso: DirettaAvviso = NessunAvviso,
 ) {
     private val lock = Any()
     private var richiesto = false
@@ -64,10 +66,13 @@ class DirettaServizioControllo(
         synchronized(lock) {
             if (serve && !richiesto) {
                 richiesto = true
+                // Un avviso della diretta di prima non vale per questa.
+                avviso.togli()
                 _fase.value = if (avviatore.avvia()) DirettaServizioFase.ATTIVO else DirettaServizioFase.NON_AVVIATO
             } else if (!serve && richiesto) {
                 // Non si ferma il servizio da qui (vedi DirettaAvviatore): lo vede da solo e se ne va.
                 richiesto = false
+                avviso.togli()
                 _fase.value = DirettaServizioFase.SPENTO
             }
         }
@@ -80,7 +85,13 @@ class DirettaServizioControllo(
 
     /** Il sistema ha chiamato `onTimeout` (tetto delle 6 ore di `dataSync`): il servizio si ferma, la diretta no. */
     fun scaduto() {
-        synchronized(lock) { if (richiesto) _fase.value = DirettaServizioFase.SCADUTO }
+        synchronized(lock) {
+            if (!richiesto) return
+            _fase.value = DirettaServizioFase.SCADUTO
+            // Niente piu' notifica fissa: un avviso ordinario dice che la diretta va avanti solo con l'app aperta. Sotto lo
+            // stesso blocco di `sulloStato`, cosi' una diretta appena finita non lascia un avviso che nessuno toglie.
+            avviso.mostra(stato.value.gruppo)
+        }
     }
 }
 

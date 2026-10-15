@@ -401,6 +401,63 @@ class DirettaServiceTest {
         assertEquals(app.getString(R.string.diretta_live_service_timeout, "Padel"), riga.text)
     }
 
+    // --- Dopo il tetto delle 6 ore: l'avviso ordinario (debito 15) ---
+
+    private fun avviso(): Notification? =
+        shadowOf(app.getSystemService(NotificationManager::class.java)).getNotification(DirettaAvvisoNotifica.ID_AVVISO)
+
+    @Test
+    fun `dopo il tetto delle 6 ore compare una notifica ordinaria che dice di tenere l'app aperta`() {
+        creaServizi()
+        servizi.diretta.accendi("g-1", "Padel", foto(1))
+        attendi("l'avvio dal controllo") { servizi.direttaServizio.fase.value == DirettaServizioFase.ATTIVO }
+        val servizio = avviaIlServizio()
+        assertNull("prima del tetto non c'e'", avviso())
+
+        servizio.onTimeout(1, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+
+        val n = avviso()
+        assertNotNull(n)
+        assertEquals(app.getString(R.string.diretta_live_service_timeout, "Padel"), testo(n!!))
+        assertEquals(app.getString(R.string.diretta_live, "Padel"), titolo(n))
+        assertEquals(
+            "stesso canale della notifica fissa: importanza bassa, nessun suono",
+            ScoreboardEssentialApplication.CHANNEL_ID_DIRETTA,
+            n.channelId,
+        )
+        assertEquals(R.drawable.notifica_sensors, n.smallIcon.resId)
+        assertEquals("ordinaria: si puo' scorrere via", 0, n.flags and Notification.FLAG_ONGOING_EVENT)
+        assertEquals("la notifica fissa e' sparita", null, notificaInCorso())
+        assertNotNull("tocco = apre l'app", n.contentIntent)
+    }
+
+    @Test
+    fun `l'avviso si toglie quando la diretta finisce`() {
+        creaServizi()
+        servizi.diretta.accendi("g-1", "Padel", foto(1))
+        attendi("l'avvio dal controllo") { servizi.direttaServizio.fase.value == DirettaServizioFase.ATTIVO }
+        avviaIlServizio().onTimeout(1, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        assertNotNull(avviso())
+
+        servizi.diretta.spegni()
+
+        attendi("l'avviso tolto") { avviso() == null }
+    }
+
+    @Test
+    fun `l'avviso si toglie quando il servizio riparte`() {
+        creaServizi()
+        servizi.diretta.accendi("g-1", "Padel", foto(1))
+        attendi("l'avvio dal controllo") { servizi.direttaServizio.fase.value == DirettaServizioFase.ATTIVO }
+        avviaIlServizio().onTimeout(1, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        assertNotNull(avviso())
+
+        val riavviato = avviaIlServizio()
+
+        assertNull(avviso())
+        assertNotNull("la notifica fissa e' tornata", shadowOf(riavviato).lastForegroundNotification)
+    }
+
     // --- Avvio negato in secondo piano ---
 
     @Test

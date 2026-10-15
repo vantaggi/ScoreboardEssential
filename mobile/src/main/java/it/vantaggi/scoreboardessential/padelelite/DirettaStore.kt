@@ -59,24 +59,47 @@ class DirettaStore(
                 }
             }
 
-    /** Segna la chiusura PRIMA di consegnarla. Scrive subito su disco: e' l'ultima cosa che un processo ucciso lascia. */
+    /**
+     * Segna la chiusura PRIMA di consegnarla. Scrive subito su disco: e' l'ultima cosa che un processo ucciso lascia.
+     * Lettura e scrittura stanno sotto un blocco unico (anche fra due [DirettaStore] sullo stesso file): chi toglie il
+     * segno di una chiusura gia' scritta in WorkManager gira su un altro thread, e non deve cancellare uno appena messo.
+     */
     fun segnaPendente(richiesta: DirettaChiusuraRichiesta) {
-        val altre = pendenti().filter { it.matchId != richiesta.matchId } + richiesta
-        prefs.edit(commit = true) { putStringSet(KEY_PENDING, altre.map(::codifica).toSet()) }
-    }
-
-    /** Toglie il segno dopo che il lavoro di chiusura e' stato accodato. */
-    fun togliPendente(matchId: String) {
-        val restano = pendenti().filter { it.matchId != matchId }
-        prefs.edit(commit = true) {
-            if (restano.isEmpty()) remove(KEY_PENDING) else putStringSet(KEY_PENDING, restano.map(::codifica).toSet())
+        synchronized(LOCK) {
+            val altre = pendenti().filter { it.matchId != richiesta.matchId } + richiesta
+            prefs.edit(commit = true) { putStringSet(KEY_PENDING, altre.map(::codifica).toSet()) }
         }
     }
+
+    /** Toglie il segno dopo che il lavoro di chiusura e' stato scritto in WorkManager. */
+    fun togliPendente(matchId: String) {
+        synchronized(LOCK) {
+            val restano = pendenti().filter { it.matchId != matchId }
+            prefs.edit(commit = true) {
+                if (restano.isEmpty()) remove(KEY_PENDING) else putStringSet(KEY_PENDING, restano.map(::codifica).toSet())
+            }
+        }
+    }
+
+    /**
+     * All'avvio del processo, prima di ogni altra cosa (debito 13): le chiusure rimaste segnate dal processo di prima,
+     * da accodare. Se una di esse chiude la diretta salvata (il processo e' morto fra il segno e la pulizia) la diretta
+     * salvata si dimentica adesso: tolto il segno, nient'altro la proteggerebbe dal ripristino. I segni non si tolgono
+     * qui: li toglie chi accoda, dopo che il lavoro e' stato scritto.
+     */
+    fun chiusureRimaste(): List<DirettaChiusuraRichiesta> =
+        synchronized(LOCK) {
+            val rimaste = pendenti()
+            val salvata = load()
+            if (salvata != null && rimaste.any { it.matchId == salvata.matchId }) clear()
+            rimaste
+        }
 
     private fun codifica(r: DirettaChiusuraRichiesta) = listOf(r.matchId, r.groupId, if (r.conRisultato) "1" else "0").joinToString(SEP)
 
     companion object {
         const val FILE = "padel_elite_diretta"
+        private val LOCK = Any()
         private const val KEY_PENDING = "chiusure_pendenti"
         private const val SEP = "|"
         private const val KEY_MATCH = "match_id"

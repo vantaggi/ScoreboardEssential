@@ -2,6 +2,7 @@ package it.vantaggi.scoreboardessential.padelelite
 
 import android.content.Context
 import android.util.Log
+import androidx.work.await
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.SportRegistry
@@ -61,6 +62,8 @@ class PadelEliteServices(
     private val direttaMinIntervalMs: Long = Diretta.MIN_INTERVAL_MS,
     /** Chi avvia il servizio in primo piano della diretta (D-3): i test ne danno uno finto. */
     private val direttaAvviatore: DirettaAvviatore = DirettaServiceAvviatore(context),
+    /** L'avviso ordinario dopo il tetto delle 6 ore del servizio (debito 15): i test ne danno uno finto. */
+    private val direttaAvviso: DirettaAvviso = DirettaAvvisoNotifica(context),
 ) {
     /** La funzione e' accesa solo con la configurazione completa. */
     val isEnabled: Boolean get() = config.isConfigured
@@ -115,10 +118,11 @@ class PadelEliteServices(
                 direttaStoreFactory(),
                 direttaScope,
                 collegamenti = { repository.padelLinkMap(it) },
-                allaChiusura = { DirettaChiusuraWorker.enqueue(context, it) },
+                // Ritorna quando il lavoro e' scritto in WorkManager: solo allora il segno della chiusura in sospeso si toglie.
+                allaChiusura = { DirettaChiusuraWorker.enqueue(context, it).await() },
                 minIntervalMs = direttaMinIntervalMs,
             )
-        d to DirettaServizioControllo(d.stato, direttaAvviatore, direttaScope)
+        d to DirettaServizioControllo(d.stato, direttaAvviatore, direttaScope, direttaAvviso)
     }
 
     /** Come sta la chiusura finale della diretta di [matchId] (lavoro in coda): "in corso" mentre ritenta, "fallita" se rinuncia. */
@@ -131,7 +135,9 @@ class PadelEliteServices(
      * il ruolo salvato e non vedrebbe l'interruttore; un admin declassato lo vedrebbe ancora. Una richiesta sola, nessun errore
      * mostrato se fallisce (rete, sessione scaduta, qualunque eccezione): resta l'ultimo ruolo letto, e il server comanda
      * comunque (`not_authorized`). Senza configurazione, accesso o gruppo scelto non fa niente, ne' consuma la lettura.
-     * True se il ruolo salvato e' cambiato (l'interfaccia puo' ridisegnarsi).
+     * Se la lettura riesce e il gruppo scelto non c'e' piu' nell'elenco (l'account e' stato tolto dal gruppo, debito 16) il gruppo
+     * scelto si dimentica e la diretta verso di esso si spegne ([Diretta.fuoriDalGruppo]); un errore di rete non vale come "tolto".
+     * True se il ruolo salvato e' cambiato o il gruppo e' stato dimenticato (l'interfaccia puo' ridisegnarsi).
      */
     suspend fun aggiornaIlRuolo(): Boolean {
         if (!isEnabled || account.session() == null) return false
@@ -141,9 +147,17 @@ class PadelEliteServices(
         return try {
             val esito = account.groups()
             if (esito !is GroupsOutcome.Ok) return false
-            val gruppo = esito.groups.firstOrNull { it.id == scelto } ?: return false
+            val gruppo = esito.groups.firstOrNull { it.id == scelto }
             // Nel frattempo l'utente puo' aver scelto un altro gruppo, o essere uscito: il risultato vecchio non si scrive.
             if (account.session() == null || account.selectedGroup()?.first != scelto) return false
+            if (gruppo == null) {
+                // Una lettura riuscita che non lo trova piu' nell'elenco: e' stato tolto dal gruppo (un errore di rete non arriva
+                // fin qui, e' `GroupsOutcome.Network`). Il gruppo scelto si dimentica, come per la sessione persa, e la diretta
+                // verso quel gruppo si spegne col suo motivo invece di aspettare che il server dica `not_authorized`.
+                account.clearSelectedGroup()
+                diretta.fuoriDalGruppo(scelto)
+                return true
+            }
             account.selectGroup(gruppo)
             gruppo.role != prima
         } catch (e: CancellationException) {

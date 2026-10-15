@@ -4,6 +4,9 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import it.vantaggi.scoreboardessential.database.AppDatabase
+import it.vantaggi.scoreboardessential.padelelite.DirettaAvvisoNotifica
+import it.vantaggi.scoreboardessential.padelelite.DirettaChiusuraWorker
+import it.vantaggi.scoreboardessential.padelelite.DirettaStore
 import it.vantaggi.scoreboardessential.padelelite.PadelEliteConfig
 import it.vantaggi.scoreboardessential.padelelite.PadelEliteServices
 import it.vantaggi.scoreboardessential.repository.ColorRepository
@@ -13,6 +16,8 @@ import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.utils.AltoContrasto
 import it.vantaggi.scoreboardessential.utils.MovimentoRidotto
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 class ScoreboardEssentialApplication : Application() {
     val database by lazy { AppDatabase.getDatabase(this) }
@@ -33,6 +38,7 @@ class ScoreboardEssentialApplication : Application() {
         MovimentoRidotto.registra(this)
         AltoContrasto.registra(this)
         createNotificationChannel()
+        sistemaLaDirettaDiPrima()
     }
 
     companion object {
@@ -42,6 +48,22 @@ class ScoreboardEssentialApplication : Application() {
 
         /** La notifica fissa della diretta (D-3): importanza bassa, niente suono ne' vibrazione. */
         const val CHANNEL_ID_DIRETTA = "scoreboard_diretta_channel"
+    }
+
+    /**
+     * Cio' che la diretta del processo di prima ha lasciato, a ogni avvio del processo e **senza aprire la schermata** (D-3,
+     * debiti 13 e 15): un messaggio dell'orologio fa risorgere il processo senza `MainViewModel`, e le chiusure rimaste segnate
+     * restavano li' finche' l'app non si apriva. Si leggono solo le preferenze (nessun Keystore, nessuna rete, niente
+     * `padelElite`); i lavori si scrivono su un altro thread. L'avviso del tetto delle 6 ore e' di una diretta che il processo
+     * morto non trasmette piu': si toglie.
+     */
+    private fun sistemaLaDirettaDiPrima() {
+        DirettaChiusuraWorker.accodaLeRimaste(
+            this,
+            DirettaStore(getSharedPreferences(DirettaStore.FILE, MODE_PRIVATE)),
+            CoroutineScope(Dispatchers.IO),
+        )
+        DirettaAvvisoNotifica(this).togli()
     }
 
     private fun createNotificationChannel() {

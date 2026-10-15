@@ -1,6 +1,7 @@
 package it.vantaggi.scoreboardessential.padelelite
 
 import android.content.Context
+import android.util.Log
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -9,12 +10,18 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.Operation
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.await
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 /**
@@ -179,14 +186,47 @@ class DirettaChiusuraWorker(
                 .getWorkInfosForUniqueWorkFlow(workName(matchId))
                 .map(::chiusuraFase)
 
-        /** KEEP: una chiusura gia' in coda per questa partita non si sostituisce (un secondo tocco non ne fa due). */
+        /**
+         * KEEP: una chiusura gia' in coda per questa partita non si sostituisce (un secondo tocco non ne fa due). L'[Operation]
+         * restituita finisce quando il lavoro e' scritto nel database di WorkManager: chi deve togliere il segno della chiusura
+         * in sospeso ([DirettaStore.pendenti]) aspetta quella, non il ritorno di questa funzione.
+         */
         fun enqueue(
             context: Context,
             richiesta: DirettaChiusuraRichiesta,
-        ) {
+        ): Operation =
             WorkManager
                 .getInstance(context)
                 .enqueueUniqueWork(workName(richiesta.matchId), ExistingWorkPolicy.KEEP, request(richiesta))
+
+        /**
+         * All'avvio del processo (debito 13): accoda le chiusure rimaste segnate dal processo di prima, **anche se nessuno apre la
+         * schermata** (un messaggio dell'orologio fa risorgere il processo senza `MainViewModel`). Una per partita e idempotente
+         * (KEEP): se poi il ripristino le ritrova, non ne nascono due. Il segno si toglie solo quando il lavoro e' scritto; se la
+         * scrittura fallisce resta, e lo ritrova il prossimo avvio. Ritorna il lavoro, per chi vuole aspettarlo (i test).
+         */
+        fun accodaLeRimaste(
+            context: Context,
+            store: DirettaStore,
+            scope: CoroutineScope,
+        ): Job? {
+            // Sincrono e subito: e' l'istante in cui ogni segno e' certamente di un processo precedente.
+            val rimaste = store.chiusureRimaste()
+            if (rimaste.isEmpty()) return null
+            return scope.launch {
+                for (richiesta in rimaste) {
+                    try {
+                        enqueue(context, richiesta).await()
+                        store.togliPendente(richiesta.matchId)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Log.w(TAG, "chiusura in sospeso non accodata: il segno resta per il prossimo avvio", e)
+                    }
+                }
+            }
         }
+
+        private const val TAG = "DirettaChiusura"
     }
 }

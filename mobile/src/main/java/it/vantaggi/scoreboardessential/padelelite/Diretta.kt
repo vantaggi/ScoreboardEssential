@@ -53,6 +53,9 @@ enum class DirettaMotivo {
 
     // Ferma
     NON_ADMIN,
+
+    /** La rilettura del ruolo non trova piu' l'account nel gruppo: non si trasmette piu' e non si puo' nemmeno chiudere sul server. */
+    FUORI_DAL_GRUPPO,
     FILE_NON_VALIDO,
     FILE_TROPPO_GRANDE,
     TROPPI_PUNTI,
@@ -108,7 +111,7 @@ data class DirettaChiusuraRichiesta(
  *
  * **Cosa persiste.** [DirettaSalvata] (partita, gruppo): al ripristino [riprendi] la riaccende. E le chiusure
  * in sospeso ([DirettaStore.pendenti]): una chiusura si segna PRIMA di consegnarla e si toglie DOPO che e'
- * stata accodata, cosi' un processo ucciso nel mezzo la ritrova al riavvio.
+ * scritta in WorkManager, cosi' un processo ucciso nel mezzo la ritrova al riavvio (all'avvio del processo: [DirettaChiusuraWorker.accodaLeRimaste]).
  *
  * La chiusura non passa di qui: [chiudi] ferma la trasmissione e consegna la richiesta a [allaChiusura]
  * (WorkManager, unico per partita), perche' il risultato finale non deve perdersi.
@@ -119,7 +122,8 @@ class Diretta(
     private val scope: CoroutineScope,
     /** I collegamenti (id locale -> id della dashboard) del gruppo di destinazione, per `padelPlayerId`. */
     private val collegamenti: suspend (groupId: String) -> Map<Int, Int> = { emptyMap() },
-    private val allaChiusura: (DirettaChiusuraRichiesta) -> Unit = {},
+    /** Mette in coda la chiusura e ritorna quando il lavoro e' **scritto** (non solo chiesto): solo allora il segno in sospeso si toglie. */
+    private val allaChiusura: suspend (DirettaChiusuraRichiesta) -> Unit = {},
     private val minIntervalMs: Long = MIN_INTERVAL_MS,
     private val retryBaseMs: Long = RETRY_BASE_MS,
     private val retryLentoMs: Long = RETRY_LENTO_MS,
@@ -230,6 +234,24 @@ class Diretta(
     fun spegni() = chiudi(conRisultato = false)
 
     /**
+     * L'account non fa piu' parte del gruppo [groupId] (la rilettura del ruolo non lo trova piu' nell'elenco, debito 16): la
+     * diretta verso quel gruppo si spegne con un motivo suo. **Senza chiusura sul server**: chi non e' piu' nel gruppo non
+     * potrebbe chiuderla, la richiesta tornerebbe `not_authorized` e il foglio direbbe "non chiusa" per niente; la riga viva
+     * la chiude la dashboard o la pulizia delle 6 ore. Una diretta salvata ma non ancora ripresa si dimentica. Quella verso
+     * un altro gruppo non si tocca.
+     */
+    fun fuoriDalGruppo(groupId: String) {
+        synchronized(lock) {
+            val a = attiva
+            if (a == null) {
+                if (store.load()?.groupId == groupId) store.clear()
+            } else if (a.groupId == groupId) {
+                ferma(a, DirettaMotivo.FUORI_DAL_GRUPPO)
+            }
+        }
+    }
+
+    /**
      * Ferma la trasmissione e consegna la chiusura: [conRisultato] a partita finita (il lavoro in coda
      * rifa' il file finale dal database), senza se scartata o interrotta. Dopo questa chiamata nessuna
      * pubblicazione parte piu' per quella partita. Senza una diretta accesa non fa niente.
@@ -293,18 +315,31 @@ class Diretta(
             _chiusureInVolo.value = _chiusureInVolo.value + richiesta.matchId
             scope.launch {
                 vecchio.join()
-                synchronized(lock) {
-                    _chiusureInVolo.value = _chiusureInVolo.value - richiesta.matchId
-                    consegnaSubito(richiesta)
-                }
+                synchronized(lock) { consegnaSubito(richiesta) }
             }
         }
     }
 
-    /** Accoda la chiusura e, solo dopo, toglie il segno di quella in sospeso: se il processo muore nel mezzo, al riavvio si ritrova. */
+    /**
+     * Accoda la chiusura e toglie il segno di quella in sospeso **solo quando il lavoro e' scritto** in WorkManager (debito 13):
+     * `enqueueUniqueWork` e' asincrono, e togliere il segno al suo ritorno lasciava una finestra in cui un processo ucciso perdeva
+     * la chiusura. Se la scrittura fallisce il segno resta e lo ritrova il prossimo avvio. Fino ad allora la partita e' "in volo":
+     * il ripristino non la accoda una seconda volta e il foglio dice gia' "Chiusura in corso".
+     */
     private fun consegnaSubito(richiesta: DirettaChiusuraRichiesta) {
-        allaChiusura(richiesta)
-        store.togliPendente(richiesta.matchId)
+        _chiusureInVolo.value = _chiusureInVolo.value + richiesta.matchId
+        scope.launch {
+            try {
+                allaChiusura(richiesta)
+                store.togliPendente(richiesta.matchId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "chiusura non accodata: il segno resta per il prossimo avvio", e)
+            } finally {
+                synchronized(lock) { _chiusureInVolo.value = _chiusureInVolo.value - richiesta.matchId }
+            }
+        }
     }
 
     /** Un'accensione finita male: ferma e non riparte da sola. [chiudiSulServer] solo se il file c'era e il server lo sa. */
