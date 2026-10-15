@@ -13,6 +13,9 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import it.vantaggi.scoreboardessential.core.Serata
+import it.vantaggi.scoreboardessential.padelelite.SerataDashboard
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /**
  * Una riga della schermata Serata, come la vede l'adapter: tutto cio' che serve a disegnarla e niente
@@ -132,8 +135,14 @@ object ChiaviSerata {
     const val STESSE_COPPIE = "stesse"
     const val SCAMBIA_LATI = "lati"
     const val OSPITE = "ospite"
+    const val DASHBOARD_PRESENTI = "dashboard:presenti"
+    private const val DASHBOARD_GIRONE = "dashboard:girone:"
 
     fun posto(i: Int) = "$POSTO$i"
+
+    fun girone(indice: Int) = "$DASHBOARD_GIRONE$indice"
+
+    fun gironeDa(chiave: String): Int? = chiave.takeIf { it.startsWith(DASHBOARD_GIRONE) }?.removePrefix(DASHBOARD_GIRONE)?.toIntOrNull()
 
     fun panchina(id: Int) = "$PANCHINA$id"
 
@@ -262,6 +271,120 @@ object RigheDellaSerata {
                 attiva = !stato.inCorso,
             )
     }
+
+    /**
+     * Le proposte della dashboard: "Usa i presenti" (se qualcuno ha confermato) e un girone per riga. Ogni riga
+     * e' un comando che cambia i presenti; la spunta dice quale e' in uso. Vuoto finche' la serata non e' letta.
+     */
+    fun dashboard(
+        contesto: Context,
+        stato: StatoDellaSerata,
+    ): List<RigaSerata> {
+        val pronta = stato.dashboard as? SerataDashboard.Pronta ?: return emptyList()
+        val vivi = !stato.inCorso
+        val presenti = pronta.presenti.voci.size
+        val righe = mutableListOf<RigaSerata>()
+        if (presenti > 0) {
+            righe +=
+                RigaSerata(
+                    chiave = ChiaviSerata.DASHBOARD_PRESENTI,
+                    titolo = contesto.getString(R.string.serata_dashboard_use_present),
+                    descrizione = contesto.getString(R.string.serata_dashboard_use_present_description, presenti),
+                    nota = presenti.toString(),
+                    icona = R.drawable.ic_event_available,
+                    selezionata = stato.inUso(PropostaDashboard.Presenti),
+                    mostraLaSpunta = true,
+                    attiva = vivi,
+                )
+        }
+        pronta.gironi.forEachIndexed { indice, girone ->
+            val lettera = letteraDelGirone(indice)
+            val nomi = girone.traduzione.voci.joinToString(", ") { it.nome }
+            righe +=
+                RigaSerata(
+                    chiave = ChiaviSerata.girone(indice),
+                    titolo = contesto.getString(R.string.serata_dashboard_pool, lettera, nomi),
+                    descrizione = contesto.getString(R.string.serata_dashboard_pool_description, lettera, nomi),
+                    icona = R.drawable.ic_group,
+                    selezionata = stato.inUso(PropostaDashboard.Girone(indice)),
+                    mostraLaSpunta = true,
+                    attiva = vivi,
+                )
+        }
+        return righe
+    }
+
+    /**
+     * La riga di stato del gruppo della dashboard, in frase: la serata e quanti presenti, poi cosa succede a chi
+     * non e' collegato o non e' nella rosa, e i gironi di un'altra serata. Null quando il gruppo non c'e'.
+     */
+    fun statoDashboard(
+        contesto: Context,
+        stato: StatoDellaSerata,
+    ): String? {
+        val risorse = contesto.resources
+        return when (val dashboard = stato.dashboard) {
+            SerataDashboard.Spenta -> {
+                null
+            }
+
+            SerataDashboard.InLettura -> {
+                contesto.getString(R.string.serata_dashboard_loading)
+            }
+
+            SerataDashboard.NonConfigurata -> {
+                contesto.getString(R.string.serata_dashboard_not_configured)
+            }
+
+            SerataDashboard.Errore -> {
+                contesto.getString(R.string.serata_dashboard_error)
+            }
+
+            SerataDashboard.AccessoScaduto -> {
+                contesto.getString(R.string.serata_dashboard_login)
+            }
+
+            SerataDashboard.FuoriDalGruppo -> {
+                contesto.getString(R.string.serata_dashboard_not_member)
+            }
+
+            is SerataDashboard.Pronta -> {
+                val giorno = giornoDellaSerata(contesto, dashboard.giorno)
+                val traduzione = dashboard.presenti
+                val n = traduzione.voci.size
+                buildList {
+                    add(
+                        if (n == 0) {
+                            contesto.getString(R.string.serata_dashboard_nobody, giorno)
+                        } else {
+                            risorse.getQuantityString(R.plurals.serata_dashboard_ready, n, giorno, n)
+                        },
+                    )
+                    if (traduzione.ospiti > 0) {
+                        add(risorse.getQuantityString(R.plurals.serata_dashboard_guests, traduzione.ospiti, traduzione.ospiti))
+                    }
+                    if (traduzione.nonTrovati > 0) {
+                        add(risorse.getQuantityString(R.plurals.serata_dashboard_missing, traduzione.nonTrovati, traduzione.nonTrovati))
+                    }
+                    if (dashboard.gironiDiUnAltraSerata) add(contesto.getString(R.string.serata_dashboard_other_evening))
+                }.joinToString(" ")
+            }
+        }
+    }
+
+    /** "martedi' 20 ottobre", nella lingua dell'app. */
+    fun giornoDellaSerata(
+        contesto: Context,
+        giorno: LocalDate,
+    ): String {
+        val lingua = contesto.resources.configuration.locales[0]
+        return DateTimeFormatter.ofPattern("EEEE d MMMM", lingua).format(giorno)
+    }
+
+    /** A, B, C... come i gironi della dashboard; dopo la Z il numero. */
+    private fun letteraDelGirone(indice: Int): String = if (indice < LETTERE) ('A' + indice).toString() else (indice + 1).toString()
+
+    private const val LETTERE = 26
 
     /** "2 partite", o niente prima della prima. */
     private fun partite(
