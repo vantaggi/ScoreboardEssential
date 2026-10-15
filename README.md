@@ -45,7 +45,9 @@ A multi-module Android project with a clean separation of concerns:
   sync in both directions. Scoring on the watch prompts a **scorer selection** that is sent back to
   the phone and attributed to the player; the full roster is synced to the watch so the picker is
   populated.
-* **Offline-first** — everything works without an internet connection; no data leaves the device.
+* **Offline-first** — everything works without an internet connection or an account; without a
+  Padel Elite sign-in no data leaves the phone and watch. Sending padel matches to Padel Elite is
+  optional and happens only on the user's command (see below).
 * **Localization** — English (default) and Italian.
 
 ## Building
@@ -99,5 +101,10 @@ only new runtime dependency is `androidx.work`. No Supabase or OkHttp library, n
 
 ## Data & Privacy
 
-All data is stored locally in a Room database; nothing is uploaded. Android auto-backup is
-disabled (`allowBackup="false"`). See [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
+All data is stored locally in a Room database. Without a Padel Elite sign-in nothing is uploaded:
+phone and watch talk only to each other, through the Wearable Data Layer. With a Padel Elite build
+and sign-in (optional), the phone sends to the group's Supabase only what the user asks for: the
+email and password to sign in, a finished padel match (players' names as typed and the point by
+point) to the group's inbox, and, with the live switch (owners and admins), the match after every
+point. The session is encrypted with an Android Keystore key. No ads, analytics or crash reporting.
+Android cloud backup is disabled (`allowBackup="false"`). See [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
