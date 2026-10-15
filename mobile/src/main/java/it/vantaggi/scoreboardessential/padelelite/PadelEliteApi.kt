@@ -1,5 +1,8 @@
 package it.vantaggi.scoreboardessential.padelelite
 
+import it.vantaggi.scoreboardessential.core.ConfigurazioneSerata
+import it.vantaggi.scoreboardessential.core.GironiSalvati
+import it.vantaggi.scoreboardessential.core.ProssimaSerata
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -8,6 +11,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.time.LocalDate
 
 /** La sessione di Supabase Auth: i due token, la scadenza dell'accesso e chi e' l'utente. */
 data class PadelEliteSession(
@@ -78,6 +82,23 @@ sealed interface RosterResult {
     data object NotAuthorized : RosterResult
 
     data object Network : RosterResult
+}
+
+/**
+ * L'esito di una lettura della serata dalla dashboard (`v2_settings`, `v2_rsvp`): gli errori come per la
+ * rosa. 401 e' [NotAuthenticated] (chi chiama rinnova il token una volta), 403 [NotAuthorized], il resto
+ * che non va (rete, 5xx, corpo che non e' una lista) [Network].
+ */
+sealed interface LetturaDashboard<out T> {
+    data class Ok<out T>(
+        val valore: T,
+    ) : LetturaDashboard<T>
+
+    data object NotAuthenticated : LetturaDashboard<Nothing>
+
+    data object NotAuthorized : LetturaDashboard<Nothing>
+
+    data object Network : LetturaDashboard<Nothing>
 }
 
 /** La voce della casella d'arrivo, com'e' restituita da `submit_scoreboard_match` (senza il file). */
@@ -207,7 +228,8 @@ sealed interface LiveResult {
  * Le chiamate a Supabase che l'app usa, scritte a mano su `HttpURLConnection`.
  *
  * Sono tre famiglie, tutte REST: GoTrue (`/auth/v1/token`) per accesso e rinnovo, PostgREST
- * (`/rest/v1/group_members`, `/rest/v1/v2_players`, `/rest/v1/v2_scoreboard_inbox`) per leggere, e la RPC
+ * (`/rest/v1/group_members`, `/rest/v1/v2_players`, `/rest/v1/v2_scoreboard_inbox`, e per la Serata
+ * `/rest/v1/v2_settings` e `/rest/v1/v2_rsvp`) per leggere, e la RPC
  * `submit_scoreboard_match` per consegnare la partita. Una libreria (supabase-kt, OkHttp) avrebbe
  * portato un'altra dozzina di dipendenze per quattro richieste; su Android `HttpURLConnection` e'
  * gia' OkHttp, e il TLS e i timeout sono quelli di sistema.
@@ -361,6 +383,104 @@ class PadelEliteApi(
                 )
             }
         }
+    }
+
+    /**
+     * La serata configurata del gruppo (`v2_settings`, chiave `venue_config`): giorno della settimana e prima
+     * prenotazione. `Ok(null)` se il gruppo non ne ha una, o se il giorno manca o non e' fra 0 e 6 (non c'e'
+     * una serata da calcolare). Ora e durata come le legge la dashboard ([ProssimaSerata]).
+     */
+    suspend fun fetchVenueConfig(
+        accessToken: String,
+        groupId: String,
+    ): LetturaDashboard<ConfigurazioneSerata?> = leggiImpostazione(accessToken, groupId, CHIAVE_SERATA) { parseVenueConfig(it) }
+
+    /**
+     * I gironi salvati della serata (`v2_settings`, chiave `gironi_serata`, formato `v: 1`). `Ok(null)` se non
+     * ce ne sono o se il formato non e' quello che l'app conosce: una versione futura si ignora, non si indovina.
+     */
+    suspend fun fetchGironi(
+        accessToken: String,
+        groupId: String,
+    ): LetturaDashboard<GironiSalvati?> = leggiImpostazione(accessToken, groupId, CHIAVE_GIRONI) { parseGironi(it) }
+
+    /**
+     * Gli id di `v2_players` confermati (`status = confirmed`) per la serata del [giorno], nell'ordine in cui
+     * hanno risposto (e a parita' per id): e' l'ordine di arrivo della serata del telefono.
+     */
+    suspend fun fetchConfirmed(
+        accessToken: String,
+        groupId: String,
+        giorno: LocalDate,
+    ): LetturaDashboard<List<Int>> {
+        val gruppo = URLEncoder.encode("eq.$groupId", "UTF-8")
+        val path =
+            "/rest/v1/v2_rsvp?group_id=$gruppo&session_date=eq.$giorno&status=eq.confirmed" +
+                "&select=player_id&order=created_at.asc,player_id.asc"
+        return leggiRighe(accessToken, path) { righe ->
+            (0 until righe.length())
+                .mapNotNull { i -> righe.optJSONObject(i)?.optInt("player_id", 0)?.takeIf { it > 0 } }
+                .distinct()
+        }
+    }
+
+    /** La riga di `v2_settings` con chiave [chiave] del gruppo: il suo `value` (null se la riga non c'e'). */
+    private suspend fun <T> leggiImpostazione(
+        accessToken: String,
+        groupId: String,
+        chiave: String,
+        interpreta: (JSONObject?) -> T,
+    ): LetturaDashboard<T> {
+        val gruppo = URLEncoder.encode("eq.$groupId", "UTF-8")
+        val path = "/rest/v1/v2_settings?group_id=$gruppo&key=eq.$chiave&select=value"
+        return leggiRighe(accessToken, path) { righe -> interpreta(righe.optJSONObject(0)?.optJSONObject("value")) }
+    }
+
+    private suspend fun <T> leggiRighe(
+        accessToken: String,
+        path: String,
+        interpreta: (JSONArray) -> T,
+    ): LetturaDashboard<T> {
+        val reply = send("GET", path, accessToken, null) ?: return LetturaDashboard.Network
+        return when {
+            reply.status == 401 -> LetturaDashboard.NotAuthenticated
+            reply.status == 403 -> LetturaDashboard.NotAuthorized
+            reply.status !in 200..299 -> LetturaDashboard.Network
+            else -> parseArray(reply.body)?.let { LetturaDashboard.Ok(interpreta(it)) } ?: LetturaDashboard.Network
+        }
+    }
+
+    private fun parseVenueConfig(valore: JSONObject?): ConfigurazioneSerata? {
+        if (valore == null) return null
+        val giorno =
+            when (val g = valore.opt("day_of_week")) {
+                is Number -> g.toDouble().takeIf { it % 1.0 == 0.0 }?.toInt()
+                is String -> g.trim().toIntOrNull()
+                else -> null
+            }
+        if (giorno == null || giorno !in 0..6) return null
+        // La prima prenotazione, come la dashboard (non la piu' presto): senza prenotazioni valgono 19:00 e 90 minuti.
+        val prima = valore.optJSONArray("bookings")?.optJSONObject(0)
+        return ConfigurazioneSerata(
+            giorno = giorno,
+            inizio = ProssimaSerata.ora(prima?.opt("time") as? String),
+            durataMinuti = ProssimaSerata.durata(prima?.opt("duration")?.takeIf { it != JSONObject.NULL }),
+        )
+    }
+
+    private fun parseGironi(valore: JSONObject?): GironiSalvati? {
+        if (valore == null || valore.optInt("v", 0) != FORMATO_GIRONI) return null
+        val serata = valore.optString("serata").takeIf { DATA_ISO.matches(it) } ?: return null
+        val elenco = valore.optJSONArray("gironi") ?: return null
+        val gironi =
+            (0 until elenco.length()).mapNotNull { i ->
+                val girone = elenco.optJSONArray(i) ?: return@mapNotNull null
+                (0 until girone.length())
+                    .mapNotNull { j -> girone.optInt(j, 0).takeIf { it > 0 } }
+                    .distinct()
+                    .takeIf { it.isNotEmpty() }
+            }
+        return GironiSalvati(serata, gironi)
     }
 
     /** Lo stato della voce di una partita nella casella del gruppo: `pending`, `imported` o `discarded`. */
@@ -604,5 +724,13 @@ class PadelEliteApi(
     private companion object {
         const val DEFAULT_LIFETIME_SEC = 3600L
         const val ID_FALLBACK_LENGTH = 8
+
+        /** Le due righe di `v2_settings` che la Serata legge: la serata configurata e i gironi salvati. */
+        const val CHIAVE_SERATA = "venue_config"
+        const val CHIAVE_GIRONI = "gironi_serata"
+
+        /** L'unica versione del formato dei gironi che l'app conosce (`v: 1`, PR #229 della dashboard). */
+        const val FORMATO_GIRONI = 1
+        val DATA_ISO = Regex("""\d{4}-\d{2}-\d{2}""")
     }
 }

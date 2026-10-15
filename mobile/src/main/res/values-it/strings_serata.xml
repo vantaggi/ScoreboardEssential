@@ -61,4 +61,44 @@
     <string name="serata_cannot_start">Le coppie non cambiano mentre si gioca.</string>
     <string name="serata_wrong_sport">La serata si gioca a padel o a tennis. Cambia sport dalle Impostazioni.</string>
     <string name="serata_no_pairs">Non ci sono ancora coppie da avviare. Servono almeno 4 presenti.</string>
+
+    <!-- Serata dalla dashboard: la prossima serata del gruppo scelto, i presenti confermati e i gironi salvati. -->
+    <string name="serata_dashboard_title">Dalla dashboard</string>
+    <string name="serata_dashboard_loading">Lettura della serata dalla dashboard in corso.</string>
+    <string name="serata_dashboard_not_configured">Il gruppo non ha una serata configurata nella dashboard.</string>
+    <plurals name="serata_dashboard_ready">
+        <item quantity="one">Serata di %1$s, %2$d presente.</item>
+        <item quantity="many">Serata di %1$s, %2$d presenti.</item>
+        <item quantity="other">Serata di %1$s, %2$d presenti.</item>
+    </plurals>
+    <string name="serata_dashboard_nobody">Serata di %1$s. Nessun presente confermato.</string>
+    <plurals name="serata_dashboard_guests">
+        <item quantity="one">%1$d non collegato entra come ospite.</item>
+        <item quantity="many">%1$d non collegati entrano come ospiti.</item>
+        <item quantity="other">%1$d non collegati entrano come ospiti.</item>
+    </plurals>
+    <plurals name="serata_dashboard_missing">
+        <item quantity="one">%1$d non è nella rosa del gruppo e resta fuori.</item>
+        <item quantity="many">%1$d non sono nella rosa del gruppo e restano fuori.</item>
+        <item quantity="other">%1$d non sono nella rosa del gruppo e restano fuori.</item>
+    </plurals>
+    <string name="serata_dashboard_other_evening">I gironi salvati sono di una serata diversa e non si usano.</string>
+    <string name="serata_dashboard_error">La dashboard non risponde. Controlla la connessione.</string>
+    <string name="serata_dashboard_login">Accesso a Padel Elite scaduto. Accedi di nuovo per leggere la serata.</string>
+    <string name="serata_dashboard_not_member">Questo account non legge più il gruppo scelto. Sceglilo di nuovo in Padel Elite.</string>
+    <string name="serata_dashboard_open">Apri Padel Elite</string>
+    <string name="serata_dashboard_use_present">Usa i presenti</string>
+    <string name="serata_dashboard_use_present_description">Presenti dalla dashboard: %1$d. Tocca per usarli come presenti della serata</string>
+    <string name="serata_dashboard_pool">Girone %1$s: %2$s</string>
+    <string name="serata_dashboard_pool_description">Girone %1$s: %2$s. Tocca per usarlo come presenti</string>
+    <plurals name="serata_dashboard_used">
+        <item quantity="one">%1$d presente dalla dashboard</item>
+        <item quantity="many">%1$d presenti dalla dashboard</item>
+        <item quantity="other">%1$d presenti dalla dashboard</item>
+    </plurals>
+    <plurals name="serata_dashboard_used_guests">
+        <item quantity="one">, %1$d come ospite</item>
+        <item quantity="many">, %1$d come ospiti</item>
+        <item quantity="other">, %1$d come ospiti</item>
+    </plurals>
 </resources>

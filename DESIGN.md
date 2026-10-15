@@ -1450,7 +1450,7 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Statistiche | `bar_chart` | `ic_bar_chart` | - |
 | Data | `calendar_today` | - | - |
 | Persona | `person` | - | - |
-| Squadra, gruppo | `group` | - | - |
+| Squadra, gruppo (anche un girone) | `group` | `ic_group` | - |
 | Impostazioni | `settings` | - | - |
 | Notifiche | `notifications` | - | - |
 | Sport, palla, gol | `sports_soccer` | - | - |
@@ -1459,7 +1459,7 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Cronometro | `timer` | - | - |
 | Storico delle partite | `history` | - | - |
 | Cronaca della partita | `timeline` | `ic_timeline` | - |
-| Presenze | `event_available` | - | - |
+| Presenze | `event_available` | `ic_event_available` | - |
 | Scambio dei posti | `swap_horiz` | `ic_swap_horiz` | - |
 | Aggiungi giocatore | `person_add` | `ic_person_add` | - |
 | Serata, chi c'e' stasera | `groups` | `ic_groups` | - |
@@ -1966,7 +1966,91 @@ Una sola, in `core/Serata.kt` (`RotazioneSerata`), funzione pura dei presenti e 
 
 ### Non fatto
 
-Gironi e iscritti dalla dashboard, rose dalla dashboard e `padelPlayerId` (altro ramo); gli strumentati e gli screenshot (nessun emulatore in questo passo: la schermata e' provata con Robolectric sul layout vero); il tennis in doppio e' gratis ma provato solo fino alla creazione del doppio dal ViewModel; la scelta fra piu' serate (ce n'e' una).
+~~Gironi e iscritti dalla dashboard~~ (fatto il 15 ottobre 2026: sezione "Serata dalla dashboard" qui sotto), rose dalla dashboard e `padelPlayerId` (altro ramo, poi R-1); gli strumentati e gli screenshot (nessun emulatore in questo passo: la schermata e' provata con Robolectric sul layout vero); il tennis in doppio e' gratis ma provato solo fino alla creazione del doppio dal ViewModel; la scelta fra piu' serate (ce n'e' una).
+
+## Serata dalla dashboard - 15 ottobre 2026 (gironi e iscritti)
+
+Punto 5 della sezione 4 di `PIANO_PADEL_ELITE.md` ("gironi e iscritti"). Con l'accesso a Padel Elite e un gruppo scelto, la schermata Serata dice qual e' la prossima serata del gruppo, quanti hanno confermato e quali gironi ha salvato la dashboard, e li propone come presenti. **Solo letture, con le policy che ci sono gia'**: nessuna scrittura sul Supabase di produzione, nessuna migrazione. Senza configurazione, senza accesso o senza un gruppo scelto la schermata e' quella di prima e non parte nessuna richiesta. Nessuna chiamata al Supabase vero: tutto provato col server finto.
+
+### Contratto letto
+
+| Lettura | Richiesta | Cosa se ne usa |
+|---|---|---|
+| Serata configurata | `GET /rest/v1/v2_settings?group_id=eq.<g>&key=eq.venue_config&select=value` | `day_of_week` (0 = domenica, come `Date.getDay()`), la **prima** prenotazione (`bookings[0]`, non la piu' presto): `time` "HH:MM" e `duration` |
+| Presenti | `GET /rest/v1/v2_rsvp?group_id=eq.<g>&session_date=eq.<AAAA-MM-GG>&status=eq.confirmed&select=player_id&order=created_at.asc,player_id.asc` | gli id di `v2_players` confermati, in ordine di risposta |
+| Gironi | `GET /rest/v1/v2_settings?group_id=eq.<g>&key=eq.gironi_serata&select=value` | `{ v: 1, serata, gironi: [[id, ...], ...] }` (PR #229 della dashboard); `presenti` e `aggiornata_il` non servono |
+| Nomi | `GET /rest/v1/v2_players?...` (la lettura di R-1, `fetchRoster`) | il nome di chi non e' collegato |
+
+Errori come la rosa di R-1: 401 rinnova il token una volta e ripete (`PadelEliteAccount.leggi`, che passa da `authenticated`), un rinnovo rifiutato e' "accesso scaduto"; 403 e' "fuori dal gruppo"; rete assente, 5xx e corpo che non e' una lista sono "errore, Riprova". Le letture sono in fila, e si ferma alla prima che non va.
+
+**La data della prossima serata** e' quella di `getNextSessionDate` in `js/nextmatch.js` della dashboard, riscritta in `:core` (`ProssimaSerata.data`, funzione pura con l'adesso iniettato): il prossimo `day_of_week` da oggi; se e' oggi e la prima prenotazione e' **strettamente** finita (inizio + durata, quindi alla fine esatta e' ancora oggi), quella della settimana dopo. Ora locale del telefono, come la dashboard usa quella del browser. La durata e' quella di `parseDurationMin`: un numero com'e', un testo per le cifre in testa ("90m" = 90), altrimenti **90 minuti**; senza prenotazioni valgono le 19:00 e 90 minuti (i predefiniti della dashboard). `end_month` non conta: la dashboard non lo usa per la prossima serata.
+
+**Differenze volute dalla dashboard** (dichiarate): (1) senza la riga `venue_config`, o con un giorno che manca o non e' fra 0 e 6, l'app dice "nessuna serata configurata" invece di usare il martedi' alle 19 di fabbrica della dashboard: non inventa una serata. (2) Un'ora che non si legge vale le 19:00 (la dashboard in quel caso calcola una data non valida). (3) Un `gironi_serata` con `v` diverso da 1 o una `serata` che non e' una data si ignora: un formato nuovo non si indovina.
+
+### Flusso
+
+1. **Apertura e ritorno sulla schermata** (`onStart`): la fonte controlla fuori dal thread principale se c'e' qualcosa da leggere (configurazione, sessione cifrata, gruppo scelto). Se no il gruppo "Dalla dashboard" non c'e' e non compare nemmeno per un attimo. Se si', "in lettura" e le quattro letture (`LettoreSerataDashboard`). Una serata gia' letta resta in vista mentre si rilegge.
+2. **Traduzione** (in `:core`, `TraduzionePresenti`): un id collegato con R-1 (`padel_elite_links` del gruppo) a un giocatore locale che c'e' diventa quel giocatore, col nome dell'app; uno non collegato col nome nella rosa diventa un **ospite** col nome della dashboard; uno senza ne' l'uno ne' l'altro resta fuori e si conta ("1 non e' nella rosa del gruppo e resta fuori"). Un id ripetuto vale una volta. Niente si scrive qui.
+3. **Il tocco** su "Usa i presenti" o su "Girone A: ..." (`SerataViewModel.usaIPresenti`, `usaIlGirone`): gli ospiti diventano giocatori locali (lo stesso meccanismo dell'ospite scritto a mano di R-2), poi la serata prende quei presenti con `Serata.conIPresenti` e un messaggio dice "8 presenti dalla dashboard, 2 come ospiti" con **Annulla**. La riga usata ha la spunta finche' i presenti restano quelli.
+4. **Annulla** rimette la serata di prima (anche le partite gia' giocate, la bozza e le proposte saltate).
+5. Le coppie poi ruotano con la regola di R-2, **invariata**.
+
+### Scelte di prodotto (prese con la raccomandazione del piano: il proprietario le puo' cambiare)
+
+1. **Il girone sostituisce i presenti**, non si aggiunge: il telefono segna un campo, quindi un girone. Chi non e' nel girone esce dalla serata come se fosse andato via.
+2. **Le partite giocate restano.** Usare i presenti a meta' serata e' come togliere e aggiungere a mano: prima escono gli assenti, poi entrano i nuovi in coda, e la bozza si ricompone con la regola di sempre. Cosi' una serata gia' iniziata non perde il conto delle partite.
+3. **Ordine di arrivo**: per i presenti l'ordine in cui hanno risposto nella dashboard (`created_at`, poi id); per un girone l'ordine del girone. Decide chi e' A, B, C, D nella prima rotazione e chi serve per primo.
+4. **Gli ospiti non si collegano da soli.** Un non collegato entra come ospite col nome della dashboard; nessun collegamento R-1 nasce in silenzio (resta un comando della schermata Padel Elite). L'ospite **riusa il giocatore locale con lo stesso nome** (senza maiuscole e spazi ai lati), come l'ospite scritto a mano, ma **solo** se e' uno solo, non e' collegato a un altro giocatore della dashboard in questo gruppo e non e' gia' preso da un altro presente: altrimenti nell'invio la partita andrebbe al giocatore sbagliato. In dubbio se ne crea uno nuovo. E' una regola piu' stretta di quella di R-2, ed e' voluta.
+5. **Annulla non cancella gli ospiti creati**: sono giocatori locali come quelli scritti a mano e possono gia' servire altrove (e' lo stesso di R-2, dove chiudere la serata non cancella nessuno).
+6. **Si rilegge a ogni ritorno sulla schermata**, non in sottofondo: quattro richieste piccole, e i collegamenti fatti nel frattempo in Padel Elite si vedono subito.
+7. **Gironi di un'altra serata**: non si propongono, e la riga di stato lo dice.
+8. **Durante una partita** il gruppo si vede ma le righe sono spente, come il resto della schermata.
+9. **Sessione scaduta**: "Accedi" apre Padel Elite; tornando, la schermata rilegge (e se l'accesso non c'e' piu' il gruppo sparisce, come senza accesso). **Fuori dal gruppo** (403): "Apri Padel Elite" per sceglierne un altro.
+
+### Piano UI (CLAUDE.md, punto 3)
+
+- **Un compito, un valore.** Il compito della schermata resta "chi gioca la prossima" e il valore resta le due coppie. Il gruppo nuovo e' un modo per riempire i presenti, quindi sta **sopra il gruppo dei presenti** e sotto coppie e panchina: a inizio serata (nessuna bozza) e' il primo gruppo che si vede, a serata avviata non spinge giu' le coppie.
+- **Gerarchia e layout.** Un gruppo tonale (`Widget.App.Group`) come gli altri della Serata, con righe rientrate (`InsetDividerDecoration`): titolo "Dalla dashboard" (`SectionHeading`), una riga di stato in frase (`Caption`, regione live), le proposte come righe (`item_serata_row`: icona, titolo fino a due righe, nota, spunta) e, solo quando serve, un comando testuale (`Widget.App.Button.Text`: "Riprova", "Accedi", "Apri Padel Elite"). **Nessun primario nuovo**: il primario resta "Inizia la partita".
+- **Componenti riusati.** `Widget.App.Group`, `SerataRigheAdapter` e `item_serata_row` (pressione condivisa, anello di fuoco, selezione con tre segni), `Widget.App.Button.Text`, lo Snackbar con "Annulla" come in Giocatori. Nessuno stile nuovo, nessun token nuovo, nessun colore scritto a mano; spazi `space_*`.
+- **Icone** (tabella G-3): "Usa i presenti" ha `event_available` (concetto Presenze, `ic_event_available`), i gironi `group` (concetto Squadra, gruppo: un girone e' un gruppo di giocatori, `ic_group`); due vettoriali scaricati da `google/material-design-icons` come gli altri, righe della tabella aggiornate. Le icone nelle righe sono decorative (`importantForAccessibility="no"`): le righe hanno testo, quindi non ci sono comandi di sola icona.
+
+| Stato | Cosa si vede |
+|---|---|
+| Spenta (senza configurazione, accesso o gruppo) | il gruppo non c'e'; la schermata e' quella di prima e nessuna richiesta parte |
+| In lettura | "Lettura della serata dalla dashboard in corso.", nessuna proposta, nessun ciclo (e' una frase, vale anche col movimento ridotto) |
+| Nessuna serata configurata | "Il gruppo non ha una serata configurata nella dashboard." |
+| Pronta | "Serata di giovedi' 15 ottobre, 8 presenti." piu', se servono, "2 non collegati entrano come ospiti.", "1 non e' nella rosa del gruppo e resta fuori."; righe "Usa i presenti" (nota: quanti) e "Girone A: Anna, Bruno, Carlo, Dario" |
+| Nessun presente | "Serata di giovedi' 15 ottobre. Nessun presente confermato."; nessuna riga "Usa i presenti" (i gironi, se ci sono, si) |
+| Gironi della serata precedente | la riga di stato finisce con "I gironi salvati sono di una serata diversa e non si usano." e i gironi non compaiono |
+| Errore di rete | "La dashboard non risponde. Controlla la connessione." e "Riprova" |
+| Sessione scaduta | "Accesso a Padel Elite scaduto. Accedi di nuovo per leggere la serata." e "Accedi" |
+| Fuori dal gruppo (403) | "Questo account non legge piu' il gruppo scelto. Sceglilo di nuovo in Padel Elite." e "Apri Padel Elite" |
+| Normale / premuto / fuoco | riga a riposo / pressione condivisa (scala 0,97, opacita' 0,85) / anello lime di 2dp |
+| Selezionato | la proposta in uso: sfondo rialzato, spunta lime, titolo a 600, `stateDescription` "Selezionato" |
+| Disattivo / sola lettura | partita in corso: righe spente (testo `elite_text_disabled`, icona a 0,5) |
+| In corso (applicazione) | nessuno stato visibile: creare gli ospiti e scrivere la serata e' locale e immediato |
+| Fatto | messaggio "8 presenti dalla dashboard, 2 come ospiti" con "Annulla" |
+
+- **Movimento.** Nessuno nuovo nelle righe (`itemAnimator` spento, come gli altri gruppi). Lo Snackbar entra in **dissolvenza** (`ANIMATION_MODE_FADE`), non scorrendo.
+- **Accessibilita'.** Titolo `accessibilityHeading`; riga di stato regione live (si sente quando la lettura finisce); ogni proposta ha una descrizione completa ("Girone A: Anna, Bruno, Carlo, Dario. Tocca per usarlo come presenti", "Presenti dalla dashboard: 8. Tocca per usarli come presenti della serata"); bersagli di 48dp; lo stato non e' mai solo colore.
+- **Schermo stretto e carattere al 200%.** Una colonna; la riga di stato va a capo; il titolo di un girone va su due righe e poi si accorcia con l'ellissi (i nomi interi restano nella descrizione per TalkBack); il comando testuale e' `wrap_content`.
+- **Conflitti dichiarati.** (1) Nessuno sui token. (2) Lo Snackbar tiene la durata di Material (come "Annulla" in Giocatori), non i token di durata: e' un componente di sistema, con la dissolvenza al posto dello scorrimento.
+- **Pattern vietati** (`review.md`): niente maiuscolo, niente emoji, niente ombre (gruppo a 0dp), niente colore scritto a mano, niente card per elementi che non sono indipendenti (un gruppo con righe), al massimo tre pesi (400 stato, 500 riga, 600 titolo e riga selezionata), un solo primario per regione (invariato), nessun ciclo. Nessuna stringa nuova con apostrofo, nessun `--` nei commenti XML.
+
+### Come si prova
+
+`SerataDallaDashboardTest` (`:core`: data, durata, ora, gironi di un'altra serata, traduzione, `conIPresenti`), `SerataDashboardApiTest` (le tre letture col server finto: 200, 401, 403, rete assente, piu' il rinnovo del token), `LettoreSerataDashboardTest` (le quattro letture insieme, la data calcolata usata davvero nella richiesta, i collegamenti dal database in memoria, gli stati), `SerataConLaDashboardTest` (il ViewModel con una fonte finta: solo al tocco, ospiti, omonimo, girone, Annulla, sola lettura, Riprova, niente lampo senza accesso), `SerataActivityTest` (la schermata gonfiata con Robolectric in ogni stato principale, il tocco su "Usa i presenti", "Riprova" e "Accedi").
+
+### Debiti dichiarati
+
+1. **Nessuna cache**: senza rete la riga dice l'errore e non mostra l'ultima serata letta in un'apertura precedente.
+2. **Gli ospiti non sono collegati**: nell'invio non portano `padelPlayerId` finche' qualcuno non li collega in Padel Elite (l'admin li sceglie nella casella, come oggi).
+3. **Annulla non toglie gli ospiti creati** (scelta 5), e annulla anche un cambio fatto a mano mentre il messaggio e' ancora visibile.
+4. **Fuso orario**: la data e' calcolata con l'ora del telefono; un telefono in un fuso diverso da quello di chi usa la dashboard puo' vedere un'altra serata vicino alla mezzanotte.
+5. **Piu' campi, piu' telefoni**: ogni telefono sceglie il suo girone; non c'e' un coordinamento (due telefoni possono scegliere lo stesso).
+6. **Rosa oltre 1000 giocatori**: la lettura dei nomi e' quella di R-1 (tetto di PostgREST); un presente oltre il tetto risulterebbe "non nella rosa".
+7. **Quattro richieste in fila** e non in parallelo: sono piccole, ma con una rete lenta "in lettura" dura quattro andate e ritorni.
+8. **Non visto a schermo**: nessun SDK Android in questo passo; la schermata e' provata con Robolectric, la logica di `:core` eseguita e falsificata sulla JVM. Da guardare a occhio dal proprietario, anche a 360dp e al 200%.
 
 ## Diretta - 9 ottobre 2026 (D-2)
 

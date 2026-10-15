@@ -57,4 +57,39 @@
     <string name="serata_cannot_start">The pairs cannot change while a match is in progress.</string>
     <string name="serata_wrong_sport">The evening is played in padel or tennis. Change the sport in Settings.</string>
     <string name="serata_no_pairs">No pairs to start yet. At least 4 people are needed.</string>
+
+    <!-- Serata dalla dashboard: la prossima serata del gruppo scelto, i presenti confermati e i gironi salvati. -->
+    <string name="serata_dashboard_title">From the dashboard</string>
+    <string name="serata_dashboard_loading">Reading the evening from the dashboard.</string>
+    <string name="serata_dashboard_not_configured">The group has no evening set up in the dashboard.</string>
+    <plurals name="serata_dashboard_ready">
+        <item quantity="one">Evening of %1$s, %2$d person confirmed.</item>
+        <item quantity="other">Evening of %1$s, %2$d people confirmed.</item>
+    </plurals>
+    <string name="serata_dashboard_nobody">Evening of %1$s. Nobody has confirmed yet.</string>
+    <plurals name="serata_dashboard_guests">
+        <item quantity="one">%1$d not linked joins as a guest.</item>
+        <item quantity="other">%1$d not linked join as guests.</item>
+    </plurals>
+    <plurals name="serata_dashboard_missing">
+        <item quantity="one">%1$d is not in the group roster and stays out.</item>
+        <item quantity="other">%1$d are not in the group roster and stay out.</item>
+    </plurals>
+    <string name="serata_dashboard_other_evening">The saved pools are for another evening and are not used.</string>
+    <string name="serata_dashboard_error">The dashboard did not answer. Check the connection.</string>
+    <string name="serata_dashboard_login">The Padel Elite session has expired. Sign in again to read the evening.</string>
+    <string name="serata_dashboard_not_member">This account can no longer read the chosen group. Choose it again in Padel Elite.</string>
+    <string name="serata_dashboard_open">Open Padel Elite</string>
+    <string name="serata_dashboard_use_present">Use the confirmed players</string>
+    <string name="serata_dashboard_use_present_description">Confirmed in the dashboard: %1$d. Touch to use them as the people here</string>
+    <string name="serata_dashboard_pool">Pool %1$s: %2$s</string>
+    <string name="serata_dashboard_pool_description">Pool %1$s: %2$s. Touch to use it as the people here</string>
+    <plurals name="serata_dashboard_used">
+        <item quantity="one">%1$d person from the dashboard</item>
+        <item quantity="other">%1$d people from the dashboard</item>
+    </plurals>
+    <plurals name="serata_dashboard_used_guests">
+        <item quantity="one">, %1$d as a guest</item>
+        <item quantity="other">, %1$d as guests</item>
+    </plurals>
 </resources>
