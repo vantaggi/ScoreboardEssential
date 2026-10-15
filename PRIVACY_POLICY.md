@@ -119,9 +119,10 @@ On Padel Elite:
   the same group or person sends again.
 - **Imported matches:** a group admin can delete one from the group's history in the dashboard;
   its point by point is deleted with it.
-- **Live broadcasts:** a broadcast is closed at the end of the match, or by the dashboard after 6
-  hours without updates. A closed broadcast, with its match file, stays until a group admin deletes
-  it.
+- **Live broadcasts:** a broadcast is closed at the end of the match. One left open (for example
+  because the phone switched off) is closed by the dashboard after 6 hours without updates, the
+  next time the group broadcasts. A closed broadcast, with its match file, stays until a group admin
+  deletes it.
 - **Your account and the data you sent:** write to the contact address in section 7. The deletion
   is done by hand. Matches already imported belong to the group's history and use the group's
   player records, which the group's admins manage.
