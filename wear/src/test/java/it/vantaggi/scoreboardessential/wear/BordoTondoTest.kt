@@ -20,14 +20,16 @@ class BordoTondoTest {
 
     @Test
     fun `vicino al bordo la riga si stringe fino a stare nel cerchio`() {
-        // Riga da 104px col bordo alto a 40px dallo schermo: la corda a 152px dal centro e' 2 * 117px.
-        val scala = BordoTondo.scala(40f, 144f, larghezza, diametro)
-        val corda = 2f * kotlin.math.sqrt(192f * 192f - 152f * 152f)
+        // Riga da 104px col bordo alto a 72px dallo schermo: la corda a 120px dal centro e' 2 * 150px.
+        val scala = BordoTondo.scala(72f, 176f, larghezza, diametro)
+        val corda = 2f * kotlin.math.sqrt(192f * 192f - 120f * 120f)
 
         assertEquals(corda / larghezza, scala, 0.001f)
         assertTrue("la riga deve stringersi, scala $scala", scala < 1f)
         // Sotto come sopra: conta la distanza dal centro, non il verso.
-        assertEquals(scala, BordoTondo.scala(diametro - 144f, diametro - 40f, larghezza, diametro), 0.001f)
+        assertEquals(scala, BordoTondo.scala(diametro - 176f, diametro - 72f, larghezza, diametro), 0.001f)
+        // Piu' vicino al bordo la corda e' piu' corta del 70% della riga: resta la scala minima.
+        assertEquals(BordoTondo.SCALA_MINIMA, BordoTondo.scala(40f, 144f, larghezza, diametro), 0f)
     }
 
     @Test
