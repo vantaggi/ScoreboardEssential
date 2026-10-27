@@ -148,6 +148,8 @@
     <string name="label_statistics">Statistics</string>
     <string name="label_players">Players</string>
     <string name="label_settings">Settings</string>
+    <string name="label_sheet_this_match">This match</string>
+    <string name="label_sheet_app">App</string>
     <string name="label_reset_match_time">Reset time</string>
     <string name="formation_label">%1$s: %2$s</string>
     <string name="formation_none">%1$s: no formation</string>
