@@ -1081,12 +1081,14 @@ class MainViewModel(
         viewModelScope.launch { senzaErrori { giocatoriDalGruppo.prepara() } }
     }
 
-    /** L'elenco per la squadra [teamId], o null se non c'e' un gruppo da offrire: allora vale il dialogo di sempre. */
-    suspend fun elencoDellaScelta(teamId: Int): ElencoDellaScelta? {
+    /**
+     * L'elenco per aggiungere un giocatore, o null se non c'e' un gruppo da offrire: allora vale il dialogo di sempre.
+     * Chi e' gia' in campo (in una delle due squadre) non si offre, e i suoi compagni di girone vengono prima.
+     */
+    suspend fun elencoDellaScelta(): ElencoDellaScelta? {
         if (!sceltaDalGruppoPossibile()) return null
-        val squadra = if (teamId == 1) _team1Players.value else _team2Players.value
-        val esclusi = squadra.orEmpty().map { it.player.playerId }.toSet()
-        return senzaErrori { giocatoriDalGruppo.elenco(esclusi) }
+        val inCampo = (_team1Players.value.orEmpty() + _team2Players.value.orEmpty()).map { it.player.playerId }.toSet()
+        return senzaErrori { giocatoriDalGruppo.elenco(inCampo) }
     }
 
     /** Un giocatore della dashboard scelto: il suo giocatore dell'app, nato adesso se serve, o gli omonimi da far scegliere. Null se la scrittura fallisce. */

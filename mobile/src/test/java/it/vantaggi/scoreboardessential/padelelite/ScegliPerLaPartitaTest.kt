@@ -28,6 +28,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
 /**
@@ -194,7 +195,42 @@ class ScegliPerLaPartitaTest {
     private fun CoroutineScope.giocatori(
         account: PadelEliteAccount,
         attesaMs: Long = 4_000L,
-    ) = GiocatoriDalGruppo(account, rosa, this, attesaMs)
+    ) = GiocatoriDalGruppo(account, rosa, this, attesaMs) { LocalDate.of(2026, 10, 15).atTime(10, 0) }
+
+    /** La dashboard con la sola rosa: la serata (configurazione, iscritti, gironi) non c'e'. */
+    private fun soloLaRosa(rosa: MockResponse): (RecordedRequest, Int) -> MockResponse =
+        { r, _ -> if (r.path.orEmpty().startsWith("/rest/v1/v2_players")) rosa else json(404, "{}") }
+
+    /** La dashboard con la serata di giovedi' 15 ottobre: [iscritti] confermati e un girone. */
+    private fun conLaSerata(
+        rosa: String,
+        iscritti: List<Int>,
+        girone: List<Int>,
+    ): (RecordedRequest, Int) -> MockResponse =
+        { r, _ ->
+            val percorso = r.path.orEmpty()
+            when {
+                percorso.contains("key=eq.venue_config") -> {
+                    json(200, """[{"value":{"day_of_week":4,"bookings":[{"time":"19:00","duration":"90m"}]}}]""")
+                }
+
+                percorso.contains("key=eq.gironi_serata") -> {
+                    json(200, """[{"value":{"v":1,"serata":"2026-10-15","gironi":[${girone.joinToString(",", "[", "]")}]}}]""")
+                }
+
+                percorso.startsWith("/rest/v1/v2_rsvp") -> {
+                    json(200, iscritti.joinToString(",", "[", "]") { """{"player_id":$it}""" })
+                }
+
+                percorso.startsWith("/rest/v1/v2_players") -> {
+                    json(200, rosa)
+                }
+
+                else -> {
+                    json(404, "{}")
+                }
+            }
+        }
 
     @Test
     fun `con la rosa letta l'elenco ha la dashboard e poi chi c'e' solo nell'app`() =
@@ -202,9 +238,9 @@ class ScegliPerLaPartitaTest {
             val mattia = giocatore("Mattia")
             val luca = giocatore("Luca")
             rosa.link("g-1", bianchi, mattia)
-            val conto = account { _, _ -> json(200, rosaJson(rossi, bianchi)) }
+            val conto = account(risposte = soloLaRosa(json(200, rosaJson(rossi, bianchi))))
 
-            val elenco = giocatori(conto).elenco(esclusi = emptySet())!!
+            val elenco = giocatori(conto).elenco(inCampo = emptySet())!!
 
             assertEquals("g-1", elenco.gruppo)
             assertEquals("Padel del giovedi", elenco.nomeGruppo)
@@ -217,6 +253,61 @@ class ScegliPerLaPartitaTest {
                     SoloNellApp(luca, "Luca"),
                 ),
                 elenco.voci,
+            )
+        }
+
+    @Test
+    fun `prima i compagni di girone di chi e' in campo, poi gli iscritti, poi il resto, ognuno in ordine di nome`() =
+        runBlocking {
+            val anna = RemotePlayer(1, "Anna")
+            val bea = RemotePlayer(2, "Bea")
+            val carlo = RemotePlayer(3, "Carlo")
+            val dario = RemotePlayer(4, "Dario")
+            val elio = RemotePlayer(5, "Elio")
+            val zoe = RemotePlayer(6, "Zoe")
+            val mattia = giocatore("Mattia")
+            rosa.link("g-1", dario, mattia)
+            val conto =
+                account(
+                    risposte =
+                        conLaSerata(
+                            rosaJson(anna, bea, carlo, dario, elio, zoe),
+                            iscritti = listOf(6, 5, 4, 3, 2, 1),
+                            girone = listOf(4, 2, 6, 1),
+                        ),
+                )
+
+            val voci = giocatori(conto).elenco(inCampo = setOf(mattia))!!.voci
+
+            assertEquals(
+                listOf(
+                    Intestazione(SezioneDellaScelta.GIRONE),
+                    DallaDashboard(anna, null, null),
+                    DallaDashboard(bea, null, null),
+                    DallaDashboard(zoe, null, null),
+                    Intestazione(SezioneDellaScelta.ISCRITTI),
+                    DallaDashboard(carlo, null, null),
+                    DallaDashboard(elio, null, null),
+                ),
+                voci,
+            )
+        }
+
+    @Test
+    fun `senza nessuno in campo gli iscritti vengono prima del resto della rosa`() =
+        runBlocking {
+            val conto = account(risposte = conLaSerata(rosaJson(rossi, bianchi), iscritti = listOf(101), girone = listOf(101, 100)))
+
+            val voci = giocatori(conto).elenco(inCampo = emptySet())!!.voci
+
+            assertEquals(
+                listOf(
+                    Intestazione(SezioneDellaScelta.ISCRITTI),
+                    DallaDashboard(rossi, null, null),
+                    Intestazione(DASHBOARD),
+                    DallaDashboard(bianchi, null, null),
+                ),
+                voci,
             )
         }
 
@@ -244,7 +335,7 @@ class ScegliPerLaPartitaTest {
     fun `una rosa che arriva tardi non fa aspettare il dialogo, e la volta dopo e' pronta`() =
         runBlocking {
             giocatore("Luca")
-            val conto = account { _, _ -> json(200, rosaJson(rossi)).setBodyDelay(600, TimeUnit.MILLISECONDS) }
+            val conto = account(risposte = soloLaRosa(json(200, rosaJson(rossi)).setBodyDelay(600, TimeUnit.MILLISECONDS)))
             val giocatori = giocatori(conto, attesaMs = 100L)
 
             val prima = giocatori.elenco(emptySet())!!

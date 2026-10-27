@@ -1,5 +1,6 @@
 package it.vantaggi.scoreboardessential.padelelite
 
+import it.vantaggi.scoreboardessential.core.ProssimaSerata
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -7,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.time.LocalDateTime
 
 /** L'elenco del dialogo "Aggiungi un giocatore" con un gruppo di Padel Elite: per quale gruppo e con quali voci. */
 data class ElencoDellaScelta(
@@ -30,9 +32,16 @@ class GiocatoriDalGruppo(
     /** Dove vive la lettura: deve poter finire anche dopo che il dialogo ha smesso di aspettarla. */
     private val scope: CoroutineScope,
     private val attesaMassimaMs: Long = ATTESA_MASSIMA_MS,
+    private val adesso: () -> LocalDateTime = { LocalDateTime.now() },
 ) {
-    private var inMemoria: Pair<String, List<RemotePlayer>>? = null
-    private var inVolo: Pair<String, Deferred<List<RemotePlayer>?>>? = null
+    /** La rosa letta e la prossima serata del gruppo (iscritti e gironi), insieme. */
+    private class Letta(
+        val giocatori: List<RemotePlayer>,
+        val serata: SerataDelGruppo,
+    )
+
+    private var inMemoria: Pair<String, Letta>? = null
+    private var inVolo: Pair<String, Deferred<Letta?>>? = null
 
     /** Il gruppo scelto, solo con l'accesso fatto. La sessione e' cifrata col Keystore: si legge fuori dal thread principale. */
     private suspend fun gruppo(): Pair<String, String>? =
@@ -52,13 +61,24 @@ class GiocatoriDalGruppo(
         lettura(g.first)
     }
 
-    /** L'elenco per la squadra che ha gia' [esclusi]; null senza accesso o senza gruppo (allora vale il dialogo di sempre). */
-    suspend fun elenco(esclusi: Set<Int>): ElencoDellaScelta? {
+    /**
+     * L'elenco quando in campo ci sono gia' [inCampo] (giocatori dell'app, non si offrono di nuovo; i loro compagni di
+     * girone vengono prima); null senza accesso o senza gruppo (allora vale il dialogo di sempre).
+     */
+    suspend fun elenco(inCampo: Set<Int>): ElencoDellaScelta? {
         val (id, nome) = gruppo() ?: return null
         val letta = inMemoria?.takeIf { it.first == id }?.second
         val nuova = lettura(id)
-        val giocatori = letta ?: withTimeoutOrNull(attesaMassimaMs) { nuova.await() }
-        val voci = SceltaDelGiocatore.voci(giocatori, rosa.localPlayers(), rosa.linksOf(id), esclusi)
+        val pronta = letta ?: withTimeoutOrNull(attesaMassimaMs) { nuova.await() }
+        val voci =
+            SceltaDelGiocatore.voci(
+                rosa = pronta?.giocatori,
+                locali = rosa.localPlayers(),
+                collegamenti = rosa.linksOf(id),
+                esclusi = inCampo,
+                serata = pronta?.serata ?: SerataDelGruppo(),
+                inCampo = inCampo,
+            )
         return ElencoDellaScelta(id, nome, voci)
     }
 
@@ -79,7 +99,7 @@ class GiocatoriDalGruppo(
     ): Int = rosa.creaNuovo(gruppo, remote)
 
     /** Una lettura per gruppo alla volta: chi arriva mentre una e' in volo aspetta quella. */
-    private fun lettura(groupId: String): Deferred<List<RemotePlayer>?> {
+    private fun lettura(groupId: String): Deferred<Letta?> {
         inVolo?.takeIf { it.first == groupId && it.second.isActive }?.let { return it.second }
         val nuova =
             scope.async {
@@ -100,12 +120,36 @@ class GiocatoriDalGruppo(
                 } catch (_: Exception) {
                     Unit
                 }
-                inMemoria = groupId to giocatori
-                giocatori
+                val letta = Letta(giocatori, serataDelGruppo(groupId))
+                inMemoria = groupId to letta
+                letta
             }
         inVolo = groupId to nuova
         return nuova
     }
+
+    /**
+     * Iscritti e gironi della prossima serata (la data come la Serata: `venue_config` e [ProssimaSerata]). Un aiuto
+     * all'ordine dell'elenco e niente di piu': se una lettura non va, la serata e' vuota e la rosa resta in ordine di nome.
+     */
+    private suspend fun serataDelGruppo(groupId: String): SerataDelGruppo =
+        try {
+            val config = valoreDi(account.venueConfig(groupId))
+            if (config == null) {
+                SerataDelGruppo()
+            } else {
+                val giorno = ProssimaSerata.data(adesso(), config)
+                val iscritti = valoreDi(account.confirmed(groupId, giorno)).orEmpty()
+                val gironi = valoreDi(account.gironi(groupId))?.takeIf { it.valgonoPer(giorno) }?.gironi
+                SerataDelGruppo(iscritti.toSet(), gironi.orEmpty())
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            SerataDelGruppo()
+        }
+
+    private fun <T> valoreDi(esito: LetturaDashboard<T>): T? = if (esito is LetturaDashboard.Ok) esito.valore else null
 
     companion object {
         /** Quanto il dialogo aspetta la prima lettura della rosa prima di aprirsi senza. */

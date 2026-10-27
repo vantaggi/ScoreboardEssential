@@ -123,6 +123,8 @@
 
     <!-- Aggiungi un giocatore con la rosa del gruppo: i giocatori della dashboard senza collegarli prima. -->
     <string name="scelta_section_dashboard">Padel Elite · %1$s</string>
+    <string name="scelta_section_girone">Same group tonight</string>
+    <string name="scelta_section_iscritti">Signed up for the next evening</string>
     <string name="scelta_section_app">Only in the app</string>
     <string name="scelta_section_unread">Padel Elite is not responding: players in the app</string>
     <string name="scelta_dashboard_new">Added to the app when you pick them</string>

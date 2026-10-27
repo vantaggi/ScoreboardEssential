@@ -1531,7 +1531,7 @@ class MainActivity :
         lifecycleScope.launch {
             val elenco =
                 try {
-                    viewModel.elencoDellaScelta(team)
+                    viewModel.elencoDellaScelta()
                 } finally {
                     bottone.isEnabled = true
                 }
@@ -1614,6 +1614,8 @@ class MainActivity :
                     is VoceDellaScelta.Intestazione -> {
                         val titolo =
                             when (voce.sezione) {
+                                SezioneDellaScelta.GIRONE -> getString(R.string.scelta_section_girone)
+                                SezioneDellaScelta.ISCRITTI -> getString(R.string.scelta_section_iscritti)
                                 SezioneDellaScelta.DASHBOARD -> getString(R.string.scelta_section_dashboard, elenco.nomeGruppo)
                                 SezioneDellaScelta.SOLO_APP -> getString(R.string.scelta_section_app)
                                 SezioneDellaScelta.DASHBOARD_NON_LETTA -> getString(R.string.scelta_section_unread)
