@@ -2379,3 +2379,34 @@ La checklist "Da guardare in locale" della PR #182, eseguita sul telefono del pr
 
 **Debito.** La correzione non e' ancora vista a schermo a 360dp e al 200%: va riguardata sul telefono.
 
+
+## Orologio: squadre in campo e prossima partita della serata - 27 ottobre 2026
+
+Richiesta del proprietario: dal menu dell'orologio sapere chi gioca in ogni squadra e, a serata in corso, cambiare le coppie della partita dopo e farla cominciare senza riprendere il telefono. Le impostazioni essenziali al polso (Sul 40-40, vibrazione, durata del portiere nel calcio, scelta del proprietario) arrivano in un secondo passo, dopo "Sul 40-40" (#194) su `main`.
+
+### Piano UI (CLAUDE.md, punto 3)
+
+- **Gerarchia**: il quadrante non cambia. Nel menu la prima card diventa "Prossima partita" (solo a serata in corso, con quattro nomi e la partita ferma), con le sigle delle coppie come sottotitolo ("VAN/BIA – GLO/ROS"); sotto le voci di sempre, un gruppo "In campo" con una riga per squadra: barretta del colore di squadra (`TeamInk.graphicOnBlack`), nome mostrato, giocatori. Il gruppo sta sotto le voci perche' la prima card resti sopra la piega (`MenuPiegaTest`).
+- **Schermata "Prossima partita"** (`ProssimaPartitaActivity`): un compito, scegliere le due coppie. Titolo "Partita N", un avviso di una riga, per coppia la sigla (`Widget.App.Sigla`, 500 12sp, testo secondario) e un gruppo tonale con due righe (`item_player_wear`: barretta di squadra e nome), chi resta fuori, poi **Ruota** (tonale) e **Inizia** (l'unico primario, lime su `on-accent`).
+- **Componenti riusati**: gruppi tonali `bg_group`, righe di `item_player_wear`, card di `item_sport_wear`, pressione condivisa `pressFeedback`. Nuovi solo come ruoli: `Widget.App.Button` e `.Tonal` (raggio `radius_control`, `control_touch` 48dp, nessuna elevazione), `elite_surface_raised` (#1E1E22, lo stesso valore del telefono) per la riga scelta, `space_4..16`, `team_bar_*`.
+- **Stati**: normale; premuto (scala 0,97 e opacita' 0,85); riga scelta (fondo `elite_surface_raised`, nome lime, `isSelected`), secondo tocco sulla stessa riga la toglie, tocco su un'altra chiede lo scambio; in corso ("Aspetto il telefono…", comandi disattivi, una richiesta alla volta); errore (nessuna risposta in 3 s o invio fallito: "Il telefono non ha risposto" in `elite_warning` e vibrazione NON_CONFERMATO, comandi di nuovo attivi); gia' a tabellone ("Già a tabellone", Inizia diventa "Al punteggio"); spareggio (titolo dello spareggio); vuoto (senza proposta la schermata si chiude, il menu non mostra la voce; senza rose il gruppo "In campo" sparisce); sola lettura (a partita cominciata la voce non c'e' e il telefono rifiuta); movimento ridotto (nessun movimento nuovo).
+- **Movimento**: nessuno nuovo. La risposta del telefono e' una piccola vibrazione, non un'animazione.
+- **Accessibilita'**: ogni riga e' un comando con `contentDescription` ("Vantaggi, coppia 1, scelto"), l'avviso e' una live region educata, ogni riga di "In campo" si legge intera ("VAN/BIA: Vantaggi, Bianchi"); le sigle non si leggono due volte (`importantForAccessibility=no`).
+- **Schermo stretto e 200%**: tutto dentro uno `ScrollView` in `BoxInsetLayout`; nomi su una riga con ellissi; i bottoni crescono in altezza.
+- **Conflitti**: nessuno con la Constitution. Il telefono resta l'autorita': l'orologio legge nomi e chiede `rotate`, `swap` o `start` sulla bozza che ha visto (`next_base`), e il telefono applica solo se la bozza e' ancora quella e la partita e' ferma.
+
+### Protocollo (additivo, golden test di `:shared`)
+
+`PATH_PAIRS` (DataItem del telefono: rose, prossima partita, sigle, panchina, spareggio, consegnata, versione) e `MSG_SERATA_INTENT` (messaggio del polso con azione, base, posti e sequenza). Le sequenze del polso restano una sola per nodo (`SequenzaDelPolso`): quadrante e schermata non si scavalcano.
+
+### Debiti
+
+- La schermata Serata del telefono non si ridisegna mentre l'orologio cambia la bozza: la rilegge quando torna in primo piano.
+- Con l'app del telefono chiusa la richiesta del polso va persa (nessuna custodia come per i punti): l'orologio dice "Il telefono non ha risposto".
+- `WearViewModel.applicaCoppie` non ha un test suo; le descrizioni TalkBack del quadrante non dicono i giocatori.
+- `clipToOutline` dei gruppi vale da API 31 (minimo 30), come nella scelta dello sport.
+- Non ancora visto a schermo sul Galaxy Watch.
+
+### Controllo dei pattern vietati (`review.md`)
+
+Nessun colore, spaziatura, raggio o durata scritti a mano (solo token, i nuovi nominano un ruolo); icone nessuna nuova; niente emoji, ombre, maiuscolo, cicli senza significato; un solo primario per schermata; pesi 400, 500, 600.

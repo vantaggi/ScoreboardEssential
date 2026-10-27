@@ -14,6 +14,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.isNotEmpty
 import com.google.android.material.card.MaterialCardView
 import it.vantaggi.scoreboardessential.core.TeamInk
 
@@ -238,7 +239,7 @@ class MenuActivity : ComponentActivity() {
                 riga.contentDescription = getString(R.string.cd_squadra, nomi[i], chi)
                 gruppo.addView(riga)
             }
-        val visibile = if (gruppo.childCount > 0) View.VISIBLE else View.GONE
+        val visibile = if (gruppo.isNotEmpty()) View.VISIBLE else View.GONE
         gruppo.visibility = visibile
         findViewById<View>(R.id.menu_squadre_titolo).visibility = visibile
     }
