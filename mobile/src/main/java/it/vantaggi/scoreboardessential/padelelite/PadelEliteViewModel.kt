@@ -15,6 +15,12 @@ enum class LoginProblem {
     EMAIL_NOT_CONFIRMED,
     RATE_LIMITED,
     NETWORK,
+
+    /** Il ritorno da Google non ha dato una sessione (codice scaduto o rifiutato): si riprova da capo. */
+    GOOGLE_FAILED,
+
+    /** Sul telefono non c'e' un browser per aprire la pagina di Google. */
+    NO_BROWSER,
     OTHER,
 }
 
@@ -22,6 +28,8 @@ enum class LoginProblem {
 data class LoginUi(
     val sending: Boolean = false,
     val problem: LoginProblem? = null,
+    /** L'invio in corso e' il ritorno da Google: la parola "in corso" va sul bottone di Google. */
+    val google: Boolean = false,
 )
 
 sealed interface GroupsUi {
@@ -40,7 +48,7 @@ sealed interface GroupsUi {
 }
 
 /**
- * La schermata "Padel Elite": accesso con email e password, elenco dei gruppi e scelta, esci.
+ * La schermata "Padel Elite": accesso con email e password o con Google, elenco dei gruppi e scelta, esci.
  * Tiene lo stato fuori dall'Activity: un accesso in corso sopravvive a una rotazione.
  */
 class PadelEliteViewModel(
@@ -77,30 +85,68 @@ class PadelEliteViewModel(
             return
         }
         _login.value = LoginUi(sending = true)
-        viewModelScope.launch {
-            when (val esito = account.signIn(email, password)) {
-                is AuthResult.Ok -> {
-                    _login.value = LoginUi()
-                    _signedInEmail.value = esito.session.email.ifEmpty { email.trim() }
-                    loadGroups()
-                }
+        viewModelScope.launch { mostraEsito(account.signIn(email, password), google = false, emailScritta = email.trim()) }
+    }
 
-                is AuthResult.Rejected -> {
-                    _login.value =
-                        LoginUi(
-                            problem =
-                                when (esito.reason) {
-                                    AuthFailure.INVALID_CREDENTIALS -> LoginProblem.INVALID_CREDENTIALS
-                                    AuthFailure.EMAIL_NOT_CONFIRMED -> LoginProblem.EMAIL_NOT_CONFIRMED
-                                    AuthFailure.RATE_LIMITED -> LoginProblem.RATE_LIMITED
-                                    AuthFailure.SESSION_EXPIRED, AuthFailure.OTHER -> LoginProblem.OTHER
-                                },
-                        )
-                }
+    /** L'indirizzo della pagina di Google da aprire nel browser, o null se un accesso e' gia' in corso. */
+    fun startGoogle(): String? {
+        if (_login.value.sending) return null
+        _login.value = LoginUi()
+        return account.startGoogleSignIn()
+    }
 
-                AuthResult.Network -> {
-                    _login.value = LoginUi(problem = LoginProblem.NETWORK)
-                }
+    /** Il browser non si apre: il verificatore salvato resta inutile, si dice perche'. */
+    fun noBrowser() {
+        _login.value = LoginUi(problem = LoginProblem.NO_BROWSER)
+    }
+
+    /** Il deep link di ritorno da Google. Chiudere la pagina di Google non e' un errore: il modulo torna com'era. */
+    fun completeGoogle(ritorno: RitornoGoogle) {
+        if (_login.value.sending) return
+        when (ritorno) {
+            RitornoGoogle.Annullato -> {
+                _login.value = LoginUi()
+            }
+
+            RitornoGoogle.Errore -> {
+                _login.value = LoginUi(problem = LoginProblem.GOOGLE_FAILED)
+            }
+
+            is RitornoGoogle.Codice -> {
+                _login.value = LoginUi(sending = true, google = true)
+                viewModelScope.launch { mostraEsito(account.signInWithGoogle(ritorno.code), google = true, emailScritta = "") }
+            }
+        }
+    }
+
+    private fun mostraEsito(
+        esito: AuthResult,
+        google: Boolean,
+        emailScritta: String,
+    ) {
+        when (esito) {
+            is AuthResult.Ok -> {
+                _login.value = LoginUi()
+                _signedInEmail.value = esito.session.email.ifEmpty { emailScritta }
+                loadGroups()
+            }
+
+            is AuthResult.Rejected -> {
+                _login.value =
+                    LoginUi(
+                        problem =
+                            when {
+                                esito.reason == AuthFailure.RATE_LIMITED -> LoginProblem.RATE_LIMITED
+                                google -> LoginProblem.GOOGLE_FAILED
+                                esito.reason == AuthFailure.INVALID_CREDENTIALS -> LoginProblem.INVALID_CREDENTIALS
+                                esito.reason == AuthFailure.EMAIL_NOT_CONFIRMED -> LoginProblem.EMAIL_NOT_CONFIRMED
+                                else -> LoginProblem.OTHER
+                            },
+                    )
+            }
+
+            AuthResult.Network -> {
+                _login.value = LoginUi(problem = LoginProblem.NETWORK)
             }
         }
     }

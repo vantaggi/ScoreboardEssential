@@ -136,10 +136,24 @@ class SessionStore(
         }
     }
 
+    /**
+     * Il verificatore PKCE di un accesso con Google in corso. Sta su file e non in memoria: mentre il
+     * browser e' aperto il sistema puo' chiudere l'app. Vale per un solo scambio.
+     */
+    fun savePkceVerifier(verifier: String) = prefs.edit { putString(KEY_PKCE, verifier) }
+
+    /** Il verificatore salvato, che si cancella leggendolo; null se non c'e' un accesso con Google in corso. */
+    fun takePkceVerifier(): String? {
+        val verificatore = prefs.getString(KEY_PKCE, null) ?: return null
+        prefs.edit { remove(KEY_PKCE) }
+        return verificatore
+    }
+
     /** Esci: via sessione e gruppo. */
     fun clear() {
         prefs.edit {
             remove(KEY_SESSION)
+            remove(KEY_PKCE)
             remove(KEY_GROUP_ID)
             remove(KEY_GROUP_NAME)
             remove(KEY_GROUP_ROLE)
@@ -152,6 +166,7 @@ class SessionStore(
         private const val KEY_GROUP_ID = "group_id"
         private const val KEY_GROUP_NAME = "group_name"
         private const val KEY_GROUP_ROLE = "group_role"
+        private const val KEY_PKCE = "pkce_verifier"
 
         fun create(context: Context) = SessionStore(context.getSharedPreferences(FILE, Context.MODE_PRIVATE), KeystoreSecretBox())
     }

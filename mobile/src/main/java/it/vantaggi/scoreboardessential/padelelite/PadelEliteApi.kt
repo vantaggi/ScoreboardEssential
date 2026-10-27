@@ -227,7 +227,7 @@ sealed interface LiveResult {
 /**
  * Le chiamate a Supabase che l'app usa, scritte a mano su `HttpURLConnection`.
  *
- * Sono tre famiglie, tutte REST: GoTrue (`/auth/v1/token`) per accesso e rinnovo, PostgREST
+ * Sono tre famiglie, tutte REST: GoTrue (`/auth/v1/token`) per accesso, ritorno da Google e rinnovo, PostgREST
  * (`/rest/v1/group_members`, `/rest/v1/v2_players`, `/rest/v1/v2_scoreboard_inbox`, e per la Serata
  * `/rest/v1/v2_settings` e `/rest/v1/v2_rsvp`) per leggere, e la RPC
  * `submit_scoreboard_match` per consegnare la partita. Una libreria (supabase-kt, OkHttp) avrebbe
@@ -255,6 +255,12 @@ class PadelEliteApi(
         val body = JSONObject().put("email", email).put("password", password).toString()
         return token("password", body)
     }
+
+    /** Il ritorno da Google: il codice del deep link piu' il verificatore PKCE che solo l'app conosce. */
+    suspend fun exchangeCode(
+        code: String,
+        verifier: String,
+    ): AuthResult = token("pkce", JSONObject().put("auth_code", code).put("code_verifier", verifier).toString())
 
     suspend fun refresh(refreshToken: String): AuthResult =
         token("refresh_token", JSONObject().put("refresh_token", refreshToken).toString())
@@ -286,6 +292,11 @@ class PadelEliteApi(
 
                 grant == "refresh_token" -> {
                     AuthFailure.SESSION_EXPIRED
+                }
+
+                // Un codice scaduto, gia' usato o col verificatore sbagliato: non e' una password sbagliata.
+                grant == "pkce" -> {
+                    AuthFailure.OTHER
                 }
 
                 "invalid_credentials" in codice || "invalid_grant" in codice || "invalid login" in codice -> {

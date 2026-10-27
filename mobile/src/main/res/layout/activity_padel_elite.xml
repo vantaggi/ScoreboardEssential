@@ -26,7 +26,7 @@
             android:layout_height="wrap_content"
             android:padding="@dimen/space_16">
 
-            <!-- Senza accesso: il modulo. Un solo primario, "Accedi". -->
+            <!-- Senza accesso: Google, poi il modulo. Un solo primario, "Accedi". -->
             <LinearLayout
                 android:id="@+id/login_panel"
                 android:layout_width="match_parent"
@@ -48,11 +48,32 @@
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="@color/elite_text_secondary" />
 
-                <!-- L'etichetta sta SOPRA il campo e si vede sempre; l'errore sotto il campo. -->
+                <!-- Google prima: e' l'accesso dei piu' nella dashboard. Secondario, perche' il primario della
+                     regione resta "Accedi" del modulo; l'icona dice che si apre fuori dall'app (il browser). -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/google_button"
+                    style="@style/Widget.App.Button.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_24"
+                    android:text="@string/padel_elite_sign_in_google"
+                    app:icon="@drawable/ic_open_in_new"
+                    app:iconGravity="textEnd"
+                    app:iconSize="@dimen/icon_standard" />
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_24"
+                    android:text="@string/padel_elite_or_email"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="@color/elite_text_secondary" />
+
+                <!-- L'etichetta sta SOPRA il campo e si vede sempre; l'errore sotto il campo. -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_16"
                     android:labelFor="@+id/email_edit"
                     android:text="@string/padel_elite_email"
                     android:textAppearance="?attr/textAppearanceLabelLarge"
