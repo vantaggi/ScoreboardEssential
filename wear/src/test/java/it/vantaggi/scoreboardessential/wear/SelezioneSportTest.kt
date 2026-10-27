@@ -3,11 +3,10 @@ package it.vantaggi.scoreboardessential.wear
 import android.content.Intent
 import android.util.TypedValue
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.wear.widget.WearableRecyclerView
 import com.google.android.material.card.MaterialCardView
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -18,11 +17,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * La selezione dello sport sul polso (passo 10): titolo a 14sp su una riga, voci a 20sp in righe da
- * almeno 52dp, la spunta e "in uso" in text-primary, il focus alla lista per la corona.
- *
- * Le righe si leggono dall'adapter, non da una lista impaginata: in Robolectric la lista non ha
- * un'altezza vera, e le misure che contano sono quelle dichiarate nelle risorse.
+ * La selezione dello sport sul polso (passo 10): titolo a 14sp su una riga, voci a 15sp in righe da
+ * almeno 52dp (le righe del menu a tutta larghezza, dalla revisione del 27 ottobre 2026), la spunta
+ * e "in uso" in text-primary, il focus alla colonna per la corona.
  */
 @RunWith(RobolectricTestRunner::class)
 class SelezioneSportTest {
@@ -46,16 +43,11 @@ class SelezioneSportTest {
         valore: Float,
     ): Float = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valore, attivita.resources.displayMetrics)
 
-    /** La riga numero [posizione], come la disegna l'adapter della schermata. */
+    /** La riga numero [posizione] della colonna delle scelte. */
     private fun riga(
         attivita: SportSelectionActivity,
         posizione: Int,
-    ): MaterialCardView {
-        val lista = attivita.findViewById<WearableRecyclerView>(R.id.sport_list)
-        val holder = lista.adapter!!.createViewHolder(FrameLayout(attivita), 0)
-        lista.adapter!!.bindViewHolder(holder, posizione)
-        return holder.itemView as MaterialCardView
-    }
+    ): MaterialCardView = attivita.findViewById<LinearLayout>(R.id.sport_voci).getChildAt(posizione) as MaterialCardView
 
     @Test
     fun `il titolo e' a 14sp su una riga`() {
@@ -67,12 +59,12 @@ class SelezioneSportTest {
     }
 
     @Test
-    fun `le voci sono a 20sp in righe da almeno 52dp`() {
+    fun `le voci sono a 15sp in righe da almeno 52dp`() {
         val attivita = apri()
 
         (0 until 3).forEach { posizione ->
             val card = riga(attivita, posizione)
-            assertEquals(sp(attivita, 20f), card.findViewById<TextView>(R.id.sport_name).textSize, 0.01f)
+            assertEquals(sp(attivita, 15f), card.findViewById<TextView>(R.id.sport_name).textSize, 0.01f)
             val contenuto = card.getChildAt(0) as LinearLayout
             assertTrue("riga ${contenuto.minimumHeight}px", contenuto.minimumHeight >= dp(attivita, 52f))
         }
@@ -109,7 +101,7 @@ class SelezioneSportTest {
     @Test
     fun `la lista ha il focus, perche' la corona scorre cio' che ha il focus`() {
         val attivita = apri()
-        val lista = attivita.findViewById<WearableRecyclerView>(R.id.sport_list)
+        val lista = attivita.findViewById<ScrollView>(R.id.sport_scroll)
 
         assertTrue("la lista non ha il focus", lista.hasFocus())
     }

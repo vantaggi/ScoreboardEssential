@@ -5,20 +5,26 @@
     giocatore: si tocca un nome e poi un altro per scambiarli), chi resta fuori, e i due bottoni:
     Ruota, tonale, e Inizia, l'unico primario. La riga di avviso dice che cosa sta succedendo
     (scegli, aspetto il telefono, non ha risposto) e TalkBack la legge quando cambia. Su nero come il
-    menu; la corona scorre la colonna.
+    menu e come lui a tutta larghezza: il titolo scorre via con la colonna, e sul tondo ogni blocco
+    si stringe vicino al bordo (BordoTondo). La corona scorre la colonna.
 -->
-<androidx.wear.widget.BoxInsetLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/prossima_scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="@dimen/menu_box_padding">
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:scrollbars="none">
 
     <LinearLayout
+        android:id="@+id/prossima_colonna"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_boxedEdges="all">
+        android:paddingHorizontal="@dimen/lista_margine_lati"
+        android:paddingTop="@dimen/lista_margine_alto"
+        android:paddingBottom="@dimen/lista_margine_basso">
 
         <TextView
             android:id="@+id/prossima_titolo"
@@ -33,95 +39,77 @@
             android:textFontWeight="600"
             android:textSize="14sp" />
 
-        <ScrollView
-            android:id="@+id/prossima_scroll"
+        <TextView
+            android:id="@+id/prossima_avviso"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:scrollbars="none">
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/space_8"
+            android:accessibilityLiveRegion="polite"
+            android:fontFamily="@font/inter"
+            android:gravity="center"
+            android:maxLines="2"
+            android:textColor="@color/elite_text_secondary"
+            android:textSize="12sp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
+        <TextView
+            android:id="@+id/prossima_sigla1"
+            style="@style/Widget.App.Sigla"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
-                <TextView
-                    android:id="@+id/prossima_avviso"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/space_8"
-                    android:accessibilityLiveRegion="polite"
-                    android:fontFamily="@font/inter"
-                    android:gravity="center"
-                    android:maxLines="2"
-                    android:textColor="@color/elite_text_secondary"
-                    android:textSize="12sp" />
+        <LinearLayout
+            android:id="@+id/prossima_coppia1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_group"
+            android:clipToOutline="true"
+            android:divider="@drawable/bg_group_divider"
+            android:orientation="vertical"
+            android:showDividers="middle" />
 
-                <TextView
-                    android:id="@+id/prossima_sigla1"
-                    style="@style/Widget.App.Sigla"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+        <TextView
+            android:id="@+id/prossima_sigla2"
+            style="@style/Widget.App.Sigla"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_12" />
 
-                <LinearLayout
-                    android:id="@+id/prossima_coppia1"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_group"
-                    android:clipToOutline="true"
-                    android:divider="@drawable/bg_group_divider"
-                    android:orientation="vertical"
-                    android:showDividers="middle" />
+        <LinearLayout
+            android:id="@+id/prossima_coppia2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_group"
+            android:clipToOutline="true"
+            android:divider="@drawable/bg_group_divider"
+            android:orientation="vertical"
+            android:showDividers="middle" />
 
-                <TextView
-                    android:id="@+id/prossima_sigla2"
-                    style="@style/Widget.App.Sigla"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_12" />
+        <TextView
+            android:id="@+id/prossima_panchina"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_8"
+            android:fontFamily="@font/inter"
+            android:gravity="center"
+            android:maxLines="3"
+            android:textColor="@color/elite_text_secondary"
+            android:textSize="12sp"
+            android:visibility="gone" />
 
-                <LinearLayout
-                    android:id="@+id/prossima_coppia2"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_group"
-                    android:clipToOutline="true"
-                    android:divider="@drawable/bg_group_divider"
-                    android:orientation="vertical"
-                    android:showDividers="middle" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/prossima_ruota"
+            style="@style/Widget.App.Button.Tonal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_12"
+            android:text="@string/wear_next_rotate" />
 
-                <TextView
-                    android:id="@+id/prossima_panchina"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_8"
-                    android:fontFamily="@font/inter"
-                    android:gravity="center"
-                    android:maxLines="3"
-                    android:textColor="@color/elite_text_secondary"
-                    android:textSize="12sp"
-                    android:visibility="gone" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/prossima_ruota"
-                    style="@style/Widget.App.Button.Tonal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_12"
-                    android:text="@string/wear_next_rotate" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/prossima_inizia"
-                    style="@style/Widget.App.Button"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_8"
-                    android:text="@string/wear_next_start" />
-            </LinearLayout>
-        </ScrollView>
-
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/prossima_inizia"
+            style="@style/Widget.App.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_8"
+            android:text="@string/wear_next_start" />
     </LinearLayout>
-
-</androidx.wear.widget.BoxInsetLayout>
+</ScrollView>

@@ -133,8 +133,14 @@ class ProssimaPartitaActivity : ComponentActivity() {
         findViewById<MaterialButton>(R.id.prossima_inizia).setOnClickListener {
             if (coppie.consegnata) finish() else chiedi(WearConstants.SERATA_START)
         }
+        // Sul tondo ogni blocco della colonna (titolo, coppie, bottoni) si stringe vicino al bordo.
+        val scorrimento = findViewById<ScrollView>(R.id.prossima_scroll)
+        val colonna = findViewById<LinearLayout>(R.id.prossima_colonna)
+        val bordo = ListaTonda(scorrimento) { (0 until colonna.childCount).map(colonna::getChildAt) }
+        scorrimento.viewTreeObserver.addOnGlobalLayoutListener { bordo.aggiorna() }
+        scorrimento.setOnScrollChangeListener { _, _, _, _, _ -> bordo.aggiorna() }
         // Il focus serve alla corona: senza, ruotarla non scorre niente.
-        findViewById<ScrollView>(R.id.prossima_scroll).requestFocus()
+        scorrimento.requestFocus()
         LocalBroadcastManager
             .getInstance(this)
             .registerReceiver(ricevitore, IntentFilter(WearDataLayerService.ACTION_PAIRS_UPDATE))

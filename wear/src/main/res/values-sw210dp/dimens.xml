@@ -35,8 +35,10 @@
     <dimen name="wear_hint_text_size">14sp</dimen>
     <dimen name="wear_hint_height">18dp</dimen>
 
-    <!-- Menu e selezione sport: il 227dp ha spazio, le misure restano quelle di sempre. -->
-    <dimen name="menu_box_padding">16dp</dimen>
+    <!-- Liste del polso: le stesse proporzioni del 192dp (5% ai lati), voci col rientro di sempre. -->
+    <dimen name="lista_margine_lati">12dp</dimen>
+    <dimen name="lista_margine_alto">19dp</dimen>
+    <dimen name="lista_margine_basso">83dp</dimen>
     <dimen name="voce_padding_verticale">8dp</dimen>
     <bool name="voce_rientro_angolo">true</bool>
 </resources>

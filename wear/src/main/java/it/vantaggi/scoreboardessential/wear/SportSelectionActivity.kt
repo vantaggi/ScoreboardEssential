@@ -6,15 +6,12 @@ import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
 import androidx.core.widget.TextViewCompat
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.RecyclerView
-import androidx.wear.widget.WearableLinearLayoutManager
-import androidx.wear.widget.WearableRecyclerView
 
 /**
  * Sceglie lo sport dal polso.
@@ -55,24 +52,51 @@ class SportSelectionActivity : ComponentActivity() {
         // si mostra cio' che e' accoppiato con certezza invece di far crashare la schermata.
         val voci = ids.zip(labels).map { (id, label) -> SportChoice(id, label, label == corrente) }
 
-        val lista = findViewById<WearableRecyclerView>(R.id.sport_list)
-        lista.layoutManager = WearableLinearLayoutManager(this)
-        lista.isEdgeItemsCenteringEnabled = true
-        // La lista e' un gruppo tonale: la linea sottile fra le righe, rientrata come nel menu.
-        lista.addItemDecoration(
-            DividerItemDecoration(this, DividerItemDecoration.VERTICAL).apply {
-                setDrawable(ContextCompat.getDrawable(this@SportSelectionActivity, R.drawable.bg_group_divider)!!)
-            },
-        )
-        lista.adapter =
-            SportAdapter(voci) { scelta ->
+        val colonna = findViewById<LinearLayout>(R.id.sport_voci)
+        voci.forEach { scelta ->
+            val riga = LayoutInflater.from(this).inflate(R.layout.item_sport_wear, colonna, false)
+            mostraLaScelta(riga, scelta) {
                 if (!scelta.current) {
                     setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_CHOSEN, scelta.id))
                 }
                 finish()
             }
+            colonna.addView(riga)
+        }
+
+        val scorrimento = findViewById<ScrollView>(R.id.sport_scroll)
+        // Sul tondo le righe si stringono vicino al bordo: alla prima impaginazione e a ogni scorrimento.
+        val bordo = ListaTonda(scorrimento) { (0 until colonna.childCount).map(colonna::getChildAt) }
+        scorrimento.viewTreeObserver.addOnGlobalLayoutListener { bordo.aggiorna() }
+        scorrimento.setOnScrollChangeListener { _, _, _, _, _ -> bordo.aggiorna() }
         // Il focus serve alla corona: senza, ruotarla non scorre niente.
-        lista.requestFocus()
+        scorrimento.requestFocus()
+    }
+
+    /**
+     * Una scelta nella riga del menu: il nome e, per quella in uso, la spunta con "in uso". Quale sia
+     * in uso si legge a parole e dalla spunta, non dal colore di una riga: l'accento e' solo un
+     * rinforzo. Colore e spunta stanno qui e non nel layout, che il menu riusa per sottotitoli grigi.
+     * La spunta e' il simbolo check di Material Symbols a icon-compact (16dp), non un carattere.
+     * Il colore e' text-primary e non il lime: sul quadrante il lime e' solo di chi serve.
+     */
+    private fun mostraLaScelta(
+        riga: View,
+        scelta: SportChoice,
+        alTocco: () -> Unit,
+    ) {
+        riga.findViewById<TextView>(R.id.sport_name).text = scelta.label
+        val stato = riga.findViewById<TextView>(R.id.sport_current)
+        val colore = ContextCompat.getColor(this, R.color.elite_text_primary)
+        val lato = resources.getDimensionPixelSize(R.dimen.icon_compact)
+        val spunta = ContextCompat.getDrawable(this, R.drawable.ic_check)!!.mutate()
+        spunta.setBounds(0, 0, lato, lato)
+        stato.setTextColor(colore)
+        stato.setCompoundDrawablesRelative(spunta, null, null, null)
+        stato.compoundDrawablePadding = resources.getDimensionPixelSize(R.dimen.icon_text_gap)
+        TextViewCompat.setCompoundDrawableTintList(stato, ColorStateList.valueOf(colore))
+        stato.visibility = if (scelta.current) View.VISIBLE else View.GONE
+        riga.setOnClickListener { alTocco() }
     }
 }
 
@@ -81,52 +105,3 @@ data class SportChoice(
     val label: String,
     val current: Boolean,
 )
-
-class SportAdapter(
-    private val voci: List<SportChoice>,
-    private val onClick: (SportChoice) -> Unit,
-) : RecyclerView.Adapter<SportAdapter.SportViewHolder>() {
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int,
-    ): SportViewHolder =
-        SportViewHolder(
-            LayoutInflater.from(parent.context).inflate(R.layout.item_sport_wear, parent, false),
-        )
-
-    override fun onBindViewHolder(
-        holder: SportViewHolder,
-        position: Int,
-    ) = holder.bind(voci[position], onClick)
-
-    override fun getItemCount() = voci.size
-
-    class SportViewHolder(
-        itemView: View,
-    ) : RecyclerView.ViewHolder(itemView) {
-        private val nome: TextView = itemView.findViewById(R.id.sport_name)
-        private val stato: TextView = itemView.findViewById(R.id.sport_current)
-
-        fun bind(
-            scelta: SportChoice,
-            onClick: (SportChoice) -> Unit,
-        ) {
-            nome.text = scelta.label
-            // Quale sport si stia giocando si legge a parole ("in uso") e dalla spunta, non dal colore
-            // di una riga: l'accento e' solo un rinforzo. Colore e spunta stanno
-            // qui e non nel layout, che il menu riusa per sottotitoli grigi e senza icona. La spunta
-            // e' il simbolo check di Material Symbols a icon-compact (16dp), non un carattere.
-            // Il colore e' text-primary e non il lime: sul quadrante il lime e' solo di chi serve.
-            val colore = ContextCompat.getColor(stato.context, R.color.elite_text_primary)
-            val lato = stato.resources.getDimensionPixelSize(R.dimen.icon_compact)
-            val spunta = ContextCompat.getDrawable(stato.context, R.drawable.ic_check)!!.mutate()
-            spunta.setBounds(0, 0, lato, lato)
-            stato.setTextColor(colore)
-            stato.setCompoundDrawablesRelative(spunta, null, null, null)
-            stato.compoundDrawablePadding = stato.resources.getDimensionPixelSize(R.dimen.icon_text_gap)
-            TextViewCompat.setCompoundDrawableTintList(stato, ColorStateList.valueOf(colore))
-            stato.visibility = if (scelta.current) View.VISIBLE else View.GONE
-            itemView.setOnClickListener { onClick(scelta) }
-        }
-    }
-}

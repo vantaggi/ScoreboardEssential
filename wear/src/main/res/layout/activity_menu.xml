@@ -1,122 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.wear.widget.BoxInsetLayout
+<!--
+    Il menu partita, a tutta larghezza: niente BoxInsetLayout, che chiudeva le voci nel quadrato
+    inscritto nel cerchio. Le voci sono righe ciascuna sul suo tono (surface), con lo spazio fra
+    l una e l altra: cosi' ognuna si stringe da sola vicino al bordo alto e basso del tondo (BordoTondo),
+    e quella al centro e' intera. La corona scorre la colonna: il focus serve a lei.
+-->
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/menu_scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="@dimen/menu_box_padding">
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:scrollbars="none">
 
     <LinearLayout
+        android:id="@+id/menu_colonna"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_boxedEdges="all">
+        android:paddingHorizontal="@dimen/lista_margine_lati"
+        android:paddingTop="@dimen/lista_margine_alto"
+        android:paddingBottom="@dimen/lista_margine_basso">
 
+        <!-- Il titolo e' la prima riga della lista e scorre via con lei: non ruba una riga per sempre. -->
         <TextView
+            android:id="@+id/menu_titolo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/space_8"
+            android:accessibilityHeading="true"
             android:text="@string/wear_menu_title"
             android:textColor="@color/elite_text_primary"
             android:fontFamily="@font/inter"
             android:textFontWeight="600"
             android:textSize="14sp"
             android:maxLines="1"
-            android:gravity="center"
-            android:layout_marginBottom="8dp" />
+            android:gravity="center" />
+
+        <LinearLayout
+            android:id="@+id/menu_voci"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:divider="@drawable/bg_spazio_righe"
+            android:orientation="vertical"
+            android:showDividers="middle" />
 
         <!--
-            Le voci sono poche e fisse: una ScrollView basta, e la corona la scorre quando il
-            tondo da 192dp non le contiene tutte. Il focus serve alla corona. Le voci sono
-            le righe di UN gruppo tonale (surface, raggio 14, senza ombra) con la linea sottile fra
-            l'una e l'altra.
+            Chi gioca: sotto i comandi, perche' la prima voce deve leggersi senza scorrere
+            (MenuPiegaTest); la corona ci arriva. Righe sul nero, senza fondo: sono da leggere,
+            non da toccare. Assente finche' il telefono non manda le rose.
         -->
-        <ScrollView
-            android:id="@+id/menu_scroll"
+        <TextView
+            android:id="@+id/menu_squadre_titolo"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:scrollbars="none">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_16"
+            android:layout_marginBottom="@dimen/space_8"
+            android:accessibilityHeading="true"
+            android:fontFamily="@font/inter"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="@string/wear_in_campo"
+            android:textColor="@color/elite_text_secondary"
+            android:textFontWeight="500"
+            android:textSize="12sp"
+            android:visibility="gone" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
+        <LinearLayout
+            android:id="@+id/menu_squadre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:divider="@drawable/bg_spazio_righe"
+            android:orientation="vertical"
+            android:showDividers="middle"
+            android:visibility="gone" />
 
-                <LinearLayout
-                    android:id="@+id/menu_voci"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_group"
-                    android:clipToOutline="true"
-                    android:divider="@drawable/bg_group_divider"
-                    android:orientation="vertical"
-                    android:showDividers="middle" />
+        <!--
+            Le impostazioni essenziali, in fondo: si cambiano fra una partita e l altra, non
+            a ogni apertura. Le stesse righe delle voci.
+        -->
+        <TextView
+            android:id="@+id/menu_impostazioni_titolo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_16"
+            android:layout_marginBottom="@dimen/space_8"
+            android:accessibilityHeading="true"
+            android:fontFamily="@font/inter"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="@string/wear_settings"
+            android:textColor="@color/elite_text_secondary"
+            android:textFontWeight="500"
+            android:textSize="12sp" />
 
-                <!--
-                    Chi gioca: sotto i comandi, perche' la prima voce deve leggersi senza scorrere
-                    (MenuPiegaTest); la corona ci arriva. Un secondo gruppo tonale, non card: sono
-                    righe da leggere, non da toccare. Assente finche' il telefono non manda le rose.
-                -->
-                <TextView
-                    android:id="@+id/menu_squadre_titolo"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_16"
-                    android:layout_marginBottom="@dimen/space_8"
-                    android:accessibilityHeading="true"
-                    android:fontFamily="@font/inter"
-                    android:gravity="center"
-                    android:maxLines="1"
-                    android:text="@string/wear_in_campo"
-                    android:textColor="@color/elite_text_secondary"
-                    android:textFontWeight="500"
-                    android:textSize="12sp"
-                    android:visibility="gone" />
-
-                <LinearLayout
-                    android:id="@+id/menu_squadre"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_group"
-                    android:clipToOutline="true"
-                    android:divider="@drawable/bg_group_divider"
-                    android:orientation="vertical"
-                    android:showDividers="middle"
-                    android:visibility="gone" />
-
-                <!--
-                    Le impostazioni essenziali, in fondo: si cambiano fra una partita e l altra, non
-                    a ogni apertura. Stesse righe e stesso gruppo tonale delle voci.
-                -->
-                <TextView
-                    android:id="@+id/menu_impostazioni_titolo"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_16"
-                    android:layout_marginBottom="@dimen/space_8"
-                    android:accessibilityHeading="true"
-                    android:fontFamily="@font/inter"
-                    android:gravity="center"
-                    android:maxLines="1"
-                    android:text="@string/wear_settings"
-                    android:textColor="@color/elite_text_secondary"
-                    android:textFontWeight="500"
-                    android:textSize="12sp" />
-
-                <LinearLayout
-                    android:id="@+id/menu_impostazioni"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_group"
-                    android:clipToOutline="true"
-                    android:divider="@drawable/bg_group_divider"
-                    android:orientation="vertical"
-                    android:showDividers="middle" />
-            </LinearLayout>
-        </ScrollView>
-
+        <LinearLayout
+            android:id="@+id/menu_impostazioni"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:divider="@drawable/bg_spazio_righe"
+            android:orientation="vertical"
+            android:showDividers="middle" />
     </LinearLayout>
-
-</androidx.wear.widget.BoxInsetLayout>
+</ScrollView>

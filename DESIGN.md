@@ -1426,7 +1426,7 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Apre fuori dall'app | `open_in_new` | `ic_open_in_new` | - |
 | Aggiungi | `add` | `ic_add` | - |
 | Modifica | `edit` | `ic_edit` | - |
-| Elimina | `delete` | `ic_delete` | - |
+| Elimina | `delete` | `ic_delete` | `ic_delete` |
 | Cerca | `search` | `ic_search` | - |
 | Filtra | `filter_list` | - | - |
 | Ordina | `swap_vert` | `ic_swap_vert` | - |
@@ -1454,15 +1454,18 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Impostazioni | `settings` | - | - |
 | Notifiche | `notifications` | - | - |
 | Sport, palla, gol | `sports_soccer` | - | - |
-| Racchetta (padel, tennis) | `sports_tennis` | - | - |
-| Portiere | `sports_handball` | - | - |
+| Racchetta (padel, tennis) | `sports_tennis` | - | `ic_sports_tennis` |
+| Portiere | `sports_handball` | - | `ic_sports_handball` |
 | Cronometro | `timer` | - | - |
+| Scegli lo sport | `sports` | - | `ic_sports` |
+| Fine partita | `flag` | - | `ic_flag` |
+| Vibrazione | `vibration` | - | `ic_vibration` |
 | Storico delle partite | `history` | - | - |
 | Cronaca della partita | `timeline` | `ic_timeline` | - |
 | Presenze | `event_available` | `ic_event_available` | - |
 | Scambio dei posti | `swap_horiz` | `ic_swap_horiz` | - |
 | Aggiungi giocatore | `person_add` | `ic_person_add` | - |
-| Serata, chi c'e' stasera | `groups` | `ic_groups` | - |
+| Serata, chi c'e' stasera | `groups` | `ic_groups` | `ic_groups` |
 | Ruota le coppie | `autorenew` | `ic_autorenew` | - |
 | Stesse coppie | `repeat` | `ic_repeat` | - |
 | Scambia i lati | `sync_alt` | `ic_sync_alt` | - |
@@ -2499,3 +2502,35 @@ Richiesta del proprietario: i menu di telefono e orologio sono "poco leggibili e
 
 1. Le partite gia' salvate con un registro in inglese restano in inglese: si traducono solo le righe nuove.
 2. Non visto a schermo finche' non e' provato sul telefono (passo nella PR).
+
+### Passo 2: le liste dell'orologio a tutta larghezza
+
+Il problema era la causa (1): menu, scelta dello sport e Prossima partita in un `BoxInsetLayout` con `boxedEdges="all"`, cioe' nel quadrato inscritto nel cerchio, e il titolo fermo sopra. `wearable.md`: il quadrato inscritto vale per il testo e i bersagli di una schermata con un valore solo; le liste invece vanno a tutta larghezza e si stringono vicino al bordo alto e basso, con la riga al centro intera.
+
+- **Gerarchia.** Un compito per schermata, com'era: il menu (le voci della partita, chi gioca, le impostazioni del polso), la scelta (sport, regola del 40-40, durata del portiere), la prossima partita (le coppie e Inizia, l'unico primario). L'ordine delle voci e la logica di `MenuVoci` non cambiano: cambia solo come si vedono.
+- **Layout.** Una `ScrollView` a tutto schermo con una colonna; i margini sono ruoli nuovi e riusabili, `lista_margine_lati` (5% del diametro: 10dp sul 192, 12dp sul 227, 8dp sui quadrati), `lista_margine_alto` (16, 19, 8dp) e `lista_margine_basso` (70, 83, 16dp: quanto basta perche' l'ultima riga arrivi al centro, dove il tondo e' largo). Il titolo e' la prima riga della colonna e scorre via. Su 192dp le voci passano da circa 130dp a 172dp di larghezza, e a schermo si leggono tre voci invece di una e mezza.
+- **Le righe.** `item_sport_wear` come i bottoni di Wear: icona a sinistra (`icon_standard`, decorativa), nome a 15sp in 600 e sotto la riga del perche' o del valore, allineati all'inizio; alta almeno 52dp; `Widget.App.GroupRow` (surface, raggio 8, pressione condivisa). Ogni riga e' sul suo tono e fra l'una e l'altra c'e' il nero (`bg_spazio_righe`, space-4) invece della linea: un gruppo con un fondo solo non si puo' stringere riga per riga. Le squadre in campo restano righe sul nero, senza fondo (si leggono, non si toccano). Nella Prossima partita le due coppie restano gruppi tonali (si tocca un nome e poi l'altro): si stringe il gruppo intero.
+- **Stringersi sul bordo.** `BordoTondo.scala` (pura): il rapporto fra la corda del cerchio all'altezza del bordo della riga piu' lontano dal centro e la larghezza della riga, fra 0,7 e 1. `ListaTonda` lo applica a ogni scorrimento e a ogni impaginazione, solo sul tondo, con la matrice di disegno della riga (`animationMatrix`): `scaleX` e `scaleY` sono della pressione condivisa, e le due cose si sommano. Il tocco resta sulla riga intera.
+- **Icone** (tabella G-3, colonna dell'orologio): Prossima partita `groups`, Sport `sports`, Fine partita `flag`, Scarta la coda `delete`, Sul 40-40 `sports_tennis`, Vibrazione `vibration`, Portiere `sports_handball`. Nuovi concetti in tabella: "Scegli lo sport", "Fine partita", "Vibrazione". L'icona ha il colore del nome: spenta, rossa o nera sulla voce armata insieme a lui.
+- **Chiusura automatica del menu** da 10 a 20 secondi: con le impostazioni in fondo la lista e' sempre piu' lunga di uno schermo, e chi leggeva "In campo" se la vedeva sparire. Tocco, scorrimento e corona la riarmano come prima.
+
+| Stato | Cosa si vede |
+|---|---|
+| Normale | riga surface, icona e nome in `text-primary`, sotto il valore in `text-secondary` |
+| Premuto | la pressione condivisa (0,97 e 0,85), sopra la scala del bordo |
+| Fuoco (corona) | la colonna ha il fuoco e scorre; nessun cambio sulle righe |
+| Selezionato | nella scelta, la spunta e "in uso" in `text-primary` |
+| Disattivo | icona e nome in `text-disabled`, il perche' sotto in `text-secondary` |
+| Armata (Fine partita, Scarta) | la riga si riempie di `status-error`, icona e testo neri, "Tocca di nuovo" |
+| In attesa / errore | Prossima partita: la riga d'avviso, come prima |
+| Vuoto | senza rose il gruppo "In campo" non c'e', come prima |
+| Movimento ridotto | la pressione senza scala, come prima; la scala del bordo segue il dito e la corona, non e' un'animazione |
+
+- **Movimento.** Nessuna animazione nuova: la scala del bordo e' geometria che segue lo scorrimento. **Accessibilita'.** Icone nascoste a TalkBack (il nome dice gia' tutto); bersagli da 52dp intatti anche dove la riga e' disegnata piu' piccola; i titoli restano intestazioni. **Testo grande.** Le righe vanno a capo in altezza; `TitoloIntero` scende fino a 14sp invece di spezzare una parola. **Quadrato.** Nessuna riga si stringe, margini piccoli e uguali.
+- **Pattern vietati.** Nessuna griglia di card uguali (una colonna di comandi, come Wear); niente icone in quadrati colorati (l'icona sta sul tono della riga); niente ombre; un primario solo per schermata (Inizia nella Prossima partita, nessuno nel menu, dove Fine partita e' il comando distruttivo in rosso con la seconda conferma).
+- **Conflitto dichiarato.** `wearable.md` dice anche "nothing essential in the outer ring": le righe vicino al bordo ci entrano, ma rimpicciolite e mai tagliate, e la corona le porta al centro. E' la lettura che la stessa pagina da' delle liste.
+
+### Debiti dichiarati del passo 2
+
+1. Non visto a schermo: verificato dai test (Robolectric, tondo 192dp e quadrato 180dp) e dalla CI; le foto sull'emulatore rotondo e sul Galaxy Watch restano da fare.
+2. La scelta dello sport e' ora una colonna e non una `WearableRecyclerView`: le scelte sono al massimo una manciata. Se un elenco diventasse lungo (decine di voci) tornerebbe una lista che ricicla.

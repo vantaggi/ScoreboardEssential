@@ -218,9 +218,10 @@ class MenuActivityTest {
     }
 
     @Test
-    fun `senza nessun tocco il menu si chiude da solo dopo 10 secondi`() {
+    fun `senza nessun tocco il menu si chiude da solo dopo 20 secondi`() {
         // L'avvio dell'activity consuma qualche millisecondo del looper di Robolectric: il conto dei
-        // 10 secondi parte da onCreate, dentro quella finestra. Si misura da prima e da dopo.
+        // 20 secondi parte da onCreate, dentro quella finestra. Si misura da prima e da dopo.
+        assertEquals(20_000L, MenuActivity.CHIUSURA_AUTOMATICA_MS)
         val prima = SystemClock.uptimeMillis()
         val activity = apri()
         val dopo = SystemClock.uptimeMillis()
@@ -234,12 +235,12 @@ class MenuActivityTest {
     }
 
     @Test
-    fun `un'interazione riporta a 10 secondi la chiusura automatica`() {
+    fun `un'interazione riporta a 20 secondi la chiusura automatica`() {
         val activity = apri()
 
-        avanza(9_000)
+        avanza(MenuActivity.CHIUSURA_AUTOMATICA_MS - 1_000)
         activity.onUserInteraction()
-        avanza(9_000)
+        avanza(MenuActivity.CHIUSURA_AUTOMATICA_MS - 1_000)
         assertFalse(activity.isFinishing)
 
         avanza(1_000)
@@ -247,13 +248,13 @@ class MenuActivityTest {
     }
 
     @Test
-    fun `ruotare la corona e' un'interazione e riporta a 10 secondi la chiusura automatica`() {
+    fun `ruotare la corona e' un'interazione e riporta a 20 secondi la chiusura automatica`() {
         val activity = apri()
         val corona = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_SCROLL, 0f, 0f, 0)
 
-        avanza(9_000)
+        avanza(MenuActivity.CHIUSURA_AUTOMATICA_MS - 1_000)
         activity.dispatchGenericMotionEvent(corona)
-        avanza(9_000)
+        avanza(MenuActivity.CHIUSURA_AUTOMATICA_MS - 1_000)
         assertFalse(activity.isFinishing)
 
         avanza(1_000)
