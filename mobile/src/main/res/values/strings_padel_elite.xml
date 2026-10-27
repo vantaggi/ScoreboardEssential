@@ -59,7 +59,7 @@
 
     <!-- R-1: group players and how they are linked to the app players. -->
     <string name="padel_elite_rosa_title">Group players</string>
-    <string name="padel_elite_rosa_hint">Link each dashboard player to one in the app: in the file you send, the admin finds the names already chosen.</string>
+    <string name="padel_elite_rosa_hint">No need to link them first: when you pick the players for a match you can take them from the dashboard, and the app links them. Here you can check or change the links.</string>
     <string name="padel_elite_rosa_no_group">Choose a group to see its players.</string>
     <string name="padel_elite_rosa_loading">Loading the group players</string>
     <string name="padel_elite_rosa_empty_title">No players in the group</string>
@@ -111,6 +111,16 @@
     <string name="diretta_channel_name">Padel Elite live</string>
     <string name="diretta_channel_description">The ongoing notification that keeps the live broadcast running while the app is in the background</string>
     <string name="diretta_notif_stop">Stop live</string>
+    <string name="diretta_notif_waiting">Live on hold: %1$s</string>
+    <string name="diretta_notif_why_network">no network</string>
+    <string name="diretta_notif_why_login">sign in again</string>
+    <string name="diretta_notif_why_players">four players needed</string>
+    <string name="diretta_notif_why_name">a name is over 60 characters</string>
+    <string name="diretta_notif_why_full">too many live matches in the group</string>
+    <string name="diretta_notif_why_code">no free code</string>
+    <string name="diretta_notif_why_server">unexpected server answer</string>
+    <string name="diretta_notif_why_error">unexpected error</string>
+    <string name="diretta_notif_why_replaced">a player was replaced</string>
     <string name="diretta_live_no_service">Live on %1$s. No ongoing notification: keep the app open</string>
     <string name="diretta_live_service_timeout">Live on %1$s. The ongoing notification stopped after 6 hours: keep the app open</string>
     <string name="diretta_avviso_title">Live broadcast: %1$s</string>
@@ -120,4 +130,27 @@
     <string name="diretta_closing">Closing the live broadcast</string>
     <string name="diretta_close_failed">The live broadcast did not close: the dashboard closes it, or it closes on its own within 6 hours</string>
     <string name="diretta_unavailable_old_match">Live broadcast not available for this match: it started with an earlier version</string>
+
+    <!-- Aggiungi un giocatore con la rosa del gruppo: i giocatori della dashboard senza collegarli prima. -->
+    <string name="scelta_section_dashboard">Padel Elite · %1$s</string>
+    <string name="scelta_section_girone">Same group tonight</string>
+    <string name="scelta_section_iscritti">Signed up for the next evening</string>
+    <string name="scelta_section_app">Only in the app</string>
+    <string name="scelta_section_unread">Padel Elite is not responding: players in the app</string>
+    <string name="scelta_dashboard_new">Added to the app when you pick them</string>
+    <string name="scelta_dashboard_in_app">In the app</string>
+    <string name="scelta_dashboard_in_app_as">In the app as %1$s</string>
+    <string name="scelta_dashboard_failed">Could not add the player. Try again.</string>
+    <string name="scelta_same_person_title">Is %1$s already in the app?</string>
+    <string name="scelta_same_person_hint">The dashboard often has only the surname. Tap the player if it is the same person.</string>
+    <string name="scelta_same_person_no_matches">No matches played</string>
+    <plurals name="scelta_same_person_matches">
+        <item quantity="one">%1$d match</item>
+        <item quantity="other">%1$d matches</item>
+    </plurals>
+    <string name="scelta_same_person_last">last on %1$s</string>
+    <string name="scelta_same_person_with">with %1$s</string>
+    <string name="scelta_same_person_against">against %1$s</string>
+    <string name="scelta_other_person">A different person</string>
+    <string name="scelta_other_person_detail">Create %1$s in the app, linked to the dashboard</string>
 </resources>

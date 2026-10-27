@@ -43,6 +43,28 @@ interface MatchDao {
     )
     suspend fun getMatchLineup(matchId: Int): List<MatchPlayer>
 
+    /** Quante partite chiuse ha giocato un giocatore: un indizio per riconoscerlo. */
+    @Query(
+        """
+        SELECT COUNT(*) FROM matches m
+        INNER JOIN MatchPlayerCrossRef cr ON cr.matchId = m.matchId
+        WHERE cr.playerId = :playerId AND m.isActive = 0
+    """,
+    )
+    suspend fun countClosedMatchesOf(playerId: Int): Int
+
+    /** L'ultima partita chiusa di un giocatore, se ce n'e' una. */
+    @Query(
+        """
+        SELECT m.* FROM matches m
+        INNER JOIN MatchPlayerCrossRef cr ON cr.matchId = m.matchId
+        WHERE cr.playerId = :playerId AND m.isActive = 0
+        ORDER BY m.timestamp DESC
+        LIMIT 1
+    """,
+    )
+    suspend fun lastClosedMatchOf(playerId: Int): Match?
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(match: Match): Long
 

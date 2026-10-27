@@ -20,6 +20,13 @@ interface PadelEliteLinkDao {
     @Query("SELECT * FROM padel_elite_links WHERE localPlayerId = :localPlayerId")
     suspend fun linksOfPlayer(localPlayerId: Int): List<PadelEliteLink>
 
+    /** Il collegamento di un giocatore della dashboard in un gruppo, se c'e'. */
+    @Query("SELECT * FROM padel_elite_links WHERE groupId = :groupId AND remotePlayerId = :remotePlayerId LIMIT 1")
+    suspend fun linkOfRemote(
+        groupId: String,
+        remotePlayerId: Int,
+    ): PadelEliteLink?
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(link: PadelEliteLink)
 

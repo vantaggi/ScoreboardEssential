@@ -57,6 +57,11 @@ import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.padelelite.DirettaAzione
 import it.vantaggi.scoreboardessential.padelelite.DirettaFase
 import it.vantaggi.scoreboardessential.padelelite.DirettaIntent
+import it.vantaggi.scoreboardessential.padelelite.ElencoDellaScelta
+import it.vantaggi.scoreboardessential.padelelite.RemotePlayer
+import it.vantaggi.scoreboardessential.padelelite.SceltaDallaDashboard
+import it.vantaggi.scoreboardessential.padelelite.SezioneDellaScelta
+import it.vantaggi.scoreboardessential.padelelite.VoceDellaScelta
 import it.vantaggi.scoreboardessential.padelelite.direttaLook
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
@@ -357,6 +362,8 @@ class MainActivity :
             // L'accesso e il gruppo si cambiano in un'altra schermata: il ruolo si rilegge al ritorno.
             aggiornaLaDiretta()
         }
+        // Anche il gruppo si sceglie altrove: la rosa si rilegge in sottofondo, e "Aggiungi" la trova pronta.
+        viewModel.preparaLaRosaDelGruppo()
     }
 
     override fun onDestroy() {
@@ -1508,7 +1515,42 @@ class MainActivity :
         }
     }
 
+    /**
+     * "Aggiungi un giocatore". Con un gruppo di Padel Elite (padel, accesso, gruppo scelto) l'elenco offre anche
+     * la rosa della dashboard, senza averla collegata prima: vedi [mostraLaSceltaConLaDashboard]. Senza, e' il
+     * dialogo di sempre coi giocatori dell'app.
+     */
     private fun showAddPlayerToTeamDialog(team: Int) {
+        if (!viewModel.sceltaDalGruppoPossibile()) {
+            mostraIGiocatoriDellApp(team)
+            return
+        }
+        // In corso: la prima lettura della rosa puo' chiedere un attimo, e un secondo tocco non apre due dialoghi.
+        val bottone = findViewById<Button>(if (team == 1) R.id.add_team1_player_button else R.id.add_team2_player_button)
+        bottone.isEnabled = false
+        lifecycleScope.launch {
+            val elenco =
+                try {
+                    viewModel.elencoDellaScelta()
+                } finally {
+                    bottone.isEnabled = true
+                }
+            when {
+                elenco == null -> mostraIGiocatoriDellApp(team)
+                elenco.voci.isEmpty() -> nessunGiocatoreDisponibile()
+                else -> mostraLaSceltaConLaDashboard(team, elenco)
+            }
+        }
+    }
+
+    private fun nessunGiocatoreDisponibile() {
+        snackbarSopraLaStriscia(getString(R.string.no_available_players), Snackbar.LENGTH_LONG)
+            .setAction(getString(R.string.manage)) {
+                startActivity(Intent(this, PlayersManagementActivity::class.java))
+            }.show()
+    }
+
+    private fun mostraIGiocatoriDellApp(team: Int) {
         val allPlayers = viewModel.allPlayers.value ?: emptyList()
         val teamPlayers = if (team == 1) viewModel.team1Players.value else viewModel.team2Players.value
         val teamPlayerIds = teamPlayers?.map { it.player.playerId }?.toSet() ?: emptySet()
@@ -1518,24 +1560,149 @@ class MainActivity :
             }
 
         if (availablePlayers.isEmpty()) {
-            snackbarSopraLaStriscia(getString(R.string.no_available_players), Snackbar.LENGTH_LONG)
-                .setAction(getString(R.string.manage)) {
-                    startActivity(Intent(this, PlayersManagementActivity::class.java))
-                }.show()
+            nessunGiocatoreDisponibile()
             return
         }
 
         val playerNames = availablePlayers.map { it.player.playerName }.toTypedArray()
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.add_player_title, team))
-            .setItems(playerNames) { _, which ->
-                val selectedPlayer = availablePlayers[which]
-                viewModel.addPlayerToTeam(selectedPlayer, team)
-                val teamName = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
-                snackbarSopraLaStriscia(
-                    getString(R.string.player_added_message, selectedPlayer.player.playerName, teamName),
-                    Snackbar.LENGTH_SHORT,
-                ).show()
+            .setItems(playerNames) { _, which -> mettiInSquadra(availablePlayers[which], team) }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun mettiInSquadra(
+        selectedPlayer: PlayerWithRoles,
+        team: Int,
+    ) {
+        viewModel.addPlayerToTeam(selectedPlayer, team)
+        val teamName = if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value
+        snackbarSopraLaStriscia(
+            getString(R.string.player_added_message, selectedPlayer.player.playerName, teamName),
+            Snackbar.LENGTH_SHORT,
+        ).show()
+    }
+
+    /** Mette in squadra il giocatore dell'app [localId] (appena creato, o gia' esistente); se non si trova lo dice. */
+    private fun mettiInSquadra(
+        localId: Int?,
+        team: Int,
+    ) {
+        lifecycleScope.launch {
+            val giocatore = localId?.let { viewModel.giocatoreDellApp(it) }
+            if (giocatore == null) {
+                snackbarSopraLaStriscia(getString(R.string.scelta_dashboard_failed), Snackbar.LENGTH_LONG).show()
+            } else {
+                mettiInSquadra(giocatore, team)
+            }
+        }
+    }
+
+    /**
+     * L'elenco con le sezioni: prima la rosa del gruppo (chi e' collegato lo dice, chi non lo e' "si aggiunge
+     * all'app" quando lo si sceglie), poi chi c'e' solo nell'app, cosi' una partita mista resta possibile. Se la
+     * dashboard non ha risposto la sezione lo dice e restano i giocatori dell'app.
+     */
+    private fun mostraLaSceltaConLaDashboard(
+        team: Int,
+        elenco: ElencoDellaScelta,
+    ) {
+        val righe =
+            elenco.voci.map { voce ->
+                when (voce) {
+                    is VoceDellaScelta.Intestazione -> {
+                        val titolo =
+                            when (voce.sezione) {
+                                SezioneDellaScelta.GIRONE -> getString(R.string.scelta_section_girone)
+                                SezioneDellaScelta.ISCRITTI -> getString(R.string.scelta_section_iscritti)
+                                SezioneDellaScelta.DASHBOARD -> getString(R.string.scelta_section_dashboard, elenco.nomeGruppo)
+                                SezioneDellaScelta.SOLO_APP -> getString(R.string.scelta_section_app)
+                                SezioneDellaScelta.DASHBOARD_NON_LETTA -> getString(R.string.scelta_section_unread)
+                            }
+                        RigaDelDialogo(titolo, intestazione = true)
+                    }
+
+                    is VoceDellaScelta.DallaDashboard -> {
+                        val didascalia =
+                            when {
+                                voce.nomeLocale == null -> getString(R.string.scelta_dashboard_new)
+                                voce.nomeLocale == voce.remote.name -> getString(R.string.scelta_dashboard_in_app)
+                                else -> getString(R.string.scelta_dashboard_in_app_as, voce.nomeLocale)
+                            }
+                        RigaDelDialogo(voce.remote.name, didascalia)
+                    }
+
+                    is VoceDellaScelta.SoloNellApp -> {
+                        RigaDelDialogo(voce.nome)
+                    }
+                }
+            }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.add_player_title, team))
+            .setAdapter(RigheDelDialogo(this, righe)) { _, which ->
+                when (val voce = elenco.voci[which]) {
+                    is VoceDellaScelta.Intestazione -> {
+                        Unit
+                    }
+
+                    is VoceDellaScelta.SoloNellApp -> {
+                        mettiInSquadra(voce.localId, team)
+                    }
+
+                    is VoceDellaScelta.DallaDashboard -> {
+                        if (voce.localId != null) {
+                            mettiInSquadra(voce.localId, team)
+                        } else {
+                            scegliDallaDashboard(elenco.gruppo, voce.remote, team)
+                        }
+                    }
+                }
+            }.setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    /** Un giocatore della dashboard non ancora nell'app: nasce adesso, o se c'e' un omonimo decide l'utente. */
+    private fun scegliDallaDashboard(
+        gruppo: String,
+        remote: RemotePlayer,
+        team: Int,
+    ) {
+        lifecycleScope.launch {
+            when (val esito = viewModel.scegliDallaDashboard(gruppo, remote)) {
+                null -> snackbarSopraLaStriscia(getString(R.string.scelta_dashboard_failed), Snackbar.LENGTH_LONG).show()
+                is SceltaDallaDashboard.Pronto -> mettiInSquadra(esito.localId, team)
+                is SceltaDallaDashboard.Omonimi -> chiediSeELoStesso(gruppo, esito, team)
+            }
+        }
+    }
+
+    /**
+     * Nell'app c'e' gia' qualcuno con lo stesso nome. Nella dashboard spesso c'e' solo il cognome, quindi non si
+     * unisce da solo: per ogni omonimo le partite giocate e l'ultima (quando, con chi, contro chi), e l'ultima
+     * riga e' "un'altra persona", che crea un giocatore nuovo. Annulla non scrive niente.
+     */
+    private fun chiediSeELoStesso(
+        gruppo: String,
+        omonimi: SceltaDallaDashboard.Omonimi,
+        team: Int,
+    ) {
+        val righe = righeDellaDomanda(this, omonimi.remote.name, omonimi.candidati)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.scelta_same_person_title, omonimi.remote.name))
+            .setAdapter(RigheDelDialogo(this, righe)) { _, which ->
+                // La riga 0 e' la spiegazione (non si tocca); poi gli omonimi; l'ultima e' "un'altra persona".
+                if (which == 0) return@setAdapter
+                val candidato = omonimi.candidati.getOrNull(which - 1)
+                lifecycleScope.launch {
+                    val id =
+                        if (candidato != null) {
+                            viewModel.unisciAllOmonimo(gruppo, omonimi.remote, candidato.localId)
+                        } else {
+                            viewModel.creaDallaDashboard(gruppo, omonimi.remote)
+                        }
+                    mettiInSquadra(id, team)
+                }
             }.setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
