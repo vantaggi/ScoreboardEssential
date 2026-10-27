@@ -1005,6 +1005,38 @@ class MainViewModelTest {
         }
 
     /**
+     * Visto sul telefono: aprire l'app con il padel salvato scriveva "Portiere a 30 secondi" nel
+     * registro. La durata arriva dalle impostazioni prima dello sport, quando le regole sono ancora
+     * quelle del calcio. Rosso se la prima lettura delle impostazioni torna a scrivere la riga.
+     */
+    @Test
+    fun `aprire l'app col padel salvato non scrive la durata del portiere`() =
+        runTest(UnconfinedTestDispatcher()) {
+            Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+            whenever(mockMatchSettingsRepository.getSettingsFlow()).thenReturn(
+                flowOf(
+                    MatchSettings(
+                        team1Name = "Team 1",
+                        team2Name = "Team 2",
+                        team1Color = Color.RED,
+                        team2Color = Color.BLUE,
+                        keeperTimerDuration = 45L,
+                        activeSport = SportRegistry.PADEL,
+                    ),
+                ),
+            )
+
+            val conPadel = creaViewModel()
+            altriViewModel.add(conPadel)
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            conPadel.matchEvents.observeForever(eventiObserver)
+
+            val righe = conPadel.matchEvents.value.orEmpty().map { it.event }
+            assertTrue("registro: $righe", righe.none { it.startsWith("Keeper timer set") })
+            conPadel.matchEvents.removeObserver(eventiObserver)
+        }
+
+    /**
      * Una partita ripresa dopo la chiusura dell'app resta la STESSA partita anche nel file: id e
      * inizio si rileggono dalla riga, altrimenti l'export dopo la ripresa ne mancherebbe e chi
      * importa non riconoscerebbe il doppione con un export fatto prima.

@@ -835,6 +835,9 @@ class MainViewModel(
      */
     val scoreDisplay: LiveData<ScoreDisplay> = _scoreDisplay
 
+    // Sopra init: il collettore delle impostazioni, lanciato in init, lo legge alla prima emissione.
+    private var impostazioniLette = false
+
     // Sopra init, come _scoreDisplay: la rilettura del ruolo, lanciata in init, lo scrive.
     private val _ruoloDirettaAggiornato = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
@@ -849,9 +852,12 @@ class MainViewModel(
                 if (_team1Color.value != settings.team1Color) setTeamColor(1, settings.team1Color)
                 if (_team2Color.value != settings.team2Color) setTeamColor(2, settings.team2Color)
 
+                // Alla prima lettura la durata e' una sincronizzazione, non un fatto della partita:
+                // arriva prima dello sport (le regole sono ancora quelle del calcio) e scriveva
+                // "Portiere a 30 secondi" a ogni apertura, anche nel padel.
                 val currentDurationSeconds = keeperTimerDuration / 1000
                 if (currentDurationSeconds != settings.keeperTimerDuration) {
-                    setKeeperTimer(settings.keeperTimerDuration)
+                    setKeeperTimer(settings.keeperTimerDuration, registra = impostazioniLette)
                 }
 
                 // Lo sport si applica solo a partita ferma: un cambio arrivato dalle impostazioni
@@ -867,6 +873,7 @@ class MainViewModel(
                     }
                 }
                 allineaRegolaDel40()
+                impostazioniLette = true
             }
         }
 
@@ -2203,11 +2210,14 @@ class MainViewModel(
     }
 
     // --- Keeper Timer Management ---
-    fun setKeeperTimer(seconds: Long) {
+    fun setKeeperTimer(
+        seconds: Long,
+        registra: Boolean = true,
+    ) {
         keeperTimerDuration = seconds * 1000
         _keeperTimerValue.value = keeperTimerDuration
         // Solo dove il portiere c'e': nel padel il registro diceva "Keeper timer set to 30 seconds".
-        if (sportRules.capabilities.hasAuxCountdown) addMatchEvent(testo(R.string.log_keeper_set, seconds))
+        if (registra && sportRules.capabilities.hasAuxCountdown) addMatchEvent(testo(R.string.log_keeper_set, seconds))
         // Sync default duration to Wear
         sendKeeperTimerUpdate(false, keeperTimerDuration)
     }
