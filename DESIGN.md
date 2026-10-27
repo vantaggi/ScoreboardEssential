@@ -2050,7 +2050,7 @@ Errori come la rosa di R-1: 401 rinnova il token una volta e ripete (`PadelElite
 5. **Piu' campi, piu' telefoni**: ogni telefono sceglie il suo girone; non c'e' un coordinamento (due telefoni possono scegliere lo stesso).
 6. **Rosa oltre 1000 giocatori**: la lettura dei nomi e' quella di R-1 (tetto di PostgREST); un presente oltre il tetto risulterebbe "non nella rosa".
 7. **Quattro richieste in fila** e non in parallelo: sono piccole, ma con una rete lenta "in lettura" dura quattro andate e ritorni.
-8. **Non visto a schermo**: nessun SDK Android in questo passo; la schermata e' provata con Robolectric, la logica di `:core` eseguita e falsificata sulla JVM. Da guardare a occhio dal proprietario, anche a 360dp e al 200%.
+8. ~~**Non visto a schermo**~~: visto il 27 ottobre 2026 sul telefono del proprietario contro la dashboard vera (sezione "Serata dalla dashboard, la verifica a schermo" in fondo).
 
 ## Diretta - 9 ottobre 2026 (D-2)
 
@@ -2284,3 +2284,25 @@ Richiesta del proprietario: con l'accesso e il gruppo scelto vedeva la rosa dell
 2. **Senza collegamenti** (funzione spenta o serata senza gruppo letto) la Serata riusa ancora l'omonimo come prima: in quel caso non c'e' un gruppo a cui collegarlo.
 3. **La rosa in memoria** vive quanto la schermata principale: un giocatore aggiunto nella dashboard compare dalla volta dopo che il dialogo si apre (la lettura in sottofondo lo porta).
 4. **Il tennis** non offre la rosa della dashboard (Padel Elite e' padel).
+
+## Serata dalla dashboard, la verifica a schermo - 27 ottobre 2026
+
+La checklist "Da guardare in locale" della PR #182, eseguita sul telefono del proprietario (SM-S948B, build di `main` 8746779b, accesso a Padel Elite e gruppo ART Padel) contro la dashboard vera, **solo in lettura**: nessuna partita inviata, nessun girone creato, la Diretta spenta durante le prove.
+
+| Punto | Esito |
+|---|---|
+| Serata, data e presenti | funziona: "Serata di martedì 27 ottobre, 12 presenti. 11 non collegati entrano come ospiti." (la data non e' confrontata con `venue_config` a mano) |
+| Girone salvato dalla dashboard | funziona: il girone toccato diventa i presenti, con la spunta |
+| "Usa i presenti", ospiti, Annulla | funziona: solo al tocco, "12 presenti dalla dashboard, 11 come ospiti", Annulla rimette la serata di prima |
+| Senza rete e "Riprova" | funziona: "La dashboard non risponde. Controlla la connessione.", Riprova rilegge |
+| 360dp e carattere al 200% | **non funzionava**: le righe dei gironi si fermavano a due righe con l'ellissi ("Girone B: Chainykova, Ma…"). Corretto qui sotto |
+| Partita in corso | funziona: le proposte si spengono dal primo punto (a 0-0 la partita non e' ancora in corso, come nel codice) |
+
+**La correzione.** Le righe dei gironi vanno a capo per intero: `RigaSerata.titoloIntero`, che l'adapter traduce in `maxLines` senza limite e niente ellissi; le altre righe (posti, panchina, presenti, "Usa i presenti") restano a due righe come prima, perche' un nome solo tagliato si riconosce e un elenco di quattro nomi no. Nessun token nuovo, nessun componente nuovo. Il test `le righe dei gironi vanno a capo per intero, le altre restano a due righe` di `SerataActivityTest` e' rosso se il girone resta a due righe o se il limite si toglie anche alle altre (il riciclo dell'adapter lo riporterebbe sulle righe sbagliate).
+
+**Nota, non un errore.** Il messaggio con "Annulla" resta circa 3 secondi (durata breve di sistema): a bordo campo col pollice puo' essere poco. Da decidere se allungarlo.
+
+**Pattern vietati** (`review.md`): niente maiuscolo, emoji, ombre, colori o misure scritti a mano, nessun peso nuovo, nessun movimento nuovo. A carattere grande il gruppo si allunga e la schermata scorre come prima.
+
+**Debito.** La correzione non e' ancora vista a schermo a 360dp e al 200%: va riguardata sul telefono.
+
