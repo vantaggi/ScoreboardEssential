@@ -9,12 +9,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.Configuration
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
+import it.vantaggi.scoreboardessential.ProvaApplication
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -135,5 +137,28 @@ class DirettaAlAvvioTest {
 
         attendi("il lavoro di chiusura in coda") { lavori("m-a").size == 1 }
         attendi("il segno tolto") { store.pendenti().isEmpty() }
+    }
+
+    @Test
+    fun `il lavoro dell'avvio gira nello scope dell'applicazione, che i test possiedono e chiudono`() {
+        store.segnaPendente(DirettaChiusuraRichiesta("m-a", "g-1", conRisultato = true))
+        val app = context as ProvaApplication
+        // Fermo: il lavoro lanciato da onCreate resta in coda finche' il test non lo fa girare.
+        val fermo = StandardTestDispatcher()
+        app.dispatcherDiAvvio = fermo
+
+        app.onCreate()
+
+        assertEquals("il lavoro e' dello scope dell'applicazione", 1, app.lavoriVivi())
+        assertEquals("e non e' ancora girato", 1, store.pendenti().size)
+        attendi("il segno tolto") {
+            fermo.scheduler.advanceUntilIdle()
+            store.pendenti().isEmpty()
+        }
+        assertEquals(1, lavori("m-a").size)
+        attendi("il lavoro finito") {
+            fermo.scheduler.advanceUntilIdle()
+            app.lavoriVivi() == 0
+        }
     }
 }

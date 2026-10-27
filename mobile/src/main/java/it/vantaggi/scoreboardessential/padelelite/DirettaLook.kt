@@ -63,7 +63,7 @@ fun direttaLook(
         }
     }
 
-/** Perche' la diretta e' accesa ma non trasmette, in una frase: la usano anche la riga del foglio e la notifica fissa. */
+/** Perche' la diretta e' accesa ma non trasmette, in una frase: la riga del foglio PARTITA. */
 internal fun testoDiAttesa(
     context: Context,
     stato: DirettaStato,
@@ -79,6 +79,29 @@ internal fun testoDiAttesa(
         DirettaMotivo.GIOCATORE_SOSTITUITO -> context.getString(R.string.diretta_wait_replaced)
         else -> context.getString(R.string.diretta_wait_network)
     }
+
+/**
+ * Lo stesso perche', breve, per la notifica fissa (debito 14): «Diretta in attesa: <motivo>». Il foglio PARTITA tiene la
+ * frase lunga di [testoDiAttesa]; i motivi sono gli stessi.
+ */
+internal fun testoDiAttesaInNotifica(
+    context: Context,
+    stato: DirettaStato,
+): String {
+    val motivo =
+        when (stato.motivo) {
+            DirettaMotivo.ACCEDI_DI_NUOVO -> R.string.diretta_notif_why_login
+            DirettaMotivo.SERVONO_QUATTRO -> R.string.diretta_notif_why_players
+            DirettaMotivo.NOME_TROPPO_LUNGO -> R.string.diretta_notif_why_name
+            DirettaMotivo.TROPPE_DIRETTE -> R.string.diretta_notif_why_full
+            DirettaMotivo.CODICE_ESAURITO -> R.string.diretta_notif_why_code
+            DirettaMotivo.RISPOSTA_INATTESA -> R.string.diretta_notif_why_server
+            DirettaMotivo.ERRORE_INATTESO -> R.string.diretta_notif_why_error
+            DirettaMotivo.GIOCATORE_SOSTITUITO -> R.string.diretta_notif_why_replaced
+            else -> R.string.diretta_notif_why_network
+        }
+    return context.getString(R.string.diretta_notif_waiting, context.getString(motivo))
+}
 
 private fun ferma(
     context: Context,

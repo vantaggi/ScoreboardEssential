@@ -18,14 +18,21 @@ import it.vantaggi.scoreboardessential.utils.AltoContrasto
 import it.vantaggi.scoreboardessential.utils.MovimentoRidotto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
-class ScoreboardEssentialApplication : Application() {
+open class ScoreboardEssentialApplication : Application() {
     val database by lazy { AppDatabase.getDatabase(this) }
     val colorRepository by lazy { ColorRepository(this) }
     val playerRepository by lazy { PlayerRepository(database.playerDao(), database.padelEliteLinkDao()) }
     val matchRepository by lazy { MatchRepository(database.matchDao(), this, colorRepository, database.padelEliteLinkDao()) }
     val userPreferencesRepository by lazy { UserPreferencesRepository(this) }
     val matchSettingsRepository by lazy { MatchSettingsRepository(this, colorRepository) }
+
+    /**
+     * Dove gira il lavoro dell'avvio del processo ([sistemaLaDirettaDiPrima]). Vive quanto il processo; i test lo
+     * sostituiscono con uno che chiudono a fine test (debito 20 di D-3), perche' nessuna coroutine sopravviva al test.
+     */
+    internal open val scopeDiAvvio: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /** L'invio a Padel Elite. Spento (nessun comando, nessuna rete) senza la configurazione di local.properties. */
     val padelElite by lazy { PadelEliteServices(this, PadelEliteConfig.fromBuildConfig(), matchRepository) }
@@ -61,7 +68,7 @@ class ScoreboardEssentialApplication : Application() {
         DirettaChiusuraWorker.accodaLeRimaste(
             this,
             DirettaStore(getSharedPreferences(DirettaStore.FILE, MODE_PRIVATE)),
-            CoroutineScope(Dispatchers.IO),
+            scopeDiAvvio,
         )
         DirettaAvvisoNotifica(this).togli()
     }
