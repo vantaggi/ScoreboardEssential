@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Il bottone primario: accent-default acceso, il tono del gruppo da spento (mai il lime sbiadito). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/elite_surface" android:state_enabled="false" />
+    <item android:color="@color/elite_lime" />
+</selector>

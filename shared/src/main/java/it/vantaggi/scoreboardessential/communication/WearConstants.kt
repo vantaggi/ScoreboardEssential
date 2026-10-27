@@ -267,6 +267,96 @@ object WearConstants {
      */
     const val KEY_STATE_VERSION = "state_version"
 
+    // --- Coppie e prossima partita della serata ----------------------------------------------
+    //
+    // Tutto ADDITIVO e su path suoi: lo stato v2 non cambia, e un orologio non aggiornato ignora
+    // path che non conosce (nessun ramo `else`), un telefono non aggiornato ignora il messaggio.
+
+    /**
+     * Chi gioca adesso e chi giocherebbe la prossima partita della serata, gia' scritti dal telefono.
+     *
+     * DataItem a parte dallo stato v2: cambia di rado (una rosa, una rotazione), e lo stato v2 viaggia
+     * a ogni punto. Gli elenchi sono nomi separati da [SPORT_SEPARATOR]; il telefono toglie il
+     * separatore dai nomi prima di mandarli. La versione ([KEY_PAIRS_VERSION]) e' monotona come
+     * [KEY_STATE_VERSION]: l'orologio ignora un elenco piu' vecchio dell'ultimo visto.
+     */
+    const val PATH_PAIRS = "/scoreboard/v2/pairs"
+
+    /** I giocatori della squadra 1 e della squadra 2 della partita a tabellone, nell'ordine della rosa. */
+    const val KEY_TEAM1_ROSTER = "team1_roster"
+    const val KEY_TEAM2_ROSTER = "team2_roster"
+    const val KEY_PAIRS_VERSION = "pairs_version"
+
+    /** Il numero della prossima partita della serata (la prima e' 1); 0 se non c'e' niente da proporre. */
+    const val KEY_NEXT_NUMBER = "next_number"
+
+    /** I quattro della prossima partita nell'ordine dei posti: i primi due sono la prima coppia. */
+    const val KEY_NEXT_PLAYERS = "next_players"
+
+    /**
+     * La prossima partita come la scrive SerataCodec (`a,b/c,d`, id locali): e' la base su cui il polso
+     * chiede uno scambio o una rotazione, e il telefono applica solo se la sua bozza e' ancora questa.
+     */
+    const val KEY_NEXT_BASE = "next_base"
+
+    /** Le sigle delle due coppie della prossima partita ("VAN/GLO"), separate da [SPORT_SEPARATOR]. */
+    const val KEY_NEXT_LABELS = "next_labels"
+
+    /** Chi resta fuori dalla prossima partita, nell'ordine di arrivo. */
+    const val KEY_NEXT_BENCH = "next_bench"
+
+    /** La prossima partita rigioca la piu' combattuta dei quattro (lo spareggio della serata). */
+    const val KEY_NEXT_TIEBREAK = "next_tiebreak"
+
+    /** La prossima partita e' gia' a tabellone (consegnata e non ancora cominciata). */
+    const val KEY_NEXT_DELIVERED = "next_delivered"
+
+    /**
+     * L'orologio chiede di cambiare la prossima partita: ruotare, scambiare due posti o cominciarla.
+     * Porta [KEY_SEQ] (la stessa sequenza dei punti, una per nodo), [KEY_SERATA_ACTION] e
+     * [KEY_NEXT_BASE]; lo scambio anche [KEY_SWAP_FROM] e [KEY_SWAP_TO]. La risposta non e' un
+     * messaggio: e' [PATH_PAIRS] che torna con la versione nuova.
+     */
+    const val MSG_SERATA_INTENT = "/scoreboard/v2/serata_intent"
+
+    const val KEY_SERATA_ACTION = "serata_action"
+    const val SERATA_ROTATE = "rotate"
+    const val SERATA_SWAP = "swap"
+    const val SERATA_START = "start"
+
+    /** I due posti da scambiare, 0..3 (0 e 1 la prima coppia, 2 e 3 la seconda). */
+    const val KEY_SWAP_FROM = "swap_from"
+    const val KEY_SWAP_TO = "swap_to"
+
+    // --- Impostazioni essenziali dal polso ---------------------------------------------------
+    //
+    // ADDITIVE come le coppie: chiavi nuove nello stato v2 e un messaggio suo. Il telefono resta
+    // l'autorita': scrive le sue impostazioni, e la risposta e' lo stato v2 che torna.
+
+    /**
+     * Le regole del 40-40 fra cui scegliere nello sport corrente: i nomi di `DeuceRule` e le loro
+     * etichette gia' tradotte, separati da [SPORT_SEPARATOR]. Vuoti dove il 40-40 non esiste (calcio)
+     * e da un telefono che non li manda: allora l'orologio non offre la scelta. La regola in vigore
+     * e' [KEY_DEUCE_RULE].
+     */
+    const val KEY_DEUCE_IDS = "deuce_ids"
+    const val KEY_DEUCE_LABELS = "deuce_labels"
+
+    /** La durata del timer del portiere in secondi; 0 dove lo sport non ha il portiere. */
+    const val KEY_KEEPER_SECONDS = "keeper_seconds"
+
+    /**
+     * L'orologio chiede di cambiare un'impostazione del telefono: [KEY_SEQ], [KEY_SETTING] e
+     * [KEY_SETTING_VALUE]. La regola del 40-40 cambia solo a partita ferma, come lo sport.
+     */
+    const val MSG_SETTING_INTENT = "/scoreboard/v2/setting_intent"
+    const val KEY_SETTING = "setting"
+    const val KEY_SETTING_VALUE = "setting_value"
+
+    /** Quale impostazione: la regola del 40-40 (valore: il nome di `DeuceRule`) o il portiere (secondi). */
+    const val SETTING_DEUCE = "deuce"
+    const val SETTING_KEEPER = "keeper"
+
     // Message Paths (MessageClient, fire-and-forget triggers)
     const val MSG_SCORER_SELECTED = "/scoreboard/scorer_selected"
     const val MSG_REQUEST_SYNC = "/scoreboard/request_sync"

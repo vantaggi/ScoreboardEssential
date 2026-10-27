@@ -123,6 +123,9 @@ enum class EsitoAvvioSerata {
 // Gli sport in cui si gioca a coppie e quindi si puo' fare una serata.
 private val SPORT_DELLA_SERATA = setOf(SportRegistry.PADEL, SportRegistry.TENNIS)
 
+// Le durate del portiere che il polso puo' chiedere, in secondi: oltre e' un valore che il menu non manda.
+private val PORTIERE_SECONDI = 5L..600L
+
 // Chiavi in app_prefs: l'ultimo arretrato dell'orologio applicato (per nodo, e l'ultimo di tutti).
 private const val PREF_BATCH_APPLICATO = "batch_applicato_"
 private const val PREF_BATCH_APPLICATO_ULTIMO = "batch_applicato_ultimo"
@@ -421,6 +424,22 @@ class MainViewModel(
                         // finiscono prima o poi per non dirla piu' uguale.
                         val sportId = intent.getStringExtra(WearConstants.KEY_SPORT_ID) ?: return
                         if (!selectSport(sportId)) sportChangeRejected.value = Unit
+                    }
+
+                    SimplifiedDataLayerListenerService.ACTION_SERATA_INTENT -> {
+                        applicaIntentoDellaSerata(
+                            azione = intent.getStringExtra(WearConstants.KEY_SERATA_ACTION).orEmpty(),
+                            base = intent.getStringExtra(WearConstants.KEY_NEXT_BASE).orEmpty(),
+                            da = intent.getIntExtra(WearConstants.KEY_SWAP_FROM, -1),
+                            a = intent.getIntExtra(WearConstants.KEY_SWAP_TO, -1),
+                        )
+                    }
+
+                    SimplifiedDataLayerListenerService.ACTION_SETTING_INTENT -> {
+                        applicaImpostazioneDalPolso(
+                            impostazione = intent.getStringExtra(WearConstants.KEY_SETTING).orEmpty(),
+                            valore = intent.getStringExtra(WearConstants.KEY_SETTING_VALUE).orEmpty(),
+                        )
                     }
 
                     SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED -> {
@@ -762,6 +781,11 @@ class MainViewModel(
     private val statoV2Da = pubblicatore(WearConstants.PATH_STATE_V2)
     private val punteggioV1Da = pubblicatore(WearConstants.PATH_SCORE)
 
+    // Le coppie per l'orologio (chi gioca, la prossima della serata): stesso imbuto conflato dello stato
+    // v2, e una versione sua, monotona, assegnata alla cattura come [versioneStato].
+    private val coppieDa = pubblicatore(WearConstants.PATH_PAIRS)
+    private var versioneCoppie = System.currentTimeMillis()
+
     // La versione dello stato v2 (WearConstants.KEY_STATE_VERSION): assegnata alla cattura, seminata
     // dall'orologio di sistema come la seq dell'orologio cosi' cresce anche fra due vite del processo.
     // Mai azzerata da una partita nuova o da un ripristino: e' la versione del CANALE, non della partita.
@@ -791,6 +815,8 @@ class MainViewModel(
             SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH,
             SimplifiedDataLayerListenerService.ACTION_SPORT_INTENT,
             SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED,
+            SimplifiedDataLayerListenerService.ACTION_SERATA_INTENT,
+            SimplifiedDataLayerListenerService.ACTION_SETTING_INTENT,
         )
 
     // L'id del file esportato e l'inizio della partita in corso: nascono con la riga viva, al
@@ -926,6 +952,8 @@ class MainViewModel(
                 addAction(SimplifiedDataLayerListenerService.ACTION_SPORT_INTENT)
                 addAction(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
                 addAction(SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED)
+                addAction(SimplifiedDataLayerListenerService.ACTION_SERATA_INTENT)
+                addAction(SimplifiedDataLayerListenerService.ACTION_SETTING_INTENT)
             }
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(application)
@@ -1003,7 +1031,7 @@ class MainViewModel(
         }
         scartaRigaViva()
         // Una partita scartata non conta per la serata, e la composizione resta com'era.
-        serataStore.load()?.let { if (it.inGioco != null) serataStore.save(it.annullaPartita()) }
+        serataStore.load()?.let { if (it.inGioco != null) salvaSerata(it.annullaPartita()) }
         startNewMatch()
         sendResetUpdate()
         return true
@@ -1236,7 +1264,7 @@ class MainViewModel(
         if (!sportDellaSerata()) return EsitoAvvioSerata.SPORT_NON_AMMESSO
         val serata = serataStore.load() ?: return EsitoAvvioSerata.NESSUNA_BOZZA
         val bozza = serata.bozza ?: return EsitoAvvioSerata.NESSUNA_BOZZA
-        serataStore.save(serata.consegna())
+        salvaSerata(serata.consegna())
         viewModelScope.launch {
             val giocatori = playerDao.getPlayersWithRoles(bozza.posti).associateBy { it.player.playerId }
             // Nel frattempo e' partito un punto: le coppie sono quelle della partita, non si toccano piu'.
@@ -1261,7 +1289,7 @@ class MainViewModel(
         val serata = serataStore.load() ?: return
         if (serata.inGioco == null) return
         val inCoppia = sportDellaSerata() && uno.size == 2 && due.size == 2 && (uno + due).toSet().size == 4
-        serataStore.save(
+        salvaSerata(
             if (inCoppia) serata.chiudiPartita(Composizione(uno, due), Risultato.da(engine.state)) else serata.annullaPartita(),
         )
     }
@@ -1269,7 +1297,92 @@ class MainViewModel(
     /** La partita consegnata alla serata non e' piu' sua (sport cambiato): la serata la dimentica. */
     private fun annullaLaPartitaDellaSerata() {
         val serata = serataStore.load() ?: return
-        if (serata.inGioco != null) serataStore.save(serata.annullaPartita())
+        if (serata.inGioco != null) salvaSerata(serata.annullaPartita())
+    }
+
+    /** Ogni scrittura della serata da qui la dice anche all'orologio, che mostra la prossima partita. */
+    private fun salvaSerata(serata: Serata) {
+        serataStore.save(serata)
+        pubblicaCoppie()
+    }
+
+    /**
+     * L'orologio chiede di cambiare un'impostazione essenziale. Si scrive nelle impostazioni, come dalla
+     * schermata del telefono, e da li' il flusso delle impostazioni la applica: una strada sola, con le
+     * sue guardie. La regola del 40-40 cambia solo a partita ferma e dove c'e' il 40-40; il portiere solo
+     * dove c'e', fra 5 secondi e 10 minuti. In ogni caso riparte lo stato v2: e' la risposta del polso.
+     */
+    internal fun applicaImpostazioneDalPolso(
+        impostazione: String,
+        valore: String,
+    ) {
+        when (impostazione) {
+            WearConstants.SETTING_DEUCE -> {
+                val regola = DeuceRule.daNome(valore)
+                if (regola != null && sportRules is RacketRules && engine.log.isEmpty() && !ripristinoInAttesa) {
+                    val sport = sportRules.id
+                    viewModelScope.launch { matchSettingsRepository.setDeuceRule(sport, regola) }
+                    return
+                }
+            }
+
+            WearConstants.SETTING_KEEPER -> {
+                val secondi = valore.toLongOrNull()
+                if (secondi != null && secondi in PORTIERE_SECONDI && sportRules.capabilities.hasAuxCountdown) {
+                    viewModelScope.launch { matchSettingsRepository.setKeeperTimerDuration(secondi) }
+                    return
+                }
+            }
+        }
+        sendStateV2()
+    }
+
+    /**
+     * L'orologio chiede di cambiare la prossima partita della serata (ruotare, scambiare due posti,
+     * cominciarla). La regola resta qui: il polso manda la bozza su cui ha deciso ([base]), e se nel
+     * frattempo e' cambiata (un tocco sul telefono, una seconda richiesta) non si applica niente, perche'
+     * "scambia i posti 1 e 2" su un'altra bozza scambierebbe altri giocatori. A partita cominciata le
+     * coppie sono quelle del motore e non si toccano. In ogni caso si ripubblicano le coppie: la versione
+     * nuova e' la risposta che il polso aspetta, anche quando dice "non e' cambiato niente".
+     */
+    private fun applicaIntentoDellaSerata(
+        azione: String,
+        base: String,
+        da: Int,
+        a: Int,
+    ) {
+        try {
+            if (engine.log.isNotEmpty() || chiusuraInCorso || !sportDellaSerata()) return
+            val serata = serataStore.load() ?: return
+            val bozza = serata.bozza ?: return
+            if (CoppieAlPolso.base(bozza) != base) return
+            when (azione) {
+                WearConstants.SERATA_ROTATE -> salvaSerata(serata.ruota())
+                WearConstants.SERATA_SWAP -> if (da in 0..3 && a in 0..3 && da != a) salvaSerata(serata.scambia(da, a))
+                WearConstants.SERATA_START -> avviaPartitaDellaSerata()
+            }
+        } finally {
+            pubblicaCoppie()
+        }
+    }
+
+    /**
+     * Le coppie all'orologio ([CoppieAlPolso]): la rosa a tabellone e la prossima partita della serata.
+     * Sincrona: i nomi vengono dalla rosa gia' in memoria, cosi' la versione segue l'ordine di cattura e
+     * una pubblicazione vecchia non puo' arrivare dopo una nuova. La chiama anche la schermata principale
+     * quando torna in primo piano, perche' la Serata scrive la sua bozza senza passare di qui.
+     */
+    fun pubblicaCoppie() {
+        val nomi = _allPlayers.value.orEmpty().associate { it.player.playerId to it.player.playerName }
+        val dati =
+            CoppieAlPolso.dati(
+                rosa1 = _team1Players.value.orEmpty().map { it.player.playerName },
+                rosa2 = _team2Players.value.orEmpty().map { it.player.playerName },
+                serata = if (sportDellaSerata()) serataStore.load() else null,
+                nomeDi = { nomi[it] },
+            )
+        versioneCoppie = maxOf(versioneCoppie + 1, System.currentTimeMillis())
+        coppieDa.trySend(dati + (WearConstants.KEY_PAIRS_VERSION to versioneCoppie))
     }
 
     /**
@@ -1363,6 +1476,7 @@ class MainViewModel(
         val display = sportRules.display(engine.state)
         val capacita = sportRules.capabilities
         val scegliibili = SportRegistry.selectable()
+        val regoleDel40AlPolso = if (sportRules is RacketRules) DeuceRule.entries else emptyList()
         val partitaIniziata = engine.log.isNotEmpty()
         val registro = MatchLogCodec.encode(engine.log)
         // L'identita' nasce QUI, sincrona, col primo evento: persistLiveMatch la scriveva dentro una
@@ -1393,6 +1507,12 @@ class MainViewModel(
                 // La regola del 40-40: l'orologio rifa' il calcolo dei tocchi in coda con :core, e
                 // con la regola del registro un killer point gli chiudeva il game al primo 40-40.
                 WearConstants.KEY_DEUCE_RULE to Match.encodeDeuceRule(sportRules),
+                // Le regole fra cui il polso puo' scegliere, gia' tradotte come gli sport; vuote dove il
+                // 40-40 non c'e'. E la durata del portiere dove c'e': il menu del polso le mostra.
+                WearConstants.KEY_DEUCE_IDS to regoleDel40AlPolso.joinToString(WearConstants.SPORT_SEPARATOR) { it.name },
+                WearConstants.KEY_DEUCE_LABELS to
+                    regoleDel40AlPolso.joinToString(WearConstants.SPORT_SEPARATOR) { deuceLabel(getApplication(), it) },
+                WearConstants.KEY_KEEPER_SECONDS to (if (capacita.hasAuxCountdown) keeperTimerDuration / 1000 else 0L),
                 WearConstants.KEY_CAP_HAS_CLOCK to (capacita.clock != ClockMode.NONE),
                 WearConstants.KEY_CAP_HAS_AUX_TIMER to capacita.hasAuxCountdown,
                 WearConstants.KEY_CAP_ATTRIBUTES_SCORER to capacita.attributesScorer,
@@ -2220,6 +2340,8 @@ class MainViewModel(
         if (registra && sportRules.capabilities.hasAuxCountdown) addMatchEvent(testo(R.string.log_keeper_set, seconds))
         // Sync default duration to Wear
         sendKeeperTimerUpdate(false, keeperTimerDuration)
+        // La durata e' anche nello stato v2, per il menu del polso.
+        sendStateV2()
     }
 
     fun startKeeperTimer(fromRemote: Boolean = false) {
@@ -2612,6 +2734,9 @@ class MainViewModel(
 
             // 7. Player roster (so the watch can attribute scorers)
             _allPlayers.value?.let { sendPlayersUpdate(it) }
+
+            // 8. Le coppie e la prossima partita della serata
+            pubblicaCoppie()
         }
     }
 
@@ -2677,14 +2802,24 @@ class MainViewModel(
             sendTeamNamesUpdate()
         }
 
+    // Una rosa cambiata (una coppia composta, la serata a tabellone) o i nomi appena caricati: l'orologio
+    // rivede chi gioca e la prossima partita.
+    private val alCambioDelleCoppie = Observer<List<PlayerWithRoles>> { pubblicaCoppie() }
+
     init {
         team1Name.observeForever(alCambioDelNome)
         team2Name.observeForever(alCambioDelNome)
+        _team1Players.observeForever(alCambioDelleCoppie)
+        _team2Players.observeForever(alCambioDelleCoppie)
+        _allPlayers.observeForever(alCambioDelleCoppie)
     }
 
     override fun onCleared() {
         team1Name.removeObserver(alCambioDelNome)
         team2Name.removeObserver(alCambioDelNome)
+        _team1Players.removeObserver(alCambioDelleCoppie)
+        _team2Players.removeObserver(alCambioDelleCoppie)
+        _allPlayers.removeObserver(alCambioDelleCoppie)
         vibrator?.cancel()
         try {
             if (isServiceBound) {

@@ -68,4 +68,32 @@
     <string name="wear_status_offline">Scollegato</string>
     <string name="wear_status_offline_at">Scollegato · %1$s</string>
     <string name="wear_scorer_not_sent">Marcatore non inviato</string>
+
+    <!-- Prossima partita della serata e squadre in campo (menu partita). Senza apostrofi: aapt li rifiuta. -->
+    <string name="wear_next_match">Prossima partita</string>
+    <string name="wear_next_match_title">Partita %1$d</string>
+    <string name="wear_next_match_tiebreak">Spareggio · partita %1$d</string>
+    <string name="wear_next_pairs">%1$s – %2$s</string>
+    <string name="wear_next_hint">Tocca due nomi per scambiarli</string>
+    <string name="wear_next_pick">Con chi scambi %1$s?</string>
+    <string name="wear_next_waiting">Aspetto il telefono…</string>
+    <string name="wear_next_no_answer">Il telefono non ha risposto</string>
+    <string name="wear_next_delivered">Già a tabellone</string>
+    <string name="wear_next_bench">In panchina: %1$s</string>
+    <string name="wear_next_rotate">Ruota</string>
+    <string name="wear_next_start">Inizia</string>
+    <string name="wear_next_back">Al punteggio</string>
+    <string name="cd_next_player">%1$s, coppia %2$d</string>
+    <string name="cd_next_player_selected">%1$s, coppia %2$d, scelto per lo scambio</string>
+    <string name="wear_in_campo">In campo</string>
+    <string name="cd_squadra">%1$s: %2$s</string>
+    <string name="wear_settings">Impostazioni</string>
+    <string name="wear_setting_deuce">Sul 40-40</string>
+    <string name="wear_setting_vibration">Vibrazione</string>
+    <string name="wear_setting_vibration_on">A ogni punto</string>
+    <string name="wear_setting_vibration_off">Solo avvisi</string>
+    <string name="wear_setting_keeper">Portiere</string>
+    <string name="wear_keeper_seconds">%1$d s</string>
+    <string name="wear_keeper_minutes">%1$d min</string>
+    <string name="wear_keeper_minutes_seconds">%1$d min %2$d s</string>
 </resources>

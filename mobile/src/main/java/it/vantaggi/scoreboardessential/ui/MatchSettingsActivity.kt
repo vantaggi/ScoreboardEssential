@@ -18,6 +18,7 @@ import it.vantaggi.scoreboardessential.core.DeuceRule
 import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.databinding.ActivityMatchSettingsBinding
+import it.vantaggi.scoreboardessential.deuceLabel
 import it.vantaggi.scoreboardessential.padelelite.PadelEliteActivity
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.sportLabel
@@ -182,14 +183,7 @@ class MatchSettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun etichettaDel40(regola: DeuceRule): String =
-        getString(
-            when (regola) {
-                DeuceRule.GOLDEN_POINT -> R.string.deuce_option_golden_point
-                DeuceRule.KILLER_POINT -> R.string.deuce_option_killer_point
-                DeuceRule.ADVANTAGE -> R.string.deuce_option_advantage
-            },
-        )
+    private fun etichettaDel40(regola: DeuceRule): String = deuceLabel(this, regola)
 
     private fun observeViewModel() {
         // Il nome predefinito ("Team 1" nei dati) non si scrive nel campo: il campo resta vuoto e

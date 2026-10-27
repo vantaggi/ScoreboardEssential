@@ -28,6 +28,22 @@ fun sportLabel(
     }
 
 /**
+ * Il nome di una regola del 40-40 come lo legge chi sceglie: lo usano le impostazioni e [MainViewModel],
+ * che lo spedisce all'orologio insieme agli sport.
+ */
+fun deuceLabel(
+    context: Context,
+    regola: DeuceRule,
+): String =
+    context.getString(
+        when (regola) {
+            DeuceRule.GOLDEN_POINT -> R.string.deuce_option_golden_point
+            DeuceRule.KILLER_POINT -> R.string.deuce_option_killer_point
+            DeuceRule.ADVANTAGE -> R.string.deuce_option_advantage
+        },
+    )
+
+/**
  * La riga delle regole che il motore applica, per sapere PRIMA del primo 40-40 cosa succede: «Set
  * unico · punto secco sul 40-40 · tie-break a 7», «Cronometro · cambio portiere».
  *

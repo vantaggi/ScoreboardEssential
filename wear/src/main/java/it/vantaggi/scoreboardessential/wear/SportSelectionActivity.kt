@@ -36,12 +36,16 @@ class SportSelectionActivity : ComponentActivity() {
         const val EXTRA_LABELS = "sport_labels"
         const val EXTRA_CURRENT = "sport_current"
         const val EXTRA_CHOSEN = "sport_chosen"
+
+        /** Il titolo della lista: la stessa schermata sceglie anche la regola del 40-40 e il portiere. */
+        const val EXTRA_TITLE = "sport_title"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MovimentoRidotto.applica(this, theme)
         setContentView(R.layout.activity_sport_selection)
+        intent.getStringExtra(EXTRA_TITLE)?.let { findViewById<TextView>(R.id.sport_title).text = it }
 
         val ids = intent.getStringArrayListExtra(EXTRA_IDS).orEmpty()
         val labels = intent.getStringArrayListExtra(EXTRA_LABELS).orEmpty()
