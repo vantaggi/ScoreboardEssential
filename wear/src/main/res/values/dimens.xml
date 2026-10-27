@@ -89,4 +89,17 @@
     <dimen name="menu_box_padding">4dp</dimen>
     <dimen name="voce_padding_verticale">4dp</dimen>
     <bool name="voce_rientro_angolo">false</bool>
+
+    <!-- space-4, space-8, space-12 e space-16 della Constitution: dentro le righe e fra i gruppi del menu. -->
+    <dimen name="space_4">4dp</dimen>
+    <dimen name="space_8">8dp</dimen>
+    <dimen name="space_12">12dp</dimen>
+    <dimen name="space_16">16dp</dimen>
+
+    <!-- La barra del colore di squadra accanto a un nome (marcatore, squadre in campo, prossima partita). -->
+    <dimen name="team_bar_width">4dp</dimen>
+    <dimen name="team_bar_height">24dp</dimen>
+
+    <!-- control-touch: il minimo di un comando al polso (le righe dei giocatori e i due bottoni). -->
+    <dimen name="control_touch">48dp</dimen>
 </resources>

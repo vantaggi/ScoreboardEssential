@@ -4506,6 +4506,106 @@ class MainViewModelTest {
             }
         }
 
+    // ---- Serata dall'orologio: la prossima partita al polso ----
+
+    private fun serataDallOrologio(
+        azione: String,
+        base: String,
+        da: Int = -1,
+        a: Int = -1,
+    ) = Intent(SimplifiedDataLayerListenerService.ACTION_SERATA_INTENT)
+        .putExtra(WearConstants.KEY_SERATA_ACTION, azione)
+        .putExtra(WearConstants.KEY_NEXT_BASE, base)
+        .putExtra(WearConstants.KEY_SWAP_FROM, da)
+        .putExtra(WearConstants.KEY_SWAP_TO, a)
+
+    /** Le coppie che il telefono ha spedito all'orologio, l'ultima per ultima. */
+    private fun coppieSpedite(): List<Map<*, *>> =
+        mockingDetails(mockConnectionManager)
+            .invocations
+            .filter { it.method.name == "sendData" && it.arguments[0] == WearConstants.PATH_PAIRS }
+            .map { it.arguments[1] as Map<*, *> }
+
+    /**
+     * Rosso se il ramo dell'intento sparisce (la bozza non cambia), se la base non si controlla (lo scambio
+     * con la base vecchia passerebbe) o se a partita cominciata la bozza si tocca ancora.
+     */
+    @Test
+    fun `dall'orologio la prossima partita si scambia e si ruota solo sulla bozza vista e a partita ferma`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (a, b, c, d) = quattroPresenti(playerDao)
+                memoriaDellaSerata().save(
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d)),
+                )
+                val bozza = memoriaDellaSerata().load()!!.bozza!!
+
+                // Una base che non e' la bozza di adesso (il telefono l'ha cambiata nel frattempo): niente.
+                ricevi(serataDallOrologio(WearConstants.SERATA_SWAP, "$d,$c/$b,$a", 0, 2))
+                advanceUntilIdle()
+                assertEquals(bozza, memoriaDellaSerata().load()!!.bozza)
+
+                ricevi(serataDallOrologio(WearConstants.SERATA_SWAP, CoppieAlPolso.base(bozza), 0, 2))
+                advanceUntilIdle()
+                val scambiata = bozza.scambia(0, 2)
+                assertEquals(scambiata, memoriaDellaSerata().load()!!.bozza)
+                // La risposta e' l'elenco nuovo: la base e' quella della bozza scambiata.
+                assertEquals(CoppieAlPolso.base(scambiata), coppieSpedite().last()[WearConstants.KEY_NEXT_BASE])
+
+                val primaDiRuotare = memoriaDellaSerata().load()!!
+                ricevi(serataDallOrologio(WearConstants.SERATA_ROTATE, CoppieAlPolso.base(scambiata)))
+                advanceUntilIdle()
+                val ruotata = memoriaDellaSerata().load()!!.bozza!!
+                assertEquals(primaDiRuotare.ruota().bozza, ruotata)
+
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                ricevi(serataDallOrologio(WearConstants.SERATA_ROTATE, CoppieAlPolso.base(ruotata)))
+                advanceUntilIdle()
+                assertEquals("a partita cominciata la bozza non si tocca", ruotata, memoriaDellaSerata().load()!!.bozza)
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
+    /** Rosso se Inizia dall'orologio non passa da avviaPartitaDellaSerata, o se le coppie non dicono che e' a tabellone. */
+    @Test
+    fun `Inizia dall'orologio mette la prossima partita a tabellone e lo dice al polso`() =
+        runTest {
+            val db = databaseInMemoria()
+            try {
+                val playerDao = db.playerDao()
+                usaDao(playerDao = playerDao, matchDao = db.matchDao())
+                viewModel.selectSport(SportRegistry.PADEL)
+                advanceUntilIdle()
+                val (a, b, c, d) = quattroPresenti(playerDao)
+                memoriaDellaSerata().save(
+                    it.vantaggi.scoreboardessential.core.Serata
+                        .nuova(listOf(a, b, c, d)),
+                )
+                val bozza = memoriaDellaSerata().load()!!.bozza!!
+
+                ricevi(serataDallOrologio(WearConstants.SERATA_START, CoppieAlPolso.base(bozza)))
+                advanceUntilIdle()
+
+                assertEquals(bozza.squadra1, rosa(viewModel, 1))
+                assertEquals(bozza.squadra2, rosa(viewModel, 2))
+                val ultime = coppieSpedite().last()
+                assertEquals(true, ultime[WearConstants.KEY_NEXT_DELIVERED])
+                assertEquals("Vantaggi|Porcacchia", ultime[WearConstants.KEY_TEAM1_ROSTER])
+                assertEquals("Trinari|Nudi", ultime[WearConstants.KEY_TEAM2_ROSTER])
+                assertEquals("VAN/POR|TRI/NUD", ultime[WearConstants.KEY_NEXT_LABELS])
+            } finally {
+                chiudiDatabase(db)
+            }
+        }
+
     @Test
     fun `l'esito dell'avvio dice perche' non parte, con tre presenti non c'e' bozza`() =
         runTest {

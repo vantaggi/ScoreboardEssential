@@ -29,6 +29,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         const val ACTION_SCORE_INTENT = "it.vantaggi.scoreboardessential.SCORE_INTENT"
         const val ACTION_SPORT_INTENT = "it.vantaggi.scoreboardessential.SPORT_INTENT"
         const val ACTION_INTENT_BATCH = "it.vantaggi.scoreboardessential.INTENT_BATCH"
+        const val ACTION_SERATA_INTENT = "it.vantaggi.scoreboardessential.SERATA_INTENT"
 
         /**
          * Ultima sequenza vista, PER NODO.
@@ -243,6 +244,10 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                 WearConstants.MSG_INTENT_BATCH -> {
                     handleIntentBatch(messageEvent.sourceNodeId, messageEvent.data)
                 }
+
+                WearConstants.MSG_SERATA_INTENT -> {
+                    handleSerataIntent(messageEvent.sourceNodeId, messageEvent.data)
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error handling message ${messageEvent.path}", e)
@@ -438,6 +443,48 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(
             Intent(ACTION_SPORT_INTENT).apply { putExtra(WearConstants.KEY_SPORT_ID, sportId) },
+        )
+    }
+
+    /**
+     * L'orologio chiede di cambiare la prossima partita della serata. Come il cambio sport: la sequenza
+     * e' la stessa dei punti, e la decisione resta al ViewModel, che ha la serata e il motore. Senza
+     * ViewModel (app chiusa) la richiesta si perde e il polso, che non vede tornare le coppie, lo dice:
+     * una rotazione applicata ore dopo cambierebbe una partita che nessuno sta guardando.
+     */
+    private fun handleSerataIntent(
+        sourceNodeId: String,
+        data: ByteArray?,
+    ) {
+        if (data == null || data.isEmpty()) {
+            Log.w(TAG, "Empty serata-intent payload. Ignoring.")
+            return
+        }
+        val dataMap = DataMap.fromByteArray(data)
+        val azione = dataMap.getString(WearConstants.KEY_SERATA_ACTION, "")
+        val base = dataMap.getString(WearConstants.KEY_NEXT_BASE, "")
+        val seq = leggiSeq(dataMap)
+        if (azione.isBlank() || base.isBlank() || seq <= 0L) {
+            Log.w(TAG, "Invalid serata-intent fields (azione=$azione, seq=$seq). Ignoring.")
+            return
+        }
+
+        val ultima = lastSeqByNode[sourceNodeId] ?: 0L
+        if (seq <= ultima) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Serata intent already seen (seq=$seq <= $ultima). Ignoring.")
+            }
+            return
+        }
+        lastSeqByNode[sourceNodeId] = seq
+
+        LocalBroadcastManager.getInstance(this).sendBroadcast(
+            Intent(ACTION_SERATA_INTENT).apply {
+                putExtra(WearConstants.KEY_SERATA_ACTION, azione)
+                putExtra(WearConstants.KEY_NEXT_BASE, base)
+                putExtra(WearConstants.KEY_SWAP_FROM, dataMap.getInt(WearConstants.KEY_SWAP_FROM, -1))
+                putExtra(WearConstants.KEY_SWAP_TO, dataMap.getInt(WearConstants.KEY_SWAP_TO, -1))
+            },
         )
     }
 

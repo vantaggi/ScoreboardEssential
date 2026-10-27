@@ -384,6 +384,9 @@ class WearViewModel(
      */
     private var intentSequence = System.currentTimeMillis()
 
+    /** La sequenza di un invio: una per nodo, condivisa con la schermata della prossima partita. */
+    private fun prossimaSequenza(): Long = SequenzaDelPolso.delQuadrante(intentSequence).also { intentSequence = it }
+
     // Vuoti finche' il telefono non li manda: e' cosi' che la schermata sa di dover ripiegare su
     // "Squadra 1" nella lingua dell'orologio, invece di leggere a TalkBack un "TEAM 1" inglese.
     private val _team1Name = MutableStateFlow("")
@@ -551,7 +554,7 @@ class WearViewModel(
      * pensando.
      */
     private fun inviaFinePartita() {
-        val seq = ++intentSequence
+        val seq = prossimaSequenza()
         val quando = System.currentTimeMillis()
         viewModelScope.launch {
             val payload =
@@ -1033,6 +1036,18 @@ class WearViewModel(
             }
     }
 
+    private val _coppie = MutableStateFlow<CoppieDalTelefono?>(null)
+
+    /** Chi gioca e la prossima partita della serata, come li ha scritti il telefono; null finche' non parla. */
+    val coppie = _coppie.asStateFlow()
+
+    /** Un elenco con versione minore dell'ultimo visto e' superato: il Data Layer puo' consegnarli invertiti. */
+    fun applicaCoppie(coppie: CoppieDalTelefono) {
+        val attuali = _coppie.value
+        if (attuali != null && coppie.versione in 1 until attuali.versione) return
+        _coppie.value = coppie
+    }
+
     // --- Score Management ---
     fun setTeamNames(
         team1Name: String,
@@ -1311,7 +1326,7 @@ class WearViewModel(
         // la base sarebbe quella di adesso, e un telefono passato a un'altra partita le applicherebbe.
         if (!risolviBaseDopo(statoDalTelefono, statoVivoVisto)) return
         val blocco =
-            batchInVolo ?: PendingIntents.BatchInVolo(id = ++intentSequence, quante = voci.size).also { pending.segnaBatchInVolo(it) }
+            batchInVolo ?: PendingIntents.BatchInVolo(id = prossimaSequenza(), quante = voci.size).also { pending.segnaBatchInVolo(it) }
         // Un rinvio manda lo STESSO blocco: le voci segnate dopo il primo invio vanno nel prossimo.
         val daSpedire = voci.take(blocco.quante)
         if (daSpedire.isEmpty()) {
@@ -1319,7 +1334,7 @@ class WearViewModel(
             batchInVolo = null
             return
         }
-        val seq = ++intentSequence
+        val seq = prossimaSequenza()
         batchInVolo = blocco
         batchInVoloDal = orologio()
         seqUltimoBatch = seq
@@ -1552,7 +1567,7 @@ class WearViewModel(
      * si ridisegna da sola; se il telefono rifiuta, non cambia niente e a dirlo e' il telefono.
      */
     fun requestSport(sportId: String) {
-        val seq = ++intentSequence
+        val seq = prossimaSequenza()
         // Dalla scelta in poi la riga lo dice: CAMBIO SPORT... finche' il quadrante non riceve lo
         // stato col nuovo sport, SPORT NON CAMBIATO se non arriva (o se il messaggio non parte).
         mostraTransitorio(Transitorio.CambioSport, DURATA_CAMBIO_SPORT_MS)
@@ -1589,7 +1604,7 @@ class WearViewModel(
         chiediMarcatore: Boolean = false,
         tickAlle: Long? = null,
     ) {
-        val seq = ++intentSequence
+        val seq = prossimaSequenza()
         // L'orario si prende ORA, non quando il messaggio partira': un tocco messo in coda e
         // consegnato due ore dopo deve restare il tocco delle 18.
         val quando = System.currentTimeMillis()

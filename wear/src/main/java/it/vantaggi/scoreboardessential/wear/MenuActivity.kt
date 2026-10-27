@@ -15,6 +15,14 @@ import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.card.MaterialCardView
+import it.vantaggi.scoreboardessential.core.TeamInk
+
+/** Una squadra a tabellone, per il gruppo "In campo" del menu: il nome mostrato, la rosa, il colore (ARGB). */
+data class SquadraInCampo(
+    val nome: String,
+    val giocatori: List<String>,
+    val colore: Int,
+)
 
 /**
  * Il menu partita: lo sport e la fine della partita, al posto dei due bottoni sempre visibili.
@@ -35,6 +43,7 @@ class MenuActivity : ComponentActivity() {
         const val AZIONE_SPORT = "sport"
         const val AZIONE_FINE = "fine"
         const val AZIONE_SCARTA = "scarta"
+        const val AZIONE_PROSSIMA = "prossima"
 
         /** Senza nessun tocco ne' scorrimento la schermata torna al quadrante da sola. */
         const val CHIUSURA_AUTOMATICA_MS = 10_000L
@@ -46,6 +55,11 @@ class MenuActivity : ComponentActivity() {
         private const val EXTRA_SPORT = "menu_sport"
         private const val EXTRA_RISULTATO = "menu_risultato"
         private const val EXTRA_RIFIUTATI = "menu_rifiutati"
+        private const val EXTRA_PROSSIMA = "menu_prossima"
+        private const val EXTRA_SQUADRE_NOMI = "menu_squadre_nomi"
+        private const val EXTRA_SQUADRE_GIOCATORI = "menu_squadre_giocatori"
+        private const val EXTRA_SQUADRE_COLORI = "menu_squadre_colori"
+        private const val SEPARATORE_GIOCATORI = "\n"
 
         /**
          * L'istante con cui si misura la finestra della conferma. Iniettabile come
@@ -58,8 +72,13 @@ class MenuActivity : ComponentActivity() {
         fun intent(
             context: Context,
             input: InputMenu,
+            squadre: List<SquadraInCampo> = emptyList(),
         ): Intent =
             Intent(context, MenuActivity::class.java)
+                .putExtra(EXTRA_PROSSIMA, input.prossima)
+                .putExtra(EXTRA_SQUADRE_NOMI, squadre.map { it.nome }.toTypedArray())
+                .putExtra(EXTRA_SQUADRE_GIOCATORI, squadre.map { it.giocatori.joinToString(SEPARATORE_GIOCATORI) }.toTypedArray())
+                .putExtra(EXTRA_SQUADRE_COLORI, squadre.map { it.colore }.toIntArray())
                 .putExtra(EXTRA_IN_CODA, input.inCoda)
                 .putExtra(EXTRA_COLLEGATO, input.collegato)
                 .putExtra(EXTRA_PARTITA_INIZIATA, input.partitaIniziata)
@@ -113,6 +132,7 @@ class MenuActivity : ComponentActivity() {
                 sport = intent.getStringExtra(EXTRA_SPORT).orEmpty(),
                 risultato = intent.getStringExtra(EXTRA_RISULTATO).orEmpty(),
                 rifiutati = intent.getIntExtra(EXTRA_RIFIUTATI, 0),
+                prossima = intent.getStringExtra(EXTRA_PROSSIMA).orEmpty(),
             )
 
         val contenitore = findViewById<LinearLayout>(R.id.menu_voci)
@@ -121,11 +141,12 @@ class MenuActivity : ComponentActivity() {
             card.setOnClickListener { alTocco(voce) }
             // Armarsi e rientrare cambia titolo e sottotitolo: TalkBack deve dirlo, perche' chi non
             // vede la card rossa non saprebbe che il tocco e' gia' armato.
-            if (voce.id != IdVoce.SPORT) card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+            if (voce.id == IdVoce.FINE_PARTITA || voce.id == IdVoce.SCARTA_CODA) card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
             contenitore.addView(card)
             righe += Riga(voce, card)
         }
         disegna()
+        mostraLeSquadre()
 
         // Anche scorrere con la corona e' un'interazione: non deve chiudere il menu sotto le dita.
         val scorrimento = findViewById<ScrollView>(R.id.menu_scroll)
@@ -162,6 +183,10 @@ class MenuActivity : ComponentActivity() {
                 chiudiConAzione(AZIONE_SPORT)
             }
 
+            IdVoce.PROSSIMA_PARTITA -> {
+                chiudiConAzione(AZIONE_PROSSIMA)
+            }
+
             // Le due voci che distruggono qualcosa (chiudere la partita, scartare la coda) si armano
             // allo stesso modo: il primo tocco arma, il secondo conferma dentro la finestra.
             IdVoce.FINE_PARTITA, IdVoce.SCARTA_CODA -> {
@@ -186,6 +211,32 @@ class MenuActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Le squadre in campo, sotto le voci: la barra del colore (portato a 3:1 sul nero, come la striscia
+     * del quadrante), la sigla e chi la compone. Senza rose (il calcio senza giocatori, un telefono non
+     * aggiornato) il gruppo non c'e'.
+     */
+    private fun mostraLeSquadre() {
+        val nomi = intent.getStringArrayExtra(EXTRA_SQUADRE_NOMI).orEmpty()
+        val giocatori = intent.getStringArrayExtra(EXTRA_SQUADRE_GIOCATORI).orEmpty()
+        val colori = intent.getIntArrayExtra(EXTRA_SQUADRE_COLORI) ?: IntArray(0)
+        val gruppo = findViewById<LinearLayout>(R.id.menu_squadre)
+        nomi.indices
+            .filter { giocatori.getOrNull(it).orEmpty().isNotBlank() }
+            .forEach { i ->
+                val riga = LayoutInflater.from(this).inflate(R.layout.item_squadra_wear, gruppo, false)
+                val chi = giocatori[i].split(SEPARATORE_GIOCATORI).joinToString(", ")
+                riga.findViewById<TextView>(R.id.squadra_nome).text = nomi[i]
+                riga.findViewById<TextView>(R.id.squadra_giocatori).text = chi
+                colori.getOrNull(i)?.let { riga.findViewById<View>(R.id.squadra_barra).setBackgroundColor(TeamInk.graphicOnBlack(it) or TeamInk.NERO) }
+                riga.contentDescription = getString(R.string.cd_squadra, nomi[i], chi)
+                gruppo.addView(riga)
+            }
+        val visibile = if (gruppo.childCount > 0) View.VISIBLE else View.GONE
+        gruppo.visibility = visibile
+        findViewById<View>(R.id.menu_squadre_titolo).visibility = visibile
     }
 
     private fun chiudiConAzione(azione: String) {
@@ -252,6 +303,10 @@ class MenuActivity : ComponentActivity() {
                 getString(R.string.wear_sport)
             }
 
+            IdVoce.PROSSIMA_PARTITA -> {
+                getString(R.string.wear_next_match)
+            }
+
             IdVoce.FINE_PARTITA -> {
                 if (armata) getString(R.string.wear_menu_end_confirm, input.risultato) else getString(R.string.wear_menu_end)
             }
@@ -294,5 +349,9 @@ internal fun SottotitoloVoce.testo(context: Context): String =
 
         is SottotitoloVoce.SalvaRisultato -> {
             context.getString(R.string.wear_menu_end_saves, risultato)
+        }
+
+        is SottotitoloVoce.CoppieProposte -> {
+            coppie
         }
     }

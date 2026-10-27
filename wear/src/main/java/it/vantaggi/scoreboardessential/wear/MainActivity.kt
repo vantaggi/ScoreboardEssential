@@ -105,6 +105,7 @@ class MainActivity : ComponentActivity() {
                 MenuActivity.AZIONE_SPORT -> apriSceltaSport()
                 MenuActivity.AZIONE_FINE -> chiudiSeAncoraPossibile()
                 MenuActivity.AZIONE_SCARTA -> viewModel.scartaCoda()
+                MenuActivity.AZIONE_PROSSIMA -> apriProssimaPartita()
             }
         }
 
@@ -150,6 +151,11 @@ class MainActivity : ComponentActivity() {
 
                     WearDataLayerService.ACTION_INTENT_CUSTODIA -> {
                         viewModel.onCustodia(intent.getLongExtra(WearConstants.KEY_SEQ, 0L))
+                    }
+
+                    WearDataLayerService.ACTION_PAIRS_UPDATE -> {
+                        val payload = intent.getByteArrayExtra(WearDataLayerService.EXTRA_PAIRS_PAYLOAD) ?: return
+                        viewModel.applicaCoppie(CoppieDalTelefono.fromDataMap(DataMap.fromByteArray(payload)))
                     }
 
                     WearDataLayerService.ACTION_SCORE_UPDATE -> {
@@ -231,6 +237,7 @@ class MainActivity : ComponentActivity() {
                 addAction(WearDataLayerService.ACTION_KEEPER_TIMER_UPDATE)
                 addAction(WearDataLayerService.ACTION_MATCH_STATE_UPDATE)
                 addAction(WearDataLayerService.ACTION_PLAYERS_UPDATE)
+                addAction(WearDataLayerService.ACTION_PAIRS_UPDATE)
             }
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(this)
@@ -429,7 +436,35 @@ class MainActivity : ComponentActivity() {
      * voci accendere, e il menu restituisce solo che cosa si e' scelto.
      */
     private fun apriMenu() {
-        menu.launch(MenuActivity.intent(this, inputMenu()))
+        menu.launch(MenuActivity.intent(this, inputMenu(), squadreInCampo()))
+    }
+
+    /** Le due squadre a tabellone col nome che ha il quadrante e il colore della loro striscia. */
+    private fun squadreInCampo(): List<SquadraInCampo> {
+        val coppie = viewModel.coppie.value ?: return emptyList()
+        return listOf(
+            SquadraInCampo(teamName(viewModel.team1Name.value, 1), coppie.rosa1, coloreDelLato(1)),
+            SquadraInCampo(teamName(viewModel.team2Name.value, 2), coppie.rosa2, coloreDelLato(2)),
+        )
+    }
+
+    private fun coloreDelLato(lato: Int): Int =
+        (if (lato == 1) viewModel.team1Color.value else viewModel.team2Color.value)
+            ?: ContextCompat.getColor(this, if (lato == 1) R.color.team_side_1 else R.color.team_side_2)
+
+    /**
+     * La prossima partita della serata: le coppie le propone il telefono, e la schermata gli chiede di
+     * ruotarle, scambiarle o cominciarle. Il menu l'ha offerta sui fatti di quando si e' aperto: se nel
+     * frattempo la proposta non c'e' piu' (o la partita e' cominciata) si riapre il menu, che lo dice.
+     */
+    private fun apriProssimaPartita() {
+        val coppie = viewModel.coppie.value
+        val voce = MenuVoci.calcola(inputMenu()).firstOrNull { it.id == IdVoce.PROSSIMA_PARTITA }
+        if (coppie == null || voce?.attiva != true) {
+            apriMenu()
+            return
+        }
+        startActivity(ProssimaPartitaActivity.intent(this, coppie, coloreDelLato(1), coloreDelLato(2)))
     }
 
     /**
@@ -464,6 +499,11 @@ class MainActivity : ComponentActivity() {
             haElencoSport = stato != null && stato.sportIds.size > 1,
             sport = stato?.sportLabel.orEmpty(),
             risultato = risultato,
+            prossima =
+                viewModel.coppie.value
+                    ?.takeIf { it.haProssima && it.sigle.size == 2 }
+                    ?.let { getString(R.string.wear_next_pairs, it.sigle[0], it.sigle[1]) }
+                    .orEmpty(),
         )
     }
 

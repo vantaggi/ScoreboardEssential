@@ -2,6 +2,8 @@ package it.vantaggi.scoreboardessential.wear
 
 /** Le voci del menu partita, nell'ordine in cui compaiono. */
 enum class IdVoce {
+    /** Compare solo a partita ferma, quando il telefono propone la prossima partita della serata. */
+    PROSSIMA_PARTITA,
     SPORT,
     FINE_PARTITA,
 
@@ -36,6 +38,11 @@ sealed class SottotitoloVoce {
     /** Registro vuoto: il telefono non salverebbe niente, e la chiusura non avrebbe cosa confermare. */
     data object NienteDaSalvare : SottotitoloVoce()
 
+    /** Voce attiva: le due coppie della prossima partita, gia' in sigle ("VAN/GLO – ROS/BIA"). */
+    data class CoppieProposte(
+        val coppie: String,
+    ) : SottotitoloVoce()
+
     /** Voce attiva: il risultato che verra' salvato, gia' impaginato ("3–2"). */
     data class SalvaRisultato(
         val risultato: String,
@@ -65,6 +72,8 @@ data class InputMenu(
     val risultato: String,
     /** Quanti tocchi in coda il telefono ha rifiutato (L5); 0 se la coda non e' rifiutata. */
     val rifiutati: Int = 0,
+    /** Le coppie della prossima partita della serata, gia' in sigle; vuoto se il telefono non ne propone. */
+    val prossima: String = "",
 )
 
 /**
@@ -77,6 +86,9 @@ data class InputMenu(
 object MenuVoci {
     fun calcola(input: InputMenu): List<Voce> =
         listOfNotNull(
+            // Prima delle altre: a partita ferma con una serata, la prossima partita e' la cosa da fare.
+            // A partita cominciata non c'e': le coppie sono quelle del motore, e il telefono rifiuterebbe.
+            if (input.prossima.isNotEmpty() && !input.partitaIniziata) voceProssima(input) else null,
             if (input.haElencoSport) voceSport(input) else null,
             voceFine(input),
             // Una coda rifiutata non si rimanda e non si applica: si scarta, e finche' non lo si fa le
@@ -87,6 +99,19 @@ object MenuVoci {
                 null
             },
         )
+
+    private fun voceProssima(input: InputMenu): Voce {
+        // Come le altre: prima la coda (una partita nuova sopra punti non consegnati fonderebbe due
+        // partite), poi il telefono assente (le coppie le cambia lui).
+        val blocco =
+            when {
+                input.rifiutati > 0 -> SottotitoloVoce.CodaRifiutata(input.rifiutati)
+                input.inCoda > 0 -> SottotitoloVoce.PrimaConsegna(input.inCoda)
+                !input.collegato -> SottotitoloVoce.ServeIlTelefono
+                else -> null
+            }
+        return Voce(IdVoce.PROSSIMA_PARTITA, blocco == null, blocco ?: SottotitoloVoce.CoppieProposte(input.prossima))
+    }
 
     private fun voceSport(input: InputMenu): Voce {
         // Stesso ordine di FINE PARTITA, cosi' le due voci non si contraddicono: prima la coda
