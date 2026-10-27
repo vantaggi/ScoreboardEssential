@@ -7,16 +7,24 @@ import it.vantaggi.scoreboardessential.core.PresenteDellaDashboard
 import it.vantaggi.scoreboardessential.core.RotazioneSerata
 import it.vantaggi.scoreboardessential.core.Serata
 import it.vantaggi.scoreboardessential.core.Traduzione
+import it.vantaggi.scoreboardessential.database.MatchDao
+import it.vantaggi.scoreboardessential.database.PadelEliteLink
+import it.vantaggi.scoreboardessential.database.PadelEliteLinkDao
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.padelelite.FonteSerataDashboard
+import it.vantaggi.scoreboardessential.padelelite.IndizioOmonimo
+import it.vantaggi.scoreboardessential.padelelite.RemotePlayer
+import it.vantaggi.scoreboardessential.padelelite.RosaGruppo
 import it.vantaggi.scoreboardessential.padelelite.SerataDashboard
+import it.vantaggi.scoreboardessential.padelelite.indizioDellOmonimo
 import it.vantaggi.scoreboardessential.repository.SerataStore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -57,6 +65,16 @@ data class UsoDellaDashboard(
     val prima: Serata?,
 )
 
+/**
+ * "E' gia' nell'app?": il presente della dashboard [idDashboard] ha lo stesso nome di [candidati], giocatori dell'app
+ * non collegati. Nella dashboard spesso c'e' solo il cognome, quindi decide l'utente, guardando le partite giocate.
+ */
+data class DomandaOmonimo(
+    val idDashboard: Int,
+    val nome: String,
+    val candidati: List<IndizioOmonimo>,
+)
+
 /** Cosa dire dopo aver usato una proposta della dashboard: quanti presenti, di cui quanti entrati come ospiti. */
 data class RapportoDashboard(
     val presenti: Int,
@@ -77,6 +95,8 @@ data class StatoDellaSerata(
     val inCorso: Boolean = false,
     val dashboard: SerataDashboard = SerataDashboard.Spenta,
     val usata: UsoDellaDashboard? = null,
+    /** Un presente della dashboard con omonimi nell'app: la schermata chiede se e' uno di loro. */
+    val domanda: DomandaOmonimo? = null,
 ) {
     /** Il nome di [id], o niente se non e' piu' in rosa. */
     fun nome(id: Int): String = rosa.firstOrNull { it.id == id }?.nome.orEmpty()
@@ -110,6 +130,10 @@ class SerataViewModel(
     partitaInCorso: Boolean,
     /** La serata della dashboard; null con la funzione spenta: nessuna riga e nessuna richiesta. */
     private val dashboard: FonteSerataDashboard? = null,
+    /** I collegamenti R-1: un presente della dashboard che nasce nell'app nasce collegato. Null: nasce senza. */
+    private val collegamenti: PadelEliteLinkDao? = null,
+    /** Per gli indizi degli omonimi (partite giocate, l'ultima). */
+    private val partite: MatchDao? = null,
 ) : ViewModel() {
     private val _stato =
         MutableStateFlow(
@@ -126,6 +150,16 @@ class SerataViewModel(
     val rapporti: Flow<RapportoDashboard> = _rapporti.receiveAsFlow()
 
     private var lettura: Job? = null
+
+    /** Una proposta toccata che aspetta le risposte sugli omonimi; le risposte: id della dashboard -> giocatore dell'app, o null per "nuovo". */
+    private class UsoInAttesa(
+        val proposta: PropostaDashboard,
+        val traduzione: Traduzione,
+        val gruppo: String,
+        val risposte: MutableMap<Int, Int?> = LinkedHashMap(),
+    )
+
+    private var inAttesa: UsoInAttesa? = null
 
     init {
         viewModelScope.launch {
@@ -193,38 +227,118 @@ class SerataViewModel(
 
     /**
      * Applica una proposta della dashboard, solo al tocco: i collegati entrano come sono, i non collegati come
-     * ospiti (un giocatore nuovo, o l'omonimo che la traduzione ha scelto), le partite gia' giocate restano.
-     * Ricorda la serata di prima per [annullaLaDashboard].
+     * ospiti, le partite gia' giocate restano. Ricorda la serata di prima per [annullaLaDashboard].
+     *
+     * Con i collegamenti e il gruppo letto, un non collegato senza omonimi nell'app nasce gia' collegato; per chi
+     * ha un omonimo (nella dashboard spesso c'e' solo il cognome) prima si chiede, uno alla volta, se e' la stessa
+     * persona ([StatoDellaSerata.domanda], risposte con [rispondi]): la proposta si applica solo dopo l'ultima
+     * risposta, e [annullaLaDomanda] la lascia cadere senza scrivere niente.
      */
     private fun usa(
         proposta: PropostaDashboard,
         traduzione: Traduzione,
     ) {
-        if (_stato.value.inCorso || traduzione.voci.isEmpty()) return
+        if (_stato.value.inCorso || traduzione.voci.isEmpty() || inAttesa != null) return
+        val gruppo = (_stato.value.dashboard as? SerataDashboard.Pronta)?.gruppo
         viewModelScope.launch {
-            val ids = traduzione.voci.map { voce -> idLocale(voce) }.distinct()
-            val prima = store.load()
-            cambia { it.conIPresenti(ids) }
-            _stato.update { it.copy(usata = UsoDellaDashboard(proposta, ids, prima)) }
-            _rapporti.trySend(RapportoDashboard(presenti = ids.size, ospiti = traduzione.ospiti))
+            if (collegamenti == null || gruppo == null) {
+                applica(proposta, traduzione, null, emptyMap())
+                return@launch
+            }
+            inAttesa = UsoInAttesa(proposta, traduzione, gruppo)
+            prossimaDomanda()
         }
     }
 
-    /**
-     * Il giocatore locale di una voce: il collegato com'e', l'ospite nel suo omonimo (deciso dalla traduzione, se
-     * e' ancora in rosa) o in un giocatore nuovo col nome della dashboard.
-     */
-    private suspend fun idLocale(voce: PresenteDellaDashboard): Int =
-        when (voce) {
-            is PresenteDellaDashboard.Collegato -> {
-                voce.idLocale
-            }
+    /** "E' lui" ([localId]) o "e' un'altra persona" (null) per la domanda aperta; poi la prossima, o si applica. */
+    fun rispondi(localId: Int?) {
+        val attesa = inAttesa ?: return
+        val domanda = _stato.value.domanda ?: return
+        attesa.risposte[domanda.idDashboard] = localId
+        _stato.update { it.copy(domanda = null) }
+        viewModelScope.launch { prossimaDomanda() }
+    }
 
-            is PresenteDellaDashboard.Ospite -> {
-                voce.omonimo?.takeIf { id -> _stato.value.rosa.any { it.id == id } }
-                    ?: playerDao.insert(Player(playerName = voce.nome, appearances = 0, goals = 0)).toInt()
-            }
+    /** La domanda chiusa senza risposta: la proposta non si applica e niente si scrive. */
+    fun annullaLaDomanda() {
+        inAttesa = null
+        _stato.update { it.copy(domanda = null) }
+    }
+
+    /**
+     * La prossima domanda sugli omonimi, o l'applicazione se non ne restano. I candidati si calcolano adesso: un
+     * omonimo gia' scelto per un altro presente, o collegato a un altro della dashboard, non si offre di nuovo.
+     */
+    private suspend fun prossimaDomanda() {
+        val attesa = inAttesa ?: return
+        val dao = collegamenti ?: return
+        val locali = playerDao.getAllPlayers().first().map { it.player }
+        val presi =
+            attesa.traduzione.voci
+                .filterIsInstance<PresenteDellaDashboard.Collegato>()
+                .map { it.idLocale }
+                .toSet() +
+                attesa.risposte.values.filterNotNull()
+        val collegati = dao.linksOf(attesa.gruppo)
+        for (voce in attesa.traduzione.voci.filterIsInstance<PresenteDellaDashboard.Ospite>()) {
+            if (voce.idDashboard in attesa.risposte) continue
+            if (collegati.any { it.remotePlayerId == voce.idDashboard }) continue
+            val candidati =
+                RosaGruppo
+                    .omonimiLiberi(RemotePlayer(voce.idDashboard, voce.nome), locali, collegati)
+                    .filter { it.playerId !in presi }
+            if (candidati.isEmpty()) continue
+            val domanda = DomandaOmonimo(voce.idDashboard, voce.nome, candidati.map { indizioDellOmonimo(it, partite) })
+            // La proposta puo' essere stata lasciata cadere mentre si leggeva.
+            if (inAttesa !== attesa) return
+            _stato.update { it.copy(domanda = domanda) }
+            return
         }
+        if (inAttesa !== attesa) return
+        inAttesa = null
+        applica(attesa.proposta, attesa.traduzione, attesa.gruppo, attesa.risposte)
+    }
+
+    private suspend fun applica(
+        proposta: PropostaDashboard,
+        traduzione: Traduzione,
+        gruppo: String?,
+        risposte: Map<Int, Int?>,
+    ) {
+        if (_stato.value.inCorso) return
+        val ids = traduzione.voci.map { voce -> idLocale(voce, gruppo, risposte) }.distinct()
+        val prima = store.load()
+        cambia { it.conIPresenti(ids) }
+        _stato.update { it.copy(usata = UsoDellaDashboard(proposta, ids, prima)) }
+        _rapporti.trySend(RapportoDashboard(presenti = ids.size, ospiti = traduzione.ospiti))
+    }
+
+    /**
+     * Il giocatore locale di una voce: il collegato com'e'. Senza collegamenti o gruppo l'ospite e' il suo omonimo
+     * (deciso dalla traduzione, se e' ancora in rosa) o un giocatore nuovo, come prima. Con i collegamenti e' il
+     * giocatore collegato nel frattempo, l'omonimo che l'utente ha detto essere lui (e ora collegato), o un
+     * giocatore nuovo gia' collegato: la volta dopo entra come collegato e non serve ricrearlo.
+     */
+    private suspend fun idLocale(
+        voce: PresenteDellaDashboard,
+        gruppo: String?,
+        risposte: Map<Int, Int?>,
+    ): Int {
+        if (voce is PresenteDellaDashboard.Collegato) return voce.idLocale
+        val ospite = voce as PresenteDellaDashboard.Ospite
+        val dao = collegamenti
+        if (dao == null || gruppo == null) {
+            return ospite.omonimo?.takeIf { id -> _stato.value.rosa.any { it.id == id } }
+                ?: playerDao.insert(Player(playerName = ospite.nome, appearances = 0, goals = 0)).toInt()
+        }
+        dao.linkOfRemote(gruppo, ospite.idDashboard)?.let { return it.localPlayerId }
+        val scelto = risposte[ospite.idDashboard]
+        if (scelto != null) {
+            dao.link(PadelEliteLink(scelto, gruppo, ospite.idDashboard, ospite.nome))
+            return scelto
+        }
+        return dao.createAndLink(gruppo, ospite.idDashboard, ospite.nome)
+    }
 
     /**
      * Annulla l'ultima proposta usata: torna la serata di prima. Gli ospiti creati restano fra i giocatori
@@ -342,8 +456,11 @@ class SerataViewModel(
         private val store: SerataStore,
         private val partitaInCorso: Boolean,
         private val dashboard: FonteSerataDashboard? = null,
+        private val collegamenti: PadelEliteLinkDao? = null,
+        private val partite: MatchDao? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = SerataViewModel(playerDao, store, partitaInCorso, dashboard) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            SerataViewModel(playerDao, store, partitaInCorso, dashboard, collegamenti, partite) as T
     }
 }
