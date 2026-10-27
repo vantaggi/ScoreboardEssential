@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Looper
 import android.view.View
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
@@ -34,6 +35,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.shadows.ShadowDialog
 import org.robolectric.annotation.Config
 import java.time.LocalDate
 
@@ -282,6 +284,35 @@ class SerataActivityTest {
         assertTrue("con quattro presenti si puo' cominciare", attivita.findViewById<MaterialButton>(R.id.serata_start_button).isEnabled)
         assertTrue(attivita.riga(R.id.serata_dashboard_rows, 0)!!.isSelected)
         assertEquals("i tre e l'ospite, piu' Aggiungi un ospite", 5, attivita.righe(R.id.serata_present))
+    }
+
+    @Test
+    fun `con i gironi salvati Usa i presenti chiede quale girone gioca, e il girone scelto diventa i presenti`() {
+        val ids = giocatori("A", "B", "C", "D", "E", "F", "G", "H")
+        val collegati = ids.mapIndexed { i, id -> Collegato(100 + i, "Nome$i", id) }
+        dallaDashboard(
+            SerataDashboard.Pronta(
+                giovedi,
+                Traduzione(collegati),
+                gironi = listOf(GironeDellaDashboard(Traduzione(collegati.take(4))), GironeDellaDashboard(Traduzione(collegati.drop(4)))),
+            ),
+        )
+        val attivita = apri().get()
+        aspetta { attivita.righe(R.id.serata_dashboard_rows) == 3 }
+
+        attivita.riga(R.id.serata_dashboard_rows, 0)!!.performClick()
+        idle()
+        val dialogo = ShadowDialog.getLatestDialog() as AlertDialog
+        assertTrue(dialogo.isShowing)
+        // I due gironi e "tutti i presenti": niente e' cambiato finche' non si sceglie.
+        assertEquals(3, dialogo.listView.adapter.count)
+        val memoria = SerataPrefsStore(contesto.getSharedPreferences("app_prefs", Context.MODE_PRIVATE))
+        assertEquals(null, memoria.load())
+
+        // Il girone B, non i primi quattro arrivati.
+        dialogo.listView.performItemClick(null, 1, 1)
+        aspetta { memoria.load() != null }
+        assertEquals(ids.drop(4), memoria.load()!!.presenti)
     }
 
     @Test

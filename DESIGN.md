@@ -2065,6 +2065,8 @@ Richiesta del proprietario: la serata dura un'ora e mezza, si giocano tre partit
 
 **L'ordine di battuta** (`OrdineDiBattuta`, richiesta del proprietario dello stesso giorno). Nella prima partita si sceglie chi batte per primo e chi per secondo (toccando due nomi, e con Scambia i lati): batte il primo posto della coppia 1, poi il primo della coppia 2, poi i loro compagni. Chiusa la partita, quell'ordine diventa la precedenza dei giocatori e ogni proposta successiva ci mette i posti: dentro ogni coppia batte per primo chi viene prima, e batte per prima la coppia di chi viene prima di tutti; chi non ha mai giocato sta dietro. Ogni partita chiusa aggiorna la precedenza con l'ordine giocato, quindi una correzione a mano vale per le successive. Senza scelte, il girone esce identico alla dashboard (1, 2, 3, 4 battono come #1, #2, #4, #3 nella prima, #1, #2, #3, #4 nella seconda). Va nel testo della serata (`o:`). Nella schermata il numero di ogni posto e' il **turno di battuta** (1 e 3 la coppia 1, 2 e 4 la coppia 2) al posto del vecchio "posto 1, posto 2", e la frase sotto le coppie lo spiega.
 
+**"Usa i presenti" chiede il girone** (richiesta del proprietario dello stesso giorno). Con i gironi salvati per la serata, il tocco su "Usa i presenti" apre una scelta: "Quale girone gioca su questo campo?", con i gironi (gli stessi titoli delle righe) e in fondo "Tutti i presenti, scelgo io i quattro". Prima entravano tutti e la prima bozza erano i primi quattro confermati, di solito il girone A. Annulla non cambia niente. Senza gironi salvati il tocco usa i presenti come prima. L'app non sa quale giocatore sia chi tiene il telefono, quindi non preseleziona il suo girone (debito 4). Dialogo di sistema (`MaterialAlertDialogBuilder.setItems`), nessun componente nuovo.
+
 **In un tocco.** Il passaggio resta quello di R-2: "Fine partita" con la casella "Prossima partita della serata" (accesa) salva e apre la Serata con la prossima gia' composta, e "Inizia la partita" la porta in campo. Non e' stato aggiunto un avvio automatico senza passare dalla Serata: si vedono le coppie prima di cominciare, e uno scambio resta a un tocco.
 
 ### Piano UI (CLAUDE.md, punto 3)
@@ -2098,6 +2100,7 @@ Richiesta del proprietario: la serata dura un'ora e mezza, si giocano tre partit
 1. **Non visto a schermo**: nessun SDK Android nel container; `:core` eseguito sulla JVM, l'app verificata dalla CI (Robolectric).
 2. **L'ordine della dashboard e' preso dalla richiesta** (il file `js/ui.js` sta nell'altro repository e non e' stato riletto in questo passo).
 3. **Piu' di quattro presenti**: lo spareggio non c'e', perche' la rotazione cambia i quattro.
+4. **Il girone di chi tiene il telefono** non si preseleziona: servirebbe sapere quale giocatore della dashboard e' l'account collegato.
 
 ## Diretta - 9 ottobre 2026 (D-2)
 

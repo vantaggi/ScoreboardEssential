@@ -83,6 +83,8 @@
     <string name="serata_dashboard_open">Open Padel Elite</string>
     <string name="serata_dashboard_use_present">Use the confirmed players</string>
     <string name="serata_dashboard_use_present_description">Confirmed in the dashboard: %1$d. Touch to use them as the people here</string>
+    <string name="serata_pick_pool_title">Which pool plays on this court?</string>
+    <string name="serata_pick_pool_all">All present players, I pick the four</string>
     <string name="serata_dashboard_pool">Pool %1$s: %2$s</string>
     <string name="serata_dashboard_pool_description">Pool %1$s: %2$s. Touch to use it as the people here</string>
     <plurals name="serata_dashboard_used">

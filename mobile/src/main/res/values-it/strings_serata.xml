@@ -90,6 +90,8 @@
     <string name="serata_dashboard_open">Apri Padel Elite</string>
     <string name="serata_dashboard_use_present">Usa i presenti</string>
     <string name="serata_dashboard_use_present_description">Presenti dalla dashboard: %1$d. Tocca per usarli come presenti della serata</string>
+    <string name="serata_pick_pool_title">Quale girone gioca su questo campo?</string>
+    <string name="serata_pick_pool_all">Tutti i presenti, scelgo io i quattro</string>
     <string name="serata_dashboard_pool">Girone %1$s: %2$s</string>
     <string name="serata_dashboard_pool_description">Girone %1$s: %2$s. Tocca per usarlo come presenti</string>
     <plurals name="serata_dashboard_used">
