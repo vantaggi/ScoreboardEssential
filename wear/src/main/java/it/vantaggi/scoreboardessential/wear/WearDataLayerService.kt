@@ -116,6 +116,10 @@ class WearDataLayerService : WearableListenerService() {
                 }
 
                 WearConstants.PATH_PAIRS -> {
+                    if (BuildConfig.DEBUG) {
+                        val c = CoppieDalTelefono.fromDataMap(dataMap)
+                        Log.d(TAG, "Coppie: rose ${c.rosa1.size}+${c.rosa2.size}, prossima ${c.numero}, versione ${c.versione}")
+                    }
                     LocalBroadcastManager.getInstance(context).sendBroadcast(
                         Intent(ACTION_PAIRS_UPDATE).putExtra(EXTRA_PAIRS_PAYLOAD, dataMap.toByteArray()),
                     )

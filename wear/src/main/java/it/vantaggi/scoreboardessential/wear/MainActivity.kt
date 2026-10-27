@@ -436,6 +436,10 @@ class MainActivity : ComponentActivity() {
      * voci accendere, e il menu restituisce solo che cosa si e' scelto.
      */
     private fun apriMenu() {
+        if (BuildConfig.DEBUG) {
+            val c = viewModel.coppie.value
+            Log.d(TAG, "Menu: coppie ${if (c == null) "assenti" else "rose ${c.rosa1.size}+${c.rosa2.size}, versione ${c.versione}"}")
+        }
         menu.launch(MenuActivity.intent(this, inputMenu(), squadreInCampo()))
     }
 
