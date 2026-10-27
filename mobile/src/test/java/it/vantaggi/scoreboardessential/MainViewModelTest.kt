@@ -51,6 +51,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -1006,6 +1007,52 @@ class MainViewModelTest {
         }
 
     /**
+     * Visto sul telefono: aprire l'app con il padel salvato scriveva "Portiere a 30 secondi" nel
+     * registro. La durata arriva dalle impostazioni prima dello sport, quando le regole sono ancora
+     * quelle del calcio. Rosso se la prima lettura delle impostazioni torna a scrivere la riga.
+     * Le impostazioni arrivano DOPO init, come da DataStore sul telefono: con un flowOf immediato
+     * arrivavano prima di startNewMatch, che svuotava il registro, e il test restava verde anche
+     * col difetto.
+     */
+    @Test
+    fun `aprire l'app col padel salvato non scrive la durata del portiere`() =
+        runTest(UnconfinedTestDispatcher()) {
+            Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+            whenever(mockMatchSettingsRepository.getSettingsFlow()).thenReturn(
+                flow {
+                    delay(1_000)
+                    emit(
+                        MatchSettings(
+                            team1Name = "Team 1",
+                            team2Name = "Team 2",
+                            team1Color = Color.RED,
+                            team2Color = Color.BLUE,
+                            keeperTimerDuration = 45L,
+                            activeSport = SportRegistry.PADEL,
+                        ),
+                    )
+                },
+            )
+
+            val conPadel = creaViewModel()
+            altriViewModel.add(conPadel)
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            conPadel.matchEvents.observeForever(eventiObserver)
+            advanceUntilIdle()
+
+            // Le impostazioni sono arrivate, dopo la riga della partita nuova: senza queste due
+            // condizioni il test non prova niente.
+            assertEquals(SportRegistry.PADEL, conPadel.activeSport.value)
+            val righe =
+                conPadel.matchEvents.value
+                    .orEmpty()
+                    .map { it.event }
+            assertTrue("registro: $righe", righe.any { it == "New match ready" })
+            assertTrue("registro: $righe", righe.none { it.startsWith("Keeper timer set") })
+            conPadel.matchEvents.removeObserver(eventiObserver)
+        }
+
+    /**
      * Una partita ripresa dopo la chiusura dell'app resta la STESSA partita anche nel file: id e
      * inizio si rileggono dalla riga, altrimenti l'export dopo la ripresa ne mancherebbe e chi
      * importa non riconoscerebbe il doppione con un export fatto prima.
@@ -1232,6 +1279,29 @@ class MainViewModelTest {
             } finally {
                 java.util.TimeZone.setDefault(prima)
             }
+        }
+
+    /**
+     * Il registro del padel diceva "Keeper timer set to 30 seconds": le impostazioni passano la
+     * durata del portiere a ogni sport. Rosso se setKeeperTimer torna a scrivere senza guardare se
+     * lo sport ha il portiere; la seconda parte e' rossa se la riga sparisce anche dal calcio.
+     */
+    @Test
+    fun `la durata del portiere entra nel registro solo dove il portiere c'e'`() =
+        runTest {
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            advanceUntilIdle()
+
+            viewModel.setKeeperTimer(30)
+            assertTrue(righeDelRegistro().none { it.startsWith("Keeper timer set") })
+
+            assertEquals(true, viewModel.selectSport(SportRegistry.FOOTBALL))
+            advanceUntilIdle()
+            viewModel.setKeeperTimer(45)
+            assertTrue(righeDelRegistro().contains("Keeper timer set to 45 seconds"))
+            viewModel.matchEvents.removeObserver(eventiObserver)
         }
 
     /** Senza cronometro un minuto sarebbe sempre 1': la colonna resta vuota. */

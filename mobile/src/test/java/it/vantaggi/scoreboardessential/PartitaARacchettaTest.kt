@@ -178,7 +178,7 @@ class PartitaARacchettaTest {
     fun `il dialogo sul 5-3 e 30-15 dice il punteggio del display e non 0-0`() {
         val testo = testoDelDialogoDiFine(context, padel.id, padel.display(padelCinqueATre()), "Rossi", "Bianchi")
         assertEquals("Rossi – Bianchi · game 5-3 · punto 30-15", testo.messaggio)
-        assertEquals("Termina Partita?", testo.titolo)
+        assertEquals("Terminare la partita?", testo.titolo)
         assertFalse("il positivo e' SALVA solo a partita chiusa", testo.salva)
     }
 

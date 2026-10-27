@@ -151,7 +151,7 @@ class LinguaUnicaTest {
         try {
             assertEquals(
                 "il titolo della notifica deve seguire la lingua scelta, non quella del sistema",
-                "Timer Partita",
+                "Timer partita",
                 controller.get().getString(R.string.match_timer),
             )
         } finally {

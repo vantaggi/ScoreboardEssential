@@ -4,10 +4,10 @@
     <string name="channel_description">Notifiche da Scoreboard Essential</string>
     <string name="appbar_scrolling_view_behavior" translatable="false">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
     <string name="delete_match">Elimina partita</string>
-    <string name="match_timer">Timer Partita</string>
+    <string name="match_timer">Timer partita</string>
     <string name="pause">Pausa</string>
     <string name="stop">Stop</string>
-    <string name="keeper_timer_expired_title">Timer Portiere Scaduto</string>
+    <string name="keeper_timer_expired_title">Timer del portiere scaduto</string>
     <string name="keeper_timer_expired_text">Il timer del portiere è scaduto.</string>
 
     <!-- Onboarding -->
@@ -51,7 +51,7 @@
     <string name="timer_state_stopped">Fermo</string>
 
     <!-- Settings -->
-    <string name="choose_team_color">Scegli Colore Squadra %d</string>
+    <string name="choose_team_color">Colore della squadra %d</string>
     <string name="select">Seleziona</string>
     <string name="cancel">Annulla</string>
     <string name="language">Lingua</string>
@@ -65,15 +65,15 @@
     <string name="notification_permission_required">È necessaria l\'autorizzazione per le notifiche del timer</string>
     <string name="wear_connected_tooltip">Wear OS Connesso</string>
     <string name="wear_disconnected_tooltip">Wear OS Disconnesso</string>
-    <string name="share_match_results">Condividi Risultati Partita</string>
-    <string name="undo_goal_title">Annulla Ultimo Gol?</string>
+    <string name="share_match_results">Condividi il risultato</string>
+    <string name="undo_goal_title">Annullare il gol appena segnato?</string>
     <string name="undo_goal_message">Questo annullerà il punteggio e rimuoverà il gol dal registro.</string>
     <string name="undo">Annulla</string>
-    <string name="no_available_players">Nessun giocatore disponibile. Crea nuovi giocatori in Gestione Giocatori.</string>
+    <string name="no_available_players">Nessun giocatore disponibile. Crea nuovi giocatori in Giocatori.</string>
     <string name="manage">Gestisci</string>
-    <string name="add_player_title">Aggiungi Giocatore a Squadra %d</string>
+    <string name="add_player_title">Aggiungi un giocatore alla squadra %d</string>
     <string name="player_added_message">%1$s aggiunto a %2$s</string>
-    <string name="remove_player_title">Rimuovi Giocatore?</string>
+    <string name="remove_player_title">Rimuovere il giocatore?</string>
     <string name="remove_player_message">Rimuovere %1$s da %2$s?</string>
     <string name="remove">Rimuovi</string>
     <string name="player_removed_message">%1$s rimosso da %2$s</string>
@@ -98,7 +98,7 @@
         <item quantity="many">%1$d punti dall\'orologio</item>
         <item quantity="other">%1$d punti dall\'orologio</item>
     </plurals>
-    <string name="end_match_title">Termina Partita?</string>
+    <string name="end_match_title">Terminare la partita?</string>
     <string name="end_match_over_title">Partita finita</string>
     <!-- Il riepilogo del dialogo si compone dal display, come la schermata: niente 0-0 sopra un 5-3. -->
     <string name="end_summary_football">%1$s %2$s-%3$s %4$s</string>
@@ -108,11 +108,11 @@
     <string name="end_part_point">punto %1$s</string>
     <string name="btn_save_match">Salva</string>
     <string name="bar_winner">Vince %1$s · %2$s</string>
-    <string name="btn_end_match">Termina Partita</string>
+    <string name="btn_end_match">Termina la partita</string>
     <string name="continue_action">Continua</string>
     <string name="match_saved">Partita salvata!</string>
     <string name="match_not_started_error">Avvia la partita o segna prima di terminarla.</string>
-    <string name="reset_timer_title">Resetta Timer?</string>
+    <string name="reset_timer_title">Azzerare il tempo?</string>
     <string name="reset_timer_message">Questo resetterà il timer della partita a 00:00</string>
     <string name="reset">Resetta</string>
 
@@ -226,6 +226,18 @@
     <string name="history_meta_duration">%1$s · %2$s · %3$s</string>
     <string name="match_ready">Nuova partita pronta</string>
     <string name="match_resumed">Partita ripresa</string>
+    <!-- Le righe informative del registro. -->
+    <string name="log_keeper_expired">Tempo del portiere scaduto</string>
+    <string name="log_keeper_set">Portiere a %d secondi</string>
+    <string name="log_keeper_started">Portiere avviato (%d s)</string>
+    <string name="log_keeper_reset">Portiere azzerato</string>
+    <string name="log_player_added">%1$s entra in %2$s</string>
+    <string name="log_player_created">Nuovo giocatore: %s</string>
+    <string name="log_score_correction">Correzione per %s</string>
+    <string name="log_undo_correction">Annullata una correzione</string>
+    <string name="log_undo_goal">Annullato un gol</string>
+    <string name="log_undo_point">Annullato un punto</string>
+    <string name="log_match_ended">Partita finita: %1$d – %2$d</string>
 
     <!-- Cronaca: la partita chiusa rigiocata punto per punto, dallo storico -->
     <string name="chronicle_title">Cronaca</string>
@@ -307,9 +319,9 @@
     <string name="title_player">Giocatore</string>
     <string name="title_edit_player">Modifica giocatore</string>
     <string name="title_match_settings">Impostazioni partita</string>
-    <string name="title_manage_players">Gestisci giocatori</string>
+    <string name="title_manage_players">Giocatori</string>
     <string name="title_statistics">Statistiche</string>
-    <string name="player_name_hint">Nome Giocatore</string>
+    <string name="player_name_hint">Nome del giocatore</string>
     <string name="player_name_empty">Scrivi il nome del giocatore.</string>
     <string name="player_name_too_long">Il nome e\' troppo lungo: al massimo %1$d caratteri.</string>
     <string name="player_created">%1$s creato</string>
@@ -327,7 +339,7 @@
     <string name="no_players_hint">Aggiungi chi gioca con te: i giocatori entrano nelle rose e ne contano gol e presenze.</string>
     <string name="player_stats_title">%1$s - Statistiche</string>
     <string name="player_stats_message">Presenze: %1$d\nGol segnati: %2$d\nGol a partita: %3$s\n\nRuoli: %4$s</string>
-    <string name="reset_stats">Azzera Statistiche</string>
+    <string name="reset_stats">Azzera le statistiche</string>
     <string name="reset_stats_title">Azzerare le statistiche?</string>
     <string name="reset_stats_message">Azzerare tutte le statistiche di %1$s?</string>
     <string name="stats_reset">Statistiche azzerate</string>

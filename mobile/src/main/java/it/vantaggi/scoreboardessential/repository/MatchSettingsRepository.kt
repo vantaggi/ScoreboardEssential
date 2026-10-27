@@ -28,7 +28,7 @@ class MatchSettingsRepository(
 
     suspend fun getTeam1Name(): String =
         withContext(Dispatchers.IO) {
-            sharedPreferences.getString(KEY_TEAM1_NAME, "Team 1") ?: "Team 1"
+            sharedPreferences.getString(KEY_TEAM1_NAME, DEFAULT_TEAM1_NAME) ?: DEFAULT_TEAM1_NAME
         }
 
     suspend fun setTeam2Name(name: String) =
@@ -40,7 +40,7 @@ class MatchSettingsRepository(
 
     suspend fun getTeam2Name(): String =
         withContext(Dispatchers.IO) {
-            sharedPreferences.getString(KEY_TEAM2_NAME, "Team 2") ?: "Team 2"
+            sharedPreferences.getString(KEY_TEAM2_NAME, DEFAULT_TEAM2_NAME) ?: DEFAULT_TEAM2_NAME
         }
 
     suspend fun setTeam1Color(color: Int) =
@@ -129,8 +129,8 @@ class MatchSettingsRepository(
                 SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
                     trySend(
                         MatchSettings(
-                            prefs.getString(KEY_TEAM1_NAME, "Team 1") ?: "Team 1",
-                            prefs.getString(KEY_TEAM2_NAME, "Team 2") ?: "Team 2",
+                            prefs.getString(KEY_TEAM1_NAME, DEFAULT_TEAM1_NAME) ?: DEFAULT_TEAM1_NAME,
+                            prefs.getString(KEY_TEAM2_NAME, DEFAULT_TEAM2_NAME) ?: DEFAULT_TEAM2_NAME,
                             prefs.getInt(KEY_TEAM1_COLOR, colorRepository.getTeam1DefaultColor()),
                             prefs.getInt(KEY_TEAM2_COLOR, colorRepository.getTeam2DefaultColor()),
                             prefs.getLong(KEY_KEEPER_TIMER_DURATION, 30L),
@@ -143,8 +143,8 @@ class MatchSettingsRepository(
             // Emit initial value
             trySend(
                 MatchSettings(
-                    sharedPreferences.getString(KEY_TEAM1_NAME, "Team 1") ?: "Team 1",
-                    sharedPreferences.getString(KEY_TEAM2_NAME, "Team 2") ?: "Team 2",
+                    sharedPreferences.getString(KEY_TEAM1_NAME, DEFAULT_TEAM1_NAME) ?: DEFAULT_TEAM1_NAME,
+                    sharedPreferences.getString(KEY_TEAM2_NAME, DEFAULT_TEAM2_NAME) ?: DEFAULT_TEAM2_NAME,
                     sharedPreferences.getInt(KEY_TEAM1_COLOR, colorRepository.getTeam1DefaultColor()),
                     sharedPreferences.getInt(KEY_TEAM2_COLOR, colorRepository.getTeam2DefaultColor()),
                     sharedPreferences.getLong(KEY_KEEPER_TIMER_DURATION, 30L),
@@ -165,6 +165,14 @@ class MatchSettingsRepository(
         private const val KEY_KEEPER_TIMER_DURATION = "keeper_timer_duration"
         private const val KEY_ACTIVE_SPORT = "active_sport"
         private const val DEFAULT_SPORT = "football"
+
+        /**
+         * I nomi predefiniti come stanno nei dati: dicono "nessun nome scelto" (EtichettaSquadra) e
+         * restano in inglese perche' arrivano anche all'orologio e nelle partite salvate. A schermo
+         * li traduce EtichettaSquadra.mostrato.
+         */
+        const val DEFAULT_TEAM1_NAME = "Team 1"
+        const val DEFAULT_TEAM2_NAME = "Team 2"
 
         private fun chiaveDel40(sportId: String) = "deuce_rule_$sportId"
     }

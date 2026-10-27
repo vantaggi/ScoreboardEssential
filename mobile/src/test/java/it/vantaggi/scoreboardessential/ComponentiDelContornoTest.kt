@@ -123,7 +123,7 @@ class ComponentiDelContornoTest {
     }
 
     @Test
-    fun `il bottone secondario e' una superficie rialzata con bordo e testo secondario`() {
+    fun `il bottone secondario e' una superficie rialzata con bordo e testo primario`() {
         val bottone = MaterialButton(contesto, null, M3.attr.materialButtonOutlinedStyle).apply { text = "Impostazioni" }
 
         assertEquals(8f * densita, raggioDelBottone(bottone), 0.5f)
@@ -131,7 +131,8 @@ class ComponentiDelContornoTest {
         assertEquals(token(R.color.elite_surface_raised), bottone.backgroundTintList!!.defaultColor)
         assertEquals(token(R.color.elite_outline), bottone.strokeColor.defaultColor)
         assertEquals(dp(R.dimen.border_width).toInt(), bottone.strokeWidth)
-        assertEquals(token(R.color.elite_text_secondary), bottone.currentTextColor)
+        // Testo primario, non secondario: col secondario un comando attivo si confondeva col disattivo.
+        assertEquals(token(R.color.elite_text_primary), bottone.currentTextColor)
     }
 
     private fun colorePredefinito(

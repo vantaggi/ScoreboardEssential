@@ -31,6 +31,17 @@ object EtichettaSquadra {
     fun predefinito(nome: String): Boolean = nome.isBlank() || PREDEFINITO.matches(nome.trim())
 
     /**
+     * Il nome da scrivere dove non c'e' una rosa da cui prendere le sigle (storico, impostazioni,
+     * anteprima del colore). Il predefinito resta "Team 1" nei dati, perche' e' il segnale che dice
+     * "nessun nome scelto" anche all'orologio e alle partite gia' salvate; a schermo diventa il
+     * predefinito della lingua in uso, cosi' lo storico non dice "Team 1" e la Cronaca "Squadra 1".
+     */
+    fun mostrato(
+        nome: String?,
+        predefinitoLocale: String,
+    ): String = if (nome == null || predefinito(nome)) predefinitoLocale else nome
+
+    /**
      * Le prime tre lettere del cognome, in maiuscolo. Il cognome e' la prima parola: nella rosa i
      * giocatori sono scritti col solo cognome (come nella dashboard) o cognome e nome, e "Ferrario
      * Stefano" deve dare FER e non STE. Apostrofi e segni restano fuori ("D'Amico" da DAM).
