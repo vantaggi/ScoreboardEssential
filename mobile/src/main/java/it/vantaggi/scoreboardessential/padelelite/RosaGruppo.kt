@@ -29,6 +29,30 @@ data class IndizioOmonimo(
     val ultima: UltimaPartita?,
 )
 
+/**
+ * Cio' che aiuta a riconoscere un giocatore dell'app: quante partite chiuse ha giocato e l'ultima (quando, con chi,
+ * contro chi). Senza [partite] l'indizio e' vuoto.
+ */
+suspend fun indizioDellOmonimo(
+    locale: Player,
+    partite: MatchDao?,
+): IndizioOmonimo {
+    val dao = partite ?: return IndizioOmonimo(locale.playerId, locale.playerName, 0, null)
+    val ultima =
+        dao.lastClosedMatchOf(locale.playerId)?.let { partita ->
+            val formazione = dao.getMatchLineup(partita.matchId)
+            val lato = formazione.firstOrNull { it.localId == locale.playerId }?.side ?: 0
+            val altri = formazione.filter { it.localId != locale.playerId }
+            // Un lato sconosciuto (righe vecchie) non dice chi era contro: tutti diventano "con".
+            UltimaPartita(
+                timestamp = partita.timestamp,
+                compagni = altri.filter { lato == 0 || it.side == lato }.map { it.name },
+                avversari = altri.filter { lato != 0 && it.side != lato }.map { it.name },
+            )
+        }
+    return IndizioOmonimo(locale.playerId, locale.playerName, dao.countClosedMatchesOf(locale.playerId), ultima)
+}
+
 /** Che cosa segue la scelta di un giocatore della dashboard per una partita. */
 sealed interface SceltaDallaDashboard {
     /** Il giocatore dell'app da mettere in squadra: era gia' collegato, o e' appena nato collegato. */
@@ -120,7 +144,7 @@ class RosaGruppo(
         links.linkOfRemote(groupId, remote.id)?.let { return SceltaDallaDashboard.Pronto(it.localPlayerId) }
         val omonimi = omonimiLiberi(remote, localPlayers(), links.linksOf(groupId))
         if (omonimi.isEmpty()) return SceltaDallaDashboard.Pronto(createLocalAndLink(groupId, remote))
-        return SceltaDallaDashboard.Omonimi(remote, omonimi.map { indizio(it) })
+        return SceltaDallaDashboard.Omonimi(remote, omonimi.map { indizioDellOmonimo(it, partite) })
     }
 
     /** "E' lui": l'omonimo scelto dall'utente si collega al giocatore della dashboard, con le sue statistiche. */
@@ -138,23 +162,6 @@ class RosaGruppo(
         groupId: String,
         remote: RemotePlayer,
     ): Int = createLocalAndLink(groupId, remote)
-
-    private suspend fun indizio(locale: Player): IndizioOmonimo {
-        val dao = partite ?: return IndizioOmonimo(locale.playerId, locale.playerName, 0, null)
-        val ultima =
-            dao.lastClosedMatchOf(locale.playerId)?.let { partita ->
-                val formazione = dao.getMatchLineup(partita.matchId)
-                val lato = formazione.firstOrNull { it.localId == locale.playerId }?.side ?: 0
-                val altri = formazione.filter { it.localId != locale.playerId }
-                // Un lato sconosciuto (righe vecchie) non dice chi era contro: tutti diventano "con".
-                UltimaPartita(
-                    timestamp = partita.timestamp,
-                    compagni = altri.filter { lato == 0 || it.side == lato }.map { it.name },
-                    avversari = altri.filter { lato != 0 && it.side != lato }.map { it.name },
-                )
-            }
-        return IndizioOmonimo(locale.playerId, locale.playerName, dao.countClosedMatchesOf(locale.playerId), ultima)
-    }
 
     /** I nomi uguali, da confermare: vedi [proposals]. */
     suspend fun proposals(

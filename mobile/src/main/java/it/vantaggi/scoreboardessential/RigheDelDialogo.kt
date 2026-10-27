@@ -6,6 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.TextView
+import it.vantaggi.scoreboardessential.padelelite.IndizioOmonimo
+import java.text.DateFormat
+import java.util.Date
 
 /** Una riga di un dialogo di scelta: un'intestazione (non si tocca) o una voce con una didascalia facoltativa. */
 data class RigaDelDialogo(
@@ -13,6 +16,47 @@ data class RigaDelDialogo(
     val didascalia: String? = null,
     val intestazione: Boolean = false,
 )
+
+/**
+ * Le righe della domanda "e' gia' nell'app?" (scelta dei giocatori della partita e Serata): la spiegazione come
+ * intestazione (riga 0), un omonimo per riga con il suo indizio, e in fondo "E' un'altra persona".
+ */
+fun righeDellaDomanda(
+    context: Context,
+    nome: String,
+    candidati: List<IndizioOmonimo>,
+): List<RigaDelDialogo> =
+    listOf(RigaDelDialogo(context.getString(R.string.scelta_same_person_hint), intestazione = true)) +
+        candidati.map { RigaDelDialogo(it.nome, testoDellIndizio(context, it)) } +
+        RigaDelDialogo(
+            context.getString(R.string.scelta_other_person),
+            context.getString(R.string.scelta_other_person_detail, nome),
+        )
+
+/** "3 partite · ultima il 12 ott 2026 · con Rossi · contro Bianchi, Verdi", o "Nessuna partita giocata". */
+fun testoDellIndizio(
+    context: Context,
+    indizio: IndizioOmonimo,
+): String {
+    val ultima = indizio.ultima ?: return context.getString(R.string.scelta_same_person_no_matches)
+    val parti =
+        buildList {
+            add(context.resources.getQuantityString(R.plurals.scelta_same_person_matches, indizio.partite, indizio.partite))
+            add(
+                context.getString(
+                    R.string.scelta_same_person_last,
+                    DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(ultima.timestamp)),
+                ),
+            )
+            if (ultima.compagni.isNotEmpty()) add(context.getString(R.string.scelta_same_person_with, ultima.compagni.joinToString(", ")))
+            if (ultima.avversari.isNotEmpty()) {
+                add(
+                    context.getString(R.string.scelta_same_person_against, ultima.avversari.joinToString(", ")),
+                )
+            }
+        }
+    return parti.joinToString(" · ")
+}
 
 /**
  * Le righe di un dialogo di scelta con le sezioni ("Aggiungi un giocatore" con la rosa di Padel Elite, la

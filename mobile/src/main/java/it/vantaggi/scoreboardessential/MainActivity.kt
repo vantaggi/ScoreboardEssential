@@ -58,7 +58,6 @@ import it.vantaggi.scoreboardessential.padelelite.DirettaAzione
 import it.vantaggi.scoreboardessential.padelelite.DirettaFase
 import it.vantaggi.scoreboardessential.padelelite.DirettaIntent
 import it.vantaggi.scoreboardessential.padelelite.ElencoDellaScelta
-import it.vantaggi.scoreboardessential.padelelite.IndizioOmonimo
 import it.vantaggi.scoreboardessential.padelelite.RemotePlayer
 import it.vantaggi.scoreboardessential.padelelite.SceltaDallaDashboard
 import it.vantaggi.scoreboardessential.padelelite.SezioneDellaScelta
@@ -80,8 +79,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.DateFormat
-import java.util.Date
 
 // Quanto scurisce la colonna di gioco a foglio PARTITA aperto: nero al 60%.
 private const val SCRIM_ALPHA = 0.6f
@@ -1688,13 +1685,7 @@ class MainActivity :
         omonimi: SceltaDallaDashboard.Omonimi,
         team: Int,
     ) {
-        val righe =
-            listOf(RigaDelDialogo(getString(R.string.scelta_same_person_hint), intestazione = true)) +
-                omonimi.candidati.map { RigaDelDialogo(it.nome, indizioDellOmonimo(it)) } +
-                RigaDelDialogo(
-                    getString(R.string.scelta_other_person),
-                    getString(R.string.scelta_other_person_detail, omonimi.remote.name),
-                )
+        val righe = righeDellaDomanda(this, omonimi.remote.name, omonimi.candidati)
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.scelta_same_person_title, omonimi.remote.name))
             .setAdapter(RigheDelDialogo(this, righe)) { _, which ->
@@ -1712,24 +1703,6 @@ class MainActivity :
                 }
             }.setNegativeButton(getString(R.string.cancel), null)
             .show()
-    }
-
-    /** "3 partite · ultima il 12 ott 2026, con Rossi, contro Bianchi, Verdi", o "Nessuna partita giocata". */
-    private fun indizioDellOmonimo(indizio: IndizioOmonimo): String {
-        val ultima = indizio.ultima ?: return getString(R.string.scelta_same_person_no_matches)
-        val parti =
-            buildList {
-                add(resources.getQuantityString(R.plurals.scelta_same_person_matches, indizio.partite, indizio.partite))
-                add(
-                    getString(
-                        R.string.scelta_same_person_last,
-                        DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(ultima.timestamp)),
-                    ),
-                )
-                if (ultima.compagni.isNotEmpty()) add(getString(R.string.scelta_same_person_with, ultima.compagni.joinToString(", ")))
-                if (ultima.avversari.isNotEmpty()) add(getString(R.string.scelta_same_person_against, ultima.avversari.joinToString(", ")))
-            }
-        return parti.joinToString(" · ")
     }
 
     private fun showRemovePlayerDialog(

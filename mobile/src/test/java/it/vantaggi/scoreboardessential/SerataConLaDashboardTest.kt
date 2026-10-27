@@ -22,6 +22,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -231,24 +232,80 @@ class SerataConLaDashboardTest {
             assertEquals(listOf("Porcacchia"), nomiInRosa())
         }
 
+    /** Una serata con Porcacchia nella dashboard (non collegato) e un Porcacchia gia' nell'app: si arriva alla domanda. */
+    private suspend fun TestScope.allaDomanda(): Pair<SerataViewModel, Int> {
+        val (porcacchia) = rosa("Porcacchia")
+        val (luca) = rosa("Luca")
+        val presenti = Traduzione(listOf(Collegato(10, "Luca", luca), Ospite(13, "Porcacchia", omonimo = porcacchia)))
+        val vm = nuovoViewModel(Finta(SerataDashboard.Pronta(giovedi, presenti, gruppo = "g-1")), conICollegamenti = true)
+        vm.ricarica()
+        advanceUntilIdle()
+        vm.usaIPresenti()
+        advanceUntilIdle()
+        return vm to porcacchia
+    }
+
     @Test
-    fun `l'ospite accoppiato a un omonimo non si collega da solo`() =
+    fun `con un omonimo nell'app si chiede se e' lui, e finche' non si risponde niente si scrive`() =
         runTest {
-            val (porcacchia) = rosa("Porcacchia")
-            val presenti = Traduzione(listOf(Ospite(13, "Porcacchia", omonimo = porcacchia)))
-            val vm = nuovoViewModel(Finta(SerataDashboard.Pronta(giovedi, presenti, gruppo = "g-1")), conICollegamenti = true)
-            vm.ricarica()
+            val (vm, porcacchia) = allaDomanda()
+
+            val domanda = vm.stato.value.domanda!!
+            assertEquals(13, domanda.idDashboard)
+            assertEquals("Porcacchia", domanda.nome)
+            assertEquals(listOf(porcacchia), domanda.candidati.map { it.localId })
+            assertNull("la proposta aspetta la risposta", store.load())
+            assertTrue(db.padelEliteLinkDao().linksOf("g-1").isEmpty())
+        }
+
+    @Test
+    fun `e' lui, l'omonimo entra nella serata e si collega`() =
+        runTest {
+            val (vm, porcacchia) = allaDomanda()
+
+            vm.rispondi(porcacchia)
             advanceUntilIdle()
 
-            vm.usaIPresenti()
-            advanceUntilIdle()
-
-            assertEquals(
-                listOf(porcacchia),
-                vm.stato.value.serata!!
-                    .presenti,
+            assertNull(vm.stato.value.domanda)
+            assertTrue(
+                porcacchia in
+                    vm.stato.value.serata!!
+                        .presenti,
             )
-            assertTrue("solo cognomi nella dashboard: decide l'utente", db.padelEliteLinkDao().linksOf("g-1").isEmpty())
+            assertEquals(listOf(PadelEliteLink(porcacchia, "g-1", 13, "Porcacchia")), db.padelEliteLinkDao().linksOf("g-1"))
+            assertEquals(listOf("Luca", "Porcacchia"), nomiInRosa())
+        }
+
+    @Test
+    fun `e' un'altra persona, ne nasce uno nuovo collegato e l'omonimo resta fuori`() =
+        runTest {
+            val (vm, porcacchia) = allaDomanda()
+
+            vm.rispondi(null)
+            advanceUntilIdle()
+
+            val presenti =
+                vm.stato.value.serata!!
+                    .presenti
+            assertFalse(porcacchia in presenti)
+            val nuovo = db.padelEliteLinkDao().linksOf("g-1").single()
+            assertEquals(13, nuovo.remotePlayerId)
+            assertTrue(nuovo.localPlayerId in presenti)
+            assertEquals(listOf("Luca", "Porcacchia", "Porcacchia"), nomiInRosa())
+        }
+
+    @Test
+    fun `annullare la domanda lascia cadere la proposta senza scrivere niente`() =
+        runTest {
+            val (vm, _) = allaDomanda()
+
+            vm.annullaLaDomanda()
+            advanceUntilIdle()
+
+            assertNull(vm.stato.value.domanda)
+            assertNull(store.load())
+            assertTrue(db.padelEliteLinkDao().linksOf("g-1").isEmpty())
+            assertEquals(listOf("Luca", "Porcacchia"), nomiInRosa())
         }
 
     @Test
