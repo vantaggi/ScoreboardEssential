@@ -9,6 +9,7 @@ import it.vantaggi.scoreboardessential.core.PresenteDellaDashboard.Ospite
 import it.vantaggi.scoreboardessential.core.Serata
 import it.vantaggi.scoreboardessential.core.Traduzione
 import it.vantaggi.scoreboardessential.database.AppDatabase
+import it.vantaggi.scoreboardessential.database.PadelEliteLink
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.padelelite.FonteSerataDashboard
 import it.vantaggi.scoreboardessential.padelelite.GironeDellaDashboard
@@ -98,7 +99,9 @@ class SerataConLaDashboardTest {
     private fun nuovoViewModel(
         fonte: FonteSerataDashboard?,
         inCorso: Boolean = false,
-    ): SerataViewModel = SerataViewModel(db.playerDao(), store, inCorso, fonte).also { creati += it }
+        conICollegamenti: Boolean = false,
+    ): SerataViewModel =
+        SerataViewModel(db.playerDao(), store, inCorso, fonte, db.padelEliteLinkDao().takeIf { conICollegamenti }).also { creati += it }
 
     private suspend fun rosa(vararg nomi: String): List<Int> =
         nomi.map { db.playerDao().insert(Player(playerName = it, appearances = 0, goals = 0)).toInt() }
@@ -203,6 +206,49 @@ class SerataConLaDashboardTest {
                 vm.stato.value.serata!!
                     .presenti,
             )
+        }
+
+    @Test
+    fun `l'ospite nuovo nasce gia' collegato al gruppo letto, e la volta dopo non si ricrea`() =
+        runTest {
+            val presenti = Traduzione(listOf(Ospite(13, "Porcacchia")))
+            val vm = nuovoViewModel(Finta(SerataDashboard.Pronta(giovedi, presenti, gruppo = "g-1")), conICollegamenti = true)
+            vm.ricarica()
+            advanceUntilIdle()
+
+            vm.usaIPresenti()
+            advanceUntilIdle()
+
+            val porcacchia =
+                vm.stato.value.rosa
+                    .first { it.nome == "Porcacchia" }
+                    .id
+            assertEquals(listOf(PadelEliteLink(porcacchia, "g-1", 13, "Porcacchia")), db.padelEliteLinkDao().linksOf("g-1"))
+
+            // Collegato nel frattempo: lo stesso ospite dalla stessa traduzione vecchia non crea un secondo giocatore.
+            vm.usaIPresenti()
+            advanceUntilIdle()
+            assertEquals(listOf("Porcacchia"), nomiInRosa())
+        }
+
+    @Test
+    fun `l'ospite accoppiato a un omonimo non si collega da solo`() =
+        runTest {
+            val (porcacchia) = rosa("Porcacchia")
+            val presenti = Traduzione(listOf(Ospite(13, "Porcacchia", omonimo = porcacchia)))
+            val vm = nuovoViewModel(Finta(SerataDashboard.Pronta(giovedi, presenti, gruppo = "g-1")), conICollegamenti = true)
+            vm.ricarica()
+            advanceUntilIdle()
+
+            vm.usaIPresenti()
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(porcacchia),
+                vm.stato.value.serata!!
+                    .presenti,
+            )
+            assertTrue("solo cognomi nella dashboard: decide l'utente", db.padelEliteLinkDao().linksOf("g-1").isEmpty())
         }
 
     @Test

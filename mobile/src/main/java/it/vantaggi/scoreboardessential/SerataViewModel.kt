@@ -7,6 +7,7 @@ import it.vantaggi.scoreboardessential.core.PresenteDellaDashboard
 import it.vantaggi.scoreboardessential.core.RotazioneSerata
 import it.vantaggi.scoreboardessential.core.Serata
 import it.vantaggi.scoreboardessential.core.Traduzione
+import it.vantaggi.scoreboardessential.database.PadelEliteLinkDao
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.padelelite.FonteSerataDashboard
@@ -110,6 +111,8 @@ class SerataViewModel(
     partitaInCorso: Boolean,
     /** La serata della dashboard; null con la funzione spenta: nessuna riga e nessuna richiesta. */
     private val dashboard: FonteSerataDashboard? = null,
+    /** I collegamenti R-1: un presente della dashboard che nasce nell'app nasce collegato. Null: nasce senza. */
+    private val collegamenti: PadelEliteLinkDao? = null,
 ) : ViewModel() {
     private val _stato =
         MutableStateFlow(
@@ -202,7 +205,8 @@ class SerataViewModel(
     ) {
         if (_stato.value.inCorso || traduzione.voci.isEmpty()) return
         viewModelScope.launch {
-            val ids = traduzione.voci.map { voce -> idLocale(voce) }.distinct()
+            val gruppo = (_stato.value.dashboard as? SerataDashboard.Pronta)?.gruppo
+            val ids = traduzione.voci.map { voce -> idLocale(voce, gruppo) }.distinct()
             val prima = store.load()
             cambia { it.conIPresenti(ids) }
             _stato.update { it.copy(usata = UsoDellaDashboard(proposta, ids, prima)) }
@@ -212,9 +216,15 @@ class SerataViewModel(
 
     /**
      * Il giocatore locale di una voce: il collegato com'e', l'ospite nel suo omonimo (deciso dalla traduzione, se
-     * e' ancora in rosa) o in un giocatore nuovo col nome della dashboard.
+     * e' ancora in rosa) o in un giocatore nuovo col nome della dashboard. Il giocatore nuovo, con un [gruppo],
+     * nasce gia' collegato (come la scelta dei giocatori della partita): la volta dopo entra come collegato e non
+     * serve ricrearlo. L'omonimo invece non si collega da solo: nella dashboard spesso c'e' solo il cognome, e
+     * se sia la stessa persona lo decide l'utente (nella scelta dei giocatori o nella schermata Padel Elite).
      */
-    private suspend fun idLocale(voce: PresenteDellaDashboard): Int =
+    private suspend fun idLocale(
+        voce: PresenteDellaDashboard,
+        gruppo: String?,
+    ): Int =
         when (voce) {
             is PresenteDellaDashboard.Collegato -> {
                 voce.idLocale
@@ -222,9 +232,22 @@ class SerataViewModel(
 
             is PresenteDellaDashboard.Ospite -> {
                 voce.omonimo?.takeIf { id -> _stato.value.rosa.any { it.id == id } }
-                    ?: playerDao.insert(Player(playerName = voce.nome, appearances = 0, goals = 0)).toInt()
+                    ?: nuovoDallaDashboard(voce, gruppo)
             }
         }
+
+    private suspend fun nuovoDallaDashboard(
+        voce: PresenteDellaDashboard.Ospite,
+        gruppo: String?,
+    ): Int {
+        val dao = collegamenti
+        if (dao == null || gruppo == null) {
+            return playerDao.insert(Player(playerName = voce.nome, appearances = 0, goals = 0)).toInt()
+        }
+        // Collegato nel frattempo (un'altra schermata): e' il suo giocatore, non uno nuovo.
+        dao.linkOfRemote(gruppo, voce.idDashboard)?.let { return it.localPlayerId }
+        return dao.createAndLink(gruppo, voce.idDashboard, voce.nome)
+    }
 
     /**
      * Annulla l'ultima proposta usata: torna la serata di prima. Gli ospiti creati restano fra i giocatori
@@ -342,8 +365,10 @@ class SerataViewModel(
         private val store: SerataStore,
         private val partitaInCorso: Boolean,
         private val dashboard: FonteSerataDashboard? = null,
+        private val collegamenti: PadelEliteLinkDao? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = SerataViewModel(playerDao, store, partitaInCorso, dashboard) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            SerataViewModel(playerDao, store, partitaInCorso, dashboard, collegamenti) as T
     }
 }

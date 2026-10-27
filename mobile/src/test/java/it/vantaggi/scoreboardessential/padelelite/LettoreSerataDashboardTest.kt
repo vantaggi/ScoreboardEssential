@@ -108,6 +108,7 @@ class LettoreSerataDashboardTest {
             val pronta = lettore().leggi() as SerataDashboard.Pronta
 
             assertEquals(giovedi, pronta.giorno)
+            assertEquals("gli ospiti nuovi si collegano a questo gruppo", "g-1", pronta.gruppo)
             assertEquals(
                 listOf(
                     PresenteDellaDashboard.Ospite(12, "Nudi"),

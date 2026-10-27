@@ -66,6 +66,7 @@ class SerataActivity : AppCompatActivity() {
                     SerataPrefsStore(prefs),
                     intent.getBooleanExtra(EXTRA_PARTITA_IN_CORSO, false),
                     fonteDiProva ?: fonteDellaDashboard(database),
+                    database.padelEliteLinkDao(),
                 ),
             )[SerataViewModel::class.java]
 
