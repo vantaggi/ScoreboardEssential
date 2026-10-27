@@ -111,6 +111,16 @@
     <string name="diretta_channel_name">Diretta Padel Elite</string>
     <string name="diretta_channel_description">La notifica fissa che tiene viva la diretta con l\'app in secondo piano</string>
     <string name="diretta_notif_stop">Interrompi diretta</string>
+    <string name="diretta_notif_waiting">Diretta in attesa: %1$s</string>
+    <string name="diretta_notif_why_network">manca la rete</string>
+    <string name="diretta_notif_why_login">accedi di nuovo</string>
+    <string name="diretta_notif_why_players">servono quattro giocatori</string>
+    <string name="diretta_notif_why_name">un nome supera i 60 caratteri</string>
+    <string name="diretta_notif_why_full">troppe dirette nel gruppo</string>
+    <string name="diretta_notif_why_code">nessun codice libero</string>
+    <string name="diretta_notif_why_server">risposta inattesa del server</string>
+    <string name="diretta_notif_why_error">errore imprevisto</string>
+    <string name="diretta_notif_why_replaced">un giocatore è stato sostituito</string>
     <string name="diretta_live_no_service">In diretta su %1$s. Senza notifica fissa: tieni l\'app aperta</string>
     <string name="diretta_live_service_timeout">In diretta su %1$s. La notifica fissa si è fermata dopo 6 ore: tieni l\'app aperta</string>
     <string name="diretta_avviso_title">Diretta su %1$s</string>

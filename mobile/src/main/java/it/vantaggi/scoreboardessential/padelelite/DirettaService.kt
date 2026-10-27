@@ -150,11 +150,11 @@ open class DirettaService : Service() {
 
     private fun titolo(stato: DirettaStato) = getString(R.string.diretta_live, stato.gruppo).trim()
 
-    /** Il punteggio, o il motivo per cui non si trasmette: la stessa frase del foglio PARTITA. */
+    /** Il punteggio, o «Diretta in attesa: <motivo>» quando non si trasmette (debito 14). */
     private fun testo(
         stato: DirettaStato,
         punteggio: String,
-    ) = if (stato.fase == DirettaFase.IN_ATTESA) testoDiAttesa(this, stato) else punteggio
+    ) = if (stato.fase == DirettaFase.IN_ATTESA) testoDiAttesaInNotifica(this, stato) else punteggio
 
     private fun aggiorna(
         stato: DirettaStato,
