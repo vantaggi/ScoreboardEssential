@@ -35,8 +35,8 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.shadows.ShadowDialog
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowDialog
 import java.time.LocalDate
 
 /**
