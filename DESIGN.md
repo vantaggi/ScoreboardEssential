@@ -2639,3 +2639,18 @@ I Giocatori avevano i filtri per ruolo da calcio anche nel padel, la stessa icon
 
 1. Modifica giocatore nel calcio ha ancora la lista di 18 caselle di ruolo; i ruoli come chip in quattro gruppi della proposta sono un passo a parte (6c).
 2. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 7a: il dialogo del colore della squadra
+
+Il dialogo era una ruota con tutti i colori, un'anteprima con un "12" e il nome, e due bottoni di testo di peso uguale (Annulla e Seleziona): per scegliere un rosso si cercava a occhio sulla ruota, e un colore illeggibile sul nero del tabellone era possibile.
+
+- **Gerarchia e layout.** Otto cerchi da 48dp (`control_touch`) in due righe da quattro, come il colore nelle Impostazioni (`ShapeAppearance.App.Swatch`, dipinti con `dipingiDiSquadra`); sotto, "Altro colore…" come bottone di testo, centrato. Il primario e' uno solo: "Usa questo colore" (prima "Seleziona"); Annulla resta testo. Il titolo e' "Colore della squadra 1". La ruota non e' sparita: "Altro colore…" chiude la tavolozza e apre il dialogo di prima (ruota, luminosita', anteprima) con lo stesso "Usa questo colore".
+- **Tavolozza.** `team_palette_1..8` in `colors.xml`: i due predefiniti dei lati (lime e ciano) e sei colori nuovi (rosso, arancio, giallo, blu, viola, rosa). Ogni colore ha almeno 6,57:1 sul nero del tabellone, 5,65:1 su `elite_surface` e 5,20:1 su `elite_surface_raised` (WCAG 1.4.11 chiede 3:1), e l'inchiostro scuro di `TeamInk` sopra regge almeno 6,07:1; il test `i colori della tavolozza si staccano dal nero e dalle superfici` lo controlla. I valori nuovi nominano un ruolo riusabile (colore di squadra), non un colore da una schermata.
+- **Stati.** Selezionato: anello chiaro da 2dp (`focus_ring_width`) e spunta `ic_check` nell'inchiostro di squadra, e `isSelected` per TalkBack: il colore non e' l'unico segno. Colore della ruota fuori dalla tavolozza: nessun cerchio segnato, e "Usa questo colore" lo salva com'e'. Ogni cerchio ha il nome del colore come `contentDescription` ("Arancio"). Movimento: la pressione di sempre (0,97 e 0,85), niente nuovo. 200%: il dialogo scorre.
+- **Pattern vietati.** Tolti due bottoni di testo di peso uguale come unica via di scelta, e l'anteprima con un numero finto. Niente ombre, niente card.
+- **Resto del passo 7.** "Aggiungi giocatore" con la ricerca in cima e lo sport con la spunta sulla voce in uso restano da fare (7b).
+
+### Debiti dichiarati del passo 7a
+
+1. Domanda per Cioti: i sei colori nuovi della tavolozza (rosso, arancio, giallo, blu, viola, rosa) vanno bene o ne vuole altri? Si cambiano in `colors.xml` senza toccare altro.
+2. Non visto a schermo: verificato solo dai test e dalla CI.

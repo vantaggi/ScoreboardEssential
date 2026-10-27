@@ -94,4 +94,20 @@
     -->
     <color name="team_side_1">@color/elite_lime</color>
     <color name="team_side_2">@color/elite_cyan</color>
+
+    <!--
+        team-palette (passo 7 della revisione dei menu): gli otto colori di squadra del dialogo del
+        colore, prima della ruota (che resta dietro "Altro colore"). I primi due sono i predefiniti.
+        Provati come grafica sul nero del tabellone e sulle superfici: almeno 6,57:1 sul nero, 5,65:1 su
+        elite_surface e 5,20:1 su elite_surface_raised (WCAG 1.4.11 chiede 3:1); l'inchiostro scuro di
+        TeamInk sopra regge almeno 6,07:1. Proposta da confermare con Cioti (DESIGN.md, passo 7).
+    -->
+    <color name="team_palette_1">@color/team_side_1</color>
+    <color name="team_palette_2">@color/team_side_2</color>
+    <color name="team_palette_3">#FF5A5F</color>
+    <color name="team_palette_4">#FF9F1C</color>
+    <color name="team_palette_5">#FFD60A</color>
+    <color name="team_palette_6">#4D8DFF</color>
+    <color name="team_palette_7">#B18CFF</color>
+    <color name="team_palette_8">#FF5FA2</color>
 </resources>

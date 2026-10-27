@@ -69,6 +69,7 @@ class ContornoDelTelefonoG4Test {
             "dialog_role_selection",
             "dialog_select_scorer",
             "dialog_color_picker",
+            "dialog_team_palette",
             "dialog_team_name",
             "item_role",
             "item_role_header",

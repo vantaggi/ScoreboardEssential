@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
@@ -23,6 +24,7 @@ import it.vantaggi.scoreboardessential.padelelite.PadelEliteActivity
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.sportLabel
 import it.vantaggi.scoreboardessential.sportRulesLine
+import it.vantaggi.scoreboardessential.ui.TavolozzaDiSquadra
 import it.vantaggi.scoreboardessential.utils.AltoContrasto
 import it.vantaggi.scoreboardessential.utils.LocaleHelper
 import it.vantaggi.scoreboardessential.utils.anteprimaDiSquadra
@@ -321,7 +323,52 @@ class MatchSettingsActivity : AppCompatActivity() {
         salvaCampi()
     }
 
+    /**
+     * Il colore della squadra (passo 7): prima otto colori gia' provati, con la spunta su quello in uso;
+     * "Usa questo colore" e' l'unico primario. La ruota resta dietro "Altro colore".
+     */
     private fun showColorPickerDialog(team: Int) {
+        val vista = layoutInflater.inflate(R.layout.dialog_team_palette, null)
+        val attuale = (if (team == 1) viewModel.team1Color.value else viewModel.team2Color.value) ?: getColor(R.color.team_side_1)
+        // Un colore della ruota fuori dalla tavolozza non ha cerchio segnato: "Usa questo colore" lo conferma com'e'.
+        var scelto = attuale
+        val cerchi = TavolozzaDiSquadra.cerchi.map { vista.findViewById<MaterialButton>(it) }
+        val segnaIlScelto = {
+            cerchi.forEachIndexed { i, cerchio -> TavolozzaDiSquadra.segna(cerchio, getColor(TavolozzaDiSquadra.colori[i]) == scelto) }
+        }
+        cerchi.forEachIndexed { i, cerchio ->
+            val colore = getColor(TavolozzaDiSquadra.colori[i])
+            cerchio.dipingiDiSquadra(colore)
+            cerchio.setOnClickListener {
+                scelto = colore
+                segnaIlScelto()
+            }
+        }
+        segnaIlScelto()
+
+        val dialogo =
+            MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.choose_team_color, team))
+                .setView(vista)
+                .setPositiveButton(getString(R.string.team_color_use)) { _, _ -> salvaColore(team, scelto) }
+                .setNegativeButton(getString(R.string.cancel), null)
+                .create()
+        vista.findViewById<View>(R.id.team_color_other_button).setOnClickListener {
+            dialogo.dismiss()
+            showColorWheelDialog(team)
+        }
+        dialogo.show()
+    }
+
+    private fun salvaColore(
+        team: Int,
+        colore: Int,
+    ) {
+        if (team == 1) viewModel.saveTeam1Color(colore) else viewModel.saveTeam2Color(colore)
+    }
+
+    /** La ruota di tutti i colori, dietro "Altro colore". */
+    private fun showColorWheelDialog(team: Int) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_color_picker, null)
         val colorPickerView = dialogView.findViewById<ColorPickerView>(R.id.colorPickerView)
         val brightnessSlideBar = dialogView.findViewById<BrightnessSlideBar>(R.id.brightnessSlide)
@@ -347,13 +394,8 @@ class MatchSettingsActivity : AppCompatActivity() {
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.choose_team_color, team)) // Format string
             .setView(dialogView)
-            .setPositiveButton(getString(R.string.select)) { _, _ ->
-                if (team == 1) {
-                    viewModel.saveTeam1Color(colorPickerView.color)
-                } else {
-                    viewModel.saveTeam2Color(colorPickerView.color)
-                }
-            }.setNegativeButton(getString(R.string.cancel), null)
+            .setPositiveButton(getString(R.string.team_color_use)) { _, _ -> salvaColore(team, colorPickerView.color) }
+            .setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
 }
