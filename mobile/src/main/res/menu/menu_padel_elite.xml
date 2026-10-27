@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Aggiorna, nella barra della schermata Padel Elite: rilegge gruppi e giocatori. Icona con la parola per TalkBack. -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@drawable/ic_refresh"
+        android:title="@string/padel_elite_refresh"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
+
+</menu>

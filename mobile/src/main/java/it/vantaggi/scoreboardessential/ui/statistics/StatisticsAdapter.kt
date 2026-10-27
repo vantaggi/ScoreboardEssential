@@ -26,13 +26,14 @@ class StatisticsAdapter : ListAdapter<PlayerStatsDTO, StatisticsAdapter.ViewHold
         holder: ViewHolder,
         position: Int,
     ) {
-        holder.bind(getItem(position), position)
+        holder.bind(getItem(position), position, leader = position == 0 && Classifica.haUnPrimo(currentList.map { it.goals }))
     }
 
     /**
      * Una riga e' il nome e i gol. Il primo in classifica ha i gol in lime (accento: l'enfasi che
-     * significa qualcosa, e il secondo segno e' la posizione in cima alla lista). Rango e presenze non
-     * sono a vista ma TalkBack le sente nella descrizione della riga.
+     * significa qualcosa, e il secondo segno e' la posizione in cima alla lista), ma solo se e' davvero
+     * primo ([Classifica.haUnPrimo]). Rango e presenze non sono a vista ma TalkBack le sente nella
+     * descrizione della riga.
      */
     class ViewHolder(
         itemView: View,
@@ -43,6 +44,7 @@ class StatisticsAdapter : ListAdapter<PlayerStatsDTO, StatisticsAdapter.ViewHold
         fun bind(
             item: PlayerStatsDTO,
             position: Int,
+            leader: Boolean = position == 0,
         ) {
             val rank = position + 1
             val resources = itemView.resources
@@ -50,7 +52,7 @@ class StatisticsAdapter : ListAdapter<PlayerStatsDTO, StatisticsAdapter.ViewHold
             nameTextView.text = item.playerName
             val gol = resources.getQuantityString(R.plurals.stats_goals, item.goals, item.goals)
             goalsTextView.text = gol
-            goalsTextView.setTextColor(context.getColor(if (rank == 1) R.color.elite_lime else R.color.elite_text_primary))
+            goalsTextView.setTextColor(context.getColor(if (leader) R.color.elite_lime else R.color.elite_text_primary))
             val presenze = resources.getQuantityString(R.plurals.stats_appearances, item.appearances, item.appearances)
             itemView.contentDescription = resources.getString(R.string.stats_row_description, rank, item.playerName, gol, presenze)
         }

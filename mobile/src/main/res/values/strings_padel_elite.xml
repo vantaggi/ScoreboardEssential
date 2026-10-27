@@ -10,9 +10,7 @@
     <string name="padel_elite_signing_in">Signing in</string>
     <string name="padel_elite_sign_in_google">Sign in with Google</string>
     <string name="padel_elite_or_email">Or with email and password</string>
-    <string name="padel_elite_sign_out">Sign out</string>
-    <string name="padel_elite_settings_sign_in">Padel Elite: sign in</string>
-    <string name="padel_elite_settings_group">Group</string>
+    <string name="padel_elite_sign_out">Sign out of Padel Elite</string>
     <string name="padel_elite_settings_signed_out">Not signed in</string>
     <string name="padel_elite_settings_signed_in">%1$s · %2$s</string>
     <string name="padel_elite_settings_no_group">no group chosen</string>
@@ -77,6 +75,12 @@
     <string name="padel_elite_rosa_dialog_title">Link %1$s to an app player</string>
     <string name="padel_elite_rosa_create_local">Create %1$s in the app</string>
     <string name="padel_elite_rosa_unlink">Unlink from %1$s</string>
+    <string name="padel_elite_refresh">Refresh</string>
+    <string name="padel_elite_rosa_linked_header">Linked · %1$d</string>
+    <string name="padel_elite_rosa_to_link_header">To link · %1$d</string>
+    <string name="padel_elite_rosa_search">Search for a player</string>
+    <string name="padel_elite_rosa_search_hint">Type a name to find it among the players to link.</string>
+    <string name="padel_elite_rosa_no_match">No player to link with this name.</string>
 
     <!-- Live broadcast (D-2): the match sheet group, for owners and admins of the group only. -->
     <string name="diretta_title">Live</string>

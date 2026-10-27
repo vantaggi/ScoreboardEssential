@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     La Cronaca (G-5). Il compito: capire com'e' andata la partita. Il valore: il tabellone dei set, in
-    cima. Sei gruppi tonali nell'ordine della dashboard, ciascuno col suo stato vuoto; righe e linee
-    rientrate dentro i gruppi, nessuna card e nessuna ombra. I colori sono solo ruoli elite_*; lo sfondo
+    cima. Fino a sei gruppi tonali nell'ordine della dashboard, solo quelli che hanno dati (passo 5 della
+    revisione dei menu); righe e linee rientrate dentro i gruppi, nessuna card e nessuna ombra. I colori sono solo ruoli elite_*; lo sfondo
     e' quello del tema (background-canvas), senza dipingerlo una seconda volta.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -74,6 +74,30 @@
                     android:id="@+id/section_moments"
                     layout="@layout/chronicle_section" />
             </LinearLayout>
+
+            <!--
+                Cio' che questa partita non ha registrato (servizio, tempi): una riga sotto le sezioni,
+                al posto di due gruppi che spiegavano un'assenza. Il perche' e cosa fare sotto, piu' piccolo.
+            -->
+            <TextView
+                android:id="@+id/chronicle_not_recorded"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/space_16"
+                android:layout_marginTop="@dimen/space_24"
+                android:textAppearance="@style/TextAppearance.App.RowTitle"
+                android:textColor="@color/elite_text_secondary"
+                android:visibility="gone"
+                tools:text="Non registrati in questa partita: servizio e tempi" />
+
+            <TextView
+                android:id="@+id/chronicle_not_recorded_reason"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/space_16"
+                android:layout_marginTop="@dimen/space_4"
+                android:textAppearance="@style/TextAppearance.App.Caption"
+                android:visibility="gone" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </LinearLayout>

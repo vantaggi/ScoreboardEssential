@@ -36,7 +36,7 @@ import org.robolectric.annotation.Config
 
 /**
  * La Cronaca aperta su partite vere, lette dal database: ogni sezione dice cio' che la partita
- * sa, e quando non lo sa lo dice.
+ * sa; quando non lo sa la sezione sparisce e una riga in fondo dice che cosa manca (passo 5).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "it")
@@ -150,32 +150,39 @@ class ChronicleActivityTest {
         id: Int,
     ): List<String> = testi(activity.findViewById<View>(id).findViewById(R.id.section_body))
 
+    private fun visibile(
+        activity: ChronicleActivity,
+        id: Int,
+    ): Boolean = activity.findViewById<View>(id).visibility == View.VISIBLE
+
+    private fun nonRegistrati(activity: ChronicleActivity): List<String> =
+        listOf(R.id.chronicle_not_recorded, R.id.chronicle_not_recorded_reason)
+            .map { activity.findViewById<TextView>(it) }
+            .filter { it.visibility == View.VISIBLE }
+            .map { it.text.toString() }
+
     /**
      * La richiesta del brief: senza ordine di servizio e senza tempi la Cronaca lo dice, invece
-     * di mostrare una tabella vuota o una durata di zero minuti.
+     * di mostrare una tabella vuota o una durata di zero minuti. Dal passo 5 lo dice una riga in
+     * fondo, e le due sezioni non ci sono.
      */
     @Test
-    fun `senza ordine di servizio e senza tempi le due sezioni lo dicono`() {
+    fun `senza ordine di servizio e senza tempi le due sezioni spariscono e lo dice una riga in fondo`() {
         // 6-0: ventiquattro punti di fila per Rossi.
         val id = salva((1..6).flatMap { game(1) }, serveOrder = "", stepMs = null)
 
         val cronaca = apri(id)
 
-        // Lo stato vuoto dice che cosa manca (la frase e' quella della dashboard) e poi perche' e
-        // cosa fare: nell'app l'ordine di servizio nasce dalle rose e non si imposta a mano.
+        assertFalse(visibile(cronaca, R.id.section_serve))
+        assertFalse(visibile(cronaca, R.id.section_times))
+        // Che cosa manca, poi perche' e cosa fare: nell'app l'ordine di servizio nasce dalle rose e non si imposta a mano.
         assertEquals(
             listOf(
-                "Il tabellone non sapeva chi serviva",
-                "Con due giocatori per squadra nelle rose prima del primo punto, qui vedrai punti e game vinti al servizio da ciascuno.",
+                "Non registrati in questa partita: servizio e tempi",
+                "Con due giocatori per squadra nelle rose prima del primo punto, qui vedrai punti e game vinti al servizio da ciascuno. " +
+                    "I punti di questa partita non hanno l'ora. Le partite nuove la registrano.",
             ),
-            sezione(cronaca, R.id.section_serve),
-        )
-        assertEquals(
-            listOf(
-                "Il tabellone non ha registrato i tempi di questa partita",
-                "I punti di questa partita non hanno l'ora. Le partite nuove la registrano.",
-            ),
-            sezione(cronaca, R.id.section_times),
+            nonRegistrati(cronaca),
         )
         // Il resto si calcola lo stesso: il tabellone e la striscia non dipendono da chi serviva.
         assertTrue(sezione(cronaca, R.id.section_scoreboard).contains("Punti vinti 24 – 0 · Game 6 – 0"))
@@ -202,14 +209,14 @@ class ChronicleActivityTest {
         val cronaca = apri(id)
 
         val servizio = sezione(cronaca, R.id.section_serve)
-        assertFalse(servizio.any { it.startsWith("Il tabellone non sapeva") })
         assertTrue(servizio.containsAll(listOf("Al servizio", "Anna", "Bruno", "Carla", "Dario")))
         // Anna e Bruno prima: la tabella e' per coppia, poi nell'ordine di servizio.
         assertEquals(listOf("Anna", "Bruno", "Carla", "Dario"), servizio.filter { it in setOf("Anna", "Bruno", "Carla", "Dario") })
 
         val tempi = sezione(cronaca, R.id.section_times)
-        assertFalse(tempi.any { it.startsWith("Il tabellone non ha registrato") })
         assertTrue(tempi.contains("Durata"))
+        assertTrue(visibile(cronaca, R.id.section_serve) && visibile(cronaca, R.id.section_times))
+        assertEquals(emptyList<String>(), nonRegistrati(cronaca))
 
         assertTrue(sezione(cronaca, R.id.section_moments).contains("Tie-break del 1° set a Rossi, 7-5"))
         assertTrue(sezione(cronaca, R.id.section_games).contains("TB 7-5"))
@@ -248,17 +255,26 @@ class ChronicleActivityTest {
         assertEquals(listOf("0-1 B", "1-1 B", "2-1"), sezione(cronaca, R.id.section_games).filter { Regex("""\d-\d.*""").matches(it) })
     }
 
-    /** Senza punti il singolare non suggerisce le rose: non c'entrano. */
+    /** Senza punti resta il tabellone, che dice che cosa manca e perche'; il resto non c'e', nemmeno la riga in fondo. */
     @Test
-    fun `nel singolare senza punti la frase non parla di rose`() {
+    fun `senza punti resta solo il tabellone che lo dice`() {
         val id = salva(emptyList(), serveOrder = "", stepMs = null, sportId = SportRegistry.TENNIS)
 
         val cronaca = apri(id)
 
-        val servizio = sezione(cronaca, R.id.section_serve)
-        assertEquals(2, servizio.size)
-        assertFalse(servizio.any { it.contains("rose") })
-        assertTrue(servizio.first().startsWith("Servizio e palle break si ricavano dai punti"))
+        assertEquals(2, sezione(cronaca, R.id.section_scoreboard).size)
+        assertEquals("Nessun punto registrato", sezione(cronaca, R.id.section_scoreboard).first())
+        for (id2 in listOf(R.id.section_momentum, R.id.section_games, R.id.section_serve, R.id.section_times, R.id.section_moments)) {
+            assertFalse("la sezione $id2 c'e' senza dati", visibile(cronaca, id2))
+        }
+        assertEquals(emptyList<String>(), nonRegistrati(cronaca))
+    }
+
+    /** L'andamento da tre punti in su: con due il tabellone dice gia' tutto. */
+    @Test
+    fun `l'andamento compare da tre punti`() {
+        assertFalse(visibile(apri(salva(listOf(1, 2), serveOrder = "", stepMs = null)), R.id.section_momentum))
+        assertTrue(visibile(apri(salva(listOf(1, 2, 1), serveOrder = "", stepMs = null)), R.id.section_momentum))
     }
 
     @Test
@@ -329,7 +345,8 @@ class ChronicleActivityTest {
 
     @Test
     fun `le sei sezioni sono gruppi tonali nell'ordine della dashboard, senza ombra`() {
-        val cronaca = apri(salva((1..6).flatMap { game(1) }, serveOrder = "", stepMs = null))
+        // Una partita con tutto: servizio, tempi, tie-break. Senza un dato la sua sezione non c'e'.
+        val cronaca = apri(tieBreakDiRossi())
         val sezioni = cronaca.findViewById<ViewGroup>(R.id.chronicle_sections)
 
         val titoli =
@@ -371,21 +388,20 @@ class ChronicleActivityTest {
     }
 
     @Test
-    fun `ogni stato vuoto dice che cosa manca e perche', senza punti esclamativi`() {
+    fun `cio' che manca dice che cosa e perche', senza punti esclamativi`() {
         val cronaca = apri(salva((1..6).flatMap { game(1) }, serveOrder = "", stepMs = null))
 
-        for (id in listOf(R.id.section_serve, R.id.section_times)) {
-            val vuoto = sezione(cronaca, id)
-            assertEquals("titolo e motivo: $vuoto", 2, vuoto.size)
-            assertFalse(vuoto.any { it.contains("!") })
-            assertFalse("il titolo non e' una frase chiusa dal punto: ${vuoto[0]}", vuoto[0].endsWith("."))
-        }
-        // Senza nessun punto, tabellone, andamento e game dicono che cosa manca e perche'.
+        val manca = nonRegistrati(cronaca)
+        assertEquals("titolo e motivo: $manca", 2, manca.size)
+        assertFalse(manca.any { it.contains("!") })
+        assertFalse("il titolo non e' una frase chiusa dal punto: ${manca[0]}", manca[0].endsWith("."))
+        // Con il solo servizio che manca la riga e' al singolare.
+        val senzaServizio = apri(salva((1..6).flatMap { game(1) }, serveOrder = "", stepMs = 20_000L))
+        assertEquals("Non registrato in questa partita: servizio", nonRegistrati(senzaServizio).first())
+        // Senza nessun punto il tabellone dice che cosa manca e perche'.
         val senzaPunti = apri(salva(emptyList(), serveOrder = "", stepMs = null))
-        for (id in listOf(R.id.section_scoreboard, R.id.section_momentum, R.id.section_games)) {
-            assertEquals("sezione $id: ${sezione(senzaPunti, id)}", 2, sezione(senzaPunti, id).size)
-        }
-        assertEquals("Nessun punto registrato", sezione(senzaPunti, R.id.section_scoreboard).first())
+        assertEquals(2, sezione(senzaPunti, R.id.section_scoreboard).size)
+        assertFalse(sezione(senzaPunti, R.id.section_scoreboard).any { it.contains("!") })
     }
 
     /** I lati col colore con cui si e' giocato: lime e ciano (chart-1 e chart-2) restano tali; gli altri si schiariscono a 3:1. */

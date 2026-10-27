@@ -10,9 +10,7 @@
     <string name="padel_elite_signing_in">Accesso in corso</string>
     <string name="padel_elite_sign_in_google">Accedi con Google</string>
     <string name="padel_elite_or_email">Oppure con email e password</string>
-    <string name="padel_elite_sign_out">Esci</string>
-    <string name="padel_elite_settings_sign_in">Padel Elite: accedi</string>
-    <string name="padel_elite_settings_group">Gruppo</string>
+    <string name="padel_elite_sign_out">Esci da Padel Elite</string>
     <string name="padel_elite_settings_signed_out">Non collegato</string>
     <string name="padel_elite_settings_signed_in">%1$s · %2$s</string>
     <string name="padel_elite_settings_no_group">nessun gruppo scelto</string>
@@ -77,6 +75,12 @@
     <string name="padel_elite_rosa_dialog_title">Collega %1$s a un giocatore dell\'app</string>
     <string name="padel_elite_rosa_create_local">Crea %1$s nell\'app</string>
     <string name="padel_elite_rosa_unlink">Scollega da %1$s</string>
+    <string name="padel_elite_refresh">Aggiorna</string>
+    <string name="padel_elite_rosa_linked_header">Collegati · %1$d</string>
+    <string name="padel_elite_rosa_to_link_header">Da collegare · %1$d</string>
+    <string name="padel_elite_rosa_search">Cerca un giocatore</string>
+    <string name="padel_elite_rosa_search_hint">Scrivi un nome per trovarlo fra quelli da collegare.</string>
+    <string name="padel_elite_rosa_no_match">Nessun giocatore da collegare con questo nome.</string>
 
     <!-- Diretta (D-2): il gruppo del foglio PARTITA, riservato a owner e admin del gruppo. -->
     <string name="diretta_title">Diretta</string>

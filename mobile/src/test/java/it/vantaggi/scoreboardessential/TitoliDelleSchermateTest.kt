@@ -42,7 +42,7 @@ class TitoliDelleSchermateTest {
     fun `in italiano i titoli delle schermate secondarie sono italiani`() {
         assertEquals("Storico partite", titolo(MatchHistoryActivity::class.java))
         assertEquals("Giocatore", titolo(AddEditPlayerActivity::class.java))
-        assertEquals("Impostazioni partita", titolo(MatchSettingsActivity::class.java))
+        assertEquals("Impostazioni", titolo(MatchSettingsActivity::class.java))
         assertEquals("Giocatori", titolo(PlayersManagementActivity::class.java))
         assertEquals("Statistiche", titolo(StatisticsActivity::class.java))
     }
@@ -52,7 +52,7 @@ class TitoliDelleSchermateTest {
     fun `in inglese i titoli delle schermate secondarie sono inglesi`() {
         assertEquals("Match history", titolo(MatchHistoryActivity::class.java))
         assertEquals("Player", titolo(AddEditPlayerActivity::class.java))
-        assertEquals("Match settings", titolo(MatchSettingsActivity::class.java))
+        assertEquals("Settings", titolo(MatchSettingsActivity::class.java))
         assertEquals("Players", titolo(PlayersManagementActivity::class.java))
         assertEquals("Statistics", titolo(StatisticsActivity::class.java))
     }

@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout
@@ -16,6 +18,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.isNotEmpty
 import androidx.core.view.isVisible
 import androidx.core.widget.TextViewCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -93,12 +96,13 @@ class PadelEliteActivity : AppCompatActivity() {
             viewModel.signOut()
         }
         findViewById<View>(R.id.groups_retry_button).setOnClickListener { viewModel.loadGroups() }
-        findViewById<View>(R.id.rosa_refresh_button).setOnClickListener { rosaViewModel.load() }
         findViewById<View>(R.id.rosa_same_names_button).setOnClickListener { rosaViewModel.linkSameNames() }
         // Vuota e in errore rileggono la rosa; "non sei piu' membro" rilegge i gruppi (quello scelto cade e se ne sceglie un altro).
         findViewById<EmptyStateView>(R.id.rosa_empty_state).actionButton.setOnClickListener {
             if (rosaViewModel.state.value == RosaUi.NotAuthorized) viewModel.loadGroups() else rosaViewModel.load()
         }
+        // La ricerca filtra la rosa gia' letta: nessuna richiesta, si ridisegna e basta.
+        findViewById<TextInputEditText>(R.id.rosa_search_edit).doAfterTextChanged { mostraRosa(rosaViewModel.state.value) }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -127,6 +131,9 @@ class PadelEliteActivity : AppCompatActivity() {
                         findViewById<View>(R.id.login_panel).isVisible = email == null
                         findViewById<View>(R.id.account_panel).isVisible = email != null
                         findViewById<TextView>(R.id.account_email).text = email?.let { getString(R.string.padel_elite_signed_in_as, it) }
+                        // Aggiorna c'e' solo con l'accesso: senza, non c'e' niente da rileggere.
+                        conAccesso = email != null
+                        invalidateOptionsMenu()
                     }
                 }
                 launch {
@@ -140,6 +147,26 @@ class PadelEliteActivity : AppCompatActivity() {
                 launch { rosaViewModel.state.collect { mostraRosa(it) } }
             }
         }
+    }
+
+    private var conAccesso = false
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_padel_elite, menu)
+        return true
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        menu.findItem(R.id.action_refresh)?.isVisible = conAccesso
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+    /** Aggiorna, nella barra: rilegge i gruppi e la rosa del gruppo scelto. */
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId != R.id.action_refresh) return super.onOptionsItemSelected(item)
+        viewModel.loadGroups()
+        rosaViewModel.load()
+        return true
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -204,16 +231,22 @@ class PadelEliteActivity : AppCompatActivity() {
 
     /**
      * "Giocatori del gruppo". Stati: scegli un gruppo, in caricamento (una riga di testo), vuota e
-     * errore di rete (EmptyStateView col suo comando), pronta (un gruppo tonale con una riga per
-     * giocatore). La sessione scaduta riporta al modulo di accesso.
+     * errore di rete (EmptyStateView col suo comando), pronta. Pronta ha due parti ([RosaInVista]):
+     * i collegati, sempre in vista, e quelli da collegare dietro la ricerca, con i nomi uguali da
+     * confermare gia' in vista. La sessione scaduta riporta al modulo di accesso.
      */
     private fun mostraRosa(stato: RosaUi) {
         val messaggio = findViewById<TextView>(R.id.rosa_message)
         val vuoto = findViewById<EmptyStateView>(R.id.rosa_empty_state)
-        val gruppo = findViewById<View>(R.id.rosa_group)
-        val elenco = findViewById<LinearLayout>(R.id.rosa_list)
+        val titoloCollegati = findViewById<TextView>(R.id.rosa_linked_title)
+        val gruppoCollegati = findViewById<View>(R.id.rosa_group)
+        val collegati = findViewById<LinearLayout>(R.id.rosa_list)
+        val sezioneDaCollegare = findViewById<View>(R.id.rosa_to_link_section)
+        val titoloDaCollegare = findViewById<TextView>(R.id.rosa_to_link_title)
+        val suggerimento = findViewById<TextView>(R.id.rosa_search_message)
+        val gruppoDaCollegare = findViewById<View>(R.id.rosa_to_link_group)
+        val daCollegare = findViewById<LinearLayout>(R.id.rosa_to_link_list)
         val stessiNomi = findViewById<MaterialButton>(R.id.rosa_same_names_button)
-        val aggiorna = findViewById<View>(R.id.rosa_refresh_button)
 
         messaggio.isVisible = stato == RosaUi.NoGroup || stato == RosaUi.Loading
         messaggio.setText(if (stato == RosaUi.NoGroup) R.string.padel_elite_rosa_no_group else R.string.padel_elite_rosa_loading)
@@ -242,42 +275,63 @@ class PadelEliteActivity : AppCompatActivity() {
                 Unit
             }
         }
-        gruppo.isVisible = stato is RosaUi.Ready
-        aggiorna.isVisible = stato is RosaUi.Ready
-        elenco.removeAllViews()
-        stessiNomi.isVisible = stato is RosaUi.Ready && stato.proposals > 0
-        if (stato !is RosaUi.Ready) return
+        collegati.removeAllViews()
+        daCollegare.removeAllViews()
+        val pronta = stato as? RosaUi.Ready
+        val cerca = findViewById<TextInputEditText>(R.id.rosa_search_edit).text?.toString().orEmpty()
+        val vista = pronta?.let { RosaInVista.di(it.rows, cerca) }
 
-        stessiNomi.text = getString(R.string.padel_elite_rosa_same_names, stato.proposals)
-        stato.rows.forEach { riga ->
-            if (elenco.isNotEmpty()) elenco.addView(divisoreDellaRosa())
-            val vista = layoutInflater.inflate(R.layout.item_padel_elite_player, elenco, false)
-            vista.findViewById<TextView>(R.id.rosa_remote_name).text = riga.remote.name
-            val stati = vista.findViewById<TextView>(R.id.rosa_link_state)
-            when {
-                riga.linkedLocalName != null -> {
-                    stati.text = getString(R.string.padel_elite_rosa_linked, riga.linkedLocalName)
-                    // Collegato: la parola e la spunta (16dp, tinta del testo), mai il solo colore.
-                    val spunta = AppCompatResources.getDrawable(this, R.drawable.ic_check)?.mutate()
-                    val lato = resources.getDimensionPixelSize(R.dimen.icon_compact)
-                    spunta?.setBounds(0, 0, lato, lato)
-                    stati.setCompoundDrawablesRelative(spunta, null, null, null)
-                    TextViewCompat.setCompoundDrawableTintList(stati, stati.textColors)
-                }
+        titoloCollegati.isVisible = vista != null && vista.collegati.isNotEmpty()
+        gruppoCollegati.isVisible = titoloCollegati.isVisible
+        sezioneDaCollegare.isVisible = vista != null && vista.totaleDaCollegare > 0
+        stessiNomi.isVisible = pronta != null && pronta.proposals > 0
+        if (pronta == null || vista == null) return
 
-                riga.proposedLocalName != null -> {
-                    stati.text = getString(R.string.padel_elite_rosa_proposed, riga.proposedLocalName)
-                    stati.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
-                }
+        titoloCollegati.text = getString(R.string.padel_elite_rosa_linked_header, vista.collegati.size)
+        titoloDaCollegare.text = getString(R.string.padel_elite_rosa_to_link_header, vista.totaleDaCollegare)
+        stessiNomi.text = getString(R.string.padel_elite_rosa_same_names, pronta.proposals)
+        vista.collegati.forEach { aggiungiRiga(collegati, it, pronta.freeLocals) }
+        vista.daCollegare.forEach { aggiungiRiga(daCollegare, it, pronta.freeLocals) }
+        gruppoDaCollegare.isVisible = vista.daCollegare.isNotEmpty()
+        // Il suggerimento a campo vuoto, "nessuno" se la ricerca non trova niente; con righe trovate tace.
+        val trovati = vista.daCollegare.any { it.proposedLocalName == null }
+        suggerimento.isVisible = cerca.isBlank() || !trovati
+        suggerimento.setText(if (cerca.isBlank()) R.string.padel_elite_rosa_search_hint else R.string.padel_elite_rosa_no_match)
+    }
 
-                else -> {
-                    stati.setText(R.string.padel_elite_rosa_not_linked)
-                    stati.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
-                }
+    /** Una riga della rosa: il nome della dashboard e, sotto, lo stato del collegamento a parole. */
+    private fun aggiungiRiga(
+        elenco: LinearLayout,
+        riga: RosaRow,
+        locali: List<LocalChoice>,
+    ) {
+        if (elenco.isNotEmpty()) elenco.addView(divisoreDellaRosa())
+        val vista = layoutInflater.inflate(R.layout.item_padel_elite_player, elenco, false)
+        vista.findViewById<TextView>(R.id.rosa_remote_name).text = riga.remote.name
+        val stati = vista.findViewById<TextView>(R.id.rosa_link_state)
+        when {
+            riga.linkedLocalName != null -> {
+                stati.text = getString(R.string.padel_elite_rosa_linked, riga.linkedLocalName)
+                // Collegato: la parola e la spunta (16dp, tinta del testo), mai il solo colore.
+                val spunta = AppCompatResources.getDrawable(this, R.drawable.ic_check)?.mutate()
+                val lato = resources.getDimensionPixelSize(R.dimen.icon_compact)
+                spunta?.setBounds(0, 0, lato, lato)
+                stati.setCompoundDrawablesRelative(spunta, null, null, null)
+                TextViewCompat.setCompoundDrawableTintList(stati, stati.textColors)
             }
-            vista.setOnClickListener { scegliGiocatore(riga, stato.freeLocals) }
-            elenco.addView(vista)
+
+            riga.proposedLocalName != null -> {
+                stati.text = getString(R.string.padel_elite_rosa_proposed, riga.proposedLocalName)
+                stati.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
+            }
+
+            else -> {
+                stati.setText(R.string.padel_elite_rosa_not_linked)
+                stati.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
+            }
         }
+        vista.setOnClickListener { scegliGiocatore(riga, locali) }
+        elenco.addView(vista)
     }
 
     /** Il giocatore dell'app per un giocatore della dashboard: crearlo, scollegarlo, oppure sceglierne uno non ancora collegato. */

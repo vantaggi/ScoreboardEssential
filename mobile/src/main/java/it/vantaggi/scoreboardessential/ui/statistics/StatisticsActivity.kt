@@ -11,7 +11,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.tabs.TabLayout
 import it.vantaggi.scoreboardessential.R
+import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.databinding.ActivityStatisticsBinding
+import it.vantaggi.scoreboardessential.sportLabel
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
 import kotlinx.coroutines.launch
 
@@ -43,7 +45,11 @@ class StatisticsActivity : AppCompatActivity() {
         }
 
         setupUI()
-        observeViewModel()
+        // Lo sport in uso decide la classifica: gol nel calcio, partite vinte nel padel e nel tennis.
+        lifecycleScope.launch {
+            val sportId = (application as ScoreboardEssentialApplication).matchSettingsRepository.getActiveSport()
+            if (StatisticsViewModel.contaIGol(sportId)) observeGoals() else observeWins(sportId)
+        }
     }
 
     private fun setupUI() {
@@ -77,18 +83,30 @@ class StatisticsActivity : AppCompatActivity() {
         )
     }
 
-    private fun observeViewModel() {
-        lifecycleScope.launch {
-            viewModel.topScorers.collect { stats ->
-                if (stats.isEmpty()) {
-                    binding.statsGroup.visibility = View.GONE
-                    binding.emptyState.visibility = View.VISIBLE
-                } else {
-                    binding.statsGroup.visibility = View.VISIBLE
-                    binding.emptyState.visibility = View.GONE
-                    adapter.submitList(stats)
-                }
-            }
+    private suspend fun observeGoals() {
+        viewModel.topScorers.collect { stats ->
+            // Una classifica di soli zeri non e' una classifica: lo stato vuoto e basta.
+            val vuota = Classifica.eVuota(stats.map { it.goals })
+            binding.statsGroup.visibility = if (vuota) View.GONE else View.VISIBLE
+            binding.emptyState.visibility = if (vuota) View.VISIBLE else View.GONE
+            if (!vuota) adapter.submitList(stats)
+        }
+    }
+
+    /** Padel e tennis: niente schede, la riga del titolo e le partite vinte su quelle giocate. */
+    private suspend fun observeWins(sportId: String) {
+        binding.tabLayout.visibility = View.GONE
+        binding.statsHeading.visibility = View.VISIBLE
+        binding.statsHeading.text = getString(R.string.stats_wins_heading, sportLabel(this, sportId))
+        binding.emptyState.setMessage(getString(R.string.stats_empty_title), getString(R.string.stats_wins_empty_hint))
+        val vittorie = RecordAdapter()
+        binding.recyclerStats.adapter = vittorie
+        viewModel.setSport(sportId)
+        viewModel.records.collect { righe ->
+            val vuota = Classifica.eVuota(righe.map { it.won })
+            binding.statsGroup.visibility = if (vuota) View.GONE else View.VISIBLE
+            binding.emptyState.visibility = if (vuota) View.VISIBLE else View.GONE
+            if (!vuota) vittorie.submitList(righe)
         }
     }
 }

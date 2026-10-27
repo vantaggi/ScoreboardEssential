@@ -1436,7 +1436,7 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Copia | `content_copy` | - | - |
 | Salva | `save` | - | - |
 | Annulla (undo) | `undo` | `ic_undo` | - |
-| Aggiorna | `refresh` | - | - |
+| Aggiorna | `refresh` | `ic_refresh` | - |
 | Mostra | `visibility` | - | - |
 | Nascondi | `visibility_off` | - | - |
 | Avvia, riprendi | `play_arrow` | `ic_play_arrow` | - |
@@ -1470,7 +1470,6 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Stesse coppie | `repeat` | `ic_repeat` | - |
 | Scambia i lati | `sync_alt` | `ic_sync_alt` | - |
 | Blocco, accedi di nuovo | `lock` | `ic_lock` | - |
-| Colore della squadra | `palette` | `ic_palette` | - |
 | Orologio collegato | `watch` | `ic_watch` | - |
 | Orologio scollegato | `watch_off` | `ic_watch_off` | - |
 | Invio a Padel Elite | `send` | `ic_send` | - |
@@ -2550,3 +2549,62 @@ Il foglio finiva con sei bottoni secondari uguali in griglia (pattern vietato), 
 2. Serata e Diretta restano gruppi col titolo: la proposta le vuole righe, da fare insieme al punto 1.
 3. Le Impostazioni (Squadre, Regole, Padel Elite, App) sono il passo 3b.
 4. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 3b: le Impostazioni, quattro gruppi nell'ordine in cui si usano
+
+La schermata si chiamava "Impostazioni partita" ma teneva anche la lingua, in mezzo alle regole, e l'alto contrasto in un gruppo a parte "Accessibilita'"; Padel Elite stava in fondo. Il colore della squadra era un quadrato con l'icona della tavolozza, dipinto del colore: un'icona che non diceva il colore.
+
+- **Gerarchia e layout.** Titolo "Impostazioni" (come la riga del foglio Partita). Quattro gruppi tonali: **Squadre** (nome e colore per squadra), **Regole** (sport con le regole che il motore applica, poi il timer del portiere dove c'e'), **Padel Elite** (solo se la build conosce il Supabase), **App** (lingua, poi alto contrasto con il perche' e l'interruttore). Prima cio' che prepara la partita, in fondo cio' che vale per tutta l'app. La linea sopra il timer del portiere sta dentro il suo blocco: sparito il timer, non resta una linea in fondo al gruppo.
+- **Componenti riusati.** Gruppi, righe, divisori, campi e interruttore quelli di prima. Il colore resta il `Widget.App.Button.Secondary` dipinto con `dipingiDiSquadra`, con la forma nuova `ShapeAppearance.App.Swatch` (cerchio, `cornerSize` 50%): il bordo `elite_outline` del secondario resta, cosi' anche un blu notte si stacca dal gruppo. `ic_palette` non si usa piu' ed e' tolta, con la sua riga di G-3.
+- **Stati.** Campi e interruttore come prima (normale, fuoco, premuto, spento dove serve). Il cerchio: premuto con la pressione condivisa, fuoco con l'anello del bottone, TalkBack legge "Colore squadra 1/2". Movimento: nessuno nuovo. 200% e 360dp: i gruppi sono colonne, crescono in altezza; il cerchio resta di 48dp accanto al campo del nome.
+- **Pattern vietati.** Niente card nuove, niente ombre, nessun primario nuovo; un'icona decorativa in meno.
+
+### Debiti dichiarati del passo 3b
+
+1. Il gruppo Padel Elite e' quello di prima (stato, Entra, Gruppo, Esci): la proposta lo vuole una riga che porta alla sua schermata, con Esci spostato li'. Lo fa il passo 4.
+2. Le scelte (sport, regola del 40-40, lingua) sono ancora campi con la tendina: la proposta le vuole righe nome e valore con il menu che si apre dalla riga. Cambia il componente e i test che toccano i campi (LinguaUnicaTest e i test dello sport): passo a se', dopo il 4.
+3. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 4: Padel Elite, prima i collegati e gli altri dietro una ricerca
+
+La rosa del gruppo erano cinquanta righe in ordine alfabetico, quasi tutte "Non collegato": i tre giocatori collegati, quelli che contano, sparivano in mezzo. Aggiorna ed Esci stavano sotto la lista, raggiungibili solo scorrendo fino in fondo. Nelle Impostazioni il gruppo Padel Elite aveva tre bottoni (Accedi, Gruppo, Esci) che portavano tutti, tranne Esci, alla stessa schermata.
+
+- **Gerarchia e layout.** La schermata, con accesso: **Gruppo per l'invio** (le righe a scelta singola di prima), poi **Giocatori del gruppo** in due parti: **Collegati · n**, sempre in vista, in ordine di nome; **Da collegare · n** con il campo "Cerca un giocatore": a campo vuoto si vedono solo i nomi uguali da confermare (pochi, e chiedono una risposta) e una riga che dice di scrivere un nome; scrivendo compaiono quelli che corrispondono, senza badare a maiuscole e accenti. "Collega i nomi uguali" resta sotto i da collegare. In fondo **Esci da Padel Elite**, testuale, e sotto l'account ("Collegato come ..."), che prima stava in cima. **Aggiorna** passa nella barra in alto (icona `refresh` con la parola per TalkBack) e rilegge gruppi e giocatori. Nelle Impostazioni il gruppo Padel Elite e' **una riga** con la freccia: senza accesso "Accedi a Padel Elite" e "Non collegato", con accesso "Gruppo per l'invio" e "account · gruppo". Esci sta solo nella schermata di Padel Elite.
+- **Componenti riusati.** Le righe della rosa (`item_padel_elite_player`), i gruppi tonali, il divisore rientrato, `EmptyStateView`, il campo `Widget.App.TextInputLayout` con l'icona `search` e la croce per svuotarlo; la riga delle Impostazioni e' quella del foglio Partita (`Widget.App.Pressable`, `bg_focus_ring`, `chevron_right`). La divisione e' una funzione pura, `RosaInVista`, che la schermata chiama a ogni lettura e a ogni lettera: la ricerca non fa richieste.
+- **Stati.** Rosa: scegli un gruppo, in caricamento, vuota, errore, non piu' membro (come prima), pronta. Pronta: nessun collegato (la parte Collegati sparisce), tutti collegati (sparisce Da collegare), campo vuoto (suggerimento), nessun risultato ("Nessun giocatore da collegare con questo nome", annunciato da TalkBack), righe trovate. Aggiorna c'e' solo con l'accesso. Movimento: nessuno nuovo. 200% e 360dp: tutto e' una colonna; il campo di ricerca resta alto almeno 48dp.
+- **Pattern vietati.** Tolti un bottone ripetuto (Gruppo che portava dove portava Accedi) e una lista da scorrere per arrivare ai comandi; nessun primario nuovo, niente card, niente ombre. Il debito 1 del passo 3b e' chiuso.
+
+### Debiti dichiarati del passo 4
+
+1. Il modulo di accesso (Google, email e password) non cambia: era gia' secondo le regole (G-4).
+2. La rosa si ridisegna intera a ogni lettera: con le rose di oggi (meno di 60 nomi) non si vede; se crescono, passare a una RecyclerView con DiffUtil.
+3. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 5a: la Cronaca mostra solo cio' che c'e'
+
+La Cronaca di una partita salvata senza ordine di servizio e senza tempi aveva quattro gruppi su sei che spiegavano un'assenza (Game per game, Servizio, Tempi, Momenti chiave), ognuno con titolo e paragrafo; il grafico dell'andamento occupava la sua altezza anche per un punto solo.
+
+- **Gerarchia e layout.** Il tabellone resta in cima e c'e' sempre: senza punti dice "Nessun punto registrato" e perche', e il resto non c'e'. Le altre sezioni compaiono solo coi loro dati: l'andamento da tre punti in su, Game per game con almeno un game chiuso, Servizio e Tempi se la partita li ha registrati, Momenti chiave se ce n'e' almeno uno. Sotto le sezioni, se mancano servizio o tempi, una riga sola: "Non registrati in questa partita: servizio e tempi" (al singolare con uno solo), e sotto, piu' piccolo, il perche' e cosa fare (le frasi di prima). Senza punti la riga non c'e': lo dice gia' il tabellone.
+- **Componenti riusati.** Le sezioni (`chronicle_section`) e i loro gruppi; la riga in fondo e' `RowTitle` in testo secondario con la `Caption` sotto, fuori dai gruppi. Tolte sette stringhe che non si usano piu' (gli stati vuoti delle sezioni sparite), nelle due lingue.
+- **Stati.** Partita completa (sei sezioni, nessuna riga in fondo); senza servizio e/o senza tempi (sezioni via, riga in fondo); senza punti (solo il tabellone); partita che non c'e' piu' (`EmptyStateView`, come prima). Movimento: nessuno. 200%: le sezioni sono colonne; la riga in fondo va a capo.
+- **Pattern vietati.** Tolti quattro stati vuoti uguali uno sotto l'altro; niente card nuove, niente ombre.
+- **Il resto del passo 5 (5b).** Lo Storico con le partite per giorno, la riga che apre la Cronaca e Invia, Esporta, Elimina nella barra della Cronaca e' il passo 5b: sposta comandi che scrivono (invio a Padel Elite, eliminazione) e merita una PR sua.
+
+### Debiti dichiarati del passo 5a
+
+1. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 6a: le Statistiche seguono lo sport
+
+In una serata di padel le Statistiche dicevano Generale, Attacco, Difesa e contavano i gol, tutti a zero, col primo in lime; Attacco e Difesa dicevano "Nessuna statistica": la stessa assenza raccontata in due modi.
+
+- **Gerarchia e layout.** Lo sport in uso (quello delle impostazioni) decide la classifica. Nel calcio restano le tre schede e i gol. Nel padel e nel tennis le schede non ci sono: una riga di titolo, "Padel · partite vinte", e la classifica delle partite vinte su quelle giocate ("Anna 3 vinte su 5"), prima chi ne ha vinte di piu', a parita' chi ne ha giocate di meno. Il dato c'e' gia': le formazioni salvate a fine partita (`MatchPlayerCrossRef.teamNumber`) e il risultato, la stessa regola delle vittorie di oggi; la nuova query `getPlayerRecords` le conta per sport, solo partite chiuse. Nessuna colonna nuova, nessuna migrazione.
+- **Componenti riusati.** La riga `item_player_stat` e il gruppo della classifica; un adapter nuovo, `RecordAdapter`, per le vittorie. Le regole comuni stanno nella funzione pura `Classifica`: il lime marca il primo solo se e' davvero primo (sopra zero e davanti al secondo), e una classifica di soli zeri e' lo stato vuoto.
+- **Stati.** Calcio con gol (come prima, lime solo a un primo vero), calcio con tutti a zero (stato vuoto), padel o tennis con partite (classifica), senza partite chiuse con giocatori (stato vuoto con il perche': servono le coppie in campo). TalkBack legge rango, nome e "3 vinte su 5". Movimento: nessuno. 200%: righe piu' alte, il valore resta a destra.
+- **Pattern vietati.** Tolte tre schede che nel padel non volevano dire niente e un lime che non marcava nessuno; niente card nuove, niente ombre.
+
+### Debiti dichiarati del passo 6a
+
+1. Le partite giocate in padel senza giocatori in campo (senza rose o coppie) non contano: non si sa chi le ha giocate.
+2. Giocatori e Modifica giocatore (filtri e ruoli da calcio anche nel padel, ordine attivo, ricerca) sono il passo 6b.
+3. Non visto a schermo: verificato solo dai test e dalla CI.

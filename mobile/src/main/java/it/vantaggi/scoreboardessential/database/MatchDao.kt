@@ -298,4 +298,28 @@ interface MatchDao {
     """,
     )
     fun getPlayerWinCounts(): Flow<List<PlayerWinCount>>
+
+    /**
+     * La classifica di uno sport senza marcatori (padel, tennis): per ogni giocatore le partite
+     * chiuse giocate e vinte in [sportId], prima chi ne ha vinte di piu', a parita' chi ne ha
+     * giocate di meno, poi il nome. Solo letture: nessuna colonna nuova, nessuna migrazione.
+     */
+    @Query(
+        """
+        SELECT cr.playerId AS playerId, p.playerName AS playerName, COUNT(*) AS played,
+          SUM(CASE WHEN (cr.teamNumber = 1 AND m.team1Score > m.team2Score)
+                     OR (cr.teamNumber = 2 AND m.team2Score > m.team1Score) THEN 1 ELSE 0 END) AS won
+        FROM MatchPlayerCrossRef cr
+        INNER JOIN matches m ON cr.matchId = m.matchId
+        INNER JOIN players p ON p.playerId = cr.playerId
+        WHERE m.isActive = 0 AND m.sportId = :sportId
+        GROUP BY cr.playerId
+        ORDER BY won DESC, played ASC, p.playerName COLLATE NOCASE ASC
+        LIMIT :limit
+    """,
+    )
+    fun getPlayerRecords(
+        sportId: String,
+        limit: Int,
+    ): Flow<List<PlayerRecord>>
 }
