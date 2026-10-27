@@ -319,6 +319,15 @@ class WearProtocolGoldenTest {
                 "SERATA_START" to "start",
                 "KEY_SWAP_FROM" to "swap_from",
                 "KEY_SWAP_TO" to "swap_to",
+                // Impostazioni essenziali dal polso (solo righe AGGIUNTE)
+                "KEY_DEUCE_IDS" to "deuce_ids",
+                "KEY_DEUCE_LABELS" to "deuce_labels",
+                "KEY_KEEPER_SECONDS" to "keeper_seconds",
+                "MSG_SETTING_INTENT" to "/scoreboard/v2/setting_intent",
+                "KEY_SETTING" to "setting",
+                "KEY_SETTING_VALUE" to "setting_value",
+                "SETTING_DEUCE" to "deuce",
+                "SETTING_KEEPER" to "keeper",
                 // Messaggi v1
                 "MSG_SCORER_SELECTED" to "/scoreboard/scorer_selected",
                 "MSG_REQUEST_SYNC" to "/scoreboard/request_sync",

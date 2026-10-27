@@ -9,6 +9,17 @@ enum class IdVoce {
 
     /** Compare solo quando il telefono ha rifiutato la coda (L5): e' il modo di scartarla. */
     SCARTA_CODA,
+
+    // Le impostazioni essenziali, in un gruppo loro sotto "In campo" ([MenuVoci.impostazioni]).
+
+    /** Solo negli sport col 40-40, e cambia solo a partita ferma, come lo sport. */
+    REGOLA_40,
+
+    /** Dell'orologio: tocco dopo tocco accende o spegne la vibrazione dei punti. */
+    VIBRAZIONE,
+
+    /** Solo dove c'e' il portiere (il calcio): la durata del suo timer. */
+    PORTIERE,
 }
 
 /**
@@ -43,6 +54,16 @@ sealed class SottotitoloVoce {
         val coppie: String,
     ) : SottotitoloVoce()
 
+    /** Voce attiva: il valore in uso, gia' scritto ("Killer point", "30 s"). */
+    data class Valore(
+        val testo: String,
+    ) : SottotitoloVoce()
+
+    /** La vibrazione dei punti: accesa, o spenta con i soli avvisi. */
+    data class Vibrazione(
+        val accesa: Boolean,
+    ) : SottotitoloVoce()
+
     /** Voce attiva: il risultato che verra' salvato, gia' impaginato ("3–2"). */
     data class SalvaRisultato(
         val risultato: String,
@@ -74,6 +95,12 @@ data class InputMenu(
     val rifiutati: Int = 0,
     /** Le coppie della prossima partita della serata, gia' in sigle; vuoto se il telefono non ne propone. */
     val prossima: String = "",
+    /** La regola del 40-40 in uso, gia' tradotta; vuota dove il telefono non offre la scelta. */
+    val regola40: String = "",
+    /** La durata del portiere, gia' scritta; vuota dove non c'e' il portiere. */
+    val portiere: String = "",
+    /** La vibrazione dei punti dell'orologio. */
+    val vibrazionePunti: Boolean = true,
 )
 
 /**
@@ -99,6 +126,37 @@ object MenuVoci {
                 null
             },
         )
+
+    /**
+     * Le impostazioni essenziali, nell'ordine: la regola del 40-40, la vibrazione, il portiere. Il resto
+     * si sceglie una volta sola dal telefono. Le due che chiede il telefono hanno i suoi blocchi; la
+     * vibrazione e' del polso e si cambia sempre.
+     */
+    fun impostazioni(input: InputMenu): List<Voce> =
+        listOfNotNull(
+            if (input.regola40.isNotEmpty()) voceRegola40(input) else null,
+            Voce(IdVoce.VIBRAZIONE, true, SottotitoloVoce.Vibrazione(input.vibrazionePunti)),
+            if (input.portiere.isNotEmpty()) vocePortiere(input) else null,
+        )
+
+    private fun voceRegola40(input: InputMenu): Voce {
+        // Gli stessi blocchi e nello stesso ordine dello sport: e' una regola dello sport.
+        val blocco =
+            when {
+                input.rifiutati > 0 -> SottotitoloVoce.CodaRifiutata(input.rifiutati)
+                input.inCoda > 0 -> SottotitoloVoce.PrimaConsegna(input.inCoda)
+                input.partitaIniziata -> SottotitoloVoce.PartitaInCorso
+                !input.collegato -> SottotitoloVoce.ServeIlTelefono
+                else -> null
+            }
+        return Voce(IdVoce.REGOLA_40, blocco == null, blocco ?: SottotitoloVoce.Valore(input.regola40))
+    }
+
+    private fun vocePortiere(input: InputMenu): Voce {
+        // La durata vale dal prossimo cambio anche a partita in corso, come sul telefono: serve solo lui.
+        val blocco = if (!input.collegato) SottotitoloVoce.ServeIlTelefono else null
+        return Voce(IdVoce.PORTIERE, blocco == null, blocco ?: SottotitoloVoce.Valore(input.portiere))
+    }
 
     private fun voceProssima(input: InputMenu): Voce {
         // Come le altre: prima la coda (una partita nuova sopra punti non consegnati fonderebbe due

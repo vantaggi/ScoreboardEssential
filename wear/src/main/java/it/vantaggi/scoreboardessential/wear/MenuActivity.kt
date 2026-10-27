@@ -45,6 +45,8 @@ class MenuActivity : ComponentActivity() {
         const val AZIONE_FINE = "fine"
         const val AZIONE_SCARTA = "scarta"
         const val AZIONE_PROSSIMA = "prossima"
+        const val AZIONE_REGOLA_40 = "regola_40"
+        const val AZIONE_PORTIERE = "portiere"
 
         /** Senza nessun tocco ne' scorrimento la schermata torna al quadrante da sola. */
         const val CHIUSURA_AUTOMATICA_MS = 10_000L
@@ -60,6 +62,9 @@ class MenuActivity : ComponentActivity() {
         private const val EXTRA_SQUADRE_NOMI = "menu_squadre_nomi"
         private const val EXTRA_SQUADRE_GIOCATORI = "menu_squadre_giocatori"
         private const val EXTRA_SQUADRE_COLORI = "menu_squadre_colori"
+        private const val EXTRA_REGOLA_40 = "menu_regola_40"
+        private const val EXTRA_PORTIERE = "menu_portiere"
+        private const val EXTRA_VIBRAZIONE = "menu_vibrazione"
         private const val SEPARATORE_GIOCATORI = "\n"
 
         /**
@@ -77,6 +82,9 @@ class MenuActivity : ComponentActivity() {
         ): Intent =
             Intent(context, MenuActivity::class.java)
                 .putExtra(EXTRA_PROSSIMA, input.prossima)
+                .putExtra(EXTRA_REGOLA_40, input.regola40)
+                .putExtra(EXTRA_PORTIERE, input.portiere)
+                .putExtra(EXTRA_VIBRAZIONE, input.vibrazionePunti)
                 .putExtra(EXTRA_SQUADRE_NOMI, squadre.map { it.nome }.toTypedArray())
                 .putExtra(EXTRA_SQUADRE_GIOCATORI, squadre.map { it.giocatori.joinToString(SEPARATORE_GIOCATORI) }.toTypedArray())
                 .putExtra(EXTRA_SQUADRE_COLORI, squadre.map { it.colore }.toIntArray())
@@ -98,7 +106,7 @@ class MenuActivity : ComponentActivity() {
     private val righe = mutableListOf<Riga>()
 
     private class Riga(
-        val voce: Voce,
+        var voce: Voce,
         val card: MaterialCardView,
     ) {
         val titolo: TextView = card.findViewById(R.id.sport_name)
@@ -134,22 +142,17 @@ class MenuActivity : ComponentActivity() {
                 risultato = intent.getStringExtra(EXTRA_RISULTATO).orEmpty(),
                 rifiutati = intent.getIntExtra(EXTRA_RIFIUTATI, 0),
                 prossima = intent.getStringExtra(EXTRA_PROSSIMA).orEmpty(),
+                regola40 = intent.getStringExtra(EXTRA_REGOLA_40).orEmpty(),
+                portiere = intent.getStringExtra(EXTRA_PORTIERE).orEmpty(),
+                vibrazionePunti = intent.getBooleanExtra(EXTRA_VIBRAZIONE, true),
             )
 
-        val contenitore = findViewById<LinearLayout>(R.id.menu_voci)
-        MenuVoci.calcola(input).forEach { voce ->
-            val card = LayoutInflater.from(this).inflate(R.layout.item_sport_wear, contenitore, false) as MaterialCardView
-            card.setOnClickListener { alTocco(voce) }
-            // Armarsi e rientrare cambia titolo e sottotitolo: TalkBack deve dirlo, perche' chi non
-            // vede la card rossa non saprebbe che il tocco e' gia' armato.
-            if (voce.id == IdVoce.FINE_PARTITA || voce.id == IdVoce.SCARTA_CODA) {
-                card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
-            }
-            contenitore.addView(card)
-            righe += Riga(voce, card)
-        }
-        disegna()
+        aggiungiVoci(findViewById(R.id.menu_voci), MenuVoci.calcola(input))
         mostraLeSquadre()
+        // Le impostazioni sotto le squadre, con le stesse righe delle voci: il gruppo c'e' sempre,
+        // perche' la vibrazione e' del polso e si cambia anche senza telefono.
+        aggiungiVoci(findViewById(R.id.menu_impostazioni), MenuVoci.impostazioni(input))
+        disegna()
 
         // Anche scorrere con la corona e' un'interazione: non deve chiudere il menu sotto le dita.
         val scorrimento = findViewById<ScrollView>(R.id.menu_scroll)
@@ -172,6 +175,24 @@ class MenuActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    private fun aggiungiVoci(
+        contenitore: LinearLayout,
+        voci: List<Voce>,
+    ) {
+        voci.forEach { voce ->
+            val card = LayoutInflater.from(this).inflate(R.layout.item_sport_wear, contenitore, false) as MaterialCardView
+            val riga = Riga(voce, card)
+            card.setOnClickListener { alTocco(riga.voce) }
+            // Armarsi e rientrare cambia titolo e sottotitolo: TalkBack deve dirlo, perche' chi non
+            // vede la card rossa non saprebbe che il tocco e' gia' armato. La vibrazione cambia sul posto.
+            if (voce.id == IdVoce.FINE_PARTITA || voce.id == IdVoce.SCARTA_CODA || voce.id == IdVoce.VIBRAZIONE) {
+                card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+            }
+            contenitore.addView(card)
+            righe += riga
+        }
+    }
+
     private fun riarmaChiusura() {
         handler.removeCallbacks(chiusuraAutomatica)
         handler.postDelayed(chiusuraAutomatica, CHIUSURA_AUTOMATICA_MS)
@@ -188,6 +209,27 @@ class MenuActivity : ComponentActivity() {
 
             IdVoce.PROSSIMA_PARTITA -> {
                 chiudiConAzione(AZIONE_PROSSIMA)
+            }
+
+            IdVoce.REGOLA_40 -> {
+                chiudiConAzione(AZIONE_REGOLA_40)
+            }
+
+            IdVoce.PORTIERE -> {
+                chiudiConAzione(AZIONE_PORTIERE)
+            }
+
+            // Del polso: si cambia qui, senza uscire, e il sottotitolo dice com'e' adesso. Riaccesa,
+            // un tick lo fa sentire.
+            IdVoce.VIBRAZIONE -> {
+                val accesa = !input.vibrazionePunti
+                PreferenzeDelPolso(this).vibrazionePunti = accesa
+                input = input.copy(vibrazionePunti = accesa)
+                righe.filter { it.voce.id == IdVoce.VIBRAZIONE }.forEach {
+                    it.voce = it.voce.copy(sottotitolo = SottotitoloVoce.Vibrazione(accesa))
+                }
+                if (accesa) VibratoreWearHaptics.di(this).tick()
+                disegna()
             }
 
             // Le due voci che distruggono qualcosa (chiudere la partita, scartare la coda) si armano
@@ -312,6 +354,18 @@ class MenuActivity : ComponentActivity() {
                 getString(R.string.wear_next_match)
             }
 
+            IdVoce.REGOLA_40 -> {
+                getString(R.string.wear_setting_deuce)
+            }
+
+            IdVoce.VIBRAZIONE -> {
+                getString(R.string.wear_setting_vibration)
+            }
+
+            IdVoce.PORTIERE -> {
+                getString(R.string.wear_setting_keeper)
+            }
+
             IdVoce.FINE_PARTITA -> {
                 if (armata) getString(R.string.wear_menu_end_confirm, input.risultato) else getString(R.string.wear_menu_end)
             }
@@ -358,5 +412,13 @@ internal fun SottotitoloVoce.testo(context: Context): String =
 
         is SottotitoloVoce.CoppieProposte -> {
             coppie
+        }
+
+        is SottotitoloVoce.Valore -> {
+            testo
+        }
+
+        is SottotitoloVoce.Vibrazione -> {
+            context.getString(if (accesa) R.string.wear_setting_vibration_on else R.string.wear_setting_vibration_off)
         }
     }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 
 /**
@@ -83,5 +84,74 @@ class VibratoreWearHaptics(
 
     companion object {
         fun di(context: Context): VibratoreWearHaptics = VibratoreWearHaptics(ContextCompat.getSystemService(context, Vibrator::class.java))
+    }
+}
+
+/**
+ * La vibrazione dei punti, scelta dal menu del polso: e' dell'orologio e non del telefono, che non
+ * vibra al polso di nessuno. Accesa di default, come prima che la scelta esistesse.
+ */
+class PreferenzeDelPolso(
+    context: Context,
+) {
+    private val prefs = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+
+    var vibrazionePunti: Boolean
+        get() = prefs.getBoolean(KEY_VIBRAZIONE_PUNTI, true)
+        set(valore) = prefs.edit { putBoolean(KEY_VIBRAZIONE_PUNTI, valore) }
+
+    companion object {
+        private const val FILE = "preferenze_polso"
+        private const val KEY_VIBRAZIONE_PUNTI = "vibrazione_punti"
+    }
+}
+
+/**
+ * L'aptica con la vibrazione dei punti spenta: tacciono le conferme (il tick del tocco, i colpi del
+ * lato, la conferma di un cambio, l'annullamento), restano gli avvisi. Il punto in coda perde i colpi
+ * del lato e tiene il colpo lungo, che e' la parte che dice "il telefono non ce l'ha"; il non
+ * confermato e l'allarme del portiere suonano come sempre. Un punto perso non deve passare in silenzio.
+ *
+ * La scelta si legge a ogni colpo ([accesa]): cambiata dal menu, vale dal tocco dopo.
+ */
+class HapticsDelPolso(
+    private val base: WearHaptics,
+    private val accesa: () -> Boolean,
+) : WearHaptics {
+    override fun suona(pattern: LongArray) {
+        if (accesa()) {
+            base.suona(pattern)
+            return
+        }
+        when {
+            CONFERME.any { it.contentEquals(pattern) } -> Unit
+            IN_CODA.any { it.contentEquals(pattern) } -> base.suona(SOLO_AVVISO_CODA)
+            else -> base.suona(pattern)
+        }
+    }
+
+    override fun annulla() = base.annulla()
+
+    override fun tick() {
+        if (accesa()) base.tick()
+    }
+
+    companion object {
+        private val CONFERME =
+            listOf(
+                WearPatterns.CONFERMA_SINISTRA,
+                WearPatterns.CONFERMA_DESTRA,
+                WearPatterns.ANNULLAMENTO,
+                HapticFeedbackManager.PATTERN_CONFIRM,
+            )
+        private val IN_CODA = listOf(WearPatterns.IN_CODA_SINISTRA, WearPatterns.IN_CODA_DESTRA)
+
+        /** Il colpo lungo del punto in coda, senza i colpi del lato che lo precedono. */
+        val SOLO_AVVISO_CODA = longArrayOf(0, 350)
+
+        fun di(context: Context): HapticsDelPolso {
+            val preferenze = PreferenzeDelPolso(context)
+            return HapticsDelPolso(VibratoreWearHaptics.di(context)) { preferenze.vibrazionePunti }
+        }
     }
 }

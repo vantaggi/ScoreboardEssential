@@ -122,6 +122,9 @@ enum class EsitoAvvioSerata {
 // Gli sport in cui si gioca a coppie e quindi si puo' fare una serata.
 private val SPORT_DELLA_SERATA = setOf(SportRegistry.PADEL, SportRegistry.TENNIS)
 
+// Le durate del portiere che il polso puo' chiedere, in secondi: oltre e' un valore che il menu non manda.
+private val PORTIERE_SECONDI = 5L..600L
+
 // Chiavi in app_prefs: l'ultimo arretrato dell'orologio applicato (per nodo, e l'ultimo di tutti).
 private const val PREF_BATCH_APPLICATO = "batch_applicato_"
 private const val PREF_BATCH_APPLICATO_ULTIMO = "batch_applicato_ultimo"
@@ -428,6 +431,13 @@ class MainViewModel(
                             base = intent.getStringExtra(WearConstants.KEY_NEXT_BASE).orEmpty(),
                             da = intent.getIntExtra(WearConstants.KEY_SWAP_FROM, -1),
                             a = intent.getIntExtra(WearConstants.KEY_SWAP_TO, -1),
+                        )
+                    }
+
+                    SimplifiedDataLayerListenerService.ACTION_SETTING_INTENT -> {
+                        applicaImpostazioneDalPolso(
+                            impostazione = intent.getStringExtra(WearConstants.KEY_SETTING).orEmpty(),
+                            valore = intent.getStringExtra(WearConstants.KEY_SETTING_VALUE).orEmpty(),
                         )
                     }
 
@@ -805,6 +815,7 @@ class MainViewModel(
             SimplifiedDataLayerListenerService.ACTION_SPORT_INTENT,
             SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED,
             SimplifiedDataLayerListenerService.ACTION_SERATA_INTENT,
+            SimplifiedDataLayerListenerService.ACTION_SETTING_INTENT,
         )
 
     // L'id del file esportato e l'inizio della partita in corso: nascono con la riga viva, al
@@ -934,6 +945,7 @@ class MainViewModel(
                 addAction(SimplifiedDataLayerListenerService.ACTION_INTENT_BATCH)
                 addAction(SimplifiedDataLayerListenerService.ACTION_SCORER_SELECTED)
                 addAction(SimplifiedDataLayerListenerService.ACTION_SERATA_INTENT)
+                addAction(SimplifiedDataLayerListenerService.ACTION_SETTING_INTENT)
             }
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(application)
@@ -1288,6 +1300,37 @@ class MainViewModel(
     }
 
     /**
+     * L'orologio chiede di cambiare un'impostazione essenziale. Si scrive nelle impostazioni, come dalla
+     * schermata del telefono, e da li' il flusso delle impostazioni la applica: una strada sola, con le
+     * sue guardie. La regola del 40-40 cambia solo a partita ferma e dove c'e' il 40-40; il portiere solo
+     * dove c'e', fra 5 secondi e 10 minuti. In ogni caso riparte lo stato v2: e' la risposta del polso.
+     */
+    internal fun applicaImpostazioneDalPolso(
+        impostazione: String,
+        valore: String,
+    ) {
+        when (impostazione) {
+            WearConstants.SETTING_DEUCE -> {
+                val regola = DeuceRule.daNome(valore)
+                if (regola != null && sportRules is RacketRules && engine.log.isEmpty() && !ripristinoInAttesa) {
+                    val sport = sportRules.id
+                    viewModelScope.launch { matchSettingsRepository.setDeuceRule(sport, regola) }
+                    return
+                }
+            }
+
+            WearConstants.SETTING_KEEPER -> {
+                val secondi = valore.toLongOrNull()
+                if (secondi != null && secondi in PORTIERE_SECONDI && sportRules.capabilities.hasAuxCountdown) {
+                    viewModelScope.launch { matchSettingsRepository.setKeeperTimerDuration(secondi) }
+                    return
+                }
+            }
+        }
+        sendStateV2()
+    }
+
+    /**
      * L'orologio chiede di cambiare la prossima partita della serata (ruotare, scambiare due posti,
      * cominciarla). La regola resta qui: il polso manda la bozza su cui ha deciso ([base]), e se nel
      * frattempo e' cambiata (un tocco sul telefono, una seconda richiesta) non si applica niente, perche'
@@ -1426,6 +1469,7 @@ class MainViewModel(
         val display = sportRules.display(engine.state)
         val capacita = sportRules.capabilities
         val scegliibili = SportRegistry.selectable()
+        val regoleDel40AlPolso = if (sportRules is RacketRules) DeuceRule.entries else emptyList()
         val partitaIniziata = engine.log.isNotEmpty()
         val registro = MatchLogCodec.encode(engine.log)
         // L'identita' nasce QUI, sincrona, col primo evento: persistLiveMatch la scriveva dentro una
@@ -1456,6 +1500,12 @@ class MainViewModel(
                 // La regola del 40-40: l'orologio rifa' il calcolo dei tocchi in coda con :core, e
                 // con la regola del registro un killer point gli chiudeva il game al primo 40-40.
                 WearConstants.KEY_DEUCE_RULE to Match.encodeDeuceRule(sportRules),
+                // Le regole fra cui il polso puo' scegliere, gia' tradotte come gli sport; vuote dove il
+                // 40-40 non c'e'. E la durata del portiere dove c'e': il menu del polso le mostra.
+                WearConstants.KEY_DEUCE_IDS to regoleDel40AlPolso.joinToString(WearConstants.SPORT_SEPARATOR) { it.name },
+                WearConstants.KEY_DEUCE_LABELS to
+                    regoleDel40AlPolso.joinToString(WearConstants.SPORT_SEPARATOR) { deuceLabel(getApplication(), it) },
+                WearConstants.KEY_KEEPER_SECONDS to (if (capacita.hasAuxCountdown) keeperTimerDuration / 1000 else 0L),
                 WearConstants.KEY_CAP_HAS_CLOCK to (capacita.clock != ClockMode.NONE),
                 WearConstants.KEY_CAP_HAS_AUX_TIMER to capacita.hasAuxCountdown,
                 WearConstants.KEY_CAP_ATTRIBUTES_SCORER to capacita.attributesScorer,
@@ -2275,6 +2325,8 @@ class MainViewModel(
         addMatchEvent("Keeper timer set to $seconds seconds")
         // Sync default duration to Wear
         sendKeeperTimerUpdate(false, keeperTimerDuration)
+        // La durata e' anche nello stato v2, per il menu del polso.
+        sendStateV2()
     }
 
     fun startKeeperTimer(fromRemote: Boolean = false) {

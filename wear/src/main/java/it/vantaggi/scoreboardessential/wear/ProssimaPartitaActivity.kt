@@ -123,7 +123,7 @@ class ProssimaPartitaActivity : ComponentActivity() {
         MovimentoRidotto.applica(this, theme)
         setContentView(R.layout.activity_prossima_partita)
         sync = creaSync(applicationContext)
-        haptics = VibratoreWearHaptics.di(this)
+        haptics = HapticsDelPolso.di(this)
         coppie = CoppieDalTelefono.fromDataMap(DataMap.fromByteArray(intent.getByteArrayExtra(EXTRA_PAYLOAD) ?: ByteArray(0)))
         if (!coppie.haProssima) {
             finish()

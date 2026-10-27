@@ -328,6 +328,35 @@ object WearConstants {
     const val KEY_SWAP_FROM = "swap_from"
     const val KEY_SWAP_TO = "swap_to"
 
+    // --- Impostazioni essenziali dal polso ---------------------------------------------------
+    //
+    // ADDITIVE come le coppie: chiavi nuove nello stato v2 e un messaggio suo. Il telefono resta
+    // l'autorita': scrive le sue impostazioni, e la risposta e' lo stato v2 che torna.
+
+    /**
+     * Le regole del 40-40 fra cui scegliere nello sport corrente: i nomi di `DeuceRule` e le loro
+     * etichette gia' tradotte, separati da [SPORT_SEPARATOR]. Vuoti dove il 40-40 non esiste (calcio)
+     * e da un telefono che non li manda: allora l'orologio non offre la scelta. La regola in vigore
+     * e' [KEY_DEUCE_RULE].
+     */
+    const val KEY_DEUCE_IDS = "deuce_ids"
+    const val KEY_DEUCE_LABELS = "deuce_labels"
+
+    /** La durata del timer del portiere in secondi; 0 dove lo sport non ha il portiere. */
+    const val KEY_KEEPER_SECONDS = "keeper_seconds"
+
+    /**
+     * L'orologio chiede di cambiare un'impostazione del telefono: [KEY_SEQ], [KEY_SETTING] e
+     * [KEY_SETTING_VALUE]. La regola del 40-40 cambia solo a partita ferma, come lo sport.
+     */
+    const val MSG_SETTING_INTENT = "/scoreboard/v2/setting_intent"
+    const val KEY_SETTING = "setting"
+    const val KEY_SETTING_VALUE = "setting_value"
+
+    /** Quale impostazione: la regola del 40-40 (valore: il nome di `DeuceRule`) o il portiere (secondi). */
+    const val SETTING_DEUCE = "deuce"
+    const val SETTING_KEEPER = "keeper"
+
     // Message Paths (MessageClient, fire-and-forget triggers)
     const val MSG_SCORER_SELECTED = "/scoreboard/scorer_selected"
     const val MSG_REQUEST_SYNC = "/scoreboard/request_sync"

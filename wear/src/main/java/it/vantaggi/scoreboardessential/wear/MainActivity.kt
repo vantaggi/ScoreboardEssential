@@ -106,6 +106,8 @@ class MainActivity : ComponentActivity() {
                 MenuActivity.AZIONE_FINE -> chiudiSeAncoraPossibile()
                 MenuActivity.AZIONE_SCARTA -> viewModel.scartaCoda()
                 MenuActivity.AZIONE_PROSSIMA -> apriProssimaPartita()
+                MenuActivity.AZIONE_REGOLA_40 -> apriSceltaRegola40()
+                MenuActivity.AZIONE_PORTIERE -> apriSceltaPortiere()
             }
         }
 
@@ -508,6 +510,68 @@ class MainActivity : ComponentActivity() {
                     ?.takeIf { it.haProssima && it.sigle.size == 2 }
                     ?.let { getString(R.string.wear_next_pairs, it.sigle[0], it.sigle[1]) }
                     .orEmpty(),
+            regola40 = stato?.deuceLabel.orEmpty(),
+            portiere = stato?.keeperSeconds?.takeIf { it > 0 && stato.hasAuxTimer }?.let { etichettaPortiere(this, it) }.orEmpty(),
+            vibrazionePunti = PreferenzeDelPolso(this).vibrazionePunti,
+        )
+    }
+
+    /**
+     * La regola del 40-40 e il portiere si scelgono con la lista dello sport: id e etichette, e la
+     * scelta torna qui, che ha la sequenza. La regola si ricontrolla sui fatti di adesso come lo sport.
+     */
+    private val sceltaImpostazione =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { esito ->
+            val scelta = esito.data?.getStringExtra(SportSelectionActivity.EXTRA_CHOSEN)
+            val impostazione = impostazioneInScelta
+            impostazioneInScelta = null
+            if (esito.resultCode == android.app.Activity.RESULT_OK && !scelta.isNullOrBlank() && impostazione != null) {
+                viewModel.requestSetting(impostazione, scelta)
+            }
+        }
+
+    /** Quale impostazione sta scegliendo la lista aperta: una alla volta. */
+    private var impostazioneInScelta: String? = null
+
+    private fun apriSceltaRegola40() {
+        val stato = viewModel.scoreState.value ?: return
+        if (stato.matchInProgress || stato.deuceLabel.isEmpty()) return
+        apriScelta(
+            WearConstants.SETTING_DEUCE,
+            getString(R.string.wear_setting_deuce),
+            stato.deuceIds,
+            stato.deuceLabels,
+            stato.deuceLabel,
+        )
+    }
+
+    private fun apriSceltaPortiere() {
+        val attuale = viewModel.scoreState.value?.keeperSeconds?.takeIf { it > 0 } ?: return
+        val scelte = DurataPortiere.scelte(attuale)
+        apriScelta(
+            WearConstants.SETTING_KEEPER,
+            getString(R.string.wear_setting_keeper),
+            scelte.map { it.toString() },
+            scelte.map { etichettaPortiere(this, it) },
+            etichettaPortiere(this, attuale),
+        )
+    }
+
+    private fun apriScelta(
+        impostazione: String,
+        titolo: String,
+        ids: List<String>,
+        etichette: List<String>,
+        corrente: String,
+    ) {
+        impostazioneInScelta = impostazione
+        sceltaImpostazione.launch(
+            Intent(this, SportSelectionActivity::class.java).apply {
+                putExtra(SportSelectionActivity.EXTRA_TITLE, titolo)
+                putExtra(SportSelectionActivity.EXTRA_IDS, ArrayList(ids))
+                putExtra(SportSelectionActivity.EXTRA_LABELS, ArrayList(etichette))
+                putExtra(SportSelectionActivity.EXTRA_CURRENT, corrente)
+            },
         )
     }
 

@@ -30,6 +30,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         const val ACTION_SPORT_INTENT = "it.vantaggi.scoreboardessential.SPORT_INTENT"
         const val ACTION_INTENT_BATCH = "it.vantaggi.scoreboardessential.INTENT_BATCH"
         const val ACTION_SERATA_INTENT = "it.vantaggi.scoreboardessential.SERATA_INTENT"
+        const val ACTION_SETTING_INTENT = "it.vantaggi.scoreboardessential.SETTING_INTENT"
 
         /**
          * Ultima sequenza vista, PER NODO.
@@ -247,6 +248,10 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
 
                 WearConstants.MSG_SERATA_INTENT -> {
                     handleSerataIntent(messageEvent.sourceNodeId, messageEvent.data)
+                }
+
+                WearConstants.MSG_SETTING_INTENT -> {
+                    handleSettingIntent(messageEvent.sourceNodeId, messageEvent.data)
                 }
             }
         } catch (e: Exception) {
@@ -484,6 +489,44 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                 putExtra(WearConstants.KEY_NEXT_BASE, base)
                 putExtra(WearConstants.KEY_SWAP_FROM, dataMap.getInt(WearConstants.KEY_SWAP_FROM, -1))
                 putExtra(WearConstants.KEY_SWAP_TO, dataMap.getInt(WearConstants.KEY_SWAP_TO, -1))
+            },
+        )
+    }
+
+    /**
+     * L'orologio chiede di cambiare un'impostazione (la regola del 40-40, il portiere). Qui solo la
+     * forma e la sequenza: se si puo' cambiare lo decide il ViewModel, con le guardie delle impostazioni.
+     */
+    private fun handleSettingIntent(
+        sourceNodeId: String,
+        data: ByteArray?,
+    ) {
+        if (data == null || data.isEmpty()) {
+            Log.w(TAG, "Empty setting-intent payload. Ignoring.")
+            return
+        }
+        val dataMap = DataMap.fromByteArray(data)
+        val impostazione = dataMap.getString(WearConstants.KEY_SETTING, "")
+        val valore = dataMap.getString(WearConstants.KEY_SETTING_VALUE, "")
+        val seq = leggiSeq(dataMap)
+        if (impostazione.isBlank() || valore.isBlank() || seq <= 0L) {
+            Log.w(TAG, "Invalid setting-intent fields (setting=$impostazione, seq=$seq). Ignoring.")
+            return
+        }
+
+        val ultima = lastSeqByNode[sourceNodeId] ?: 0L
+        if (seq <= ultima) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Setting intent already seen (seq=$seq <= $ultima). Ignoring.")
+            }
+            return
+        }
+        lastSeqByNode[sourceNodeId] = seq
+
+        LocalBroadcastManager.getInstance(this).sendBroadcast(
+            Intent(ACTION_SETTING_INTENT).apply {
+                putExtra(WearConstants.KEY_SETTING, impostazione)
+                putExtra(WearConstants.KEY_SETTING_VALUE, valore)
             },
         )
     }

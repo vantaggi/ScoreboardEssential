@@ -91,4 +91,13 @@
     <string name="cd_next_player_selected">%1$s, pair %2$d, picked for the swap</string>
     <string name="wear_in_campo">On court</string>
     <string name="cd_squadra">%1$s: %2$s</string>
+    <string name="wear_settings">Settings</string>
+    <string name="wear_setting_deuce">At deuce</string>
+    <string name="wear_setting_vibration">Vibration</string>
+    <string name="wear_setting_vibration_on">Every point</string>
+    <string name="wear_setting_vibration_off">Alerts only</string>
+    <string name="wear_setting_keeper">Keeper</string>
+    <string name="wear_keeper_seconds">%1$d s</string>
+    <string name="wear_keeper_minutes">%1$d min</string>
+    <string name="wear_keeper_minutes_seconds">%1$d min %2$d s</string>
 </resources>

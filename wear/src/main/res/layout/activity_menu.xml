@@ -85,6 +85,35 @@
                     android:orientation="vertical"
                     android:showDividers="middle"
                     android:visibility="gone" />
+
+                <!--
+                    Le impostazioni essenziali, in fondo: si cambiano fra una partita e l altra, non
+                    a ogni apertura. Stesse righe e stesso gruppo tonale delle voci.
+                -->
+                <TextView
+                    android:id="@+id/menu_impostazioni_titolo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_16"
+                    android:layout_marginBottom="@dimen/space_8"
+                    android:accessibilityHeading="true"
+                    android:fontFamily="@font/inter"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:text="@string/wear_settings"
+                    android:textColor="@color/elite_text_secondary"
+                    android:textFontWeight="500"
+                    android:textSize="12sp" />
+
+                <LinearLayout
+                    android:id="@+id/menu_impostazioni"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_group"
+                    android:clipToOutline="true"
+                    android:divider="@drawable/bg_group_divider"
+                    android:orientation="vertical"
+                    android:showDividers="middle" />
             </LinearLayout>
         </ScrollView>
 

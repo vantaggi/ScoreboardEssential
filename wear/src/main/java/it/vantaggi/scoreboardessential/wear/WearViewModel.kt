@@ -92,7 +92,19 @@ data class WearScoreState(
      * un telefono che non la manda. Il calcolo al polso la usa: e' la stessa che usa il telefono.
      */
     val deuceRule: String = "",
+    /**
+     * Le regole del 40-40 fra cui scegliere (nomi e etichette gia' tradotte), vuote dove il 40-40 non
+     * c'e' e da un telefono che non le manda: allora il menu non offre la scelta.
+     */
+    val deuceIds: List<String> = emptyList(),
+    val deuceLabels: List<String> = emptyList(),
+    /** La durata del portiere in secondi; 0 dove non c'e' il portiere o se il telefono non la manda. */
+    val keeperSeconds: Long = 0L,
 ) {
+    /** L'etichetta della regola del 40-40 in vigore, vuota se il menu non la puo' offrire. */
+    val deuceLabel: String
+        get() = deuceIds.indexOf(deuceRule).takeIf { it >= 0 && deuceIds.size == deuceLabels.size }?.let { deuceLabels[it] }.orEmpty()
+
     companion object {
         private const val TAG = "WearScoreState"
 
@@ -136,6 +148,9 @@ data class WearScoreState(
                 matchUuid = dataMap.getString(WearConstants.KEY_MATCH_UUID, ""),
                 stateVersion = versioneDelloStato(dataMap),
                 deuceRule = dataMap.getString(WearConstants.KEY_DEUCE_RULE, ""),
+                deuceIds = elenco(dataMap.getString(WearConstants.KEY_DEUCE_IDS, "")),
+                deuceLabels = elenco(dataMap.getString(WearConstants.KEY_DEUCE_LABELS, "")),
+                keeperSeconds = lungo(dataMap, WearConstants.KEY_KEEPER_SECONDS),
             )
         }
 
@@ -186,7 +201,7 @@ class WearViewModel(
     // d'accordo.
     private val orologio: () -> Long = System::currentTimeMillis,
     // Iniettabile per le ricevute del tocco: nei test e' un finto che registra i pattern.
-    private val haptics: WearHaptics = VibratoreWearHaptics.di(application),
+    private val haptics: WearHaptics = HapticsDelPolso.di(application),
 ) : AndroidViewModel(application) {
     /**
      * Costruttore richiesto da [androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory],
@@ -1576,6 +1591,29 @@ class WearViewModel(
      * un messaggio nuovo. La risposta e' lo stato v2 che torna: se lo sport cambia, la schermata
      * si ridisegna da sola; se il telefono rifiuta, non cambia niente e a dirlo e' il telefono.
      */
+    /**
+     * Chiede al telefono di cambiare un'impostazione ([WearConstants.SETTING_DEUCE] o
+     * [WearConstants.SETTING_KEEPER]). Come lo sport, la scelta e' del telefono: la risposta e' lo
+     * stato v2 che torna col valore nuovo, e il menu lo legge alla prossima apertura. Se il messaggio
+     * non parte, la vibrazione dell'errore.
+     */
+    fun requestSetting(
+        impostazione: String,
+        valore: String,
+    ) {
+        val seq = prossimaSequenza()
+        viewModelScope.launch {
+            val payload =
+                DataMap().apply {
+                    putString(WearConstants.KEY_SETTING, impostazione)
+                    putString(WearConstants.KEY_SETTING_VALUE, valore)
+                    putLong(WearConstants.KEY_SEQ, seq)
+                }
+            val consegnato = invii.withLock { inviaMessaggio(WearConstants.MSG_SETTING_INTENT, payload.toByteArray()) }
+            if (!consegnato) triggerFailureVibration()
+        }
+    }
+
     fun requestSport(sportId: String) {
         val seq = prossimaSequenza()
         // Dalla scelta in poi la riga lo dice: CAMBIO SPORT... finche' il quadrante non riceve lo

@@ -2407,9 +2407,17 @@ Richiesta del proprietario: dal menu dell'orologio sapere chi gioca in ogni squa
 - **Schermo stretto e 200%**: tutto dentro uno `ScrollView` in `BoxInsetLayout`; nomi su una riga con ellissi; i bottoni crescono in altezza.
 - **Conflitti**: nessuno con la Constitution. Il telefono resta l'autorita': l'orologio legge nomi e chiede `rotate`, `swap` o `start` sulla bozza che ha visto (`next_base`), e il telefono applica solo se la bozza e' ancora quella e la partita e' ferma.
 
+### Impostazioni essenziali al polso (scelta del proprietario, 27 ottobre 2026)
+
+- **Cosa**: in fondo al menu, sotto "In campo", un gruppo "Impostazioni" con le stesse righe delle voci (`item_sport_wear`, nome e valore come sottotitolo): **Sul 40-40** (solo negli sport col 40-40; spenta a partita cominciata, con la coda o senza telefono, coi sottotitoli dello sport), **Vibrazione** (del polso, sempre attiva: "A ogni punto" / "Solo avvisi", cambia sul posto con un tocco, un tick quando si riaccende), **Portiere** (solo nel calcio, la durata; anche a partita in corso, come sul telefono). Il resto delle impostazioni resta sul telefono. Quali righe ci sono e quali sono spente lo decide `MenuVoci.impostazioni`, pura.
+- **Scelta**: Sul 40-40 e Portiere aprono la lista dello sport (`SportSelectionActivity` con un titolo), con la spunta sul valore in uso. Il portiere si sceglie fra 15 s e 5 min (piu' la durata in uso, se il telefono ne ha scritta un'altra): sul tondo non si scrive un numero.
+- **Vibrazione spenta** (scelta del proprietario: "spegne i punti, avvisi si'"): tacciono il tick del tocco, i colpi del lato, la conferma di un cambio e l'annullamento; il punto in coda perde i colpi del lato e tiene il colpo lungo; non confermato e allarme del portiere suonano come sempre (`HapticsDelPolso`).
+- **Autorita'**: il polso chiede (`MSG_SETTING_INTENT`), il telefono scrive nelle sue impostazioni (`MatchSettingsRepository`) e da li' il flusso delle impostazioni applica, con le guardie di sempre; la risposta e' lo stato v2, che ora porta le regole fra cui scegliere (`deuce_ids`, `deuce_labels`, gia' tradotte) e la durata del portiere (`keeper_seconds`).
+- **Stati**: normale, premuto, spenta col perche', in corso (la lista resta aperta finche' non si sceglie), errore (messaggio non partito: vibrazione dell'errore), vuoto (senza 40-40 ne' portiere resta la sola vibrazione), movimento ridotto (nessun movimento nuovo).
+
 ### Protocollo (additivo, golden test di `:shared`)
 
-`PATH_PAIRS` (DataItem del telefono: rose, prossima partita, sigle, panchina, spareggio, consegnata, versione) e `MSG_SERATA_INTENT` (messaggio del polso con azione, base, posti e sequenza). Le sequenze del polso restano una sola per nodo (`SequenzaDelPolso`): quadrante e schermata non si scavalcano.
+`PATH_PAIRS` (DataItem del telefono: rose, prossima partita, sigle, panchina, spareggio, consegnata, versione) e `MSG_SERATA_INTENT` (messaggio del polso con azione, base, posti e sequenza). Le sequenze del polso restano una sola per nodo (`SequenzaDelPolso`): quadrante e schermata non si scavalcano. Impostazioni: `KEY_DEUCE_IDS`, `KEY_DEUCE_LABELS`, `KEY_KEEPER_SECONDS` nello stato v2 e `MSG_SETTING_INTENT` (`setting`, `setting_value`, `seq`).
 
 ### Debiti
 
@@ -2417,7 +2425,9 @@ Richiesta del proprietario: dal menu dell'orologio sapere chi gioca in ogni squa
 - Con l'app del telefono chiusa la richiesta del polso va persa (nessuna custodia come per i punti): l'orologio dice "Il telefono non ha risposto".
 - `WearViewModel.applicaCoppie` non ha un test suo; le descrizioni TalkBack del quadrante non dicono i giocatori.
 - `clipToOutline` dei gruppi vale da API 31 (minimo 30), come nella scelta dello sport.
-- Non ancora visto a schermo sul Galaxy Watch.
+- Il menu si chiude da solo dopo 10 secondi senza tocchi: con "In campo" e le impostazioni sotto la piega c'e' da scorrere (segnalato alla revisione dei menu, che ridisegna il menu dopo questa PR).
+- Dopo una scelta dalla lista il quadrante non riapre il menu: il valore nuovo si legge alla prossima apertura.
+- "In campo" visto sul Galaxy Watch (VAN/SER, Vantaggi e Serrone); prossima partita e impostazioni non ancora viste a schermo.
 
 ### Controllo dei pattern vietati (`review.md`)
 

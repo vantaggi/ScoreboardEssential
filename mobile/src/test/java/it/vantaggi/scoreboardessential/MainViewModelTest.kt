@@ -74,6 +74,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doSuspendableAnswer
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
@@ -3146,6 +3147,58 @@ class MainViewModelTest {
             assertEquals(DeuceRule.KILLER_POINT, engine.rules.config.deuce)
             val padel = statiV2().filter { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL }
             assertEquals("KILLER_POINT", padel.last()[WearConstants.KEY_DEUCE_RULE])
+        }
+
+    /**
+     * Dal polso la regola del 40-40 si scrive nelle impostazioni, come dal telefono, e lo stato v2 porta
+     * le regole fra cui scegliere. A partita cominciata, o con un nome che non e' una regola, non si
+     * scrive niente. Si rompe togliendo la guardia del registro o le chiavi dallo stato.
+     */
+    @Test
+    fun `il 40-40 chiesto dal polso si scrive solo a partita ferma`() =
+        runTest {
+            val nuovo = nuovoViewModel(sportSalvato = SportRegistry.PADEL)
+            advanceUntilIdle()
+            val padel = statiV2().last { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL }
+            assertEquals("GOLDEN_POINT|KILLER_POINT|ADVANTAGE", padel[WearConstants.KEY_DEUCE_IDS])
+            assertEquals(3, (padel[WearConstants.KEY_DEUCE_LABELS] as String).split("|").count { it.isNotBlank() })
+            assertEquals(0L, padel[WearConstants.KEY_KEEPER_SECONDS])
+
+            nuovo.applicaImpostazioneDalPolso(WearConstants.SETTING_DEUCE, "KILLER_POINT")
+            nuovo.applicaImpostazioneDalPolso(WearConstants.SETTING_DEUCE, "QUALCOSA")
+            advanceUntilIdle()
+            verify(mockMatchSettingsRepository).setDeuceRule(SportRegistry.PADEL, DeuceRule.KILLER_POINT)
+
+            nuovo.addScore(1)
+            advanceUntilIdle()
+            nuovo.applicaImpostazioneDalPolso(WearConstants.SETTING_DEUCE, "ADVANTAGE")
+            advanceUntilIdle()
+            verify(mockMatchSettingsRepository, never()).setDeuceRule(any(), eq(DeuceRule.ADVANTAGE))
+        }
+
+    /**
+     * Il portiere dal polso: la durata si scrive dove c'e' il portiere e solo fra 5 secondi e 10 minuti,
+     * e lo stato v2 la porta. Nel padel non c'e' niente da scrivere e la chiave vale 0.
+     */
+    @Test
+    fun `il portiere chiesto dal polso si scrive solo nel calcio e in un intervallo sensato`() =
+        runTest {
+            advanceUntilIdle()
+            assertEquals(300L, statiV2().last()[WearConstants.KEY_KEEPER_SECONDS])
+            assertEquals("", statiV2().last()[WearConstants.KEY_DEUCE_IDS])
+
+            viewModel.applicaImpostazioneDalPolso(WearConstants.SETTING_KEEPER, "45")
+            viewModel.applicaImpostazioneDalPolso(WearConstants.SETTING_KEEPER, "3")
+            viewModel.applicaImpostazioneDalPolso(WearConstants.SETTING_KEEPER, "mezzo minuto")
+            advanceUntilIdle()
+            verify(mockMatchSettingsRepository).setKeeperTimerDuration(45L)
+            verify(mockMatchSettingsRepository, never()).setKeeperTimerDuration(3L)
+
+            val padel = nuovoViewModel(sportSalvato = SportRegistry.PADEL)
+            advanceUntilIdle()
+            padel.applicaImpostazioneDalPolso(WearConstants.SETTING_KEEPER, "60")
+            advanceUntilIdle()
+            verify(mockMatchSettingsRepository, never()).setKeeperTimerDuration(60L)
         }
 
     /** Il ViewModel di [viewModel] rifatto da capo, con i suoi finti, e queste impostazioni. */

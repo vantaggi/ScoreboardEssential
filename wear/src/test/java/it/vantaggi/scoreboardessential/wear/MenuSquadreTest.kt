@@ -78,4 +78,37 @@ class MenuSquadreTest {
         assertEquals(Activity.RESULT_OK, esito.resultCode)
         assertEquals(MenuActivity.AZIONE_PROSSIMA, esito.resultIntent.getStringExtra(MenuActivity.EXTRA_AZIONE))
     }
+
+    /**
+     * Il gruppo delle impostazioni: rosso se non compare, se la regola del 40-40 non torna al quadrante
+     * con la sua azione o se la vibrazione non si cambia sul posto e non resta scelta.
+     */
+    @Test
+    fun `le impostazioni stanno in fondo, il 40-40 torna al quadrante e la vibrazione si cambia sul posto`() {
+        val contesto = RuntimeEnvironment.getApplication()
+        PreferenzeDelPolso(contesto).vibrazionePunti = true
+        val input = ferma.copy(regola40 = "Killer point")
+        val menu =
+            Robolectric
+                .buildActivity(MenuActivity::class.java, MenuActivity.intent(contesto, input, emptyList()))
+                .setup()
+                .get()
+        val gruppo = menu.findViewById<LinearLayout>(R.id.menu_impostazioni)
+        val titolo = { i: Int -> gruppo.getChildAt(i).findViewById<TextView>(R.id.sport_name).text.toString() }
+        val sotto = { i: Int -> gruppo.getChildAt(i).findViewById<TextView>(R.id.sport_current).text.toString() }
+
+        assertEquals(2, gruppo.childCount)
+        assertEquals(menu.getString(R.string.wear_setting_deuce), titolo(0))
+        assertEquals("Killer point", sotto(0))
+        assertEquals(menu.getString(R.string.wear_setting_vibration_on), sotto(1))
+
+        gruppo.getChildAt(1).performClick()
+        assertEquals(menu.getString(R.string.wear_setting_vibration_off), sotto(1))
+        assertEquals(false, PreferenzeDelPolso(contesto).vibrazionePunti)
+
+        gruppo.getChildAt(0).performClick()
+        val esito = shadowOf(menu)
+        assertEquals(Activity.RESULT_OK, esito.resultCode)
+        assertEquals(MenuActivity.AZIONE_REGOLA_40, esito.resultIntent.getStringExtra(MenuActivity.EXTRA_AZIONE))
+    }
 }
