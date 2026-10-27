@@ -1,7 +1,9 @@
 package it.vantaggi.scoreboardessential.padelelite
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -27,8 +29,12 @@ import it.vantaggi.scoreboardessential.ui.EmptyStateView
 import kotlinx.coroutines.launch
 
 /**
- * "Padel Elite": accesso con email e password, scelta del gruppo, esci. Si raggiunge dalle
- * impostazioni e dal comando "Invia a Padel Elite" quando manca l'accesso o il gruppo.
+ * "Padel Elite": accesso con Google o con email e password, scelta del gruppo, esci. Si raggiunge
+ * dalle impostazioni e dal comando "Invia a Padel Elite" quando manca l'accesso o il gruppo.
+ *
+ * "Accedi con Google" apre la pagina di Supabase nel browser; il ritorno arriva come deep link
+ * ([AccessoGoogle.RITORNO]) a questa stessa Activity, `singleTask` nel manifest: quella gia' aperta
+ * lo riceve in [onNewIntent], una nuova (l'app chiusa nel frattempo) in [onCreate].
  *
  * Stati del modulo: vuoto, invio in corso (il bottone resta largo uguale e cambia solo la parola),
  * errore sotto il campo o in una riga con icona, riuscito (si passa al pannello dell'account).
@@ -52,6 +58,11 @@ class PadelEliteActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Esportata per il deep link: un link che arriva con la funzione spenta non apre niente.
+        if (!(application as ScoreboardEssentialApplication).padelElite.account.isEnabled) {
+            finish()
+            return
+        }
         setContentView(R.layout.activity_padel_elite)
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -61,7 +72,11 @@ class PadelEliteActivity : AppCompatActivity() {
         val emailEdit = findViewById<TextInputEditText>(R.id.email_edit)
         val passwordEdit = findViewById<TextInputEditText>(R.id.password_edit)
         val loginButton = findViewById<MaterialButton>(R.id.login_button)
+        val googleButton = findViewById<MaterialButton>(R.id.google_button)
         val loginMessage = findViewById<TextView>(R.id.login_message)
+
+        googleButton.setOnClickListener { apriGoogle() }
+        if (savedInstanceState == null) leggiRitorno(intent)
 
         fun accedi() = viewModel.signIn(emailEdit.text?.toString().orEmpty(), passwordEdit.text?.toString().orEmpty())
         loginButton.setOnClickListener { accedi() }
@@ -91,9 +106,14 @@ class PadelEliteActivity : AppCompatActivity() {
                     viewModel.login.collect { stato ->
                         val inCorso = stato.sending
                         loginButton.isEnabled = !inCorso
+                        googleButton.isEnabled = !inCorso
                         emailEdit.isEnabled = !inCorso
                         passwordEdit.isEnabled = !inCorso
-                        loginButton.setText(if (inCorso) R.string.padel_elite_signing_in else R.string.padel_elite_sign_in)
+                        // "Accesso in corso" va sul bottone che l'ha cominciato; l'altro e' solo disattivato.
+                        val conEmail = inCorso && !stato.google
+                        val conGoogle = inCorso && stato.google
+                        loginButton.setText(if (conEmail) R.string.padel_elite_signing_in else R.string.padel_elite_sign_in)
+                        googleButton.setText(if (conGoogle) R.string.padel_elite_signing_in else R.string.padel_elite_sign_in_google)
                         val testo = stato.problem?.let { getString(testoDelProblema(it)) }
                         // Un errore di campo sta sotto il campo, gli altri in una riga con icona.
                         emailLayout.error = testo.takeIf { stato.problem in EMAIL_PROBLEMS }
@@ -119,6 +139,27 @@ class PadelEliteActivity : AppCompatActivity() {
                 }
                 launch { rosaViewModel.state.collect { mostraRosa(it) } }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        leggiRitorno(intent)
+    }
+
+    /** Il deep link di ritorno da Google, se [intent] lo porta. Letto una volta: poi l'intent non lo porta piu'. */
+    private fun leggiRitorno(intent: Intent?) {
+        val ritorno = RitornoGoogle.da(intent?.data) ?: return
+        setIntent(Intent(intent).setData(null))
+        viewModel.completeGoogle(ritorno)
+    }
+
+    private fun apriGoogle() {
+        val indirizzo = viewModel.startGoogle() ?: return
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(indirizzo)).addCategory(Intent.CATEGORY_BROWSABLE))
+        } catch (_: ActivityNotFoundException) {
+            viewModel.noBrowser()
         }
     }
 
@@ -299,6 +340,8 @@ class PadelEliteActivity : AppCompatActivity() {
             LoginProblem.EMAIL_NOT_CONFIRMED -> R.string.padel_elite_error_email_not_confirmed
             LoginProblem.RATE_LIMITED -> R.string.padel_elite_error_rate_limited
             LoginProblem.NETWORK -> R.string.padel_elite_error_network
+            LoginProblem.GOOGLE_FAILED -> R.string.padel_elite_error_google
+            LoginProblem.NO_BROWSER -> R.string.padel_elite_error_no_browser
             LoginProblem.OTHER -> R.string.padel_elite_error_other
         }
 

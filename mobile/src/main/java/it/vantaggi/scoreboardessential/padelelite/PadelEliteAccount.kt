@@ -42,7 +42,7 @@ sealed interface RosterOutcome {
 }
 
 /**
- * L'account Padel Elite dell'utente: accesso, uscita, rinnovo automatico del token, gruppo scelto
+ * L'account Padel Elite dell'utente: accesso (email e password, o Google), uscita, rinnovo automatico del token, gruppo scelto
  * e le chiamate che richiedono di essere autenticati.
  *
  * Un token scaduto (o rifiutato dal server con 401) si rinnova da solo **una volta** e la
@@ -78,12 +78,33 @@ class PadelEliteAccount(
         password: String,
     ): AuthResult {
         val esito = api.signIn(email.trim(), password)
-        if (esito is AuthResult.Ok) {
-            // Un altro utente non eredita il gruppo del precedente.
-            if (store.load()?.userId != esito.session.userId) store.clearGroup()
-            store.save(esito.session)
-        }
+        salva(esito)
         return esito
+    }
+
+    /**
+     * Comincia l'accesso con Google: salva un verificatore PKCE nuovo (quello di un tentativo
+     * precedente non vale piu') e da' l'indirizzo da aprire nel browser.
+     */
+    fun startGoogleSignIn(): String {
+        val verificatore = AccessoGoogle.nuovoVerificatore()
+        store.savePkceVerifier(verificatore)
+        return AccessoGoogle.indirizzo(config, AccessoGoogle.sfida(verificatore))
+    }
+
+    /** Finisce l'accesso con Google col [code] del deep link. Senza un verificatore salvato il codice non vale niente. */
+    suspend fun signInWithGoogle(code: String): AuthResult {
+        val verificatore = store.takePkceVerifier() ?: return AuthResult.Rejected(AuthFailure.OTHER)
+        val esito = api.exchangeCode(code, verificatore)
+        salva(esito)
+        return esito
+    }
+
+    private fun salva(esito: AuthResult) {
+        if (esito !is AuthResult.Ok) return
+        // Un altro utente non eredita il gruppo del precedente.
+        if (store.load()?.userId != esito.session.userId) store.clearGroup()
+        store.save(esito.session)
     }
 
     fun signOut() = store.clear()

@@ -8,6 +8,8 @@
     <string name="padel_elite_password">Password</string>
     <string name="padel_elite_sign_in">Accedi</string>
     <string name="padel_elite_signing_in">Accesso in corso</string>
+    <string name="padel_elite_sign_in_google">Accedi con Google</string>
+    <string name="padel_elite_or_email">Oppure con email e password</string>
     <string name="padel_elite_sign_out">Esci</string>
     <string name="padel_elite_settings_sign_in">Padel Elite: accedi</string>
     <string name="padel_elite_settings_group">Gruppo</string>
@@ -31,6 +33,8 @@
     <string name="padel_elite_error_email_not_confirmed">Conferma prima l\'email: apri il link che ti abbiamo mandato</string>
     <string name="padel_elite_error_rate_limited">Troppi tentativi. Aspetta qualche minuto e riprova.</string>
     <string name="padel_elite_error_network">Nessuna connessione. Controlla la rete e riprova.</string>
+    <string name="padel_elite_error_google">Accesso con Google non riuscito. Riprova.</string>
+    <string name="padel_elite_error_no_browser">Per accedere con Google serve un browser sul telefono.</string>
     <string name="padel_elite_error_other">Non riesco ad accedere. Riprova piu\' tardi.</string>
 
     <!-- Il comando e lo stato sulla card dello storico: ogni stato ha una parola e un icona. -->

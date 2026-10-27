@@ -8,6 +8,8 @@
     <string name="padel_elite_password">Password</string>
     <string name="padel_elite_sign_in">Sign in</string>
     <string name="padel_elite_signing_in">Signing in</string>
+    <string name="padel_elite_sign_in_google">Sign in with Google</string>
+    <string name="padel_elite_or_email">Or with email and password</string>
     <string name="padel_elite_sign_out">Sign out</string>
     <string name="padel_elite_settings_sign_in">Padel Elite: sign in</string>
     <string name="padel_elite_settings_group">Group</string>
@@ -31,6 +33,8 @@
     <string name="padel_elite_error_email_not_confirmed">Confirm your email first: open the link we sent you</string>
     <string name="padel_elite_error_rate_limited">Too many attempts. Wait a few minutes and try again.</string>
     <string name="padel_elite_error_network">No connection. Check the network and try again.</string>
+    <string name="padel_elite_error_google">Google sign-in did not work. Try again.</string>
+    <string name="padel_elite_error_no_browser">Signing in with Google needs a browser on the phone.</string>
     <string name="padel_elite_error_other">Could not sign in. Try again later.</string>
 
     <!-- Il comando e lo stato sulla card dello storico: ogni stato ha una parola e un icona. -->
