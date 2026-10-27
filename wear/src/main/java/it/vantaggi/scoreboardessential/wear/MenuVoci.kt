@@ -59,6 +59,12 @@ sealed class SottotitoloVoce {
         val testo: String,
     ) : SottotitoloVoce()
 
+    /** Una voce spenta che dice anche il valore in uso: "Killer point · Partita in corso". */
+    data class ValoreBloccato(
+        val valore: String,
+        val perche: SottotitoloVoce,
+    ) : SottotitoloVoce()
+
     /** La vibrazione dei punti: accesa, o spenta con i soli avvisi. */
     data class Vibrazione(
         val accesa: Boolean,
@@ -149,7 +155,12 @@ object MenuVoci {
                 !input.collegato -> SottotitoloVoce.ServeIlTelefono
                 else -> null
             }
-        return Voce(IdVoce.REGOLA_40, blocco == null, blocco ?: SottotitoloVoce.Valore(input.regola40))
+        // Spenta dice anche quale regola vale: a meta' partita e' proprio quello che si vuole sapere.
+        return Voce(
+            IdVoce.REGOLA_40,
+            blocco == null,
+            if (blocco == null) SottotitoloVoce.Valore(input.regola40) else SottotitoloVoce.ValoreBloccato(input.regola40, blocco),
+        )
     }
 
     private fun vocePortiere(input: InputMenu): Voce {

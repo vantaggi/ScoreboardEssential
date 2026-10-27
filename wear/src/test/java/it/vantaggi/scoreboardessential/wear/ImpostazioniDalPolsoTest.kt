@@ -37,17 +37,17 @@ class ImpostazioniDalPolsoTest {
     }
 
     @Test
-    fun `a partita cominciata, con la coda o senza telefono il 40-40 e' spento e dice perche'`() {
+    fun `a partita cominciata, con la coda o senza telefono il 40-40 e' spento e dice quale vale e perche'`() {
         assertEquals(
-            Voce(IdVoce.REGOLA_40, false, SottotitoloVoce.PartitaInCorso),
+            Voce(IdVoce.REGOLA_40, false, SottotitoloVoce.ValoreBloccato("Killer point", SottotitoloVoce.PartitaInCorso)),
             MenuVoci.impostazioni(padelFermo.copy(partitaIniziata = true)).first(),
         )
         assertEquals(
-            Voce(IdVoce.REGOLA_40, false, SottotitoloVoce.PrimaConsegna(2)),
+            Voce(IdVoce.REGOLA_40, false, SottotitoloVoce.ValoreBloccato("Killer point", SottotitoloVoce.PrimaConsegna(2))),
             MenuVoci.impostazioni(padelFermo.copy(inCoda = 2)).first(),
         )
         assertEquals(
-            Voce(IdVoce.REGOLA_40, false, SottotitoloVoce.ServeIlTelefono),
+            Voce(IdVoce.REGOLA_40, false, SottotitoloVoce.ValoreBloccato("Killer point", SottotitoloVoce.ServeIlTelefono)),
             MenuVoci.impostazioni(padelFermo.copy(collegato = false)).first(),
         )
     }

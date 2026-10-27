@@ -2409,7 +2409,7 @@ Richiesta del proprietario: dal menu dell'orologio sapere chi gioca in ogni squa
 
 ### Impostazioni essenziali al polso (scelta del proprietario, 27 ottobre 2026)
 
-- **Cosa**: in fondo al menu, sotto "In campo", un gruppo "Impostazioni" con le stesse righe delle voci (`item_sport_wear`, nome e valore come sottotitolo): **Sul 40-40** (solo negli sport col 40-40; spenta a partita cominciata, con la coda o senza telefono, coi sottotitoli dello sport), **Vibrazione** (del polso, sempre attiva: "A ogni punto" / "Solo avvisi", cambia sul posto con un tocco, un tick quando si riaccende), **Portiere** (solo nel calcio, la durata; anche a partita in corso, come sul telefono). Il resto delle impostazioni resta sul telefono. Quali righe ci sono e quali sono spente lo decide `MenuVoci.impostazioni`, pura.
+- **Cosa**: in fondo al menu, sotto "In campo", un gruppo "Impostazioni" con le stesse righe delle voci (`item_sport_wear`, nome e valore come sottotitolo): **Sul 40-40** (solo negli sport col 40-40; spenta a partita cominciata, con la coda o senza telefono, e anche spenta dice quale regola vale: "Killer point · Partita in corso"), **Vibrazione** (del polso, sempre attiva: "A ogni punto" / "Solo avvisi", cambia sul posto con un tocco, un tick quando si riaccende), **Portiere** (solo nel calcio, la durata; anche a partita in corso, come sul telefono). Il resto delle impostazioni resta sul telefono. Quali righe ci sono e quali sono spente lo decide `MenuVoci.impostazioni`, pura.
 - **Scelta**: Sul 40-40 e Portiere aprono la lista dello sport (`SportSelectionActivity` con un titolo), con la spunta sul valore in uso. Il portiere si sceglie fra 15 s e 5 min (piu' la durata in uso, se il telefono ne ha scritta un'altra): sul tondo non si scrive un numero.
 - **Vibrazione spenta** (scelta del proprietario: "spegne i punti, avvisi si'"): tacciono il tick del tocco, i colpi del lato, la conferma di un cambio e l'annullamento; il punto in coda perde i colpi del lato e tiene il colpo lungo; non confermato e allarme del portiere suonano come sempre (`HapticsDelPolso`).
 - **Autorita'**: il polso chiede (`MSG_SETTING_INTENT`), il telefono scrive nelle sue impostazioni (`MatchSettingsRepository`) e da li' il flusso delle impostazioni applica, con le guardie di sempre; la risposta e' lo stato v2, che ora porta le regole fra cui scegliere (`deuce_ids`, `deuce_labels`, gia' tradotte) e la durata del portiere (`keeper_seconds`).
@@ -2427,7 +2427,7 @@ Richiesta del proprietario: dal menu dell'orologio sapere chi gioca in ogni squa
 - `clipToOutline` dei gruppi vale da API 31 (minimo 30), come nella scelta dello sport.
 - Il menu si chiude da solo dopo 10 secondi senza tocchi: con "In campo" e le impostazioni sotto la piega c'e' da scorrere (segnalato alla revisione dei menu, che ridisegna il menu dopo questa PR).
 - Dopo una scelta dalla lista il quadrante non riapre il menu: il valore nuovo si legge alla prossima apertura.
-- "In campo" visto sul Galaxy Watch (VAN/SER, Vantaggi e Serrone); prossima partita e impostazioni non ancora viste a schermo.
+- Visti sul Galaxy Watch il 27 ottobre: "In campo" (VAN/SER Vantaggi e Serrone, RAG/GLO Ragni e Glorio, con le barrette di squadra) e il gruppo Impostazioni a partita in corso nel padel (Sul 40-40 spento, Vibrazione "A ogni punto", niente Portiere); non toccate le voci. La prossima partita non e' vista a schermo (nessuna serata aperta). Per arrivare alle Impostazioni servono tre o quattro trascinamenti.
 
 ### Controllo dei pattern vietati (`review.md`)
 

@@ -339,7 +339,10 @@ class MenuActivity : ComponentActivity() {
     }
 
     /** I due sottotitoli che parlano di tocchi non consegnati, in ambra. */
-    private fun SottotitoloVoce.eDaConsegnare() = this is SottotitoloVoce.PrimaConsegna || this is SottotitoloVoce.CodaRifiutata
+    private fun SottotitoloVoce.eDaConsegnare(): Boolean =
+        this is SottotitoloVoce.PrimaConsegna ||
+            this is SottotitoloVoce.CodaRifiutata ||
+            (this is SottotitoloVoce.ValoreBloccato && perche.eDaConsegnare())
 
     private fun titoloDi(
         voce: Voce,
@@ -416,6 +419,10 @@ internal fun SottotitoloVoce.testo(context: Context): String =
 
         is SottotitoloVoce.Valore -> {
             testo
+        }
+
+        is SottotitoloVoce.ValoreBloccato -> {
+            "$valore · ${perche.testo(context)}"
         }
 
         is SottotitoloVoce.Vibrazione -> {
