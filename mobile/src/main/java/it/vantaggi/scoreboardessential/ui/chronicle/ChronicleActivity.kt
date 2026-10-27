@@ -39,7 +39,9 @@ import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.core.GameStat
 import it.vantaggi.scoreboardessential.core.MatchPlayer
 import it.vantaggi.scoreboardessential.core.MatchStats
+import it.vantaggi.scoreboardessential.core.MatchTimes
 import it.vantaggi.scoreboardessential.core.ServeLine
+import it.vantaggi.scoreboardessential.core.ServeStats
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.sportLabel
@@ -56,10 +58,12 @@ import it.vantaggi.scoreboardessential.shared.R as SharedR
  * La Cronaca di una partita chiusa: la stessa della dashboard di Padel Elite, sui dati del
  * telefono e senza rete (`docs/dashboard/SCOREBOARD_CRONACA_APP.md`, sezione 4).
  *
- * Il calcolo e' tutto in [MatchStats]; qui ci sono solo impaginazione e parole. Ogni sezione ha
- * il suo stato vuoto e lo dice (che cosa manca, perche', cosa fare): una partita salvata senza
- * ordine di servizio o senza tempi non deve sembrare una partita in cui nessuno ha servito o
- * durata zero.
+ * Il calcolo e' tutto in [MatchStats]; qui ci sono solo impaginazione e parole. Si mostra solo
+ * cio' che c'e' (revisione dei menu, passo 5): una sezione senza dati sparisce, e se mancano
+ * servizio o tempi lo dice una riga in fondo, con il perche' e cosa fare, invece di quattro
+ * gruppi che spiegano un'assenza. Una partita salvata senza ordine di servizio o senza tempi non
+ * deve sembrare una partita in cui nessuno ha servito o durata zero. L'andamento compare da tre
+ * punti in su: prima basta il tabellone. Senza nessun punto resta il tabellone, che lo dice.
  *
  * Schermata di contorno (G-5): ogni sezione e' un gruppo tonale (surface su canvas) con righe
  * separate da linee sottili rientrate al testo, niente card e niente ombre. I colori sono i
@@ -124,11 +128,66 @@ class ChronicleActivity : AppCompatActivity() {
         findViewById<View>(R.id.chronicle_sections).visibility = View.VISIBLE
 
         scoreboard(section(R.id.section_scoreboard, R.string.chronicle_section_scoreboard), s, teams, paints)
-        momentum(section(R.id.section_momentum, R.string.chronicle_section_momentum), s, teams, paints)
-        games(section(R.id.section_games, R.string.chronicle_section_games), s, teams, paints)
-        serve(section(R.id.section_serve, R.string.chronicle_section_serve), s, teams, paints, riga.match, lineup)
-        times(section(R.id.section_times, R.string.chronicle_section_times), s, teams)
-        moments(section(R.id.section_moments, R.string.chronicle_section_moments), s, teams, paints)
+        if (shown(R.id.section_momentum, s.points.size >= MOMENTUM_MIN_POINTS)) {
+            momentum(section(R.id.section_momentum, R.string.chronicle_section_momentum), s, teams, paints)
+        }
+        if (shown(R.id.section_games, s.games.isNotEmpty())) {
+            games(section(R.id.section_games, R.string.chronicle_section_games), s, teams, paints)
+        }
+        val serveStats = s.serve
+        shown(R.id.section_serve, serveStats != null)
+        if (serveStats != null) {
+            serve(section(R.id.section_serve, R.string.chronicle_section_serve), s, serveStats, teams, paints, riga.match, lineup)
+        }
+        val timeStats = s.times
+        shown(R.id.section_times, timeStats != null)
+        if (timeStats != null) times(section(R.id.section_times, R.string.chronicle_section_times), s, timeStats, teams)
+        if (shown(R.id.section_moments, s.moments.isNotEmpty())) {
+            moments(section(R.id.section_moments, R.string.chronicle_section_moments), s, teams, paints)
+        }
+        notRecorded(s, riga.match)
+    }
+
+    /** Mostra la sezione [id] solo se [present]; la risposta e' [present]. */
+    private fun shown(
+        id: Int,
+        present: Boolean,
+    ): Boolean {
+        findViewById<View>(id).visibility = if (present) View.VISIBLE else View.GONE
+        return present
+    }
+
+    /**
+     * La riga in fondo per cio' che la partita non ha registrato: servizio e tempi, con il perche' e
+     * cosa fare. Senza punti non c'e': lo dice gia' il tabellone, e senza punti non c'e' altro.
+     */
+    private fun notRecorded(
+        s: MatchStats,
+        match: Match,
+    ) {
+        val title = findViewById<TextView>(R.id.chronicle_not_recorded)
+        val reason = findViewById<TextView>(R.id.chronicle_not_recorded_reason)
+        val singles = MatchStats.isSingles(match.sportId, Match.decodeServeOrder(match.serveOrder))
+        // Che cosa manca e il suo perche'.
+        val missing = mutableListOf<Pair<Int, Int>>()
+        if (s.points.isNotEmpty() && s.serve == null) {
+            val why = if (singles) R.string.chronicle_serve_unknown_singles_reason else R.string.chronicle_serve_unknown_reason
+            missing += R.string.chronicle_not_recorded_serve to why
+        }
+        if (s.points.isNotEmpty() && s.times == null) {
+            missing += R.string.chronicle_not_recorded_times to R.string.chronicle_times_unknown_reason
+        }
+        title.visibility = if (missing.isEmpty()) View.GONE else View.VISIBLE
+        reason.visibility = title.visibility
+        if (missing.isEmpty()) return
+        val names = missing.map { getString(it.first) }
+        title.text =
+            if (names.size == 1) {
+                getString(R.string.chronicle_not_recorded_one, names[0])
+            } else {
+                getString(R.string.chronicle_not_recorded_two, names[0], names[1])
+            }
+        reason.text = missing.joinToString(" ") { getString(it.second) }
     }
 
     /** "Padel · 23/09/2026 21:04 · 1 h 12 min": la durata solo se il tabellone l'ha misurata. */
@@ -246,7 +305,6 @@ class ChronicleActivity : AppCompatActivity() {
         teams: List<String>,
         paints: List<Int>,
     ) {
-        if (s.points.isEmpty()) return empty(body, R.string.chronicle_no_points, R.string.chronicle_momentum_empty_reason)
         val diffs = s.points.map { it.diff }
         val setEnds = s.points.indices.filter { s.points[it].setWon && !s.points[it].matchWon }
         val chart =
@@ -274,7 +332,6 @@ class ChronicleActivity : AppCompatActivity() {
         teams: List<String>,
         paints: List<Int>,
     ) {
-        if (s.games.isEmpty()) return empty(body, R.string.chronicle_no_games, R.string.chronicle_no_games_reason)
         s.games.groupBy { it.set }.forEach { (set, games) ->
             val closed = set < s.sets.size
             val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
@@ -348,20 +405,13 @@ class ChronicleActivity : AppCompatActivity() {
     private fun serve(
         body: LinearLayout,
         s: MatchStats,
+        serve: ServeStats,
         teams: List<String>,
         paints: List<Int>,
         match: Match,
         lineup: List<MatchPlayer>,
     ) {
         val order = Match.decodeServeOrder(match.serveOrder)
-        // Nel singolare le rose a due non c'entrano: il servizio si ricava dall'alternanza.
-        val singles = MatchStats.isSingles(match.sportId, order)
-        val serve =
-            s.serve ?: return if (singles) {
-                empty(body, R.string.chronicle_serve_unknown_singles, R.string.chronicle_serve_unknown_singles_reason)
-            } else {
-                empty(body, R.string.chronicle_serve_unknown, R.string.chronicle_serve_unknown_reason)
-            }
         val names = lineup.associate { it.localId to it.name }
         val table = TableLayout(this).apply { setColumnStretchable(0, true) }
         addTableRow(
@@ -415,9 +465,9 @@ class ChronicleActivity : AppCompatActivity() {
     private fun times(
         body: LinearLayout,
         s: MatchStats,
+        t: MatchTimes,
         teams: List<String>,
     ) {
-        val t = s.times ?: return empty(body, R.string.chronicle_times_unknown, R.string.chronicle_times_unknown_reason)
         val rows =
             listOf(getString(R.string.chronicle_times_total) to t.totalMs) +
                 s.sets.zip(t.setDurationsMs) { set, ms ->
@@ -460,7 +510,6 @@ class ChronicleActivity : AppCompatActivity() {
         teams: List<String>,
         paints: List<Int>,
     ) {
-        if (s.moments.isEmpty()) return empty(body, R.string.chronicle_moments_none)
         s.moments.forEach { m ->
             val side = ChronicleText.side(m)
             addRow(body, withBar(text(ChronicleText.moment(resources, m, teams)), side?.let { paints[it - 1] }))
@@ -616,6 +665,9 @@ class ChronicleActivity : AppCompatActivity() {
         private const val CELL_BAR_DP = 4
         private const val CELL_BAR_INSET_DP = 6
         private const val PERCENT = 100
+
+        // Con meno punti la linea dell'andamento non dice niente che il tabellone non dica gia'.
+        private const val MOMENTUM_MIN_POINTS = 3
         private const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         private const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
 

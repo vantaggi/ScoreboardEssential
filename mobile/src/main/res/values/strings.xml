@@ -259,22 +259,17 @@
     <string name="chronicle_totals">Points won %1$d – %2$d · Games %3$d – %4$d</string>
     <string name="chronicle_no_points">No points recorded</string>
     <string name="chronicle_no_points_reason">The Chronicle is built from the points. This match was saved without them, for example when scoring by games: score points one by one and it fills in.</string>
-    <string name="chronicle_momentum_empty_reason">It is drawn from the points, one by one.</string>
     <string name="chronicle_momentum_caption">Points won ahead, point by point. The number next to a name is its largest lead; dashed lines close the sets.</string>
     <string name="chronicle_momentum_description">Points won, point by point. Largest lead: %1$s +%2$d, %3$s +%4$d.</string>
     <string name="chronicle_set">Set %1$d</string>
     <string name="chronicle_set_open">Set %1$d (in progress)</string>
-    <string name="chronicle_no_games">No game completed</string>
-    <string name="chronicle_no_games_reason">A box appears here for each game that closes, and the log has none.</string>
     <string name="chronicle_tiebreak_cell">TB %1$d-%2$d</string>
     <string name="chronicle_break_mark">B</string>
     <string name="chronicle_game_cd">%1$s, game to %2$s</string>
     <string name="chronicle_game_cd_break">%1$s, game to %2$s, break</string>
     <string name="chronicle_games_legend">The bar tells who won the game: %1$s on the left, %2$s on the right. The number is the score after the game.</string>
     <string name="chronicle_games_legend_breaks">The bar tells who won the game: %1$s on the left, %2$s on the right. The number is the score after the game. B = break: the game was won by the receiving side.</string>
-    <string name="chronicle_serve_unknown">The scoreboard did not know who was serving</string>
     <string name="chronicle_serve_unknown_reason">With two players per team in the rosters before the first point, here you will see the points and games each player won on serve.</string>
-    <string name="chronicle_serve_unknown_singles">Serve and break points come from the points played</string>
     <string name="chronicle_serve_unknown_singles_reason">This match has none, for example when scoring by games. With points scored one by one they appear.</string>
     <string name="chronicle_serve_header_player">On serve</string>
     <string name="chronicle_serve_header_points">Points won</string>
@@ -282,8 +277,11 @@
     <string name="chronicle_percent">%1$d%%</string>
     <string name="chronicle_breaks">%1$s: break points converted %2$d of %3$d</string>
     <string name="chronicle_player_unknown">Player %1$d</string>
-    <string name="chronicle_times_unknown">The scoreboard did not record the times of this match</string>
     <string name="chronicle_times_unknown_reason">The points of this match have no time. New matches record it.</string>
+    <string name="chronicle_not_recorded_one">Not recorded in this match: %1$s</string>
+    <string name="chronicle_not_recorded_two">Not recorded in this match: %1$s and %2$s</string>
+    <string name="chronicle_not_recorded_serve">serve</string>
+    <string name="chronicle_not_recorded_times">times</string>
     <string name="chronicle_times_total">Duration</string>
     <string name="chronicle_times_set">Set %1$d (%2$d-%3$d)</string>
     <string name="chronicle_times_point">Between points</string>
@@ -296,7 +294,6 @@
     <string name="chronicle_duration_minutes">%1$d min</string>
     <string name="chronicle_duration_hours">%1$d h %2$02d min</string>
     <string name="chronicle_no_value">—</string>
-    <string name="chronicle_moments_none">A match without jolts: no comeback, no match point saved, no tie-break.</string>
     <plurals name="chronicle_moment_match_points">
         <item quantity="one">%1$s save a match point</item>
         <item quantity="other">%1$s save %2$d match points</item>

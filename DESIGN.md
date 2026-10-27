@@ -2580,3 +2580,17 @@ La rosa del gruppo erano cinquanta righe in ordine alfabetico, quasi tutte "Non 
 1. Il modulo di accesso (Google, email e password) non cambia: era gia' secondo le regole (G-4).
 2. La rosa si ridisegna intera a ogni lettera: con le rose di oggi (meno di 60 nomi) non si vede; se crescono, passare a una RecyclerView con DiffUtil.
 3. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 5a: la Cronaca mostra solo cio' che c'e'
+
+La Cronaca di una partita salvata senza ordine di servizio e senza tempi aveva quattro gruppi su sei che spiegavano un'assenza (Game per game, Servizio, Tempi, Momenti chiave), ognuno con titolo e paragrafo; il grafico dell'andamento occupava la sua altezza anche per un punto solo.
+
+- **Gerarchia e layout.** Il tabellone resta in cima e c'e' sempre: senza punti dice "Nessun punto registrato" e perche', e il resto non c'e'. Le altre sezioni compaiono solo coi loro dati: l'andamento da tre punti in su, Game per game con almeno un game chiuso, Servizio e Tempi se la partita li ha registrati, Momenti chiave se ce n'e' almeno uno. Sotto le sezioni, se mancano servizio o tempi, una riga sola: "Non registrati in questa partita: servizio e tempi" (al singolare con uno solo), e sotto, piu' piccolo, il perche' e cosa fare (le frasi di prima). Senza punti la riga non c'e': lo dice gia' il tabellone.
+- **Componenti riusati.** Le sezioni (`chronicle_section`) e i loro gruppi; la riga in fondo e' `RowTitle` in testo secondario con la `Caption` sotto, fuori dai gruppi. Tolte sette stringhe che non si usano piu' (gli stati vuoti delle sezioni sparite), nelle due lingue.
+- **Stati.** Partita completa (sei sezioni, nessuna riga in fondo); senza servizio e/o senza tempi (sezioni via, riga in fondo); senza punti (solo il tabellone); partita che non c'e' piu' (`EmptyStateView`, come prima). Movimento: nessuno. 200%: le sezioni sono colonne; la riga in fondo va a capo.
+- **Pattern vietati.** Tolti quattro stati vuoti uguali uno sotto l'altro; niente card nuove, niente ombre.
+- **Il resto del passo 5 (5b).** Lo Storico con le partite per giorno, la riga che apre la Cronaca e Invia, Esporta, Elimina nella barra della Cronaca e' il passo 5b: sposta comandi che scrivono (invio a Padel Elite, eliminazione) e merita una PR sua.
+
+### Debiti dichiarati del passo 5a
+
+1. Non visto a schermo: verificato solo dai test e dalla CI.
