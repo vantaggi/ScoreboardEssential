@@ -56,7 +56,11 @@ class SerataAnnullaStrumentatoTest {
             .getDeclaredField("instance")
             .apply { isAccessible = true }
             .set(null, db)
-        contesto.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).edit().clear().commit()
+        contesto
+            .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .commit()
     }
 
     @After
@@ -67,7 +71,11 @@ class SerataAnnullaStrumentatoTest {
             .apply { isAccessible = true }
             .set(null, null)
         db.close()
-        contesto.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).edit().clear().commit()
+        contesto
+            .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .commit()
     }
 
     @Test
@@ -88,7 +96,11 @@ class SerataAnnullaStrumentatoTest {
         ActivityScenario.launch(SerataActivity::class.java).use { scena ->
             toccaUsaIPresenti(scena)
             // "E' lui": la riga 0 e' la spiegazione, la 1 l'omonimo.
-            onData(anything()).inRoot(isDialog()).inAdapterView(isAssignableFrom(ListView::class.java)).atPosition(1).perform(click())
+            onData(anything())
+                .inRoot(isDialog())
+                .inAdapterView(isAssignableFrom(ListView::class.java))
+                .atPosition(1)
+                .perform(click())
             misura(scena)
         }
     }
@@ -154,9 +166,16 @@ class SerataAnnullaStrumentatoTest {
             strumenti.runOnMainSync { letto = motivo }
             letto != -1
         }
-        android.util.Log.i("SerataAnnulla", "durata=$durata ms, motivo=$motivo, impostata=${avviso!!.duration}")
+        android.util.Log.i(
+            "SerataAnnulla",
+            "durata=$durata ms, motivo=$motivo, impostata=${avviso!!.duration}",
+        )
         assertTrue("il messaggio deve sparire da solo entro 15 s (durata=$durata)", durata > 0)
-        assertEquals("sparisce per il tempo scaduto (2 = TIMEOUT), non per altro", BaseTransientBottomBar.BaseCallback.DISMISS_EVENT_TIMEOUT, motivo)
+        assertEquals(
+            "sparisce per il tempo scaduto (2 = TIMEOUT), non per altro",
+            BaseTransientBottomBar.BaseCallback.DISMISS_EVENT_TIMEOUT,
+            motivo,
+        )
         assertTrue("resta circa 8 s, non i 3 di sistema (durata=$durata ms)", durata in 7_500..9_500)
     }
 
