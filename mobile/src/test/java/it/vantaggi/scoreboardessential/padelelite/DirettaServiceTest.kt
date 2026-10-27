@@ -284,7 +284,10 @@ class DirettaServiceTest {
         val notifica = shadowOf(avviaIlServizio()).lastForegroundNotification
 
         assertEquals(app.getString(R.string.diretta_live, "Padel"), titolo(notifica))
-        assertEquals(app.getString(R.string.diretta_wait_network), testo(notifica))
+        assertEquals(
+            app.getString(R.string.diretta_notif_waiting, app.getString(R.string.diretta_notif_why_network)),
+            testo(notifica),
+        )
     }
 
     // --- Aggiornamento ---

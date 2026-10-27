@@ -54,8 +54,13 @@ import it.vantaggi.scoreboardessential.padelelite.DirettaFase
 import it.vantaggi.scoreboardessential.padelelite.DirettaFoto
 import it.vantaggi.scoreboardessential.padelelite.DirettaServizioFase
 import it.vantaggi.scoreboardessential.padelelite.DirettaStato
+import it.vantaggi.scoreboardessential.padelelite.ElencoDellaScelta
+import it.vantaggi.scoreboardessential.padelelite.GiocatoriDalGruppo
 import it.vantaggi.scoreboardessential.padelelite.PadelEliteConfig
 import it.vantaggi.scoreboardessential.padelelite.PadelEliteServices
+import it.vantaggi.scoreboardessential.padelelite.RemotePlayer
+import it.vantaggi.scoreboardessential.padelelite.RosaGruppo
+import it.vantaggi.scoreboardessential.padelelite.SceltaDallaDashboard
 import it.vantaggi.scoreboardessential.repository.ColorRepository
 import it.vantaggi.scoreboardessential.repository.MatchRepository
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
@@ -71,6 +76,7 @@ import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
 import it.vantaggi.scoreboardessential.utils.TimeUtils
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -1051,6 +1057,74 @@ class MainViewModel(
         refreshServeOrder()
         salvaRoseDellaRigaViva()
     }
+
+    // --- Giocatori dalla dashboard ---
+
+    /** La rosa del gruppo di Padel Elite nella scelta dei giocatori. Pigra: con la funzione spenta non apre niente. */
+    private val giocatoriDalGruppo: GiocatoriDalGruppo by lazy {
+        GiocatoriDalGruppo(
+            padelElite.account,
+            RosaGruppo(AppDatabase.getDatabase(getApplication()).padelEliteLinkDao(), playerDao, matchDao),
+            viewModelScope,
+        )
+    }
+
+    /**
+     * Il dialogo "Aggiungi un giocatore" offre anche la rosa della dashboard: funzione accesa, sport padel e un
+     * gruppo scelto. L'accesso si controlla in [elencoDellaScelta], fuori dal thread principale.
+     */
+    fun sceltaDalGruppoPossibile(): Boolean =
+        padelElite.isEnabled && _activeSport.value == SportRegistry.PADEL && padelElite.account.selectedGroup() != null
+
+    /** Rilegge la rosa in sottofondo (al ritorno sulla schermata): il dialogo la trova pronta. Nessun errore mostrato. */
+    fun preparaLaRosaDelGruppo() {
+        if (!sceltaDalGruppoPossibile()) return
+        viewModelScope.launch { senzaErrori { giocatoriDalGruppo.prepara() } }
+    }
+
+    /**
+     * L'elenco per aggiungere un giocatore, o null se non c'e' un gruppo da offrire: allora vale il dialogo di sempre.
+     * Chi e' gia' in campo (in una delle due squadre) non si offre, e i suoi compagni di girone vengono prima.
+     */
+    suspend fun elencoDellaScelta(): ElencoDellaScelta? {
+        if (!sceltaDalGruppoPossibile()) return null
+        val inCampo = (_team1Players.value.orEmpty() + _team2Players.value.orEmpty()).map { it.player.playerId }.toSet()
+        return senzaErrori { giocatoriDalGruppo.elenco(inCampo) }
+    }
+
+    /** Un giocatore della dashboard scelto: il suo giocatore dell'app, nato adesso se serve, o gli omonimi da far scegliere. Null se la scrittura fallisce. */
+    suspend fun scegliDallaDashboard(
+        gruppo: String,
+        remote: RemotePlayer,
+    ): SceltaDallaDashboard? = senzaErrori { giocatoriDalGruppo.scegli(gruppo, remote) }
+
+    /** "E' lui": collega l'omonimo e restituisce il suo id; null se la scrittura fallisce. */
+    suspend fun unisciAllOmonimo(
+        gruppo: String,
+        remote: RemotePlayer,
+        localId: Int,
+    ): Int? = senzaErrori { giocatoriDalGruppo.unisci(gruppo, remote, localId) }
+
+    /** "E' un'altra persona": un giocatore nuovo, gia' collegato; null se la scrittura fallisce. */
+    suspend fun creaDallaDashboard(
+        gruppo: String,
+        remote: RemotePlayer,
+    ): Int? = senzaErrori { giocatoriDalGruppo.creaNuovo(gruppo, remote) }
+
+    /** Il giocatore dell'app con i suoi ruoli, per metterlo in squadra: dalla rosa in memoria o, appena creato, dal database. */
+    suspend fun giocatoreDellApp(localId: Int): PlayerWithRoles? =
+        _allPlayers.value.orEmpty().firstOrNull { it.player.playerId == localId }
+            ?: senzaErrori { playerDao.getPlayersWithRoles(listOf(localId)).firstOrNull() }
+
+    /** Una lettura o scrittura che fallisce (rete, database) diventa null: il dialogo lo dice, l'app non cade. */
+    private suspend fun <T> senzaErrori(azione: suspend () -> T): T? =
+        try {
+            azione()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
 
     /**
      * Scambia i due giocatori di una squadra: chi era primo diventa secondo, e con lui cambia chi

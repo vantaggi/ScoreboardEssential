@@ -34,12 +34,14 @@ sealed interface SerataDashboard {
     /**
      * La serata del [giorno]: i [presenti] confermati, tradotti, e i [gironi] salvati per QUESTA serata.
      * [gironiDiUnAltraSerata] e' vero se c'erano gironi salvati ma per un'altra data: non si usano.
+     * [gruppo] e' il gruppo letto: gli ospiti nuovi nascono gia' collegati a lui (null: senza collegamento).
      */
     data class Pronta(
         val giorno: LocalDate,
         val presenti: Traduzione,
         val gironi: List<GironeDellaDashboard> = emptyList(),
         val gironiDiUnAltraSerata: Boolean = false,
+        val gruppo: String? = null,
     ) : SerataDashboard
 
     /** La rete o il server non hanno risposto: si puo' riprovare. */
@@ -145,6 +147,7 @@ class LettoreSerataDashboard(
                     .map { GironeDellaDashboard(traduci(it)) }
                     .filter { it.traduzione.voci.isNotEmpty() },
             gironiDiUnAltraSerata = salvati != null && valgono == null && salvati.gironi.isNotEmpty(),
+            gruppo = gruppo,
         )
     }
 

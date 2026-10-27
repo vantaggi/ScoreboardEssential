@@ -1,6 +1,7 @@
 package it.vantaggi.scoreboardessential
 
 import android.content.Context
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,6 +25,7 @@ import java.time.format.DateTimeFormatter
  *
  * [intestazione] e' una riga che non si tocca (la coppia). [selezionata] ha sempre un secondo segno oltre
  * al tono (spunta e peso). [attiva] false spegne la riga (testo disattivo, icona a 0,5) senza toglierla.
+ * [titoloIntero] lascia andare a capo il titolo senza limite: un elenco di nomi tagliato non si legge.
  */
 data class RigaSerata(
     val chiave: String,
@@ -36,6 +38,7 @@ data class RigaSerata(
     val selezionata: Boolean = false,
     val attiva: Boolean = true,
     val mostraLaSpunta: Boolean = false,
+    val titoloIntero: Boolean = false,
 )
 
 /** Le righe di un gruppo della schermata Serata: posti, comandi, panchina, presenti. */
@@ -89,6 +92,8 @@ class SerataRigheAdapter(
             lead.visibility = if (riga.lead != null) View.VISIBLE else View.GONE
             lead.text = riga.lead
             titolo.text = riga.titolo
+            titolo.maxLines = if (riga.titoloIntero) Int.MAX_VALUE else RIGHE_DEL_TITOLO
+            titolo.ellipsize = if (riga.titoloIntero) null else TextUtils.TruncateAt.END
             // Tre pesi in tutto: la selezione porta il titolo dal 500 al 600.
             titolo.setTextAppearance(
                 if (riga.selezionata) R.style.TextAppearance_App_RowTitleSelected else R.style.TextAppearance_App_RowTitle,
@@ -124,6 +129,7 @@ class SerataRigheAdapter(
         const val TIPO_INTESTAZIONE = 0
         const val TIPO_RIGA = 1
         const val ALPHA_DISATTIVO = 0.5f
+        const val RIGHE_DEL_TITOLO = 2
     }
 }
 
@@ -312,6 +318,7 @@ object RigheDellaSerata {
                     selezionata = stato.inUso(PropostaDashboard.Girone(indice)),
                     mostraLaSpunta = true,
                     attiva = vivi,
+                    titoloIntero = true,
                 )
         }
         return righe

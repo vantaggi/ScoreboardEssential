@@ -7,6 +7,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import androidx.annotation.VisibleForTesting
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
@@ -67,6 +68,8 @@ class SerataActivity : AppCompatActivity() {
                     SerataPrefsStore(prefs),
                     intent.getBooleanExtra(EXTRA_PARTITA_IN_CORSO, false),
                     fonteDiProva ?: fonteDellaDashboard(database),
+                    database.padelEliteLinkDao(),
+                    database.matchDao(),
                 ),
             )[SerataViewModel::class.java]
 
@@ -179,6 +182,7 @@ class SerataActivity : AppCompatActivity() {
 
     /** Disegna lo stato: i gruppi che servono, con le loro righe. */
     private fun mostra(stato: StatoDellaSerata) {
+        mostraLaDomanda(stato.domanda)
         val serata = stato.serata
         val bozza = serata?.bozza
         findViewById<View>(R.id.serata_readonly_notice).visibility = if (stato.inCorso) View.VISIBLE else View.GONE
@@ -274,6 +278,34 @@ class SerataActivity : AppCompatActivity() {
             visibility = if (comando != null) View.VISIBLE else View.GONE
             if (comando != null) setText(comando)
         }
+    }
+
+    /** La domanda aperta sugli omonimi e il dialogo che la mostra; dopo una rotazione la domanda torna dallo stato. */
+    private var domandaMostrata: DomandaOmonimo? = null
+    private var dialogoDellaDomanda: AlertDialog? = null
+
+    /**
+     * "Rossi e' gia' nell'app?" per un presente della dashboard con omonimi: nella dashboard spesso c'e' solo il
+     * cognome, quindi si chiede invece di indovinare. Un omonimo = "e' lui" (si collega), l'ultima riga = un giocatore
+     * nuovo; Annulla, indietro o un tocco fuori lasciano cadere la proposta senza scrivere niente.
+     */
+    private fun mostraLaDomanda(domanda: DomandaOmonimo?) {
+        if (domanda == domandaMostrata) return
+        domandaMostrata = domanda
+        dialogoDellaDomanda?.setOnCancelListener(null)
+        dialogoDellaDomanda?.dismiss()
+        dialogoDellaDomanda = null
+        if (domanda == null) return
+        dialogoDellaDomanda =
+            MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.scelta_same_person_title, domanda.nome))
+                .setAdapter(RigheDelDialogo(this, righeDellaDomanda(this, domanda.nome, domanda.candidati))) { _, which ->
+                    // La riga 0 e' la spiegazione (non si tocca); poi gli omonimi; l'ultima e' "un'altra persona".
+                    if (which == 0) return@setAdapter
+                    viewModel.rispondi(domanda.candidati.getOrNull(which - 1)?.localId)
+                }.setNegativeButton(R.string.cancel) { _, _ -> viewModel.annullaLaDomanda() }
+                .setOnCancelListener { viewModel.annullaLaDomanda() }
+                .show()
     }
 
     private fun mostraIlDialogoDellOspite() {

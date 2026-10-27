@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Looper
+import android.text.TextUtils
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -259,6 +260,23 @@ class SerataActivityTest {
             "Girone B: Nome4, Nome5, Nome6, Nome7. Tocca per usarlo come presenti",
             attivita.riga(R.id.serata_dashboard_rows, 2)?.contentDescription,
         )
+    }
+
+    @Test
+    fun `le righe dei gironi vanno a capo per intero, le altre restano a due righe`() {
+        val ids = giocatori("A", "B", "C", "D")
+        val collegati = ids.mapIndexed { i, id -> Collegato(100 + i, "Nome$i", id) }
+        dallaDashboard(SerataDashboard.Pronta(giovedi, Traduzione(collegati), gironi = listOf(GironeDellaDashboard(Traduzione(collegati)))))
+        val attivita = apri().get()
+        aspetta { attivita.righe(R.id.serata_dashboard_rows) == 2 }
+
+        val presenti = attivita.riga(R.id.serata_dashboard_rows, 0)!!.findViewById<TextView>(R.id.serata_row_title)
+        val girone = attivita.riga(R.id.serata_dashboard_rows, 1)!!.findViewById<TextView>(R.id.serata_row_title)
+        assertEquals("Girone A: Nome0, Nome1, Nome2, Nome3", girone.text.toString())
+        assertEquals("a 360dp e al 200% il girone non si taglia", Int.MAX_VALUE, girone.maxLines)
+        assertEquals(null, girone.ellipsize)
+        assertEquals(2, presenti.maxLines)
+        assertEquals(TextUtils.TruncateAt.END, presenti.ellipsize)
     }
 
     @Test
