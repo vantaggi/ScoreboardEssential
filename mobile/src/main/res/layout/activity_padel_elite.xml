@@ -151,7 +151,11 @@
                     android:text="@string/padel_elite_sign_in" />
             </LinearLayout>
 
-            <!-- Con accesso: chi e', il gruppo, esci. -->
+            <!--
+                Con accesso (revisione dei menu, passo 4): il gruppo per l'invio, poi i giocatori del gruppo
+                (prima i collegati, gli altri dietro una ricerca), in fondo Esci con l'account. Aggiorna sta
+                nella barra in alto.
+            -->
             <LinearLayout
                 android:id="@+id/account_panel"
                 android:layout_width="match_parent"
@@ -160,17 +164,9 @@
                 android:visibility="gone">
 
                 <TextView
-                    android:id="@+id/account_email"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="@color/elite_text_primary"
-                    tools:text="Collegato come mattia@example.com" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/space_24"
+                    android:accessibilityHeading="true"
                     android:text="@string/padel_elite_groups_title"
                     android:textAppearance="?attr/textAppearanceTitleMedium"
                     android:textColor="@color/elite_text_primary" />
@@ -260,6 +256,17 @@
                         android:layout_height="wrap_content"
                         android:visibility="gone" />
 
+                    <!-- Collegati: i giocatori che contano, sempre in vista. Il numero dice quanti sono. -->
+                    <TextView
+                        android:id="@+id/rosa_linked_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_16"
+                        android:accessibilityHeading="true"
+                        android:textAppearance="@style/TextAppearance.App.Caption"
+                        android:visibility="gone"
+                        tools:text="Collegati · 3" />
+
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/rosa_group"
                         style="@style/Widget.App.Group"
@@ -275,25 +282,81 @@
                             android:orientation="vertical" />
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Compare solo con nomi uguali da proporre: la proposta si conferma con questo comando. -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/rosa_same_names_button"
-                        style="@style/Widget.App.Button.Secondary"
-                        android:layout_width="wrap_content"
+                    <!--
+                        Da collegare: i nomi uguali da confermare restano in vista, gli altri si trovano
+                        scrivendo. Stati: suggerimento (campo vuoto), nessun risultato, righe trovate.
+                    -->
+                    <LinearLayout
+                        android:id="@+id/rosa_to_link_section"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/space_8"
-                        android:visibility="gone" />
+                        android:orientation="vertical"
+                        android:visibility="gone">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/rosa_refresh_button"
-                        style="@style/Widget.App.Button.Text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/padel_elite_rosa_refresh"
-                        android:visibility="gone" />
+                        <TextView
+                            android:id="@+id/rosa_to_link_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_16"
+                            android:accessibilityHeading="true"
+                            android:textAppearance="@style/TextAppearance.App.Caption"
+                            tools:text="Da collegare · 44" />
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/rosa_search_layout"
+                            style="@style/Widget.App.TextInputLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_8"
+                            android:hint="@string/padel_elite_rosa_search"
+                            app:endIconMode="clear_text"
+                            app:startIconDrawable="@drawable/ic_search">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/rosa_search_edit"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:imeOptions="actionSearch"
+                                android:inputType="textPersonName"
+                                android:minHeight="@dimen/control_touch" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <TextView
+                            android:id="@+id/rosa_search_message"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_8"
+                            android:accessibilityLiveRegion="polite"
+                            android:textAppearance="@style/TextAppearance.App.Caption"
+                            tools:text="Scrivi un nome per trovarlo fra quelli da collegare." />
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/rosa_to_link_group"
+                            style="@style/Widget.App.Group"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_8"
+                            android:visibility="gone">
+
+                            <LinearLayout
+                                android:id="@+id/rosa_to_link_list"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical" />
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- Compare solo con nomi uguali da proporre: la proposta si conferma con questo comando. -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/rosa_same_names_button"
+                            style="@style/Widget.App.Button.Secondary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_8"
+                            android:visibility="gone" />
+                    </LinearLayout>
                 </LinearLayout>
 
-                <!-- Esci non e' l'azione della schermata: testuale, in fondo, senza peso. -->
+                <!-- Esci non e' l'azione della schermata: testuale, in fondo, senza peso. Sotto, con quale account. -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/logout_button"
                     style="@style/Widget.App.Button.Text"
@@ -301,6 +364,13 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_32"
                     android:text="@string/padel_elite_sign_out" />
+
+                <TextView
+                    android:id="@+id/account_email"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.App.Caption"
+                    tools:text="Collegato come mattia@example.com" />
             </LinearLayout>
         </FrameLayout>
     </ScrollView>

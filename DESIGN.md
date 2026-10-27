@@ -1428,6 +1428,7 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Modifica | `edit` | `ic_edit` | - |
 | Elimina | `delete` | `ic_delete` | `ic_delete` |
 | Cerca | `search` | `ic_search` | - |
+| Aggiorna | `refresh` | `ic_refresh` | - |
 | Filtra | `filter_list` | - | - |
 | Ordina | `swap_vert` | `ic_swap_vert` | - |
 | Condividi | `share` | `ic_share` | - |
@@ -2563,4 +2564,19 @@ La schermata si chiamava "Impostazioni partita" ma teneva anche la lingua, in me
 
 1. Il gruppo Padel Elite e' quello di prima (stato, Entra, Gruppo, Esci): la proposta lo vuole una riga che porta alla sua schermata, con Esci spostato li'. Lo fa il passo 4.
 2. Le scelte (sport, regola del 40-40, lingua) sono ancora campi con la tendina: la proposta le vuole righe nome e valore con il menu che si apre dalla riga. Cambia il componente e i test che toccano i campi (LinguaUnicaTest e i test dello sport): passo a se', dopo il 4.
+3. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 4: Padel Elite, prima i collegati e gli altri dietro una ricerca
+
+La rosa del gruppo erano cinquanta righe in ordine alfabetico, quasi tutte "Non collegato": i tre giocatori collegati, quelli che contano, sparivano in mezzo. Aggiorna ed Esci stavano sotto la lista, raggiungibili solo scorrendo fino in fondo. Nelle Impostazioni il gruppo Padel Elite aveva tre bottoni (Accedi, Gruppo, Esci) che portavano tutti, tranne Esci, alla stessa schermata.
+
+- **Gerarchia e layout.** La schermata, con accesso: **Gruppo per l'invio** (le righe a scelta singola di prima), poi **Giocatori del gruppo** in due parti: **Collegati · n**, sempre in vista, in ordine di nome; **Da collegare · n** con il campo "Cerca un giocatore": a campo vuoto si vedono solo i nomi uguali da confermare (pochi, e chiedono una risposta) e una riga che dice di scrivere un nome; scrivendo compaiono quelli che corrispondono, senza badare a maiuscole e accenti. "Collega i nomi uguali" resta sotto i da collegare. In fondo **Esci da Padel Elite**, testuale, e sotto l'account ("Collegato come ..."), che prima stava in cima. **Aggiorna** passa nella barra in alto (icona `refresh` con la parola per TalkBack) e rilegge gruppi e giocatori. Nelle Impostazioni il gruppo Padel Elite e' **una riga** con la freccia: senza accesso "Accedi a Padel Elite" e "Non collegato", con accesso "Gruppo per l'invio" e "account · gruppo". Esci sta solo nella schermata di Padel Elite.
+- **Componenti riusati.** Le righe della rosa (`item_padel_elite_player`), i gruppi tonali, il divisore rientrato, `EmptyStateView`, il campo `Widget.App.TextInputLayout` con l'icona `search` e la croce per svuotarlo; la riga delle Impostazioni e' quella del foglio Partita (`Widget.App.Pressable`, `bg_focus_ring`, `chevron_right`). La divisione e' una funzione pura, `RosaInVista`, che la schermata chiama a ogni lettura e a ogni lettera: la ricerca non fa richieste.
+- **Stati.** Rosa: scegli un gruppo, in caricamento, vuota, errore, non piu' membro (come prima), pronta. Pronta: nessun collegato (la parte Collegati sparisce), tutti collegati (sparisce Da collegare), campo vuoto (suggerimento), nessun risultato ("Nessun giocatore da collegare con questo nome", annunciato da TalkBack), righe trovate. Aggiorna c'e' solo con l'accesso. Movimento: nessuno nuovo. 200% e 360dp: tutto e' una colonna; il campo di ricerca resta alto almeno 48dp.
+- **Pattern vietati.** Tolti un bottone ripetuto (Gruppo che portava dove portava Accedi) e una lista da scorrere per arrivare ai comandi; nessun primario nuovo, niente card, niente ombre. Il debito 1 del passo 3b e' chiuso.
+
+### Debiti dichiarati del passo 4
+
+1. Il modulo di accesso (Google, email e password) non cambia: era gia' secondo le regole (G-4).
+2. La rosa si ridisegna intera a ogni lettera: con le rose di oggi (meno di 60 nomi) non si vede; se crescono, passare a una RecyclerView con DiffUtil.
 3. Non visto a schermo: verificato solo dai test e dalla CI.

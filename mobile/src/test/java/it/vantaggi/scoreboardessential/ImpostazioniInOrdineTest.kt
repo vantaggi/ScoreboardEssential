@@ -24,7 +24,7 @@ import org.robolectric.annotation.Config
  * Squadre, Regole, Padel Elite, App, e la lingua nel gruppo App accanto all'alto contrasto invece che
  * in mezzo alle regole della partita. Il colore della squadra e' un cerchio pieno senza icona.
  * Rosso se la lingua torna nel gruppo delle regole, se i gruppi cambiano ordine o nome, o se il
- * colore torna un quadrato con la tavolozza.
+ * colore torna un quadrato con la tavolozza, o se Padel Elite torna un gruppo di bottoni.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "it-w411dp-h923dp-xxhdpi")
@@ -76,4 +76,23 @@ class ImpostazioniInOrdineTest {
             assertEquals(0.5f, (angolo as RelativeCornerSize).relativePercent, 0.001f)
         }
     }
+
+    /** Passo 4: Accedi, Gruppo ed Esci erano tre bottoni qui; ora la riga porta alla schermata di Padel Elite. */
+    @Test
+    fun `Padel Elite e' una riga che porta alla sua schermata, senza bottoni`() {
+        val impostazioni = gonfiaLeImpostazioni()
+        val gruppo = impostazioni.findViewById<ViewGroup>(R.id.padelEliteCard)
+        val riga = impostazioni.findViewById<View>(R.id.padelEliteRow)
+
+        assertTrue("la riga di Padel Elite non si tocca", riga.isClickable && riga.isFocusable)
+        assertSame(gruppo, gruppoDi(riga))
+        assertEquals(emptyList<View>(), bottoniIn(gruppo))
+    }
+
+    private fun bottoniIn(vista: View): List<View> =
+        when (vista) {
+            is MaterialButton -> listOf(vista)
+            is ViewGroup -> (0 until vista.childCount).flatMap { bottoniIn(vista.getChildAt(it)) }
+            else -> emptyList()
+        }
 }

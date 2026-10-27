@@ -67,17 +67,14 @@ class MatchSettingsActivity : AppCompatActivity() {
 
     private val padelElite get() = (application as ScoreboardEssentialApplication).padelElite
 
-    /** La card di Padel Elite c'e' solo se la build conosce il Supabase: senza, l'app e' identica a prima. */
+    /**
+     * Il gruppo di Padel Elite c'e' solo se la build conosce il Supabase: senza, l'app e' identica a prima.
+     * E' una riga che porta alla schermata di Padel Elite, dove si accede, si sceglie il gruppo e si esce.
+     */
     private fun setupPadelElite() {
         if (!padelElite.isEnabled) return
         binding.padelEliteCard.visibility = View.VISIBLE
-        val apri = View.OnClickListener { startActivity(PadelEliteActivity.intent(this)) }
-        binding.padelEliteSignInButton.setOnClickListener(apri)
-        binding.padelEliteGroupButton.setOnClickListener(apri)
-        binding.padelEliteSignOutButton.setOnClickListener {
-            padelElite.account.signOut()
-            showPadelEliteStatus()
-        }
+        binding.padelEliteRow.setOnClickListener { startActivity(PadelEliteActivity.intent(this)) }
     }
 
     /**
@@ -98,9 +95,7 @@ class MatchSettingsActivity : AppCompatActivity() {
     private fun showPadelEliteStatus() {
         if (!padelElite.isEnabled) return
         val sessione = padelElite.account.session()
-        val collegato = sessione != null
-        binding.padelEliteSignInButton.visibility = if (collegato) View.GONE else View.VISIBLE
-        binding.padelEliteAccountRow.visibility = if (collegato) View.VISIBLE else View.GONE
+        binding.padelEliteRowTitle.setText(if (sessione == null) R.string.padel_elite_login_title else R.string.padel_elite_groups_title)
         binding.padelEliteStatus.text =
             if (sessione == null) {
                 getString(R.string.padel_elite_settings_signed_out)
