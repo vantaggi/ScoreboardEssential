@@ -2233,7 +2233,7 @@ Richiesta del proprietario: con le coppie scelte e il nome della squadra lasciat
 ### Piano UI (CLAUDE.md, punto 3)
 
 - **Gerarchia e layout**: invariati. Cambia solo il testo del nome di squadra sopra la zona: "VAN/GLO" al posto di "TEAM 1". Stessa `TextView` (`team1_name_textview`, `TextAppearance.App.Game.Name`, una riga con ellissi), nessun token, colore, icona o movimento nuovo.
-- **Regola** (`EtichettaSquadra`, pura): se il nome scelto e' il predefinito (vuoto, "TEAM n", "Team n", "Squadra n", senza badare alle maiuscole) e la rosa ha uno o due giocatori, il nome mostrato e' la sigla di ciascuno unita da "/": prime tre lettere dell'ultima parola del nome, solo lettere, in maiuscolo ("Mattia Vantaggi" e "Glorio" danno "VAN/GLO", "D'Amico" da' "DAM"). Un nome scelto vince sempre. Con piu' di due giocatori (il calcio) resta il nome: cinque sigle non entrano in mezzo tabellone. Se un giocatore non ha lettere resta il nome.
+- **Regola** (`EtichettaSquadra`, pura): se il nome scelto e' il predefinito (vuoto, "TEAM n", "Team n", "Squadra n", senza badare alle maiuscole) e la rosa ha uno o due giocatori, il nome mostrato e' la sigla di ciascuno unita da "/": prime tre lettere della prima parola del nome (il cognome: in rosa i giocatori sono scritti col solo cognome o cognome e nome), solo lettere, in maiuscolo ("Vantaggi" e "Glorio" danno "VAN/GLO", "Ferrario Stefano" da' "FER", "D'Amico" da' "DAM"). Un nome scelto vince sempre. Con piu' di due giocatori (il calcio) resta il nome: cinque sigle non entrano in mezzo tabellone. Se un giocatore non ha lettere resta il nome.
 - **Dove arriva**: `MainViewModel.team1Name`/`team2Name` sono ora il nome **mostrato** (un `MediatorLiveData` di nome scelto e rosa), quindi tabellone, barra del periodo, pallini del servizio, registro del foglio, coppie nel dettaglio, striscia, orologio (`PATH_TEAM_NAMES`), riassunto testuale, PDF e nome del file d'export usano le sigle senza altre modifiche. Il nome **scelto** resta in `team1ChosenName`/`team2ChosenName` ed e' quello che il dialogo propone: aprire il dialogo e confermare non trasforma le sigle in un nome fisso. Registro e orologio si aggiornano anche quando cambia solo la rosa (un osservatore permanente nel ViewModel, tolto in `onCleared`).
 - **Stati**: rosa vuota (il predefinito), un giocatore (singolare: "VAN"), due giocatori, rosa che cambia durante la scelta (le sigle seguono), nome scelto, ripristino dopo la chiusura dell'app (le rose tornano dalla riga viva e con loro le sigle). Nessuno stato nuovo di pressione o di fuoco: il contenitore e' quello di prima.
 - **Accessibilita'**: la descrizione del contenitore segue il nome mostrato ("Modifica nome VAN/GLO"). Come TalkBack legge "/" va sentito sul telefono.
@@ -2243,7 +2243,7 @@ Richiesta del proprietario: con le coppie scelte e il nome della squadra lasciat
 ### Debiti
 
 - Omonimi di sigla (Rossi e Rossini sono tutti e due "ROS"): non si distinguono, si sceglie un nome.
-- Un cognome di due parole ("De Luca") da' la sigla dell'ultima ("LUC").
+- Un cognome di due parole ("De Luca") da' "DE"; un giocatore scritto nome e cognome ("Mattia Vantaggi") da' la sigla del nome ("MAT").
 
 ### Controllo dei pattern vietati (`review.md`)
 

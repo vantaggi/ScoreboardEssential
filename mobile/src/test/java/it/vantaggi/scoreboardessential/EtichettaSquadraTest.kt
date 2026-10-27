@@ -33,8 +33,10 @@ class EtichettaSquadraTest {
     }
 
     @Test
-    fun `la sigla viene dal cognome, l'ultima parola, solo lettere`() {
-        assertEquals("VAN", EtichettaSquadra.sigla("Mattia Vantaggi"))
+    fun `la sigla viene dal cognome, la prima parola, solo lettere`() {
+        // Rosso se torna l'ultima parola: "Ferrario Stefano" dava STE, il nome di battesimo.
+        assertEquals("FER", EtichettaSquadra.sigla("Ferrario Stefano"))
+        assertEquals("VAN", EtichettaSquadra.sigla("Vantaggi"))
         assertEquals("DAM", EtichettaSquadra.sigla("D'Amico"))
         assertEquals("LI", EtichettaSquadra.sigla("Li"))
         assertEquals("", EtichettaSquadra.sigla("  "))

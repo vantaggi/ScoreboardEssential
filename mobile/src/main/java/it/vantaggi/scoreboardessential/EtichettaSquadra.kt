@@ -31,12 +31,12 @@ object EtichettaSquadra {
     fun predefinito(nome: String): Boolean = nome.isBlank() || PREDEFINITO.matches(nome.trim())
 
     /**
-     * Le prime tre lettere del cognome, in maiuscolo. Il cognome e' l'ultima parola: nei giocatori
-     * locali e in quelli presi da Padel Elite il nome e' spesso il solo cognome, e "Mattia Vantaggi"
-     * deve dare VAN e non MAT. Apostrofi e segni restano fuori ("D'Amico" da DAM).
+     * Le prime tre lettere del cognome, in maiuscolo. Il cognome e' la prima parola: nella rosa i
+     * giocatori sono scritti col solo cognome (come nella dashboard) o cognome e nome, e "Ferrario
+     * Stefano" deve dare FER e non STE. Apostrofi e segni restano fuori ("D'Amico" da DAM).
      */
     fun sigla(nomeGiocatore: String): String {
-        val cognome = nomeGiocatore.trim().split(Regex("""\s+""")).last()
+        val cognome = nomeGiocatore.trim().split(Regex("""\s+""")).first()
         return cognome.filter { it.isLetter() }.take(LETTERE).uppercase()
     }
 }

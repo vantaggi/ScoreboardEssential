@@ -529,7 +529,7 @@ class MainViewModelTest {
             val nameObserver = Observer<String> {}
             viewModel.team1Name.observeForever(nameObserver)
 
-            viewModel.addPlayerToTeam(PlayerWithRoles(Player(1, "Mattia Vantaggi", 0, 0), emptyList()), 1)
+            viewModel.addPlayerToTeam(PlayerWithRoles(Player(1, "Vantaggi Mattia", 0, 0), emptyList()), 1)
             viewModel.addPlayerToTeam(PlayerWithRoles(Player(2, "Glorio", 0, 0), emptyList()), 1)
             advanceUntilIdle()
 
