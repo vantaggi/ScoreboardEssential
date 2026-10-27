@@ -312,6 +312,11 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">@dimen/radius_badge</item>
     </style>
+    <!-- Il campione di un colore (squadra): un cerchio, che non si confonde coi bottoni rettangolari. -->
+    <style name="ShapeAppearance.App.Swatch" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
     <style name="ShapeAppearance.App.MatchSheet" parent="ShapeAppearance.Material3.LargeComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSizeTopLeft">@dimen/radius_surface</item>

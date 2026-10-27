@@ -1470,7 +1470,6 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Stesse coppie | `repeat` | `ic_repeat` | - |
 | Scambia i lati | `sync_alt` | `ic_sync_alt` | - |
 | Blocco, accedi di nuovo | `lock` | `ic_lock` | - |
-| Colore della squadra | `palette` | `ic_palette` | - |
 | Orologio collegato | `watch` | `ic_watch` | - |
 | Orologio scollegato | `watch_off` | `ic_watch_off` | - |
 | Invio a Padel Elite | `send` | `ic_send` | - |
@@ -2550,3 +2549,17 @@ Il foglio finiva con sei bottoni secondari uguali in griglia (pattern vietato), 
 2. Serata e Diretta restano gruppi col titolo: la proposta le vuole righe, da fare insieme al punto 1.
 3. Le Impostazioni (Squadre, Regole, Padel Elite, App) sono il passo 3b.
 4. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 3b: le Impostazioni, quattro gruppi nell'ordine in cui si usano
+
+La schermata si chiamava "Impostazioni partita" ma teneva anche la lingua, in mezzo alle regole, e l'alto contrasto in un gruppo a parte "Accessibilita'"; Padel Elite stava in fondo. Il colore della squadra era un quadrato con l'icona della tavolozza, dipinto del colore: un'icona che non diceva il colore.
+
+- **Gerarchia e layout.** Titolo "Impostazioni" (come la riga del foglio Partita). Quattro gruppi tonali: **Squadre** (nome e colore per squadra), **Regole** (sport con le regole che il motore applica, poi il timer del portiere dove c'e'), **Padel Elite** (solo se la build conosce il Supabase), **App** (lingua, poi alto contrasto con il perche' e l'interruttore). Prima cio' che prepara la partita, in fondo cio' che vale per tutta l'app. La linea sopra il timer del portiere sta dentro il suo blocco: sparito il timer, non resta una linea in fondo al gruppo.
+- **Componenti riusati.** Gruppi, righe, divisori, campi e interruttore quelli di prima. Il colore resta il `Widget.App.Button.Secondary` dipinto con `dipingiDiSquadra`, con la forma nuova `ShapeAppearance.App.Swatch` (cerchio, `cornerSize` 50%): il bordo `elite_outline` del secondario resta, cosi' anche un blu notte si stacca dal gruppo. `ic_palette` non si usa piu' ed e' tolta, con la sua riga di G-3.
+- **Stati.** Campi e interruttore come prima (normale, fuoco, premuto, spento dove serve). Il cerchio: premuto con la pressione condivisa, fuoco con l'anello del bottone, TalkBack legge "Colore squadra 1/2". Movimento: nessuno nuovo. 200% e 360dp: i gruppi sono colonne, crescono in altezza; il cerchio resta di 48dp accanto al campo del nome.
+- **Pattern vietati.** Niente card nuove, niente ombre, nessun primario nuovo; un'icona decorativa in meno.
+
+### Debiti dichiarati del passo 3b
+
+1. Il gruppo Padel Elite e' quello di prima (stato, Entra, Gruppo, Esci): lo rivede il passo 4.
+2. Non visto a schermo: verificato solo dai test e dalla CI.

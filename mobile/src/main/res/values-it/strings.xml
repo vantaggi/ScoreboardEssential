@@ -320,7 +320,7 @@
     <string name="title_match_history">Storico partite</string>
     <string name="title_player">Giocatore</string>
     <string name="title_edit_player">Modifica giocatore</string>
-    <string name="title_match_settings">Impostazioni partita</string>
+    <string name="title_match_settings">Impostazioni</string>
     <string name="title_manage_players">Giocatori</string>
     <string name="title_statistics">Statistiche</string>
     <string name="player_name_hint">Nome del giocatore</string>
@@ -371,8 +371,8 @@
         <item quantity="other">%d presenze</item>
     </plurals>
     <string name="settings_teams_title">Squadre</string>
-    <string name="settings_match_title">Partita</string>
-    <string name="settings_accessibility_title">Accessibilità</string>
+    <string name="settings_match_title">Regole</string>
+    <string name="settings_app_title">App</string>
     <string name="settings_high_contrast_title">Alto contrasto</string>
     <string name="settings_high_contrast_summary">Testo più luminoso e bordi più netti. Segue il contrasto del sistema finché non scegli.</string>
     <string name="history_empty_reason">Una partita compare qui quando la salvi a fine partita. Gioca e termina una partita per vederla.</string>
