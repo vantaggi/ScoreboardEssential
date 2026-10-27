@@ -59,7 +59,7 @@
 
     <!-- R-1: i giocatori del gruppo e il loro collegamento con quelli dell'app. -->
     <string name="padel_elite_rosa_title">Giocatori del gruppo</string>
-    <string name="padel_elite_rosa_hint">Collega ogni giocatore della dashboard a uno dell\'app: nel file inviato l\'admin trova i nomi gia\' scelti.</string>
+    <string name="padel_elite_rosa_hint">Non serve collegarli prima: quando scegli i giocatori di una partita li prendi dalla dashboard e l\'app li collega da sola. Qui vedi e cambi i collegamenti.</string>
     <string name="padel_elite_rosa_no_group">Scegli un gruppo per vedere i suoi giocatori.</string>
     <string name="padel_elite_rosa_loading">Carico i giocatori del gruppo</string>
     <string name="padel_elite_rosa_empty_title">Nessun giocatore nel gruppo</string>
@@ -120,4 +120,28 @@
     <string name="diretta_closing">Chiusura della diretta in corso</string>
     <string name="diretta_close_failed">La diretta non si è chiusa: la chiude la dashboard o si chiude da sola entro 6 ore</string>
     <string name="diretta_unavailable_old_match">Diretta non disponibile per questa partita: è cominciata con una versione precedente</string>
+
+    <!-- Aggiungi un giocatore con la rosa del gruppo: i giocatori della dashboard senza collegarli prima. -->
+    <string name="scelta_section_dashboard">Padel Elite · %1$s</string>
+    <string name="scelta_section_girone">Nello stesso girone stasera</string>
+    <string name="scelta_section_iscritti">Iscritti alla prossima serata</string>
+    <string name="scelta_section_app">Solo nell\'app</string>
+    <string name="scelta_section_unread">Padel Elite non risponde: giocatori dell\'app</string>
+    <string name="scelta_dashboard_new">Si aggiunge all\'app quando lo scegli</string>
+    <string name="scelta_dashboard_in_app">Già nell\'app</string>
+    <string name="scelta_dashboard_in_app_as">Nell\'app come %1$s</string>
+    <string name="scelta_dashboard_failed">Non sono riuscito ad aggiungere il giocatore. Riprova.</string>
+    <string name="scelta_same_person_title">%1$s è già nell\'app?</string>
+    <string name="scelta_same_person_hint">Nella dashboard spesso c\'è solo il cognome. Tocca il giocatore se è la stessa persona.</string>
+    <string name="scelta_same_person_no_matches">Nessuna partita giocata</string>
+    <plurals name="scelta_same_person_matches">
+        <item quantity="one">%1$d partita</item>
+        <item quantity="many">%1$d partite</item>
+        <item quantity="other">%1$d partite</item>
+    </plurals>
+    <string name="scelta_same_person_last">ultima il %1$s</string>
+    <string name="scelta_same_person_with">con %1$s</string>
+    <string name="scelta_same_person_against">contro %1$s</string>
+    <string name="scelta_other_person">È un\'altra persona</string>
+    <string name="scelta_other_person_detail">Crea %1$s nell\'app, collegato alla dashboard</string>
 </resources>

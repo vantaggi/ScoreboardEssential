@@ -2225,3 +2225,51 @@ Molti giocatori, il proprietario compreso, entrano nella dashboard con Google e 
 - *Controllo dei pattern vietati:* niente maiuscolo, niente emoji, niente ombre, nessun colore, spaziatura o misura scritti a mano (`space_16`, `space_24`, `icon_standard`), un solo primario, tre pesi. **Non visto a schermo** (nessun SDK Android nel container): da provare in locale con `local.properties` e la Redirect URL ammessa.
 
 **Debiti dichiarati.** (1) La scheda del browser resta aperta dietro l'app dopo il ritorno (con Custom Tabs si chiuderebbe da sola, ma porta `androidx.browser`). (2) Un ritorno senza rete obbliga a ricominciare da Google: il codice non si conserva. (3) Se la Redirect URL non e' ammessa l'app non lo sa: il bottone porta al sito.
+
+## Giocatori della dashboard nella scelta della partita - 27 ottobre 2026
+
+Richiesta del proprietario: con l'accesso e il gruppo scelto vedeva la rosa della dashboard, ma per usarla doveva prima ricreare o collegare a mano ogni giocatore in Padel Elite. Ora "Aggiungi un giocatore" (le due rose del foglio PARTITA) offre direttamente la rosa del gruppo: il giocatore scelto, se non e' ancora nell'app, nasce nell'app col nome della dashboard e **gia' collegato** (`padel_elite_links`), cosi' nel file inviato e nella diretta porta il suo `padelPlayerId`. Solo scritture Room sul telefono; sulla dashboard solo la lettura della rosa che R-1 gia' fa. Nessuna migrazione (le query nuove sono letture su tabelle che ci sono).
+
+**Regola degli omonimi (decisione del proprietario, 27 ottobre).** Nella dashboard spesso c'e' solo il cognome: due persone con lo stesso nome non sono per forza la stessa. Quindi non si unisce mai da solo. Se nell'app non c'e' nessuno con lo stesso nome (senza maiuscole e spazi) e libero in questo gruppo, si crea e si collega subito; se c'e', l'app chiede "Rossi e' gia' nell'app?" e per ogni omonimo mostra le partite giocate e l'ultima (data, con chi, contro chi); l'utente tocca l'omonimo ("e' lui": si collega e tiene le sue statistiche) o "E' un'altra persona" (un giocatore nuovo, collegato). Un omonimo gia' collegato a un altro giocatore della dashboard non e' un candidato.
+
+**Ordine dell'elenco** (richiesta del proprietario, 27 ottobre: "ci iscriviamo alla serata, e chi gioca con me e' nel mio girone"). Le sezioni, ognuna in ordine di nome: "Nello stesso girone stasera" (i compagni di girone di chi e' gia' in campo, nei gironi salvati dalla dashboard per la prossima serata: scelto il primo, gli altri tre sono in cima), "Iscritti alla prossima serata" (i confermati di `v2_rsvp`), "Padel Elite · <gruppo>" (il resto della rosa), "Solo nell'app" (i giocatori dell'app non collegati in questo gruppo). La serata si legge come nella Serata (`venue_config`, `ProssimaSerata`, `v2_rsvp`, `gironi_serata` valido solo per quella data), insieme alla rosa e in sottofondo; se non si legge, l'elenco e' solo rosa e app. Chi e' gia' in campo, in una qualunque delle due squadre, non si offre. Tre dalla dashboard e uno locale si possono mettere insieme: il locale arriva all'admin col nome, come prima.
+
+**Serata.** "Usa i presenti" e i gironi: un presente non collegato e senza omonimi nasce gia' collegato al gruppo letto (prima nasceva come ospite senza collegamento), e la volta dopo entra come collegato. Per chi ha un omonimo nell'app (prima riusato in silenzio) la Serata fa la stessa domanda, un presente alla volta, prima di applicare la proposta: "e' lui" lo collega, "un'altra persona" ne crea uno nuovo collegato, Annulla (o indietro) lascia cadere la proposta senza scrivere niente. Un omonimo gia' scelto per un altro presente non si offre di nuovo. Decisione del proprietario del 27 ottobre. Chiude il debito 2 di "Serata dalla dashboard".
+
+**Codice.** `SceltaDelGiocatore` (le voci, pura), `RosaGruppo.scegliPerLaPartita`, `unisci`, `creaNuovo` e gli indizi (`MatchDao.countClosedMatchesOf`, `lastClosedMatchOf`), `GiocatoriDalGruppo` (rosa in memoria per gruppo, riletta in sottofondo a ogni ritorno sulla schermata e a ogni apertura del dialogo, attesa massima di 4 secondi la prima volta), `RigheDelDialogo` (righe con sezioni per i dialoghi di scelta). Il testo di Padel Elite sotto "Giocatori del gruppo" ora dice che collegarli prima non serve.
+
+### Piano UI (CLAUDE.md, punto 3)
+
+- **Compito e valore.** Il compito resta "metti un giocatore in questa squadra", il valore e' il nome. La rosa della dashboard viene prima perche' e' quella da cui si sceglie quando c'e' un gruppo.
+- **Gerarchia e layout.** Il dialogo di Material di prima, con un elenco a sezioni: intestazioni non toccabili (`item_role_header`, testo secondario, `accessibilityHeading`) e righe col nome e una didascalia (`item_padel_elite_player`: "Si aggiunge all'app quando lo scegli", "Gia' nell'app", "Nell'app come Mattia"; le righe "Solo nell'app" non hanno didascalia). La domanda sugli omonimi e' un secondo dialogo dello stesso tipo: una riga di spiegazione come intestazione, gli omonimi con l'indizio, "E' un'altra persona" in fondo. Nessun primario nuovo: il solo comando del dialogo e' "Annulla", come prima.
+- **Componenti riusati.** `MaterialAlertDialogBuilder`, `item_role_header`, `item_padel_elite_player` (pressione condivisa e anello di fuoco), lo Snackbar sopra la striscia. Nessuno stile, token, colore, spaziatura o icona nuovi.
+
+| Stato | Cosa si vede |
+|---|---|
+| Senza funzione, accesso o gruppo, o sport non padel | il dialogo di sempre coi soli giocatori dell'app |
+| In corso (prima lettura della rosa) | "Aggiungi" della squadra disattivato finche' l'elenco e' pronto, al massimo 4 secondi; poi il dialogo |
+| Pronto | "Nello stesso girone stasera", "Iscritti alla prossima serata", "Padel Elite · <gruppo>" (le sezioni vuote non compaiono) con le didascalie, poi "Solo nell'app" |
+| Dashboard che non risponde (rete, 403, sessione) | una sola intestazione "Padel Elite non risponde: giocatori dell'app" e i giocatori dell'app |
+| Vuoto | il messaggio di prima "Nessun giocatore disponibile" con "Gestisci" |
+| Omonimo | "Rossi e' gia' nell'app?", la spiegazione, gli omonimi con "2 partite · ultima il 12 ott 2026 · con Luca · contro Anna, Bea" o "Nessuna partita giocata", e "E' un'altra persona" |
+| Errore di scrittura | Snackbar "Non sono riuscito ad aggiungere il giocatore. Riprova." |
+| Fatto | lo Snackbar di prima "Rossi aggiunto a <squadra>" |
+| Normale / premuto / fuoco | riga a riposo / pressione della lista sulla riga (scala 0,97, opacita' 0,85) / anello lime |
+| Disattivo | le intestazioni (non si toccano); chi e' gia' nella squadra non compare |
+
+- **Movimento.** Nessuno nuovo: i dialoghi e lo Snackbar sono quelli di sistema, come prima.
+- **Accessibilita'.** Intestazioni come titoli per TalkBack e non abilitate; righe da 48dp di testo (nessun comando di sola icona); lo stato e' sempre in parole.
+- **Schermo stretto e 200%.** Una colonna nel dialogo che scorre; il nome si accorcia con l'ellissi, la didascalia va a capo.
+- **Conflitti dichiarati.** Nessuno sui token. L'indizio dell'omonimo e' una frase lunga in una didascalia: a 200% occupa piu' righe, scelta voluta (e' l'informazione per decidere).
+- **Pattern vietati** (`review.md`): niente maiuscolo, niente emoji, niente ombre nuove, niente colore scritto a mano, nessuna card, al massimo tre pesi (400 didascalia, 500 nome e intestazione), un solo comando nel dialogo, nessun ciclo. Stringhe con apostrofo escapate, nessun `--` nei commenti XML.
+
+### Come si prova
+
+`SceltaDelGiocatoreTest` (le voci: ordine, sezioni, esclusi, rosa non letta, elenco vuoto), `ScegliPerLaPartitaTest` (database in memoria e server finto: collegato, creato e collegato, omonimo non unito da solo con partite e ultima partita, omonimo collegato ad altri escluso, "e' lui", "un'altra persona"; l'elenco con la rosa, l'ordine compagni di girone, iscritti e resto con la serata del server finto, senza gruppo nessuna richiesta, la dashboard che non risponde, la rosa che arriva tardi e la volta dopo e' pronta), `SerataConLaDashboardTest` (l'ospite nuovo nasce collegato e non si ricrea; con un omonimo si chiede e niente si scrive prima della risposta; "e' lui" collega l'omonimo; "un'altra persona" ne crea uno collegato; Annulla non scrive niente), `LettoreSerataDashboardTest` (la serata porta il gruppo letto). Cosa li rende rossi: togliere la creazione collegata in `scegliPerLaPartita` o in `nuovoDallaDashboard`, unire l'omonimo in automatico, togliere l'esclusione degli omonimi collegati, aspettare la rete oltre `attesaMassimaMs`, non salvare la rosa letta in memoria.
+
+### Debiti dichiarati
+
+1. **Non visto a schermo** (nessun SDK Android nel container): i due dialoghi sono provati solo nella logica; da guardare a occhio, anche a 360dp e al 200%.
+2. **Senza collegamenti** (funzione spenta o serata senza gruppo letto) la Serata riusa ancora l'omonimo come prima: in quel caso non c'e' un gruppo a cui collegarlo.
+3. **La rosa in memoria** vive quanto la schermata principale: un giocatore aggiunto nella dashboard compare dalla volta dopo che il dialogo si apre (la lettura in sottofondo lo porta).
+4. **Il tennis** non offre la rosa della dashboard (Padel Elite e' padel).
