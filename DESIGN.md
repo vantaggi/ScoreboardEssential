@@ -2287,6 +2287,29 @@ Molti giocatori, il proprietario compreso, entrano nella dashboard con Google e 
 
 **Debiti dichiarati.** (1) La scheda del browser resta aperta dietro l'app dopo il ritorno (con Custom Tabs si chiuderebbe da sola, ma porta `androidx.browser`). (2) Un ritorno senza rete obbliga a ricominciare da Google: il codice non si conserva. (3) Se la Redirect URL non e' ammessa l'app non lo sa: il bottone porta al sito.
 
+## Sigle delle coppie - 27 ottobre 2026
+
+Richiesta del proprietario: con le coppie scelte e il nome della squadra lasciato com'e', il tabellone diceva "TEAM 1" contro "TEAM 2" e a bordo campo non si capiva chi fosse chi.
+
+### Piano UI (CLAUDE.md, punto 3)
+
+- **Gerarchia e layout**: invariati. Cambia solo il testo del nome di squadra sopra la zona: "VAN/GLO" al posto di "TEAM 1". Stessa `TextView` (`team1_name_textview`, `TextAppearance.App.Game.Name`, una riga con ellissi), nessun token, colore, icona o movimento nuovo.
+- **Regola** (`EtichettaSquadra`, pura): se il nome scelto e' il predefinito (vuoto, "TEAM n", "Team n", "Squadra n", senza badare alle maiuscole) e la rosa ha uno o due giocatori, il nome mostrato e' la sigla di ciascuno unita da "/": prime tre lettere della prima parola del nome (il cognome: in rosa i giocatori sono scritti col solo cognome o cognome e nome), solo lettere, in maiuscolo ("Vantaggi" e "Glorio" danno "VAN/GLO", "Ferrario Stefano" da' "FER", "D'Amico" da' "DAM"). Un nome scelto vince sempre. Con piu' di due giocatori (il calcio) resta il nome: cinque sigle non entrano in mezzo tabellone. Se un giocatore non ha lettere resta il nome.
+- **Dove arriva**: `MainViewModel.team1Name`/`team2Name` sono ora il nome **mostrato** (un `MediatorLiveData` di nome scelto e rosa), quindi tabellone, barra del periodo, pallini del servizio, registro del foglio, coppie nel dettaglio, striscia, orologio (`PATH_TEAM_NAMES`), riassunto testuale, PDF e nome del file d'export usano le sigle senza altre modifiche. Il nome **scelto** resta in `team1ChosenName`/`team2ChosenName` ed e' quello che il dialogo propone: aprire il dialogo e confermare non trasforma le sigle in un nome fisso. Registro e orologio si aggiornano anche quando cambia solo la rosa (un osservatore permanente nel ViewModel, tolto in `onCleared`).
+- **Stati**: rosa vuota (il predefinito), un giocatore (singolare: "VAN"), due giocatori, rosa che cambia durante la scelta (le sigle seguono), nome scelto, ripristino dopo la chiusura dell'app (le rose tornano dalla riga viva e con loro le sigle). Nessuno stato nuovo di pressione o di fuoco: il contenitore e' quello di prima.
+- **Accessibilita'**: la descrizione del contenitore segue il nome mostrato ("Modifica nome VAN/GLO"). Come TalkBack legge "/" va sentito sul telefono.
+- **Schermo stretto e 200%**: "VAN/GLO" sono sette caratteri, meno di "TEAM 1" piu' margine; se non entra si accorcia con l'ellissi come prima.
+- **Conflitti**: nessuno. Storico e Cronaca non cambiano: leggono le squadre fisse 1 e 2 del database, non il nome della partita.
+
+### Debiti
+
+- Omonimi di sigla (Rossi e Rossini sono tutti e due "ROS"): non si distinguono, si sceglie un nome.
+- Un cognome di due parole ("De Luca") da' "DE"; un giocatore scritto nome e cognome ("Mattia Vantaggi") da' la sigla del nome ("MAT").
+
+### Controllo dei pattern vietati (`review.md`)
+
+Nessun valore scritto a mano, nessuna emoji, nessuna icona nuova, nessuna ombra, nessun movimento nuovo, nessun peso nuovo: il cambio e' solo del testo.
+
 ## Giocatori della dashboard nella scelta della partita - 27 ottobre 2026
 
 Richiesta del proprietario: con l'accesso e il gruppo scelto vedeva la rosa della dashboard, ma per usarla doveva prima ricreare o collegare a mano ogni giocatore in Padel Elite. Ora "Aggiungi un giocatore" (le due rose del foglio PARTITA) offre direttamente la rosa del gruppo: il giocatore scelto, se non e' ancora nell'app, nasce nell'app col nome della dashboard e **gia' collegato** (`padel_elite_links`), cosi' nel file inviato e nella diretta porta il suo `padelPlayerId`. Solo scritture Room sul telefono; sulla dashboard solo la lettura della rosa che R-1 gia' fa. Nessuna migrazione (le query nuove sono letture su tabelle che ci sono).

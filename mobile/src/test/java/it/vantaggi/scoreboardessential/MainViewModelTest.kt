@@ -522,6 +522,35 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `senza un nome scelto la squadra mostra le sigle della coppia, e le manda all'orologio`() =
+        runTest {
+            // "TEAM 1" contro "TEAM 2" con le coppie gia' composte non diceva chi fosse chi. Rosso
+            // se il nome mostrato resta il predefinito o se all'orologio arriva ancora "TEAM 1".
+            val nameObserver = Observer<String> {}
+            viewModel.team1Name.observeForever(nameObserver)
+
+            viewModel.addPlayerToTeam(PlayerWithRoles(Player(1, "Vantaggi Mattia", 0, 0), emptyList()), 1)
+            viewModel.addPlayerToTeam(PlayerWithRoles(Player(2, "Glorio", 0, 0), emptyList()), 1)
+            advanceUntilIdle()
+
+            assertEquals("VAN/GLO", viewModel.team1Name.value)
+            assertEquals("il nome scelto resta il predefinito, per il dialogo", "TEAM 1", viewModel.team1ChosenName.value)
+            assertEquals("l'altra squadra senza giocatori resta com'e'", "TEAM 2", viewModel.team2Name.value)
+            val nomiAllOrologio =
+                mockingDetails(mockConnectionManager)
+                    .invocations
+                    .filter { it.method.name == "sendData" && it.arguments[0] == WearConstants.PATH_TEAM_NAMES }
+                    .map { (it.arguments[1] as Map<*, *>)[WearConstants.KEY_TEAM1_NAME] }
+            assertEquals("VAN/GLO", nomiAllOrologio.last())
+
+            // Un nome scelto vince sulle sigle.
+            viewModel.setTeam1Name("Leoni")
+            assertEquals("Leoni", viewModel.team1Name.value)
+
+            viewModel.team1Name.removeObserver(nameObserver)
+        }
+
+    @Test
     fun `startStopMatchTimer calls startTimer when timer is not running`() {
         // Arrange
         // Mock the internal live data or service behavior
