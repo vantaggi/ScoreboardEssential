@@ -5,6 +5,7 @@
     <string name="state_selected">Selected</string>
 
     <string name="serata_next_title">Match %1$d</string>
+    <string name="serata_next_reason">Decider: replay of match %1$d, the closest one (%2$d-%3$d in games).</string>
     <string name="serata_pair_title">Pair %1$d</string>
     <string name="serata_seat_description">Pair %1$d, place %2$d: %3$s</string>
     <string name="serata_seats_hint">Place 1 of each pair serves first. Touch two names to swap them.</string>

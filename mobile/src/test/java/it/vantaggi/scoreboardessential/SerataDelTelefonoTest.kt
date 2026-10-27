@@ -419,7 +419,7 @@ class SerataDelTelefonoTest {
     @Test
     fun `una serata ricordata prima della prima apertura si legge, e un testo rotto no`() {
         store.save(Serata.nuova(listOf(1, 2, 3, 4)).consegna())
-        assertEquals(Composizione(listOf(1, 2), listOf(3, 4)), store.load()!!.inGioco)
+        assertEquals(Composizione(listOf(1, 4), listOf(2, 3)), store.load()!!.inGioco)
         prefs.edit().putString(SerataPrefsStore.CHIAVE, "rotto").commit()
         assertNull(store.load())
     }

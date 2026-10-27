@@ -12,6 +12,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.google.android.material.button.MaterialButton
 import it.vantaggi.scoreboardessential.core.PresenteDellaDashboard.Collegato
 import it.vantaggi.scoreboardessential.core.PresenteDellaDashboard.Ospite
+import it.vantaggi.scoreboardessential.core.Risultato
 import it.vantaggi.scoreboardessential.core.Serata
 import it.vantaggi.scoreboardessential.core.Traduzione
 import it.vantaggi.scoreboardessential.database.AppDatabase
@@ -129,6 +130,29 @@ class SerataActivityTest {
         assertEquals(View.VISIBLE, attivita.findViewById<View>(R.id.serata_bench_group).visibility)
         assertEquals(View.VISIBLE, attivita.findViewById<View>(R.id.serata_bench_empty).visibility)
         assertEquals(0, attivita.righe(R.id.serata_bench))
+    }
+
+    @Test
+    fun `alla quarta partita dei quattro dice che e' lo spareggio, quale partita rigioca e com'era finita`() {
+        val ids = giocatori("A", "B", "C", "D")
+        val memoria = SerataPrefsStore(contesto.getSharedPreferences("app_prefs", Context.MODE_PRIVATE))
+        // Prima del giro la riga non c'e'.
+        memoria.save(Serata.nuova(ids))
+        val prima = apri().get()
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(View.GONE, prima.findViewById<View>(R.id.serata_next_reason).visibility)
+
+        val giro =
+            listOf(Risultato(6, 2), Risultato(6, 5), Risultato(3, 6))
+                .fold(Serata.nuova(ids)) { s, r -> s.consegna().chiudiPartita(risultato = r) }
+        memoria.save(giro)
+        val attivita = apri().get()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals("Partita 4", attivita.findViewById<TextView>(R.id.serata_next_title).text)
+        val motivo = attivita.findViewById<TextView>(R.id.serata_next_reason)
+        assertEquals(View.VISIBLE, motivo.visibility)
+        assertEquals("Spareggio: si rigioca la partita 2, la più combattuta (6-5 in game).", motivo.text.toString())
     }
 
     @Test

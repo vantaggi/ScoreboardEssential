@@ -5,6 +5,7 @@
     <string name="state_selected">Selezionato</string>
 
     <string name="serata_next_title">Partita %1$d</string>
+    <string name="serata_next_reason">Spareggio: si rigioca la partita %1$d, la più combattuta (%2$d-%3$d in game).</string>
     <string name="serata_pair_title">Coppia %1$d</string>
     <string name="serata_seat_description">Coppia %1$d, posto %2$d: %3$s</string>
     <string name="serata_seats_hint">Il posto 1 di ogni coppia serve per primo. Tocca due nomi per scambiarli.</string>

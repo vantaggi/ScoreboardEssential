@@ -4350,19 +4350,29 @@ class MainViewModelTest {
                 )
                 viewModel.avviaPartitaDellaSerata()
                 advanceUntilIdle()
-                viewModel.addScore(1)
+                // Un game alla prima coppia (quattro punti) e un punto alla seconda: la serata ricorda 1-0 in game.
+                repeat(4) { viewModel.addScore(1) }
+                viewModel.addScore(2)
                 advanceUntilIdle()
 
                 assertEquals(true, viewModel.endMatch())
                 advanceUntilIdle()
 
                 val serata = memoriaDellaSerata().load()!!
+                // Come la dashboard: la prima partita del girone e' #1+#4 contro #2+#3.
                 assertEquals(
                     listOf(
                         it.vantaggi.scoreboardessential.core
-                            .Composizione(listOf(a, b), listOf(c, d)),
+                            .Composizione(listOf(a, d), listOf(b, c)),
                     ),
                     serata.giocate,
+                )
+                assertEquals(
+                    listOf(
+                        it.vantaggi.scoreboardessential.core
+                            .Risultato(1, 0),
+                    ),
+                    serata.risultati,
                 )
                 assertEquals(null, serata.inGioco)
                 assertEquals(setOf(setOf(a, c), setOf(b, d)), serata.bozza!!.coppie)
