@@ -10,4 +10,11 @@
     <integer name="duration_fast">160</integer>
     <!-- duration-standard: apertura di un dialogo o di un foglio, il segno di spunta. -->
     <integer name="duration_standard">240</integer>
+
+    <!--
+        Quanto resta un messaggio con "Annulla" (Serata, "Usa i presenti" e i gironi). Non e' un'animazione:
+        e' il tempo per ripensarci, piu' lungo della durata lunga di sistema (circa 3 secondi) perche' a bordo
+        campo il telefono si guarda di sfuggita. Con TalkBack Material lo allunga ancora se serve.
+    -->
+    <integer name="undo_window">8000</integer>
 </resources>

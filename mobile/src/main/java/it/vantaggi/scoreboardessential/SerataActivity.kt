@@ -49,6 +49,10 @@ class SerataActivity : AppCompatActivity() {
     private lateinit var presenti: SerataRigheAdapter
     private lateinit var proposte: SerataRigheAdapter
 
+    /** L'ultimo messaggio con "Annulla", per i test. */
+    @VisibleForTesting
+    internal var avvisoConAnnulla: Snackbar? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_serata)
@@ -137,7 +141,10 @@ class SerataActivity : AppCompatActivity() {
         return LettoreSerataDashboard(padelElite.account, database.padelEliteLinkDao(), database.playerDao())
     }
 
-    /** Il rapporto di una proposta usata: quanti presenti e quanti ospiti, con "Annulla". */
+    /**
+     * Il rapporto di una proposta usata: quanti presenti e quanti ospiti, con "Annulla". Resta per `undo_window`
+     * (8 secondi) e non per la durata lunga di sistema (circa 3): a bordo campo si guarda il telefono di sfuggita.
+     */
     private fun diciCosaEArrivato(rapporto: RapportoDashboard) {
         val testo =
             buildString {
@@ -146,12 +153,13 @@ class SerataActivity : AppCompatActivity() {
                     append(resources.getQuantityString(R.plurals.serata_dashboard_used_guests, rapporto.ospiti, rapporto.ospiti))
                 }
             }
-        Snackbar
-            .make(findViewById(R.id.serata_scroll), testo, Snackbar.LENGTH_LONG)
-            .setAnchorView(R.id.serata_start_bar)
-            .setAnimationMode(Snackbar.ANIMATION_MODE_FADE)
-            .setAction(R.string.undo) { viewModel.annullaLaDashboard() }
-            .show()
+        avvisoConAnnulla =
+            Snackbar
+                .make(findViewById(R.id.serata_scroll), testo, resources.getInteger(R.integer.undo_window))
+                .setAnchorView(R.id.serata_start_bar)
+                .setAnimationMode(Snackbar.ANIMATION_MODE_FADE)
+                .setAction(R.string.undo) { viewModel.annullaLaDashboard() }
+                .apply { show() }
     }
 
     override fun onStart() {
