@@ -2,7 +2,8 @@
 <!--
     Una riga della schermata Serata: un posto della prossima partita, uno della panchina, un presente, un
     comando. Sta dentro un gruppo tonale, non e' una card. Da sinistra: icona (solo i comandi), numero del
-    posto, il nome (fino a due righe: a carattere grande non si taglia in una riga sola), una nota
+    posto, il nome (fino a due righe: a carattere grande non si taglia in una riga sola; le righe dei gironi
+    vanno a capo per intero, l'adapter toglie il limite), una nota
     (le partite giocate) e la spunta della selezione. La spunta tiene il posto anche spenta, cosi' toccare
     una riga non sposta niente. Selezionata: sfondo rialzato (bg_row_selected), spunta lime, nome a 600.
 -->
