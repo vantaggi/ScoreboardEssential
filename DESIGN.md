@@ -2623,3 +2623,19 @@ Lo Storico era una colonna di schede tutte uguali, ognuna con la sua data in pic
 
 1. Domanda per Cioti: i comandi della partita (Invia, Esporta, Elimina) restano nel dettaglio della scheda per tutti gli sport, oppure passano nella barra della Cronaca per la racchetta e restano nella scheda solo per il calcio?
 2. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 6b: i Giocatori seguono lo sport
+
+I Giocatori avevano i filtri per ruolo da calcio anche nel padel, la stessa icona a barre grigia e senza parola su ogni riga (apriva un dialogo con presenze, gol e "Azzera"), un menu Ordina che non diceva quale ordine fosse attivo e una lente che apriva un campo invisibile.
+
+- **Gerarchia e layout.** In cima la ricerca, un campo vero e sempre visibile (lo stesso `TextInputLayout` con la lente e la croce di Padel Elite, passo 4); sotto, solo nel calcio, i filtri per ruolo su una riga che scorre; poi il gruppo delle righe. La riga e' il nome e sotto il valore che conta: "3 partite", nel calcio "3 partite · 5 gol"; i chip dei ruoli solo nel calcio. A destra la freccia (`chevron_right`, decorativa): la riga intera apre Modifica giocatore. Lo sport e' quello attivo nelle Impostazioni, come nelle Statistiche (passo 6a, `StatisticsViewModel.contaIGol`).
+- **Ordine.** Nel menu Ordina le voci sono una scelta sola con la spunta su quella in uso (Per nome, Per partite giocate, Per gol); "Per gol" c'e' solo nel calcio, e passando a uno sport senza gol l'ordine torna per nome.
+- **Azzera le statistiche.** Il dialogo dietro l'icona a barre e' tolto: partite e gol sono gia' nella riga. Azzerare sta nel menu di Modifica giocatore, solo se c'e' qualcosa da azzerare, con la conferma che dice cosa succede ("Partite e gol di Rossi tornano a zero.") e il primario "Azzera". In Modifica giocatore, fuori dal calcio, titolo e lista dei ruoli si nascondono: la pagina e' il nome; i ruoli gia' scelti restano salvati.
+- **Componenti riusati.** Riga `Widget.App.Pressable` con `RowTitle` e `Caption`, gruppo tonale e divisori di prima, campo di ricerca di Padel Elite, freccia del foglio Partita (passo 3a). La ricerca ignora maiuscole e accenti con la stessa funzione di Padel Elite, ora in `utils/TestoPiano.kt`; nel calcio cerca anche nei ruoli. Stringhe nuove: `player_value_matches`, `player_value_with_goals`, `reset_stats_confirm`; tolte `menu_search`, `cd_player_stats`, `player_stats_title`, `player_stats_message`, `player_deleted`, `roles_not_specified`, che non si usavano piu'.
+- **Stati.** Nessun giocatore (stato vuoto con "Aggiungi giocatore", FAB nascosto); la ricerca o il filtro non trovano nessuno (stato vuoto senza bottone, FAB visibile); padel e calcio come sopra; giocatore a zero partite (niente "Azzera"). Movimento: nessuno nuovo. 200%: il nome si tronca su una riga, il valore va a capo; il campo di ricerca resta alto `control_touch`.
+- **Pattern vietati.** Tolti un comando di sola icona ripetuto su ogni riga, un menu che non mostra lo stato, una ricerca nascosta e le informazioni da calcio nel padel. Niente card, niente ombre nuove.
+
+### Debiti dichiarati del passo 6b
+
+1. Modifica giocatore nel calcio ha ancora la lista di 18 caselle di ruolo; i ruoli come chip in quattro gruppi della proposta sono un passo a parte (6c).
+2. Non visto a schermo: verificato solo dai test e dalla CI.

@@ -43,20 +43,18 @@ class AccessibilitaDelTelefonoTest {
         }
     }
 
-    // Pulsanti da 40dp, sotto i 48 della linea guida, con descrizioni cablate in inglese.
+    // Pulsanti da 40dp, sotto i 48 della linea guida, con descrizioni cablate in inglese. Dal passo 6b in
+    // riga non c'e' piu' nessun comando di sola icona: la riga intera e' il comando (alta almeno 48dp)
+    // e la freccia e' decorativa, quindi TalkBack non la legge come un secondo bottone.
     @Test
-    fun `nella gestione giocatori i comandi sono da 48dp e parlano italiano`() {
+    fun `nella gestione giocatori la riga e' il comando e la freccia non parla`() {
         val riga = gonfia(R.layout.item_player_management)
         val minimo = (48 * riga.resources.displayMetrics.density).toInt()
-        // La modifica e' la riga stessa (si tocca per modificare): in riga resta il solo comando del dettaglio.
-        val attese = mapOf(R.id.stats_button to "Statistiche del giocatore")
-        for ((id, descrizione) in attese) {
-            val pulsante = riga.findViewById<View>(id)
-            val parametri = pulsante.layoutParams
-            assertTrue("larghezza ${parametri.width}px < ${minimo}px", parametri.width >= minimo)
-            assertTrue("altezza ${parametri.height}px < ${minimo}px", parametri.height >= minimo)
-            assertEquals(descrizione, pulsante.contentDescription?.toString())
-        }
+        assertTrue("la riga e' alta ${riga.minimumHeight}px < ${minimo}px", riga.minimumHeight >= minimo)
+        assertTrue(riga.isClickable && riga.isFocusable)
+        val freccia = riga.findViewById<View>(R.id.player_chevron)
+        assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO, freccia.importantForAccessibility)
+        assertEquals(0, riga.resources.getIdentifier("stats_button", "id", riga.context.packageName))
     }
 
     // Il FAB per aggiungere un giocatore non aveva etichetta: TalkBack diceva solo "pulsante".

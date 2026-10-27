@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Gestisci giocatori (G-4). Il compito: tenere l'elenco di chi gioca. Il valore: il nome (e il ruolo).
-    L'elenco e' un gruppo tonale, una riga per giocatore. Il primario e' uno solo per volta: il tasto
+    Gestisci giocatori (G-4, passo 6b). Il compito: tenere l'elenco di chi gioca. Il valore: il nome
+    e le partite giocate. In cima la ricerca, un campo vero e sempre visibile (come in Padel Elite);
+    sotto i filtri per ruolo, solo nel calcio. L'elenco e' un gruppo tonale, una riga per giocatore. Il primario e' uno solo per volta: il tasto
     "aggiungi" (lime) quando l'elenco ha delle righe, il bottone dello stato vuoto quando non ne ha.
 -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -35,12 +36,37 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/players_search_layout"
+            style="@style/Widget.App.TextInputLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/space_16"
+            android:hint="@string/search_players_hint"
+            app:endIconMode="clear_text"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:startIconDrawable="@drawable/ic_search">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/players_search_edit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionSearch"
+                android:inputType="textPersonName"
+                android:minHeight="@dimen/control_touch" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- I ruoli sono del calcio: negli altri sport la riga non c'e' (PlayersManagementActivity). -->
         <HorizontalScrollView
             android:id="@+id/roles_filter_scrollview"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_4"
             android:scrollbars="none"
-            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/players_search_layout"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
@@ -70,6 +96,7 @@
             app:layout_constraintHeight_default="wrap"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/roles_filter_scrollview"
+            app:layout_goneMarginTop="@dimen/space_8"
             app:layout_constraintVertical_bias="0">
 
             <androidx.recyclerview.widget.RecyclerView

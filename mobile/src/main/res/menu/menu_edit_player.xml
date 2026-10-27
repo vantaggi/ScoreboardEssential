@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Modifica giocatore (passo 6b): azzerare presenze e gol stava in un dialogo dietro l'icona a barre
+    della riga. Ora sta qui, nel menu del giocatore, e chiede conferma. Senza numeri da azzerare non c'e'.
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_reset_stats"
+        android:title="@string/reset_stats"
+        android:visible="false"
+        app:showAsAction="never" />
+
+</menu>

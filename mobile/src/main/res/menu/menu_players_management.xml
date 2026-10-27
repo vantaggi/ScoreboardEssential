@@ -1,28 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Giocatori (passo 6b): la ricerca e' un campo nella pagina, qui resta l'ordine. Le voci sono una
+    scelta sola con la spunta su quella attiva; "Per gol" c'e' solo negli sport che contano i gol.
+-->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_search"
-        android:icon="@drawable/ic_search"
-        android:title="@string/menu_search"
-        app:actionViewClass="android.widget.SearchView"
-        app:showAsAction="always|collapseActionView" />
-
-    <item
+        android:id="@+id/action_sort"
         android:icon="@drawable/ic_swap_vert"
         android:title="@string/menu_sort"
         app:showAsAction="ifRoom">
         <menu>
-            <item
-                android:id="@+id/action_sort_name"
-                android:title="@string/sort_by_name" />
-            <item
-                android:id="@+id/action_sort_goals"
-                android:title="@string/sort_by_goals" />
-            <item
-                android:id="@+id/action_sort_appearances"
-                android:title="@string/sort_by_appearances" />
+            <group
+                android:id="@+id/group_sort"
+                android:checkableBehavior="single">
+                <item
+                    android:id="@+id/action_sort_name"
+                    android:checked="true"
+                    android:title="@string/sort_by_name" />
+                <item
+                    android:id="@+id/action_sort_appearances"
+                    android:title="@string/sort_by_appearances" />
+                <item
+                    android:id="@+id/action_sort_goals"
+                    android:title="@string/sort_by_goals" />
+            </group>
         </menu>
     </item>
 

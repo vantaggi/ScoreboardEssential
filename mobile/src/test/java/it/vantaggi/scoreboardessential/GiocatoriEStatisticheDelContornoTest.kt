@@ -86,22 +86,38 @@ class GiocatoriEStatisticheDelContornoTest {
         assertEquals("2. Luca, 4 goals, 10 appearances", vista.contentDescription.toString())
     }
 
-    // Una riga dei giocatori e' il nome e i ruoli: niente avatar colorato, niente numeri.
+    // Una riga dei giocatori e' il nome, il valore che conta e, nel calcio, i ruoli: niente avatar
+    // colorato. Dal passo 6b le partite e i gol stanno sotto il nome invece che dietro un'icona muta.
     @Test
-    fun `la riga dei giocatori ha nome e ruoli e basta`() {
+    fun `la riga dei giocatori ha nome, partite e gol e ruoli nel calcio`() {
         val vista = LayoutInflater.from(tema).inflate(R.layout.item_player_management, FrameLayout(tema), false)
-        PlayersManagementAdapter.PlayerViewHolder(vista, {}, {}).bind(
+        PlayersManagementAdapter.PlayerViewHolder(vista, {}).bind(
             PlayerWithRoles(Player(playerName = "Mario Rossi", appearances = 3, goals = 2), listOf(Role(1, "Portiere", "PORTA"))),
+            contaIGol = true,
         )
 
         assertEquals("Mario Rossi", vista.findViewById<TextView>(R.id.player_name).text.toString())
+        assertEquals("3 matches · 2 goals", vista.findViewById<TextView>(R.id.player_value).text.toString())
         val ruoli = vista.findViewById<ChipGroup>(R.id.player_roles_group)
         assertEquals(1, ruoli.childCount)
         assertEquals("POR", (ruoli.getChildAt(0) as Chip).text.toString())
         assertEquals("Portiere", ruoli.getChildAt(0).contentDescription.toString())
-        // I numeri e l'avatar non sono in riga: stanno nel dettaglio.
-        assertEquals(0, vista.resources.getIdentifier("player_goals", "id", base.packageName))
         assertEquals(0, vista.resources.getIdentifier("player_avatar", "id", base.packageName))
+    }
+
+    // Nel padel i ruoli da calcio e i gol non vogliono dire niente: la riga e' il nome e le partite.
+    @Test
+    fun `fuori dal calcio la riga e' il nome e le partite`() {
+        val vista = LayoutInflater.from(tema).inflate(R.layout.item_player_management, FrameLayout(tema), false)
+        PlayersManagementAdapter.PlayerViewHolder(vista, {}).bind(
+            PlayerWithRoles(Player(playerName = "Mario Rossi", appearances = 1, goals = 2), listOf(Role(1, "Portiere", "PORTA"))),
+            contaIGol = false,
+        )
+
+        assertEquals("1 match", vista.findViewById<TextView>(R.id.player_value).text.toString())
+        val ruoli = vista.findViewById<ChipGroup>(R.id.player_roles_group)
+        assertEquals(0, ruoli.childCount)
+        assertEquals(View.GONE, ruoli.visibility)
     }
 
     // Un giocatore senza ruoli e' il nome e basta: niente chip "N/A".

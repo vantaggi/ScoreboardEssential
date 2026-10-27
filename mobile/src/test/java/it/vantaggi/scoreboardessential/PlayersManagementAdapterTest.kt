@@ -21,7 +21,7 @@ class PlayersManagementAdapterTest {
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
         context.setTheme(R.style.Theme_ScoreboardEssential)
-        adapter = PlayersManagementAdapter(onPlayerClick = {}, onStatsClick = {})
+        adapter = PlayersManagementAdapter(onPlayerClick = {})
     }
 
     @Test

@@ -210,10 +210,7 @@ class ContornoDelTelefonoG4Test {
             vista.stateListAnimator?.jumpToCurrentState()
             assertEquals("$nome: al rilascio torna com'era", 1f, vista.scaleX, 0.001f)
         }
-        // I comandi di sola icona delle righe la hanno anch'essi.
-        for (id in listOf(R.id.stats_button)) {
-            assertNotNull(gonfia("item_player_management").findViewById<View>(id).stateListAnimator)
-        }
+        // I comandi di sola icona delle righe la hanno anch'essi (la riga dei giocatori non ne ha piu': passo 6b).
         assertNotNull(gonfia("match_item").findViewById<View>(R.id.delete_match_button).stateListAnimator)
     }
 

@@ -6,9 +6,9 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.SearchView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -16,14 +16,16 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textfield.TextInputEditText
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.database.Role
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.ui.EmptyStateView
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
+import it.vantaggi.scoreboardessential.ui.statistics.StatisticsViewModel
 import it.vantaggi.scoreboardessential.views.PlayersManagementViewModelFactory
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -36,7 +38,17 @@ class PlayersManagementActivity : AppCompatActivity() {
     private lateinit var emptyState: EmptyStateView
     private lateinit var playersGroup: View
     private lateinit var rolesFilterChipGroup: ChipGroup
+    private lateinit var rolesFilter: View
     private var searchQuery: String = ""
+
+    // L'ultimo elenco arrivato dal ViewModel: la ricerca lo rifiltra senza aprire un'altra raccolta.
+    private var ultimi: List<PlayerWithRoles> = emptyList()
+
+    /**
+     * Lo sport attivo conta i gol (il calcio): solo allora ci sono gol, ruoli e i loro filtri. Si legge
+     * all'apertura; fino ad allora vale il calcio, com'era la schermata.
+     */
+    private var contaIGol = true
 
     private val addEditPlayerResultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -85,6 +97,24 @@ class PlayersManagementActivity : AppCompatActivity() {
         setupRecyclerView()
         observeViewModel()
         setupSwipeToDelete()
+
+        lifecycleScope.launch {
+            val sportId = (application as ScoreboardEssentialApplication).matchSettingsRepository.getActiveSport()
+            mostraLoSport(StatisticsViewModel.contaIGol(sportId))
+        }
+    }
+
+    /** Fuori dal calcio niente gol e niente ruoli: ne' in riga, ne' nei filtri, ne' nell'ordine. */
+    private fun mostraLoSport(gol: Boolean) {
+        contaIGol = gol
+        adapter.contaIGol = gol
+        rolesFilter.visibility = if (gol && viewModel.allRoles.value.isNotEmpty()) View.VISIBLE else View.GONE
+        if (!gol) {
+            viewModel.setRoleFilter(null)
+            if (viewModel.sortOrder == SortOrder.GOALS_DESC) viewModel.sortByName()
+        }
+        invalidateOptionsMenu()
+        mostra()
     }
 
     private fun initViews() {
@@ -93,6 +123,11 @@ class PlayersManagementActivity : AppCompatActivity() {
         emptyState = findViewById(R.id.empty_state)
         playersGroup = findViewById(R.id.players_group)
         rolesFilterChipGroup = findViewById(R.id.roles_filter_chip_group)
+        rolesFilter = findViewById(R.id.roles_filter_scrollview)
+        findViewById<TextInputEditText>(R.id.players_search_edit).doAfterTextChanged { testo ->
+            searchQuery = testo?.toString().orEmpty()
+            mostra()
+        }
         fab.setOnClickListener { apriNuovoGiocatore() }
         // Lo stato vuoto offre la stessa strada: il FAB si nasconde quando c'e' il bottone, un primario solo.
         emptyState.actionButton.setOnClickListener { apriNuovoGiocatore() }
@@ -116,7 +151,7 @@ class PlayersManagementActivity : AppCompatActivity() {
                         }
                     addEditPlayerResultLauncher.launch(intent)
                 },
-                onStatsClick = { playerWithRoles -> showPlayerStatsDialog(playerWithRoles) },
+                contaIGol = contaIGol,
             )
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -126,25 +161,24 @@ class PlayersManagementActivity : AppCompatActivity() {
     private fun observeViewModel() {
         lifecycleScope.launch {
             viewModel.players.collect { players ->
-                val filteredPlayers =
-                    if (searchQuery.isEmpty()) {
-                        players
-                    } else {
-                        players.filter { playerWithRoles ->
-                            playerWithRoles.player.playerName.contains(searchQuery, ignoreCase = true) ||
-                                playerWithRoles.roles.any { it.name.contains(searchQuery, ignoreCase = true) }
-                        }
-                    }
-                adapter.submitList(filteredPlayers)
-                mostraElencoOVuoto(filteredPlayers.isEmpty())
+                ultimi = players
+                mostra()
             }
         }
 
         lifecycleScope.launch {
             viewModel.allRoles.collect { roles ->
                 setupRoleFilterChips(roles)
+                rolesFilter.visibility = if (contaIGol && roles.isNotEmpty()) View.VISIBLE else View.GONE
             }
         }
+    }
+
+    /** L'elenco filtrato dalla ricerca, o lo stato vuoto. */
+    private fun mostra() {
+        val trovati = PlayersManagementViewModel.cerca(ultimi, searchQuery, conRuoli = contaIGol)
+        adapter.submitList(trovati)
+        mostraElencoOVuoto(trovati.isEmpty())
     }
 
     /**
@@ -165,7 +199,7 @@ class PlayersManagementActivity : AppCompatActivity() {
         if (vuoto && !filtrato) fab.hide() else fab.show()
     }
 
-    private fun setupRoleFilterChips(roles: List<it.vantaggi.scoreboardessential.database.Role>) {
+    private fun setupRoleFilterChips(roles: List<Role>) {
         rolesFilterChipGroup.removeAllViews()
 
         val inflater = layoutInflater
@@ -237,71 +271,22 @@ class PlayersManagementActivity : AppCompatActivity() {
         ItemTouchHelper(swipeHandler).attachToRecyclerView(recyclerView)
     }
 
-    private fun showPlayerStatsDialog(playerWithRoles: PlayerWithRoles) {
-        val player = playerWithRoles.player
-        val rolesText = playerWithRoles.roles.joinToString(", ") { it.name }.ifEmpty { getString(R.string.roles_not_specified) }
-        val statsMessage =
-            getString(
-                R.string.player_stats_message,
-                player.appearances,
-                player.goals,
-                if (player.appearances > 0) String.format("%.2f", player.goals.toFloat() / player.appearances) else "0.00",
-                rolesText,
-            )
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.player_stats_title, player.playerName))
-            .setMessage(statsMessage)
-            .setPositiveButton(android.R.string.ok, null)
-            .setNeutralButton(R.string.reset_stats) { _, _ -> showResetStatsConfirmation(playerWithRoles) }
-            .show()
-    }
-
-    private fun showDeleteConfirmation(playerWithRoles: PlayerWithRoles) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.delete_player_title)
-            .setMessage(getString(R.string.delete_player_message, playerWithRoles.player.playerName))
-            .setPositiveButton(R.string.delete) { _, _ ->
-                viewModel.deletePlayer(playerWithRoles)
-                Snackbar.make(fab, R.string.player_deleted, Snackbar.LENGTH_SHORT).show()
-            }.setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-
-    private fun showResetStatsConfirmation(playerWithRoles: PlayerWithRoles) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.reset_stats_title)
-            .setMessage(getString(R.string.reset_stats_message, playerWithRoles.player.playerName))
-            .setPositiveButton(R.string.reset) { _, _ ->
-                val resetPlayer = playerWithRoles.player.copy(appearances = 0, goals = 0)
-                viewModel.updatePlayer(resetPlayer, playerWithRoles.roles.map { it.roleId })
-                Snackbar.make(fab, R.string.stats_reset, Snackbar.LENGTH_SHORT).show()
-            }.setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_players_management, menu)
-
-        val searchItem = menu.findItem(R.id.action_search)
-        val searchView = searchItem?.actionView as? SearchView
-
-        searchView?.apply {
-            queryHint = getString(R.string.search_players_hint)
-            setOnQueryTextListener(
-                object : SearchView.OnQueryTextListener {
-                    override fun onQueryTextSubmit(query: String?): Boolean = false
-
-                    override fun onQueryTextChange(newText: String?): Boolean {
-                        searchQuery = newText ?: ""
-                        observeViewModel() // Re-filter the list
-                        return true
-                    }
-                },
-            )
-        }
-
         return true
+    }
+
+    /** La spunta sull'ordine in uso; "Per gol" solo dove si contano i gol. */
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        menu.findItem(R.id.action_sort_goals)?.isVisible = contaIGol
+        val attivo =
+            when (viewModel.sortOrder) {
+                SortOrder.NAME_ASC -> R.id.action_sort_name
+                SortOrder.GOALS_DESC -> R.id.action_sort_goals
+                SortOrder.APPEARANCES_DESC -> R.id.action_sort_appearances
+            }
+        menu.findItem(attivo)?.isChecked = true
+        return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean =
@@ -313,16 +298,19 @@ class PlayersManagementActivity : AppCompatActivity() {
 
             R.id.action_sort_name -> {
                 viewModel.sortByName()
+                item.isChecked = true
                 true
             }
 
             R.id.action_sort_goals -> {
                 viewModel.sortByGoals()
+                item.isChecked = true
                 true
             }
 
             R.id.action_sort_appearances -> {
                 viewModel.sortByAppearances()
+                item.isChecked = true
                 true
             }
 
