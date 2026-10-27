@@ -3,16 +3,19 @@ package it.vantaggi.scoreboardessential.wear
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.isNotEmpty
 import com.google.android.material.card.MaterialCardView
@@ -36,7 +39,10 @@ data class SquadraInCampo(
  *
  * Quali voci ci sono e quali sono spente lo decide [MenuVoci]. La fine partita non chiede conferma
  * con un dialogo: la card si riempie di rosso e il secondo tocco, dentro la finestra di
- * [ConfermaSulPosto], chiude. Se nessuno tocca niente, il menu si chiude da solo dopo 10 secondi.
+ * [ConfermaSulPosto], chiude. Se nessuno tocca niente, il menu si chiude da solo dopo 20 secondi.
+ *
+ * Le righe vanno a tutta larghezza e sul tondo si stringono vicino al bordo ([ListaTonda]); ognuna
+ * ha l'icona del suo concetto (tabella G-3 di DESIGN.md).
  */
 class MenuActivity : ComponentActivity() {
     companion object {
@@ -48,8 +54,12 @@ class MenuActivity : ComponentActivity() {
         const val AZIONE_REGOLA_40 = "regola_40"
         const val AZIONE_PORTIERE = "portiere"
 
-        /** Senza nessun tocco ne' scorrimento la schermata torna al quadrante da sola. */
-        const val CHIUSURA_AUTOMATICA_MS = 10_000L
+        /**
+         * Senza nessun tocco ne' scorrimento la schermata torna al quadrante da sola. Erano 10 secondi:
+         * con le impostazioni in fondo la lista e' sempre piu' lunga di uno schermo, e chi leggeva
+         * "In campo" se la vedeva sparire.
+         */
+        const val CHIUSURA_AUTOMATICA_MS = 20_000L
 
         private const val EXTRA_IN_CODA = "menu_in_coda"
         private const val EXTRA_COLLEGATO = "menu_collegato"
@@ -109,6 +119,7 @@ class MenuActivity : ComponentActivity() {
         var voce: Voce,
         val card: MaterialCardView,
     ) {
+        val icona: ImageView = card.findViewById(R.id.voce_icona)
         val titolo: TextView = card.findViewById(R.id.sport_name)
         val sottotitolo: TextView = card.findViewById(R.id.sport_current)
     }
@@ -154,9 +165,21 @@ class MenuActivity : ComponentActivity() {
         aggiungiVoci(findViewById(R.id.menu_impostazioni), MenuVoci.impostazioni(input))
         disegna()
 
-        // Anche scorrere con la corona e' un'interazione: non deve chiudere il menu sotto le dita.
+        // Sul tondo le righe si stringono vicino al bordo: alla prima impaginazione e a ogni scorrimento.
         val scorrimento = findViewById<ScrollView>(R.id.menu_scroll)
-        scorrimento.setOnScrollChangeListener { _, _, _, _, _ -> riarmaChiusura() }
+        val bordo =
+            ListaTonda(scorrimento) {
+                listOf(R.id.menu_voci, R.id.menu_squadre, R.id.menu_impostazioni).flatMap { id ->
+                    val gruppo = findViewById<LinearLayout>(id)
+                    (0 until gruppo.childCount).map(gruppo::getChildAt)
+                }
+            }
+        scorrimento.viewTreeObserver.addOnGlobalLayoutListener { bordo.aggiorna() }
+        // Anche scorrere con la corona e' un'interazione: non deve chiudere il menu sotto le dita.
+        scorrimento.setOnScrollChangeListener { _, _, _, _, _ ->
+            bordo.aggiorna()
+            riarmaChiusura()
+        }
         // Il focus serve alla corona: senza, ruotarla non scorre niente.
         scorrimento.requestFocus()
         riarmaChiusura()
@@ -312,7 +335,7 @@ class MenuActivity : ComponentActivity() {
             riga.card.isEnabled = voce.attiva
 
             riga.titolo.text = titoloDi(voce, armata)
-            riga.titolo.setTextColor(
+            val inchiostro =
                 colore(
                     when {
                         armata -> R.color.ink_black
@@ -320,8 +343,12 @@ class MenuActivity : ComponentActivity() {
                         voce.id == IdVoce.FINE_PARTITA || voce.id == IdVoce.SCARTA_CODA -> R.color.elite_error
                         else -> R.color.elite_text_primary
                     },
-                ),
-            )
+                )
+            riga.titolo.setTextColor(inchiostro)
+            // L'icona ha il colore del nome: spenta con lui, rossa con lui, nera sulla voce armata.
+            riga.icona.setImageResource(iconaDi(voce.id))
+            riga.icona.imageTintList = ColorStateList.valueOf(inchiostro)
+            riga.icona.visibility = View.VISIBLE
 
             val sotto = if (armata) getString(R.string.wear_menu_tap_again) else voce.sottotitolo.testo(this)
             riga.sottotitolo.text = sotto
@@ -337,6 +364,19 @@ class MenuActivity : ComponentActivity() {
             )
         }
     }
+
+    /** Il simbolo di ogni voce, dalla tabella concetto -> icona (G-3). */
+    @DrawableRes
+    private fun iconaDi(id: IdVoce): Int =
+        when (id) {
+            IdVoce.SPORT -> R.drawable.ic_sports
+            IdVoce.PROSSIMA_PARTITA -> R.drawable.ic_groups
+            IdVoce.REGOLA_40 -> R.drawable.ic_sports_tennis
+            IdVoce.VIBRAZIONE -> R.drawable.ic_vibration
+            IdVoce.PORTIERE -> R.drawable.ic_sports_handball
+            IdVoce.FINE_PARTITA -> R.drawable.ic_flag
+            IdVoce.SCARTA_CODA -> R.drawable.ic_delete
+        }
 
     /** I due sottotitoli che parlano di tocchi non consegnati, in ambra. */
     private fun SottotitoloVoce.eDaConsegnare(): Boolean =

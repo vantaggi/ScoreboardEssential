@@ -8,6 +8,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.shape.RoundedCornerTreatment
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,12 +44,15 @@ class MenuG7Test {
     ) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valore, attivita.resources.displayMetrics)
 
     @Test
-    fun `le voci sono righe di un gruppo tonale con la linea sottile, senza ombra e a raggio 8`() {
+    fun `le voci sono righe sul loro tono separate dal nero, senza ombra e a raggio 8`() {
         val attivita = apri()
         val gruppo = attivita.findViewById<LinearLayout>(R.id.menu_voci)
 
-        assertNotNull("il gruppo ha il suo fondo", gruppo.background)
-        assertNotNull("e la linea sottile fra le righe", gruppo.dividerDrawable)
+        // Dal 27 ottobre 2026 ogni riga ha il suo tono e si stringe da sola sul bordo del tondo:
+        // il gruppo non ha fondo, e fra le righe c'e' lo spazio space-4 e non una linea.
+        assertNull("il gruppo non ha piu' un fondo suo", gruppo.background)
+        assertNotNull("lo spazio fra le righe", gruppo.dividerDrawable)
+        assertEquals(dp(attivita, 4f).toInt(), gruppo.dividerDrawable.intrinsicHeight)
         assertEquals(LinearLayout.SHOW_DIVIDER_MIDDLE, gruppo.showDividers)
         assertEquals(2, gruppo.childCount)
 

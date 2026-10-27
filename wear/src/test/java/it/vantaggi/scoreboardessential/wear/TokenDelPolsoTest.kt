@@ -128,8 +128,11 @@ class TokenDelPolsoTest {
         val menu = File(res, "layout/activity_menu.xml").readText()
         val sport = File(res, "layout/activity_sport_selection.xml").readText()
         val riga = File(res, "layout/item_sport_wear.xml").readText()
-        assertTrue(menu.contains("@drawable/bg_group") && menu.contains("@drawable/bg_group_divider"))
-        assertTrue(sport.contains("@drawable/bg_group"))
+        // Dal 27 ottobre 2026 ogni riga ha il suo tono e fra l'una e l'altra c'e' il nero (space-4):
+        // cosi' sul tondo ogni riga si stringe da sola vicino al bordo.
+        assertTrue(menu.contains("@drawable/bg_spazio_righe") && sport.contains("@drawable/bg_spazio_righe"))
+        assertFalse("menu chiuso nel quadrato inscritto", menu.contains("<androidx.wear.widget.BoxInsetLayout"))
+        assertFalse("sport chiuso nel quadrato inscritto", sport.contains("<androidx.wear.widget.BoxInsetLayout"))
         assertTrue(riga.contains("Widget.App.GroupRow"))
         listOf(menu, sport, riga).forEach {
             assertFalse("textAllCaps nel layout", it.contains("textAllCaps"))

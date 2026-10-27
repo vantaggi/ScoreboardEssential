@@ -4,10 +4,8 @@ import android.content.Intent
 import android.util.TypedValue
 import android.view.View
 import android.view.View.MeasureSpec
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.wear.widget.WearableRecyclerView
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -21,8 +19,9 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * Una parola non si spezza mai: i titoli del menu e della selezione dello sport sul tondo da 192dp.
  *
- * Sul tondo il BoxInsetLayout stringe le card a circa 104dp, e "PARTITA" in maiuscolo a 20sp bold
- * non c'entrava: "FINE PA" / "RTITA". Si misura sul Layout vero del TextView, con la grafica
+ * Sul tondo il BoxInsetLayout stringeva le card a circa 104dp, e "PARTITA" in maiuscolo a 20sp bold
+ * non c'entrava: "FINE PA" / "RTITA". Dal 27 ottobre 2026 le righe vanno a tutta larghezza con
+ * l'icona accanto al nome: il test resta, perche' la regola (mai una parola spezzata) resta. Si misura sul Layout vero del TextView, con la grafica
  * nativa (con quella di default measureText vale un pixel a carattere e il test non direbbe niente).
  * A fontScale 1.0, come dice la regola del design.
  */
@@ -98,7 +97,7 @@ class TitoliIntegriTest {
         val fine = titoli.last()
         assertEquals(attesa, menu.getString(R.string.wear_menu_end))
         assertEquals(attesa, fine.text.toString())
-        assertTrue("la card e' larga ${dp(fine.width)}dp: il tondo non e' quello vero?", dp(fine.width) in 40f..140f)
+        assertTrue("il nome e' largo ${dp(fine.width)}dp: il tondo non e' quello vero?", dp(fine.width) in 80f..160f)
         titoli.forEach(::verificaIntero)
 
         // Il primo tocco arma la conferma: il titolo cambia e deve restare intero anche cosi'.
@@ -130,21 +129,11 @@ class TitoliIntegriTest {
                 putExtra(SportSelectionActivity.EXTRA_CURRENT, "Padel")
             }
         val attivita = Robolectric.buildActivity(SportSelectionActivity::class.java, intent).setup().get()
-        val lista = attivita.findViewById<WearableRecyclerView>(R.id.sport_list)
+        val lista = attivita.findViewById<LinearLayout>(R.id.sport_voci)
         assertTrue("la lista non e' stata impaginata", lista.width > 0)
+        assertEquals(4, lista.childCount)
 
-        (0 until 4).forEach { posizione ->
-            // La riga con la larghezza che la lista le da davvero, come la misura il layout manager.
-            val holder = lista.adapter!!.createViewHolder(FrameLayout(attivita), 0)
-            lista.adapter!!.bindViewHolder(holder, posizione)
-            val riga = holder.itemView
-            riga.measure(
-                MeasureSpec.makeMeasureSpec(lista.width, MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-            )
-            riga.layout(0, 0, riga.measuredWidth, riga.measuredHeight)
-            verificaIntero(riga.findViewById(R.id.sport_name))
-        }
+        (0 until 4).forEach { posizione -> verificaIntero(lista.getChildAt(posizione).findViewById(R.id.sport_name)) }
     }
 
     @Test

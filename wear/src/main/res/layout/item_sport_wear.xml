@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Una riga delle liste del polso (menu, impostazioni, scelta dello sport), come i bottoni di Wear:
+    l icona a sinistra, il nome e sotto la riga del perche' o del valore, allineati all inizio. Alta
+    almeno 52dp, sul suo tono (surface) e a tutta larghezza: si stringe solo vicino al bordo del tondo.
+-->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -12,42 +17,54 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:gravity="center_vertical"
         android:minHeight="52dp"
-        android:paddingHorizontal="8dp"
-        android:paddingVertical="@dimen/voce_padding_verticale"
-        android:layout_margin="2dp">
+        android:paddingHorizontal="@dimen/space_12"
+        android:paddingVertical="@dimen/voce_padding_verticale">
 
-        <!-- Titolo a 20sp semibold (600), in frase e non in maiuscolo. L'errore su elite_surface fa 4,7:1.
-             TitoloIntero e' un TextView che, se la parola piu' lunga non entra nella card (sul tondo
-             da 192dp le card sono strette), scende di dimensione fino a 14sp invece di spezzarla.
-             Scelto al posto di un rientro piu' stretto del BoxInsetLayout: quel rientro tiene le card
-             dentro il cerchio. Il rientro interno della card e' sceso da 12dp a 8dp, che da' 8dp in
-             piu' al testo (sul tondo da 192dp "CHIUDERE" a 14sp ne vuole 66, e ne aveva 64). Lo stesso layout
-             serve il menu e la selezione dello sport. -->
-        <it.vantaggi.scoreboardessential.wear.TitoloIntero
-            android:id="@+id/sport_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceHeadlineSmall"
-            android:textSize="20sp"
-            android:textColor="@color/elite_text_primary"
-            android:gravity="center" />
+        <!-- Decorativa: il nome accanto dice gia' tutto. Il colore e' quello del nome (MenuActivity). -->
+        <ImageView
+            android:id="@+id/voce_icona"
+            android:layout_width="@dimen/icon_standard"
+            android:layout_height="@dimen/icon_standard"
+            android:layout_marginEnd="@dimen/space_8"
+            android:importantForAccessibility="no"
+            android:visibility="gone" />
 
-        <!-- La riga secondaria: "in uso" nella scelta dello sport, il perche' o il risultato nel menu. -->
-        <TextView
-            android:id="@+id/sport_current"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/wear_sport_current"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
-            android:textSize="12sp"
-            android:letterSpacing="0"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:gravity="center"
-            android:visibility="gone"
-            android:layout_marginTop="2dp" />
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Il nome a 15sp in 600, in frase. TitoloIntero e' un TextView che, se la parola piu'
+                 lunga non entra, scende di dimensione fino a 14sp invece di spezzarla: a tutta
+                 larghezza succede di rado, ma la regola resta. -->
+            <it.vantaggi.scoreboardessential.wear.TitoloIntero
+                android:id="@+id/sport_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/inter"
+                android:textFontWeight="600"
+                android:textSize="15sp"
+                android:textColor="@color/elite_text_primary"
+                android:textAlignment="viewStart" />
+
+            <!-- La riga secondaria: "in uso" nella scelta dello sport, il perche' o il valore nel menu. -->
+            <TextView
+                android:id="@+id/sport_current"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/wear_sport_current"
+                android:fontFamily="@font/inter"
+                android:textSize="12sp"
+                android:letterSpacing="0"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textAlignment="viewStart"
+                android:visibility="gone"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

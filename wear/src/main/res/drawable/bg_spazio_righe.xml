@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Lo spazio fra le righe di una lista del polso (space-4): ogni riga ha il suo tono e si stringe da
+    sola vicino al bordo del tondo, quindi fra l una e l altra c'e' il nero e non una linea.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <size android:height="@dimen/space_4" />
+    <solid android:color="@android:color/transparent" />
+</shape>

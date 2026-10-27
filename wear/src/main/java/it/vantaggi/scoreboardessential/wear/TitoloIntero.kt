@@ -18,7 +18,9 @@ import androidx.appcompat.widget.AppCompatTextView
  * "CHIUDERE 3-2?") rimisura da capo, ripartendo dalla dimensione dichiarata nel layout.
  *
  * La dimensione dichiarata (20sp) resta quella di tutti i casi in cui la parola entra: il quadrato
- * da 180dp e il tondo da 227dp non cambiano.
+ * da 180dp e il tondo da 227dp non cambiano. Dalla revisione dei menu del 27 ottobre 2026 le righe
+ * vanno a tutta larghezza e il nome e' a 15sp: la parola entra quasi sempre, e la vista resta per i casi
+ * che non entrano (TitoliIntegriTest).
  *
  * AppCompatTextView e non MaterialTextView: quella applica la lineHeight di HeadlineSmall (32sp),
  * che il TextView di prima ignorava, e allargava le righe del titolo di un terzo.

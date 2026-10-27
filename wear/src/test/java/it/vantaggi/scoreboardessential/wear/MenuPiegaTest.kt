@@ -20,8 +20,9 @@ import org.robolectric.annotation.GraphicsMode
  * spenta, titolo e sottotitolo della prima card si leggono senza scorrere con la corona.
  * Si misura con i bounds veri dopo il layout, con la grafica nativa e a fontScale 1.0.
  *
- * Sul tondo l'area visibile e' circa 77dp (rientro del BoxInsetLayout, titolo PARTITA), e la card
- * con titolo su due righe e sottotitolo su due ne chiedeva piu' di 100.
+ * Sul tondo l'area visibile era circa 77dp (rientro del BoxInsetLayout, titolo PARTITA), e la card
+ * con titolo su due righe e sottotitolo su due ne chiedeva piu' di 100. Dalla revisione dei menu
+ * (27 ottobre 2026) la lista va a tutta larghezza e il titolo scorre con lei: l'area e' lo schermo.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -109,13 +110,11 @@ class MenuPiegaTest {
     }
 
     /**
-     * Le misure piccole sono solo del tondo da 192dp: il 227dp e il quadrato da 180dp tengono
-     * rientro e padding di sempre. La card intera non si chiede: sul 227dp il suo fondo sfora
-     * l'area visibile di 15dp, com'era prima e fuori da questo passo. Il sottotitolo invece sta dentro.
+     * Il rientro verticale piccolo della voce e' solo del tondo da 192dp: il 227dp e il quadrato da
+     * 180dp tengono quello di sempre.
      */
     private fun verificaMisureDiSempre() {
         val risorse = RuntimeEnvironment.getApplication().resources
-        assertEquals(16f, risorse.getDimension(R.dimen.menu_box_padding) / risorse.displayMetrics.density, 0.01f)
         assertEquals(8f, risorse.getDimension(R.dimen.voce_padding_verticale) / risorse.displayMetrics.density, 0.01f)
         assertTrue(risorse.getBoolean(R.bool.voce_rientro_angolo))
     }

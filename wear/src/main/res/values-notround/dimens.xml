@@ -16,8 +16,10 @@
     <dimen name="scorer_top_inset">6dp</dimen>
     <dimen name="scorer_row_inset">10dp</dimen>
 
-    <!-- Menu e selezione sport: sul quadrato non c'e' cerchio che taglia, le misure restano quelle di sempre. -->
-    <dimen name="menu_box_padding">16dp</dimen>
+    <!-- Liste del polso sul quadrato: nessun cerchio che taglia, un margine piccolo e uguale su ogni lato. -->
+    <dimen name="lista_margine_lati">8dp</dimen>
+    <dimen name="lista_margine_alto">8dp</dimen>
+    <dimen name="lista_margine_basso">16dp</dimen>
     <dimen name="voce_padding_verticale">8dp</dimen>
     <bool name="voce_rientro_angolo">true</bool>
 </resources>
