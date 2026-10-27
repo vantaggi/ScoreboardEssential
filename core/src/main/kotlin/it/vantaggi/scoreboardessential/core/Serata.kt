@@ -187,7 +187,7 @@ data class Risultato(
 /**
  * La quarta partita degli stessi quattro: quando hanno fatto le tre combinazioni, una per una, si
  * rigioca la piu' combattuta (lo scarto di game piu' piccolo; a parita' quella con piu' game, poi la
- * prima giocata), con le stesse coppie e gli stessi posti. Vale solo se tutte e tre hanno un
+ * prima giocata), con le stesse coppie e i posti nell'ordine di battuta. Vale solo se tutte e tre hanno un
  * risultato: senza, non si sa quale sia stata la piu' combattuta e resta la rotazione. Dalla quinta
  * partita degli stessi quattro si torna alla rotazione.
  */
@@ -215,6 +215,42 @@ object SpareggioSerata {
 }
 
 /**
+ * L'ordine di battuta della serata: la scelta fatta in una partita vale per le successive.
+ *
+ * In una partita battono, nell'ordine, il primo posto della prima coppia, il primo della seconda, il
+ * compagno del primo e il compagno del secondo ([di]). Chiusa la partita, quell'ordine diventa la
+ * precedenza dei giocatori ([dopo]): chi ha battuto prima viene prima, e chi non giocava resta dietro
+ * nell'ordine che aveva. Ogni proposta successiva mette i posti in quella precedenza ([applica]):
+ * dentro ogni coppia batte per primo chi viene prima, e batte per prima la coppia di chi viene prima di
+ * tutti. Chi non ha ancora una precedenza (non ha mai giocato) sta dietro, nell'ordine della rotazione.
+ */
+object OrdineDiBattuta {
+    /** Chi batte nella partita [c], dal primo al quarto. */
+    fun di(c: Composizione): List<Int> = listOf(c.squadra1[0], c.squadra2[0], c.squadra1[1], c.squadra2[1])
+
+    /** La precedenza dopo aver giocato [giocata]: i suoi quattro davanti, gli altri dietro come prima. */
+    fun dopo(
+        ordine: List<Int>,
+        giocata: Composizione,
+    ): List<Int> = di(giocata) + ordine.filter { it !in giocata.posti }
+
+    /** [c] con i posti nella precedenza [ordine] (le coppie restano quelle). */
+    fun applica(
+        c: Composizione,
+        ordine: List<Int>,
+    ): Composizione {
+        if (ordine.isEmpty()) return c
+        val rango = { id: Int -> ordine.indexOf(id).takeIf { it >= 0 } ?: Int.MAX_VALUE }
+        // sortedBy e' stabile: a parita' (due senza precedenza) resta l'ordine della rotazione.
+        val (prima, seconda) =
+            listOf(c.squadra1, c.squadra2)
+                .map { coppia -> coppia.sortedBy(rango) }
+                .sortedBy { coppia -> rango(coppia[0]) }
+        return Composizione(prima, seconda)
+    }
+}
+
+/**
  * Una serata: chi c'e', cosa si e' giocato, cosa si gioca dopo.
  *
  * Valore immutabile; ogni comando ne restituisce uno nuovo. Non sa niente di Android, ne' del database:
@@ -235,6 +271,8 @@ object SpareggioSerata {
  * @property inGioco la composizione consegnata al motore e non ancora chiusa
  * @property risultati come sono finite le [giocate], nello stesso ordine; null (o mancante, per le
  *   serate ricordate prima che ci fossero) quando non si sa
+ * @property ordineDiBattuta la precedenza di battuta lasciata dall'ultima partita ([OrdineDiBattuta]);
+ *   vuota prima della prima
  */
 data class Serata(
     val presenti: List<Int>,
@@ -243,11 +281,19 @@ data class Serata(
     val saltate: List<Composizione> = emptyList(),
     val inGioco: Composizione? = null,
     val risultati: List<Risultato?> = emptyList(),
+    val ordineDiBattuta: List<Int> = emptyList(),
 ) {
     init {
         require(presenti.toSet().size == presenti.size) { "Un presente non si ripete" }
         require(risultati.size <= giocate.size) { "Un risultato per partita giocata, non di piu'" }
     }
+
+    /** La prossima della rotazione, con i posti nell'ordine di battuta della serata. */
+    private fun proponi(
+        chi: List<Int>,
+        storia: List<Composizione>,
+        ordine: List<Int> = ordineDiBattuta,
+    ): Composizione? = RotazioneSerata.prossima(chi, storia)?.let { OrdineDiBattuta.applica(it, ordine) }
 
     /** Come e' finita la partita [indice] delle giocate, o null se non si sa. */
     fun risultatoDi(indice: Int): Risultato? = risultati.getOrNull(indice)
@@ -277,7 +323,7 @@ data class Serata(
     fun aggiungi(id: Int): Serata {
         if (id in presenti) return this
         val nuovi = presenti + id
-        val nuovaBozza = bozza ?: RotazioneSerata.prossima(nuovi, storia)
+        val nuovaBozza = bozza ?: proponi(nuovi, storia)
         return copy(presenti = nuovi, bozza = nuovaBozza)
     }
 
@@ -289,11 +335,11 @@ data class Serata(
         if (id !in presenti) return this
         val restanti = presenti - id
         if (restanti.size < RotazioneSerata.MINIMO_PRESENTI) return copy(presenti = restanti, bozza = null)
-        val attuale = bozza ?: return copy(presenti = restanti, bozza = RotazioneSerata.prossima(restanti, storia))
+        val attuale = bozza ?: return copy(presenti = restanti, bozza = proponi(restanti, storia))
         if (id !in attuale.posti) return copy(presenti = restanti)
         val sostituto =
             RotazioneSerata.primoDellaPanchina(restanti, storia, RotazioneSerata.inPanchina(restanti, attuale))
-                ?: return copy(presenti = restanti, bozza = RotazioneSerata.prossima(restanti, storia))
+                ?: return copy(presenti = restanti, bozza = proponi(restanti, storia))
         return copy(presenti = restanti, bozza = attuale.sostituisci(attuale.posti.indexOf(id), sostituto))
     }
 
@@ -315,7 +361,7 @@ data class Serata(
     fun ruota(): Serata {
         if (presenti.size < RotazioneSerata.MINIMO_PRESENTI) return this
         val saltata = if (bozza != null) saltate + bozza else saltate
-        val nuova = RotazioneSerata.prossima(presenti, giocate + saltata) ?: return this
+        val nuova = proponi(presenti, giocate + saltata) ?: return this
         return copy(bozza = nuova, saltate = saltata)
     }
 
@@ -365,12 +411,14 @@ data class Serata(
         val tutte = giocate + giocata
         val conRisultato = risultati + List(giocate.size - risultati.size) { null } + risultato
         val spareggio = SpareggioSerata.daRigiocare(presenti, tutte, conRisultato)
+        val ordine = OrdineDiBattuta.dopo(ordineDiBattuta, giocata)
         return copy(
             giocate = tutte,
             risultati = conRisultato,
+            ordineDiBattuta = ordine,
             saltate = emptyList(),
             inGioco = null,
-            bozza = spareggio?.let { tutte[it] } ?: RotazioneSerata.prossima(presenti, tutte),
+            bozza = spareggio?.let { OrdineDiBattuta.applica(tutte[it], ordine) } ?: proponi(presenti, tutte, ordine),
         )
     }
 
@@ -391,7 +439,7 @@ data class Serata(
  * rompe l'apertura dell'app. Il formato ha un numero di versione per poterlo cambiare.
  *
  * `serata2` aggiunge la riga `r:` dei risultati, uno per partita giocata separati da `;`: `6-5`, o
- * `?` quando non si sa. Una `serata1`, scritta prima, si legge ancora: e' la stessa senza risultati.
+ * `?` quando non si sa, e la riga `o:` dell'ordine di battuta (id separati da `,`). Una `serata1`, scritta prima, si legge ancora: e' la stessa senza risultati.
  */
 object SerataCodec {
     private const val VERSIONE = "serata2"
@@ -407,6 +455,7 @@ object SerataCodec {
             "b:" + (serata.bozza?.let { scrivi(it) } ?: ""),
             "i:" + (serata.inGioco?.let { scrivi(it) } ?: ""),
             "r:" + serata.risultati.joinToString(";") { r -> r?.let { "${it.squadra1}-${it.squadra2}" } ?: IGNOTO },
+            "o:" + serata.ordineDiBattuta.joinToString(","),
         ).joinToString("\n")
 
     fun decode(testo: String?): Serata? {
@@ -423,6 +472,7 @@ object SerataCodec {
                 bozza = leggiUna(campi.getValue("b")),
                 inGioco = leggiUna(campi.getValue("i")),
                 risultati = if (versione == VERSIONE) leggiIRisultati(campi.getValue("r")) else emptyList(),
+                ordineDiBattuta = if (versione == VERSIONE) leggiGliId(campi.getValue("o")) else emptyList(),
             )
         } catch (_: RuntimeException) {
             // Chiave mancante, numero o coppia mal scritti: un testo che non si legge e' una serata persa.

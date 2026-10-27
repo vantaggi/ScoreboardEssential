@@ -2063,11 +2063,14 @@ Richiesta del proprietario: la serata dura un'ora e mezza, si giocano tre partit
 
 **Il girone decide l'ordine.** Prima della prima partita `conIPresenti` mette i presenti nell'ordine della proposta (prima chi era gia' spuntato restava davanti e diventava "#1"). A serata iniziata resta la regola di prima: escono gli assenti, entrano i nuovi in coda.
 
+**L'ordine di battuta** (`OrdineDiBattuta`, richiesta del proprietario dello stesso giorno). Nella prima partita si sceglie chi batte per primo e chi per secondo (toccando due nomi, e con Scambia i lati): batte il primo posto della coppia 1, poi il primo della coppia 2, poi i loro compagni. Chiusa la partita, quell'ordine diventa la precedenza dei giocatori e ogni proposta successiva ci mette i posti: dentro ogni coppia batte per primo chi viene prima, e batte per prima la coppia di chi viene prima di tutti; chi non ha mai giocato sta dietro. Ogni partita chiusa aggiorna la precedenza con l'ordine giocato, quindi una correzione a mano vale per le successive. Senza scelte, il girone esce identico alla dashboard (1, 2, 3, 4 battono come #1, #2, #4, #3 nella prima, #1, #2, #3, #4 nella seconda). Va nel testo della serata (`o:`). Nella schermata il numero di ogni posto e' il **turno di battuta** (1 e 3 la coppia 1, 2 e 4 la coppia 2) al posto del vecchio "posto 1, posto 2", e la frase sotto le coppie lo spiega.
+
 **In un tocco.** Il passaggio resta quello di R-2: "Fine partita" con la casella "Prossima partita della serata" (accesa) salva e apre la Serata con la prossima gia' composta, e "Inizia la partita" la porta in campo. Non e' stato aggiunto un avvio automatico senza passare dalla Serata: si vedono le coppie prima di cominciare, e uno scambio resta a un tocco.
 
 ### Piano UI (CLAUDE.md, punto 3)
 
 - **Un compito, un valore.** Invariati: "chi gioca la prossima", le due coppie. Lo spareggio aggiunge solo il perche' di quelle coppie, e solo quando c'e'.
+- **Turno di battuta.** Il numero in testa a ogni posto (lo stesso `lead` di `item_serata_row`) e' il turno di battuta, non il posto nella coppia; la frase `serata_seats_hint` lo spiega. Per TalkBack: "Coppia 2, turno di battuta 2: Nome".
 - **Gerarchia e layout.** Una riga `Caption` sotto "Partita n", nel gruppo delle coppie: "Spareggio: si rigioca la partita 2, la piu' combattuta (6-5 in game)." Nessun gruppo, card, bottone o primario nuovo.
 - **Componenti riusati.** `TextAppearance.App.Caption` (Inter 400, `elite_text_secondary`) con `fontFeatureSettings="tnum"` per le cifre, spazi `space_16` e `space_4`. Nessun token, stile, colore o icona nuovi.
 

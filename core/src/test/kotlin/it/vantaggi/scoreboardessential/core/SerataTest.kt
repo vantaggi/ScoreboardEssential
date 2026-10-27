@@ -386,6 +386,52 @@ class SerataTest {
         assertNull(SerataCodec.decode("serata2\np:1,2,3,4\ng:1,2/3,4\ns:\nb:\ni:\nr:6-4;6-3"))
     }
 
+    // ---- Ordine di battuta ----
+
+    @Test
+    fun `chi batte nella prima partita decide l'ordine di battuta delle successive`() {
+        // Proposta 1+4 contro 2+3; si sceglie che batta per primo il 3, poi il 4: coppie 3+2 e 4+1.
+        val scelta =
+            Serata
+                .nuova(listOf(1, 2, 3, 4))
+                .scambiaLati()
+                .scambia(0, 1)
+                .scambia(2, 3)
+        assertEquals(Composizione(listOf(3, 2), listOf(4, 1)), scelta.bozza)
+        assertEquals(listOf(3, 4, 2, 1), OrdineDiBattuta.di(scelta.bozza!!))
+
+        val dopo = scelta.consegna().chiudiPartita()
+        assertEquals(listOf(3, 4, 2, 1), dopo.ordineDiBattuta)
+        // La seconda e' 1+3 contro 2+4: batte il 3 (primo di tutti), poi il 4, poi i loro compagni.
+        assertEquals(Composizione(listOf(3, 1), listOf(4, 2)), dopo.bozza)
+        // La terza e' 3+4 contro 1+2: batte il 3, poi l'1 (che nella seconda batteva prima del 2), poi i compagni.
+        val terza = dopo.consegna().chiudiPartita().bozza!!
+        assertEquals(listOf(3, 1, 4, 2), OrdineDiBattuta.di(terza))
+        assertEquals(coppie(1, 2, 3, 4), terza.coppie)
+    }
+
+    @Test
+    fun `senza scelte l'ordine del girone resta quello della dashboard, e chi non ha mai giocato batte dopo`() {
+        // Le tre partite del girone escono identiche a quelle senza ordine di battuta.
+        val girone = Serata.nuova(listOf(1, 2, 3, 4))
+        assertEquals(comp(1, 3, 2, 4), girone.gioca(1).bozza)
+        assertEquals(comp(1, 2, 3, 4), girone.gioca(2).bozza)
+        // Il 5, arrivato dopo, non ha precedenza: nella sua coppia batte per secondo.
+        val conCinque =
+            girone
+                .gioca(1)
+                .aggiungi(5)
+                .ruota()
+                .ruota()
+        val bozza = conCinque.bozza!!
+        if (5 in bozza.posti) {
+            val coppia = if (5 in bozza.squadra1) bozza.squadra1 else bozza.squadra2
+            assertEquals(5, coppia[1])
+        }
+        val riletta = SerataCodec.decode(SerataCodec.encode(girone.gioca(2)))!!
+        assertEquals(girone.gioca(2).ordineDiBattuta, riletta.ordineDiBattuta)
+    }
+
     // ---- Spareggio: la quarta partita degli stessi quattro ----
 
     /** Gioca le tre partite del giro con questi risultati, nell'ordine proposto. */
