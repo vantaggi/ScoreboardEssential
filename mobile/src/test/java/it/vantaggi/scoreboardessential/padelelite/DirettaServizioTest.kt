@@ -121,8 +121,9 @@ class DirettaServizioTest {
     }
 
     private fun serveIlServizio() {
-        attendi("l'avvio del servizio") { avviatore.avvii == 1 }
-        assertEquals(DirettaServizioFase.ATTIVO, controllo.fase.value)
+        // La fase si scrive dopo che avvia() e' tornata (e il finto ha gia' contato): si aspetta la fase, poi si contano gli avvii.
+        attendi("l'avvio del servizio") { controllo.fase.value == DirettaServizioFase.ATTIVO }
+        assertEquals(1, avviatore.avvii)
     }
 
     private fun ilServizioSiFerma() {
