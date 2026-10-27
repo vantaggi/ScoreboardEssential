@@ -2373,12 +2373,24 @@ La checklist "Da guardare in locale" della PR #182, eseguita sul telefono del pr
 
 **La correzione.** Le righe dei gironi vanno a capo per intero: `RigaSerata.titoloIntero`, che l'adapter traduce in `maxLines` senza limite e niente ellissi; le altre righe (posti, panchina, presenti, "Usa i presenti") restano a due righe come prima, perche' un nome solo tagliato si riconosce e un elenco di quattro nomi no. Nessun token nuovo, nessun componente nuovo. Il test `le righe dei gironi vanno a capo per intero, le altre restano a due righe` di `SerataActivityTest` e' rosso se il girone resta a due righe o se il limite si toglie anche alle altre (il riciclo dell'adapter lo riporterebbe sulle righe sbagliate).
 
-**Nota, non un errore.** Il messaggio con "Annulla" resta circa 3 secondi (durata breve di sistema): a bordo campo col pollice puo' essere poco. Da decidere se allungarlo.
+**Nota, non un errore.** Il messaggio con "Annulla" resta circa 3 secondi (durata lunga di sistema): a bordo campo col pollice puo' essere poco. Allungato a 8 secondi, vedi "Testi e Annulla della Serata" qui sotto.
 
 **Pattern vietati** (`review.md`): niente maiuscolo, emoji, ombre, colori o misure scritti a mano, nessun peso nuovo, nessun movimento nuovo. A carattere grande il gruppo si allunga e la schermata scorre come prima.
 
 **Debito.** La correzione non e' ancora vista a schermo a 360dp e al 200%: va riguardata sul telefono.
 
+## Testi e Annulla della Serata - 27 ottobre 2026
+
+Due ritocchi emersi dalla verifica a schermo di oggi, sul contorno; il gioco non cambia.
+
+- **Il sottotitolo dell'accesso a Padel Elite** diceva "Serve solo per inviare le partite al tuo gruppo", ma l'accesso ora serve anche alla Serata. Ora: "Usa lo stesso account della dashboard. Serve per leggere la serata del tuo gruppo, i presenti e i gironi, e per inviare le partite." (in inglese nello stesso ordine). Stesso stile e stessa posizione, solo il testo.
+- **Il messaggio con "Annulla"** dopo "Usa i presenti" o un girone resta 8 secondi invece dei circa 3 della durata lunga di sistema. Il valore e' un token nuovo, `undo_window` in `integers.xml`, che nomina un ruolo riusabile (il tempo per ripensarci di un messaggio con Annulla), separato dalle durate di movimento: non e' un'animazione. Con TalkBack Material lo allunga ancora secondo le impostazioni di accessibilita'. Il test `il messaggio con Annulla resta otto secondi, non i tre di sistema` di `SerataActivityTest` e' rosso se si torna a `LENGTH_LONG`.
+
+**Come e' stato provato.** Test strumentato `SerataAnnullaStrumentatoTest` sull'emulatore `Pixel_9a_Test` (Android 16), dashboard finta e database in memoria: il messaggio resta 8,6 e 8,8 secondi e si chiude per tempo scaduto (`DISMISS_EVENT_TIMEOUT`), senza e con la domanda sull'omonimo prima; e' rosso se dura meno di 7,5 s o si chiude per altro. Sul telefono del proprietario non e' stato visto: una prova del 27 ottobre misurava circa 3,4 s, ma sul telefono c'era la build di un'altra sessione installata sopra (senza `undo_window` e col sottotitolo vecchio, controllato con `aapt2 dump resources`), quindi quella misura non riguarda questa modifica. Il sottotitolo nuovo non e' visto a schermo (il proprietario e' collegato e non si e' fatto logout).
+
+**Piano UI.** Gerarchia, layout, componenti, stati e movimento invariati (stessa Snackbar ancorata sopra la barra di avvio, dissolvenza come prima). A 360dp e al 200% il sottotitolo e' un testo a capo libero dentro la schermata che scorre: una riga in piu' al massimo.
+
+**Pattern vietati** (`review.md`): niente maiuscolo, emoji, ombre, colori o misure scritti a mano, nessun peso nuovo, nessun movimento nuovo; la sola cifra nuova e' un token con un ruolo.
 
 ## Orologio: squadre in campo e prossima partita della serata - 27 ottobre 2026
 
