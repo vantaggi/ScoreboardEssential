@@ -144,6 +144,8 @@
     <string name="label_statistics">Statistiche</string>
     <string name="label_players">Giocatori</string>
     <string name="label_settings">Impostazioni</string>
+    <string name="label_sheet_this_match">Questa partita</string>
+    <string name="label_sheet_app">App</string>
     <string name="label_reset_match_time">Azzera tempo</string>
     <string name="formation_label">%1$s: %2$s</string>
     <string name="formation_none">%1$s: nessun modulo</string>

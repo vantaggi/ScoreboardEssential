@@ -1419,7 +1419,7 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Chiudi | `close` | - | - |
 | Menu | `menu` | `ic_menu` | - |
 | Casa | `home` | - | - |
-| Vai al dettaglio | `chevron_right` | - | - |
+| Vai al dettaglio | `chevron_right` | `ic_chevron_right` | - |
 | Espandi | `expand_more` | `ic_expand_more` | - |
 | Comprimi | `expand_less` | `ic_expand_less` | - |
 | Altre azioni | `more_horiz` | - | `ic_more_horiz` |
@@ -1449,9 +1449,9 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | In corso | `progress_activity` | `ic_progress_activity` | - |
 | Statistiche | `bar_chart` | `ic_bar_chart` | - |
 | Data | `calendar_today` | - | - |
-| Persona | `person` | - | - |
+| Persona | `person` | `ic_person` | - |
 | Squadra, gruppo (anche un girone) | `group` | `ic_group` | - |
-| Impostazioni | `settings` | - | - |
+| Impostazioni | `settings` | `ic_settings` | - |
 | Notifiche | `notifications` | - | - |
 | Sport, palla, gol | `sports_soccer` | - | - |
 | Racchetta (padel, tennis) | `sports_tennis` | - | `ic_sports_tennis` |
@@ -1460,7 +1460,7 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Scegli lo sport | `sports` | - | `ic_sports` |
 | Fine partita | `flag` | - | `ic_flag` |
 | Vibrazione | `vibration` | - | `ic_vibration` |
-| Storico delle partite | `history` | - | - |
+| Storico delle partite | `history` | `ic_history` | - |
 | Cronaca della partita | `timeline` | `ic_timeline` | - |
 | Presenze | `event_available` | `ic_event_available` | - |
 | Scambio dei posti | `swap_horiz` | `ic_swap_horiz` | - |
@@ -2534,3 +2534,19 @@ Il problema era la causa (1): menu, scelta dello sport e Prossima partita in un 
 
 1. Non visto a schermo: verificato dai test (Robolectric, tondo 192dp e quadrato 180dp) e dalla CI; le foto sull'emulatore rotondo e sul Galaxy Watch restano da fare.
 2. La scelta dello sport e' ora una colonna e non una `WearableRecyclerView`: le scelte sono al massimo una manciata. Se un elenco diventasse lungo (decine di voci) tornerebbe una lista che ricicla.
+
+### Passo 3a: il foglio Partita, prima la partita e poi l'app
+
+Il foglio finiva con sei bottoni secondari uguali in griglia (pattern vietato), che mescolavano comandi su questa partita (Condividi, Azzera tempo) e posti dell'app (Storico, Statistiche, Giocatori, Impostazioni).
+
+- **Gerarchia e layout.** Sopra, invariati: Serata, Diretta, rose, coppie, registro, formazioni. Poi il gruppo **Questa partita** (didascalia): Condividi e, col cronometro, Azzera tempo, secondari della stessa misura in una fila (senza cronometro Condividi prende la fila intera); sotto **Fine partita**, l'unico primario del foglio, a tutta larghezza. In fondo il gruppo **App**: un `Widget.App.Group` con quattro righe (Storico, Statistiche, Giocatori, Impostazioni), icona a sinistra, nome `RowTitle`, freccia `chevron_right` in `text-secondary`, linee rientrate fra le righe (`Widget.App.RowDivider`). Le righe si leggono come "vai a", non come comandi.
+- **Componenti riusati.** La riga e' quella della Serata (`Widget.App.Pressable`, `bg_focus_ring`, `control_touch`); gruppo, divisore e didascalia quelli del foglio. Icone nuove sul telefono, dalla tabella G-3: `history`, `bar_chart` (c'era), `person` (Giocatori: sono persone, `group` e' la squadra), `settings`, `chevron_right`.
+- **Stati.** Riga normale, premuta (pressione condivisa), fuoco (anello), nessuna riga spenta. Azzera tempo spento finche' il servizio del cronometro non e' legato, come prima. Movimento: nessuno nuovo. Accessibilita': icone e freccia nascoste a TalkBack, la riga si legge col suo nome; le due didascalie sono intestazioni. 200%: le righe crescono in altezza, i due secondari vanno a capo su due righe come prima.
+- **Pattern vietati.** Tolta la griglia di bottoni uguali; un solo primario; niente card nuove (il gruppo App e' un gruppo tonale con righe); niente ombre.
+
+### Debiti dichiarati del passo 3a
+
+1. **Un solo "In campo"** (proposta: nel padel e nel tennis solo le coppie) resta aperto: le rose sono l'unico posto dove si aggiungono i giocatori a un lato, e togliendole nel padel servirebbe un altro modo per farlo. Domanda per il proprietario.
+2. Serata e Diretta restano gruppi col titolo: la proposta le vuole righe, da fare insieme al punto 1.
+3. Le Impostazioni (Squadre, Regole, Padel Elite, App) sono il passo 3b.
+4. Non visto a schermo: verificato solo dai test e dalla CI.

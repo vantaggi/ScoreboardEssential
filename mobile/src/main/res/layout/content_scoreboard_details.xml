@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Il foglio PARTITA (G-6): cio' che si consulta, non cio' che si usa mentre si gioca. Quattro gruppi
-    tonali (rose, coppie, registro, formazioni) con righe separate da linee rientrate, e le azioni. Il
-    colore della squadra e' solo una barretta accanto al nome, mai un blocco pieno con il testo sopra. Un
-    solo primario nel foglio, FINE PARTITA; gli altri comandi sono secondari e in fila. Niente colori
+    tonali (rose, coppie, registro, formazioni) con righe separate da linee rientrate, poi i comandi di
+    questa partita e in fondo i posti dell'app. Il colore della squadra e' solo una barretta accanto al
+    nome, mai un blocco pieno con il testo sopra. Un solo primario nel foglio, FINE PARTITA. Niente colori
     Street, niente maiuscolo forzato.
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -601,10 +601,10 @@
     </com.google.android.material.card.MaterialCardView>
 
     <!--
-        Azioni. Un solo primario nel foglio, FINE PARTITA, a tutta larghezza: e' l'unico comando che
-        chiude qualcosa e non va confuso con gli altri. Sotto, i secondari in file da tre con la stessa
-        misura (STORICO, CONDIVIDI, STATISTICHE; GIOCATORI, IMPOSTAZIONI e, solo col cronometro,
-        AZZERA TEMPO: applyCapabilities lo spegne negli altri sport e la riga si divide in due).
+        Questa partita, poi l'app (revisione dei menu, passo 3). Prima i comandi su questa partita: Condividi
+        e, solo col cronometro, Azzera tempo (applyCapabilities lo spegne negli altri sport), secondari della
+        stessa misura; sotto FINE PARTITA, l'unico primario del foglio, a tutta larghezza. Poi i posti
+        dell'app come righe di un gruppo con la freccia: si leggono come "vai a", non come sei bottoni uguali.
     -->
     <LinearLayout
         android:id="@+id/match_actions"
@@ -619,77 +619,28 @@
         app:layout_constraintTop_toBottomOf="@id/formations_card"
         app:layout_constraintVertical_bias="0">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/reset_scores_button"
-            style="@style/Widget.App.Button.Primary"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/label_end_match" />
+            android:layout_marginBottom="@dimen/space_8"
+            android:accessibilityHeading="true"
+            android:text="@string/label_sheet_this_match"
+            android:textAppearance="@style/TextAppearance.App.Caption" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_12"
             android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/match_history_button"
-                style="@style/Widget.App.Button.Secondary"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:maxLines="2"
-                android:paddingHorizontal="@dimen/space_8"
-                android:text="@string/label_match_history" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/share_match_button"
                 style="@style/Widget.App.Button.Secondary"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="@dimen/space_8"
                 android:layout_weight="1"
                 android:maxLines="2"
                 android:paddingHorizontal="@dimen/space_8"
                 android:text="@string/share_match_report" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/statistics_button"
-                style="@style/Widget.App.Button.Secondary"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:maxLines="2"
-                android:paddingHorizontal="@dimen/space_8"
-                android:text="@string/label_statistics" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/space_8"
-            android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/players_button"
-                style="@style/Widget.App.Button.Secondary"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:maxLines="2"
-                android:paddingHorizontal="@dimen/space_8"
-                android:text="@string/label_players" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/sheet_settings_button"
-                style="@style/Widget.App.Button.Secondary"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/space_8"
-                android:layout_weight="1"
-                android:maxLines="2"
-                android:paddingHorizontal="@dimen/space_8"
-                android:text="@string/label_settings" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/sheet_reset_timer_button"
@@ -702,5 +653,201 @@
                 android:paddingHorizontal="@dimen/space_8"
                 android:text="@string/label_reset_match_time" />
         </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reset_scores_button"
+            style="@style/Widget.App.Button.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_12"
+            android:text="@string/label_end_match" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_24"
+            android:layout_marginBottom="@dimen/space_8"
+            android:accessibilityHeading="true"
+            android:text="@string/label_sheet_app"
+            android:textAppearance="@style/TextAppearance.App.Caption" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/app_places_card"
+            style="@style/Widget.App.Group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/match_history_button"
+                    style="@style/Widget.App.Pressable"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="@drawable/bg_focus_ring"
+                    android:gravity="center_vertical"
+                    android:minHeight="@dimen/control_touch"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_8">
+
+                    <ImageView
+                        android:layout_width="@dimen/icon_standard"
+                        android:layout_height="@dimen/icon_standard"
+                        android:layout_marginEnd="@dimen/space_12"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_history"
+                        app:tint="@color/elite_text_primary" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/label_match_history"
+                        android:textAppearance="@style/TextAppearance.App.RowTitle" />
+
+                    <ImageView
+                        android:layout_width="@dimen/icon_standard"
+                        android:layout_height="@dimen/icon_standard"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/elite_text_secondary" />
+                </LinearLayout>
+
+                <View
+                    style="@style/Widget.App.RowDivider"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/border_width"
+                    android:layout_marginStart="@dimen/space_48" />
+
+                <LinearLayout
+                    android:id="@+id/statistics_button"
+                    style="@style/Widget.App.Pressable"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="@drawable/bg_focus_ring"
+                    android:gravity="center_vertical"
+                    android:minHeight="@dimen/control_touch"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_8">
+
+                    <ImageView
+                        android:layout_width="@dimen/icon_standard"
+                        android:layout_height="@dimen/icon_standard"
+                        android:layout_marginEnd="@dimen/space_12"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_bar_chart"
+                        app:tint="@color/elite_text_primary" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/label_statistics"
+                        android:textAppearance="@style/TextAppearance.App.RowTitle" />
+
+                    <ImageView
+                        android:layout_width="@dimen/icon_standard"
+                        android:layout_height="@dimen/icon_standard"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/elite_text_secondary" />
+                </LinearLayout>
+
+                <View
+                    style="@style/Widget.App.RowDivider"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/border_width"
+                    android:layout_marginStart="@dimen/space_48" />
+
+                <LinearLayout
+                    android:id="@+id/players_button"
+                    style="@style/Widget.App.Pressable"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="@drawable/bg_focus_ring"
+                    android:gravity="center_vertical"
+                    android:minHeight="@dimen/control_touch"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_8">
+
+                    <ImageView
+                        android:layout_width="@dimen/icon_standard"
+                        android:layout_height="@dimen/icon_standard"
+                        android:layout_marginEnd="@dimen/space_12"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_person"
+                        app:tint="@color/elite_text_primary" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/label_players"
+                        android:textAppearance="@style/TextAppearance.App.RowTitle" />
+
+                    <ImageView
+                        android:layout_width="@dimen/icon_standard"
+                        android:layout_height="@dimen/icon_standard"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/elite_text_secondary" />
+                </LinearLayout>
+
+                <View
+                    style="@style/Widget.App.RowDivider"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/border_width"
+                    android:layout_marginStart="@dimen/space_48" />
+
+                <LinearLayout
+                    android:id="@+id/sheet_settings_button"
+                    style="@style/Widget.App.Pressable"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="@drawable/bg_focus_ring"
+                    android:gravity="center_vertical"
+                    android:minHeight="@dimen/control_touch"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="@dimen/space_16"
+                    android:paddingVertical="@dimen/space_8">
+
+                    <ImageView
+                        android:layout_width="@dimen/icon_standard"
+                        android:layout_height="@dimen/icon_standard"
+                        android:layout_marginEnd="@dimen/space_12"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_settings"
+                        app:tint="@color/elite_text_primary" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/label_settings"
+                        android:textAppearance="@style/TextAppearance.App.RowTitle" />
+
+                    <ImageView
+                        android:layout_width="@dimen/icon_standard"
+                        android:layout_height="@dimen/icon_standard"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/elite_text_secondary" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

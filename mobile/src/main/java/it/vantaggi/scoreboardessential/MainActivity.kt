@@ -1266,22 +1266,22 @@ class MainActivity :
 
         findViewById<Button>(R.id.serata_open_button).setOnClickListener { apriLaSerata() }
 
-        findViewById<Button>(R.id.players_button).setOnClickListener {
+        findViewById<View>(R.id.players_button).setOnClickListener {
             startActivity(Intent(this, PlayersManagementActivity::class.java))
         }
     }
 
     private fun setupNavigationButtons() {
-        findViewById<Button>(R.id.match_history_button).setOnClickListener {
+        findViewById<View>(R.id.match_history_button).setOnClickListener {
             startActivity(Intent(this, MatchHistoryActivity::class.java))
         }
 
-        // Le impostazioni stanno solo nel foglio, accanto agli altri comandi che prima erano FAB.
-        findViewById<Button>(R.id.sheet_settings_button).setOnClickListener {
+        // Storico, Statistiche, Giocatori e Impostazioni sono righe del gruppo App in fondo al foglio.
+        findViewById<View>(R.id.sheet_settings_button).setOnClickListener {
             startActivity(Intent(this, MatchSettingsActivity::class.java))
         }
 
-        findViewById<Button>(R.id.statistics_button).setOnClickListener {
+        findViewById<View>(R.id.statistics_button).setOnClickListener {
             startActivity(Intent(this, StatisticsActivity::class.java))
         }
 
