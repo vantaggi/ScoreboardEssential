@@ -2654,3 +2654,19 @@ Il dialogo era una ruota con tutti i colori, un'anteprima con un "12" e il nome,
 
 1. Domanda per Cioti: i sei colori nuovi della tavolozza (rosso, arancio, giallo, blu, viola, rosa) vanno bene o ne vuole altri? Si cambiano in `colors.xml` senza toccare altro.
 2. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 7b: "Aggiungi un giocatore" dice una volta sola come si entra nell'app
+
+Nell'elenco con la rosa di Padel Elite ogni giocatore della dashboard non ancora nell'app aveva sotto il nome la stessa riga grigia, "Si aggiunge all'app quando lo scegli": con sei nomi, sei volte la stessa frase, e nessuna riga che dicesse qualcosa di diverso.
+
+- **Gerarchia e layout.** La frase passa una volta sola sotto il titolo della prima sezione che viene dalla dashboard (Nello stesso girone, Iscritti o Padel Elite): "Chi non e' ancora nell'app ci entra quando lo scegli". Le righe dei giocatori nuovi hanno solo il nome; restano le didascalie che dicono qualcosa di diverso ("Gia' nell'app", "Nell'app come Bruno"). La logica sta in `righeDellaScelta` (funzione pura, prima era dentro `MainActivity`); l'intestazione di sezione ha una didascalia facoltativa (`item_dialog_section`, `RowTitle` in testo secondario con la `Caption` sotto).
+- **Componenti riusati.** Riga e intestazione del dialogo di prima; stringa esistente con il testo cambiato (italiano e inglese). Nessun token nuovo.
+- **Stati.** Rosa letta con giocatori nuovi (avviso sotto la prima sezione); tutti gia' nell'app (nessun avviso, restano le didascalie); rosa non letta (`DASHBOARD_NON_LETTA`, nessun avviso); solo giocatori dell'app (nessun avviso). Movimento: nessuno. 200%: il titolo e l'avviso vanno a capo.
+- **Pattern vietati.** Tolta la stessa didascalia ripetuta su ogni riga.
+- **Non toccato.** La ricerca in cima e lo sport con la spunta (resto del passo 7) restano da fare.
+
+### Debiti dichiarati del passo 7b
+
+1. Nessuna ricerca nel dialogo: con una rosa di cinquanta nomi si scorre ancora. Serve un dialogo con un campo e una lista filtrata al posto dell'adattatore del `MaterialAlertDialog`; non l'ho fatto di notte perche' tocca la scelta dalla dashboard di Padel Elite, che e' in produzione.
+2. Lo sport nelle Impostazioni e' ancora un menu a tendina; la riga "Sport: Padel" con il dialogo e la spunta e' legata al debito 2 del passo 3b (righe nome e valore) e cambia molti test: da fare insieme.
+3. Non visto a schermo: verificato solo dai test e dalla CI.

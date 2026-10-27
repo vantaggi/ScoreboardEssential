@@ -60,7 +60,6 @@ import it.vantaggi.scoreboardessential.padelelite.DirettaIntent
 import it.vantaggi.scoreboardessential.padelelite.ElencoDellaScelta
 import it.vantaggi.scoreboardessential.padelelite.RemotePlayer
 import it.vantaggi.scoreboardessential.padelelite.SceltaDallaDashboard
-import it.vantaggi.scoreboardessential.padelelite.SezioneDellaScelta
 import it.vantaggi.scoreboardessential.padelelite.VoceDellaScelta
 import it.vantaggi.scoreboardessential.padelelite.direttaLook
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
@@ -1610,36 +1609,7 @@ class MainActivity :
         team: Int,
         elenco: ElencoDellaScelta,
     ) {
-        val righe =
-            elenco.voci.map { voce ->
-                when (voce) {
-                    is VoceDellaScelta.Intestazione -> {
-                        val titolo =
-                            when (voce.sezione) {
-                                SezioneDellaScelta.GIRONE -> getString(R.string.scelta_section_girone)
-                                SezioneDellaScelta.ISCRITTI -> getString(R.string.scelta_section_iscritti)
-                                SezioneDellaScelta.DASHBOARD -> getString(R.string.scelta_section_dashboard, elenco.nomeGruppo)
-                                SezioneDellaScelta.SOLO_APP -> getString(R.string.scelta_section_app)
-                                SezioneDellaScelta.DASHBOARD_NON_LETTA -> getString(R.string.scelta_section_unread)
-                            }
-                        RigaDelDialogo(titolo, intestazione = true)
-                    }
-
-                    is VoceDellaScelta.DallaDashboard -> {
-                        val didascalia =
-                            when {
-                                voce.nomeLocale == null -> getString(R.string.scelta_dashboard_new)
-                                voce.nomeLocale == voce.remote.name -> getString(R.string.scelta_dashboard_in_app)
-                                else -> getString(R.string.scelta_dashboard_in_app_as, voce.nomeLocale)
-                            }
-                        RigaDelDialogo(voce.remote.name, didascalia)
-                    }
-
-                    is VoceDellaScelta.SoloNellApp -> {
-                        RigaDelDialogo(voce.nome)
-                    }
-                }
-            }
+        val righe = righeDellaScelta(this, elenco)
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.add_player_title, team))
             .setAdapter(RigheDelDialogo(this, righe)) { _, which ->

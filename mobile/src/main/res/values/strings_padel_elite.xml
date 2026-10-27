@@ -141,7 +141,7 @@
     <string name="scelta_section_iscritti">Signed up for the next evening</string>
     <string name="scelta_section_app">Only in the app</string>
     <string name="scelta_section_unread">Padel Elite is not responding: players in the app</string>
-    <string name="scelta_dashboard_new">Added to the app when you pick them</string>
+    <string name="scelta_dashboard_new">Anyone not in the app yet is added when you pick them</string>
     <string name="scelta_dashboard_in_app">In the app</string>
     <string name="scelta_dashboard_in_app_as">In the app as %1$s</string>
     <string name="scelta_dashboard_failed">Could not add the player. Try again.</string>
