@@ -13,6 +13,7 @@ import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import it.vantaggi.scoreboardessential.core.OrdineDiBattuta
 import it.vantaggi.scoreboardessential.core.Serata
 import it.vantaggi.scoreboardessential.padelelite.SerataDashboard
 import java.time.LocalDate
@@ -185,12 +186,14 @@ object RigheDellaSerata {
                 for (posto in 1..2) {
                     val indice = (coppia - 1) * 2 + (posto - 1)
                     val nome = stato.nome(bozza.posti[indice])
+                    // Il numero e' il turno di battuta: A1, B1, A2, B2 (1 e 3 la coppia 1, 2 e 4 la coppia 2).
+                    val turno = OrdineDiBattuta.di(bozza).indexOf(bozza.posti[indice]) + 1
                     add(
                         RigaSerata(
                             chiave = ChiaviSerata.posto(indice),
                             titolo = nome,
-                            descrizione = contesto.getString(R.string.serata_seat_description, coppia, posto, nome),
-                            lead = posto.toString(),
+                            descrizione = contesto.getString(R.string.serata_seat_description, coppia, turno, nome),
+                            lead = turno.toString(),
                             selezionata = selezionato == indice,
                             mostraLaSpunta = true,
                             attiva = !stato.inCorso,

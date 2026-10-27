@@ -1948,7 +1948,7 @@ Richiesta del proprietario: una sera giocano in quattro (o piu'), le coppie camb
 Una sola, in `core/Serata.kt` (`RotazioneSerata`), funzione pura dei presenti e delle partite fatte:
 
 1. **Chi gioca.** Giocano i quattro che hanno giocato meno partite; a parita' chi ha giocato piu' tempo fa (chi non ha mai giocato per primo); a parita' chi e' arrivato prima. Con quattro presenti giocano tutti.
-2. **Con chi.** I quattro hanno tre modi di dividersi in coppie (A+B/C+D, A+C/B+D, A+D/B+C, con A..D nell'ordine di arrivo). Si sceglie quello che ripete meno coppie gia' fatte; a parita' quello giocato meno di recente; a parita' il primo dell'elenco. Con quattro presenti e' un ciclo di tre che non ripete una combinazione prima di averle fatte tutte; con piu' presenti nessuno gioca due partite piu' di un altro.
+2. **Con chi.** I quattro hanno tre modi di dividersi in coppie (A+D/B+C, A+C/B+D, A+B/C+D, con A..D nell'ordine di arrivo: dal 27 ottobre 2026 l'ordine dei gironi della dashboard, vedi "Serata: ordine dei gironi e spareggio"). Si sceglie quello che ripete meno coppie gia' fatte; a parita' quello giocato meno di recente; a parita' il primo dell'elenco. Con quattro presenti e' un ciclo di tre che non ripete una combinazione prima di averle fatte tutte; con piu' presenti nessuno gioca due partite piu' di un altro.
 3. **Posti.** Dentro ogni coppia il primo posto, che serve per primo, e' di chi e' arrivato prima; la coppia col primo arrivato e' la prima. L'ordine di servizio della partita e' quello dei posti (A1, B1, A2, B2), come in `CoppieNelFoglio`.
 
 **Ruota** propone la successiva trattando la bozza di adesso come gia' fatta (cosi' percorre tutte le combinazioni invece di rimbalzare fra due); **Stesse coppie** rimette le coppie dell'ultima partita (spento se uno dei quattro se n'e' andato); **Scambia i lati** porta ogni coppia dall'altra parte; **toccare due nomi** li scambia (anche fra coppie, o con uno in panchina). Chi arriva a meta' serata sta in panchina finche' la bozza non si cambia (poi, non avendo giocato, gioca); chi esce dalla bozza e' sostituito dal primo della panchina, nello stesso posto.
@@ -2051,6 +2051,56 @@ Errori come la rosa di R-1: 401 rinnova il token una volta e ripete (`PadelElite
 6. **Rosa oltre 1000 giocatori**: la lettura dei nomi e' quella di R-1 (tetto di PostgREST); un presente oltre il tetto risulterebbe "non nella rosa".
 7. **Quattro richieste in fila** e non in parallelo: sono piccole, ma con una rete lenta "in lettura" dura quattro andate e ritorni.
 8. ~~**Non visto a schermo**~~: visto il 27 ottobre 2026 sul telefono del proprietario contro la dashboard vera (sezione "Serata dalla dashboard, la verifica a schermo" in fondo).
+
+## Serata: ordine dei gironi e spareggio - 27 ottobre 2026
+
+Richiesta del proprietario: la serata dura un'ora e mezza, si giocano tre partite tirate e, se resta tempo, una quarta; passare da una partita all'altra non deve costare configurazione. Due cambi, solo nell'app (`:core` e la schermata Serata):
+
+1. **L'ordine delle partite e' quello dei gironi della dashboard** (`js/ui.js`): con #1..#4 nell'ordine del girone (per valore, dal piu' alto) si gioca #1+#4 contro #2+#3, poi #1+#3 contro #2+#4, poi #1+#2 contro #3+#4. In `RotazioneSerata` e' l'ordine delle tre candidate, quindi vale anche per la serata composta a mano (A..D nell'ordine di arrivo); il resto della regola non cambia. Dentro ogni coppia serve per primo chi viene prima (#1 e #2).
+2. **La quarta partita degli stessi quattro rigioca la piu' combattuta delle tre** (`SpareggioSerata`): lo scarto di game piu' piccolo; a parita' quella con piu' game, poi la prima giocata. Stesse coppie e stessi posti. Vale solo quando i quattro hanno fatto le tre combinazioni una per una e tutte e tre hanno un risultato; dalla quinta si torna alla rotazione. **Ruota** la scarta come ogni proposta. E' "opzionale" nel senso della serata: se non c'e' tempo non si gioca, e la serata si chiude come sempre.
+
+**I risultati.** `Serata.risultati` ha, per ogni partita giocata, i game di ciascuna coppia contando i set chiusi e quello in corso (`Risultato.da(engine.state)` in `endMatch`): una partita fermata dal tempo sul 5-4 vale 5-4. Senza nemmeno un game non c'e' risultato. Il testo della serata passa a `serata2` con la riga `r:` (`6-4;?;5-6`, `?` = non si sa) e legge ancora `serata1` (senza risultati: lo spareggio non scatta e resta la rotazione). Un'app piu' vecchia legge `serata2` come serata assente: si perde la serata, non le partite (come detto in "Come vive la serata").
+
+**Il girone decide l'ordine.** Prima della prima partita `conIPresenti` mette i presenti nell'ordine della proposta (prima chi era gia' spuntato restava davanti e diventava "#1"). A serata iniziata resta la regola di prima: escono gli assenti, entrano i nuovi in coda.
+
+**L'ordine di battuta** (`OrdineDiBattuta`, richiesta del proprietario dello stesso giorno). Nella prima partita si sceglie chi batte per primo e chi per secondo (toccando due nomi, e con Scambia i lati): batte il primo posto della coppia 1, poi il primo della coppia 2, poi i loro compagni. Chiusa la partita, quell'ordine diventa la precedenza dei giocatori e ogni proposta successiva ci mette i posti: dentro ogni coppia batte per primo chi viene prima, e batte per prima la coppia di chi viene prima di tutti; chi non ha mai giocato sta dietro. Ogni partita chiusa aggiorna la precedenza con l'ordine giocato, quindi una correzione a mano vale per le successive. Senza scelte, il girone esce identico alla dashboard (1, 2, 3, 4 battono come #1, #2, #4, #3 nella prima, #1, #2, #3, #4 nella seconda). Va nel testo della serata (`o:`). Nella schermata il numero di ogni posto e' il **turno di battuta** (1 e 3 la coppia 1, 2 e 4 la coppia 2) al posto del vecchio "posto 1, posto 2", e la frase sotto le coppie lo spiega.
+
+**"Usa i presenti" chiede il girone** (richiesta del proprietario dello stesso giorno). Con i gironi salvati per la serata, il tocco su "Usa i presenti" apre una scelta: "Quale girone gioca su questo campo?", con i gironi (gli stessi titoli delle righe) e in fondo "Tutti i presenti, scelgo io i quattro". Prima entravano tutti e la prima bozza erano i primi quattro confermati, di solito il girone A. Annulla non cambia niente. Senza gironi salvati il tocco usa i presenti come prima. L'app non sa quale giocatore sia chi tiene il telefono, quindi non preseleziona il suo girone (debito 4). Dialogo di sistema (`MaterialAlertDialogBuilder.setItems`), nessun componente nuovo.
+
+**In un tocco.** Il passaggio resta quello di R-2: "Fine partita" con la casella "Prossima partita della serata" (accesa) salva e apre la Serata con la prossima gia' composta, e "Inizia la partita" la porta in campo. Non e' stato aggiunto un avvio automatico senza passare dalla Serata: si vedono le coppie prima di cominciare, e uno scambio resta a un tocco.
+
+### Piano UI (CLAUDE.md, punto 3)
+
+- **Un compito, un valore.** Invariati: "chi gioca la prossima", le due coppie. Lo spareggio aggiunge solo il perche' di quelle coppie, e solo quando c'e'.
+- **Turno di battuta.** Il numero in testa a ogni posto (lo stesso `lead` di `item_serata_row`) e' il turno di battuta, non il posto nella coppia; la frase `serata_seats_hint` lo spiega. Per TalkBack: "Coppia 2, turno di battuta 2: Nome".
+- **Gerarchia e layout.** Una riga `Caption` sotto "Partita n", nel gruppo delle coppie: "Spareggio: si rigioca la partita 2, la piu' combattuta (6-5 in game)." Nessun gruppo, card, bottone o primario nuovo.
+- **Componenti riusati.** `TextAppearance.App.Caption` (Inter 400, `elite_text_secondary`) con `fontFeatureSettings="tnum"` per le cifre, spazi `space_16` e `space_4`. Nessun token, stile, colore o icona nuovi.
+
+| Stato | Cosa si vede |
+|---|---|
+| Bozza di rotazione (partite 1-3, dalla quinta, dopo Ruota) | nessuna riga |
+| Spareggio | la riga, con il numero della partita rigiocata e i suoi game |
+| Senza risultati (serata ricordata con `serata1`, partite senza un game) | nessuno spareggio, nessuna riga: si propone la rotazione |
+| Sola lettura (partita in corso) | la riga resta se la bozza e' lo spareggio, come il resto, spenta nel senso che non ha comandi |
+| Normale, premuto, fuoco, selezionato, disattivo, in corso, errore, vuoto | non applicabili: e' testo, non un comando |
+| Movimento ridotto | non applicabile: nessun movimento |
+
+- **Movimento.** Nessuno.
+- **Accessibilita'.** E' testo letto da TalkBack nell'ordine, dopo il titolo; dice partita e punteggio in parole e cifre, non con un colore.
+- **Schermo stretto e carattere al 200%.** `wrap_content`, va a capo; non sposta il primario (fuori dallo scorrimento).
+- **Conflitti dichiarati.** Nessuno. Le cifre sono in Inter con `tnum` come chiede CLAUDE.md.
+- **Pattern vietati** (`review.md`): niente maiuscolo, emoji, ombre, colori scritti a mano, card, pesi oltre i tre, cicli; un solo primario per regione (invariato). Nessun `--` nel commento XML nuovo, nessun apostrofo nelle stringhe nuove.
+
+### Come si prova
+
+`SerataTest` (`:core`: l'ordine del girone con coppie e posti, lo spareggio e le sue parita', i game con il set interrotto, niente spareggio senza i tre risultati o con piu' di quattro presenti, il ritorno alla rotazione, `serata2` scritta e riletta e `serata1` letta ancora), `SerataDallaDashboardTest` (il girone decide l'ordine prima della prima partita), `MainViewModelTest` (la partita salvata registra coppie e game), `SerataActivityTest` (la riga dello spareggio). Falsificati: con l'ordine di prima e senza lo spareggio 15 test di `:core` diventano rossi.
+
+### Debiti dichiarati
+
+1. **Non visto a schermo**: nessun SDK Android nel container; `:core` eseguito sulla JVM, l'app verificata dalla CI (Robolectric).
+2. **L'ordine della dashboard e' preso dalla richiesta** (il file `js/ui.js` sta nell'altro repository e non e' stato riletto in questo passo).
+3. **Piu' di quattro presenti**: lo spareggio non c'e', perche' la rotazione cambia i quattro.
+4. **Il girone di chi tiene il telefono** non si preseleziona: servirebbe sapere quale giocatore della dashboard e' l'account collegato.
 
 ## Diretta - 9 ottobre 2026 (D-2)
 

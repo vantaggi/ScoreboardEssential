@@ -33,6 +33,7 @@ import it.vantaggi.scoreboardessential.core.MatchNarrative
 import it.vantaggi.scoreboardessential.core.MatchPlayer
 import it.vantaggi.scoreboardessential.core.MatchSummarizer
 import it.vantaggi.scoreboardessential.core.MatchSummary
+import it.vantaggi.scoreboardessential.core.Risultato
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.Serata
@@ -1190,7 +1191,7 @@ class MainViewModel(
 
     /**
      * La partita salvata chiude quella della serata, se era sua, con le coppie con cui si e' giocato
-     * davvero. Se non si e' giocato in coppia (sport cambiato, una rosa scesa a uno) non e' una partita
+     * davvero e i game di ciascuna (servono per lo spareggio dei quattro). Se non si e' giocato in coppia (sport cambiato, una rosa scesa a uno) non e' una partita
      * della serata: si annulla invece di registrarla con la composizione consegnata.
      */
     private fun chiudiLaPartitaDellaSerata(
@@ -1200,7 +1201,9 @@ class MainViewModel(
         val serata = serataStore.load() ?: return
         if (serata.inGioco == null) return
         val inCoppia = sportDellaSerata() && uno.size == 2 && due.size == 2 && (uno + due).toSet().size == 4
-        serataStore.save(if (inCoppia) serata.chiudiPartita(Composizione(uno, due)) else serata.annullaPartita())
+        serataStore.save(
+            if (inCoppia) serata.chiudiPartita(Composizione(uno, due), Risultato.da(engine.state)) else serata.annullaPartita(),
+        )
     }
 
     /** La partita consegnata alla serata non e' piu' sua (sport cambiato): la serata la dimentica. */

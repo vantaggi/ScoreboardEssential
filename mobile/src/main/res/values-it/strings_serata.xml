@@ -5,9 +5,10 @@
     <string name="state_selected">Selezionato</string>
 
     <string name="serata_next_title">Partita %1$d</string>
+    <string name="serata_next_reason">Spareggio: si rigioca la partita %1$d, la più combattuta (%2$d-%3$d in game).</string>
     <string name="serata_pair_title">Coppia %1$d</string>
-    <string name="serata_seat_description">Coppia %1$d, posto %2$d: %3$s</string>
-    <string name="serata_seats_hint">Il posto 1 di ogni coppia serve per primo. Tocca due nomi per scambiarli.</string>
+    <string name="serata_seat_description">Coppia %1$d, turno di battuta %2$d: %3$s</string>
+    <string name="serata_seats_hint">Il numero dice chi batte: 1 e 3 sono la coppia 1, 2 e 4 la coppia 2. Tocca due nomi per scambiarli. Le partite dopo seguono questo ordine.</string>
     <string name="serata_rotate">Ruota le coppie</string>
     <string name="serata_same_pairs">Stesse coppie</string>
     <string name="serata_swap_sides">Scambia i lati</string>
@@ -89,6 +90,8 @@
     <string name="serata_dashboard_open">Apri Padel Elite</string>
     <string name="serata_dashboard_use_present">Usa i presenti</string>
     <string name="serata_dashboard_use_present_description">Presenti dalla dashboard: %1$d. Tocca per usarli come presenti della serata</string>
+    <string name="serata_pick_pool_title">Quale girone gioca su questo campo?</string>
+    <string name="serata_pick_pool_all">Tutti i presenti, scelgo io i quattro</string>
     <string name="serata_dashboard_pool">Girone %1$s: %2$s</string>
     <string name="serata_dashboard_pool_description">Girone %1$s: %2$s. Tocca per usarlo come presenti</string>
     <plurals name="serata_dashboard_used">

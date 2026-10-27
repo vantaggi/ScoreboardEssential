@@ -106,6 +106,17 @@
                             android:paddingTop="@dimen/space_16"
                             android:textAppearance="@style/TextAppearance.App.SectionHeading" />
 
+                        <!-- Perche' queste coppie, solo quando e' lo spareggio dei quattro: la quarta rigioca la piu' combattuta. -->
+                        <TextView
+                            android:id="@+id/serata_next_reason"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFeatureSettings="tnum"
+                            android:paddingHorizontal="@dimen/space_16"
+                            android:paddingTop="@dimen/space_4"
+                            android:textAppearance="@style/TextAppearance.App.Caption"
+                            android:visibility="gone" />
+
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/serata_seats"
                             android:layout_width="match_parent"

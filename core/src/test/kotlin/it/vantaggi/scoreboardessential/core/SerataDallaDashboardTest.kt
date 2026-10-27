@@ -197,6 +197,14 @@ class SerataDallaDashboardTest {
     }
 
     @Test
+    fun `prima della prima partita il girone decide l'ordine anche se qualcuno era gia' presente`() {
+        // Il 3 era gia' spuntato a mano: col girone 1..4 non passa davanti, e la prima e' 1+4 contro 2+3.
+        val serata = Serata.nuova(listOf(9, 3)).conIPresenti(listOf(1, 2, 3, 4))
+        assertEquals(listOf(1, 2, 3, 4), serata.presenti)
+        assertEquals(Composizione(listOf(1, 4), listOf(2, 3)), serata.bozza)
+    }
+
+    @Test
     fun `una serata gia' giocata tiene le partite, perde gli assenti e aggiunge i nuovi in coda`() {
         val giocata = Serata.nuova(listOf(1, 2, 3, 4)).consegna().chiudiPartita()
 

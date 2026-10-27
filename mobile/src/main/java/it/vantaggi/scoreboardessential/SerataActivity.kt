@@ -20,6 +20,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import it.vantaggi.scoreboardessential.core.Serata
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.padelelite.FonteSerataDashboard
 import it.vantaggi.scoreboardessential.padelelite.LettoreSerataDashboard
@@ -95,7 +96,7 @@ class SerataActivity : AppCompatActivity() {
         proposte =
             SerataRigheAdapter { chiave ->
                 when (chiave) {
-                    ChiaviSerata.DASHBOARD_PRESENTI -> viewModel.usaIPresenti()
+                    ChiaviSerata.DASHBOARD_PRESENTI -> scegliIlGirone()
                     else -> ChiaviSerata.gironeDa(chiave)?.let(viewModel::usaIlGirone)
                 }
             }
@@ -188,6 +189,7 @@ class SerataActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.serata_next_group).visibility = if (bozza != null) View.VISIBLE else View.GONE
         findViewById<TextView>(R.id.serata_next_title).text = getString(R.string.serata_next_title, serata?.numeroDellaProssima ?: 1)
+        mostraLoSpareggio(serata)
         posti.submitList(RigheDellaSerata.posti(this, stato))
         comandi.submitList(RigheDellaSerata.comandi(this, stato))
 
@@ -216,6 +218,45 @@ class SerataActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.serata_start_hint).apply {
             text = if (mancanti > 0) resources.getQuantityString(R.plurals.serata_start_missing, mancanti, mancanti) else ""
             visibility = if (mancanti > 0) View.VISIBLE else View.GONE
+        }
+    }
+
+    /**
+     * "Usa i presenti" con i gironi salvati: il telefono segna un campo, quindi prima si sceglie il girone (con tutti
+     * i presenti la prima bozza sarebbe solo i primi quattro arrivati, cioe' di solito il girone A). L'ultima voce
+     * tiene tutti i presenti, per comporre a mano. Senza gironi salvati si usano i presenti come prima.
+     */
+    private fun scegliIlGirone() {
+        val gironi =
+            RigheDellaSerata
+                .dashboard(this, viewModel.stato.value)
+                .filter { ChiaviSerata.gironeDa(it.chiave) != null }
+        if (gironi.isEmpty()) {
+            viewModel.usaIPresenti()
+            return
+        }
+        val voci = gironi.map { it.titolo } + getString(R.string.serata_pick_pool_all)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.serata_pick_pool_title)
+            .setItems(voci.toTypedArray()) { _, scelta ->
+                gironi.getOrNull(scelta)?.let { ChiaviSerata.gironeDa(it.chiave)?.let(viewModel::usaIlGirone) }
+                    ?: viewModel.usaIPresenti()
+            }.setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    /** Sotto "Partita n", solo per lo spareggio dei quattro: quale partita si rigioca e com'era finita. */
+    private fun mostraLoSpareggio(serata: Serata?) {
+        val indice = serata?.spareggio
+        val risultato = indice?.let { serata?.risultatoDi(it) }
+        findViewById<TextView>(R.id.serata_next_reason).apply {
+            text =
+                if (indice != null && risultato != null) {
+                    getString(R.string.serata_next_reason, indice + 1, risultato.squadra1, risultato.squadra2)
+                } else {
+                    ""
+                }
+            visibility = if (text.isNotEmpty()) View.VISIBLE else View.GONE
         }
     }
 
