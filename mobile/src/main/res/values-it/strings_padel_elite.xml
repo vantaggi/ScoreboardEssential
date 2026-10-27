@@ -141,7 +141,7 @@
     <string name="scelta_section_iscritti">Iscritti alla prossima serata</string>
     <string name="scelta_section_app">Solo nell\'app</string>
     <string name="scelta_section_unread">Padel Elite non risponde: giocatori dell\'app</string>
-    <string name="scelta_dashboard_new">Si aggiunge all\'app quando lo scegli</string>
+    <string name="scelta_dashboard_new">Chi non è ancora nell\'app ci entra quando lo scegli</string>
     <string name="scelta_dashboard_in_app">Già nell\'app</string>
     <string name="scelta_dashboard_in_app_as">Nell\'app come %1$s</string>
     <string name="scelta_dashboard_failed">Non sono riuscito ad aggiungere il giocatore. Riprova.</string>

@@ -34,7 +34,6 @@
     <string name="cd_edit_team_1_name">Edit Team 1 name</string>
     <string name="cd_edit_team_2_name">Edit Team 2 name</string>
     <string name="cd_edit_team_name">Edit the name of %1$s</string>
-    <string name="cd_player_stats">Player statistics</string>
     <string name="cd_wear_status">Wear OS Connection Status</string>
     <string name="cd_wear_status_with_notice">%1$s. %2$s</string>
     <!-- La colonna di gioco: dicono quello che il tocco fa e lo stato di adesso, con il nome della squadra. -->
@@ -54,8 +53,17 @@
     <string name="label_correct_minus_one" translatable="false">−1</string>
 
     <!-- Settings -->
-    <string name="choose_team_color">Choose Team %d Color</string>
-    <string name="select">Select</string>
+    <string name="choose_team_color">Team %d color</string>
+    <string name="team_palette_name_1">Lime</string>
+    <string name="team_palette_name_2">Cyan</string>
+    <string name="team_palette_name_3">Red</string>
+    <string name="team_palette_name_4">Orange</string>
+    <string name="team_palette_name_5">Yellow</string>
+    <string name="team_palette_name_6">Blue</string>
+    <string name="team_palette_name_7">Purple</string>
+    <string name="team_palette_name_8">Pink</string>
+    <string name="team_color_other">Other color…</string>
+    <string name="team_color_use">Use this color</string>
     <string name="cancel">Cancel</string>
     <string name="language">Language</string>
     <string name="team_1_name">Team 1 name</string>
@@ -229,6 +237,8 @@
     <string name="history_players">Players: %1$s</string>
     <string name="history_meta">%1$s · %2$s</string>
     <string name="history_meta_duration">%1$s · %2$s · %3$s</string>
+    <string name="history_today">Today</string>
+    <string name="history_yesterday">Yesterday</string>
     <string name="match_ready">New match ready</string>
     <string name="match_resumed">Match resumed</string>
     <!-- Le righe informative del registro. In inglese restano le parole di prima, che i test leggono. -->
@@ -328,34 +338,35 @@
     <string name="choose_roles">Choose roles</string>
     <string name="select_roles_title">Select roles</string>
     <string name="no_roles_selected">No roles selected</string>
-    <string name="roles_not_specified">Not specified</string>
     <string name="delete">Delete</string>
     <string name="delete_match_message">Are you sure you want to delete this match log?</string>
     <string name="no_matches_found">No saved matches</string>
     <string name="filter_all">All</string>
     <string name="no_players_yet">No players</string>
     <string name="no_players_hint">Add the people you play with: players join the rosters and their goals and appearances are counted.</string>
-    <string name="player_stats_title">%1$s - Statistics</string>
-    <string name="player_stats_message">Appearances: %1$d\nGoals Scored: %2$d\nGoals per Match: %3$s\n\nRoles: %4$s</string>
-    <string name="reset_stats">Reset Stats</string>
-    <string name="reset_stats_title">Reset Statistics?</string>
-    <string name="reset_stats_message">Reset all statistics for %1$s?</string>
+    <string name="reset_stats">Reset stats</string>
+    <string name="reset_stats_title">Reset stats?</string>
+    <string name="reset_stats_message">%1$s\'s matches and goals go back to zero.</string>
+    <string name="reset_stats_confirm">Reset</string>
     <string name="stats_reset">Stats reset</string>
     <string name="delete_player_title">Delete Player?</string>
     <string name="delete_player_message">Are you sure you want to delete %1$s? This action cannot be undone.</string>
-    <string name="player_deleted">Player deleted</string>
     <string name="player_deleted_named">%1$s deleted</string>
-    <string name="menu_search">Search</string>
-    <string name="search_players_hint">Search players…</string>
+    <string name="search_players_hint">Search for a player</string>
     <string name="menu_sort">Sort</string>
     <string name="sort_by_name">By name</string>
     <string name="sort_by_goals">By goals</string>
-    <string name="sort_by_appearances">By appearances</string>
+    <string name="sort_by_appearances">By matches played</string>
     <string name="stats_tab_general">General</string>
     <string name="stats_tab_attack">Attack</string>
     <string name="stats_tab_defense">Defense</string>
     <string name="stats_empty_title">No statistics yet</string>
     <string name="stats_empty_hint">Goals and appearances are counted from saved matches with scorers. Save a match to see them here.</string>
+    <plurals name="player_value_matches">
+        <item quantity="one">%d match</item>
+        <item quantity="other">%d matches</item>
+    </plurals>
+    <string name="player_value_with_goals">%1$s · %2$s</string>
     <plurals name="stats_goals">
         <item quantity="one">%d goal</item>
         <item quantity="other">%d goals</item>

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Una riga dei giocatori (G-4): il nome e il ruolo; si tocca per modificare. L'unico comando in riga e'
-    il dettaglio (presenze, gol, ruoli, azzera): la modifica e' la riga stessa, quindi non ha un secondo
-    bottone. Sta dentro un gruppo, non e' una card.
+    Una riga dei giocatori (G-4, passo 6b della revisione dei menu): il nome e sotto il valore che
+    conta, le partite giocate (e i gol solo negli sport che li contano); i ruoli solo nel calcio. Si
+    tocca per modificare, e la freccia lo dice: prima c'era un'icona a barre muta, uguale su ogni riga.
+    Sta dentro un gruppo, non e' una card.
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -16,7 +17,7 @@
     android:foreground="@drawable/bg_focus_ring"
     android:minHeight="56dp"
     android:paddingStart="@dimen/space_16"
-    android:paddingEnd="@dimen/space_4"
+    android:paddingEnd="@dimen/space_12"
     android:paddingVertical="@dimen/space_8">
 
     <LinearLayout
@@ -25,7 +26,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/stats_button"
+        app:layout_constraintEnd_toStartOf="@id/player_chevron"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -38,6 +39,14 @@
             android:textAppearance="@style/TextAppearance.App.RowTitle"
             tools:text="Johnathan Doe" />
 
+        <!-- «3 partite», nel calcio «3 partite · 5 gol». -->
+        <TextView
+            android:id="@+id/player_value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.App.Caption"
+            tools:text="3 partite · 5 gol" />
+
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/player_roles_group"
             android:layout_width="match_parent"
@@ -47,20 +56,19 @@
             app:chipSpacingVertical="0dp"
             app:selectionRequired="false"
             app:singleLine="true">
-            <!-- I chip dei ruoli si aggiungono da codice -->
+            <!-- I chip dei ruoli si aggiungono da codice, solo nel calcio -->
         </com.google.android.material.chip.ChipGroup>
 
     </LinearLayout>
 
-    <ImageButton
-        android:id="@+id/stats_button"
-        style="@style/Widget.App.Pressable"
-        android:layout_width="@dimen/control_touch"
-        android:layout_height="@dimen/control_touch"
-        android:background="@android:color/transparent"
-        android:contentDescription="@string/cd_player_stats"
-        android:foreground="@drawable/bg_focus_ring"
-        android:src="@drawable/ic_bar_chart"
+    <!-- Decorativa: la riga intera e' il comando, e TalkBack la legge come tale. -->
+    <ImageView
+        android:id="@+id/player_chevron"
+        android:layout_width="@dimen/icon_standard"
+        android:layout_height="@dimen/icon_standard"
+        android:layout_marginStart="@dimen/space_8"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_chevron_right"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"

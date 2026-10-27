@@ -108,7 +108,8 @@ class CronacaDalloStoricoTest {
             shadowOf(Looper.getMainLooper()).idle()
             lista.measure(larga, alta)
             lista.layout(0, 0, 1080, 2000)
-            comando = lista.findViewHolderForAdapterPosition(0)?.itemView?.findViewById(R.id.chronicle_match_button)
+            // Alla posizione 0 c'e' il titolo del giorno (passo 5b), la scheda viene subito dopo.
+            comando = lista.findViewHolderForAdapterPosition(1)?.itemView?.findViewById(R.id.chronicle_match_button)
             if (comando == null) Thread.sleep(10)
         }
         assertNotNull("la card della partita non e' comparsa nello storico", comando)

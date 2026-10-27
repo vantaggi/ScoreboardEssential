@@ -2608,3 +2608,65 @@ In una serata di padel le Statistiche dicevano Generale, Attacco, Difesa e conta
 1. Le partite giocate in padel senza giocatori in campo (senza rose o coppie) non contano: non si sa chi le ha giocate.
 2. Giocatori e Modifica giocatore (filtri e ruoli da calcio anche nel padel, ordine attivo, ricerca) sono il passo 6b.
 3. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 5b, prima parte: lo Storico per giorno
+
+Lo Storico era una colonna di schede tutte uguali, ognuna con la sua data in piccolo ("Padel · 12/09 18:30 · 47 min"): per ritrovare la partita di ieri sera si leggevano le date una per una.
+
+- **Gerarchia e layout.** Sopra la prima partita di ogni giorno c'e' il titolo del giorno: "Oggi", "Ieri", poi la data col giorno della settimana ("Domenica 25 ottobre"), con l'anno solo se non e' quello in corso. Nella scheda la riga meta tiene l'ora ("Padel · 18:30 · 47 min"). Il giorno si calcola nel fuso del telefono; le partite arrivano gia' dalla piu' recente. La logica sta in `GiorniDelloStorico` (funzione pura, `RigaDelloStorico` = giorno o partita).
+- **Componenti riusati.** Il titolo e' come i titoli dei gruppi delle Impostazioni: `RowTitle` in testo secondario, intestazione per TalkBack (si salta da un giorno all'altro), allineato al testo delle schede. Le schede (`match_item`) non cambiano. Nessun colore, spazio o tipo nuovo; due stringhe nuove ("Oggi", "Ieri").
+- **Stati.** Vuoto: nessun titolo, resta `EmptyStateView` come prima. Un giorno con una partita sola ha il suo titolo lo stesso. Movimento: nessuno nuovo (l'apertura del dettaglio resta quella di G-4). 200%: il titolo va a capo.
+- **Pattern vietati.** Niente card per i giorni (i giorni non sono elementi indipendenti), niente ombre, niente date ripetute in ogni scheda.
+- **Seconda parte, ferma su una domanda.** La proposta portava Invia, Esporta ed Elimina nella barra della Cronaca e faceva aprire la Cronaca toccando la scheda. Ma la Cronaca c'e' solo per padel e tennis con registro: il calcio e le partite salvate col solo punteggio non l'hanno, e per loro Elimina deve restare nella scheda. Due posti per lo stesso comando sono peggio di uno: la scelta e' di Cioti (vedi i debiti).
+
+### Debiti dichiarati del passo 5b
+
+1. Domanda per Cioti: i comandi della partita (Invia, Esporta, Elimina) restano nel dettaglio della scheda per tutti gli sport, oppure passano nella barra della Cronaca per la racchetta e restano nella scheda solo per il calcio?
+2. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 6b: i Giocatori seguono lo sport
+
+I Giocatori avevano i filtri per ruolo da calcio anche nel padel, la stessa icona a barre grigia e senza parola su ogni riga (apriva un dialogo con presenze, gol e "Azzera"), un menu Ordina che non diceva quale ordine fosse attivo e una lente che apriva un campo invisibile.
+
+- **Gerarchia e layout.** In cima la ricerca, un campo vero e sempre visibile (lo stesso `TextInputLayout` con la lente e la croce di Padel Elite, passo 4); sotto, solo nel calcio, i filtri per ruolo su una riga che scorre; poi il gruppo delle righe. La riga e' il nome e sotto il valore che conta: "3 partite", nel calcio "3 partite · 5 gol"; i chip dei ruoli solo nel calcio. A destra la freccia (`chevron_right`, decorativa): la riga intera apre Modifica giocatore. Lo sport e' quello attivo nelle Impostazioni, come nelle Statistiche (passo 6a, `StatisticsViewModel.contaIGol`).
+- **Ordine.** Nel menu Ordina le voci sono una scelta sola con la spunta su quella in uso (Per nome, Per partite giocate, Per gol); "Per gol" c'e' solo nel calcio, e passando a uno sport senza gol l'ordine torna per nome.
+- **Azzera le statistiche.** Il dialogo dietro l'icona a barre e' tolto: partite e gol sono gia' nella riga. Azzerare sta nel menu di Modifica giocatore, solo se c'e' qualcosa da azzerare, con la conferma che dice cosa succede ("Partite e gol di Rossi tornano a zero.") e il primario "Azzera". In Modifica giocatore, fuori dal calcio, titolo e lista dei ruoli si nascondono: la pagina e' il nome; i ruoli gia' scelti restano salvati.
+- **Componenti riusati.** Riga `Widget.App.Pressable` con `RowTitle` e `Caption`, gruppo tonale e divisori di prima, campo di ricerca di Padel Elite, freccia del foglio Partita (passo 3a). La ricerca ignora maiuscole e accenti con la stessa funzione di Padel Elite, ora in `utils/TestoPiano.kt`; nel calcio cerca anche nei ruoli. Stringhe nuove: `player_value_matches`, `player_value_with_goals`, `reset_stats_confirm`; tolte `menu_search`, `cd_player_stats`, `player_stats_title`, `player_stats_message`, `player_deleted`, `roles_not_specified`, che non si usavano piu'.
+- **Stati.** Nessun giocatore (stato vuoto con "Aggiungi giocatore", FAB nascosto); la ricerca o il filtro non trovano nessuno (stato vuoto senza bottone, FAB visibile); padel e calcio come sopra; giocatore a zero partite (niente "Azzera"). Movimento: nessuno nuovo. 200%: il nome si tronca su una riga, il valore va a capo; il campo di ricerca resta alto `control_touch`.
+- **Pattern vietati.** Tolti un comando di sola icona ripetuto su ogni riga, un menu che non mostra lo stato, una ricerca nascosta e le informazioni da calcio nel padel. Niente card, niente ombre nuove.
+
+### Debiti dichiarati del passo 6b
+
+1. Modifica giocatore nel calcio ha ancora la lista di 18 caselle di ruolo; i ruoli come chip in quattro gruppi della proposta sono un passo a parte (6c).
+2. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 7a: il dialogo del colore della squadra
+
+Il dialogo era una ruota con tutti i colori, un'anteprima con un "12" e il nome, e due bottoni di testo di peso uguale (Annulla e Seleziona): per scegliere un rosso si cercava a occhio sulla ruota, e un colore illeggibile sul nero del tabellone era possibile.
+
+- **Gerarchia e layout.** Otto cerchi da 48dp (`control_touch`) in due righe da quattro, come il colore nelle Impostazioni (`ShapeAppearance.App.Swatch`, dipinti con `dipingiDiSquadra`); sotto, "Altro colore…" come bottone di testo, centrato. Il primario e' uno solo: "Usa questo colore" (prima "Seleziona"); Annulla resta testo. Il titolo e' "Colore della squadra 1". La ruota non e' sparita: "Altro colore…" chiude la tavolozza e apre il dialogo di prima (ruota, luminosita', anteprima) con lo stesso "Usa questo colore".
+- **Tavolozza.** `team_palette_1..8` in `colors.xml`: i due predefiniti dei lati (lime e ciano) e sei colori nuovi (rosso, arancio, giallo, blu, viola, rosa). Ogni colore ha almeno 6,57:1 sul nero del tabellone, 5,65:1 su `elite_surface` e 5,20:1 su `elite_surface_raised` (WCAG 1.4.11 chiede 3:1), e l'inchiostro scuro di `TeamInk` sopra regge almeno 6,07:1; il test `i colori della tavolozza si staccano dal nero e dalle superfici` lo controlla. I valori nuovi nominano un ruolo riusabile (colore di squadra), non un colore da una schermata.
+- **Stati.** Selezionato: anello chiaro da 2dp (`focus_ring_width`) e spunta `ic_check` nell'inchiostro di squadra, e `isSelected` per TalkBack: il colore non e' l'unico segno. Colore della ruota fuori dalla tavolozza: nessun cerchio segnato, e "Usa questo colore" lo salva com'e'. Ogni cerchio ha il nome del colore come `contentDescription` ("Arancio"). Movimento: la pressione di sempre (0,97 e 0,85), niente nuovo. 200%: il dialogo scorre.
+- **Pattern vietati.** Tolti due bottoni di testo di peso uguale come unica via di scelta, e l'anteprima con un numero finto. Niente ombre, niente card.
+- **Resto del passo 7.** "Aggiungi giocatore" con la ricerca in cima e lo sport con la spunta sulla voce in uso restano da fare (7b).
+
+### Debiti dichiarati del passo 7a
+
+1. Domanda per Cioti: i sei colori nuovi della tavolozza (rosso, arancio, giallo, blu, viola, rosa) vanno bene o ne vuole altri? Si cambiano in `colors.xml` senza toccare altro.
+2. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 7b: "Aggiungi un giocatore" dice una volta sola come si entra nell'app
+
+Nell'elenco con la rosa di Padel Elite ogni giocatore della dashboard non ancora nell'app aveva sotto il nome la stessa riga grigia, "Si aggiunge all'app quando lo scegli": con sei nomi, sei volte la stessa frase, e nessuna riga che dicesse qualcosa di diverso.
+
+- **Gerarchia e layout.** La frase passa una volta sola sotto il titolo della prima sezione che viene dalla dashboard (Nello stesso girone, Iscritti o Padel Elite): "Chi non e' ancora nell'app ci entra quando lo scegli". Le righe dei giocatori nuovi hanno solo il nome; restano le didascalie che dicono qualcosa di diverso ("Gia' nell'app", "Nell'app come Bruno"). La logica sta in `righeDellaScelta` (funzione pura, prima era dentro `MainActivity`); l'intestazione di sezione ha una didascalia facoltativa (`item_dialog_section`, `RowTitle` in testo secondario con la `Caption` sotto).
+- **Componenti riusati.** Riga e intestazione del dialogo di prima; stringa esistente con il testo cambiato (italiano e inglese). Nessun token nuovo.
+- **Stati.** Rosa letta con giocatori nuovi (avviso sotto la prima sezione); tutti gia' nell'app (nessun avviso, restano le didascalie); rosa non letta (`DASHBOARD_NON_LETTA`, nessun avviso); solo giocatori dell'app (nessun avviso). Movimento: nessuno. 200%: il titolo e l'avviso vanno a capo.
+- **Pattern vietati.** Tolta la stessa didascalia ripetuta su ogni riga.
+- **Non toccato.** La ricerca in cima e lo sport con la spunta (resto del passo 7) restano da fare.
+
+### Debiti dichiarati del passo 7b
+
+1. Nessuna ricerca nel dialogo: con una rosa di cinquanta nomi si scorre ancora. Serve un dialogo con un campo e una lista filtrata al posto dell'adattatore del `MaterialAlertDialog`; non l'ho fatto di notte perche' tocca la scelta dalla dashboard di Padel Elite, che e' in produzione.
+2. Lo sport nelle Impostazioni e' ancora un menu a tendina; la riga "Sport: Padel" con il dialogo e la spunta e' legata al debito 2 del passo 3b (righe nome e valore) e cambia molti test: da fare insieme.
+3. Non visto a schermo: verificato solo dai test e dalla CI.

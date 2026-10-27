@@ -1,7 +1,6 @@
 package it.vantaggi.scoreboardessential.padelelite
 
-import java.text.Normalizer
-import java.util.Locale
+import it.vantaggi.scoreboardessential.utils.testoPiano
 
 /**
  * Come si mostra la rosa del gruppo (revisione dei menu, passo 4): prima i collegati, che sono quelli
@@ -34,9 +33,6 @@ data class RosaInVista(
             return RosaInVista(collegati.sortedWith(perNome), proposti + trovati, altri.size)
         }
 
-        private val segni = Regex("\\p{Mn}+")
-
-        private fun piano(testo: String): String =
-            segni.replace(Normalizer.normalize(testo, Normalizer.Form.NFD), "").lowercase(Locale.ROOT)
+        private fun piano(testo: String): String = testoPiano(testo)
     }
 }

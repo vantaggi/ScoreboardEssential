@@ -3,7 +3,8 @@
     Aggiungi o modifica un giocatore (G-4). Il compito: nome e ruoli. Un solo primario, "Salva
     giocatore", sotto il modulo (un bottone che dice l'azione al posto dell'icona di sola barra); mentre
     salva resta lo stesso bottone con l'icona che gira. L'errore del nome sta sotto il campo e il testo
-    scritto non si perde.
+    scritto non si perde. I ruoli sono del calcio: negli altri sport la pagina e' il nome e basta
+    (passo 6b), e titolo e lista dei ruoli si nascondono da codice.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -56,6 +57,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
+                android:id="@+id/roles_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_24"

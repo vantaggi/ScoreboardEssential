@@ -33,7 +33,6 @@
     <string name="cd_edit_team_1_name">Modifica nome Squadra 1</string>
     <string name="cd_edit_team_2_name">Modifica nome Squadra 2</string>
     <string name="cd_edit_team_name">Modifica il nome di %1$s</string>
-    <string name="cd_player_stats">Statistiche del giocatore</string>
     <string name="cd_wear_status">Stato Connessione Wear OS</string>
     <string name="cd_wear_status_with_notice">%1$s. %2$s</string>
     <!-- La colonna di gioco: dicono quello che il tocco fa e lo stato di adesso, con il nome della squadra. -->
@@ -52,7 +51,16 @@
 
     <!-- Settings -->
     <string name="choose_team_color">Colore della squadra %d</string>
-    <string name="select">Seleziona</string>
+    <string name="team_palette_name_1">Lime</string>
+    <string name="team_palette_name_2">Ciano</string>
+    <string name="team_palette_name_3">Rosso</string>
+    <string name="team_palette_name_4">Arancio</string>
+    <string name="team_palette_name_5">Giallo</string>
+    <string name="team_palette_name_6">Blu</string>
+    <string name="team_palette_name_7">Viola</string>
+    <string name="team_palette_name_8">Rosa</string>
+    <string name="team_color_other">Altro colore…</string>
+    <string name="team_color_use">Usa questo colore</string>
     <string name="cancel">Annulla</string>
     <string name="language">Lingua</string>
     <string name="team_1_name">Nome squadra 1</string>
@@ -226,6 +234,8 @@
     <string name="history_players">Giocatori: %1$s</string>
     <string name="history_meta">%1$s · %2$s</string>
     <string name="history_meta_duration">%1$s · %2$s · %3$s</string>
+    <string name="history_today">Oggi</string>
+    <string name="history_yesterday">Ieri</string>
     <string name="match_ready">Nuova partita pronta</string>
     <string name="match_resumed">Partita ripresa</string>
     <!-- Le righe informative del registro. -->
@@ -329,34 +339,36 @@
     <string name="choose_roles">Scegli i ruoli</string>
     <string name="select_roles_title">Scegli i ruoli</string>
     <string name="no_roles_selected">Nessun ruolo scelto</string>
-    <string name="roles_not_specified">Non indicati</string>
     <string name="delete">Elimina</string>
     <string name="delete_match_message">Vuoi davvero eliminare questa partita dallo storico?</string>
     <string name="no_matches_found">Nessuna partita salvata</string>
     <string name="filter_all">Tutti</string>
     <string name="no_players_yet">Nessun giocatore</string>
     <string name="no_players_hint">Aggiungi chi gioca con te: i giocatori entrano nelle rose e ne contano gol e presenze.</string>
-    <string name="player_stats_title">%1$s - Statistiche</string>
-    <string name="player_stats_message">Presenze: %1$d\nGol segnati: %2$d\nGol a partita: %3$s\n\nRuoli: %4$s</string>
     <string name="reset_stats">Azzera le statistiche</string>
     <string name="reset_stats_title">Azzerare le statistiche?</string>
-    <string name="reset_stats_message">Azzerare tutte le statistiche di %1$s?</string>
+    <string name="reset_stats_message">Partite e gol di %1$s tornano a zero.</string>
+    <string name="reset_stats_confirm">Azzera</string>
     <string name="stats_reset">Statistiche azzerate</string>
     <string name="delete_player_title">Eliminare il giocatore?</string>
     <string name="delete_player_message">Vuoi davvero eliminare %1$s? Non si potrà tornare indietro.</string>
-    <string name="player_deleted">Giocatore eliminato</string>
     <string name="player_deleted_named">%1$s eliminato</string>
-    <string name="menu_search">Cerca</string>
-    <string name="search_players_hint">Cerca giocatori…</string>
+    <string name="search_players_hint">Cerca un giocatore</string>
     <string name="menu_sort">Ordina</string>
     <string name="sort_by_name">Per nome</string>
     <string name="sort_by_goals">Per gol</string>
-    <string name="sort_by_appearances">Per presenze</string>
+    <string name="sort_by_appearances">Per partite giocate</string>
     <string name="stats_tab_general">Generale</string>
     <string name="stats_tab_attack">Attacco</string>
     <string name="stats_tab_defense">Difesa</string>
     <string name="stats_empty_title">Nessuna statistica</string>
     <string name="stats_empty_hint">Gol e presenze si contano dalle partite salvate con i marcatori. Salva una partita per vederli qui.</string>
+    <plurals name="player_value_matches">
+        <item quantity="one">%d partita</item>
+        <item quantity="many">%d partite</item>
+        <item quantity="other">%d partite</item>
+    </plurals>
+    <string name="player_value_with_goals">%1$s · %2$s</string>
     <plurals name="stats_goals">
         <item quantity="one">%d gol</item>
         <item quantity="many">%d gol</item>

@@ -24,6 +24,7 @@ import it.vantaggi.scoreboardessential.ui.EmptyStateView
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
 import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
 import it.vantaggi.scoreboardessential.ui.ProgressButton
+import it.vantaggi.scoreboardessential.ui.RigaDelloStorico
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -68,6 +69,7 @@ class ContornoDelTelefonoG4Test {
             "dialog_role_selection",
             "dialog_select_scorer",
             "dialog_color_picker",
+            "dialog_team_palette",
             "dialog_team_name",
             "item_role",
             "item_role_header",
@@ -209,10 +211,7 @@ class ContornoDelTelefonoG4Test {
             vista.stateListAnimator?.jumpToCurrentState()
             assertEquals("$nome: al rilascio torna com'era", 1f, vista.scaleX, 0.001f)
         }
-        // I comandi di sola icona delle righe la hanno anch'essi.
-        for (id in listOf(R.id.stats_button)) {
-            assertNotNull(gonfia("item_player_management").findViewById<View>(id).stateListAnimator)
-        }
+        // I comandi di sola icona delle righe la hanno anch'essi (la riga dei giocatori non ne ha piu': passo 6b).
         assertNotNull(gonfia("match_item").findViewById<View>(R.id.delete_match_button).stateListAnimator)
     }
 
@@ -401,7 +400,12 @@ class ContornoDelTelefonoG4Test {
     @Test
     fun `la scheda dello storico si apre e si chiude sul dettaglio e tiene lo stato per partita`() {
         val adapter = MatchHistoryAdapter({}, {}, {}, {})
-        adapter.submitList(listOf(MatchHistoryUiState(partita(1), "Mario, Luca", null), MatchHistoryUiState(partita(2), "", null)))
+        adapter.submitList(
+            listOf(
+                RigaDelloStorico.Partita(MatchHistoryUiState(partita(1), "Mario, Luca", null)),
+                RigaDelloStorico.Partita(MatchHistoryUiState(partita(2), "", null)),
+            ),
+        )
         val riga = adapter.onCreateViewHolder(FrameLayout(contesto), 0)
         val vista = riga.itemView
         val dettaglio = vista.findViewById<View>(R.id.match_detail)

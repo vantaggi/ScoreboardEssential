@@ -8,6 +8,7 @@ import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.database.Role
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
+import it.vantaggi.scoreboardessential.utils.testoPiano
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +36,9 @@ class PlayersManagementViewModel(
     val selectedRoleFilter: StateFlow<Int?> = _selectedRoleFilter.asStateFlow()
 
     private var currentSortOrder = SortOrder.NAME_ASC
+
+    /** L'ordine in uso: il menu mette la spunta su questo. */
+    val sortOrder: SortOrder get() = currentSortOrder
     private var allPlayersInternal: List<PlayerWithRoles> = emptyList()
 
     init {
@@ -141,5 +145,35 @@ class PlayersManagementViewModel(
     fun sortByAppearances() {
         currentSortOrder = SortOrder.APPEARANCES_DESC
         applyFiltersAndSorting()
+    }
+
+    /**
+     * Presenze e gol a zero; i ruoli restano quelli che sono. Sospesa: Modifica giocatore aspetta la
+     * scrittura prima di dire "Statistiche azzerate".
+     */
+    suspend fun resetStats(playerWithRoles: PlayerWithRoles) {
+        playerRepository.updatePlayerWithRoles(
+            playerWithRoles.player.copy(appearances = 0, goals = 0),
+            playerWithRoles.roles.map { it.roleId },
+        )
+    }
+
+    companion object {
+        /**
+         * La ricerca dell'elenco (passo 6b): il nome, senza badare a maiuscole e accenti, e nel calcio
+         * anche il ruolo. Vuota, l'elenco resta intero.
+         */
+        fun cerca(
+            giocatori: List<PlayerWithRoles>,
+            testo: String,
+            conRuoli: Boolean,
+        ): List<PlayerWithRoles> {
+            val chiave = testoPiano(testo.trim())
+            if (chiave.isEmpty()) return giocatori
+            return giocatori.filter { giocatore ->
+                testoPiano(giocatore.player.playerName).contains(chiave) ||
+                    (conRuoli && giocatore.roles.any { testoPiano(it.name).contains(chiave) })
+            }
+        }
     }
 }

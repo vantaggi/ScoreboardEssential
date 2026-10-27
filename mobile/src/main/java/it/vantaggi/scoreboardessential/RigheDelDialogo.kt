@@ -6,11 +6,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.TextView
+import it.vantaggi.scoreboardessential.padelelite.ElencoDellaScelta
 import it.vantaggi.scoreboardessential.padelelite.IndizioOmonimo
+import it.vantaggi.scoreboardessential.padelelite.SezioneDellaScelta
+import it.vantaggi.scoreboardessential.padelelite.VoceDellaScelta
 import java.text.DateFormat
 import java.util.Date
 
-/** Una riga di un dialogo di scelta: un'intestazione (non si tocca) o una voce con una didascalia facoltativa. */
+/**
+ * Una riga di un dialogo di scelta: un'intestazione (non si tocca; la didascalia, se c'e', sta sotto il titolo)
+ * o una voce con una didascalia facoltativa.
+ */
 data class RigaDelDialogo(
     val titolo: String,
     val didascalia: String? = null,
@@ -32,6 +38,53 @@ fun righeDellaDomanda(
             context.getString(R.string.scelta_other_person),
             context.getString(R.string.scelta_other_person_detail, nome),
         )
+
+/**
+ * Le righe di "Aggiungi un giocatore" con la rosa di Padel Elite. Chi viene dalla dashboard e non e' ancora
+ * nell'app vi entra scegliendolo: lo dice una volta sola, sotto il titolo della prima sezione della dashboard,
+ * non su ogni riga (prima era la stessa frase sei volte).
+ */
+fun righeDellaScelta(
+    context: Context,
+    elenco: ElencoDellaScelta,
+): List<RigaDelDialogo> {
+    var avvisoDato = false
+    return elenco.voci.map { voce ->
+        when (voce) {
+            is VoceDellaScelta.Intestazione -> {
+                val titolo =
+                    when (voce.sezione) {
+                        SezioneDellaScelta.GIRONE -> context.getString(R.string.scelta_section_girone)
+                        SezioneDellaScelta.ISCRITTI -> context.getString(R.string.scelta_section_iscritti)
+                        SezioneDellaScelta.DASHBOARD -> context.getString(R.string.scelta_section_dashboard, elenco.nomeGruppo)
+                        SezioneDellaScelta.SOLO_APP -> context.getString(R.string.scelta_section_app)
+                        SezioneDellaScelta.DASHBOARD_NON_LETTA -> context.getString(R.string.scelta_section_unread)
+                    }
+                val dallaDashboard =
+                    voce.sezione == SezioneDellaScelta.GIRONE ||
+                        voce.sezione == SezioneDellaScelta.ISCRITTI ||
+                        voce.sezione == SezioneDellaScelta.DASHBOARD
+                val avviso = context.getString(R.string.scelta_dashboard_new).takeIf { dallaDashboard && !avvisoDato }
+                if (avviso != null) avvisoDato = true
+                RigaDelDialogo(titolo, avviso, intestazione = true)
+            }
+
+            is VoceDellaScelta.DallaDashboard -> {
+                val didascalia =
+                    when {
+                        voce.nomeLocale == null -> null
+                        voce.nomeLocale == voce.remote.name -> context.getString(R.string.scelta_dashboard_in_app)
+                        else -> context.getString(R.string.scelta_dashboard_in_app_as, voce.nomeLocale)
+                    }
+                RigaDelDialogo(voce.remote.name, didascalia)
+            }
+
+            is VoceDellaScelta.SoloNellApp -> {
+                RigaDelDialogo(voce.nome)
+            }
+        }
+    }
+}
 
 /** "3 partite · ultima il 12 ott 2026 · con Rossi · contro Bianchi, Verdi", o "Nessuna partita giocata". */
 fun testoDellIndizio(
@@ -60,7 +113,7 @@ fun testoDellIndizio(
 
 /**
  * Le righe di un dialogo di scelta con le sezioni ("Aggiungi un giocatore" con la rosa di Padel Elite, la
- * domanda sugli omonimi). Riusa le righe che ci sono: l'intestazione dei ruoli e la riga della rosa (nome e,
+ * domanda sugli omonimi). Riusa le righe che ci sono: l'intestazione di sezione e la riga della rosa (nome e,
  * sotto, una parola sullo stato). Le intestazioni non sono abilitate: un tocco non fa niente e TalkBack le
  * legge come titoli. La pressione la da' la lista (la riga non e' cliccabile da se').
  */
@@ -91,8 +144,12 @@ class RigheDelDialogo(
     ): View {
         val riga = righe[position]
         if (riga.intestazione) {
-            val vista = convertView ?: inflater.inflate(R.layout.item_role_header, parent, false)
+            val vista = convertView ?: inflater.inflate(R.layout.item_dialog_section, parent, false)
             vista.findViewById<TextView>(R.id.header_title).text = riga.titolo
+            vista.findViewById<TextView>(R.id.header_caption).apply {
+                text = riga.didascalia.orEmpty()
+                visibility = if (riga.didascalia == null) View.GONE else View.VISIBLE
+            }
             return vista
         }
         val vista =
