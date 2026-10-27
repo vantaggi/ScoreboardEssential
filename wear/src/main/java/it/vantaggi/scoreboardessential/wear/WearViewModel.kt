@@ -103,7 +103,10 @@ data class WearScoreState(
 ) {
     /** L'etichetta della regola del 40-40 in vigore, vuota se il menu non la puo' offrire. */
     val deuceLabel: String
-        get() = deuceIds.indexOf(deuceRule).takeIf { it >= 0 && deuceIds.size == deuceLabels.size }?.let { deuceLabels[it] }.orEmpty()
+        get() {
+            val i = deuceIds.indexOf(deuceRule)
+            return if (i >= 0 && deuceIds.size == deuceLabels.size) deuceLabels[i] else ""
+        }
 
     companion object {
         private const val TAG = "WearScoreState"
@@ -1584,14 +1587,6 @@ class WearViewModel(
     }
 
     /**
-     * Chiede al telefono di cambiare sport. La decisione non e' di questo lato.
-     *
-     * Stesso contatore delle intenzioni di punteggio, perche' la sequenza e' UNA per nodo: se ne
-     * usasse uno suo, i due flussi si scavalcherebbero e il telefono scarterebbe come "gia' visto"
-     * un messaggio nuovo. La risposta e' lo stato v2 che torna: se lo sport cambia, la schermata
-     * si ridisegna da sola; se il telefono rifiuta, non cambia niente e a dirlo e' il telefono.
-     */
-    /**
      * Chiede al telefono di cambiare un'impostazione ([WearConstants.SETTING_DEUCE] o
      * [WearConstants.SETTING_KEEPER]). Come lo sport, la scelta e' del telefono: la risposta e' lo
      * stato v2 che torna col valore nuovo, e il menu lo legge alla prossima apertura. Se il messaggio
@@ -1614,6 +1609,14 @@ class WearViewModel(
         }
     }
 
+    /**
+     * Chiede al telefono di cambiare sport. La decisione non e' di questo lato.
+     *
+     * Stesso contatore delle intenzioni di punteggio, perche' la sequenza e' UNA per nodo: se ne
+     * usasse uno suo, i due flussi si scavalcherebbero e il telefono scarterebbe come "gia' visto"
+     * un messaggio nuovo. La risposta e' lo stato v2 che torna: se lo sport cambia, la schermata
+     * si ridisegna da sola; se il telefono rifiuta, non cambia niente e a dirlo e' il telefono.
+     */
     fun requestSport(sportId: String) {
         val seq = prossimaSequenza()
         // Dalla scelta in poi la riga lo dice: CAMBIO SPORT... finche' il quadrante non riceve lo

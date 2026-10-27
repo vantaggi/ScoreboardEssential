@@ -511,7 +511,7 @@ class MainActivity : ComponentActivity() {
                     ?.let { getString(R.string.wear_next_pairs, it.sigle[0], it.sigle[1]) }
                     .orEmpty(),
             regola40 = stato?.deuceLabel.orEmpty(),
-            portiere = stato?.keeperSeconds?.takeIf { it > 0 && stato.hasAuxTimer }?.let { etichettaPortiere(this, it) }.orEmpty(),
+            portiere = portiereDi(stato),
             vibrazionePunti = PreferenzeDelPolso(this).vibrazionePunti,
         )
     }
@@ -533,6 +533,10 @@ class MainActivity : ComponentActivity() {
     /** Quale impostazione sta scegliendo la lista aperta: una alla volta. */
     private var impostazioneInScelta: String? = null
 
+    /** La durata del portiere a parole, vuota dove lo sport non ha il portiere. */
+    private fun portiereDi(stato: WearScoreState?): String =
+        if (stato != null && stato.hasAuxTimer && stato.keeperSeconds > 0) etichettaPortiere(this, stato.keeperSeconds) else ""
+
     private fun apriSceltaRegola40() {
         val stato = viewModel.scoreState.value ?: return
         if (stato.matchInProgress || stato.deuceLabel.isEmpty()) return
@@ -546,7 +550,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun apriSceltaPortiere() {
-        val attuale = viewModel.scoreState.value?.keeperSeconds?.takeIf { it > 0 } ?: return
+        val attuale = viewModel.scoreState.value?.keeperSeconds ?: return
+        if (attuale <= 0) return
         val scelte = DurataPortiere.scelte(attuale)
         apriScelta(
             WearConstants.SETTING_KEEPER,

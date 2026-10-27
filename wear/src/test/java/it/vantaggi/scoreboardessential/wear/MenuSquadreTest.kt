@@ -94,8 +94,9 @@ class MenuSquadreTest {
                 .setup()
                 .get()
         val gruppo = menu.findViewById<LinearLayout>(R.id.menu_impostazioni)
-        val titolo = { i: Int -> gruppo.getChildAt(i).findViewById<TextView>(R.id.sport_name).text.toString() }
-        val sotto = { i: Int -> gruppo.getChildAt(i).findViewById<TextView>(R.id.sport_current).text.toString() }
+        fun titolo(i: Int) = gruppo.getChildAt(i).findViewById<TextView>(R.id.sport_name).text.toString()
+
+        fun sotto(i: Int) = gruppo.getChildAt(i).findViewById<TextView>(R.id.sport_current).text.toString()
 
         assertEquals(2, gruppo.childCount)
         assertEquals(menu.getString(R.string.wear_setting_deuce), titolo(0))
