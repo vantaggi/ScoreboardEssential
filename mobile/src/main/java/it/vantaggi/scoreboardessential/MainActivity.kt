@@ -1063,14 +1063,14 @@ class MainActivity :
         // piu' di un controllo in meno.
         findViewById<View>(R.id.team1_name_container).setOnClickListener {
             mostraDialogo(
-                TeamNameDialogFragment.newInstance(1, viewModel.team1Name.value.orEmpty()),
+                TeamNameDialogFragment.newInstance(1, viewModel.team1ChosenName.value.orEmpty()),
                 TeamNameDialogFragment.TAG,
             )
         }
 
         findViewById<View>(R.id.team2_name_container).setOnClickListener {
             mostraDialogo(
-                TeamNameDialogFragment.newInstance(2, viewModel.team2Name.value.orEmpty()),
+                TeamNameDialogFragment.newInstance(2, viewModel.team2ChosenName.value.orEmpty()),
                 TeamNameDialogFragment.TAG,
             )
         }
