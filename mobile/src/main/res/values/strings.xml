@@ -204,6 +204,11 @@
     <string name="sport_padel">Padel</string>
     <string name="sport_tennis">Tennis</string>
     <string name="sport_change_blocked">Finish the current match to change sport</string>
+    <string name="settings_deuce_title">At 40–40</string>
+    <string name="deuce_option_golden_point">Golden point</string>
+    <string name="deuce_option_killer_point">Killer point</string>
+    <string name="deuce_option_advantage">Advantage</string>
+    <string name="deuce_change_blocked">Finish the current match to change the 40–40 rule</string>
     <!-- Riga delle regole sotto il selettore dello sport: si compone dalla configurazione del motore -->
     <string name="rules_single_set">Single set</string>
     <plurals name="rules_best_of">

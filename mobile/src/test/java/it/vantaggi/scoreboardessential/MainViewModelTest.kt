@@ -16,6 +16,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.LoggedEvent
+import it.vantaggi.scoreboardessential.core.DeuceRule
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
@@ -1010,6 +1011,7 @@ class MainViewModelTest {
         startedAt: Long? = null,
         sportId: String = SportRegistry.FOOTBALL,
         serveOrder: String = "",
+        deuceRule: String = "",
     ): PlayerDao {
         val playerDao = campo("playerDao") as PlayerDao
         val matchDao = campo("matchDao") as MatchDao
@@ -1028,6 +1030,7 @@ class MainViewModelTest {
                 matchUuid = matchUuid,
                 sportId = sportId,
                 serveOrder = serveOrder,
+                deuceRule = deuceRule,
             )
         kotlinx.coroutines.runBlocking {
             whenever(matchDao.getActiveMatchOnce()).thenReturn(salvata)
@@ -3076,10 +3079,49 @@ class MainViewModelTest {
             verify(mockMatchSettingsRepository).setActiveSport(SportRegistry.PADEL)
         }
 
+    /**
+     * La regola del 40-40 e' della riga come lo sport: un padel giocato al killer point e ripreso
+     * con quella del registro (punto secco) chiudeva il game al primo 40-40. Si rompe togliendo la
+     * regola da [Match.regole] o leggendo le regole dal registro nel ripristino.
+     */
+    @Test
+    fun `alla ripresa vale la regola del 40-40 della riga`() =
+        runTest {
+            // 40-40 e un punto: col killer point e' vantaggio, col punto secco sarebbe game.
+            partitaSalvata("1|1,2,1,2,1,2,1", sportId = SportRegistry.PADEL, deuceRule = "KILLER_POINT")
+            advanceUntilIdle()
+
+            assertEquals(DeuceRule.KILLER_POINT, motore().rules.config.deuce)
+            assertEquals("AV", viewModel.scoreDisplay.value?.side1Primary)
+        }
+
+    /**
+     * La regola scelta nelle impostazioni vale per la partita non ancora cominciata, e arriva
+     * all'orologio con lo stato: e' quella con cui il polso rifa' il conto dei tocchi in coda.
+     */
+    @Test
+    fun `la regola del 40-40 delle impostazioni vale per la partita e arriva all'orologio`() =
+        runTest {
+            val nuovo =
+                nuovoViewModel(
+                    sportSalvato = SportRegistry.PADEL,
+                    regoleDel40 = mapOf(SportRegistry.PADEL to DeuceRule.KILLER_POINT),
+                )
+            advanceUntilIdle()
+
+            val engine = nuovo.javaClass.getDeclaredField("engine").apply { isAccessible = true }.get(nuovo) as MatchEngine
+            assertEquals(DeuceRule.KILLER_POINT, engine.rules.config.deuce)
+            val padel = statiV2().filter { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL }
+            assertEquals("KILLER_POINT", padel.last()[WearConstants.KEY_DEUCE_RULE])
+        }
+
     /** Il ViewModel di [viewModel] rifatto da capo, con i suoi finti, e queste impostazioni. */
-    private fun nuovoViewModel(sportSalvato: String): MainViewModel {
+    private fun nuovoViewModel(
+        sportSalvato: String,
+        regoleDel40: Map<String, DeuceRule> = emptyMap(),
+    ): MainViewModel {
         whenever(mockMatchSettingsRepository.getSettingsFlow()).thenReturn(
-            flowOf(MatchSettings("Team 1", "Team 2", Color.RED, Color.BLUE, 300L, sportSalvato)),
+            flowOf(MatchSettings("Team 1", "Team 2", Color.RED, Color.BLUE, 300L, sportSalvato, regoleDel40)),
         )
         // Gli stessi DAO e lo stesso connection manager di [viewModel], dal costruttore: le
         // coroutine di init li usano fin dal primo giro.

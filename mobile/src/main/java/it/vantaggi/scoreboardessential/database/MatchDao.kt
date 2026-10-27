@@ -209,6 +209,13 @@ interface MatchDao {
         serveOrder: String,
     )
 
+    /** La regola del 40-40 della riga viva, quando cambia dalle impostazioni a registro vuoto. */
+    @Query("UPDATE matches SET deuceRule = :deuceRule WHERE matchId = :matchId")
+    suspend fun updateLiveDeuceRule(
+        matchId: Int,
+        deuceRule: String,
+    )
+
     /** Chiude la partita viva: smette di essere attiva e fissa il risultato finale. */
     @Query(
         """

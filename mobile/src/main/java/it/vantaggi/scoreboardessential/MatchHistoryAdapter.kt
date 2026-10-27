@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
+import it.vantaggi.scoreboardessential.core.DeuceRule
 import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
@@ -132,7 +133,7 @@ class MatchHistoryAdapter(
 
             val righeDiSet =
                 item.setLine
-                    ?: if (SportRegistry.byId(match.sportId) is RacketRules) sportRulesLine(context, match.sportId) else null
+                    ?: if (SportRegistry.byId(match.sportId) is RacketRules) sportRulesLine(context, match.sportId, DeuceRule.daNome(match.deuceRule)) else null
             setsTextView.visibility = if (righeDiSet != null) View.VISIBLE else View.GONE
             setsTextView.text = righeDiSet
 

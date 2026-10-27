@@ -52,6 +52,7 @@ class MatchHistoryViewModel(
         val sportId: String,
         val serveOrder: String?,
         val eventLog: String?,
+        val deuceRule: String,
     )
 
     // La riga puo' essere null e va ricordata lo stesso: per questo containsKey e non getOrPut.
@@ -92,7 +93,7 @@ class MatchHistoryViewModel(
             val stati =
                 matches.map { match ->
                     val m = match.match
-                    val chiave = ChiaveRiga(m.matchId, m.sportId, m.serveOrder, m.eventLog)
+                    val chiave = ChiaveRiga(m.matchId, m.sportId, m.serveOrder, m.eventLog, m.deuceRule)
                     correnti += chiave
                     if (chiave !in righe) righe[chiave] = calcolaRiga(m)
                     val riga = righe[chiave]

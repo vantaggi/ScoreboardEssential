@@ -5,7 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import it.vantaggi.scoreboardessential.core.DeuceRule
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
+import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.utils.SingleLiveEvent
@@ -17,6 +19,9 @@ class MatchSettingsViewModel(
 ) : ViewModel() {
     /** Il cambio sport e' stato rifiutato perche' una partita e' gia' cominciata. */
     val sportChangeBlocked = SingleLiveEvent<Unit>()
+
+    /** Il cambio della regola del 40-40 e' stato rifiutato, per la stessa ragione. */
+    val deuceChangeBlocked = SingleLiveEvent<Unit>()
 
     private val _team1Name = MutableLiveData<String>()
     val team1Name: LiveData<String> = _team1Name
@@ -38,6 +43,14 @@ class MatchSettingsViewModel(
     /** Lo sport scelto. E' la sola sorgente della voce mostrata nel selettore. */
     val activeSport: LiveData<String> = _activeSport
 
+    private val _deuceRule = MutableLiveData<DeuceRule>()
+
+    /**
+     * La regola del 40-40 in vigore per lo sport scelto: quella scelta, o quella del registro se non
+     * e' mai stata scelta. Nel calcio non vuol dire niente e la schermata non la mostra.
+     */
+    val deuceRule: LiveData<DeuceRule> = _deuceRule
+
     init {
         loadSettings()
     }
@@ -50,6 +63,7 @@ class MatchSettingsViewModel(
             _team2Color.value = repository.getTeam2Color()
             _keeperTimerDuration.value = repository.getKeeperTimerDuration()
             _activeSport.value = repository.getActiveSport()
+            caricaRegolaDel40()
         }
     }
 
@@ -106,9 +120,7 @@ class MatchSettingsViewModel(
      */
     fun saveActiveSport(sportId: String) {
         viewModelScope.launch {
-            val partitaIniziata =
-                matchDao.getActiveMatchOnce()?.let { MatchLogCodec.decode(it.eventLog)?.isNotEmpty() ?: true } == true
-            if (partitaIniziata) {
+            if (partitaIniziata()) {
                 sportChangeBlocked.value = Unit
                 // Rimette nel selettore la voce vera. LiveData ridistribuisce anche un valore
                 // uguale, quindi l'osservatore riscrive l'etichetta e il menu smette di mentire.
@@ -117,8 +129,36 @@ class MatchSettingsViewModel(
             }
             repository.setActiveSport(sportId)
             _activeSport.value = sportId
+            caricaRegolaDel40()
         }
     }
+
+    /**
+     * Cambia la regola del 40-40 dello sport scelto, ma non a partita cominciata: come lo sport,
+     * rigiocare i punti gia' dati con un'altra regola cambierebbe un game chiuso sul campo, e il
+     * selettore mostrerebbe una regola diversa da quella che il tabellone sta applicando.
+     */
+    fun saveDeuceRule(regola: DeuceRule) {
+        val sportId = _activeSport.value ?: return
+        viewModelScope.launch {
+            if (partitaIniziata()) {
+                deuceChangeBlocked.value = Unit
+                _deuceRule.value = _deuceRule.value
+                return@launch
+            }
+            repository.setDeuceRule(sportId, regola)
+            _deuceRule.value = regola
+        }
+    }
+
+    private suspend fun caricaRegolaDel40() {
+        val sportId = _activeSport.value ?: return
+        _deuceRule.value = repository.getDeuceRule(sportId) ?: SportRegistry.byId(sportId).config.deuce
+    }
+
+    /** Lo stesso criterio di [saveActiveSport]: un registro illeggibile vale come partita iniziata. */
+    private suspend fun partitaIniziata(): Boolean =
+        matchDao.getActiveMatchOnce()?.let { MatchLogCodec.decode(it.eventLog)?.isNotEmpty() ?: true } == true
 }
 
 class MatchSettingsViewModelFactory(

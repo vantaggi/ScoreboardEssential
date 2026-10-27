@@ -13,6 +13,8 @@ import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
+import it.vantaggi.scoreboardessential.core.DeuceRule
+import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.databinding.ActivityMatchSettingsBinding
 import it.vantaggi.scoreboardessential.padelelite.PadelEliteActivity
@@ -48,6 +50,7 @@ class MatchSettingsActivity : AppCompatActivity() {
 
         setupLanguageDropdown() // setup before observing
         setupSportDropdown()
+        setupDeuceDropdown()
         observeViewModel()
         setupListeners()
         setupPadelElite()
@@ -162,6 +165,31 @@ class MatchSettingsActivity : AppCompatActivity() {
         }
     }
 
+    /** Le tre regole del 40-40, nell'ordine di [DeuceRule]; il nome si legge da [etichettaDel40]. */
+    private fun setupDeuceDropdown() {
+        val regole = DeuceRule.entries
+        val adapter =
+            android.widget.ArrayAdapter(
+                this,
+                android.R.layout.simple_dropdown_item_1line,
+                regole.map { etichettaDel40(it) },
+            )
+        binding.deuceAutoComplete.setAdapter(adapter)
+        binding.deuceAutoComplete.setOnItemClickListener { _, _, position, _ ->
+            val scelta = regole[position]
+            if (viewModel.deuceRule.value != scelta) viewModel.saveDeuceRule(scelta)
+        }
+    }
+
+    private fun etichettaDel40(regola: DeuceRule): String =
+        getString(
+            when (regola) {
+                DeuceRule.GOLDEN_POINT -> R.string.deuce_option_golden_point
+                DeuceRule.KILLER_POINT -> R.string.deuce_option_killer_point
+                DeuceRule.ADVANTAGE -> R.string.deuce_option_advantage
+            },
+        )
+
     private fun observeViewModel() {
         viewModel.team1Name.observe(this) { name ->
             if (binding.team1NameEdittext.text.toString() != name) {
@@ -199,12 +227,30 @@ class MatchSettingsActivity : AppCompatActivity() {
                 .show()
         }
 
+        viewModel.deuceChangeBlocked.observe(this) {
+            com.google.android.material.snackbar.Snackbar
+                .make(binding.root, R.string.deuce_change_blocked, com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                .show()
+        }
+
+        // Come lo sport: la voce mostrata e la riga delle regole seguono il ViewModel.
+        viewModel.deuceRule.observe(this) { regola ->
+            val label = etichettaDel40(regola)
+            if (binding.deuceAutoComplete.text.toString() != label) {
+                binding.deuceAutoComplete.setText(label, false)
+            }
+            viewModel.activeSport.value?.let { binding.sportRulesText.text = sportRulesLine(this, it, regola) }
+        }
+
         viewModel.activeSport.observe(this) { sportId ->
             val label = sportLabel(this, sportId)
             if (binding.sportAutoComplete.text.toString() != label) {
                 binding.sportAutoComplete.setText(label, false)
             }
-            binding.sportRulesText.text = sportRulesLine(this, sportId)
+            binding.sportRulesText.text = sportRulesLine(this, sportId, viewModel.deuceRule.value)
+            // Il 40-40 esiste solo negli sport con racchetta.
+            binding.deuceRuleLayout.visibility =
+                if (SportRegistry.byId(sportId) is RacketRules) android.view.View.VISIBLE else android.view.View.GONE
             // Le stesse capacita' che la schermata principale usa per spegnere il cronometro:
             // nel padel non c'e' un portiere da cambiare, quindi non c'e' niente da impostare.
             // Prima il campo restava li' a chiedere un numero che nessuno avrebbe mai usato.

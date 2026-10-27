@@ -9,6 +9,7 @@ import com.google.android.gms.wearable.DataMap
 import it.vantaggi.scoreboardessential.core.ClockMode
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
+import it.vantaggi.scoreboardessential.core.DeuceRule
 import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportRegistry
@@ -86,6 +87,11 @@ data class WearScoreState(
      * versione minore dell'ultima vista e' superato. 0 da un telefono che non la manda.
      */
     val stateVersion: Long = 0L,
+    /**
+     * La regola del 40-40 della partita (il nome di `DeuceRule`), vuota per "quella dello sport" e da
+     * un telefono che non la manda. Il calcolo al polso la usa: e' la stessa che usa il telefono.
+     */
+    val deuceRule: String = "",
 ) {
     companion object {
         private const val TAG = "WearScoreState"
@@ -129,6 +135,7 @@ data class WearScoreState(
                 lastBatchId = idDelBatch(dataMap),
                 matchUuid = dataMap.getString(WearConstants.KEY_MATCH_UUID, ""),
                 stateVersion = versioneDelloStato(dataMap),
+                deuceRule = dataMap.getString(WearConstants.KEY_DEUCE_RULE, ""),
             )
         }
 
@@ -797,7 +804,7 @@ class WearViewModel(
         // stato, e qui non si tocca. Tutto il resto fa decadere quella che c'era.
         chiudiFinestraChiSeNonVera(state)
         // L'ora sul disco la scrive WearDataLayerService, che c'e' anche ad app chiusa.
-        ultimaNota.save(state.sportId, state.eventLog, state.servingSlot, state.matchUuid)
+        ultimaNota.save(state.sportId, state.eventLog, state.servingSlot, state.matchUuid, state.deuceRule)
         // Lo stato porta l'id dell'ultimo arretrato applicato: se e' quello in volo, e' un ack che non
         // ha avuto bisogno di arrivare (L5, ack perso). Dopo chiudiRicevute: lo stato dell'arretrato
         // non e' la conferma di un tocco dal vivo, e finche' batchInVolo c'e' non la chiude.
@@ -1192,6 +1199,7 @@ class WearViewModel(
             servingSlot = if (ultimaNota.inCoppia) 1 else 0,
             // La partita del registro: la coda che nasce a freddo la rimanda nel batch (L5).
             matchUuid = ultimaNota.matchUuid,
+            deuceRule = ultimaNota.deuceRule,
         )
     }
 
@@ -1219,9 +1227,11 @@ class WearViewModel(
         if (base.sportId.isBlank()) return false
 
         // L'orologio non ha le rose, quindi non sa se un tennis e' in coppia: lo sa dal telefono,
-        // che manda il giocatore al servizio (1 o 2) solo in coppia. Il padel lo e' sempre.
+        // che manda il giocatore al servizio (1 o 2) solo in coppia. Il padel lo e' sempre. La
+        // regola del 40-40 viene dal telefono: con quella del registro un killer point o i vantaggi
+        // chiudevano il game al primo 40-40.
         val rules =
-            SportRegistry.byId(base.sportId).let {
+            SportRegistry.forMatch(base.sportId, deuce = DeuceRule.daNome(base.deuceRule)).let {
                 if (it is RacketRules && base.servingSlot != 0) it.conIlServizioInCoppia() else it
             }
         val engine = MatchEngine(rules)
