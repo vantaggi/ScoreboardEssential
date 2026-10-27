@@ -3,7 +3,7 @@
     <!-- Invio della partita a Padel Elite (passi A-2..A-4). Le versioni italiane stanno in values-it. -->
     <string name="padel_elite_title">Padel Elite</string>
     <string name="padel_elite_login_title">Sign in to Padel Elite</string>
-    <string name="padel_elite_login_hint">Use the same account as the dashboard. It is only needed to send matches to your group.</string>
+    <string name="padel_elite_login_hint">Use the same account as the dashboard. It is used to read your group\'s evening, the confirmed players and the groups, and to send matches.</string>
     <string name="padel_elite_email">Email</string>
     <string name="padel_elite_password">Password</string>
     <string name="padel_elite_sign_in">Sign in</string>

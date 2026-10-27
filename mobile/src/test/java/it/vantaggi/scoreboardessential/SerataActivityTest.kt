@@ -305,6 +305,19 @@ class SerataActivityTest {
     }
 
     @Test
+    fun `il messaggio con Annulla resta otto secondi, non i tre di sistema`() {
+        val ids = giocatori("A", "B", "C", "D")
+        dallaDashboard(SerataDashboard.Pronta(giovedi, Traduzione(ids.mapIndexed { i, id -> Collegato(100 + i, "x", id) })))
+        val attivita = apri().get()
+        aspetta { attivita.righe(R.id.serata_dashboard_rows) == 1 }
+
+        attivita.riga(R.id.serata_dashboard_rows, 0)!!.performClick()
+        aspetta { attivita.avvisoConAnnulla != null }
+
+        assertEquals("a bordo campo si guarda di sfuggita", 8000, attivita.avvisoConAnnulla!!.duration)
+    }
+
+    @Test
     fun `con i gironi salvati Usa i presenti chiede quale girone gioca, e il girone scelto diventa i presenti`() {
         val ids = giocatori("A", "B", "C", "D", "E", "F", "G", "H")
         val collegati = ids.mapIndexed { i, id -> Collegato(100 + i, "Nome$i", id) }
