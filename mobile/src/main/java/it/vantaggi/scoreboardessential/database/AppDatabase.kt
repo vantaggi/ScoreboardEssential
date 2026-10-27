@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
         Match::class, Player::class, MatchPlayerCrossRef::class,
         Team::class, Role::class, PlayerRoleCrossRef::class, PadelEliteLink::class,
     ],
-    version = 15,
+    version = 16,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,7 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         /** Versione dello schema. Tenuta qui cosi' che i test non la ripetano a mano. */
-        const val SCHEMA_VERSION = 15
+        const val SCHEMA_VERSION = 16
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -224,6 +224,17 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
 
+        internal val MIGRATION_15_16 =
+            object : Migration(15, 16) {
+                override fun migrate(database: SupportSQLiteDatabase) {
+                    // Additiva come la 13 -> 14: la regola del 40-40 con cui si e' giocata la
+                    // partita. NOT NULL con DEFAULT '', dichiarato uguale in @ColumnInfo: le partite
+                    // di prima diventano "la regola dello sport", che e' quella con cui sono state
+                    // giocate (fino alla versione 15 non si poteva sceglierne un'altra).
+                    database.execSQL("ALTER TABLE `matches` ADD COLUMN `deuceRule` TEXT NOT NULL DEFAULT ''")
+                }
+            }
+
         fun getDatabase(context: Context): AppDatabase =
             instance ?: synchronized(this) {
                 val instance =
@@ -256,6 +267,7 @@ abstract class AppDatabase : RoomDatabase() {
                             MIGRATION_12_13,
                             MIGRATION_13_14,
                             MIGRATION_14_15,
+                            MIGRATION_15_16,
                         )
                         // Non esiste alcun percorso di migrazione dalle versioni 1-5: un
                         // dispositivo fermo li' crasherebbe a ogni avvio, per sempre. La

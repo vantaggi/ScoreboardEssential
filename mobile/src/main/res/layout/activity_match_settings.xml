@@ -66,6 +66,12 @@
                         <AutoCompleteTextView android:id="@+id/sportAutoComplete" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="none" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- La regola del 40-40, solo negli sport con racchetta: punto secco, killer point, vantaggi. -->
+                    <com.google.android.material.textfield.TextInputLayout android:id="@+id/deuceRuleLayout" style="@style/Widget.App.TextInputLayout.ExposedDropdownMenu" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_12" android:hint="@string/settings_deuce_title" android:visibility="gone">
+
+                        <AutoCompleteTextView android:id="@+id/deuceAutoComplete" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
                     <!-- Le regole che il motore applica allo sport scelto, composte da SportRegistry. -->
                     <TextView android:id="@+id/sportRulesText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_8" android:textAppearance="@style/TextAppearance.App.Caption" />
                 </LinearLayout>

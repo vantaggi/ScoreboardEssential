@@ -102,6 +102,7 @@ class WearDataLayerService : WearableListenerService() {
                                 dataMap.getString(WearConstants.KEY_EVENT_LOG, ""),
                                 dataMap.getInt(WearConstants.KEY_SERVING_SLOT, 0),
                                 partita,
+                                dataMap.getString(WearConstants.KEY_DEUCE_RULE, ""),
                             )
                         }
                     }

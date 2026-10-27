@@ -25,6 +25,7 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.ClockMode
 import it.vantaggi.scoreboardessential.core.Composizione
+import it.vantaggi.scoreboardessential.core.DeuceRule
 import it.vantaggi.scoreboardessential.core.ExportOrigin
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchClock
@@ -35,6 +36,7 @@ import it.vantaggi.scoreboardessential.core.MatchNarrative
 import it.vantaggi.scoreboardessential.core.MatchPlayer
 import it.vantaggi.scoreboardessential.core.MatchSummarizer
 import it.vantaggi.scoreboardessential.core.MatchSummary
+import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.Risultato
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.ScoringEvent
@@ -585,7 +587,7 @@ class MainViewModel(
                 )
             }
         if (ordine == sportRules.config.serveOrder) return
-        sportRules = SportRegistry.forMatch(sportRules.id, ordine)
+        sportRules = SportRegistry.forMatch(sportRules.id, ordine, sportRules.config.deuce)
         engine = MatchEngine(sportRules)
         _scoreDisplay.value = sportRules.display(engine.state)
         // Il tennis diventa doppio o singolare con le rose: i giocatori per lato seguono l'ordine.
@@ -602,7 +604,7 @@ class MainViewModel(
         if (sportId != _activeSport.value) annullaLaPartitaDellaSerata()
         // La diretta e' del padel e di QUESTA partita: cambiando sport non c'e' piu' niente da trasmettere.
         chiudiLaDiretta(conRisultato = false)
-        sportRules = SportRegistry.byId(sportId)
+        sportRules = SportRegistry.forMatch(sportId, deuce = regoleDel40[sportId])
         engine = MatchEngine(sportRules)
         matchClock.reset()
         _activeSport.value = sportRules.id
@@ -629,6 +631,31 @@ class MainViewModel(
         // due il tennis e' un doppio e il padel torna con il suo primo servente. Il registro qui
         // e' vuoto per costruzione, quindi refreshServeOrder non si ferma alla guardia.
         refreshServeOrder()
+    }
+
+    /**
+     * La regola del 40-40 scelta nelle impostazioni, per sport. Si applica come lo sport: solo a
+     * registro vuoto, e mai durante il ripristino, quando la regola e' quella della riga che torna.
+     */
+    private var regoleDel40: Map<String, DeuceRule> = emptyMap()
+
+    /**
+     * Porta la partita non ancora cominciata sulla regola del 40-40 scelta. A partita cominciata non
+     * fa niente: rigiocare i punti gia' dati con un'altra regola cambierebbe un game chiuso sul
+     * campo. Il cambio vale allora dalla partita dopo, che passa di qui da [startNewMatch].
+     */
+    private fun allineaRegolaDel40() {
+        if (engine.log.isNotEmpty() || ripristinoInAttesa) return
+        val voluta = regoleDel40[sportRules.id] ?: SportRegistry.byId(sportRules.id).config.deuce
+        if (sportRules !is RacketRules || voluta == sportRules.config.deuce) return
+        sportRules = SportRegistry.forMatch(sportRules.id, sportRules.config.serveOrder, voluta)
+        engine = MatchEngine(sportRules)
+        _scoreDisplay.value = sportRules.display(engine.state)
+        // Una riga viva senza eventi (un punto e ANNULLA) c'e' gia': tornerebbe con la regola vecchia.
+        val regola = Match.encodeDeuceRule(sportRules)
+        inFilaSullaRigaViva { currentMatchId?.let { matchDao.updateLiveDeuceRule(it.toInt(), regola) } }
+        // L'orologio rifa' il calcolo da solo: deve farlo con la stessa regola.
+        sendStateV2()
     }
 
     /**
@@ -830,6 +857,7 @@ class MainViewModel(
                 // mentre si sta giocando verrebbe ignorato qui e ripreso alla partita successiva.
                 // Durante il ripristino il registro e' vuoto solo perche' la partita non e' ancora
                 // tornata: lo sport salvato si decide alla fine, e se torna una riga vince la riga.
+                regoleDel40 = settings.regoleDel40
                 if (settings.activeSport != _activeSport.value && engine.log.isEmpty()) {
                     if (ripristinoInAttesa) {
                         sportRimandato = settings.activeSport
@@ -837,6 +865,7 @@ class MainViewModel(
                         applySport(settings.activeSport)
                     }
                 }
+                allineaRegolaDel40()
             }
         }
 
@@ -992,6 +1021,8 @@ class MainViewModel(
 
     private fun startNewMatch() {
         engine.reset()
+        // La regola del 40-40 cambiata a partita in corso vale da qui.
+        allineaRegolaDel40()
         // L'arretrato dell'orologio riguardava la partita di prima: badge e avviso durano fino a qui.
         setWatchNotice(null)
         matchClock.reset()
@@ -1352,6 +1383,9 @@ class MainViewModel(
                 WearConstants.KEY_PERIOD_LABEL to (display.periodLabel ?: ""),
                 WearConstants.KEY_SERVING_SIDE to (display.servingSide ?: 0),
                 WearConstants.KEY_SERVING_SLOT to (display.servingPlayerSlot ?: 0),
+                // La regola del 40-40: l'orologio rifa' il calcolo dei tocchi in coda con :core, e
+                // con la regola del registro un killer point gli chiudeva il game al primo 40-40.
+                WearConstants.KEY_DEUCE_RULE to Match.encodeDeuceRule(sportRules),
                 WearConstants.KEY_CAP_HAS_CLOCK to (capacita.clock != ClockMode.NONE),
                 WearConstants.KEY_CAP_HAS_AUX_TIMER to capacita.hasAuxCountdown,
                 WearConstants.KEY_CAP_ATTRIBUTES_SCORER to capacita.attributesScorer,
@@ -1457,6 +1491,7 @@ class MainViewModel(
                             serveOrder = Match.encodeServeOrder(sportRules.config.serveOrder),
                             startedAt = inizio,
                             matchUuid = uuid,
+                            deuceRule = Match.encodeDeuceRule(sportRules),
                         ),
                         _team1Players.value.orEmpty().map { it.player.playerId },
                         _team2Players.value.orEmpty().map { it.player.playerId },
@@ -1508,7 +1543,7 @@ class MainViewModel(
         // la partita e' cominciata. Il registro ripiegato con le regole in vigore adesso (un
         // cambio sport dall'orologio, o le impostazioni) dava un altro punteggio, e la
         // partita finiva scritta su una riga con lo sport sbagliato.
-        val regole = SportRegistry.forMatch(attiva.sportId, Match.decodeServeOrder(attiva.serveOrder))
+        val regole = attiva.regole()
         sportRules = regole
         engine = MatchEngine(regole)
         _activeSport.value = regole.id
@@ -1569,6 +1604,7 @@ class MainViewModel(
         ripristinoInCorso = false
         sportRimandato?.let { if (it != _activeSport.value && engine.log.isEmpty()) applySport(it) }
         sportRimandato = null
+        allineaRegolaDel40()
         val rimandate = azioniRimandate.toList()
         azioniRimandate.clear()
         rimandate.forEach { it() }
@@ -2404,6 +2440,7 @@ class MainViewModel(
                         serveOrder = Match.encodeServeOrder(sportRules.config.serveOrder),
                         startedAt = matchStartedAt,
                         matchUuid = matchUuid,
+                        deuceRule = Match.encodeDeuceRule(sportRules),
                     ),
                     // Solo gli id: le presenze si incrementano nel database. Le copie dei giocatori
                     // tenute nelle rose sono ferme a quando sono state aggiunte, e riscriverle con

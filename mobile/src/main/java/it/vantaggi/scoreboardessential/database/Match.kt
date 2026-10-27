@@ -4,6 +4,10 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import it.vantaggi.scoreboardessential.core.DeuceRule
+import it.vantaggi.scoreboardessential.core.RacketRules
+import it.vantaggi.scoreboardessential.core.SportRegistry
+import it.vantaggi.scoreboardessential.core.SportRules
 
 @Entity(
     tableName = "matches",
@@ -68,10 +72,24 @@ data class Match(
      * chiave primaria. Null per le partite salvate prima della versione 14.
      */
     val matchUuid: String? = null,
+    /**
+     * La regola del 40-40 con cui si e' giocato ([DeuceRule.name]), o stringa vuota per "quella
+     * dello sport": il calcio, e ogni partita salvata prima della versione 16 dello schema, quando
+     * non si poteva sceglierne un'altra. Serve a rigiocare il registro dallo storico come
+     * [serveOrder]: con la regola sbagliata un 40-40 chiude un game che sul campo e' continuato.
+     */
+    @ColumnInfo(defaultValue = "''")
+    val deuceRule: String = "",
 ) {
+    /** Le regole con cui si e' giocata questa partita: sport, ordine di servizio e regola del 40-40. */
+    fun regole(): SportRules = SportRegistry.forMatch(sportId, decodeServeOrder(serveOrder), DeuceRule.daNome(deuceRule))
+
     companion object {
         /** Il formato di [serveOrder]: una coppia di funzioni sola, cosi' scrittura e lettura non divergono. */
         fun encodeServeOrder(order: List<Int>): String = order.joinToString(",")
+
+        /** Il valore di [deuceRule] per le regole [regole]: vuoto dove il 40-40 non esiste. */
+        fun encodeDeuceRule(regole: SportRules): String = if (regole is RacketRules) regole.config.deuce.name else ""
 
         /** Un valore illeggibile vale come ordine assente: un dato in meno, non una partita persa. */
         fun decodeServeOrder(raw: String): List<Int> {

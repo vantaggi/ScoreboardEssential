@@ -484,6 +484,14 @@ class WearViewModelTest {
         assertEquals(2, WearScoreState.fromDataMap(vecchio).servingSide)
     }
 
+    @Test
+    fun `la regola del 40-40 arriva dalla chiave additiva, e senza chiave e' vuota`() {
+        val killer = DataMap().apply { putString(WearConstants.KEY_DEUCE_RULE, "KILLER_POINT") }
+        assertEquals("KILLER_POINT", WearScoreState.fromDataMap(killer).deuceRule)
+        // Un telefono precedente non la manda: vale la regola dello sport.
+        assertEquals("", WearScoreState.fromDataMap(DataMap()).deuceRule)
+    }
+
     /**
      * L8: il telefono manda il residuo in pausa, e l'orologio lo salvava come durata: dopo una
      * pausa a 2:00 ogni conto successivo durava 2 minuti invece di 5. Con la durata a parte, la

@@ -8,6 +8,7 @@ import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.NodeClient
+import it.vantaggi.scoreboardessential.core.DeuceRule
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.core.ScoringEvent
@@ -209,6 +210,58 @@ class OfflineScoreTest {
         val atteso = SportRegistry.byId(SportRegistry.PADEL).display(telefono.state)
         assertEquals(atteso.side1Primary, viewModel.scoreState.value?.side1Primary)
         assertEquals(atteso.side2Primary, viewModel.scoreState.value?.side2Primary)
+    }
+
+    /**
+     * Il caso visto in campo: col killer point il polso chiudeva il game al primo 40-40, perche'
+     * rifaceva il conto con la regola del registro (punto secco) invece che con quella della partita.
+     * Si rompe togliendo la regola dallo stato o non passandola a forMatch in rebuildLocalState.
+     */
+    @Test
+    fun `col killer point il polso gioca il vantaggio e poi il punto secco come il telefono`() {
+        val regole = SportRegistry.forMatch(SportRegistry.PADEL, deuce = DeuceRule.KILLER_POINT)
+        // Il telefono e' a 40-40.
+        val telefono = MatchEngine(regole)
+        repeat(3) {
+            telefono.apply(ScoringEvent.Point(side = 1))
+            telefono.apply(ScoringEvent.Point(side = 2))
+        }
+        coda.add(PendingIntent(WearConstants.INTENT_POINT, 1, 1_000L))
+        viewModel.applyStateV2(
+            statoDalTelefono(MatchLogCodec.encode(telefono.log), primo = "X", secondo = "X").copy(deuceRule = "KILLER_POINT"),
+        )
+        // Vantaggio, non game.
+        assertEquals("AV", viewModel.scoreState.value?.side1Primary)
+        assertEquals("40", viewModel.scoreState.value?.side2Primary)
+
+        // Di nuovo parita': ora e' punto secco per entrambi.
+        coda.add(PendingIntent(WearConstants.INTENT_POINT, 2, 2_000L))
+        viewModel.refreshPendingCount()
+        assertEquals("PV", viewModel.scoreState.value?.side1Primary)
+        assertEquals("PV", viewModel.scoreState.value?.side2Primary)
+
+        // Lo stesso motore del telefono, con gli stessi punti, dice la stessa cosa.
+        telefono.apply(ScoringEvent.Point(side = 1))
+        telefono.apply(ScoringEvent.Point(side = 2))
+        assertEquals(regole.display(telefono.state).side1Primary, viewModel.scoreState.value?.side1Primary)
+    }
+
+    @Test
+    fun `un orologio riavviato ritrova anche la regola del 40-40`() {
+        val regole = SportRegistry.forMatch(SportRegistry.PADEL, deuce = DeuceRule.ADVANTAGE)
+        val telefono = MatchEngine(regole)
+        repeat(3) {
+            telefono.apply(ScoringEvent.Point(side = 1))
+            telefono.apply(ScoringEvent.Point(side = 2))
+        }
+        LastKnownMatch(RuntimeEnvironment.getApplication())
+            .save(SportRegistry.PADEL, MatchLogCodec.encode(telefono.log), deuceRule = "ADVANTAGE")
+        coda.add(PendingIntent(WearConstants.INTENT_POINT, 2, 1_000L))
+
+        viewModel.refreshPendingCount()
+
+        // Col punto secco del registro sarebbe stato game: con i vantaggi e' AV.
+        assertEquals("AV", viewModel.scoreState.value?.side2Primary)
     }
 
     @Test

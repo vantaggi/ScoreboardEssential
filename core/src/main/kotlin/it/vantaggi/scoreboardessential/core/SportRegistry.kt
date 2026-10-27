@@ -53,15 +53,22 @@ object SportRegistry {
     fun byId(id: String): SportRules = all.firstOrNull { it.id == id } ?: FootballRules
 
     /**
-     * Le regole per una partita, con l'ordine di servizio scelto dall'utente innestato nella
-     * configurazione. Per gli sport che non modellano il servizio l'elenco viene ignorato.
+     * Le regole per una partita, con l'ordine di servizio scelto dall'utente e la regola del 40-40
+     * innestati nella configurazione. Una [deuce] null lascia quella dello sport (il padel a punto
+     * secco, il tennis ai vantaggi). Per gli sport che non modellano il servizio ne' il 40-40
+     * entrambi vengono ignorati.
      */
     fun forMatch(
         id: String,
         serveOrder: List<Int> = emptyList(),
+        deuce: DeuceRule? = null,
     ): SportRules {
         val base = byId(id)
-        if (serveOrder.isEmpty() || base !is RacketRules) return base
-        return RacketRules(id = base.id, config = base.config.copy(serveOrder = serveOrder))
+        if (base !is RacketRules) return base
+        if (serveOrder.isEmpty() && (deuce == null || deuce == base.config.deuce)) return base
+        return RacketRules(
+            id = base.id,
+            config = base.config.copy(serveOrder = serveOrder, deuce = deuce ?: base.config.deuce),
+        )
     }
 }

@@ -39,6 +39,15 @@ enum class DeuceRule {
 
     /** Vantaggi classici: si vince per due. E' il tennis. */
     ADVANTAGE,
+    ;
+
+    companion object {
+        /**
+         * La regola dal suo nome salvato (colonna `matches.deuceRule`, chiave dell'orologio). Null per
+         * la stringa vuota e per un nome che questa build non conosce: vale "la regola dello sport".
+         */
+        fun daNome(nome: String?): DeuceRule? = entries.firstOrNull { it.name == nome }
+    }
 }
 
 /** Se e come scorre il cronometro. */

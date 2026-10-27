@@ -106,6 +106,45 @@ class SportRegistryTest {
     }
 
     @Test
+    fun `forMatch innesta la regola del 40-40 e il padel la gioca`() {
+        val killer = SportRegistry.forMatch("padel", listOf(1, 2, 3, 4), DeuceRule.KILLER_POINT)
+        assertEquals(DeuceRule.KILLER_POINT, killer.config.deuce)
+        assertEquals(listOf(1, 2, 3, 4), killer.config.serveOrder)
+        // Il registro resta a punto secco.
+        assertEquals(DeuceRule.GOLDEN_POINT, SportRegistry.byId("padel").config.deuce)
+        // 40-40, vantaggio, di nuovo 40-40: col killer point il game non e' ancora chiuso, e il
+        // secondo 40-40 e' punto secco per entrambi.
+        val engine = MatchEngine(killer)
+        repeat(3) {
+            engine.apply(ScoringEvent.Point(side = 1))
+            engine.apply(ScoringEvent.Point(side = 2))
+        }
+        engine.apply(ScoringEvent.Point(side = 1))
+        assertEquals("AV", killer.display(engine.state).side1Primary)
+        engine.apply(ScoringEvent.Point(side = 2))
+        assertEquals("PV", killer.display(engine.state).side1Primary)
+        assertEquals("PV", killer.display(engine.state).side2Primary)
+        engine.apply(ScoringEvent.Point(side = 2))
+        assertEquals(listOf(0, 1), (engine.state as RacketScore).gamesInSet)
+    }
+
+    @Test
+    fun `forMatch senza regola o con quella dello sport non crea una copia`() {
+        assertSame(SportRegistry.byId("padel"), SportRegistry.forMatch("padel"))
+        assertSame(SportRegistry.byId("padel"), SportRegistry.forMatch("padel", deuce = DeuceRule.GOLDEN_POINT))
+        assertSame(FootballRules, SportRegistry.forMatch("football", deuce = DeuceRule.ADVANTAGE))
+        assertEquals(DeuceRule.ADVANTAGE, SportRegistry.forMatch("padel", deuce = DeuceRule.ADVANTAGE).config.deuce)
+    }
+
+    @Test
+    fun `daNome legge i nomi salvati e ripiega su null`() {
+        DeuceRule.entries.forEach { assertEquals(it, DeuceRule.daNome(it.name)) }
+        assertNull(DeuceRule.daNome(""))
+        assertNull(DeuceRule.daNome(null))
+        assertNull(DeuceRule.daNome("SUDDEN_DEATH"))
+    }
+
+    @Test
     fun `ogni sport del registro produce uno stato iniziale valido`() {
         SportRegistry.selectable().forEach { rules ->
             val iniziale = rules.initial()

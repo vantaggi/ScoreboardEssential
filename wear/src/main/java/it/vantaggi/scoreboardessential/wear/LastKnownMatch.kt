@@ -25,6 +25,7 @@ class LastKnownMatch(
         const val CHIAVE_RICEVUTO_ALLE = "received_at"
         const val CHIAVE_UUID = "match_uuid"
         const val CHIAVE_VERSIONE_STATO = "state_version"
+        const val CHIAVE_DEUCE = "deuce_rule"
     }
 
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -56,11 +57,18 @@ class LastKnownMatch(
      */
     val ricevutoAlle: Long get() = prefs.getLong(CHIAVE_RICEVUTO_ALLE, 0L)
 
+    /**
+     * La regola del 40-40 della partita, vuota per "quella dello sport" (anche per i dati scritti
+     * prima di questa chiave). Un orologio riavviato a meta' partita rifa' il conto con questa.
+     */
+    val deuceRule: String get() = prefs.getString(CHIAVE_DEUCE, "").orEmpty()
+
     fun save(
         sportId: String,
         eventLog: String,
         servingSlot: Int = 0,
         matchUuid: String = "",
+        deuceRule: String = "",
     ) {
         // Uno sport vuoto arriva da un telefono che parla una bozza precedente del v2: non si
         // sovrascrive quello che si sa gia' con un vuoto, perche' quel vuoto non e' informazione.
@@ -75,6 +83,7 @@ class LastKnownMatch(
             putString(CHIAVE_LOG, eventLog)
             putBoolean(CHIAVE_IN_COPPIA, inCoppia)
             putString(CHIAVE_UUID, matchUuid)
+            putString(CHIAVE_DEUCE, deuceRule)
         }
     }
 
