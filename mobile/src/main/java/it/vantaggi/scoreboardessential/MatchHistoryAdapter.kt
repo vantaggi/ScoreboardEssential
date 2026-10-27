@@ -105,8 +105,8 @@ class MatchHistoryAdapter(
             // L'etichetta porta il colore con cui si e' giocato (Team.color), con l'inchiostro di
             // TeamInk: non piu' giallo e verde fissi. Se la squadra non c'e' piu' ripiega sui
             // predefiniti.
-            team1NameTextView.text = matchWithTeams.team1?.name ?: "Team 1"
-            team2NameTextView.text = matchWithTeams.team2?.name ?: "Team 2"
+            team1NameTextView.text = EtichettaSquadra.mostrato(matchWithTeams.team1?.name, context.getString(R.string.label_team_1))
+            team2NameTextView.text = EtichettaSquadra.mostrato(matchWithTeams.team2?.name, context.getString(R.string.label_team_2))
             team1NameTextView.etichettaDiSquadra(matchWithTeams.team1?.color ?: context.getColor(R.color.team_side_1))
             team2NameTextView.etichettaDiSquadra(matchWithTeams.team2?.color ?: context.getColor(R.color.team_side_2))
             team1ScoreTextView.text = match.team1Score.toString()

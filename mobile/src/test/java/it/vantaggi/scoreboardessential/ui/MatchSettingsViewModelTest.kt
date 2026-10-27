@@ -142,4 +142,31 @@ class MatchSettingsViewModelTest {
             assertEquals(SportRegistry.PADEL, viewModel.activeSport.value)
             verify(repository).setActiveSport(SportRegistry.PADEL)
         }
+
+    /**
+     * Il campo del nome nasconde il predefinito ("Team 1" resta nei dati, a schermo il campo e'
+     * vuoto). Lasciarlo vuoto deve salvare di nuovo il predefinito: con una stringa vuota orologio e
+     * registro avrebbero mostrato una squadra senza nome. Rosso se saveTeam1Name torna a salvare il
+     * testo cosi' com'e'.
+     */
+    @Test
+    fun `il nome lasciato vuoto salva il predefinito e non una stringa vuota`() =
+        runTest(UnconfinedTestDispatcher()) {
+            Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+            val repository = mock(MatchSettingsRepository::class.java)
+            whenever(repository.getTeam1Name()).thenReturn("Rossi")
+            whenever(repository.getTeam2Name()).thenReturn("Team 2")
+            whenever(repository.getTeam1Color()).thenReturn(1)
+            whenever(repository.getTeam2Color()).thenReturn(2)
+            whenever(repository.getKeeperTimerDuration()).thenReturn(300L)
+            whenever(repository.getActiveSport()).thenReturn(SportRegistry.PADEL)
+            val viewModel = MatchSettingsViewModel(repository, mock(MatchDao::class.java))
+
+            viewModel.saveTeam1Name("   ")
+            viewModel.saveTeam2Name(" Bianchi ")
+
+            verify(repository).setTeam1Name(MatchSettingsRepository.DEFAULT_TEAM1_NAME)
+            verify(repository).setTeam2Name("Bianchi")
+            assertEquals(MatchSettingsRepository.DEFAULT_TEAM1_NAME, viewModel.team1Name.value)
+        }
 }

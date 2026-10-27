@@ -67,17 +67,21 @@ class MatchSettingsViewModel(
         }
     }
 
+    // Il campo vuoto vuol dire "nessun nome scelto": si salva il predefinito, come prima che il
+    // campo lo nascondesse, e non una stringa vuota che orologio e registro mostrerebbero cosi'.
     fun saveTeam1Name(name: String) {
+        val nome = name.trim().ifEmpty { MatchSettingsRepository.DEFAULT_TEAM1_NAME }
         viewModelScope.launch {
-            repository.setTeam1Name(name)
-            _team1Name.value = name
+            repository.setTeam1Name(nome)
+            _team1Name.value = nome
         }
     }
 
     fun saveTeam2Name(name: String) {
+        val nome = name.trim().ifEmpty { MatchSettingsRepository.DEFAULT_TEAM2_NAME }
         viewModelScope.launch {
-            repository.setTeam2Name(name)
-            _team2Name.value = name
+            repository.setTeam2Name(nome)
+            _team2Name.value = nome
         }
     }
 

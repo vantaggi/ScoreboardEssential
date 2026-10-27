@@ -11,6 +11,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
+import it.vantaggi.scoreboardessential.EtichettaSquadra
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.core.DeuceRule
@@ -191,15 +192,19 @@ class MatchSettingsActivity : AppCompatActivity() {
         )
 
     private fun observeViewModel() {
+        // Il nome predefinito ("Team 1" nei dati) non si scrive nel campo: il campo resta vuoto e
+        // dice "Nome squadra 1", che e' la verita' (nessun nome scelto) nella lingua in uso.
         viewModel.team1Name.observe(this) { name ->
-            if (binding.team1NameEdittext.text.toString() != name) {
-                binding.team1NameEdittext.setText(name)
+            val testo = if (EtichettaSquadra.predefinito(name)) "" else name
+            if (binding.team1NameEdittext.text.toString() != testo) {
+                binding.team1NameEdittext.setText(testo)
             }
         }
 
         viewModel.team2Name.observe(this) { name ->
-            if (binding.team2NameEdittext.text.toString() != name) {
-                binding.team2NameEdittext.setText(name)
+            val testo = if (EtichettaSquadra.predefinito(name)) "" else name
+            if (binding.team2NameEdittext.text.toString() != testo) {
+                binding.team2NameEdittext.setText(testo)
             }
         }
 
@@ -336,7 +341,11 @@ class MatchSettingsActivity : AppCompatActivity() {
 
         // L'anteprima parte dal colore attuale e segue la ruota a ogni movimento.
         val anteprima = dialogView.findViewById<TextView>(R.id.colorPreview)
-        val nome = (if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value).orEmpty()
+        val nome =
+            EtichettaSquadra.mostrato(
+                if (team == 1) viewModel.team1Name.value else viewModel.team2Name.value,
+                getString(if (team == 1) R.string.label_team_1 else R.string.label_team_2),
+            )
         val attuale = (if (team == 1) viewModel.team1Color.value else viewModel.team2Color.value) ?: getColor(R.color.team_side_1)
         anteprima.anteprimaDiSquadra(attuale, nome)
         colorPickerView.setColorListener(

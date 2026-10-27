@@ -10,6 +10,7 @@ import android.os.IBinder
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
@@ -259,7 +260,7 @@ class MainViewModel(
                 viewModelScope.launch {
                     binder.getService().keeperTimerExpired.collect {
                         _isKeeperTimerExpired.postValue(true)
-                        addMatchEvent("Keeper timer expired!")
+                        addMatchEvent(testo(R.string.log_keeper_expired))
                     }
                 }
             }
@@ -1091,8 +1092,7 @@ class MainViewModel(
         } else {
             _team2Players.value = _team2Players.value?.plus(playerWithRoles)
         }
-        val teamName = if (teamId == 1) team1Name.value else team2Name.value
-        addMatchEvent("${playerWithRoles.player.playerName} added to $teamName", team = teamId)
+        addMatchEvent(testo(R.string.log_player_added, playerWithRoles.player.playerName, nomeNelRegistro(teamId)), team = teamId)
         refreshServeOrder()
         salvaRoseDellaRigaViva()
     }
@@ -1306,7 +1306,7 @@ class MainViewModel(
                 )
             val playerRepository = PlayerRepository(playerDao)
             playerRepository.insertPlayerWithRoles(player, roleIds)
-            addMatchEvent("New player created: $name")
+            addMatchEvent(testo(R.string.log_player_created, name))
         }
     }
 
@@ -1674,7 +1674,7 @@ class MainViewModel(
                 }
 
                 is ScoringEvent.Correction -> {
-                    addMatchEvent("Score correction for $nomeSquadra", team = squadra, engineIndex = indice, pubblica = false)
+                    addMatchEvent(testo(R.string.log_score_correction, nomeNelRegistro(squadra)), team = squadra, engineIndex = indice, pubblica = false)
                 }
             }
         }
@@ -2005,10 +2005,9 @@ class MainViewModel(
         if (dopo != prima) {
             publishEngineState()
             triggerHapticFeedback()
-            val teamName = if (teamId == 1) team1Name.value else team2Name.value
             // Anche la correzione porta il suo indice: e' un evento del motore come un punto, e
             // annullarla deve togliere questa riga e non quella di un gol.
-            addMatchEvent("Score correction for $teamName", team = teamId, engineIndex = engine.log.lastIndex)
+            addMatchEvent(testo(R.string.log_score_correction, nomeNelRegistro(teamId)), team = teamId, engineIndex = engine.log.lastIndex)
         }
     }
 
@@ -2163,11 +2162,11 @@ class MainViewModel(
 
         val cosa =
             when {
-                evento is ScoringEvent.Correction -> "Correction"
-                sportRules.capabilities.attributesScorer -> "Goal"
-                else -> "Point"
+                evento is ScoringEvent.Correction -> R.string.log_undo_correction
+                sportRules.capabilities.attributesScorer -> R.string.log_undo_goal
+                else -> R.string.log_undo_point
             }
-        addMatchEvent("Undo: $cosa removed", team = evento.side)
+        addMatchEvent(testo(cosa), team = evento.side)
         return evento
     }
 
@@ -2202,7 +2201,8 @@ class MainViewModel(
     fun setKeeperTimer(seconds: Long) {
         keeperTimerDuration = seconds * 1000
         _keeperTimerValue.value = keeperTimerDuration
-        addMatchEvent("Keeper timer set to $seconds seconds")
+        // Solo dove il portiere c'e': nel padel il registro diceva "Keeper timer set to 30 seconds".
+        if (sportRules.capabilities.hasAuxCountdown) addMatchEvent(testo(R.string.log_keeper_set, seconds))
         // Sync default duration to Wear
         sendKeeperTimerUpdate(false, keeperTimerDuration)
     }
@@ -2211,7 +2211,7 @@ class MainViewModel(
         if (!isServiceBound) return
         _isKeeperTimerExpired.value = false
         matchTimerService?.startKeeperTimer(keeperTimerDuration, fromRemote)
-        addMatchEvent("Keeper timer started (${keeperTimerDuration / 1000}s)")
+        addMatchEvent(testo(R.string.log_keeper_started, keeperTimerDuration / 1000))
     }
 
     /**
@@ -2227,7 +2227,7 @@ class MainViewModel(
         if (!isServiceBound) return
         _isKeeperTimerExpired.value = false
         matchTimerService?.restartKeeperTimer(keeperTimerDuration)
-        addMatchEvent("Keeper timer started (${keeperTimerDuration / 1000}s)")
+        addMatchEvent(testo(R.string.log_keeper_started, keeperTimerDuration / 1000))
     }
 
     fun pauseKeeperTimer(fromRemote: Boolean = false) {
@@ -2239,10 +2239,23 @@ class MainViewModel(
         if (!isServiceBound) return
         _isKeeperTimerExpired.value = false
         matchTimerService?.resetKeeperTimer(fromRemote)
-        addMatchEvent("Keeper timer reset")
+        addMatchEvent(testo(R.string.log_keeper_reset))
     }
 
     // --- Match Events ---
+
+    /** Le righe informative del registro, nella lingua in uso come le altre (prima erano in inglese). */
+    private fun testo(
+        @StringRes id: Int,
+        vararg argomenti: Any,
+    ): String = getApplication<Application>().getString(id, *argomenti)
+
+    /** Il nome della squadra nel registro: il predefinito ("Team 1") nella lingua in uso. */
+    private fun nomeNelRegistro(squadra: Int): String =
+        EtichettaSquadra.mostrato(
+            if (squadra == 1) team1Name.value else team2Name.value,
+            testo(if (squadra == 1) R.string.label_team_1 else R.string.label_team_2),
+        )
 
     private fun addMatchEvent(
         event: String,
@@ -2450,7 +2463,7 @@ class MainViewModel(
                 )
                 currentMatchId = null
 
-                addMatchEvent("Match ended - Final Score: ${team1Score.value} - ${team2Score.value}")
+                addMatchEvent(testo(R.string.log_match_ended, team1Score.value ?: 0, team2Score.value ?: 0))
 
                 sendMatchStateUpdate(false)
                 startNewMatch()

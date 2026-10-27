@@ -229,6 +229,18 @@
     <string name="history_meta_duration">%1$s · %2$s · %3$s</string>
     <string name="match_ready">New match ready</string>
     <string name="match_resumed">Match resumed</string>
+    <!-- Le righe informative del registro. In inglese restano le parole di prima, che i test leggono. -->
+    <string name="log_keeper_expired">Keeper timer expired!</string>
+    <string name="log_keeper_set">Keeper timer set to %d seconds</string>
+    <string name="log_keeper_started">Keeper timer started (%ds)</string>
+    <string name="log_keeper_reset">Keeper timer reset</string>
+    <string name="log_player_added">%1$s added to %2$s</string>
+    <string name="log_player_created">New player created: %s</string>
+    <string name="log_score_correction">Score correction for %s</string>
+    <string name="log_undo_correction">Undo: Correction removed</string>
+    <string name="log_undo_goal">Undo: Goal removed</string>
+    <string name="log_undo_point">Undo: Point removed</string>
+    <string name="log_match_ended">Match ended - Final Score: %1$d - %2$d</string>
 
     <!-- Cronaca: la partita chiusa rigiocata punto per punto, dallo storico -->
     <string name="chronicle_title">Chronicle</string>
@@ -306,7 +318,7 @@
     <string name="title_player">Player</string>
     <string name="title_edit_player">Edit player</string>
     <string name="title_match_settings">Match settings</string>
-    <string name="title_manage_players">Manage players</string>
+    <string name="title_manage_players">Players</string>
     <string name="title_statistics">Statistics</string>
     <string name="player_name_hint">Player Name</string>
     <string name="player_name_empty">Enter the player\'s name.</string>

@@ -1233,6 +1233,29 @@ class MainViewModelTest {
             }
         }
 
+    /**
+     * Il registro del padel diceva "Keeper timer set to 30 seconds": le impostazioni passano la
+     * durata del portiere a ogni sport. Rosso se setKeeperTimer torna a scrivere senza guardare se
+     * lo sport ha il portiere; la seconda parte e' rossa se la riga sparisce anche dal calcio.
+     */
+    @Test
+    fun `la durata del portiere entra nel registro solo dove il portiere c'e'`() =
+        runTest {
+            val eventiObserver = Observer<List<MatchEvent>> {}
+            viewModel.matchEvents.observeForever(eventiObserver)
+            assertEquals(true, viewModel.selectSport(SportRegistry.PADEL))
+            advanceUntilIdle()
+
+            viewModel.setKeeperTimer(30)
+            assertTrue(righeDelRegistro().none { it.startsWith("Keeper timer set") })
+
+            assertEquals(true, viewModel.selectSport(SportRegistry.FOOTBALL))
+            advanceUntilIdle()
+            viewModel.setKeeperTimer(45)
+            assertTrue(righeDelRegistro().contains("Keeper timer set to 45 seconds"))
+            viewModel.matchEvents.removeObserver(eventiObserver)
+        }
+
     /** Senza cronometro un minuto sarebbe sempre 1': la colonna resta vuota. */
     @Test
     fun `nel padel il registro non scrive un minuto`() =

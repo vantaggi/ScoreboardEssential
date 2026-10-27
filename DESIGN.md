@@ -2428,3 +2428,33 @@ Richiesta del proprietario: dall'orologio i punti arrivano al telefono, ma "non 
 
 1. Il file della partita (export e Diretta) porta gia' la regola in `config.deuce`, e la dashboard la traduce in `goldenPoint` e `killerPoint` (`docs/dashboard/riferimento-match-log.js`): ora puo' valere `KILLER_POINT` o `ADVANTAGE`. Non provato contro la dashboard vera (produzione).
 2. L'orologio non ha un selettore: la regola si sceglie sul telefono.
+
+## Revisione di menu e pagine - 27 ottobre 2026
+
+Richiesta del proprietario: i menu di telefono e orologio sono "poco leggibili e molto confusionari", e sull'orologio lo spazio non e' usato bene; poi, approvata la direzione, la revisione di tutte le pagine (non il tabellone). Audit con le foto prese stasera sul telefono S26 e sul Galaxy Watch (480x480, 340dpi, circa 227dp) e proposta schermata per schermata: <https://claude.ai/artifact/R97K4QRxHkd33ohzcpMQf5>. Le foto stanno sul PC in `build\audit_menu_prima\` (ignorata da git).
+
+**Le tre cause ricorrenti.** (1) Sull'orologio menu, scelta dello sport e Prossima partita stanno in un `BoxInsetLayout` con `boxedEdges="all"` e il titolo fermo sopra: le voci occupano circa 270x215 pixel su 480x480 e gia' la seconda esce tagliata. Sul tondo le liste vanno a tutta larghezza (`wearable.md`: si stringono solo vicino al bordo alto e basso). (2) Sul telefono il testo dei bottoni secondari era `text-secondary` (#8A8A9A), quasi uguale al disattivo (#6B7077): Storico, Condividi, Apri la serata, Gruppo sembravano spenti. (3) Il foglio Partita e le Impostazioni mescolano la partita in corso e l'app (griglia di sei bottoni uguali, lingua e account fra le regole). In piu', trasversali: lingua mista ("Team 1" nello storico e nelle impostazioni, "Squadra 1" nella Cronaca, maiuscole all'inglese) e lessico del calcio nel padel (gol, Attacco e Difesa, ruoli).
+
+**I passi, una PR ciascuno.** 1 grigio dei bottoni e testi; 2 orologio a tutta larghezza (dopo la PR #195 e le impostazioni al polso, che toccano gli stessi file); 3 foglio Partita (prima la partita, poi l'app come righe con la freccia; un solo "In campo") e Impostazioni (Squadre, Regole, Padel Elite, App); 4 Padel Elite (collegati in cima, gli altri dietro una ricerca); 5 Storico e Cronaca (un tocco apre la Cronaca, le sezioni senza dati spariscono); 6 Statistiche, Giocatori e Modifica giocatore secondo lo sport; 7 dialoghi (tavolozza di colori, ricerca in Aggiungi giocatore, sport con la spunta).
+
+### Passo 1: grigio dei bottoni e testi
+
+- **Bottone secondario.** `button_text_secondary` passa da `eliteTextSecondary` a `eliteTextPrimary`; il disattivo resta `eliteTextDisabled`. Lo usano tutti i `Widget.App.Button.Secondary` (testo e icona). Con l'alto contrasto segue il tema come prima.
+- **Il nome predefinito della squadra.** Nei dati resta "Team 1"/"Team 2" (`MatchSettingsRepository.DEFAULT_TEAM1_NAME`): e' il segnale "nessun nome scelto" per `EtichettaSquadra`, per l'orologio e per le partite gia' salvate. A schermo `EtichettaSquadra.mostrato` lo traduce nel predefinito della lingua ("Squadra 1"): storico, anteprima del colore, registro. Nelle Impostazioni il campo resta vuoto e dice "Nome squadra 1"; lasciato vuoto, salva di nuovo il predefinito e non una stringa vuota.
+- **Registro.** Le righe informative scritte nel codice in inglese ("Keeper timer set to 30 seconds", "Score correction for", "Undo: Goal removed", "added to", "Match ended") vengono dalle risorse: in inglese restano le parole di prima, in italiano "Portiere a 30 secondi", "Correzione per Squadra 1", "Annullato un gol", "Partita finita: 3 – 2". La durata del portiere entra nel registro solo negli sport col portiere (`hasAuxCountdown`): nel padel non c'e' piu'.
+- **Maiuscole in frase.** "Nome del giocatore", "Aggiungi un giocatore alla squadra 1", "Colore della squadra 1", "Terminare la partita?", "Azzerare il tempo?" e le altre; "Gestisci giocatori" diventa "Giocatori", come il comando che la apre.
+
+| Stato | Cosa si vede |
+|---|---|
+| Secondario normale | testo e icona in `text-primary` su `surface-raised` col contorno |
+| Premuto / fuoco | la pressione condivisa e l'anello di fuoco, come prima |
+| Disattivo | testo `text-disabled`, ora distinguibile dal normale |
+| Nome non scelto | campo vuoto con l'etichetta "Nome squadra 1"; nello storico "Squadra 1" |
+| Registro, padel | nessuna riga del portiere |
+
+- **Movimento.** Nessuno nuovo. **Accessibilita'.** Il testo dei secondari passa da 4,9:1 a 10,9:1 su `surface-raised` (tema standard); il disattivo resta a 3,3:1, quindi i due ora si distinguono. **Schermo stretto e 200%.** Testi piu' lunghi di qualche lettera nei titoli dei dialoghi ("Aggiungi un giocatore alla squadra 1"): vanno a capo. **Conflitti dichiarati.** Nessuno. **Pattern vietati** (`review.md`): nessun colore scritto a mano, nessun token nuovo; niente maiuscolo; nessun `--` nei commenti XML e nessun apostrofo nelle stringhe nuove.
+
+### Debiti dichiarati
+
+1. Le partite gia' salvate con un registro in inglese restano in inglese: si traducono solo le righe nuove.
+2. Non visto a schermo finche' non e' provato sul telefono (passo nella PR).

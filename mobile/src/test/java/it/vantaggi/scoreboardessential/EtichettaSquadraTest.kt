@@ -52,4 +52,13 @@ class EtichettaSquadraTest {
         assertTrue(EtichettaSquadra.predefinito(" team 2 "))
         assertFalse(EtichettaSquadra.predefinito("Team Rocket"))
     }
+
+    /** Rosso se il predefinito dei dati ("Team 1") torna a schermo cosi' com'e', come nello storico. */
+    @Test
+    fun `mostrato traduce solo il predefinito`() {
+        assertEquals("Squadra 1", EtichettaSquadra.mostrato("Team 1", "Squadra 1"))
+        assertEquals("Squadra 2", EtichettaSquadra.mostrato(null, "Squadra 2"))
+        assertEquals("Squadra 1", EtichettaSquadra.mostrato("", "Squadra 1"))
+        assertEquals("Team Rocket", EtichettaSquadra.mostrato("Team Rocket", "Squadra 1"))
+    }
 }
