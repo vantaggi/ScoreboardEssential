@@ -76,10 +76,12 @@ class FoglioPrimaLaPartitaTest {
         assertTrue("i posti dell'app devono stare sotto Fine partita", gruppo > fine)
         // Nelle azioni restano solo due secondari, quelli di questa partita.
         val secondari = mutableListOf<Int>()
+
         fun cerca(v: View) {
             if (v is MaterialButton && v.id != R.id.reset_scores_button) secondari += v.id
             if (v is ViewGroup) (0 until v.childCount).forEach { cerca(v.getChildAt(it)) }
         }
+
         cerca(azioni)
         assertEquals(listOf(R.id.share_match_button, R.id.sheet_reset_timer_button), secondari)
     }
