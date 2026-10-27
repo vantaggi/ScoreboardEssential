@@ -14,7 +14,16 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.isNotEmpty
 import com.google.android.material.card.MaterialCardView
+import it.vantaggi.scoreboardessential.core.TeamInk
+
+/** Una squadra a tabellone, per il gruppo "In campo" del menu: il nome mostrato, la rosa, il colore (ARGB). */
+data class SquadraInCampo(
+    val nome: String,
+    val giocatori: List<String>,
+    val colore: Int,
+)
 
 /**
  * Il menu partita: lo sport e la fine della partita, al posto dei due bottoni sempre visibili.
@@ -35,6 +44,9 @@ class MenuActivity : ComponentActivity() {
         const val AZIONE_SPORT = "sport"
         const val AZIONE_FINE = "fine"
         const val AZIONE_SCARTA = "scarta"
+        const val AZIONE_PROSSIMA = "prossima"
+        const val AZIONE_REGOLA_40 = "regola_40"
+        const val AZIONE_PORTIERE = "portiere"
 
         /** Senza nessun tocco ne' scorrimento la schermata torna al quadrante da sola. */
         const val CHIUSURA_AUTOMATICA_MS = 10_000L
@@ -46,6 +58,14 @@ class MenuActivity : ComponentActivity() {
         private const val EXTRA_SPORT = "menu_sport"
         private const val EXTRA_RISULTATO = "menu_risultato"
         private const val EXTRA_RIFIUTATI = "menu_rifiutati"
+        private const val EXTRA_PROSSIMA = "menu_prossima"
+        private const val EXTRA_SQUADRE_NOMI = "menu_squadre_nomi"
+        private const val EXTRA_SQUADRE_GIOCATORI = "menu_squadre_giocatori"
+        private const val EXTRA_SQUADRE_COLORI = "menu_squadre_colori"
+        private const val EXTRA_REGOLA_40 = "menu_regola_40"
+        private const val EXTRA_PORTIERE = "menu_portiere"
+        private const val EXTRA_VIBRAZIONE = "menu_vibrazione"
+        private const val SEPARATORE_GIOCATORI = "\n"
 
         /**
          * L'istante con cui si misura la finestra della conferma. Iniettabile come
@@ -58,8 +78,16 @@ class MenuActivity : ComponentActivity() {
         fun intent(
             context: Context,
             input: InputMenu,
+            squadre: List<SquadraInCampo> = emptyList(),
         ): Intent =
             Intent(context, MenuActivity::class.java)
+                .putExtra(EXTRA_PROSSIMA, input.prossima)
+                .putExtra(EXTRA_REGOLA_40, input.regola40)
+                .putExtra(EXTRA_PORTIERE, input.portiere)
+                .putExtra(EXTRA_VIBRAZIONE, input.vibrazionePunti)
+                .putExtra(EXTRA_SQUADRE_NOMI, squadre.map { it.nome }.toTypedArray())
+                .putExtra(EXTRA_SQUADRE_GIOCATORI, squadre.map { it.giocatori.joinToString(SEPARATORE_GIOCATORI) }.toTypedArray())
+                .putExtra(EXTRA_SQUADRE_COLORI, squadre.map { it.colore }.toIntArray())
                 .putExtra(EXTRA_IN_CODA, input.inCoda)
                 .putExtra(EXTRA_COLLEGATO, input.collegato)
                 .putExtra(EXTRA_PARTITA_INIZIATA, input.partitaIniziata)
@@ -78,7 +106,7 @@ class MenuActivity : ComponentActivity() {
     private val righe = mutableListOf<Riga>()
 
     private class Riga(
-        val voce: Voce,
+        var voce: Voce,
         val card: MaterialCardView,
     ) {
         val titolo: TextView = card.findViewById(R.id.sport_name)
@@ -113,18 +141,17 @@ class MenuActivity : ComponentActivity() {
                 sport = intent.getStringExtra(EXTRA_SPORT).orEmpty(),
                 risultato = intent.getStringExtra(EXTRA_RISULTATO).orEmpty(),
                 rifiutati = intent.getIntExtra(EXTRA_RIFIUTATI, 0),
+                prossima = intent.getStringExtra(EXTRA_PROSSIMA).orEmpty(),
+                regola40 = intent.getStringExtra(EXTRA_REGOLA_40).orEmpty(),
+                portiere = intent.getStringExtra(EXTRA_PORTIERE).orEmpty(),
+                vibrazionePunti = intent.getBooleanExtra(EXTRA_VIBRAZIONE, true),
             )
 
-        val contenitore = findViewById<LinearLayout>(R.id.menu_voci)
-        MenuVoci.calcola(input).forEach { voce ->
-            val card = LayoutInflater.from(this).inflate(R.layout.item_sport_wear, contenitore, false) as MaterialCardView
-            card.setOnClickListener { alTocco(voce) }
-            // Armarsi e rientrare cambia titolo e sottotitolo: TalkBack deve dirlo, perche' chi non
-            // vede la card rossa non saprebbe che il tocco e' gia' armato.
-            if (voce.id != IdVoce.SPORT) card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
-            contenitore.addView(card)
-            righe += Riga(voce, card)
-        }
+        aggiungiVoci(findViewById(R.id.menu_voci), MenuVoci.calcola(input))
+        mostraLeSquadre()
+        // Le impostazioni sotto le squadre, con le stesse righe delle voci: il gruppo c'e' sempre,
+        // perche' la vibrazione e' del polso e si cambia anche senza telefono.
+        aggiungiVoci(findViewById(R.id.menu_impostazioni), MenuVoci.impostazioni(input))
         disegna()
 
         // Anche scorrere con la corona e' un'interazione: non deve chiudere il menu sotto le dita.
@@ -148,6 +175,24 @@ class MenuActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    private fun aggiungiVoci(
+        contenitore: LinearLayout,
+        voci: List<Voce>,
+    ) {
+        voci.forEach { voce ->
+            val card = LayoutInflater.from(this).inflate(R.layout.item_sport_wear, contenitore, false) as MaterialCardView
+            val riga = Riga(voce, card)
+            card.setOnClickListener { alTocco(riga.voce) }
+            // Armarsi e rientrare cambia titolo e sottotitolo: TalkBack deve dirlo, perche' chi non
+            // vede la card rossa non saprebbe che il tocco e' gia' armato. La vibrazione cambia sul posto.
+            if (voce.id == IdVoce.FINE_PARTITA || voce.id == IdVoce.SCARTA_CODA || voce.id == IdVoce.VIBRAZIONE) {
+                card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+            }
+            contenitore.addView(card)
+            righe += riga
+        }
+    }
+
     private fun riarmaChiusura() {
         handler.removeCallbacks(chiusuraAutomatica)
         handler.postDelayed(chiusuraAutomatica, CHIUSURA_AUTOMATICA_MS)
@@ -160,6 +205,31 @@ class MenuActivity : ComponentActivity() {
         when (voce.id) {
             IdVoce.SPORT -> {
                 chiudiConAzione(AZIONE_SPORT)
+            }
+
+            IdVoce.PROSSIMA_PARTITA -> {
+                chiudiConAzione(AZIONE_PROSSIMA)
+            }
+
+            IdVoce.REGOLA_40 -> {
+                chiudiConAzione(AZIONE_REGOLA_40)
+            }
+
+            IdVoce.PORTIERE -> {
+                chiudiConAzione(AZIONE_PORTIERE)
+            }
+
+            // Del polso: si cambia qui, senza uscire, e il sottotitolo dice com'e' adesso. Riaccesa,
+            // un tick lo fa sentire.
+            IdVoce.VIBRAZIONE -> {
+                val accesa = !input.vibrazionePunti
+                PreferenzeDelPolso(this).vibrazionePunti = accesa
+                input = input.copy(vibrazionePunti = accesa)
+                righe.filter { it.voce.id == IdVoce.VIBRAZIONE }.forEach {
+                    it.voce = it.voce.copy(sottotitolo = SottotitoloVoce.Vibrazione(accesa))
+                }
+                if (accesa) VibratoreWearHaptics.di(this).tick()
+                disegna()
             }
 
             // Le due voci che distruggono qualcosa (chiudere la partita, scartare la coda) si armano
@@ -186,6 +256,34 @@ class MenuActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Le squadre in campo, sotto le voci: la barra del colore (portato a 3:1 sul nero, come la striscia
+     * del quadrante), la sigla e chi la compone. Senza rose (il calcio senza giocatori, un telefono non
+     * aggiornato) il gruppo non c'e'.
+     */
+    private fun mostraLeSquadre() {
+        val nomi = intent.getStringArrayExtra(EXTRA_SQUADRE_NOMI).orEmpty()
+        val giocatori = intent.getStringArrayExtra(EXTRA_SQUADRE_GIOCATORI).orEmpty()
+        val colori = intent.getIntArrayExtra(EXTRA_SQUADRE_COLORI) ?: IntArray(0)
+        val gruppo = findViewById<LinearLayout>(R.id.menu_squadre)
+        nomi.indices
+            .filter { giocatori.getOrNull(it).orEmpty().isNotBlank() }
+            .forEach { i ->
+                val riga = LayoutInflater.from(this).inflate(R.layout.item_squadra_wear, gruppo, false)
+                val chi = giocatori[i].split(SEPARATORE_GIOCATORI).joinToString(", ")
+                riga.findViewById<TextView>(R.id.squadra_nome).text = nomi[i]
+                riga.findViewById<TextView>(R.id.squadra_giocatori).text = chi
+                colori.getOrNull(i)?.let {
+                    riga.findViewById<View>(R.id.squadra_barra).setBackgroundColor(TeamInk.graphicOnBlack(it) or TeamInk.NERO)
+                }
+                riga.contentDescription = getString(R.string.cd_squadra, nomi[i], chi)
+                gruppo.addView(riga)
+            }
+        val visibile = if (gruppo.isNotEmpty()) View.VISIBLE else View.GONE
+        gruppo.visibility = visibile
+        findViewById<View>(R.id.menu_squadre_titolo).visibility = visibile
     }
 
     private fun chiudiConAzione(azione: String) {
@@ -241,7 +339,10 @@ class MenuActivity : ComponentActivity() {
     }
 
     /** I due sottotitoli che parlano di tocchi non consegnati, in ambra. */
-    private fun SottotitoloVoce.eDaConsegnare() = this is SottotitoloVoce.PrimaConsegna || this is SottotitoloVoce.CodaRifiutata
+    private fun SottotitoloVoce.eDaConsegnare(): Boolean =
+        this is SottotitoloVoce.PrimaConsegna ||
+            this is SottotitoloVoce.CodaRifiutata ||
+            (this is SottotitoloVoce.ValoreBloccato && perche.eDaConsegnare())
 
     private fun titoloDi(
         voce: Voce,
@@ -250,6 +351,22 @@ class MenuActivity : ComponentActivity() {
         when (voce.id) {
             IdVoce.SPORT -> {
                 getString(R.string.wear_sport)
+            }
+
+            IdVoce.PROSSIMA_PARTITA -> {
+                getString(R.string.wear_next_match)
+            }
+
+            IdVoce.REGOLA_40 -> {
+                getString(R.string.wear_setting_deuce)
+            }
+
+            IdVoce.VIBRAZIONE -> {
+                getString(R.string.wear_setting_vibration)
+            }
+
+            IdVoce.PORTIERE -> {
+                getString(R.string.wear_setting_keeper)
             }
 
             IdVoce.FINE_PARTITA -> {
@@ -294,5 +411,21 @@ internal fun SottotitoloVoce.testo(context: Context): String =
 
         is SottotitoloVoce.SalvaRisultato -> {
             context.getString(R.string.wear_menu_end_saves, risultato)
+        }
+
+        is SottotitoloVoce.CoppieProposte -> {
+            coppie
+        }
+
+        is SottotitoloVoce.Valore -> {
+            testo
+        }
+
+        is SottotitoloVoce.ValoreBloccato -> {
+            "$valore · ${perche.testo(context)}"
+        }
+
+        is SottotitoloVoce.Vibrazione -> {
+            context.getString(if (accesa) R.string.wear_setting_vibration_on else R.string.wear_setting_vibration_off)
         }
     }

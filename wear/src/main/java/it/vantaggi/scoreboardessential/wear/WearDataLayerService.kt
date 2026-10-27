@@ -32,6 +32,7 @@ class WearDataLayerService : WearableListenerService() {
         const val ACTION_BATCH_ACK = "it.vantaggi.scoreboardessential.wear.BATCH_ACK"
         const val ACTION_BATCH_NACK = "it.vantaggi.scoreboardessential.wear.BATCH_NACK"
         const val ACTION_INTENT_CUSTODIA = "it.vantaggi.scoreboardessential.wear.INTENT_CUSTODIA"
+        const val ACTION_PAIRS_UPDATE = "it.vantaggi.scoreboardessential.wear.PAIRS_UPDATE"
 
         // Extras
         const val EXTRA_TEAM1_SCORE = "team1_score"
@@ -47,6 +48,9 @@ class WearDataLayerService : WearableListenerService() {
         const val EXTRA_KEEPER_DURATION = "keeper_duration"
         const val EXTRA_MATCH_ACTIVE = "match_active"
         const val EXTRA_PLAYERS = "players"
+
+        /** Il DataMap delle coppie viaggia grezzo, come il v2: lo legge [CoppieDalTelefono]. */
+        const val EXTRA_PAIRS_PAYLOAD = "pairs_payload"
 
         /** Il DataMap del v2 viaggia grezzo: le chiavi si leggono in un posto solo, [WearScoreState]. */
         const val EXTRA_V2_PAYLOAD = "v2_payload"
@@ -109,6 +113,16 @@ class WearDataLayerService : WearableListenerService() {
                     if (BuildConfig.DEBUG) {
                         Log.d(TAG, "Broadcasted v2 state")
                     }
+                }
+
+                WearConstants.PATH_PAIRS -> {
+                    if (BuildConfig.DEBUG) {
+                        val c = CoppieDalTelefono.fromDataMap(dataMap)
+                        Log.d(TAG, "Coppie: rose ${c.rosa1.size}+${c.rosa2.size}, prossima ${c.numero}, versione ${c.versione}")
+                    }
+                    LocalBroadcastManager.getInstance(context).sendBroadcast(
+                        Intent(ACTION_PAIRS_UPDATE).putExtra(EXTRA_PAIRS_PAYLOAD, dataMap.toByteArray()),
+                    )
                 }
 
                 WearConstants.PATH_SCORE -> {

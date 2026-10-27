@@ -357,6 +357,8 @@ class MainActivity :
         // Il Bluetooth puo' essere caduto mentre l'app era in secondo piano, e nessun listener lo
         // segnala: senza questo l'icona dell'orologio restava "collegato".
         lifecycleScope.launch { viewModel.connectionManager.refreshConnection() }
+        // La Serata scrive la sua bozza senza passare dal ViewModel: tornando qui l'orologio la rivede.
+        viewModel.pubblicaCoppie()
         if (::matchSheet.isInitialized) {
             aggiornaLaSerata()
             // L'accesso e il gruppo si cambiano in un'altra schermata: il ruolo si rilegge al ritorno.

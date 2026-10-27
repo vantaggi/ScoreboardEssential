@@ -2392,6 +2392,47 @@ Due ritocchi emersi dalla verifica a schermo di oggi, sul contorno; il gioco non
 
 **Pattern vietati** (`review.md`): niente maiuscolo, emoji, ombre, colori o misure scritti a mano, nessun peso nuovo, nessun movimento nuovo; la sola cifra nuova e' un token con un ruolo.
 
+## Orologio: squadre in campo e prossima partita della serata - 27 ottobre 2026
+
+Richiesta del proprietario: dal menu dell'orologio sapere chi gioca in ogni squadra e, a serata in corso, cambiare le coppie della partita dopo e farla cominciare senza riprendere il telefono. Le impostazioni essenziali al polso (Sul 40-40, vibrazione, durata del portiere nel calcio, scelta del proprietario) arrivano in un secondo passo, dopo "Sul 40-40" (#194) su `main`.
+
+### Piano UI (CLAUDE.md, punto 3)
+
+- **Gerarchia**: il quadrante non cambia. Nel menu la prima card diventa "Prossima partita" (solo a serata in corso, con quattro nomi e la partita ferma), con le sigle delle coppie come sottotitolo ("VAN/BIA – GLO/ROS"); sotto le voci di sempre, un gruppo "In campo" con una riga per squadra: barretta del colore di squadra (`TeamInk.graphicOnBlack`), nome mostrato, giocatori. Il gruppo sta sotto le voci perche' la prima card resti sopra la piega (`MenuPiegaTest`).
+- **Schermata "Prossima partita"** (`ProssimaPartitaActivity`): un compito, scegliere le due coppie. Titolo "Partita N", un avviso di una riga, per coppia la sigla (`Widget.App.Sigla`, 500 12sp, testo secondario) e un gruppo tonale con due righe (`item_player_wear`: barretta di squadra e nome), chi resta fuori, poi **Ruota** (tonale) e **Inizia** (l'unico primario, lime su `on-accent`).
+- **Componenti riusati**: gruppi tonali `bg_group`, righe di `item_player_wear`, card di `item_sport_wear`, pressione condivisa `pressFeedback`. Nuovi solo come ruoli: `Widget.App.Button` e `.Tonal` (raggio `radius_control`, `control_touch` 48dp, nessuna elevazione), `elite_surface_raised` (#1E1E22, lo stesso valore del telefono) per la riga scelta, `space_4..16`, `team_bar_*`.
+- **Stati**: normale; premuto (scala 0,97 e opacita' 0,85); riga scelta (fondo `elite_surface_raised`, nome lime, `isSelected`), secondo tocco sulla stessa riga la toglie, tocco su un'altra chiede lo scambio; in corso ("Aspetto il telefono…", comandi disattivi, una richiesta alla volta); errore (nessuna risposta in 3 s o invio fallito: "Il telefono non ha risposto" in `elite_warning` e vibrazione NON_CONFERMATO, comandi di nuovo attivi); gia' a tabellone ("Già a tabellone", Inizia diventa "Al punteggio"); spareggio (titolo dello spareggio); vuoto (senza proposta la schermata si chiude, il menu non mostra la voce; senza rose il gruppo "In campo" sparisce); sola lettura (a partita cominciata la voce non c'e' e il telefono rifiuta); movimento ridotto (nessun movimento nuovo).
+- **Movimento**: nessuno nuovo. La risposta del telefono e' una piccola vibrazione, non un'animazione.
+- **Accessibilita'**: ogni riga e' un comando con `contentDescription` ("Vantaggi, coppia 1, scelto"), l'avviso e' una live region educata, ogni riga di "In campo" si legge intera ("VAN/BIA: Vantaggi, Bianchi"); le sigle non si leggono due volte (`importantForAccessibility=no`).
+- **Schermo stretto e 200%**: tutto dentro uno `ScrollView` in `BoxInsetLayout`; nomi su una riga con ellissi; i bottoni crescono in altezza.
+- **Conflitti**: nessuno con la Constitution. Il telefono resta l'autorita': l'orologio legge nomi e chiede `rotate`, `swap` o `start` sulla bozza che ha visto (`next_base`), e il telefono applica solo se la bozza e' ancora quella e la partita e' ferma.
+
+### Impostazioni essenziali al polso (scelta del proprietario, 27 ottobre 2026)
+
+- **Cosa**: in fondo al menu, sotto "In campo", un gruppo "Impostazioni" con le stesse righe delle voci (`item_sport_wear`, nome e valore come sottotitolo): **Sul 40-40** (solo negli sport col 40-40; spenta a partita cominciata, con la coda o senza telefono, e anche spenta dice quale regola vale: "Killer point · Partita in corso"), **Vibrazione** (del polso, sempre attiva: "A ogni punto" / "Solo avvisi", cambia sul posto con un tocco, un tick quando si riaccende), **Portiere** (solo nel calcio, la durata; anche a partita in corso, come sul telefono). Il resto delle impostazioni resta sul telefono. Quali righe ci sono e quali sono spente lo decide `MenuVoci.impostazioni`, pura.
+- **Scelta**: Sul 40-40 e Portiere aprono la lista dello sport (`SportSelectionActivity` con un titolo), con la spunta sul valore in uso. Il portiere si sceglie fra 15 s e 5 min (piu' la durata in uso, se il telefono ne ha scritta un'altra): sul tondo non si scrive un numero.
+- **Vibrazione spenta** (scelta del proprietario: "spegne i punti, avvisi si'"): tacciono il tick del tocco, i colpi del lato, la conferma di un cambio e l'annullamento; il punto in coda perde i colpi del lato e tiene il colpo lungo; non confermato e allarme del portiere suonano come sempre (`HapticsDelPolso`).
+- **Autorita'**: il polso chiede (`MSG_SETTING_INTENT`), il telefono scrive nelle sue impostazioni (`MatchSettingsRepository`) e da li' il flusso delle impostazioni applica, con le guardie di sempre; la risposta e' lo stato v2, che ora porta le regole fra cui scegliere (`deuce_ids`, `deuce_labels`, gia' tradotte) e la durata del portiere (`keeper_seconds`).
+- **Stati**: normale, premuto, spenta col perche', in corso (la lista resta aperta finche' non si sceglie), errore (messaggio non partito: vibrazione dell'errore), vuoto (senza 40-40 ne' portiere resta la sola vibrazione), movimento ridotto (nessun movimento nuovo).
+
+### Protocollo (additivo, golden test di `:shared`)
+
+`PATH_PAIRS` (DataItem del telefono: rose, prossima partita, sigle, panchina, spareggio, consegnata, versione) e `MSG_SERATA_INTENT` (messaggio del polso con azione, base, posti e sequenza). Le sequenze del polso restano una sola per nodo (`SequenzaDelPolso`): quadrante e schermata non si scavalcano. Impostazioni: `KEY_DEUCE_IDS`, `KEY_DEUCE_LABELS`, `KEY_KEEPER_SECONDS` nello stato v2 e `MSG_SETTING_INTENT` (`setting`, `setting_value`, `seq`).
+
+### Debiti
+
+- La schermata Serata del telefono non si ridisegna mentre l'orologio cambia la bozza: la rilegge quando torna in primo piano.
+- Con l'app del telefono chiusa la richiesta del polso va persa (nessuna custodia come per i punti): l'orologio dice "Il telefono non ha risposto".
+- `WearViewModel.applicaCoppie` non ha un test suo; le descrizioni TalkBack del quadrante non dicono i giocatori.
+- `clipToOutline` dei gruppi vale da API 31 (minimo 30), come nella scelta dello sport.
+- Il menu si chiude da solo dopo 10 secondi senza tocchi: con "In campo" e le impostazioni sotto la piega c'e' da scorrere (segnalato alla revisione dei menu, che ridisegna il menu dopo questa PR).
+- Dopo una scelta dalla lista il quadrante non riapre il menu: il valore nuovo si legge alla prossima apertura.
+- Visti sul Galaxy Watch il 27 ottobre: "In campo" (VAN/SER Vantaggi e Serrone, RAG/GLO Ragni e Glorio, con le barrette di squadra) e il gruppo Impostazioni a partita in corso nel padel (Sul 40-40 spento, Vibrazione "A ogni punto", niente Portiere); non toccate le voci. La prossima partita non e' vista a schermo (nessuna serata aperta). Per arrivare alle Impostazioni servono tre o quattro trascinamenti.
+
+### Controllo dei pattern vietati (`review.md`)
+
+Nessun colore, spaziatura, raggio o durata scritti a mano (solo token, i nuovi nominano un ruolo); icone nessuna nuova; niente emoji, ombre, maiuscolo, cicli senza significato; un solo primario per schermata; pesi 400, 500, 600.
+
 ## Regola del 40-40 a scelta, anche sull'orologio - 27 ottobre 2026
 
 Richiesta del proprietario: dall'orologio i punti arrivano al telefono, ma "non ci sono i vantaggi e la regola del killer point". La causa: il padel era fissato nel registro degli sport a punto secco, sul telefono come sull'orologio; il motore di `:core` sapeva gia' fare i vantaggi e il killer point, ma nessuno poteva sceglierli. Come gioca il gruppo (parole del proprietario): "40-40, vantaggio. Un'unica volta, se si ritorna in parita', killer point. Chi fa il punto vince": e' `DeuceRule.KILLER_POINT`.

@@ -92,7 +92,22 @@ data class WearScoreState(
      * un telefono che non la manda. Il calcolo al polso la usa: e' la stessa che usa il telefono.
      */
     val deuceRule: String = "",
+    /**
+     * Le regole del 40-40 fra cui scegliere (nomi e etichette gia' tradotte), vuote dove il 40-40 non
+     * c'e' e da un telefono che non le manda: allora il menu non offre la scelta.
+     */
+    val deuceIds: List<String> = emptyList(),
+    val deuceLabels: List<String> = emptyList(),
+    /** La durata del portiere in secondi; 0 dove non c'e' il portiere o se il telefono non la manda. */
+    val keeperSeconds: Long = 0L,
 ) {
+    /** L'etichetta della regola del 40-40 in vigore, vuota se il menu non la puo' offrire. */
+    val deuceLabel: String
+        get() {
+            val i = deuceIds.indexOf(deuceRule)
+            return if (i >= 0 && deuceIds.size == deuceLabels.size) deuceLabels[i] else ""
+        }
+
     companion object {
         private const val TAG = "WearScoreState"
 
@@ -136,6 +151,9 @@ data class WearScoreState(
                 matchUuid = dataMap.getString(WearConstants.KEY_MATCH_UUID, ""),
                 stateVersion = versioneDelloStato(dataMap),
                 deuceRule = dataMap.getString(WearConstants.KEY_DEUCE_RULE, ""),
+                deuceIds = elenco(dataMap.getString(WearConstants.KEY_DEUCE_IDS, "")),
+                deuceLabels = elenco(dataMap.getString(WearConstants.KEY_DEUCE_LABELS, "")),
+                keeperSeconds = lungo(dataMap, WearConstants.KEY_KEEPER_SECONDS),
             )
         }
 
@@ -186,7 +204,7 @@ class WearViewModel(
     // d'accordo.
     private val orologio: () -> Long = System::currentTimeMillis,
     // Iniettabile per le ricevute del tocco: nei test e' un finto che registra i pattern.
-    private val haptics: WearHaptics = VibratoreWearHaptics.di(application),
+    private val haptics: WearHaptics = HapticsDelPolso.di(application),
 ) : AndroidViewModel(application) {
     /**
      * Costruttore richiesto da [androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory],
@@ -391,6 +409,9 @@ class WearViewModel(
      */
     private var intentSequence = System.currentTimeMillis()
 
+    /** La sequenza di un invio: una per nodo, condivisa con la schermata della prossima partita. */
+    private fun prossimaSequenza(): Long = SequenzaDelPolso.delQuadrante(intentSequence).also { intentSequence = it }
+
     // Vuoti finche' il telefono non li manda: e' cosi' che la schermata sa di dover ripiegare su
     // "Squadra 1" nella lingua dell'orologio, invece di leggere a TalkBack un "TEAM 1" inglese.
     private val _team1Name = MutableStateFlow("")
@@ -558,7 +579,7 @@ class WearViewModel(
      * pensando.
      */
     private fun inviaFinePartita() {
-        val seq = ++intentSequence
+        val seq = prossimaSequenza()
         val quando = System.currentTimeMillis()
         viewModelScope.launch {
             val payload =
@@ -1040,6 +1061,18 @@ class WearViewModel(
             }
     }
 
+    private val _coppie = MutableStateFlow<CoppieDalTelefono?>(null)
+
+    /** Chi gioca e la prossima partita della serata, come li ha scritti il telefono; null finche' non parla. */
+    val coppie = _coppie.asStateFlow()
+
+    /** Un elenco con versione minore dell'ultimo visto e' superato: il Data Layer puo' consegnarli invertiti. */
+    fun applicaCoppie(coppie: CoppieDalTelefono) {
+        val attuali = _coppie.value
+        if (attuali != null && coppie.versione in 1 until attuali.versione) return
+        _coppie.value = coppie
+    }
+
     // --- Score Management ---
     fun setTeamNames(
         team1Name: String,
@@ -1321,7 +1354,7 @@ class WearViewModel(
         // la base sarebbe quella di adesso, e un telefono passato a un'altra partita le applicherebbe.
         if (!risolviBaseDopo(statoDalTelefono, statoVivoVisto)) return
         val blocco =
-            batchInVolo ?: PendingIntents.BatchInVolo(id = ++intentSequence, quante = voci.size).also { pending.segnaBatchInVolo(it) }
+            batchInVolo ?: PendingIntents.BatchInVolo(id = prossimaSequenza(), quante = voci.size).also { pending.segnaBatchInVolo(it) }
         // Un rinvio manda lo STESSO blocco: le voci segnate dopo il primo invio vanno nel prossimo.
         val daSpedire = voci.take(blocco.quante)
         if (daSpedire.isEmpty()) {
@@ -1329,7 +1362,7 @@ class WearViewModel(
             batchInVolo = null
             return
         }
-        val seq = ++intentSequence
+        val seq = prossimaSequenza()
         batchInVolo = blocco
         batchInVoloDal = orologio()
         seqUltimoBatch = seq
@@ -1554,6 +1587,29 @@ class WearViewModel(
     }
 
     /**
+     * Chiede al telefono di cambiare un'impostazione ([WearConstants.SETTING_DEUCE] o
+     * [WearConstants.SETTING_KEEPER]). Come lo sport, la scelta e' del telefono: la risposta e' lo
+     * stato v2 che torna col valore nuovo, e il menu lo legge alla prossima apertura. Se il messaggio
+     * non parte, la vibrazione dell'errore.
+     */
+    fun requestSetting(
+        impostazione: String,
+        valore: String,
+    ) {
+        val seq = prossimaSequenza()
+        viewModelScope.launch {
+            val payload =
+                DataMap().apply {
+                    putString(WearConstants.KEY_SETTING, impostazione)
+                    putString(WearConstants.KEY_SETTING_VALUE, valore)
+                    putLong(WearConstants.KEY_SEQ, seq)
+                }
+            val consegnato = invii.withLock { inviaMessaggio(WearConstants.MSG_SETTING_INTENT, payload.toByteArray()) }
+            if (!consegnato) triggerFailureVibration()
+        }
+    }
+
+    /**
      * Chiede al telefono di cambiare sport. La decisione non e' di questo lato.
      *
      * Stesso contatore delle intenzioni di punteggio, perche' la sequenza e' UNA per nodo: se ne
@@ -1562,7 +1618,7 @@ class WearViewModel(
      * si ridisegna da sola; se il telefono rifiuta, non cambia niente e a dirlo e' il telefono.
      */
     fun requestSport(sportId: String) {
-        val seq = ++intentSequence
+        val seq = prossimaSequenza()
         // Dalla scelta in poi la riga lo dice: CAMBIO SPORT... finche' il quadrante non riceve lo
         // stato col nuovo sport, SPORT NON CAMBIATO se non arriva (o se il messaggio non parte).
         mostraTransitorio(Transitorio.CambioSport, DURATA_CAMBIO_SPORT_MS)
@@ -1599,7 +1655,7 @@ class WearViewModel(
         chiediMarcatore: Boolean = false,
         tickAlle: Long? = null,
     ) {
-        val seq = ++intentSequence
+        val seq = prossimaSequenza()
         // L'orario si prende ORA, non quando il messaggio partira': un tocco messo in coda e
         // consegnato due ore dopo deve restare il tocco delle 18.
         val quando = System.currentTimeMillis()

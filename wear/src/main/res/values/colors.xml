@@ -15,6 +15,8 @@
 
     <!-- background-surface: il gruppo tonale del menu e della scelta dello sport. -->
     <color name="elite_surface">#161618</color>
+    <!-- state-selected: la riga scelta per uno scambio nella prossima partita, con il nome in lime e a 600. -->
+    <color name="elite_surface_raised">#1E1E22</color>
     <!-- border-subtle: la linea sottile fra le righe di un gruppo. -->
     <color name="elite_border_strong">#2A2A2E</color>
     <!-- text-primary e text-secondary (contrasti sul nero 13,8 e 6,2; sul gruppo 11,9 e 5,3). -->
