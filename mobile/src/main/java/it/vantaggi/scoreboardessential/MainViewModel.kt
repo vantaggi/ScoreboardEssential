@@ -14,7 +14,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -35,6 +37,7 @@ import it.vantaggi.scoreboardessential.core.MatchPlayer
 import it.vantaggi.scoreboardessential.core.MatchSummarizer
 import it.vantaggi.scoreboardessential.core.MatchSummary
 import it.vantaggi.scoreboardessential.core.RacketRules
+import it.vantaggi.scoreboardessential.core.Risultato
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.Serata
@@ -444,12 +447,35 @@ class MainViewModel(
         }
     }
 
-    // Team Names
+    // Team Names: i nomi scelti (impostazioni o dialogo) e quelli mostrati, che senza un nome
+    // scelto sono le sigle della coppia ([EtichettaSquadra]).
     private val _team1Name = MutableLiveData("TEAM 1")
-    val team1Name: LiveData<String> = _team1Name
-
     private val _team2Name = MutableLiveData("TEAM 2")
-    val team2Name: LiveData<String> = _team2Name
+
+    /** Il nome scelto per la squadra 1, da proporre nel dialogo che lo cambia. */
+    val team1ChosenName: LiveData<String> = _team1Name
+
+    /** Il nome scelto per la squadra 2, da proporre nel dialogo che lo cambia. */
+    val team2ChosenName: LiveData<String> = _team2Name
+
+    /** Il nome mostrato della squadra 1: quello scelto, o "VAN/GLO" se e' il predefinito. */
+    val team1Name: LiveData<String> = nomeMostrato(_team1Name, _team1Players)
+
+    /** Il nome mostrato della squadra 2: quello scelto, o "VAN/GLO" se e' il predefinito. */
+    val team2Name: LiveData<String> = nomeMostrato(_team2Name, _team2Players)
+
+    private fun nomeMostrato(
+        scelto: LiveData<String>,
+        rosa: LiveData<List<PlayerWithRoles>>,
+    ): LiveData<String> =
+        MediatorLiveData<String>().apply {
+            fun ricalcola() {
+                val nome = EtichettaSquadra.di(scelto.value.orEmpty(), rosa.value.orEmpty().map { it.player.playerName })
+                if (value != nome) value = nome
+            }
+            addSource(scelto) { ricalcola() }
+            addSource(rosa) { ricalcola() }
+        }
 
     // Team Colors: i predefiniti hanno una sola fonte, ColorRepository (giallo e verde).
     private val _team1Color = MutableLiveData(colorRepository.getTeam1DefaultColor())
@@ -668,7 +694,7 @@ class MainViewModel(
             val righe = matchEventLog.toList()
             _matchEvents.postValue(righe)
             _registroDelFoglio.postValue(
-                registroAGame(righe, MatchNarrative.of(engine), _team1Name.value.orEmpty(), _team2Name.value.orEmpty()),
+                registroAGame(righe, MatchNarrative.of(engine), team1Name.value.orEmpty(), team2Name.value.orEmpty()),
             )
         }
     }
@@ -1031,16 +1057,13 @@ class MainViewModel(
     }
 
     // --- Team Management ---
+    // Il registro e l'orologio li aggiorna l'osservatore dei nomi mostrati, che cambiano anche con le rose.
     fun setTeam1Name(name: String) {
         _team1Name.value = name
-        pubblicaRegistro()
-        sendTeamNamesUpdate()
     }
 
     fun setTeam2Name(name: String) {
         _team2Name.value = name
-        pubblicaRegistro()
-        sendTeamNamesUpdate()
     }
 
     fun setTeamColor(
@@ -1068,7 +1091,7 @@ class MainViewModel(
         } else {
             _team2Players.value = _team2Players.value?.plus(playerWithRoles)
         }
-        val teamName = if (teamId == 1) _team1Name.value else _team2Name.value
+        val teamName = if (teamId == 1) team1Name.value else team2Name.value
         addMatchEvent("${playerWithRoles.player.playerName} added to $teamName", team = teamId)
         refreshServeOrder()
         salvaRoseDellaRigaViva()
@@ -1221,7 +1244,7 @@ class MainViewModel(
 
     /**
      * La partita salvata chiude quella della serata, se era sua, con le coppie con cui si e' giocato
-     * davvero. Se non si e' giocato in coppia (sport cambiato, una rosa scesa a uno) non e' una partita
+     * davvero e i game di ciascuna (servono per lo spareggio dei quattro). Se non si e' giocato in coppia (sport cambiato, una rosa scesa a uno) non e' una partita
      * della serata: si annulla invece di registrarla con la composizione consegnata.
      */
     private fun chiudiLaPartitaDellaSerata(
@@ -1231,7 +1254,9 @@ class MainViewModel(
         val serata = serataStore.load() ?: return
         if (serata.inGioco == null) return
         val inCoppia = sportDellaSerata() && uno.size == 2 && due.size == 2 && (uno + due).toSet().size == 4
-        serataStore.save(if (inCoppia) serata.chiudiPartita(Composizione(uno, due)) else serata.annullaPartita())
+        serataStore.save(
+            if (inCoppia) serata.chiudiPartita(Composizione(uno, due), Risultato.da(engine.state)) else serata.annullaPartita(),
+        )
     }
 
     /** La partita consegnata alla serata non e' piu' sua (sport cambiato): la serata la dimentica. */
@@ -1630,7 +1655,7 @@ class MainViewModel(
             if (dopo == stato) return@forEachIndexed
             stato = dopo
             val squadra = voce.event.side
-            val nomeSquadra = if (squadra == 1) _team1Name.value else _team2Name.value
+            val nomeSquadra = if (squadra == 1) team1Name.value else team2Name.value
             when (val evento = voce.event) {
                 is ScoringEvent.Point -> {
                     val giocatore = evento.playerId?.let { id -> rosa.find { it.player.playerId == id } }
@@ -1980,7 +2005,7 @@ class MainViewModel(
         if (dopo != prima) {
             publishEngineState()
             triggerHapticFeedback()
-            val teamName = if (teamId == 1) _team1Name.value else _team2Name.value
+            val teamName = if (teamId == 1) team1Name.value else team2Name.value
             // Anche la correzione porta il suo indice: e' un evento del motore come un punto, e
             // annullarla deve togliere questa riga e non quella di un gol.
             addMatchEvent("Score correction for $teamName", team = teamId, engineIndex = engine.log.lastIndex)
@@ -1998,7 +2023,7 @@ class MainViewModel(
         team: Int,
         engineIndex: Int,
     ) {
-        val teamName = if (team == 1) _team1Name.value else _team2Name.value
+        val teamName = if (team == 1) team1Name.value else team2Name.value
         addMatchEvent(
             "Goal",
             team = team,
@@ -2448,8 +2473,8 @@ class MainViewModel(
         viewModelScope.launch {
             val data =
                 mapOf(
-                    WearConstants.KEY_TEAM1_NAME to (_team1Name.value ?: "TEAM 1"),
-                    WearConstants.KEY_TEAM2_NAME to (_team2Name.value ?: "TEAM 2"),
+                    WearConstants.KEY_TEAM1_NAME to (team1Name.value ?: "TEAM 1"),
+                    WearConstants.KEY_TEAM2_NAME to (team2Name.value ?: "TEAM 2"),
                 )
             connectionManager.sendData(
                 path = WearConstants.PATH_TEAM_NAMES,
@@ -2595,18 +2620,18 @@ class MainViewModel(
 
     /** Etichetta della partita per il nome del file. Il timestamp lo aggiunge chi scrive. */
     fun exportFileLabel(): String {
-        val squadre = "${_team1Name.value.orEmpty()}-vs-${_team2Name.value.orEmpty()}"
+        val squadre = "${team1Name.value.orEmpty()}-vs-${team2Name.value.orEmpty()}"
         return "${sportRules.id}-$squadre"
     }
 
     fun shareMatchResults() {
         val data =
             MatchReportData(
-                team1Name = _team1Name.value ?: "TEAM 1",
+                team1Name = team1Name.value ?: "TEAM 1",
                 team1Score = _team1Score.value ?: 0,
                 team1Color = _team1Color.value,
                 team1Players = _team1Players.value ?: emptyList(),
-                team2Name = _team2Name.value ?: "TEAM 2",
+                team2Name = team2Name.value ?: "TEAM 2",
                 team2Score = _team2Score.value ?: 0,
                 team2Color = _team2Color.value,
                 team2Players = _team2Players.value ?: emptyList(),
@@ -2615,7 +2640,23 @@ class MainViewModel(
         shareMatchReportData.postValue(data)
     }
 
+    // In fondo alla classe: l'osservatore tocca il registro e l'orologio, che devono esistere gia'.
+    // Tiene vivi i due nomi mostrati anche senza schermata, e a ogni cambio (un nome scelto, una
+    // coppia composta) riscrive il registro del foglio e li manda all'orologio.
+    private val alCambioDelNome =
+        Observer<String> {
+            pubblicaRegistro()
+            sendTeamNamesUpdate()
+        }
+
+    init {
+        team1Name.observeForever(alCambioDelNome)
+        team2Name.observeForever(alCambioDelNome)
+    }
+
     override fun onCleared() {
+        team1Name.removeObserver(alCambioDelNome)
+        team2Name.removeObserver(alCambioDelNome)
         vibrator?.cancel()
         try {
             if (isServiceBound) {

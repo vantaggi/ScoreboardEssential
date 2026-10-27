@@ -523,6 +523,35 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `senza un nome scelto la squadra mostra le sigle della coppia, e le manda all'orologio`() =
+        runTest {
+            // "TEAM 1" contro "TEAM 2" con le coppie gia' composte non diceva chi fosse chi. Rosso
+            // se il nome mostrato resta il predefinito o se all'orologio arriva ancora "TEAM 1".
+            val nameObserver = Observer<String> {}
+            viewModel.team1Name.observeForever(nameObserver)
+
+            viewModel.addPlayerToTeam(PlayerWithRoles(Player(1, "Vantaggi Mattia", 0, 0), emptyList()), 1)
+            viewModel.addPlayerToTeam(PlayerWithRoles(Player(2, "Glorio", 0, 0), emptyList()), 1)
+            advanceUntilIdle()
+
+            assertEquals("VAN/GLO", viewModel.team1Name.value)
+            assertEquals("il nome scelto resta il predefinito, per il dialogo", "TEAM 1", viewModel.team1ChosenName.value)
+            assertEquals("l'altra squadra senza giocatori resta com'e'", "TEAM 2", viewModel.team2Name.value)
+            val nomiAllOrologio =
+                mockingDetails(mockConnectionManager)
+                    .invocations
+                    .filter { it.method.name == "sendData" && it.arguments[0] == WearConstants.PATH_TEAM_NAMES }
+                    .map { (it.arguments[1] as Map<*, *>)[WearConstants.KEY_TEAM1_NAME] }
+            assertEquals("VAN/GLO", nomiAllOrologio.last())
+
+            // Un nome scelto vince sulle sigle.
+            viewModel.setTeam1Name("Leoni")
+            assertEquals("Leoni", viewModel.team1Name.value)
+
+            viewModel.team1Name.removeObserver(nameObserver)
+        }
+
+    @Test
     fun `startStopMatchTimer calls startTimer when timer is not running`() {
         // Arrange
         // Mock the internal live data or service behavior
@@ -4337,10 +4366,11 @@ class MainViewModelTest {
                 assertEquals(EsitoAvvioSerata.AVVIATA, viewModel.avviaPartitaDellaSerata())
                 advanceUntilIdle()
 
-                assertEquals(listOf(c, d), rosa(viewModel, 1))
-                assertEquals(listOf(b, a), rosa(viewModel, 2))
+                // La bozza e' a+d contro b+c; scambiati i primi due posti e poi i lati: b+c contro d+a.
+                assertEquals(listOf(b, c), rosa(viewModel, 1))
+                assertEquals(listOf(d, a), rosa(viewModel, 2))
                 // A1, B1, A2, B2: il primo posto di ogni coppia serve per primo.
-                assertEquals(listOf(c, b, d, a), motore().rules.config.serveOrder)
+                assertEquals(listOf(b, d, c, a), motore().rules.config.serveOrder)
                 assertEquals(2, viewModel.sportCapabilities.value?.playersPerSide)
                 assertEquals(
                     "la serata sa che questa partita e' sua",
@@ -4396,19 +4426,29 @@ class MainViewModelTest {
                 )
                 viewModel.avviaPartitaDellaSerata()
                 advanceUntilIdle()
-                viewModel.addScore(1)
+                // Un game alla prima coppia (quattro punti) e un punto alla seconda: la serata ricorda 1-0 in game.
+                repeat(4) { viewModel.addScore(1) }
+                viewModel.addScore(2)
                 advanceUntilIdle()
 
                 assertEquals(true, viewModel.endMatch())
                 advanceUntilIdle()
 
                 val serata = memoriaDellaSerata().load()!!
+                // Come la dashboard: la prima partita del girone e' #1+#4 contro #2+#3.
                 assertEquals(
                     listOf(
                         it.vantaggi.scoreboardessential.core
-                            .Composizione(listOf(a, b), listOf(c, d)),
+                            .Composizione(listOf(a, d), listOf(b, c)),
                     ),
                     serata.giocate,
+                )
+                assertEquals(
+                    listOf(
+                        it.vantaggi.scoreboardessential.core
+                            .Risultato(1, 0),
+                    ),
+                    serata.risultati,
                 )
                 assertEquals(null, serata.inGioco)
                 assertEquals(setOf(setOf(a, c), setOf(b, d)), serata.bozza!!.coppie)
@@ -4625,7 +4665,8 @@ class MainViewModelTest {
                 advanceUntilIdle()
 
                 assertEquals(2, viewModel.sportCapabilities.value?.playersPerSide)
-                assertEquals(listOf(a, c, b, d), motore().rules.config.serveOrder)
+                // a+d contro b+c: A1, B1, A2, B2.
+                assertEquals(listOf(a, b, d, c), motore().rules.config.serveOrder)
             } finally {
                 chiudiDatabase(db)
             }

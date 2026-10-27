@@ -43,7 +43,7 @@ class SerataTest {
             serata = serata.consegna().chiudiPartita()
         }
         assertEquals(
-            listOf(coppie(1, 2, 3, 4), coppie(1, 3, 2, 4), coppie(1, 4, 2, 3)),
+            listOf(coppie(1, 4, 2, 3), coppie(1, 3, 2, 4), coppie(1, 2, 3, 4)),
             proposte.take(3),
         )
         // Il giro ricomincia dalla prima: ogni gruppo di tre ha le tre combinazioni diverse.
@@ -52,12 +52,22 @@ class SerataTest {
     }
 
     @Test
-    fun `la prima proposta ha i primi arrivati insieme e il primo arrivato serve per primo`() {
+    fun `la prima proposta e' il primo col quarto contro il secondo col terzo, e il primo arrivato serve per primo`() {
         val s = Serata.nuova(listOf(10, 20, 30, 40))
-        assertEquals(comp(10, 20, 30, 40), s.bozza)
+        assertEquals(comp(10, 40, 20, 30), s.bozza)
         // Ordine di servizio A1, B1, A2, B2: primo posto della prima coppia, primo posto della seconda...
         val b = s.bozza!!
-        assertEquals(listOf(10, 30, 20, 40), listOf(b.squadra1[0], b.squadra2[0], b.squadra1[1], b.squadra2[1]))
+        assertEquals(listOf(10, 20, 40, 30), listOf(b.squadra1[0], b.squadra2[0], b.squadra1[1], b.squadra2[1]))
+    }
+
+    @Test
+    fun `un girone gioca nell'ordine della dashboard, coppie e posti compresi`() {
+        // #1..#4 del girone, in ordine di valore: 1+4 contro 2+3, poi 1+3 contro 2+4, poi 1+2 contro 3+4.
+        val s = Serata.nuova(listOf(10, 20, 30, 40))
+        val prima = s.bozza!!
+        val seconda = s.consegna().chiudiPartita().bozza!!
+        val terza = s.gioca(2).bozza!!
+        assertEquals(listOf(comp(10, 40, 20, 30), comp(10, 30, 20, 40), comp(10, 20, 30, 40)), listOf(prima, seconda, terza))
     }
 
     @Test
@@ -69,7 +79,7 @@ class SerataTest {
             viste += s.bozza.coppie()
         }
         assertEquals(
-            listOf(coppie(1, 2, 3, 4), coppie(1, 3, 2, 4), coppie(1, 4, 2, 3), coppie(1, 2, 3, 4)),
+            listOf(coppie(1, 4, 2, 3), coppie(1, 3, 2, 4), coppie(1, 2, 3, 4), coppie(1, 4, 2, 3)),
             viste,
         )
     }
@@ -82,7 +92,7 @@ class SerataTest {
         assertEquals(1, s.numeroDellaProssima)
         // Si gioca davvero quella: la proposta dopo e' la prima, che nessuno ha ancora fatto.
         val dopo = s.consegna().chiudiPartita()
-        assertEquals(coppie(1, 2, 3, 4), dopo.bozza.coppie())
+        assertEquals(coppie(1, 4, 2, 3), dopo.bozza.coppie())
         assertTrue(dopo.saltate.isEmpty())
     }
 
@@ -243,27 +253,27 @@ class SerataTest {
     @Test
     fun `scambiare due posti dentro la coppia cambia chi serve per primo`() {
         val s = Serata.nuova(listOf(1, 2, 3, 4)).scambia(0, 1)
-        assertEquals(Composizione(listOf(2, 1), listOf(3, 4)), s.bozza)
+        assertEquals(Composizione(listOf(4, 1), listOf(2, 3)), s.bozza)
     }
 
     @Test
     fun `scambiare due posti fra coppie le rimescola`() {
         val s = Serata.nuova(listOf(1, 2, 3, 4)).scambia(1, 2)
-        assertEquals(Composizione(listOf(1, 3), listOf(2, 4)), s.bozza)
+        assertEquals(Composizione(listOf(1, 2), listOf(4, 3)), s.bozza)
     }
 
     @Test
     fun `scambio di lato porta ogni coppia dall'altra parte con i suoi posti`() {
         val s = Serata.nuova(listOf(1, 2, 3, 4)).scambiaLati()
-        assertEquals(Composizione(listOf(3, 4), listOf(1, 2)), s.bozza)
+        assertEquals(Composizione(listOf(2, 3), listOf(1, 4)), s.bozza)
         assertEquals(Serata.nuova(listOf(1, 2, 3, 4)), s.scambiaLati())
     }
 
     @Test
     fun `scambio con la panchina manda fuori chi stava nel posto e fa entrare chi aspettava`() {
         val s = Serata.nuova(listOf(1, 2, 3, 4, 5)).sostituisci(2, 5)
-        assertEquals(Composizione(listOf(1, 2), listOf(5, 4)), s.bozza)
-        assertEquals(listOf(3), s.panchina)
+        assertEquals(Composizione(listOf(1, 4), listOf(5, 3)), s.bozza)
+        assertEquals(listOf(2), s.panchina)
     }
 
     @Test
@@ -341,15 +351,146 @@ class SerataTest {
         val prima = Serata.nuova(listOf(1, 2, 3, 4)).gioca(2)
         val ripresa = SerataCodec.decode(SerataCodec.encode(prima))!!
         assertEquals(prima.bozza, ripresa.bozza)
-        assertEquals(coppie(1, 4, 2, 3), ripresa.bozza.coppie())
+        assertEquals(coppie(1, 2, 3, 4), ripresa.bozza.coppie())
         assertEquals(
-            coppie(1, 2, 3, 4),
+            coppie(1, 4, 2, 3),
             ripresa
                 .consegna()
                 .chiudiPartita()
                 .bozza
                 .coppie(),
         )
+    }
+
+    @Test
+    fun `i risultati si scrivono e si rileggono, e una serata1 di prima si legge ancora senza risultati`() {
+        val s =
+            Serata
+                .nuova(listOf(1, 2, 3, 4))
+                .consegna()
+                .chiudiPartita(risultato = Risultato(6, 4))
+                .consegna()
+                .chiudiPartita()
+                .consegna()
+                .chiudiPartita(risultato = Risultato(5, 6))
+        assertEquals(listOf(Risultato(6, 4), null, Risultato(5, 6)), s.risultati)
+        assertEquals(s, SerataCodec.decode(SerataCodec.encode(s)))
+        assertTrue(SerataCodec.encode(s).startsWith("serata2\n"))
+
+        val vecchia = SerataCodec.decode("serata1\np:1,2,3,4\ng:1,2/3,4\ns:\nb:1,3/2,4\ni:")!!
+        assertEquals(listOf(comp(1, 2, 3, 4)), vecchia.giocate)
+        assertTrue(vecchia.risultati.isEmpty())
+        assertNull(vecchia.risultatoDi(0))
+        // Un risultato rotto e' una serata rotta, come il resto.
+        assertNull(SerataCodec.decode("serata2\np:1,2,3,4\ng:1,2/3,4\ns:\nb:\ni:\nr:6-x"))
+        assertNull(SerataCodec.decode("serata2\np:1,2,3,4\ng:1,2/3,4\ns:\nb:\ni:\nr:6-4;6-3"))
+    }
+
+    // ---- Ordine di battuta ----
+
+    @Test
+    fun `chi batte nella prima partita decide l'ordine di battuta delle successive`() {
+        // Proposta 1+4 contro 2+3; si sceglie che batta per primo il 3, poi il 4: coppie 3+2 e 4+1.
+        val scelta =
+            Serata
+                .nuova(listOf(1, 2, 3, 4))
+                .scambiaLati()
+                .scambia(0, 1)
+                .scambia(2, 3)
+        assertEquals(Composizione(listOf(3, 2), listOf(4, 1)), scelta.bozza)
+        assertEquals(listOf(3, 4, 2, 1), OrdineDiBattuta.di(scelta.bozza!!))
+
+        val dopo = scelta.consegna().chiudiPartita()
+        assertEquals(listOf(3, 4, 2, 1), dopo.ordineDiBattuta)
+        // La seconda e' 1+3 contro 2+4: batte il 3 (primo di tutti), poi il 4, poi i loro compagni.
+        assertEquals(Composizione(listOf(3, 1), listOf(4, 2)), dopo.bozza)
+        // La terza e' 3+4 contro 1+2: batte il 3, poi l'1 (che nella seconda batteva prima del 2), poi i compagni.
+        val terza = dopo.consegna().chiudiPartita().bozza!!
+        assertEquals(listOf(3, 1, 4, 2), OrdineDiBattuta.di(terza))
+        assertEquals(coppie(1, 2, 3, 4), terza.coppie)
+    }
+
+    @Test
+    fun `senza scelte l'ordine del girone resta quello della dashboard, e chi non ha mai giocato batte dopo`() {
+        // Le tre partite del girone escono identiche a quelle senza ordine di battuta.
+        val girone = Serata.nuova(listOf(1, 2, 3, 4))
+        assertEquals(comp(1, 3, 2, 4), girone.gioca(1).bozza)
+        assertEquals(comp(1, 2, 3, 4), girone.gioca(2).bozza)
+        // Il 5, arrivato dopo, non ha precedenza: nella sua coppia batte per secondo.
+        val conCinque =
+            girone
+                .gioca(1)
+                .aggiungi(5)
+                .ruota()
+                .ruota()
+        val bozza = conCinque.bozza!!
+        if (5 in bozza.posti) {
+            val coppia = if (5 in bozza.squadra1) bozza.squadra1 else bozza.squadra2
+            assertEquals(5, coppia[1])
+        }
+        val riletta = SerataCodec.decode(SerataCodec.encode(girone.gioca(2)))!!
+        assertEquals(girone.gioca(2).ordineDiBattuta, riletta.ordineDiBattuta)
+    }
+
+    // ---- Spareggio: la quarta partita degli stessi quattro ----
+
+    /** Gioca le tre partite del giro con questi risultati, nell'ordine proposto. */
+    private fun giro(vararg risultati: Risultato?): Serata =
+        risultati.fold(Serata.nuova(listOf(1, 2, 3, 4))) { s, r -> s.consegna().chiudiPartita(risultato = r) }
+
+    @Test
+    fun `la quarta partita rigioca la piu' combattuta delle tre, con le stesse coppie e gli stessi posti`() {
+        val s = giro(Risultato(6, 2), Risultato(6, 5), Risultato(3, 6))
+        assertEquals(s.giocate[1], s.bozza)
+        assertEquals(1, s.spareggio)
+        assertEquals(4, s.numeroDellaProssima)
+    }
+
+    @Test
+    fun `a parita' di scarto vince quella con piu' game, poi la prima giocata`() {
+        assertEquals(2, giro(Risultato(4, 3), Risultato(6, 0), Risultato(7, 6)).spareggio)
+        assertEquals(0, giro(Risultato(6, 5), Risultato(5, 6), Risultato(2, 0)).spareggio)
+    }
+
+    @Test
+    fun `scarto e game contano i set chiusi e quello interrotto`() {
+        val stato =
+            RacketScore(
+                setsWon = listOf(1, 0),
+                closedSets = listOf(SetLine(listOf(6, 4))),
+                gamesInSet = listOf(2, 3),
+            )
+        assertEquals(Risultato(8, 7), Risultato.da(stato))
+        assertEquals(1, Risultato(8, 7).scarto)
+        // Senza un game non dice niente; e il calcio non e' una partita della serata.
+        assertNull(Risultato.da(RacketScore()))
+        assertNull(Risultato.da(CounterScore(listOf(3, 2))))
+    }
+
+    @Test
+    fun `senza tutti e tre i risultati la quarta resta quella della rotazione`() {
+        val s = giro(Risultato(6, 2), null, Risultato(3, 6))
+        assertEquals(coppie(1, 4, 2, 3), s.bozza.coppie())
+        assertNull(s.spareggio)
+    }
+
+    @Test
+    fun `dopo lo spareggio si torna alla rotazione, e Ruota lo lascia`() {
+        val s = giro(Risultato(6, 2), Risultato(6, 5), Risultato(3, 6))
+        val ruotata = s.ruota()
+        assertNotEquals(s.bozza.coppie(), ruotata.bozza.coppie())
+        assertNull(ruotata.spareggio)
+        // La quinta, dopo lo spareggio, e' della rotazione: la combinazione giocata meno.
+        val quinta = s.consegna().chiudiPartita(risultato = Risultato(6, 4))
+        assertNull(quinta.spareggio)
+        assertNotEquals(quinta.giocate[1].coppie, quinta.bozza.coppie())
+    }
+
+    @Test
+    fun `con piu' di quattro presenti lo spareggio non c'e', perche' i quattro cambiano`() {
+        var s = Serata.nuova(listOf(1, 2, 3, 4, 5))
+        repeat(3) { s = s.consegna().chiudiPartita(risultato = Risultato(6, 5)) }
+        assertNull(s.spareggio)
     }
 
     // ---- La regola in se' ----

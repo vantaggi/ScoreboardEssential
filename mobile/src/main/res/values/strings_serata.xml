@@ -5,9 +5,10 @@
     <string name="state_selected">Selected</string>
 
     <string name="serata_next_title">Match %1$d</string>
+    <string name="serata_next_reason">Decider: replay of match %1$d, the closest one (%2$d-%3$d in games).</string>
     <string name="serata_pair_title">Pair %1$d</string>
-    <string name="serata_seat_description">Pair %1$d, place %2$d: %3$s</string>
-    <string name="serata_seats_hint">Place 1 of each pair serves first. Touch two names to swap them.</string>
+    <string name="serata_seat_description">Pair %1$d, serving turn %2$d: %3$s</string>
+    <string name="serata_seats_hint">The number is the serving order: 1 and 3 are pair 1, 2 and 4 pair 2. Tap two names to swap them. Later matches follow this order.</string>
     <string name="serata_rotate">Rotate the pairs</string>
     <string name="serata_same_pairs">Same pairs</string>
     <string name="serata_swap_sides">Swap sides</string>
@@ -82,6 +83,8 @@
     <string name="serata_dashboard_open">Open Padel Elite</string>
     <string name="serata_dashboard_use_present">Use the confirmed players</string>
     <string name="serata_dashboard_use_present_description">Confirmed in the dashboard: %1$d. Touch to use them as the people here</string>
+    <string name="serata_pick_pool_title">Which pool plays on this court?</string>
+    <string name="serata_pick_pool_all">All present players, I pick the four</string>
     <string name="serata_dashboard_pool">Pool %1$s: %2$s</string>
     <string name="serata_dashboard_pool_description">Pool %1$s: %2$s. Touch to use it as the people here</string>
     <plurals name="serata_dashboard_used">

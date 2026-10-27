@@ -401,9 +401,10 @@ class SerataDelTelefonoTest {
             assertEquals(listOf("Coppia 1", "Coppia 2"), posti.filter { it.intestazione }.map { it.titolo })
             val seggi = posti.filter { !it.intestazione }
             assertEquals(4, seggi.size)
-            assertEquals(listOf("1", "2", "1", "2"), seggi.map { it.lead })
+            // Il numero e' il turno di battuta: 1 e 3 la coppia 1, 2 e 4 la coppia 2.
+            assertEquals(listOf("1", "3", "2", "4"), seggi.map { it.lead })
             assertEquals(listOf(false, false, true, false), seggi.map { it.selezionata })
-            assertTrue(seggi[2].descrizione.startsWith("Coppia 2, posto 1: "))
+            assertTrue(seggi[2].descrizione.startsWith("Coppia 2, turno di battuta 2: "))
 
             val comandi = RigheDellaSerata.comandi(contesto, stato)
             assertEquals(listOf("Ruota le coppie", "Stesse coppie", "Scambia i lati"), comandi.map { it.titolo })
@@ -419,7 +420,7 @@ class SerataDelTelefonoTest {
     @Test
     fun `una serata ricordata prima della prima apertura si legge, e un testo rotto no`() {
         store.save(Serata.nuova(listOf(1, 2, 3, 4)).consegna())
-        assertEquals(Composizione(listOf(1, 2), listOf(3, 4)), store.load()!!.inGioco)
+        assertEquals(Composizione(listOf(1, 4), listOf(2, 3)), store.load()!!.inGioco)
         prefs.edit().putString(SerataPrefsStore.CHIAVE, "rotto").commit()
         assertNull(store.load())
     }
