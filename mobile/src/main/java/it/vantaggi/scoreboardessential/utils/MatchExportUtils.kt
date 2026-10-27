@@ -12,7 +12,6 @@ import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.core.MatchPlayer
-import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.Match
 import java.io.File
 import java.text.SimpleDateFormat
@@ -62,13 +61,13 @@ object MatchExportUtils {
     }
 
     /**
-     * Il motore di una partita dello storico, rifatto dal registro con lo sport e l'ordine di
-     * servizio della riga. Lo usano l'export e la Cronaca: la stessa partita deve dare lo stesso
+     * Il motore di una partita dello storico, rifatto dal registro con lo sport, l'ordine di
+     * servizio e la regola del 40-40 della riga. Lo usano l'export e la Cronaca: la stessa partita deve dare lo stesso
      * file e la stessa cronaca. Null se il registro non si legge.
      */
     fun savedEngine(match: Match): MatchEngine? {
         val registro = MatchLogCodec.decode(match.eventLog) ?: return null
-        val engine = MatchEngine(SportRegistry.forMatch(match.sportId, Match.decodeServeOrder(match.serveOrder)))
+        val engine = MatchEngine(match.regole())
         engine.restoreLog(registro)
         return engine
     }

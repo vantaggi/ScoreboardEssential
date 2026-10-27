@@ -188,9 +188,39 @@ class DatabaseMigrationTest {
         db.close()
     }
 
+    /**
+     * La 15 -> 16 aggiunge la regola del 40-40 della partita. Una partita di padel gia' chiusa deve
+     * uscirne intatta e con la regola vuota, cioe' "quella dello sport": e' il punto secco con cui
+     * e' stata davvero giocata, e il registro rigiocato dallo storico deve dare lo stesso punteggio.
+     */
     @Test
     @Throws(IOException::class)
-    fun laCatena11a15_arriva_in_fondo_in_un_colpo_solo() {
+    fun migrazione15a16_aggiunge_la_regola_del_40_40_vuota_lasciando_intatta_la_partita() {
+        helper.createDatabase(TEST_DB, 15).apply {
+            execSQL(
+                "INSERT INTO matches (matchId, team1Id, team2Id, team1Score, team2Score, timestamp, isActive, sportId, eventLog, " +
+                    "serveOrder, startedAt, matchUuid) " +
+                    "VALUES (3, 1, 2, 6, 4, 1790190240000, 0, 'padel', '1|1@0,2@30000', '1,2,3,4', 1790190000000, 'u-3')",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 16, true, AppDatabase.MIGRATION_15_16)
+
+        db.query("SELECT sportId, eventLog, serveOrder, matchUuid, deuceRule FROM matches WHERE matchId = 3").use { c ->
+            assertTrue("la partita della v15 deve sopravvivere", c.moveToFirst())
+            assertEquals("padel", c.getString(0))
+            assertEquals("1|1@0,2@30000", c.getString(1))
+            assertEquals("1,2,3,4", c.getString(2))
+            assertEquals("u-3", c.getString(3))
+            assertEquals("la regola dello sport", "", c.getString(4))
+        }
+        db.close()
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun laCatena11a16_arriva_in_fondo_in_un_colpo_solo() {
         // E' il percorso che fa davvero un telefono rimasto indietro di tre versioni: Room
         // incatena le migrazioni da solo, e l'ordine in cui le applica non e' garantito da
         // nessun test che le provi una per una.
@@ -208,6 +238,7 @@ class DatabaseMigrationTest {
                 AppDatabase.MIGRATION_12_13,
                 AppDatabase.MIGRATION_13_14,
                 AppDatabase.MIGRATION_14_15,
+                AppDatabase.MIGRATION_15_16,
             )
 
         db.query("SELECT sportId, serveOrder, matchUuid FROM matches WHERE matchId = 1").use { c ->

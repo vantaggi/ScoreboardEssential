@@ -2422,3 +2422,40 @@ Richiesta del proprietario: dal menu dell'orologio sapere chi gioca in ogni squa
 ### Controllo dei pattern vietati (`review.md`)
 
 Nessun colore, spaziatura, raggio o durata scritti a mano (solo token, i nuovi nominano un ruolo); icone nessuna nuova; niente emoji, ombre, maiuscolo, cicli senza significato; un solo primario per schermata; pesi 400, 500, 600.
+
+## Regola del 40-40 a scelta, anche sull'orologio - 27 ottobre 2026
+
+Richiesta del proprietario: dall'orologio i punti arrivano al telefono, ma "non ci sono i vantaggi e la regola del killer point". La causa: il padel era fissato nel registro degli sport a punto secco, sul telefono come sull'orologio; il motore di `:core` sapeva gia' fare i vantaggi e il killer point, ma nessuno poteva sceglierli. Come gioca il gruppo (parole del proprietario): "40-40, vantaggio. Un'unica volta, se si ritorna in parita', killer point. Chi fa il punto vince": e' `DeuceRule.KILLER_POINT`.
+
+**Cosa cambia.** In Impostazioni, sotto lo sport, "Sul 40-40" con tre voci: Punto secco, Killer point, Vantaggi. C'e' solo negli sport con racchetta, una scelta per sport (il padel parte dal punto secco, il tennis dai vantaggi, come prima). Si cambia a partita ferma, come lo sport: a partita cominciata lo Snackbar "Termina la partita in corso per cambiare la regola del 40-40". La riga delle regole sotto il selettore dice la regola scelta ("Set unico · un vantaggio, poi punto secco · tie-break a 7").
+
+**Dove vive la regola.** `SportRegistry.forMatch(id, serveOrder, deuce)` innesta la regola nella configurazione come l'ordine di servizio. La partita la salva nella colonna `matches.deuceRule` (migrazione 15 -> 16, additiva, `''` = la regola dello sport, cioe' quella con cui le partite di prima sono state giocate) e ripristino, storico, Cronaca ed export la rigiocano con `Match.regole()`. Il telefono la manda all'orologio nello stato v2 (`deuce_rule`, chiave additiva: un telefono che non la manda vale "la regola dello sport"); l'orologio la usa quando rifa' il conto dei tocchi in coda e la salva in `LastKnownMatch` per il riavvio senza telefono. Le etichette vengono dal motore: "AV" al vantaggio, "PV" sul 40-40 decisivo, sul telefono e sul quadrante.
+
+### Piano UI (CLAUDE.md, punto 3)
+
+- **Compito e valore.** Il compito della schermata resta preparare la partita; il valore nuovo e' la regola del 40-40, accanto allo sport perche' e' una regola dello sport.
+- **Gerarchia e layout.** Nel gruppo "Partita", nella stessa riga dello sport: selettore dello sport, selettore "Sul 40-40" (12dp sotto), riga delle regole come didascalia. Nessun gruppo nuovo, nessuna card.
+- **Componenti riusati.** `Widget.App.TextInputLayout.ExposedDropdownMenu` con `AutoCompleteTextView`, come sport e lingua; lo Snackbar del cambio sport rifiutato; `space_12`. Nessun token, colore, icona o stile nuovi.
+
+| Stato | Cosa si vede |
+|---|---|
+| Calcio | il selettore non c'e' |
+| Padel o tennis | il selettore con la regola in vigore (scelta, o quella dello sport) |
+| Premuto / fuoco / selezionato | quelli del menu a tendina di Material, come sport e lingua |
+| Partita in corso | il tocco su un'altra voce mostra lo Snackbar e il selettore torna alla regola vera |
+| In gioco | "AV" e "PV" nelle cifre del telefono e del quadrante, come gia' nel tennis |
+
+- **Movimento.** Nessuno nuovo.
+- **Accessibilita'.** Il selettore ha l'etichetta visibile "Sul 40-40" (letta da TalkBack); le voci sono parole.
+- **Schermo stretto e 200%.** Il selettore occupa la larghezza della riga; le voci sono brevi.
+- **Conflitti dichiarati.** Nessuno.
+- **Pattern vietati** (`review.md`): niente maiuscolo, emoji, ombre, colori scritti a mano, card nuove; nessun peso nuovo; nessun ciclo. Nessun `--` nei commenti XML, nessun apostrofo nelle stringhe nuove.
+
+### Come si prova
+
+`SportRegistryTest` (forMatch innesta la regola e il padel gioca AV e poi PV, daNome), `OfflineScoreTest` (col killer point il polso gioca il vantaggio e il punto secco come il telefono; un orologio riavviato ritrova la regola), `WearViewModelTest` (la chiave additiva), `WearProtocolGoldenTest` (la chiave congelata), `MainViewModelTest` (alla ripresa vale la regola della riga; la regola delle impostazioni vale per la partita e arriva all'orologio), `DatabaseMigrationTest` (15 -> 16 e la catena, strumentati). Cosa li rende rossi: leggere le regole dal registro nel ripristino o nel conto al polso, non mandare la chiave all'orologio, non salvarla con la partita.
+
+### Debiti dichiarati
+
+1. Il file della partita (export e Diretta) porta gia' la regola in `config.deuce`, e la dashboard la traduce in `goldenPoint` e `killerPoint` (`docs/dashboard/riferimento-match-log.js`): ora puo' valere `KILLER_POINT` o `ADVANTAGE`. Non provato contro la dashboard vera (produzione).
+2. L'orologio non ha un selettore: la regola si sceglie sul telefono.

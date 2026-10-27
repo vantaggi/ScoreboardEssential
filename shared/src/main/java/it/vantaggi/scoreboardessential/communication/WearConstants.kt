@@ -98,6 +98,15 @@ object WearConstants {
     const val KEY_SERVING_SLOT = "serving_slot"
 
     /**
+     * La regola del 40-40 della partita, col nome di `DeuceRule` di :core ("KILLER_POINT").
+     *
+     * Additiva: vuota vuol dire "quella dello sport", ed e' anche il valore di un telefono che non
+     * la manda. Serve all'orologio quando rifa' il calcolo dei tocchi in coda: senza, un padel al
+     * killer point gli chiudeva il game al primo 40-40.
+     */
+    const val KEY_DEUCE_RULE = "deuce_rule"
+
+    /**
      * Lo sport corrente e quelli scegliibili, gia' tradotti dal telefono.
      *
      * L'orologio non dipende da :core e non deve dipendervi: se conoscesse l'elenco degli sport,

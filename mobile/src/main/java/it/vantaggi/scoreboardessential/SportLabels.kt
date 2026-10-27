@@ -38,8 +38,9 @@ fun sportLabel(
 fun sportRulesLine(
     context: Context,
     sportId: String,
+    deuce: DeuceRule? = null,
 ): String {
-    val regole = SportRegistry.byId(sportId)
+    val regole = SportRegistry.forMatch(sportId, deuce = deuce)
     val pezzi = mutableListOf<String>()
     if (regole is RacketRules) {
         val config = regole.config

@@ -3,6 +3,9 @@ package it.vantaggi.scoreboardessential.repository
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import it.vantaggi.scoreboardessential.core.DeuceRule
+import it.vantaggi.scoreboardessential.core.RacketRules
+import it.vantaggi.scoreboardessential.core.SportRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -94,6 +97,32 @@ class MatchSettingsRepository(
             sharedPreferences.getString(KEY_ACTIVE_SPORT, DEFAULT_SPORT) ?: DEFAULT_SPORT
         }
 
+    /**
+     * La regola del 40-40 scelta per uno sport con racchetta, o null se non e' mai stata scelta:
+     * vale quella del registro (punto secco nel padel, vantaggi nel tennis). Una per sport, perche'
+     * chi gioca il padel col killer point non per questo gioca il tennis senza vantaggi.
+     */
+    suspend fun setDeuceRule(
+        sportId: String,
+        regola: DeuceRule,
+    ) = withContext(Dispatchers.IO) {
+        sharedPreferences.edit {
+            putString(chiaveDel40(sportId), regola.name)
+        }
+    }
+
+    suspend fun getDeuceRule(sportId: String): DeuceRule? =
+        withContext(Dispatchers.IO) {
+            DeuceRule.daNome(sharedPreferences.getString(chiaveDel40(sportId), null))
+        }
+
+    private fun regoleDel40(prefs: SharedPreferences): Map<String, DeuceRule> =
+        SportRegistry
+            .selectable()
+            .filterIsInstance<RacketRules>()
+            .mapNotNull { sport -> DeuceRule.daNome(prefs.getString(chiaveDel40(sport.id), null))?.let { sport.id to it } }
+            .toMap()
+
     fun getSettingsFlow(): Flow<MatchSettings> =
         callbackFlow {
             val listener =
@@ -106,6 +135,7 @@ class MatchSettingsRepository(
                             prefs.getInt(KEY_TEAM2_COLOR, colorRepository.getTeam2DefaultColor()),
                             prefs.getLong(KEY_KEEPER_TIMER_DURATION, 30L),
                             prefs.getString(KEY_ACTIVE_SPORT, DEFAULT_SPORT) ?: DEFAULT_SPORT,
+                            regoleDel40(prefs),
                         ),
                     )
                 }
@@ -119,6 +149,7 @@ class MatchSettingsRepository(
                     sharedPreferences.getInt(KEY_TEAM2_COLOR, colorRepository.getTeam2DefaultColor()),
                     sharedPreferences.getLong(KEY_KEEPER_TIMER_DURATION, 30L),
                     sharedPreferences.getString(KEY_ACTIVE_SPORT, DEFAULT_SPORT) ?: DEFAULT_SPORT,
+                    regoleDel40(sharedPreferences),
                 ),
             )
 
@@ -134,6 +165,8 @@ class MatchSettingsRepository(
         private const val KEY_KEEPER_TIMER_DURATION = "keeper_timer_duration"
         private const val KEY_ACTIVE_SPORT = "active_sport"
         private const val DEFAULT_SPORT = "football"
+
+        private fun chiaveDel40(sportId: String) = "deuce_rule_$sportId"
     }
 }
 
@@ -144,4 +177,6 @@ data class MatchSettings(
     val team2Color: Int,
     val keeperTimerDuration: Long,
     val activeSport: String = "football",
+    /** La regola del 40-40 scelta, per sport; uno sport che manca gioca con quella del registro. */
+    val regoleDel40: Map<String, DeuceRule> = emptyMap(),
 )
