@@ -329,8 +329,8 @@ class AltoContrastoTest {
     fun `i bottoni secondari e primari prendono contorno e testo dall'overlay`() {
         val ac = altoContrasto()
         val secondario = MaterialButton(ac, null, M3.attr.materialButtonOutlinedStyle)
-        assertEquals(colore(ac, R.color.elite_text_secondary), secondario.textColors.defaultColor)
-        assertEquals(0xFFC9C9D2.toInt(), secondario.textColors.defaultColor)
+        assertEquals(colore(ac, R.color.elite_text_primary), secondario.textColors.defaultColor)
+        assertEquals(0xFFFFFFFF.toInt(), secondario.textColors.defaultColor)
         assertEquals(0xFFB4B4C0.toInt(), secondario.strokeColor.defaultColor)
         val primario = MaterialButton(ac)
         assertEquals(0xFFC8F135.toInt(), primario.backgroundTintList!!.defaultColor)

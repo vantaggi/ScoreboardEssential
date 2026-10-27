@@ -1674,7 +1674,12 @@ class MainViewModel(
                 }
 
                 is ScoringEvent.Correction -> {
-                    addMatchEvent(testo(R.string.log_score_correction, nomeNelRegistro(squadra)), team = squadra, engineIndex = indice, pubblica = false)
+                    addMatchEvent(
+                        testo(R.string.log_score_correction, nomeNelRegistro(squadra)),
+                        team = squadra,
+                        engineIndex = indice,
+                        pubblica = false,
+                    )
                 }
             }
         }

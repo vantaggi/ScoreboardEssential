@@ -43,7 +43,7 @@ class TitoliDelleSchermateTest {
         assertEquals("Storico partite", titolo(MatchHistoryActivity::class.java))
         assertEquals("Giocatore", titolo(AddEditPlayerActivity::class.java))
         assertEquals("Impostazioni partita", titolo(MatchSettingsActivity::class.java))
-        assertEquals("Gestisci giocatori", titolo(PlayersManagementActivity::class.java))
+        assertEquals("Giocatori", titolo(PlayersManagementActivity::class.java))
         assertEquals("Statistiche", titolo(StatisticsActivity::class.java))
     }
 
@@ -53,7 +53,7 @@ class TitoliDelleSchermateTest {
         assertEquals("Match history", titolo(MatchHistoryActivity::class.java))
         assertEquals("Player", titolo(AddEditPlayerActivity::class.java))
         assertEquals("Match settings", titolo(MatchSettingsActivity::class.java))
-        assertEquals("Manage players", titolo(PlayersManagementActivity::class.java))
+        assertEquals("Players", titolo(PlayersManagementActivity::class.java))
         assertEquals("Statistics", titolo(StatisticsActivity::class.java))
     }
 
