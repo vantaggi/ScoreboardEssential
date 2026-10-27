@@ -2561,5 +2561,6 @@ La schermata si chiamava "Impostazioni partita" ma teneva anche la lingua, in me
 
 ### Debiti dichiarati del passo 3b
 
-1. Il gruppo Padel Elite e' quello di prima (stato, Entra, Gruppo, Esci): lo rivede il passo 4.
-2. Non visto a schermo: verificato solo dai test e dalla CI.
+1. Il gruppo Padel Elite e' quello di prima (stato, Entra, Gruppo, Esci): la proposta lo vuole una riga che porta alla sua schermata, con Esci spostato li'. Lo fa il passo 4.
+2. Le scelte (sport, regola del 40-40, lingua) sono ancora campi con la tendina: la proposta le vuole righe nome e valore con il menu che si apre dalla riga. Cambia il componente e i test che toccano i campi (LinguaUnicaTest e i test dello sport): passo a se', dopo il 4.
+3. Non visto a schermo: verificato solo dai test e dalla CI.
