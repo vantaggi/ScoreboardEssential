@@ -14,9 +14,9 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import it.vantaggi.scoreboardessential.core.DeuceRule
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.LoggedEvent
-import it.vantaggi.scoreboardessential.core.DeuceRule
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchExporter
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
@@ -3109,7 +3109,11 @@ class MainViewModelTest {
                 )
             advanceUntilIdle()
 
-            val engine = nuovo.javaClass.getDeclaredField("engine").apply { isAccessible = true }.get(nuovo) as MatchEngine
+            val engine =
+                nuovo.javaClass
+                    .getDeclaredField("engine")
+                    .apply { isAccessible = true }
+                    .get(nuovo) as MatchEngine
             assertEquals(DeuceRule.KILLER_POINT, engine.rules.config.deuce)
             val padel = statiV2().filter { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL }
             assertEquals("KILLER_POINT", padel.last()[WearConstants.KEY_DEUCE_RULE])

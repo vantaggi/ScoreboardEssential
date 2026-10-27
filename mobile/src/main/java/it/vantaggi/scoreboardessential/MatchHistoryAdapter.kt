@@ -133,7 +133,14 @@ class MatchHistoryAdapter(
 
             val righeDiSet =
                 item.setLine
-                    ?: if (SportRegistry.byId(match.sportId) is RacketRules) sportRulesLine(context, match.sportId, DeuceRule.daNome(match.deuceRule)) else null
+                    ?: if (SportRegistry.byId(
+                            match.sportId,
+                        ) is RacketRules
+                    ) {
+                        sportRulesLine(context, match.sportId, DeuceRule.daNome(match.deuceRule))
+                    } else {
+                        null
+                    }
             setsTextView.visibility = if (righeDiSet != null) View.VISIBLE else View.GONE
             setsTextView.text = righeDiSet
 
