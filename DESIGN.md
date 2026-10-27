@@ -2594,3 +2594,18 @@ La Cronaca di una partita salvata senza ordine di servizio e senza tempi aveva q
 ### Debiti dichiarati del passo 5a
 
 1. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 6a: le Statistiche seguono lo sport
+
+In una serata di padel le Statistiche dicevano Generale, Attacco, Difesa e contavano i gol, tutti a zero, col primo in lime; Attacco e Difesa dicevano "Nessuna statistica": la stessa assenza raccontata in due modi.
+
+- **Gerarchia e layout.** Lo sport in uso (quello delle impostazioni) decide la classifica. Nel calcio restano le tre schede e i gol. Nel padel e nel tennis le schede non ci sono: una riga di titolo, "Padel · partite vinte", e la classifica delle partite vinte su quelle giocate ("Anna 3 vinte su 5"), prima chi ne ha vinte di piu', a parita' chi ne ha giocate di meno. Il dato c'e' gia': le formazioni salvate a fine partita (`MatchPlayerCrossRef.teamNumber`) e il risultato, la stessa regola delle vittorie di oggi; la nuova query `getPlayerRecords` le conta per sport, solo partite chiuse. Nessuna colonna nuova, nessuna migrazione.
+- **Componenti riusati.** La riga `item_player_stat` e il gruppo della classifica; un adapter nuovo, `RecordAdapter`, per le vittorie. Le regole comuni stanno nella funzione pura `Classifica`: il lime marca il primo solo se e' davvero primo (sopra zero e davanti al secondo), e una classifica di soli zeri e' lo stato vuoto.
+- **Stati.** Calcio con gol (come prima, lime solo a un primo vero), calcio con tutti a zero (stato vuoto), padel o tennis con partite (classifica), senza partite chiuse con giocatori (stato vuoto con il perche': servono le coppie in campo). TalkBack legge rango, nome e "3 vinte su 5". Movimento: nessuno. 200%: righe piu' alte, il valore resta a destra.
+- **Pattern vietati.** Tolte tre schede che nel padel non volevano dire niente e un lime che non marcava nessuno; niente card nuove, niente ombre.
+
+### Debiti dichiarati del passo 6a
+
+1. Le partite giocate in padel senza giocatori in campo (senza rose o coppie) non contano: non si sa chi le ha giocate.
+2. Giocatori e Modifica giocatore (filtri e ruoli da calcio anche nel padel, ordine attivo, ricerca) sono il passo 6b.
+3. Non visto a schermo: verificato solo dai test e dalla CI.

@@ -4,7 +4,9 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.AppDatabase
+import it.vantaggi.scoreboardessential.database.PlayerRecord
 import it.vantaggi.scoreboardessential.domain.model.PlayerStatsDTO
 import it.vantaggi.scoreboardessential.domain.usecases.GetPlayerStatsUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -12,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 
 class StatisticsViewModel(
@@ -39,11 +42,33 @@ class StatisticsViewModel(
                         FilterType.ATTACK -> listOf("ATTACCO")
                         FilterType.DEFENSE -> listOf("DIFESA", "PORTA")
                     }
-                getPlayerStatsUseCase.getTopScorers(10, categories)
+                getPlayerStatsUseCase.getTopScorers(LIMIT, categories)
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun setFilter(newFilter: FilterType) {
         filter.value = newFilter
+    }
+
+    /** Lo sport in uso (revisione dei menu, passo 6): decide se la classifica e' di gol o di partite vinte. */
+    private val sport = MutableStateFlow<String?>(null)
+
+    fun setSport(sportId: String) {
+        sport.value = sportId
+    }
+
+    /** Nel padel e nel tennis, senza marcatori: le partite giocate e vinte nello sport in uso. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val records: StateFlow<List<PlayerRecord>> =
+        sport
+            .flatMapLatest { id ->
+                if (id == null || contaIGol(id)) flowOf(emptyList()) else matchDao.getPlayerRecords(id, LIMIT)
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    companion object {
+        private const val LIMIT = 10
+
+        /** Gli sport in cui segnando si dice chi ha segnato hanno la classifica dei gol; gli altri quella delle vittorie. */
+        fun contaIGol(sportId: String): Boolean = SportRegistry.byId(sportId).capabilities.attributesScorer
     }
 
     class Factory(

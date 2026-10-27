@@ -364,6 +364,13 @@
         <item quantity="one">%d appearance</item>
         <item quantity="other">%d appearances</item>
     </plurals>
+    <plurals name="stats_wins">
+        <item quantity="one">%1$d win of %2$d</item>
+        <item quantity="other">%1$d wins of %2$d</item>
+    </plurals>
+    <string name="stats_record_description">%1$d. %2$s, %3$s</string>
+    <string name="stats_wins_heading">%1$s · matches won</string>
+    <string name="stats_wins_empty_hint">Wins are counted from finished matches with players on court. Save a match with the pairs to see them here.</string>
     <string name="settings_teams_title">Teams</string>
     <string name="settings_match_title">Rules</string>
     <string name="settings_app_title">App</string>

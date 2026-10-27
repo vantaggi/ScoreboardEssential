@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Statistiche (G-4). Il compito: vedere chi ha segnato di piu'. Il valore: i gol. Tre schede (Generale,
-    Attacco, Difesa) con un solo indicatore lime; la classifica e' un gruppo tonale con una riga per
-    giocatore (nome e gol), separate da linee sottili rientrate al testo. Rango e presenze non sono in
-    riga: il rango e' l'ordine, le presenze stanno nel dettaglio del giocatore (Gestisci giocatori).
+    Statistiche (G-4, revisione dei menu passo 6). Le schede seguono lo sport in uso. Nel calcio il
+    compito e' vedere chi ha segnato di piu': tre schede (Generale, Attacco, Difesa) con un solo
+    indicatore lime e una riga per giocatore (nome e gol). Nel padel e nel tennis non ci sono gol: niente
+    schede, una riga di titolo ("Padel · partite vinte") e la classifica delle partite vinte su quelle
+    giocate. In tutti e due i casi un gruppo tonale con righe separate da linee sottili rientrate.
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -26,6 +27,21 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
+    <!-- Solo negli sport senza marcatori, al posto delle schede. -->
+    <TextView
+        android:id="@+id/stats_heading"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/space_16"
+        android:layout_marginTop="@dimen/space_16"
+        android:accessibilityHeading="true"
+        android:textAppearance="@style/TextAppearance.App.Caption"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tabLayout"
+        tools:text="Padel · partite vinte" />
+
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/stats_group"
         style="@style/Widget.App.Group"
@@ -35,7 +51,7 @@
         app:layout_constrainedHeight="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintHeight_default="wrap"
-        app:layout_constraintTop_toBottomOf="@id/tabLayout"
+        app:layout_constraintTop_toBottomOf="@id/stats_heading"
         app:layout_constraintVertical_bias="0">
 
         <androidx.recyclerview.widget.RecyclerView
