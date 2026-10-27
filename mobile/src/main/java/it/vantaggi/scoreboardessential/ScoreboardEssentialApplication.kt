@@ -34,8 +34,11 @@ open class ScoreboardEssentialApplication : Application() {
      */
     internal open val scopeDiAvvio: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    /** L'invio a Padel Elite. Spento (nessun comando, nessuna rete) senza la configurazione di local.properties. */
-    val padelElite by lazy { PadelEliteServices(this, PadelEliteConfig.fromBuildConfig(), matchRepository) }
+    /**
+     * L'invio a Padel Elite. Spento (nessun comando, nessuna rete) senza la configurazione di local.properties. Aperto: i
+     * test strumentati lo puntano a un indirizzo muto (debito 12 di D-3).
+     */
+    open val padelElite: PadelEliteServices by lazy { PadelEliteServices(this, PadelEliteConfig.fromBuildConfig(), matchRepository) }
 
     override fun onCreate() {
         // Il contesto dell'applicazione non riceve il tema del manifest (solo le activity): i token elite_* seguono il
