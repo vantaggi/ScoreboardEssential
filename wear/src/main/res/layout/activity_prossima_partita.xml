@@ -61,7 +61,7 @@
 
                 <TextView
                     android:id="@+id/prossima_sigla1"
-                    style="@style/TextAppearance.App.Sigla"
+                    style="@style/Widget.App.Sigla"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
@@ -77,7 +77,7 @@
 
                 <TextView
                     android:id="@+id/prossima_sigla2"
-                    style="@style/TextAppearance.App.Sigla"
+                    style="@style/Widget.App.Sigla"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_12" />

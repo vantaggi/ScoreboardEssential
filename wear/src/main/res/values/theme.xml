@@ -174,7 +174,7 @@
     </style>
 
     <!-- La sigla di una coppia sopra il suo gruppo (prossima partita): label, text-secondary, 500. -->
-    <style name="TextAppearance.App.Sigla">
+    <style name="Widget.App.Sigla" parent="">
         <item name="android:layout_marginBottom">@dimen/space_4</item>
         <item name="android:paddingHorizontal">@dimen/space_12</item>
         <item name="android:fontFamily">@font/inter</item>

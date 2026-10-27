@@ -141,7 +141,9 @@ class MenuActivity : ComponentActivity() {
             card.setOnClickListener { alTocco(voce) }
             // Armarsi e rientrare cambia titolo e sottotitolo: TalkBack deve dirlo, perche' chi non
             // vede la card rossa non saprebbe che il tocco e' gia' armato.
-            if (voce.id == IdVoce.FINE_PARTITA || voce.id == IdVoce.SCARTA_CODA) card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+            if (voce.id == IdVoce.FINE_PARTITA || voce.id == IdVoce.SCARTA_CODA) {
+                card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+            }
             contenitore.addView(card)
             righe += Riga(voce, card)
         }
@@ -230,7 +232,9 @@ class MenuActivity : ComponentActivity() {
                 val chi = giocatori[i].split(SEPARATORE_GIOCATORI).joinToString(", ")
                 riga.findViewById<TextView>(R.id.squadra_nome).text = nomi[i]
                 riga.findViewById<TextView>(R.id.squadra_giocatori).text = chi
-                colori.getOrNull(i)?.let { riga.findViewById<View>(R.id.squadra_barra).setBackgroundColor(TeamInk.graphicOnBlack(it) or TeamInk.NERO) }
+                colori.getOrNull(i)?.let {
+                    riga.findViewById<View>(R.id.squadra_barra).setBackgroundColor(TeamInk.graphicOnBlack(it) or TeamInk.NERO)
+                }
                 riga.contentDescription = getString(R.string.cd_squadra, nomi[i], chi)
                 gruppo.addView(riga)
             }

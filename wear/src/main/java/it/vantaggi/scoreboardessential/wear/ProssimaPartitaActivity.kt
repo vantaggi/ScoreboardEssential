@@ -181,8 +181,14 @@ class ProssimaPartitaActivity : ComponentActivity() {
         senzaRisposta = false
         val primo = scelto
         when {
-            primo == null -> scelto = posto
-            primo == posto -> scelto = null
+            primo == null -> {
+                scelto = posto
+            }
+
+            primo == posto -> {
+                scelto = null
+            }
+
             else -> {
                 scelto = null
                 chiedi(WearConstants.SERATA_SWAP, primo, posto)
@@ -244,7 +250,11 @@ class ProssimaPartitaActivity : ComponentActivity() {
 
         findViewById<TextView>(R.id.prossima_sigla1).text = coppie.sigle.getOrNull(0).orEmpty()
         findViewById<TextView>(R.id.prossima_sigla2).text = coppie.sigle.getOrNull(1).orEmpty()
-        val colori = listOf(intent.getIntExtra(EXTRA_COLORE1, colore(R.color.team_side_1)), intent.getIntExtra(EXTRA_COLORE2, colore(R.color.team_side_2)))
+        val colori =
+            listOf(
+                intent.getIntExtra(EXTRA_COLORE1, colore(R.color.team_side_1)),
+                intent.getIntExtra(EXTRA_COLORE2, colore(R.color.team_side_2)),
+            )
         listOf(R.id.prossima_coppia1, R.id.prossima_coppia2).forEachIndexed { coppia, id ->
             val gruppo = findViewById<LinearLayout>(id)
             gruppo.removeAllViews()

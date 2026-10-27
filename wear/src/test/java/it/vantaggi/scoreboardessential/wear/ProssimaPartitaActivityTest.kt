@@ -123,10 +123,16 @@ class ProssimaPartitaActivityTest {
     fun `mostra il numero, le coppie in ordine dei posti e chi resta fuori`() {
         val activity = apri()
 
-        assertEquals(activity.getString(R.string.wear_next_match_title, 2), activity.findViewById<TextView>(R.id.prossima_titolo).text.toString())
+        assertEquals(
+            activity.getString(R.string.wear_next_match_title, 2),
+            activity.findViewById<TextView>(R.id.prossima_titolo).text.toString(),
+        )
         assertEquals(listOf("Vantaggi", "Bianchi", "Glorio", "Rossi"), (0..3).map { nome(activity, it) })
         assertEquals("VAN/BIA", activity.findViewById<TextView>(R.id.prossima_sigla1).text.toString())
-        assertEquals(activity.getString(R.string.wear_next_bench, "Verdi"), activity.findViewById<TextView>(R.id.prossima_panchina).text.toString())
+        assertEquals(
+            activity.getString(R.string.wear_next_bench, "Verdi"),
+            activity.findViewById<TextView>(R.id.prossima_panchina).text.toString(),
+        )
         assertEquals(activity.getString(R.string.wear_next_hint), avviso(activity))
     }
 
