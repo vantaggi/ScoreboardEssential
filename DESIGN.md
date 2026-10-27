@@ -1428,7 +1428,6 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Modifica | `edit` | `ic_edit` | - |
 | Elimina | `delete` | `ic_delete` | `ic_delete` |
 | Cerca | `search` | `ic_search` | - |
-| Aggiorna | `refresh` | `ic_refresh` | - |
 | Filtra | `filter_list` | - | - |
 | Ordina | `swap_vert` | `ic_swap_vert` | - |
 | Condividi | `share` | `ic_share` | - |
@@ -1437,7 +1436,7 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Copia | `content_copy` | - | - |
 | Salva | `save` | - | - |
 | Annulla (undo) | `undo` | `ic_undo` | - |
-| Aggiorna | `refresh` | - | - |
+| Aggiorna | `refresh` | `ic_refresh` | - |
 | Mostra | `visibility` | - | - |
 | Nascondi | `visibility_off` | - | - |
 | Avvia, riprendi | `play_arrow` | `ic_play_arrow` | - |
