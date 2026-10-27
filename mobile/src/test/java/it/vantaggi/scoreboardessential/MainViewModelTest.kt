@@ -4291,10 +4291,11 @@ class MainViewModelTest {
                 assertEquals(EsitoAvvioSerata.AVVIATA, viewModel.avviaPartitaDellaSerata())
                 advanceUntilIdle()
 
-                assertEquals(listOf(c, d), rosa(viewModel, 1))
-                assertEquals(listOf(b, a), rosa(viewModel, 2))
+                // La bozza e' a+d contro b+c; scambiati i primi due posti e poi i lati: b+c contro d+a.
+                assertEquals(listOf(b, c), rosa(viewModel, 1))
+                assertEquals(listOf(d, a), rosa(viewModel, 2))
                 // A1, B1, A2, B2: il primo posto di ogni coppia serve per primo.
-                assertEquals(listOf(c, b, d, a), motore().rules.config.serveOrder)
+                assertEquals(listOf(b, d, c, a), motore().rules.config.serveOrder)
                 assertEquals(2, viewModel.sportCapabilities.value?.playersPerSide)
                 assertEquals(
                     "la serata sa che questa partita e' sua",
@@ -4589,7 +4590,8 @@ class MainViewModelTest {
                 advanceUntilIdle()
 
                 assertEquals(2, viewModel.sportCapabilities.value?.playersPerSide)
-                assertEquals(listOf(a, c, b, d), motore().rules.config.serveOrder)
+                // a+d contro b+c: A1, B1, A2, B2.
+                assertEquals(listOf(a, b, d, c), motore().rules.config.serveOrder)
             } finally {
                 chiudiDatabase(db)
             }
