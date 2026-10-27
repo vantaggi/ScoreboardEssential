@@ -2608,3 +2608,18 @@ In una serata di padel le Statistiche dicevano Generale, Attacco, Difesa e conta
 1. Le partite giocate in padel senza giocatori in campo (senza rose o coppie) non contano: non si sa chi le ha giocate.
 2. Giocatori e Modifica giocatore (filtri e ruoli da calcio anche nel padel, ordine attivo, ricerca) sono il passo 6b.
 3. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Passo 5b, prima parte: lo Storico per giorno
+
+Lo Storico era una colonna di schede tutte uguali, ognuna con la sua data in piccolo ("Padel · 12/09 18:30 · 47 min"): per ritrovare la partita di ieri sera si leggevano le date una per una.
+
+- **Gerarchia e layout.** Sopra la prima partita di ogni giorno c'e' il titolo del giorno: "Oggi", "Ieri", poi la data col giorno della settimana ("Domenica 25 ottobre"), con l'anno solo se non e' quello in corso. Nella scheda la riga meta tiene l'ora ("Padel · 18:30 · 47 min"). Il giorno si calcola nel fuso del telefono; le partite arrivano gia' dalla piu' recente. La logica sta in `GiorniDelloStorico` (funzione pura, `RigaDelloStorico` = giorno o partita).
+- **Componenti riusati.** Il titolo e' come i titoli dei gruppi delle Impostazioni: `RowTitle` in testo secondario, intestazione per TalkBack (si salta da un giorno all'altro), allineato al testo delle schede. Le schede (`match_item`) non cambiano. Nessun colore, spazio o tipo nuovo; due stringhe nuove ("Oggi", "Ieri").
+- **Stati.** Vuoto: nessun titolo, resta `EmptyStateView` come prima. Un giorno con una partita sola ha il suo titolo lo stesso. Movimento: nessuno nuovo (l'apertura del dettaglio resta quella di G-4). 200%: il titolo va a capo.
+- **Pattern vietati.** Niente card per i giorni (i giorni non sono elementi indipendenti), niente ombre, niente date ripetute in ogni scheda.
+- **Seconda parte, ferma su una domanda.** La proposta portava Invia, Esporta ed Elimina nella barra della Cronaca e faceva aprire la Cronaca toccando la scheda. Ma la Cronaca c'e' solo per padel e tennis con registro: il calcio e le partite salvate col solo punteggio non l'hanno, e per loro Elimina deve restare nella scheda. Due posti per lo stesso comando sono peggio di uno: la scelta e' di Cioti (vedi i debiti).
+
+### Debiti dichiarati del passo 5b
+
+1. Domanda per Cioti: i comandi della partita (Invia, Esporta, Elimina) restano nel dettaglio della scheda per tutti gli sport, oppure passano nella barra della Cronaca per la racchetta e restano nella scheda solo per il calcio?
+2. Non visto a schermo: verificato solo dai test e dalla CI.

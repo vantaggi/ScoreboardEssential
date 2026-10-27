@@ -24,6 +24,7 @@ import it.vantaggi.scoreboardessential.ui.EmptyStateView
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
 import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
 import it.vantaggi.scoreboardessential.ui.ProgressButton
+import it.vantaggi.scoreboardessential.ui.RigaDelloStorico
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -401,7 +402,12 @@ class ContornoDelTelefonoG4Test {
     @Test
     fun `la scheda dello storico si apre e si chiude sul dettaglio e tiene lo stato per partita`() {
         val adapter = MatchHistoryAdapter({}, {}, {}, {})
-        adapter.submitList(listOf(MatchHistoryUiState(partita(1), "Mario, Luca", null), MatchHistoryUiState(partita(2), "", null)))
+        adapter.submitList(
+            listOf(
+                RigaDelloStorico.Partita(MatchHistoryUiState(partita(1), "Mario, Luca", null)),
+                RigaDelloStorico.Partita(MatchHistoryUiState(partita(2), "", null)),
+            ),
+        )
         val riga = adapter.onCreateViewHolder(FrameLayout(contesto), 0)
         val vista = riga.itemView
         val dettaglio = vista.findViewById<View>(R.id.match_detail)

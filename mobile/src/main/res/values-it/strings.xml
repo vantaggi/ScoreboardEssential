@@ -226,6 +226,8 @@
     <string name="history_players">Giocatori: %1$s</string>
     <string name="history_meta">%1$s · %2$s</string>
     <string name="history_meta_duration">%1$s · %2$s · %3$s</string>
+    <string name="history_today">Oggi</string>
+    <string name="history_yesterday">Ieri</string>
     <string name="match_ready">Nuova partita pronta</string>
     <string name="match_resumed">Partita ripresa</string>
     <!-- Le righe informative del registro. -->

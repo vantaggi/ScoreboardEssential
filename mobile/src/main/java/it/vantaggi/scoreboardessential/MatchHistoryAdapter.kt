@@ -17,10 +17,13 @@ import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.padelelite.invioLook
+import it.vantaggi.scoreboardessential.ui.GiorniDelloStorico
 import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
+import it.vantaggi.scoreboardessential.ui.RigaDelloStorico
 import it.vantaggi.scoreboardessential.ui.chronicle.ChronicleText
 import it.vantaggi.scoreboardessential.utils.etichettaDiSquadra
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.Date
 import java.util.Locale
 
@@ -29,27 +32,49 @@ class MatchHistoryAdapter(
     private val onExportClicked: (MatchWithTeams) -> Unit,
     private val onChronicleClicked: (MatchWithTeams) -> Unit,
     private val onSendClicked: (MatchWithTeams) -> Unit = {},
-) : ListAdapter<MatchHistoryUiState, MatchHistoryAdapter.MatchViewHolder>(MatchDiffCallback()) {
+) : ListAdapter<RigaDelloStorico, RecyclerView.ViewHolder>(MatchDiffCallback()) {
     // Le schede aperte, per partita: le viste si riciclano, lo stato aperto o chiuso non puo' stare nella vista.
     private val aperte = mutableSetOf<Int>()
+
+    override fun getItemViewType(position: Int): Int =
+        when (getItem(position)) {
+            is RigaDelloStorico.Partita -> TIPO_PARTITA
+            is RigaDelloStorico.Giorno -> TIPO_GIORNO
+        }
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int,
-    ): MatchViewHolder {
-        val view =
-            LayoutInflater
-                .from(parent.context)
-                .inflate(R.layout.match_item, parent, false)
+    ): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        if (viewType == TIPO_GIORNO) return GiornoViewHolder(inflater.inflate(R.layout.item_history_day, parent, false) as TextView)
+        val view = inflater.inflate(R.layout.match_item, parent, false)
         return MatchViewHolder(view, onDeleteClicked, onExportClicked, onChronicleClicked, onSendClicked, aperte)
     }
 
     override fun onBindViewHolder(
-        holder: MatchViewHolder,
+        holder: RecyclerView.ViewHolder,
         position: Int,
     ) {
-        val item = getItem(position)
-        holder.bind(item)
+        when (val item = getItem(position)) {
+            is RigaDelloStorico.Partita -> (holder as MatchViewHolder).bind(item.stato)
+            is RigaDelloStorico.Giorno -> (holder as GiornoViewHolder).bind(item.giorno)
+        }
+    }
+
+    /** Il titolo di un giorno: «Oggi», «Ieri» o la data (GiorniDelloStorico). */
+    class GiornoViewHolder(
+        private val titolo: TextView,
+    ) : RecyclerView.ViewHolder(titolo) {
+        fun bind(giorno: LocalDate) {
+            titolo.text = GiorniDelloStorico.etichetta(titolo.context, giorno)
+        }
+    }
+
+    companion object {
+        // La partita resta il tipo 0: chi gonfia una scheda da solo (i test) passa 0 come prima.
+        const val TIPO_PARTITA = 0
+        const val TIPO_GIORNO = 1
     }
 
     class MatchViewHolder(
@@ -201,32 +226,41 @@ internal fun coloreDelPunteggio(
     lato: Int,
 ): Int = if (vincitore == null || vincitore == lato) R.color.elite_text_primary else R.color.elite_text_secondary
 
-/** «Padel · 12/09 18:30 · 47 min»: sport, data e, se c'e', durata. */
+/** «Padel · 18:30 · 47 min»: sport, ora e, se c'e', durata. Il giorno e' il titolo sopra la scheda (passo 5b). */
 internal fun metaDellaPartita(
     context: Context,
     item: MatchHistoryUiState,
 ): String {
     val match = item.matchWithTeams.match
     val sport = sportLabel(context, match.sportId)
-    val data = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(Date(match.timestamp))
+    val ora = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(match.timestamp))
     val durata = item.durationMillis
     val testo =
         if (durata == null) {
-            context.getString(R.string.history_meta, sport, data)
+            context.getString(R.string.history_meta, sport, ora)
         } else {
-            context.getString(R.string.history_meta_duration, sport, data, ChronicleText.duration(context.resources, durata))
+            context.getString(R.string.history_meta_duration, sport, ora, ChronicleText.duration(context.resources, durata))
         }
     return testo
 }
 
-class MatchDiffCallback : DiffUtil.ItemCallback<MatchHistoryUiState>() {
+class MatchDiffCallback : DiffUtil.ItemCallback<RigaDelloStorico>() {
     override fun areItemsTheSame(
-        oldItem: MatchHistoryUiState,
-        newItem: MatchHistoryUiState,
-    ): Boolean = oldItem.matchWithTeams.match.matchId == newItem.matchWithTeams.match.matchId
+        oldItem: RigaDelloStorico,
+        newItem: RigaDelloStorico,
+    ): Boolean =
+        when {
+            oldItem is RigaDelloStorico.Partita && newItem is RigaDelloStorico.Partita -> {
+                oldItem.stato.matchWithTeams.match.matchId == newItem.stato.matchWithTeams.match.matchId
+            }
+
+            else -> {
+                oldItem == newItem
+            }
+        }
 
     override fun areContentsTheSame(
-        oldItem: MatchHistoryUiState,
-        newItem: MatchHistoryUiState,
+        oldItem: RigaDelloStorico,
+        newItem: RigaDelloStorico,
     ): Boolean = oldItem == newItem
 }

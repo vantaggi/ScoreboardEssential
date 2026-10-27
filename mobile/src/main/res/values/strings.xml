@@ -229,6 +229,8 @@
     <string name="history_players">Players: %1$s</string>
     <string name="history_meta">%1$s · %2$s</string>
     <string name="history_meta_duration">%1$s · %2$s · %3$s</string>
+    <string name="history_today">Today</string>
+    <string name="history_yesterday">Yesterday</string>
     <string name="match_ready">New match ready</string>
     <string name="match_resumed">Match resumed</string>
     <!-- Le righe informative del registro. In inglese restano le parole di prima, che i test leggono. -->

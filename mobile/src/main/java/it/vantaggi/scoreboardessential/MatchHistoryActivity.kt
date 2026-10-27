@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.ui.EmptyStateView
+import it.vantaggi.scoreboardessential.ui.GiorniDelloStorico
 import it.vantaggi.scoreboardessential.ui.MatchHistoryViewModel
 import it.vantaggi.scoreboardessential.ui.MatchHistoryViewModelFactory
 import it.vantaggi.scoreboardessential.ui.chronicle.ChronicleActivity
@@ -92,7 +93,7 @@ class MatchHistoryActivity : AppCompatActivity() {
 
         viewModel.matchHistory.observe(this) { matches ->
             matches?.let {
-                adapter.submitList(it)
+                adapter.submitList(GiorniDelloStorico.dividi(it))
                 recyclerView.visibility = if (it.isEmpty()) View.GONE else View.VISIBLE
                 emptyState.visibility = if (it.isEmpty()) View.VISIBLE else View.GONE
             }

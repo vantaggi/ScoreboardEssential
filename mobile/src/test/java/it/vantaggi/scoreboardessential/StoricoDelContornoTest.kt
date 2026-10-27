@@ -115,17 +115,18 @@ class StoricoDelContornoTest {
         assertEquals(chiaro, testo(pari, R.id.team2_score_textview).currentTextColor)
     }
 
-    // Un 6-4 di padel, un 2-1 di tennis e un 2-1 di calcio erano indistinguibili.
+    // Un 6-4 di padel, un 2-1 di tennis e un 2-1 di calcio erano indistinguibili. Dal passo 5b la data
+    // e' il titolo del giorno sopra le schede (GiorniDelloStorico): nella riga resta l'ora.
     @Test
     @Config(qualifiers = "it")
-    fun `la riga meta dice sport data e durata`() {
+    fun `la riga meta dice sport ora e durata, il giorno sta nel titolo`() {
         val (_, vista) = scheda(partita(SportRegistry.PADEL, 6 to 4, minuti = 47))
         val meta = testo(vista, R.id.timestamp_textview).text.toString()
-        assertTrue(meta, Regex("""Padel · \d\d/\d\d \d\d:\d\d · 47 min""").matches(meta))
+        assertTrue(meta, Regex("""Padel · \d\d:\d\d · 47 min""").matches(meta))
 
         val (_, senzaDurata) = scheda(partita(SportRegistry.FOOTBALL, 2 to 1))
         val metaSenza = testo(senzaDurata, R.id.timestamp_textview).text.toString()
-        assertTrue(metaSenza, Regex("""Calcio · \d\d/\d\d \d\d:\d\d""").matches(metaSenza))
+        assertTrue(metaSenza, Regex("""Calcio · \d\d:\d\d""").matches(metaSenza))
     }
 
     /**
@@ -148,7 +149,7 @@ class StoricoDelContornoTest {
         val (_, vista) = scheda(ripresa)
 
         val meta = testo(vista, R.id.timestamp_textview).text.toString()
-        assertTrue(meta, Regex("""Calcio · \d\d/\d\d \d\d:\d\d · 2 min""").matches(meta))
+        assertTrue(meta, Regex("""Calcio · \d\d:\d\d · 2 min""").matches(meta))
     }
 
     @Test
