@@ -93,6 +93,7 @@ dependencies {
     implementation libs.androidx.recyclerview
     implementation libs.androidx.wear
     implementation libs.androidx.wear.remote.interactions
+    implementation libs.androidx.wear.ongoing
     implementation libs.androidx.appcompat
     implementation libs.android.material
     implementation libs.androidx.constraintlayout
