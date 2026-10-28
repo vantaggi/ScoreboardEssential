@@ -15,6 +15,10 @@ import it.vantaggi.scoreboardessential.shared.communication.NodoLocale
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.shared.utils.WearDataValidator
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class SimplifiedDataLayerListenerService : WearableListenerService() {
     companion object {
@@ -523,12 +527,23 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         }
         lastSeqByNode[sourceNodeId] = seq
 
-        LocalBroadcastManager.getInstance(this).sendBroadcast(
-            Intent(ACTION_SETTING_INTENT).apply {
-                putExtra(WearConstants.KEY_SETTING, impostazione)
-                putExtra(WearConstants.KEY_SETTING_VALUE, valore)
-            },
-        )
+        val preso =
+            LocalBroadcastManager.getInstance(this).sendBroadcast(
+                Intent(ACTION_SETTING_INTENT).apply {
+                    putExtra(WearConstants.KEY_SETTING, impostazione)
+                    putExtra(WearConstants.KEY_SETTING_VALUE, valore)
+                },
+            )
+        // Senza ViewModel (app non in memoria) il broadcast non ha chi lo prende e la scelta del polso
+        // spariva in silenzio. La durata del portiere non dipende dalla partita: si scrive nelle
+        // impostazioni e vale alla prossima apertura. Il 40-40 no, perche' vale solo a partita ferma e
+        // il motore e' nel ViewModel.
+        if (!preso && impostazione == WearConstants.SETTING_KEEPER) {
+            val secondi = valore.toLongOrNull()
+            if (secondi != null && DurataPortiere.chiestaDalPolsoValida(secondi)) {
+                CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { matchSettingsRepository.setKeeperTimerDuration(secondi) }
+            }
+        }
     }
 
     /**

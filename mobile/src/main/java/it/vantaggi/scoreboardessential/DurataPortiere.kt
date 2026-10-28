@@ -11,6 +11,9 @@ object DurataPortiere {
     private const val MINIMO_SECONDI = 5L
     private const val MASSIMO_SECONDI = 3600L
 
+    /** Le durate che il polso puo' chiedere: 0 (Off) oppure 5 s - 60 min. */
+    fun chiestaDalPolsoValida(secondi: Long): Boolean = secondi == 0L || secondi in MINIMO_SECONDI..MASSIMO_SECONDI
+
     /** 300 -> "5", 270 -> "4,5", 90 -> "1,5". */
     fun minutiDi(secondi: Long): String {
         val interi = secondi / 60

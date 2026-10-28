@@ -123,9 +123,6 @@ enum class EsitoAvvioSerata {
 // Gli sport in cui si gioca a coppie e quindi si puo' fare una serata.
 private val SPORT_DELLA_SERATA = setOf(SportRegistry.PADEL, SportRegistry.TENNIS)
 
-// Le durate del portiere che il polso puo' chiedere, in secondi: oltre e' un valore che il menu non manda.
-private val PORTIERE_SECONDI = 5L..3600L
-
 // Chiavi in app_prefs: l'ultimo arretrato dell'orologio applicato (per nodo, e l'ultimo di tutti).
 private const val PREF_BATCH_APPLICATO = "batch_applicato_"
 private const val PREF_BATCH_APPLICATO_ULTIMO = "batch_applicato_ultimo"
@@ -1335,7 +1332,7 @@ class MainViewModel(
             WearConstants.SETTING_KEEPER -> {
                 val secondi = valore.toLongOrNull()
                 // 0 spegne il portiere: niente conto, niente slot, niente cambio a tempo.
-                if (secondi != null && (secondi == 0L || secondi in PORTIERE_SECONDI) && sportRules.capabilities.hasAuxCountdown) {
+                if (secondi != null && DurataPortiere.chiestaDalPolsoValida(secondi) && sportRules.capabilities.hasAuxCountdown) {
                     viewModelScope.launch { matchSettingsRepository.setKeeperTimerDuration(secondi) }
                     return
                 }

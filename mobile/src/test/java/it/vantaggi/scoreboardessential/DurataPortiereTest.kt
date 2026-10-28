@@ -1,7 +1,9 @@
 package it.vantaggi.scoreboardessential
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -40,5 +42,16 @@ class DurataPortiereTest {
         assertNull(DurataPortiere.secondiDi("61"))
         assertNull(DurataPortiere.secondiDi(""))
         assertNull(DurataPortiere.secondiDi("cinque"))
+    }
+
+    @Test
+    fun `dal polso si accetta Off o da 5 secondi a un'ora`() {
+        assertTrue(DurataPortiere.chiestaDalPolsoValida(0L))
+        assertTrue(DurataPortiere.chiestaDalPolsoValida(5L))
+        assertTrue(DurataPortiere.chiestaDalPolsoValida(360L))
+        assertTrue(DurataPortiere.chiestaDalPolsoValida(3600L))
+        assertFalse(DurataPortiere.chiestaDalPolsoValida(3L))
+        assertFalse(DurataPortiere.chiestaDalPolsoValida(3601L))
+        assertFalse(DurataPortiere.chiestaDalPolsoValida(-1L))
     }
 }
