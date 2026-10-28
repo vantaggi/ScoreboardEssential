@@ -1051,7 +1051,9 @@ class MainViewModel(
     fun discardMatch(): Boolean {
         // Scartata: la diretta si chiude senza risultato (anche se la partita non era ancora cominciata).
         chiudiLaDiretta(conRisultato = false)
-        if (currentMatchId == null && engine.log.isEmpty()) {
+        // Lo stesso criterio di endMatch: uno 0-0 col solo cronometro avviato e' una partita. Senza il
+        // cronometro qui, SCARTA diceva "non iniziata" e lasciava il tempo sul telefono e al polso.
+        if (currentMatchId == null && engine.log.isEmpty() && (matchTimerValue.value ?: 0L) == 0L) {
             dimenticaLIdSeLaPartitaNonE()
             return false
         }

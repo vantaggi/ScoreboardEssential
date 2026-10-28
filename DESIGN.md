@@ -2872,3 +2872,10 @@ Controllo delle home di telefono e orologio contro la Constitution, con le cattu
 - **Debito dichiarato.** Nella riga dello storico il nome resta su una riga coi puntini (`maxLines` 1, com'era): un nome lungo come "Polisportiva Sangiorgese" a 360dp al 200% puo' chiudersi con "…". Da vedere a schermo prima di decidere se andare a capo.
 - **Pattern vietati (`review.md`).** Nessun colore, spazio o durata scritti a mano; nessun elemento nuovo a schermo.
 - **Non visto a schermo**: solo test JVM e CI.
+
+### Seguito dal giro di prove (Fase 4)
+
+- **Cronaca al 200%.** Nel tabellone e nella tabella del servizio la colonna dei nomi ora si stringe (`setColumnShrinkable`): «Polisportiva Sangiorgese» al 200% allargava la tabella oltre il bordo destro del gruppo. Nel tabellone il nome va su due righe al massimo, poi i puntini. Nessun token nuovo.
+- **Ora nello storico.** La riga dice l'ora d'inizio (`startedAt`), come la Cronaca; senza inizio (partite vecchie, 0-0 a tempo) la chiusura. Il titolo del giorno resta sulla chiusura.
+- **Debito dichiarato: la durata.** La durata dello storico e della Cronaca e' il tempo dell'ultimo evento del registro: un calcio chiuso a 15 s col solo gol a 2 s dice "2 s". Il cronometro finale non si salva; servirebbe una colonna nuova (migrazione), quindi resta cosi' finche' il proprietario non lo chiede.
+- **Stati.** Nome corto (una riga), lungo (due righe), lunghissimo (due righe e puntini); testo normale e 200%.
