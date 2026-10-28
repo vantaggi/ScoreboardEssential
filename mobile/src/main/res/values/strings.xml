@@ -66,8 +66,8 @@
     <string name="team_color_use">Use this color</string>
     <string name="cancel">Cancel</string>
     <string name="language">Language</string>
-    <string name="team_1_name">Team 1 name</string>
-    <string name="team_2_name">Team 2 name</string>
+    <string name="team_1_name">Team 1</string>
+    <string name="team_2_name">Team 2</string>
     <string name="keeper_timer_seconds">Keeper timer (seconds)</string>
     <string name="btn_team_1_color">Team 1 color</string>
     <string name="btn_team_2_color">Team 2 color</string>
@@ -228,7 +228,7 @@
     <string name="rules_golden_point">golden point at 40–40</string>
     <string name="rules_advantage">advantage</string>
     <string name="rules_killer_point">one advantage, then golden point</string>
-    <string name="rules_tiebreak_to">tie-break to %1$d</string>
+    <string name="rules_tiebreak_to">tie-break to %1$d</string>
     <string name="rules_stopwatch">Stopwatch</string>
     <string name="rules_keeper_change">keeper change</string>
     <!-- Anteprima del colore di squadra: un punteggio di esempio e il nome -->

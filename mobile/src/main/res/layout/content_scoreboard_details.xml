@@ -404,8 +404,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_8"
+                        android:maxLines="1"
                         android:text="@string/label_pair_swap"
                         app:icon="@drawable/ic_swap_horiz"
+                        app:iconGravity="top"
                         app:iconSize="@dimen/icon_standard" />
                 </LinearLayout>
 
@@ -485,8 +487,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_8"
+                        android:maxLines="1"
                         android:text="@string/label_pair_swap"
                         app:icon="@drawable/ic_swap_horiz"
+                        app:iconGravity="top"
                         app:iconSize="@dimen/icon_standard" />
                 </LinearLayout>
             </LinearLayout>

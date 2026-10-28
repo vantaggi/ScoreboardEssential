@@ -398,6 +398,7 @@
     -->
     <style name="ThemeOverlay.App.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="colorPrimary">@color/elite_lime</item>
+        <item name="colorControlActivated">@color/elite_lime</item>
         <item name="colorSurface">?attr/eliteSurfaceRaised</item>
         <item name="colorOnSurface">?attr/eliteTextPrimary</item>
         <item name="elevationOverlayEnabled">false</item>

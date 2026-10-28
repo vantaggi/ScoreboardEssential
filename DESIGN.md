@@ -2684,6 +2684,8 @@ Difetti trovati e corretti in questa PR:
 
 Difetti noti, non corretti qui (tutti a 360dp e 200%): etichette della schermata di gioco troncate e didascalia "Game" persa; hint "Nome squadra" troncati nelle Impostazioni; la riga delle regole dello Storico lascia il "7" da solo ("tie-break a / 7", anche a 100%); la prima riga del Registro ("Partita ripresa") non ha l'ora. La slider di luminosita' nella ruota del colore non si vede, da verificare.
 
+Seconda prova sul telefono (main d7a7a2c, PR #201): colore squadra, Storico e Impostazioni a righe ok a 100% e a 360dp con 200%. Corretti nel passo seguente, da riguardare a schermo: hint "Squadra 1/2" piu' corti (prima "Nome squadra 1", troncato), il pallino dei fogli di scelta in lime (`colorControlActivated` nell'overlay dei dialoghi, era grigio), il "7" che non va piu' a capo da solo ("tie-break a" e "7" con uno spazio che non spezza), "Scambia" con l'icona sopra il testo (andava a capo a meta' parola), lo slider di luminosita' della ruota con altezza di 48dp (non si vedeva: da verificare). Non corretto: "Vantaggi" troncato nella riga della Coppia e le etichette della schermata di gioco a 360dp e 200%.
+
 ### Debiti dichiarati del passo 7b
 
 1. Nessuna ricerca nel dialogo: con una rosa di cinquanta nomi si scorre ancora. Serve un dialogo con un campo e una lista filtrata al posto dell'adattatore del `MaterialAlertDialog`; non l'ho fatto di notte perche' tocca la scelta dalla dashboard di Padel Elite, che e' in produzione.

@@ -32,16 +32,16 @@ class ImpostazioniDelContornoTest {
     @Test
     @Config(qualifiers = "it")
     fun `in italiano la riga delle regole dice cosa arbitra il motore`() {
-        assertEquals("Set unico · punto secco sul 40–40 · tie-break a 7", sportRulesLine(base, SportRegistry.PADEL))
-        assertEquals("Al meglio di 3 set · vantaggi · tie-break a 7", sportRulesLine(base, SportRegistry.TENNIS))
+        assertEquals("Set unico · punto secco sul 40–40 · tie-break a\u00a07", sportRulesLine(base, SportRegistry.PADEL))
+        assertEquals("Al meglio di 3 set · vantaggi · tie-break a\u00a07", sportRulesLine(base, SportRegistry.TENNIS))
         assertEquals("Cronometro · cambio portiere", sportRulesLine(base, SportRegistry.FOOTBALL))
     }
 
     @Test
     @Config(qualifiers = "en")
     fun `in inglese la riga delle regole e' inglese`() {
-        assertEquals("Single set · golden point at 40–40 · tie-break to 7", sportRulesLine(base, SportRegistry.PADEL))
-        assertEquals("Best of 3 sets · advantage · tie-break to 7", sportRulesLine(base, SportRegistry.TENNIS))
+        assertEquals("Single set · golden point at 40–40 · tie-break to\u00a07", sportRulesLine(base, SportRegistry.PADEL))
+        assertEquals("Best of 3 sets · advantage · tie-break to\u00a07", sportRulesLine(base, SportRegistry.TENNIS))
         assertEquals("Stopwatch · keeper change", sportRulesLine(base, SportRegistry.FOOTBALL))
     }
 
@@ -51,7 +51,7 @@ class ImpostazioniDelContornoTest {
     fun `la riga segue la configurazione del registro e non un testo per sport`() {
         val padel = SportRegistry.byId(SportRegistry.PADEL).config
         val tennis = SportRegistry.byId(SportRegistry.TENNIS).config
-        assertTrue(sportRulesLine(base, SportRegistry.PADEL).contains("tie-break to ${padel.tieBreakTo}"))
+        assertTrue(sportRulesLine(base, SportRegistry.PADEL).contains("tie-break to\u00a0${padel.tieBreakTo}"))
         assertTrue(sportRulesLine(base, SportRegistry.TENNIS).contains("Best of ${tennis.sets} sets"))
     }
 
