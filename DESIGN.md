@@ -905,7 +905,7 @@ Voci:
 - "SPORT" con sottotitolo lo sport in uso. Disattivata (alpha della card 0.5, testo sempre ≥ 4.5:1) con sottotitolo "Partita in corso" oppure "Prima consegna n punti" in ambra.
 - "FINE PARTITA" in #FF1744, sottotitolo "Salva 3–2 sul telefono". Al primo tocco la card si riempie di #FF1744 e dice "CHIUDERE 3–2?" in nero, sottotitolo "Tocca di nuovo". Il secondo tocco vale solo dopo 600ms ed entro 5s, poi la card torna com'era. Niente AlertDialog.
 - FINE PARTITA disattivata in tre casi: con coda > 0 ("Prima consegna n punti"); da scollegati ("Serve il telefono"); nel calcio dopo il primo v2 ("Nel calcio chiudi dal telefono"), finché il rimedio L4 non è fatto.
-Dopo la conferma, la riga E dice "CHIUSURA…" finché non arriva un v2 con matchInProgress=false. Senza risposta entro 10s dice "NON CONFERMATA" in ambra: il comando, inviato urgente, puo' ancora arrivare. La conferma vale solo se il registro passa da pieno a vuoto dopo il comando; a partita non cominciata FINE PARTITA e' spenta ("Niente da salvare").
+Dopo la conferma, la riga E dice "CHIUSURA…" finché non arriva un v2 con matchInProgress=false. Senza risposta entro 10s dice "NON CONFERMATA" in ambra: il comando, inviato urgente, puo' ancora arrivare. La conferma vale solo se il registro passa da pieno a vuoto dopo il comando; a partita non cominciata (registro vuoto e cronometro a zero) FINE PARTITA e' spenta ("Niente da salvare"). Dal 28 ottobre 2026 uno 0-0 col cronometro avviato si chiude anche dal polso, come dal telefono: la voce dice "Salva 0–0" e la conferma di CHIUSURA… e' il MATCH_STATE a false che il telefono manda, urgente, solo da endMatch (il registro resta vuoto, nessun v2 puo' confermarla).
 La voce "n RIFIUTATI" si aggiunge in cima quando L5 porterà il NACK e la schermata di decisione TIENI/SCARTA. Il menu si chiude da solo dopo 10s senza input. La corona lo scorre (requestFocus).
 - **Perche':** Sono azioni da una volta per partita: oggi occupano quasi metà dell'altezza utile e mettono un bersaglio distruttivo sotto il pollice di chi segna senza guardare. Se cambia il significato cambia anche il segno: la card diventa rossa piena. Bloccare la fine con la coda piena impedisce di fondere due partite (L4 alta) finché la logica non sa separarle. Il blocco nel calcio evita di perdere la partita.
 - **File:** `wear/src/main/java/it/vantaggi/scoreboardessential/wear/MenuActivity.kt (nuovo, sul modello di SportSelectionActivity)`, `wear/src/main/java/it/vantaggi/scoreboardessential/wear/MenuVoci.kt (nuovo, funzione pura che decide voci e blocchi)`, `wear/src/test/java/it/vantaggi/scoreboardessential/wear/MenuVociTest.kt (nuovo)`, `wear/src/main/res/layout/activity_menu.xml (nuovo)`, `wear/src/main/res/layout/item_sport_wear.xml (riuso: titolo più riga secondaria)`, `wear/src/main/res/drawable/ic_menu_dots.xml (nuovo)`, `wear/src/main/AndroidManifest.xml`, `wear/src/main/java/it/vantaggi/scoreboardessential/wear/MainActivity.kt (via btn_sport, btn_start_new_match, Toast e AlertDialog)`, `wear/src/main/res/values/strings.xml`, `wear/src/main/res/values-it/strings.xml`
@@ -2494,6 +2494,18 @@ Richiesta del proprietario: dall'orologio i punti arrivano al telefono, ma "non 
 
 1. Il file della partita (export e Diretta) porta gia' la regola in `config.deuce`, e la dashboard la traduce in `goldenPoint` e `killerPoint` (`docs/dashboard/riferimento-match-log.js`): ora puo' valere `KILLER_POINT` o `ADVANTAGE`. Non provato contro la dashboard vera (produzione).
 2. L'orologio non ha un selettore: la regola si sceglie sul telefono.
+
+## Killer point predefinito nel padel - 28 ottobre 2026
+
+Richiesta del proprietario: nel padel "Sul 40-40" parte dal killer point, sul telefono e sull'orologio. L'impostazione e' una sola: vive sul telefono (`MatchSettingsRepository`, chiave `deuce_rule_<sport>`), il polso la legge dallo stato v2 (`deuce_rule`) e la cambia con `SETTING_DEUCE`, che il telefono scrive nella stessa chiave. Quindi cambia un solo punto.
+
+**Cosa cambia.** `SportRegistry.defaultDeuce(id)`: killer point per il padel, la configurazione per gli altri sport. Lo usano `MainViewModel` (`applySport`, `allineaRegolaDel40`) e `MatchSettingsViewModel` dove non c'e' una scelta salvata. Chi ha gia' scelto (anche il punto secco) tiene la sua regola; il tennis resta ai vantaggi. Nessuna migrazione, nessuna chiave nuova, protocollo dell'orologio invariato.
+
+**Cosa NON cambia, di proposito.** La configurazione del padel nel registro resta il punto secco: e' la regola con cui si rigiocano le partite salvate con `deuceRule` vuoto (prima dello schema 16) e il conto dell'orologio senza regola dal telefono. Cambiarla riscriverebbe il registro delle partite vecchie. Le partite nuove salvano sempre il nome della regola.
+
+**Piano UI.** Nessun cambio di interfaccia: stessa riga, stesso selettore, un valore mostrato diverso. Nessun colore, icona, movimento o testo nuovo; nessun conflitto. Controllo dei pattern vietati di `review.md`: niente di nuovo da controllare.
+
+**Come si prova.** `SportRegistryTest` (il predefinito del padel e' il killer point, la configurazione resta il punto secco), `MatchSettingsViewModelTest` (il selettore mostra il killer point senza scelta e la scelta salvata se c'e'), `MainViewModelTest` (padel senza scelta: killer point e lo dice all'orologio; punto secco scelto: resta; riga salvata senza regola: si riprende a punto secco).
 
 ## Revisione di menu e pagine - 27 ottobre 2026
 

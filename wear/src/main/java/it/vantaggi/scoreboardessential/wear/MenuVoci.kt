@@ -49,7 +49,7 @@ sealed class SottotitoloVoce {
 
     data object ServeIlTelefono : SottotitoloVoce()
 
-    /** Registro vuoto: il telefono non salverebbe niente, e la chiusura non avrebbe cosa confermare. */
+    /** Registro vuoto e cronometro a zero: il telefono non salverebbe niente, e la chiusura non avrebbe cosa confermare. */
     data object NienteDaSalvare : SottotitoloVoce()
 
     /** Voce attiva: le due coppie della prossima partita, gia' in sigle ("VAN/GLO – ROS/BIA"). */
@@ -117,6 +117,11 @@ data class InputMenu(
     val vibrazionePunti: Boolean = true,
     /** Lo schermo resta acceso mentre la partita e' in corso. */
     val schermoAcceso: Boolean = false,
+    /**
+     * Il cronometro della partita e' partito: anche a registro vuoto c'e' una partita da salvare (lo 0-0
+     * giocato a tempo), con lo stesso criterio di endMatch sul telefono.
+     */
+    val tempoAvviato: Boolean = false,
 )
 
 /**
@@ -211,15 +216,16 @@ object MenuVoci {
 
     private fun voceFine(input: InputMenu): Voce {
         // L'ordine e' quello del design. Con la coda piena si fonderebbero due partite (L4 alta);
-        // a partita non cominciata non c'e' niente da salvare (il telefono non salva un 0-0 e il
-        // polso aspetterebbe invano la conferma); da scollegati la chiusura non arriverebbe. Nel
+        // a partita non cominciata, registro vuoto e cronometro a zero, non c'e' niente da salvare
+        // (il telefono rifiuta e il polso aspetterebbe invano la conferma); col tempo avviato uno
+        // 0-0 si salva come sul telefono; da scollegati la chiusura non arriverebbe. Nel
         // calcio la voce e' accesa come negli altri sport: la chiusura e' un'intenzione con
         // sequenza e il telefono salva col proprio registro (L4).
         val blocco =
             when {
                 input.rifiutati > 0 -> SottotitoloVoce.CodaRifiutata(input.rifiutati)
                 input.inCoda > 0 -> SottotitoloVoce.PrimaConsegna(input.inCoda)
-                !input.partitaIniziata -> SottotitoloVoce.NienteDaSalvare
+                !input.partitaIniziata && !input.tempoAvviato -> SottotitoloVoce.NienteDaSalvare
                 !input.collegato -> SottotitoloVoce.ServeIlTelefono
                 else -> null
             }

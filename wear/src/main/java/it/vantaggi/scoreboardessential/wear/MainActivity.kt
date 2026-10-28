@@ -205,7 +205,7 @@ class MainActivity : ComponentActivity() {
                     WearDataLayerService.ACTION_MATCH_STATE_UPDATE -> {
                         val isActive = intent.getBooleanExtra(WearDataLayerService.EXTRA_MATCH_ACTIVE, true)
                         if (!isActive) {
-                            viewModel.resetMatch(fromRemote = true)
+                            viewModel.partitaChiusaDalTelefono()
                         }
                     }
 
@@ -585,6 +585,7 @@ class MainActivity : ComponentActivity() {
             portiere = portiereDi(stato),
             vibrazionePunti = PreferenzeDelPolso(this).vibrazionePunti,
             schermoAcceso = PreferenzeDelPolso(this).schermoAcceso,
+            tempoAvviato = viewModel.tempoAvviato,
         )
     }
 

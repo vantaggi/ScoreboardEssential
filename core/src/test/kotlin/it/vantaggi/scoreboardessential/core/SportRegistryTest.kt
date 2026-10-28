@@ -39,6 +39,19 @@ class SportRegistryTest {
         assertEquals(3, tennis.config.sets)
     }
 
+    /**
+     * Il padel nasce al killer point per chi non ha mai scelto, ma il punto secco della configurazione
+     * resta la regola delle partite salvate senza `deuceRule`. Rosso se defaultDeuce torna al punto
+     * secco, o se si cambia la configurazione invece di defaultDeuce (le partite vecchie cambierebbero).
+     */
+    @Test
+    fun `il predefinito del 40-40 e' il killer point nel padel e la configurazione altrove`() {
+        assertEquals(DeuceRule.KILLER_POINT, SportRegistry.defaultDeuce("padel"))
+        assertEquals(DeuceRule.ADVANTAGE, SportRegistry.defaultDeuce("tennis"))
+        assertEquals(DeuceRule.GOLDEN_POINT, (SportRegistry.byId("padel") as RacketRules).config.deuce)
+        assertEquals(DeuceRule.GOLDEN_POINT, (SportRegistry.forMatch("padel") as RacketRules).config.deuce)
+    }
+
     @Test
     fun `il calcio conserva le capacita' che l'interfaccia attuale si aspetta`() {
         val caps = FootballRules.capabilities

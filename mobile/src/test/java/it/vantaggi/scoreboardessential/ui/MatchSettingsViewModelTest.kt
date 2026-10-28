@@ -4,6 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import it.vantaggi.scoreboardessential.core.DeuceRule
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchDao
@@ -186,5 +187,40 @@ class MatchSettingsViewModelTest {
             verify(repository).setTeam1Name(MatchSettingsRepository.DEFAULT_TEAM1_NAME)
             verify(repository).setTeam2Name("Bianchi")
             assertEquals(MatchSettingsRepository.DEFAULT_TEAM1_NAME, viewModel.team1Name.value)
+        }
+
+    /** Le impostazioni col padel come sport e, per il 40-40, [salvata] come scelta (null: mai scelto). */
+    private suspend fun impostazioniDelPadel(salvata: DeuceRule?): MatchSettingsViewModel {
+        val repository = mock(MatchSettingsRepository::class.java)
+        whenever(repository.getTeam1Name()).thenReturn("Team 1")
+        whenever(repository.getTeam2Name()).thenReturn("Team 2")
+        whenever(repository.getTeam1Color()).thenReturn(1)
+        whenever(repository.getTeam2Color()).thenReturn(2)
+        whenever(repository.getKeeperTimerDuration()).thenReturn(300L)
+        whenever(repository.getActiveSport()).thenReturn(SportRegistry.PADEL)
+        whenever(repository.getDeuceRule(SportRegistry.PADEL)).thenReturn(salvata)
+        return MatchSettingsViewModel(repository, mock(MatchDao::class.java))
+    }
+
+    /** Rosso se il predefinito torna al punto secco della configurazione. */
+    @Test
+    fun `nel padel senza scelta il 40-40 mostra il killer point`() =
+        runTest(UnconfinedTestDispatcher()) {
+            Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+            val viewModel = impostazioniDelPadel(salvata = null)
+            viewModel.deuceRule.observe(ProprietarioAttivo()) {}
+
+            assertEquals(DeuceRule.KILLER_POINT, viewModel.deuceRule.value)
+        }
+
+    /** Chi ha scelto il punto secco lo tiene. Rosso se il predefinito vince sulla scelta salvata. */
+    @Test
+    fun `nel padel la scelta salvata vince sul predefinito`() =
+        runTest(UnconfinedTestDispatcher()) {
+            Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+            val viewModel = impostazioniDelPadel(salvata = DeuceRule.GOLDEN_POINT)
+            viewModel.deuceRule.observe(ProprietarioAttivo()) {}
+
+            assertEquals(DeuceRule.GOLDEN_POINT, viewModel.deuceRule.value)
         }
 }

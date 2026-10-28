@@ -727,6 +727,34 @@ class MainViewModelTest {
         }
 
     /**
+     * Uno 0-0 giocato a tempo: nessun punto, cronometro avviato. Si salva come 0-0, e il MATCH_STATE
+     * della chiusura parte urgente, perche' e' l'unica conferma che l'orologio aspetta (il registro resta
+     * vuoto e nessun v2 gli dice che la partita e' chiusa). Rosso se endMatch torna a guardare solo il
+     * registro, o se il MATCH_STATE a false torna non urgente.
+     */
+    @Test
+    fun `uno 0-0 col cronometro avviato si salva e la chiusura arriva urgente all'orologio`() =
+        runTest {
+            val matchDao = campo("matchDao") as MatchDao
+            val connessione = campo("connectionManager") as OptimizedWearDataSync
+            viewModel.selectSport(SportRegistry.FOOTBALL)
+            shadowOf(Looper.getMainLooper()).idle()
+            advanceUntilIdle()
+            assertEquals("senza punti e a tempo fermo non c'e' niente da salvare", false, viewModel.endMatch())
+
+            @Suppress("UNCHECKED_CAST")
+            (campo("_matchTimerValue") as androidx.lifecycle.MutableLiveData<Long>).value = 5 * 60_000L
+
+            assertEquals(true, viewModel.endMatch())
+            advanceUntilIdle()
+            val salvata = org.mockito.kotlin.argumentCaptor<Match>()
+            verify(matchDao).closeMatch(salvata.capture(), any(), any())
+            assertEquals(0, salvata.firstValue.team1Score)
+            assertEquals(0, salvata.firstValue.team2Score)
+            verify(connessione).sendData(eq(WearConstants.PATH_MATCH_STATE), eq(mapOf(WearConstants.KEY_MATCH_ACTIVE to false)), eq(true))
+        }
+
+    /**
      * Rilievo della validazione (L1): la rosa tiene la copia del giocatore letta quando e' stato aggiunto, e la
      * fine partita la riscriveva per intero con un @Update per contare la presenza. Il gol
      * segnato nella partita, gia' scritto nel database, tornava indietro.
@@ -3224,6 +3252,56 @@ class MainViewModelTest {
             assertEquals(DeuceRule.KILLER_POINT, engine.rules.config.deuce)
             val padel = statiV2().filter { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL }
             assertEquals("KILLER_POINT", padel.last()[WearConstants.KEY_DEUCE_RULE])
+        }
+
+    /**
+     * Il padel nasce al killer point per chi non ha mai scelto (28 ottobre 2026) e lo dice anche
+     * all'orologio, che non ha una regola sua. Rosso se applySport torna a leggere la configurazione
+     * del registro (punto secco) quando le impostazioni non hanno una scelta.
+     */
+    @Test
+    fun `il padel senza scelta nel 40-40 gioca il killer point e lo dice all'orologio`() =
+        runTest {
+            val nuovo = nuovoViewModel(sportSalvato = SportRegistry.PADEL)
+            advanceUntilIdle()
+
+            val engine =
+                nuovo.javaClass
+                    .getDeclaredField("engine")
+                    .apply { isAccessible = true }
+                    .get(nuovo) as MatchEngine
+            assertEquals(DeuceRule.KILLER_POINT, engine.rules.config.deuce)
+            val padel = statiV2().last { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL }
+            assertEquals("KILLER_POINT", padel[WearConstants.KEY_DEUCE_RULE])
+        }
+
+    /** Chi ha scelto il punto secco lo tiene anche col nuovo predefinito. Rosso se il predefinito vince sulla scelta. */
+    @Test
+    fun `il punto secco scelto resta il punto secco`() =
+        runTest {
+            val nuovo =
+                nuovoViewModel(
+                    sportSalvato = SportRegistry.PADEL,
+                    regoleDel40 = mapOf(SportRegistry.PADEL to DeuceRule.GOLDEN_POINT),
+                )
+            advanceUntilIdle()
+
+            val padel = statiV2().last { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL }
+            assertEquals("GOLDEN_POINT", padel[WearConstants.KEY_DEUCE_RULE])
+        }
+
+    /**
+     * Una partita salvata prima della versione 16 non ha la regola ("") e si giocava a punto secco:
+     * col nuovo predefinito non deve riaprirsi al killer point, o il suo 40-40 non sarebbe un game.
+     * Rosso se Match.regole() usa il predefinito invece della configurazione per la riga vuota.
+     */
+    @Test
+    fun `una partita di padel senza regola salvata si riprende a punto secco`() =
+        runTest {
+            partitaSalvata("1|1,2,1,2,1,2,1", sportId = SportRegistry.PADEL, deuceRule = "")
+            advanceUntilIdle()
+
+            assertEquals(DeuceRule.GOLDEN_POINT, motore().rules.config.deuce)
         }
 
     /**
