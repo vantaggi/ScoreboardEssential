@@ -329,9 +329,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun osservaPartitaInCorso() {
         lifecycleScope.launch {
-            combine(viewModel.scoreState, viewModel.pendingCount, viewModel.cronometroPartito) { _, _, _ ->
-                viewModel.partitaInCorso
-            }
+            combine(viewModel.scoreState, viewModel.pendingCount, viewModel.cronometroPartito) { _, _, _ -> viewModel.partitaInCorso }
                 .distinctUntilChanged()
                 .collect { sincronizzaPartitaInCorso() }
         }
