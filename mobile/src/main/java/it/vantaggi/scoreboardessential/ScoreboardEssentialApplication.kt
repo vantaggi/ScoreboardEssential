@@ -154,7 +154,11 @@ open class ScoreboardEssentialApplication : Application() {
 
         // Partita Channel (Low Importance - Silent): la notifica fissa del servizio che tiene vivo il motore
         val partitaChannel =
-            NotificationChannel(CHANNEL_ID_PARTITA, getString(R.string.partita_in_corso_channel), NotificationManager.IMPORTANCE_LOW).apply {
+            NotificationChannel(
+                CHANNEL_ID_PARTITA,
+                getString(R.string.partita_in_corso_channel),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
                 setShowBadge(false)
                 setSound(null, null)
                 enableVibration(false)
