@@ -228,7 +228,7 @@ class StrisciaTest {
     @Test
     @Config(qualifiers = "en")
     fun `in inglese il testo segue la lingua`() {
-        assertEquals("Goal Rossi · who scored? ›", striscia(listOf(gol(1, 0))).testo)
+        assertEquals("Goal Rossi\nWho scored? ›", striscia(listOf(gol(1, 0))).testo)
         assertEquals("No goals yet", striscia(emptyList()).testo)
     }
 
