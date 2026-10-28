@@ -44,6 +44,15 @@ object SportRegistry {
     fun selectable(): List<SportRules> = all
 
     /**
+     * La regola del 40-40 di una partita nuova per chi non ha mai scelto: nel padel il killer point,
+     * negli altri sport quella della configurazione. Non e' `byId(id).config.deuce`, che resta il
+     * punto secco: e' la regola con cui si rigiocano le partite salvate con `deuceRule` vuoto (prima
+     * della versione 16 dello schema), e cambiarla riscriverebbe il loro registro. Chi ha una regola
+     * salvata la tiene: questo vale solo dove non c'e' scelta.
+     */
+    fun defaultDeuce(id: String): DeuceRule = if (id == PADEL) DeuceRule.KILLER_POINT else byId(id).config.deuce
+
+    /**
      * Ripiega sul calcio invece di lanciare.
      *
      * Una riga di database con uno `sportId` che questa build non conosce -- perche' l'utente ha

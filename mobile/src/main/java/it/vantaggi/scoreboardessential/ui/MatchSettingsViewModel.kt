@@ -51,8 +51,9 @@ class MatchSettingsViewModel(
     private val _deuceRule = MutableLiveData<DeuceRule>()
 
     /**
-     * La regola del 40-40 in vigore per lo sport scelto: quella scelta, o quella del registro se non
-     * e' mai stata scelta. Nel calcio non vuol dire niente e la schermata non la mostra.
+     * La regola del 40-40 in vigore per lo sport scelto: quella scelta, o il predefinito dello sport
+     * ([SportRegistry.defaultDeuce]) se non e' mai stata scelta. Nel calcio non vuol dire niente
+     * e la schermata non la mostra.
      */
     val deuceRule: LiveData<DeuceRule> = _deuceRule
 
@@ -164,7 +165,7 @@ class MatchSettingsViewModel(
 
     private suspend fun caricaRegolaDel40() {
         val sportId = _activeSport.value ?: return
-        _deuceRule.value = repository.getDeuceRule(sportId) ?: SportRegistry.byId(sportId).config.deuce
+        _deuceRule.value = repository.getDeuceRule(sportId) ?: SportRegistry.defaultDeuce(sportId)
     }
 
     /** Lo stesso criterio di [saveActiveSport]: un registro illeggibile vale come partita iniziata. */
