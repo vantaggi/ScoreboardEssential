@@ -57,6 +57,13 @@ android {
             // con 8 test su 8 "skipped".
             includeAndroidResources = true
         }
+        unitTests.all {
+            // Nel log della CI il messaggio dell'asserzione, non solo file e riga: il rapporto
+            // dei test e' un artefatto che dal container non si scarica.
+            testLogging {
+                exceptionFormat "full"
+            }
+        }
     }
     buildFeatures {
         buildConfig true

@@ -241,14 +241,20 @@ class OrologioG7Test {
 
         assertEquals("15", s.cifra.text.toString())
         assertEquals("il fantasma della cifra vecchia", 2, s.genitore.childCount)
-        // Sotto Robolectric il looper porta l'animazione a fine corsa in un colpo: si guarda a meta'
-        // spostando l'animatore, come farebbe il tempo.
-        s.rotolo.corsa!!.setCurrentPlayTime(80)
+        // Sotto Robolectric il looper porta l'animazione a fine corsa in un colpo: si guarda dentro
+        // spostando l'animatore, come farebbe il tempo. Prima esce la vecchia, poi entra la nuova
+        // (bozza W4a): a 40ms la nuova non si vede ancora, a 120ms la vecchia non si vede piu'.
+        s.rotolo.corsa!!.setCurrentPlayTime(40)
         val uscente = s.genitore.getChildAt(1) as TextView
         assertEquals("0", uscente.text.toString())
         assertEquals("il fantasma e' nascosto a TalkBack", View.IMPORTANT_FOR_ACCESSIBILITY_NO, uscente.importantForAccessibility)
         assertTrue("la vecchia sale (y negativo): ${uscente.translationY}", uscente.translationY < 0f)
+        assertTrue("la vecchia sta uscendo: alpha ${uscente.alpha}", uscente.alpha in 0.01f..0.99f)
+        assertEquals("mentre esce la vecchia la nuova non si vede", 0f, s.cifra.alpha, 0f)
+        s.rotolo.corsa!!.setCurrentPlayTime(120)
+        assertEquals("mentre entra la nuova la vecchia non si vede piu'", 0f, uscente.alpha, 0f)
         assertTrue("la nuova arriva dal basso (y positivo): ${s.cifra.translationY}", s.cifra.translationY > 0f)
+        assertTrue("la nuova sta entrando: alpha ${s.cifra.alpha}", s.cifra.alpha in 0.01f..0.99f)
         s.genitore.measure(
             View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY),
@@ -269,10 +275,11 @@ class OrologioG7Test {
         val s = montaLaCifra("30")
 
         s.rotolo.mostra("15", NumberRoll.GIU)
-        s.rotolo.corsa!!.setCurrentPlayTime(80)
+        s.rotolo.corsa!!.setCurrentPlayTime(40)
 
         val uscente = s.genitore.getChildAt(1)
         assertTrue("la vecchia scende (y positivo)", uscente.translationY > 0f)
+        s.rotolo.corsa!!.setCurrentPlayTime(120)
         assertTrue("la nuova arriva dall'alto (y negativo)", s.cifra.translationY < 0f)
         passa(300)
     }
@@ -289,7 +296,7 @@ class OrologioG7Test {
         // Con la direzione sbagliata il test di sopra fallirebbe: la cifra nuova partirebbe dall'altra parte.
         val s = montaLaCifra("0")
         s.rotolo.mostra("15", NumberRoll.GIU)
-        s.rotolo.corsa!!.setCurrentPlayTime(80)
+        s.rotolo.corsa!!.setCurrentPlayTime(120)
         assertTrue("salendo col verso sbagliato la nuova arriva dall'alto", s.cifra.translationY < 0f)
         passa(300)
     }
@@ -303,7 +310,8 @@ class OrologioG7Test {
         val s = montaLaCifra("0")
         s.rotolo.mostra("15", NumberRoll.SU)
         assertEquals(s.cifra.height * 0.25f, s.cifra.translationY, 0.5f)
-        assertEquals(160L, s.rotolo.corsa!!.duration)
+        // Uscita e entrata una dopo l'altra, 80ms ciascuna: in tutto duration_fast.
+        assertEquals(160L, s.rotolo.corsa!!.totalDuration)
         passa(300)
     }
 

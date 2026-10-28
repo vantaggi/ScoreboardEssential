@@ -13,15 +13,18 @@ import androidx.constraintlayout.widget.ConstraintLayout
 /**
  * NumberRoll della UI Constitution (components/NumberRoll) sulle cifre del quadrante, con la corsa
  * piu' breve di wearable.md: il valore che cambia di un passo mostra la direzione del cambio. Salendo
- * la cifra vecchia esce in alto e la nuova arriva dal basso, scendendo il contrario.
+ * la cifra vecchia esce in alto e la nuova arriva dal basso, scendendo il contrario. Una dopo l'altra
+ * (bozza W4a di Cioti): la vecchia esce nella prima meta' della durata, la nuova entra nella
+ * seconda. Insieme si accavallavano, mezze trasparenti («40» sopra «0»).
  *
  * ```text
  * Transition name: Value step (orologio)
  * Trigger: il punteggio di un lato cambia di un passo mentre lo schermo e' acceso e guardato
  * Persistent element: la scatola della cifra (larghezza fissa dalle colonne del quadrante)
  * Animated properties: translationY e alpha, niente layout
- * Duration or spring token: duration_fast con ease_standard (nessuna molla: la corsa e' un quarto
- *   dell'altezza della scatola, e non c'e' posizione da far assestare)
+ * Duration or spring token: duration_fast con ease_standard, divisa in due meta' in sequenza (uscita,
+ *   poi entrata); nessuna molla: la corsa e' un quarto dell'altezza della scatola, e non c'e'
+ *   posizione da far assestare
  * Interruption behavior: un cambio nuovo sostituisce subito quello in corso
  * Reduced-motion fallback: la cifra si sostituisce subito, senza traslazione ne' fantasma
  * Purpose: far vedere che il punteggio e' cambiato e in che verso
@@ -82,16 +85,28 @@ internal class NumberRoll(
         val verso = if (direzione > 0) -1f else 1f
         cifra.translationY = -verso * corsaInPixel
         cifra.alpha = 0f
-        val insieme =
+        // Due meta' della stessa durata: mai due cifre a schermo nello stesso istante.
+        val uscita =
             AnimatorSet().apply {
                 playTogether(
                     ObjectAnimator.ofFloat(uscente, View.TRANSLATION_Y, 0f, verso * corsaInPixel),
                     ObjectAnimator.ofFloat(uscente, View.ALPHA, 1f, 0f),
+                )
+                duration = durata / 2
+                interpolator = curva
+            }
+        val entrata =
+            AnimatorSet().apply {
+                playTogether(
                     ObjectAnimator.ofFloat(cifra, View.TRANSLATION_Y, -verso * corsaInPixel, 0f),
                     ObjectAnimator.ofFloat(cifra, View.ALPHA, 0f, 1f),
                 )
-                duration = durata
+                duration = durata - durata / 2
                 interpolator = curva
+            }
+        val insieme =
+            AnimatorSet().apply {
+                playSequentially(uscita, entrata)
                 addListener(
                     object : AnimatorListenerAdapter() {
                         override fun onAnimationEnd(animation: Animator) = ripulisci()

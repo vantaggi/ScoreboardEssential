@@ -3,12 +3,13 @@
     <!--
     Quadrato grande: sw210dp vincerebbe da solo su notround (la soglia di larghezza viene prima nella
     precedenza dei qualificatori), quindi la combinazione ha il suo file. Misure grandi, margini di
-    fascia a 0.
+    fascia a 12dp, dentro l'anello lungo la cornice.
     -->
-    <dimen name="face_margin_d">0dp</dimen>
-    <dimen name="face_margin_e">0dp</dimen>
+    <dimen name="face_margin_d">12dp</dimen>
+    <dimen name="face_margin_e">12dp</dimen>
+    <dimen name="face_margin_e_cronometro">12dp</dimen>
 
-    <dimen name="face_dot_inset">6dp</dimen>
+    <dimen name="face_dot_inset">16dp</dimen>
     <dimen name="face_digits_outer">14dp</dimen>
     <dimen name="face_stripe_inset">45dp</dimen>
 
