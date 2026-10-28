@@ -379,8 +379,8 @@ class ColonnaDiGiocoTest {
             // Il nome e la barretta stanno nella riga dei nomi da 48dp.
             val riga = radice.findViewById<View>(R.id.names_row)
             val barretta = radice.findViewById<View>(R.id.team1_color_bar)
-            val fondo = IntArray(2).also { barretta.getLocationInWindow(it) }[1] + barretta.height
-            val cima = IntArray(2).also { riga.getLocationInWindow(it) }[1]
+            val fondo = cimaNellaRadice(barretta) + barretta.height
+            val cima = cimaNellaRadice(riga)
             assertTrue("a scala $scala la barretta esce dalla riga dei nomi", fondo - cima <= riga.height)
             assertNomeIntero("a scala $scala", nome1, barretta)
             altezzeDelNome += nome1.layout.height
@@ -397,6 +397,20 @@ class ColonnaDiGiocoTest {
     }
 
     /**
+     * La cima della vista nella radice gonfiata. Non getLocationInWindow: senza finestra da' sempre
+     * 0, e il confronto fra barretta e riga dei nomi passava comunque.
+     */
+    private fun cimaNellaRadice(vista: View): Int {
+        var cima = 0
+        var corrente: View? = vista
+        while (corrente != null) {
+            cima += corrente.top
+            corrente = corrente.parent as? View
+        }
+        return cima
+    }
+
+    /**
      * Il nome si legge intero: la vista e' alta quanto le sue righe (la «g» di «Sangiorgese» non e'
      * tagliata in fondo) e finisce prima della barretta, che ha il suo margine sopra.
      */
@@ -407,8 +421,8 @@ class ColonnaDiGiocoTest {
     ) {
         val righe = nome.layout.height + nome.totalPaddingTop + nome.totalPaddingBottom
         assertTrue("$quando il nome ha righe alte ${righe}px in una vista di ${nome.height}px", righe <= nome.height)
-        val fondoDelNome = IntArray(2).also { nome.getLocationInWindow(it) }[1] + nome.height
-        val cimaDellaBarretta = IntArray(2).also { barretta.getLocationInWindow(it) }[1]
+        val fondoDelNome = cimaNellaRadice(nome) + nome.height
+        val cimaDellaBarretta = cimaNellaRadice(barretta)
         assertTrue(
             "$quando il nome finisce a ${fondoDelNome}px e la barretta comincia a ${cimaDellaBarretta}px",
             fondoDelNome <= cimaDellaBarretta,
