@@ -27,6 +27,19 @@ class CoppieAlPolsoTest {
         assertEquals(true, CoppieAlPolso.dati(emptyList(), emptyList(), serata.consegna()) { nomi[it] }[WearConstants.KEY_NEXT_DELIVERED])
     }
 
+    /** Rosso se il polso torna a leggere "PRO/PRO - PRO/PRO", come al giro sugli emulatori. */
+    @Test
+    fun `con nomi che cominciano uguale le sigle delle due coppie si distinguono`() {
+        val prova = mapOf(1 to "Prova 1", 2 to "Prova 2", 3 to "Prova 3", 4 to "Prova 4")
+        val serata = Serata.nuova(listOf(1, 2, 3, 4))
+        val posti = serata.bozza!!.posti.map { prova.getValue(it) }
+
+        val dati = CoppieAlPolso.dati(emptyList(), emptyList(), serata) { prova[it] }
+
+        val sigle = posti.map { "PRO" + it.last() }
+        assertEquals("${sigle[0]}/${sigle[1]}|${sigle[2]}/${sigle[3]}", dati[WearConstants.KEY_NEXT_LABELS])
+    }
+
     @Test
     fun `senza serata, senza bozza o con un nome mancante non si propone niente`() {
         listOf(

@@ -2451,13 +2451,23 @@ Richiesta del proprietario: dal menu dell'orologio sapere chi gioca in ogni squa
 - **Stati**: normale, premuto, acceso/spento, errore (campo con un valore non valido: resta l'ultima durata), in corso (il conto in corso si ferma se si spegne), sola lettura (nessuno), movimento ridotto (nessun movimento nuovo).
 - **Non visto a schermo** quando scritto: da provare su telefono e orologio.
 
+### Correzioni dal giro unico sugli emulatori (28 ottobre 2026)
+
+Il giro unico su `main` (telefono Pixel_9a e orologio Wear OS tondo, accoppiati) ha trovato quattro cose sulle coppie e sul portiere.
+
+- **Sigle uguali.** Con i giocatori di prova ("Prova 1".."Prova 4") la Prossima partita diceva "PRO/PRO – PRO/PRO"; capita anche con cognomi che cominciano uguale. `EtichettaSquadra.sigle` le distingue fra i quattro in campo: chi si ripete prende la quarta lettera del cognome, poi le prime tre piu' l'iniziale della seconda parola ("PRO1/PRO2", "ROSM/ROSL"); due nomi identici restano uguali. Vale sul tabellone, al polso (stato e `PATH_PAIRS`) e nelle partite salvate, perche' passa tutto da `EtichettaSquadra.di` con gli avversari. Al massimo nove caratteri ("VANT/GLO"): entrano nella sigla del polso (`Widget.App.Sigla`, una riga) e nel nome del tabellone, che ha l'ellissi.
+- **La Serata del telefono aperta non seguiva il polso.** Ruota, scambio e Inizia fatti dall'orologio li scrive `MainViewModel`; la schermata li rileggeva solo tornando in primo piano. Ora ascolta la chiave `serata` delle preferenze mentre e' visibile (`onStart`/`onStop`) e `SerataViewModel.allineaAllaMemoria` si allinea: coppie nuove, selezione buttata, sola lettura dopo Inizia e di nuovo modificabile a partita chiusa. Una scrittura della schermata stessa non cambia niente (la memoria dice gia' quello che si vede).
+- **"4 min 30 s".** Sul polso un decimo di minuto esatto si scrive coi decimali, come nel campo del telefono: 270 s e' "4,5 min", 90 s "1,5 min"; 80 s resta "1 min 20 s", sotto il minuto "45 s".
+- **Portiere Off, "K" che resta ~10 s.** Sul telefono lo slot sparisce subito; lo stato v2 parte subito e urgente, quindi il ritardo e' del Data Layer fra gli emulatori (che passa dal cloud, visto al giro). Non corretto: da guardare sul polso vero; se resta, la strada e' applicare la scelta Off sul quadrante senza aspettare la risposta.
+- **Stati**: invariati (nessun componente nuovo). Movimento: nessuno nuovo; la Serata si ridisegna come quando torna in primo piano.
+
 ### Protocollo (additivo, golden test di `:shared`)
 
 `PATH_PAIRS` (DataItem del telefono: rose, prossima partita, sigle, panchina, spareggio, consegnata, versione) e `MSG_SERATA_INTENT` (messaggio del polso con azione, base, posti e sequenza). Le sequenze del polso restano una sola per nodo (`SequenzaDelPolso`): quadrante e schermata non si scavalcano. Impostazioni: `KEY_DEUCE_IDS`, `KEY_DEUCE_LABELS`, `KEY_KEEPER_SECONDS` (0 se il portiere e' spento) e `KEY_KEEPER_OFFERED` nello stato v2 e `MSG_SETTING_INTENT` (`setting`, `setting_value`, `seq`).
 
 ### Debiti
 
-- La schermata Serata del telefono non si ridisegna mentre l'orologio cambia la bozza: la rilegge quando torna in primo piano.
+- ~~La schermata Serata del telefono non si ridisegna mentre l'orologio cambia la bozza~~: corretto dopo il giro sugli emulatori (vedi "Correzioni dal giro unico").
 - Con l'app del telefono chiusa la richiesta del polso va persa (nessuna custodia come per i punti): l'orologio dice "Il telefono non ha risposto".
 - `WearViewModel.applicaCoppie` non ha un test suo; le descrizioni TalkBack del quadrante non dicono i giocatori.
 - `clipToOutline` dei gruppi vale da API 31 (minimo 30), come nella scelta dello sport.

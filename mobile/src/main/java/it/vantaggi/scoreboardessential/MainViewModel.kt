@@ -478,23 +478,25 @@ class MainViewModel(
     val team2ChosenName: LiveData<String> = _team2Name
 
     /** Il nome mostrato della squadra 1: quello scelto, "VAN/GLO" o "Squadra 1" nella lingua in uso. */
-    val team1Name: LiveData<String> = nomeMostrato(_team1Name, _team1Players, R.string.label_team_1)
+    val team1Name: LiveData<String> = nomeMostrato(_team1Name, _team1Players, _team2Players, R.string.label_team_1)
 
     /** Il nome mostrato della squadra 2: quello scelto, "VAN/GLO" o "Squadra 2" nella lingua in uso. */
-    val team2Name: LiveData<String> = nomeMostrato(_team2Name, _team2Players, R.string.label_team_2)
+    val team2Name: LiveData<String> = nomeMostrato(_team2Name, _team2Players, _team1Players, R.string.label_team_2)
 
     private fun nomeMostrato(
         scelto: LiveData<String>,
         rosa: LiveData<List<PlayerWithRoles>>,
+        avversari: LiveData<List<PlayerWithRoles>>,
         @StringRes predefinitoLocale: Int,
     ): LiveData<String> =
         MediatorLiveData<String>().apply {
             fun ricalcola() {
-                val nome = EtichettaSquadra.mostrato(nomeSegnale(scelto, rosa), testo(predefinitoLocale))
+                val nome = EtichettaSquadra.mostrato(nomeSegnale(scelto, rosa, avversari), testo(predefinitoLocale))
                 if (value != nome) value = nome
             }
             addSource(scelto) { ricalcola() }
             addSource(rosa) { ricalcola() }
+            addSource(avversari) { ricalcola() }
         }
 
     /**
@@ -504,7 +506,13 @@ class MainViewModel(
     private fun nomeSegnale(
         scelto: LiveData<String>,
         rosa: LiveData<List<PlayerWithRoles>>,
-    ): String = EtichettaSquadra.di(scelto.value.orEmpty(), rosa.value.orEmpty().map { it.player.playerName })
+        avversari: LiveData<List<PlayerWithRoles>>,
+    ): String =
+        EtichettaSquadra.di(
+            scelto.value.orEmpty(),
+            rosa.value.orEmpty().map { it.player.playerName },
+            avversari.value.orEmpty().map { it.player.playerName },
+        )
 
     // Team Colors: i predefiniti hanno una sola fonte, ColorRepository (giallo e verde).
     private val _team1Color = MutableLiveData(colorRepository.getTeam1DefaultColor())
@@ -2661,8 +2669,8 @@ class MainViewModel(
         viewModelScope.launch {
             val data =
                 mapOf(
-                    WearConstants.KEY_TEAM1_NAME to nomeSegnale(_team1Name, _team1Players),
-                    WearConstants.KEY_TEAM2_NAME to nomeSegnale(_team2Name, _team2Players),
+                    WearConstants.KEY_TEAM1_NAME to nomeSegnale(_team1Name, _team1Players, _team2Players),
+                    WearConstants.KEY_TEAM2_NAME to nomeSegnale(_team2Name, _team2Players, _team1Players),
                 )
             connectionManager.sendData(
                 path = WearConstants.PATH_TEAM_NAMES,
@@ -2821,11 +2829,11 @@ class MainViewModel(
     fun shareMatchResults() {
         val data =
             MatchReportData(
-                team1Name = nomeSegnale(_team1Name, _team1Players),
+                team1Name = nomeSegnale(_team1Name, _team1Players, _team2Players),
                 team1Score = _team1Score.value ?: 0,
                 team1Color = _team1Color.value,
                 team1Players = _team1Players.value ?: emptyList(),
-                team2Name = nomeSegnale(_team2Name, _team2Players),
+                team2Name = nomeSegnale(_team2Name, _team2Players, _team1Players),
                 team2Score = _team2Score.value ?: 0,
                 team2Color = _team2Color.value,
                 team2Players = _team2Players.value ?: emptyList(),

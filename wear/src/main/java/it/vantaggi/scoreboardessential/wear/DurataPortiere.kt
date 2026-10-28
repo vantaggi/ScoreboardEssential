@@ -1,6 +1,7 @@
 package it.vantaggi.scoreboardessential.wear
 
 import android.content.Context
+import java.text.NumberFormat
 
 /**
  * Le durate del portiere fra cui si sceglie dal polso: sul tondo non si scrive un numero, si sceglie
@@ -19,7 +20,10 @@ object DurataPortiere {
     private const val MINUTO = 60L
 }
 
-/** "Off", "45 s", "2 min", "1 min 30 s". */
+/**
+ * "Off", "45 s", "2 min", "4,5 min", "1 min 20 s". Un decimo di minuto esatto si scrive coi decimali, come
+ * nel campo del telefono: 4,5 scritto li' si leggeva "4 min 30 s" sul polso.
+ */
 internal fun etichettaPortiere(
     context: Context,
     secondi: Long,
@@ -30,6 +34,13 @@ internal fun etichettaPortiere(
     return when {
         minuti == 0 -> context.getString(R.string.wear_keeper_seconds, resto)
         resto == 0 -> context.getString(R.string.wear_keeper_minutes, minuti)
+        resto % SECONDI_PER_DECIMO == 0 -> {
+            val formato = NumberFormat.getNumberInstance(context.resources.configuration.locales[0])
+            formato.maximumFractionDigits = 1
+            context.getString(R.string.wear_keeper_minutes_decimal, formato.format(secondi / 60.0))
+        }
         else -> context.getString(R.string.wear_keeper_minutes_seconds, minuti, resto)
     }
 }
+
+private const val SECONDI_PER_DECIMO = 6

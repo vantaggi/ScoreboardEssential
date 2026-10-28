@@ -37,9 +37,10 @@ object CoppieAlPolso {
             if (proposta == null) {
                 ""
             } else {
-                listOf(nomi.subList(0, 2), nomi.subList(2, 4)).joinToString(WearConstants.SPORT_SEPARATOR) {
-                    pulito(EtichettaSquadra.di("", it))
-                }
+                val uno = nomi.subList(0, 2)
+                val due = nomi.subList(2, 4)
+                listOf(EtichettaSquadra.di("", uno, due), EtichettaSquadra.di("", due, uno))
+                    .joinToString(WearConstants.SPORT_SEPARATOR) { pulito(it) }
             }
         return mapOf(
             WearConstants.KEY_TEAM1_ROSTER to elenco(rosa1),
