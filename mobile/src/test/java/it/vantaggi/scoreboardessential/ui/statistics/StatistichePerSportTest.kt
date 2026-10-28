@@ -200,6 +200,21 @@ class StatistichePerSportTest {
     }
 
     @Test
+    fun `toccando una riga si apre la scheda di quel giocatore`() {
+        sport(SportRegistry.PADEL)
+        partita(SportRegistry.PADEL, listOf(1, 2), listOf(3, 4))
+        val statistiche = Robolectric.buildActivity(StatisticsActivity::class.java).setup().get()
+        val lista = statistiche.findViewById<RecyclerView>(R.id.recycler_stats)
+        attendi("la classifica non e' arrivata") { righe(lista).size == 4 }
+
+        righe(lista).first().performClick()
+
+        val aperta = shadowOf(statistiche).nextStartedActivity
+        assertEquals(SchedaGiocatoreActivity::class.java.name, aperta.component?.className)
+        assertEquals(1, aperta.getIntExtra(SchedaGiocatoreActivity.EXTRA_PLAYER_ID, -1))
+    }
+
+    @Test
     fun `nel padel la classifica e' delle partite vinte, senza schede`() {
         sport(SportRegistry.PADEL)
         runBlocking {

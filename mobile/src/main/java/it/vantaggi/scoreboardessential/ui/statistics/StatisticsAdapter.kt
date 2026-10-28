@@ -10,7 +10,10 @@ import androidx.recyclerview.widget.RecyclerView
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.domain.model.PlayerStatsDTO
 
-class StatisticsAdapter : ListAdapter<PlayerStatsDTO, StatisticsAdapter.ViewHolder>(DiffCallback()) {
+/** [onPlayerClick] apre la scheda del giocatore: la riga si tocca e la freccia lo dice. */
+class StatisticsAdapter(
+    private val onPlayerClick: (Int) -> Unit = {},
+) : ListAdapter<PlayerStatsDTO, StatisticsAdapter.ViewHolder>(DiffCallback()) {
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int,
@@ -26,7 +29,9 @@ class StatisticsAdapter : ListAdapter<PlayerStatsDTO, StatisticsAdapter.ViewHold
         holder: ViewHolder,
         position: Int,
     ) {
-        holder.bind(getItem(position), position, leader = position == 0 && Classifica.haUnPrimo(currentList.map { it.goals }))
+        val item = getItem(position)
+        holder.bind(item, position, leader = position == 0 && Classifica.haUnPrimo(currentList.map { it.goals }))
+        holder.itemView.setOnClickListener { onPlayerClick(item.playerId) }
     }
 
     /**
@@ -40,6 +45,10 @@ class StatisticsAdapter : ListAdapter<PlayerStatsDTO, StatisticsAdapter.ViewHold
     ) : RecyclerView.ViewHolder(itemView) {
         private val nameTextView: TextView = itemView.findViewById(R.id.text_player_name)
         private val goalsTextView: TextView = itemView.findViewById(R.id.text_goals)
+
+        init {
+            itemView.findViewById<View>(R.id.stat_chevron).visibility = View.VISIBLE
+        }
 
         fun bind(
             item: PlayerStatsDTO,

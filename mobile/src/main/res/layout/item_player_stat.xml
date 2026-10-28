@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Una riga della classifica: il nome e il valore che conta (i gol). Sta dentro un gruppo, non e' una card. -->
+<!--
+    Una riga della classifica: il nome e il valore che conta (i gol). Sta dentro un gruppo, non e' una card.
+    Nelle Statistiche si tocca per aprire la scheda del giocatore e la freccia lo dice; nella scheda la
+    stessa riga e' solo nome e valore, senza freccia.
+-->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/card_player_stat"
+    style="@style/Widget.App.Pressable"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:foreground="@drawable/bg_focus_ring"
     android:minHeight="56dp"
-    android:paddingHorizontal="@dimen/space_16"
+    android:paddingStart="@dimen/space_16"
+    android:paddingEnd="@dimen/space_16"
     android:paddingVertical="@dimen/space_8">
 
     <TextView
@@ -28,12 +35,27 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/space_16"
+        android:layout_marginEnd="@dimen/space_8"
         android:textAppearance="@style/TextAppearance.App.Punteggio"
         android:textColor="@color/elite_text_primary"
         android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/stat_chevron"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_goneMarginEnd="0dp"
+        tools:text="12 gol" />
+
+    <!-- Decorativa: la riga intera e' il comando, e TalkBack la legge come tale. Solo nelle Statistiche. -->
+    <ImageView
+        android:id="@+id/stat_chevron"
+        android:layout_width="@dimen/icon_standard"
+        android:layout_height="@dimen/icon_standard"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_chevron_right"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="12 gol" />
+        app:tint="@color/elite_text_secondary" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

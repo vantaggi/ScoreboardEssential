@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Un blocco della scheda del giocatore: il titolo dello sport (intestazione per TalkBack, come i
+    giorni dello Storico) e sotto un gruppo tonale. Le righe nome e valore si aggiungono da codice.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/block_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:accessibilityHeading="true"
+        android:paddingHorizontal="@dimen/space_16"
+        android:paddingTop="@dimen/space_16"
+        android:paddingBottom="@dimen/space_4"
+        android:textAppearance="@style/TextAppearance.App.RowTitle"
+        android:textColor="@color/elite_text_secondary"
+        tools:text="Calcio" />
+
+    <com.google.android.material.card.MaterialCardView
+        style="@style/Widget.App.Group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/space_16"
+        android:layout_marginTop="@dimen/space_4">
+
+        <LinearLayout
+            android:id="@+id/block_rows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </com.google.android.material.card.MaterialCardView>
+</LinearLayout>

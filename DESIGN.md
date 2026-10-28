@@ -2763,3 +2763,19 @@ Scelta di Cioti sulla bozza 3 (B e C, 28 ottobre 2026): l'app ha un tema chiaro 
 2. La finestra di avvio e l'icona adattiva restano scure.
 3. "Come il telefono": la logica e' provata dai test (notte e giorno), non a schermo; il cambio di notte con l'app aperta lo gestisce il sistema ricreando l'activity, le altre si ricreano al ritorno in primo piano.
 4. Nel calcio i nomi di default compaiono come "Team 1" e "Team 2" nel gioco e nelle Formazioni (nei dati salvati, non nel campo del nome): da guardare.
+
+### Statistiche per sport: la scheda del giocatore (28 ottobre 2026, bozza B)
+
+Cioti ha scelto la A e ha detto che la B va bene dopo. La A dice chi e' in testa in uno sport; la B risponde a «dentro il singolo giocatore vedo il padel e il calcio».
+
+- **Gerarchia e layout.** Le righe delle Statistiche (calcio e padel/tennis) si toccano e hanno la freccia `chevron_right`, come in Giocatori. Si apre la scheda: in barra il nome del giocatore, sotto un blocco per ogni sport che ha giocato (titolo dello sport come i giorni dello Storico, `RowTitle` in testo secondario e intestazione per TalkBack; poi un gruppo tonale con righe nome e valore: Partite, Vinte e, solo nel calcio, Gol). Uno sport senza partite ne' gol non compare. La logica sta in `SchedaDelGiocatore.blocchi` (funzione pura).
+- **Componenti riusati.** La riga `item_player_stat` (la freccia e' nascosta nella scheda), il gruppo `Widget.App.Group`, la linea rientrata di `border_strong`, lo stato vuoto. Nessun token, colore o spaziatura nuovi; `item_sport_block` e `activity_scheda_giocatore` sono layout nuovi che compongono questi pezzi.
+- **Stati.** Con partite (un blocco per sport); senza partite (stato vuoto "Nessuna partita" con il perche'); giocatore cancellato mentre la scheda e' aperta (la scheda si chiude); riga premuta e con il fuoco (`Widget.App.Pressable`, anello). TalkBack legge ogni riga come «Partite: 12». Movimento: nessuno nuovo; la scheda si apre con la transizione di sistema, non il container transform di `RowDetail`: **conflitto dichiarato**, da rivedere a schermo.
+- **200% e schermo stretto.** Il nome si tronca su una riga e il valore resta a destra; la scheda scorre.
+- **Pattern vietati.** Niente card per sport (sono gruppi), niente ombre, niente blocchi uguali per sport senza dati.
+
+### Debiti dichiarati della scheda del giocatore
+
+1. Niente container transform dalla riga alla scheda (`RowDetail`): si apre come un'altra schermata.
+2. La scheda non mostra i ruoli ne' permette di modificare il giocatore (resta in Giocatori).
+3. Non visto a schermo: verificato solo dai test e dalla CI.

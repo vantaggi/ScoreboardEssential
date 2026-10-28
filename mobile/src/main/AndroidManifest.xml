@@ -61,6 +61,9 @@
         <activity android:name=".ui.statistics.StatisticsActivity" android:exported="false" android:label="@string/title_statistics" android:parentActivityName=".MainActivity">
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".MainActivity" />
         </activity>
+        <activity android:name=".ui.statistics.SchedaGiocatoreActivity" android:exported="false" android:label="@string/title_player" android:parentActivityName=".ui.statistics.StatisticsActivity">
+            <meta-data android:name="android.support.PARENT_ACTIVITY" android:value=".ui.statistics.StatisticsActivity" />
+        </activity>
         <!--
             Nessun android:permission su questo servizio. Qui c'era BIND_WEARABLE_LISTENER_SERVICE,
             messo per restringere chi puo' collegarsi: ma Google Play Services quel permesso non

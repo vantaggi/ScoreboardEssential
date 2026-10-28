@@ -387,6 +387,12 @@
         <item quantity="other">%1$d vinte su %2$d</item>
     </plurals>
     <string name="stats_record_description">%1$d. %2$s, %3$s</string>
+    <string name="sheet_matches">Partite</string>
+    <string name="sheet_won">Vinte</string>
+    <string name="sheet_goals">Gol</string>
+    <string name="sheet_row_description">%1$s: %2$d</string>
+    <string name="sheet_empty_title">Nessuna partita</string>
+    <string name="sheet_empty_hint">Le partite si contano dalle partite chiuse con i giocatori in campo. Salva una partita con le coppie per vederle qui.</string>
     <string name="stats_wins_heading">Partite vinte</string>
     <string name="stats_wins_empty_hint">Le partite vinte si contano dalle partite chiuse con i giocatori in campo. Salva una partita con le coppie per vederle qui.</string>
     <string name="settings_teams_title">Squadre</string>

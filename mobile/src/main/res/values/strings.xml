@@ -382,6 +382,12 @@
         <item quantity="other">%1$d wins of %2$d</item>
     </plurals>
     <string name="stats_record_description">%1$d. %2$s, %3$s</string>
+    <string name="sheet_matches">Matches</string>
+    <string name="sheet_won">Won</string>
+    <string name="sheet_goals">Goals</string>
+    <string name="sheet_row_description">%1$s: %2$d</string>
+    <string name="sheet_empty_title">No matches</string>
+    <string name="sheet_empty_hint">Matches are counted from finished matches with players on court. Save a match with the pairs to see them here.</string>
     <string name="stats_wins_heading">Matches won</string>
     <string name="stats_wins_empty_hint">Wins are counted from finished matches with players on court. Save a match with the pairs to see them here.</string>
     <string name="settings_teams_title">Teams</string>

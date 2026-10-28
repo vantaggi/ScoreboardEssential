@@ -1,5 +1,6 @@
 package it.vantaggi.scoreboardessential.ui.statistics
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
@@ -67,8 +68,8 @@ class StatisticsActivity : AppCompatActivity() {
     private fun setupUI() {
         binding.toolbar.setNavigationOnClickListener { finish() }
 
-        goalsAdapter = StatisticsAdapter()
-        winsAdapter = RecordAdapter()
+        goalsAdapter = StatisticsAdapter(::apriLaScheda)
+        winsAdapter = RecordAdapter(::apriLaScheda)
         binding.recyclerStats.layoutManager = LinearLayoutManager(this)
         binding.recyclerStats.adapter = goalsAdapter
         binding.recyclerStats.addItemDecoration(InsetDividerDecoration(this))
@@ -95,6 +96,13 @@ class StatisticsActivity : AppCompatActivity() {
 
                 override fun onTabReselected(tab: TabLayout.Tab?) {}
             },
+        )
+    }
+
+    /** Toccando una riga si apre la scheda del giocatore, con un blocco per ogni sport che ha giocato. */
+    private fun apriLaScheda(playerId: Int) {
+        startActivity(
+            Intent(this, SchedaGiocatoreActivity::class.java).putExtra(SchedaGiocatoreActivity.EXTRA_PLAYER_ID, playerId),
         )
     }
 

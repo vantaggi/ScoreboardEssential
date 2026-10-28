@@ -14,7 +14,9 @@ import it.vantaggi.scoreboardessential.database.PlayerRecord
  * La classifica del padel e del tennis (passo 6): la stessa riga di quella dei gol (`item_player_stat`),
  * con le partite vinte su quelle giocate al posto dei gol. Il lime solo per un primo vero.
  */
-class RecordAdapter : ListAdapter<PlayerRecord, RecordAdapter.ViewHolder>(DiffCallback()) {
+class RecordAdapter(
+    private val onPlayerClick: (Int) -> Unit = {},
+) : ListAdapter<PlayerRecord, RecordAdapter.ViewHolder>(DiffCallback()) {
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int,
@@ -24,7 +26,9 @@ class RecordAdapter : ListAdapter<PlayerRecord, RecordAdapter.ViewHolder>(DiffCa
         holder: ViewHolder,
         position: Int,
     ) {
-        holder.bind(getItem(position), position, leader = position == 0 && Classifica.haUnPrimo(currentList.map { it.won }))
+        val item = getItem(position)
+        holder.bind(item, position, leader = position == 0 && Classifica.haUnPrimo(currentList.map { it.won }))
+        holder.itemView.setOnClickListener { onPlayerClick(item.playerId) }
     }
 
     class ViewHolder(
@@ -32,6 +36,10 @@ class RecordAdapter : ListAdapter<PlayerRecord, RecordAdapter.ViewHolder>(DiffCa
     ) : RecyclerView.ViewHolder(itemView) {
         private val name: TextView = itemView.findViewById(R.id.text_player_name)
         private val value: TextView = itemView.findViewById(R.id.text_goals)
+
+        init {
+            itemView.findViewById<View>(R.id.stat_chevron).visibility = View.VISIBLE
+        }
 
         fun bind(
             item: PlayerRecord,
