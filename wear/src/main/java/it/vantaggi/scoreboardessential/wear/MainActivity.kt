@@ -11,6 +11,7 @@ import android.os.SystemClock
 import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.view.WindowManager
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -335,6 +336,22 @@ class MainActivity : ComponentActivity() {
         val visibile = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
         if (attiva && visibile) chiediPermessoNotificheUnaVolta()
         PartitaInCorsoServizio.imposta(this, attiva, visibile)
+        tieniLoSchermoAcceso(attiva && PreferenzeDelPolso(this).schermoAcceso)
+    }
+
+    /**
+     * "Schermo acceso" del menu: finche' la partita e' in corso lo schermo non si spegne e non
+     * entra in ambient, quindi il tabellone resta dov'e' anche oltre il massimo di "Mostra ultima
+     * app" del sistema (2 minuti sul Galaxy Watch). Costa batteria, per questo e' spento di default.
+     * Si toglie con la fine della partita e con l'interruttore spento; non vale in ambient, dove
+     * il flag non e' mai arrivato.
+     */
+    internal fun tieniLoSchermoAcceso(acceso: Boolean) {
+        if (acceso) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 
     private fun chiediPermessoNotificheUnaVolta() {
@@ -567,6 +584,7 @@ class MainActivity : ComponentActivity() {
             regola40 = stato?.deuceLabel.orEmpty(),
             portiere = portiereDi(stato),
             vibrazionePunti = PreferenzeDelPolso(this).vibrazionePunti,
+            schermoAcceso = PreferenzeDelPolso(this).schermoAcceso,
         )
     }
 

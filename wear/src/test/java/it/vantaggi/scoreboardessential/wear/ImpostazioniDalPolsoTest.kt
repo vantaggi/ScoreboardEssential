@@ -29,10 +29,11 @@ class ImpostazioniDalPolsoTest {
     fun `nel padel a partita ferma il 40-40 si sceglie, il portiere non c'e'`() {
         val voci = MenuVoci.impostazioni(padelFermo)
 
-        assertEquals(listOf(IdVoce.REGOLA_40, IdVoce.VIBRAZIONE), voci.map { it.id })
+        assertEquals(listOf(IdVoce.REGOLA_40, IdVoce.VIBRAZIONE, IdVoce.SCHERMO_ACCESO), voci.map { it.id })
         assertTrue(voci[0].attiva)
         assertEquals(SottotitoloVoce.Valore("Killer point"), voci[0].sottotitolo)
         assertEquals(SottotitoloVoce.Vibrazione(true), voci[1].sottotitolo)
+        assertEquals(Voce(IdVoce.SCHERMO_ACCESO, true, SottotitoloVoce.SchermoAcceso(false)), voci[2])
     }
 
     @Test
@@ -56,12 +57,13 @@ class ImpostazioniDalPolsoTest {
         val calcio = padelFermo.copy(sport = "Calcio", regola40 = "", portiere = "30 s", partitaIniziata = true)
         val voci = MenuVoci.impostazioni(calcio)
 
-        assertEquals(listOf(IdVoce.VIBRAZIONE, IdVoce.PORTIERE), voci.map { it.id })
-        assertEquals(Voce(IdVoce.PORTIERE, true, SottotitoloVoce.Valore("30 s")), voci[1])
+        assertEquals(listOf(IdVoce.VIBRAZIONE, IdVoce.SCHERMO_ACCESO, IdVoce.PORTIERE), voci.map { it.id })
+        assertEquals(Voce(IdVoce.PORTIERE, true, SottotitoloVoce.Valore("30 s")), voci[2])
 
         val scollegato = MenuVoci.impostazioni(calcio.copy(collegato = false, vibrazionePunti = false))
         assertEquals(Voce(IdVoce.VIBRAZIONE, true, SottotitoloVoce.Vibrazione(false)), scollegato[0])
-        assertEquals(Voce(IdVoce.PORTIERE, false, SottotitoloVoce.ServeIlTelefono), scollegato[1])
+        assertEquals(Voce(IdVoce.SCHERMO_ACCESO, true, SottotitoloVoce.SchermoAcceso(false)), scollegato[1])
+        assertEquals(Voce(IdVoce.PORTIERE, false, SottotitoloVoce.ServeIlTelefono), scollegato[2])
     }
 
     private class Registro : WearHaptics {

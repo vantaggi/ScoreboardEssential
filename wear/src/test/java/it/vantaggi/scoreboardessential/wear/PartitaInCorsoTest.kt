@@ -155,6 +155,31 @@ class PartitaInCorsoTest {
         assertTrue(serviziAvviati().contains(nomeServizio))
     }
 
+    private fun schermoTenutoAcceso() =
+        controller.get().window.attributes.flags and android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON != 0
+
+    /** "Schermo acceso" del menu: rosso se il flag manca con l'interruttore acceso, se c'e' a interruttore spento o a partita finita. */
+    @Test
+    fun `lo schermo resta acceso solo con l'interruttore e la partita in corso`() {
+        val preferenze = PreferenzeDelPolso(app)
+        try {
+            preferenze.schermoAcceso = false
+            controller.create().start().resume()
+            idle()
+            applica(stato())
+            assertTrue("interruttore spento: lo schermo segue il sistema", !schermoTenutoAcceso())
+
+            preferenze.schermoAcceso = true
+            controller.get().sincronizzaPartitaInCorso()
+            assertTrue("interruttore acceso e partita in corso", schermoTenutoAcceso())
+
+            applica(stato(finita = true))
+            assertTrue("a partita finita il flag si toglie", !schermoTenutoAcceso())
+        } finally {
+            preferenze.schermoAcceso = false
+        }
+    }
+
     @Test
     fun `a schermo spento la fine della partita toglie comunque l'icona`() {
         controller.create().start().resume()
