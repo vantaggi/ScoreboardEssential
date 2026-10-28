@@ -372,7 +372,7 @@ class ContornoDelTelefonoG4Test {
         assertEquals(contesto.getColor(R.color.elite_text_secondary), colori.defaultColor)
         val stile = File("src/main/res/values/styles.xml").readText()
         val corpo = Regex("""<style name="Widget.App.TabLayout".*?</style>""", RegexOption.DOT_MATCHES_ALL).find(stile)!!.value
-        assertTrue(corpo.contains("tabIndicatorColor\">@color/elite_lime"))
+        assertTrue(corpo.contains("tabIndicatorColor\">?attr/eliteAccent"))
     }
 
     // --- Storico: la scheda si apre sul dettaglio, e lo stato dell'invio resta in vista ---

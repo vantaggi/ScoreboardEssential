@@ -35,7 +35,7 @@ fun direttaLook(
                     DirettaServizioFase.SCADUTO -> context.getString(R.string.diretta_live_service_timeout, stato.gruppo)
                     else -> context.getString(R.string.diretta_live, stato.gruppo)
                 }
-            DirettaLook(testo, R.drawable.ic_sensors, R.color.elite_lime)
+            DirettaLook(testo, R.drawable.ic_sensors, R.color.elite_accent)
         }
 
         DirettaFase.IN_ATTESA -> {

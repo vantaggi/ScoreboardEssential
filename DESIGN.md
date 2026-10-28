@@ -1348,7 +1348,7 @@ I valori di P sono quelli gia' verificati da `TokenEliteTest`; qui si aggiungono
 La Constitution ammette di cambiare ogni valore, ma non di lasciar cadere un ruolo, saltare uno stato o usare un pattern vietato senza dichiararlo. Qui sono tutti:
 
 1. **Inter al posto del font di sistema.** La Constitution dice `--font-sans` di sistema e "non aggiungere un font senza approvazione". Inter e' approvato dal proprietario per coerenza con la dashboard. Costa tre file da circa 96 KB (288 KB in tutto) e li porta l'APK; non si usa un font scaricabile (niente Play Services in partita).
-2. **Niente tema chiaro** (G4). La Constitution chiede chiaro, scuro e alto contrasto. Il chiaro e' fuori; l'alto contrasto e' G-10.
+2. **Niente tema chiaro** (G4). La Constitution chiede chiaro, scuro e alto contrasto. Il chiaro e' fuori; l'alto contrasto e' G-10. **Superato il 28 ottobre 2026** da "Tema chiaro" (in fondo): l'app ha scuro, chiaro e come il telefono, scelti nelle Impostazioni.
 3. **Cifre giganti fuori dalla scala dei ruoli.** Il punteggio del gioco e' il valore focale e si misura per entrare nella meta' colonna (da 72dp a un tetto di 150dp): e' `numeric` con un corpo calcolato. E' l'unico corpo fuori scala.
 4. **Cifre del quadrante in condensato di sistema**, non in Inter, perche' Inter non entra (misura qui sotto). E' un secondo carattere sul quadrante, limitato alle cifre e al cronometro.
 5. **`border-group` visibile in scuro**, la Constitution lo vuole invisibile dove il tono basta: qui i due toni distano 1,07:1 (Padel Elite le disegna con un bordo di 1px).
@@ -2689,3 +2689,39 @@ Difetti noti, non corretti qui (tutti a 360dp e 200%): etichette della schermata
 1. Nessuna ricerca nel dialogo: con una rosa di cinquanta nomi si scorre ancora. Serve un dialogo con un campo e una lista filtrata al posto dell'adattatore del `MaterialAlertDialog`; non l'ho fatto di notte perche' tocca la scelta dalla dashboard di Padel Elite, che e' in produzione.
 2. Lo sport nelle Impostazioni e' ancora un menu a tendina; la riga "Sport: Padel" con il dialogo e la spunta e' legata al debito 2 del passo 3b (righe nome e valore) e cambia molti test: da fare insieme.
 3. Non visto a schermo: verificato solo dai test e dalla CI.
+
+## Tema chiaro - 28 ottobre 2026
+
+Scelta di Cioti sulla bozza 3 (B e C, 28 ottobre 2026): l'app ha un tema chiaro e una riga Aspetto nelle Impostazioni, gruppo App, sopra la lingua, con tre scelte: Scuro, Chiaro, Come il telefono. Di base resta Scuro: chi aggiorna non trova un'altra app. Il conflitto 2 ("niente tema chiaro") e' chiuso; il quadrante dell'orologio resta scuro (il chiaro e' solo del telefono).
+
+### Piano UI (CLAUDE.md, punto 3)
+
+- **Gerarchia e layout.** Nessuna schermata cambia disposizione: cambiano i colori dei ruoli. In gioco il campo e' bianco e le cifre quasi nere (`elite_game_background`, `elite_game_ink`), il resto della pagina e' la carta chiara della Constitution che il report PDF usava gia' (`print_*`). Il lime non regge su bianco (1,3:1): l'accento diventa un oliva scuro, `#4F6B00` (6,1:1 sul fondo, 5,6:1 sul gruppo), sia come riempimento (con testo bianco sopra) sia come testo, icona, pallino del servizio e anello di fuoco.
+- **Come e' fatto.** Come l'alto contrasto: un tema AGGIUNTO. Gli attributi dei ruoli (`eliteBackground`... `eliteFocusRing`) restano quelli del tema scuro; `ThemeOverlay.App.Chiaro` ne assegna i valori chiari (`colors_chiaro.xml`) e i pochi colori del framework che la base scura fissa al bianco (testo dei campi, icone di sistema, barre). Tre ruoli nuovi: `eliteAccent` (lime nel scuro, oliva nel chiaro), `eliteGameBackground` e `eliteGameInk`. Tutto cio' che citava `@color/elite_lime`, `ink_black` o `ink_white` per un ruolo passa a `elite_accent`, `elite_game_background`, `elite_game_ink`; il lime resta com'e' dove e' contenuto (colore predefinito del lato 1, icona) e non tema. I dialoghi hanno la loro base chiara (`ThemeOverlay.App.Dialog.Chiaro`).
+- **Chi decide.** `Aspetto.kt`: la scelta salvata nelle preferenze (`appearance`); "come il telefono" legge la modalita' notte del sistema. L'overlay lo applica ogni activity prima di gonfiare i layout; al cambio (scelta o notte/giorno) ogni activity aperta si ricrea al ritorno in primo piano. **L'alto contrasto e' solo scuro e vince**: con l'alto contrasto acceso il chiaro non si applica e la riga Aspetto lo dice ("Chiaro · sospeso con alto contrasto").
+- **Barre di sistema.** `enableEdgeToEdge()` sceglieva le icone dalla notte del sistema e con l'app chiara su un telefono scuro l'orologio e la batteria erano bianchi sul bianco: `enableEdgeToEdgeConAspetto()` le sceglie dall'aspetto dell'app.
+- **Colore di squadra su fondo chiaro.** `TeamInk.graphicOnSurface`: sul chiaro la grafica (barrette, strisce, anello della zona) si scurisce fino a 3:1 invece di schiarirsi; il lime del lato 1 sul bianco diventa un oliva, il ciano un petrolio, come sulla carta del PDF. La zona + resta del colore scelto, col contorno da 2dp quando non si stacca dal campo (il lime sul bianco), glifo in `TeamInk.on`.
+- **Contrasti** (li controlla `ChiaroTest`): testo primario `#1A1C1F` e secondario `#5A5F66` almeno 4,5:1 su fondo, gruppo, rialzata e hover; accento 6,1:1 su fondo; bianco sull'accento 6,1:1; contorno dei comandi `#767A83` almeno 3:1; disattivato `#8D9199` non sotto 2,8:1 (solo etichette spente, come in scuro); stati (attenzione `#8A5A00`, errore `#B3261E`, informazione `#1D5F8F`) almeno 4,5:1 sulle superfici e sul proprio fondo tenue; cifre del gioco 7:1.
+- **Stati.** Normale, premuto (stessa scala 0,97 e opacita' 0,85), fuoco (anello oliva), selezionato (oliva e un secondo segno: spunta, anello), disattivo, errore, vuoto. Movimento: nessuno di nuovo; il cambio di tema ricrea la schermata come il cambio di lingua.
+- **Schermo stretto e 200%.** La riga Aspetto e' una riga nome e valore come Lingua: il nome va a capo, il valore resta a destra.
+- **Conflitti dichiarati.** 1) Il lime non e' il colore di marchio sul chiaro: l'accento e' un oliva (come nel PDF, dove il lime non e' mai testo). 2) L'alto contrasto non ha una variante chiara: con lui acceso il chiaro e' sospeso. 3) Il quadrante dell'orologio e il suo protocollo restano scuri. 4) Il lampo del tema all'avvio (finestra di avvio scura prima della prima schermata chiara) non e' risolto: da guardare a schermo.
+- **Controllo dei pattern vietati (`review.md`).** Nessun colore scritto a mano nei layout: i valori chiari stanno in `colors_chiaro.xml` con un ruolo ciascuno; nessuna ombra nuova; un solo primario per regione (l'oliva); niente card nuove.
+
+### Corretto prima, dalla prova a schermo del 28 ottobre 2026 (360dp, carattere al 200%)
+
+- Hint "Nome squadra 1/2" troncati: ora "Squadra 1" e "Squadra 2", il nome che compare se il campo resta vuoto.
+- "Scambia" andava a capo in mezzo alla parola: bottone a tutta colonna con padding 8dp; da 1,5 di carattere in su l'icona sale sopra la parola.
+- Ruota del colore: il dialogo non conteneva ruota, cursore e bottoni; ora e' scorrevole, l'anteprima cresce col carattere e il cursore della luminosita' (alto `wrap_content`, non si vedeva mai) e' alto 48dp.
+- "tie-break a 7": lo spazio prima del numero e' unico, il 7 non resta da solo.
+
+### Come si prova
+
+- Test: `ChiaroTest` (contrasti dalle risorse vere attraverso il tema, che l'overlay cambia ogni ruolo, scelta di base scura, "come il telefono" con notte e giorno, alto contrasto che sospende il chiaro), `TeamInkTest` (`graphicOnSurface` su tutto l'RGB).
+- A schermo (SM-S948B, 28 ottobre 2026): Impostazioni, menu Partita, gioco (calcio), Storico, Cronaca, Statistiche, Giocatori, Padel Elite, dialogo colore e ruota, foglio Aspetto, in chiaro; il gioco in scuro identico a prima.
+
+### Debiti dichiarati
+
+1. Non visto in chiaro: la serata, l'onboarding e le schermate con il padel in gioco (sul telefono c'era una partita di calcio). Il report PDF non cambia: e' gia' carta chiara. Da guardare.
+2. La finestra di avvio e l'icona adattiva restano scure.
+3. "Come il telefono": la logica e' provata dai test (notte e giorno), non a schermo; il cambio di notte con l'app aperta lo gestisce il sistema ricreando l'activity, le altre si ricreano al ritorno in primo piano.
+4. Nel calcio i nomi di default compaiono come "Team 1" e "Team 2" nel gioco e nelle Formazioni (nei dati salvati, non nel campo del nome): da guardare.

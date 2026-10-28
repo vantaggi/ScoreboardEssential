@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Il pallino del servizio: lime, l'accento che segna chi serve (16,09:1 sul nero del gioco). -->
+<!-- Il pallino del servizio: l'accento che segna chi serve (lime a 16,09:1 sul nero del gioco, oliva sul chiaro). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
-    <solid android:color="@color/elite_lime" />
+    <solid android:color="?attr/eliteAccent" />
 </shape>

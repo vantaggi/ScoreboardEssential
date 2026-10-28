@@ -26,7 +26,9 @@ import it.vantaggi.scoreboardessential.sportLabel
 import it.vantaggi.scoreboardessential.sportRulesLine
 import it.vantaggi.scoreboardessential.ui.TavolozzaDiSquadra
 import it.vantaggi.scoreboardessential.utils.AltoContrasto
+import it.vantaggi.scoreboardessential.utils.Aspetto
 import it.vantaggi.scoreboardessential.utils.LocaleHelper
+import it.vantaggi.scoreboardessential.utils.ScelteAspetto
 import it.vantaggi.scoreboardessential.utils.anteprimaDiSquadra
 import it.vantaggi.scoreboardessential.utils.dipingiDiSquadra
 
@@ -59,6 +61,7 @@ class MatchSettingsActivity : AppCompatActivity() {
         setupListeners()
         setupPadelElite()
         setupAltoContrasto()
+        setupAspetto()
     }
 
     override fun onResume() {
@@ -91,6 +94,32 @@ class MatchSettingsActivity : AppCompatActivity() {
         binding.highContrastSwitch.setOnCheckedChangeListener { _, attivo ->
             AltoContrasto.scegli(this, attivo)
             recreate()
+        }
+    }
+
+    /**
+     * L'aspetto: scuro, chiaro o come il telefono. Il valore e' la scelta; con l'alto contrasto acceso (solo scuro) il
+     * chiaro resta sospeso e la riga lo dice. Cambiare ricrea la schermata col tema nuovo; le altre activity le ricrea
+     * chi applica il tema ([Aspetto]) quando tornano in primo piano.
+     */
+    private fun setupAspetto() {
+        val scelte = ScelteAspetto.entries
+
+        fun nome(scelta: ScelteAspetto) = getString(Aspetto.nomeDi(scelta))
+
+        fun valore(): String {
+            val scelta = Aspetto.scelta(this)
+            val sospeso = AltoContrasto.attivo(this) && scelta != ScelteAspetto.SCURO
+            return if (sospeso) getString(R.string.appearance_value_suspended, nome(scelta)) else nome(scelta)
+        }
+        binding.appearanceValue.text = valore()
+        binding.appearanceRow.setOnClickListener {
+            scegliDaElenco(getString(R.string.appearance_title), scelte.map(::nome), scelte.indexOf(Aspetto.scelta(this))) { posizione ->
+                if (scelte[posizione] != Aspetto.scelta(this)) {
+                    Aspetto.scegli(this, scelte[posizione])
+                    recreate()
+                }
+            }
         }
     }
 

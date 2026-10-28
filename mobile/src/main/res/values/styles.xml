@@ -169,7 +169,7 @@
     </style>
     <style name="Widget.App.TabLayout" parent="Widget.Material3.TabLayout">
         <item name="android:background">@android:color/transparent</item>
-        <item name="tabIndicatorColor">@color/elite_lime</item>
+        <item name="tabIndicatorColor">?attr/eliteAccent</item>
         <item name="tabIndicatorHeight">@dimen/focus_ring_width</item>
         <item name="tabTextColor">@color/elite_text_secondary</item>
         <item name="tabSelectedTextColor">@color/elite_text_primary</item>

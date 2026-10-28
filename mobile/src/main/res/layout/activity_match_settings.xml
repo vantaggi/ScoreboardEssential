@@ -127,6 +127,17 @@
 
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/settings_app_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/elite_text_secondary" android:accessibilityHeading="true" />
 
+                <LinearLayout android:id="@+id/appearanceRow" style="@style/Widget.App.Pressable" android:layout_width="match_parent" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:foreground="@drawable/bg_focus_ring" android:gravity="center_vertical" android:minHeight="@dimen/control_touch" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
+
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/appearance_title" android:textAppearance="@style/TextAppearance.App.RowTitle" />
+
+                    <TextView android:id="@+id/appearanceValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/space_12" android:textAppearance="@style/TextAppearance.App.Caption" />
+
+                    <ImageView android:layout_width="@dimen/icon_standard" android:layout_height="@dimen/icon_standard" android:layout_marginStart="@dimen/space_8" android:importantForAccessibility="no" android:src="@drawable/ic_chevron_right" app:tint="@color/elite_text_secondary" />
+                </LinearLayout>
+
+                <View style="@style/Widget.App.RowDivider" android:layout_width="match_parent" android:layout_height="@dimen/border_width" android:layout_marginStart="@dimen/space_16" />
+
                 <LinearLayout android:id="@+id/languageRow" style="@style/Widget.App.Pressable" android:layout_width="match_parent" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:foreground="@drawable/bg_focus_ring" android:gravity="center_vertical" android:minHeight="@dimen/control_touch" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/language" android:textAppearance="@style/TextAppearance.App.RowTitle" />
