@@ -4,11 +4,12 @@ import it.vantaggi.scoreboardessential.utils.testoPiano
 
 /**
  * Come si mostra la rosa del gruppo (revisione dei menu, passo 4): prima i collegati, che sono quelli
- * che contano, poi gli altri dietro una ricerca. Una rosa della dashboard puo' avere cinquanta nomi e
- * quasi tutti "Non collegato": la lista lunga si apre solo per chi cerca qualcuno.
+ * che contano, poi gli altri. Gli altri sono tutti in vista, perche' si collegano toccando il nome
+ * (scelta di Cioti, 28 ottobre 2026: "se ci sono i nomi gia' scritti, clicco e via"); la ricerca
+ * serve solo a stringere una lista lunga.
  *
- * [daCollegare] tiene sempre i nomi uguali da confermare (sono pochi e chiedono una risposta), poi chi
- * corrisponde a [cerca]. Con [cerca] vuoto non c'e' nient'altro. Il confronto ignora maiuscole e accenti.
+ * [daCollegare] tiene sempre i nomi uguali da confermare (sono pochi e chiedono una risposta), poi
+ * tutti gli altri, oppure, se [cerca] non e' vuoto, chi ci corrisponde. Il confronto ignora maiuscole e accenti.
  */
 data class RosaInVista(
     val collegati: List<RosaRow>,
@@ -25,11 +26,9 @@ data class RosaInVista(
             val chiave = piano(cerca.trim())
             val proposti = altri.filter { it.proposedLocalName != null }.sortedWith(perNome)
             val trovati =
-                if (chiave.isEmpty()) {
-                    emptyList()
-                } else {
-                    altri.filter { it.proposedLocalName == null && piano(it.remote.name).contains(chiave) }.sortedWith(perNome)
-                }
+                altri
+                    .filter { it.proposedLocalName == null && piano(it.remote.name).contains(chiave) }
+                    .sortedWith(perNome)
             return RosaInVista(collegati.sortedWith(perNome), proposti + trovati, altri.size)
         }
 

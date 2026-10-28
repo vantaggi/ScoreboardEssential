@@ -79,7 +79,6 @@
     <string name="padel_elite_rosa_linked_header">Linked · %1$d</string>
     <string name="padel_elite_rosa_to_link_header">To link · %1$d</string>
     <string name="padel_elite_rosa_search">Search for a player</string>
-    <string name="padel_elite_rosa_search_hint">Type a name to find it among the players to link.</string>
     <string name="padel_elite_rosa_no_match">No player to link with this name.</string>
 
     <!-- Live broadcast (D-2): the match sheet group, for owners and admins of the group only. -->

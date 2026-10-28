@@ -79,7 +79,6 @@
     <string name="padel_elite_rosa_linked_header">Collegati · %1$d</string>
     <string name="padel_elite_rosa_to_link_header">Da collegare · %1$d</string>
     <string name="padel_elite_rosa_search">Cerca un giocatore</string>
-    <string name="padel_elite_rosa_search_hint">Scrivi un nome per trovarlo fra quelli da collegare.</string>
     <string name="padel_elite_rosa_no_match">Nessun giocatore da collegare con questo nome.</string>
 
     <!-- Diretta (D-2): il gruppo del foglio PARTITA, riservato a owner e admin del gruppo. -->

@@ -283,8 +283,8 @@
                     </com.google.android.material.card.MaterialCardView>
 
                     <!--
-                        Da collegare: i nomi uguali da confermare restano in vista, gli altri si trovano
-                        scrivendo. Stati: suggerimento (campo vuoto), nessun risultato, righe trovate.
+                        Da collegare: i nomi uguali da confermare in cima, poi tutti gli altri; la ricerca
+                        stringe la lista. Stati: tutti (campo vuoto), nessun risultato, righe trovate.
                     -->
                     <LinearLayout
                         android:id="@+id/rosa_to_link_section"
@@ -328,7 +328,7 @@
                             android:layout_marginTop="@dimen/space_8"
                             android:accessibilityLiveRegion="polite"
                             android:textAppearance="@style/TextAppearance.App.Caption"
-                            tools:text="Scrivi un nome per trovarlo fra quelli da collegare." />
+                            tools:text="Nessun giocatore da collegare con questo nome." />
 
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/rosa_to_link_group"
