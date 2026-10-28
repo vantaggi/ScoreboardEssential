@@ -1,8 +1,8 @@
 package it.vantaggi.scoreboardessential.wear
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Build
