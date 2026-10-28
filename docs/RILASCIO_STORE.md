@@ -1,6 +1,6 @@
 # Rilascio sugli store: valutazione del 28 ottobre 2026
 
-Stato: **solo valutazione, nessun codice cambiato.** Google Play e' il prossimo passo; Apple e' **rimandato** per decisione del proprietario (28 ottobre 2026). La versione completa e leggibile e' una pagina privata del proprietario; qui resta quello che serve a una sessione nuova.
+Stato: **solo valutazione, nessun codice cambiato; tutto in standby** per decisione del proprietario (28 ottobre 2026): si riprende piu' avanti. Apple e' rimandato ancora piu' in la'. La versione completa e leggibile e' una pagina privata del proprietario; qui resta quello che serve a una sessione nuova.
 
 Le regole di Google sono state lette sulle pagine ufficiali il 28 ottobre 2026 (elenco in fondo). Il codice e' stato letto, non compilato: nel cloud non c'e' l'SDK.
 
@@ -53,6 +53,14 @@ Decisione del proprietario, 28 ottobre 2026: **per ora resta indietro**. Quello 
 - Costi: programma sviluppatori Apple (99 dollari l'anno, da verificare), un Mac per Xcode e la firma (o un Mac in affitto), un iPhone e un Apple Watch.
 - La diretta su iPhone va ripensata: non c'e' un servizio in primo piano per tenere viva la rete (Live Activities o notifiche dal server, con modifiche a Padel Elite). Con "Accedi con Google" Apple di solito chiede anche "Accedi con Apple" (regola 4.8, da ricontrollare).
 - Indicazione: pubblicare prima su Android, vedere chi usa l'app, chiedersi quanti del gruppo hanno un iPhone; se pochi, basta la strada C. Preparare `core` per Kotlin Multiplatform solo quando la decisione c'e'.
+
+## Domande aperte (da riprendere)
+
+1. Il proprietario ha gia' un account sviluppatore Google Play? Da quando? (cambia il test chiuso)
+2. Video della diretta: prova vera su un gruppo di prova (scrive in produzione, serve il suo si' esplicito) o solo server finto?
+3. Nella dashboard esiste un modo per chiedere la cancellazione dell'account e dei dati?
+4. Via libera per una PR con privacy policy nuova (italiano e inglese), collegamento nell'app, scheda del negozio riscritta, titolo dell'orologio tradotto e checklist con il cronometro (nessuna scrittura sul database).
+5. Nome della scheda, paesi, dove ospitare la privacy policy, i 12 tester.
 
 ## Fonti (consultate il 28 ottobre 2026)
 
