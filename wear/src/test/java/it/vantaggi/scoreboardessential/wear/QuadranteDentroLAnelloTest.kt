@@ -178,18 +178,16 @@ class QuadranteDentroLAnelloTest {
         val sopra = r.top - dentro
         val sotto = alto - dentro - r.bottom
         var aria = minOf(sinistra, destra, sopra, sotto)
-        // Negli angoli il bordo interno e' un arco di raggio `curva`: lo spigolo deve starci dentro.
-        listOf(
-            Triple(r.left, r.top, dentro + curva to dentro + curva),
-            Triple(r.right, r.top, lato - dentro - curva to dentro + curva),
-            Triple(r.left, r.bottom, dentro + curva to alto - dentro - curva),
-            Triple(r.right, r.bottom, lato - dentro - curva to alto - dentro - curva),
-        ).forEach { (x, y, centro) ->
-            val (ax, ay) = centro
-            val nellAngoloX = if (x < lato / 2) x < ax else x > ax
-            val nellAngoloY = if (y < alto / 2) y < ay else y > ay
-            if (nellAngoloX && nellAngoloY) aria = minOf(aria, curva - hypot(x - ax, y - ay))
-        }
+        // Negli angoli il bordo interno e' un arco di raggio `curva`: lo spigolo che sta nel quadrato
+        // di quell'angolo (oltre il centro dell'arco, nei due versi) deve stare dentro l'arco.
+        val sx = dentro + curva
+        val dx = lato - dentro - curva
+        val sy = dentro + curva
+        val gy = alto - dentro - curva
+        if (r.left < sx && r.top < sy) aria = minOf(aria, curva - hypot(r.left - sx, r.top - sy))
+        if (r.right > dx && r.top < sy) aria = minOf(aria, curva - hypot(r.right - dx, r.top - sy))
+        if (r.left < sx && r.bottom > gy) aria = minOf(aria, curva - hypot(r.left - sx, r.bottom - gy))
+        if (r.right > dx && r.bottom > gy) aria = minOf(aria, curva - hypot(r.right - dx, r.bottom - gy))
         return dp(aria)
     }
 
@@ -270,7 +268,15 @@ class QuadranteDentroLAnelloTest {
         binding.chiCapsule.visibility = View.VISIBLE
         fasce.requestLayout()
         idle()
-        verificaDentro("la capsula CHI?", rettangolo(binding.chiCapsule))
+        // La capsula ha gli angoli tondi (radius_control): sul tondo conta l'arco, non lo spigolo.
+        val capsula = rettangolo(binding.chiCapsule)
+        val tondo = fasce.resources.getDimension(R.dimen.radius_control)
+        if (fasce.resources.configuration.isScreenRound) {
+            val centri = RectF(capsula).apply { inset(tondo, tondo) }
+            annota("la capsula CHI?", ariaDallAnello(centri) - dp(tondo), capsula.toString())
+        } else {
+            verificaDentro("la capsula CHI?", capsula)
+        }
     }
 
     private fun soloCalcio() {
