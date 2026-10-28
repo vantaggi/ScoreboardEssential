@@ -2583,7 +2583,14 @@ La schermata si chiamava "Impostazioni partita" ma teneva anche la lingua, in me
 
 1. Il gruppo Padel Elite e' quello di prima (stato, Entra, Gruppo, Esci): la proposta lo vuole una riga che porta alla sua schermata, con Esci spostato li'. Lo fa il passo 4.
 2. Le scelte (sport, regola del 40-40, lingua) sono ancora campi con la tendina: la proposta le vuole righe nome e valore con il menu che si apre dalla riga. Cambia il componente e i test che toccano i campi (LinguaUnicaTest e i test dello sport): passo a se', dopo il 4.
-3. Non visto a schermo: verificato solo dai test e dalla CI.
+3. Vista a schermo il 28 ottobre 2026 sull'emulatore Pixel_9a (build di `main`, dati di prova nel database locale): chip, Partite per sport, scheda con un blocco per sport, ritorno allo sport di partenza, font al 200% e 320 dp senza testi tagliati. Lo stato vuoto della scheda non si raggiunge dalle liste (le classifiche mostrano solo chi ha partite o gol): resta coperto dal test.
+4. Nomi molto lunghi: in lista e nel titolo della scheda finiscono con i puntini (il nome intero e' nella descrizione per TalkBack). Accettato.
+
+### Correzioni dopo la prova a schermo (28 ottobre 2026)
+
+- Le schede Generale/Attacco/Difesa a 320 dp e carattere al 200% andavano a capo a meta' parola: `tabMode="auto"` con `tabGravity="fill"` (riempiono la riga quando ci stanno, scorrono quando non ci stanno).
+- Nella riga della classifica il margine tra nome e valore non aveva effetto (il valore non era ancorato al nome): ora e' il nome ad avere il margine di fine, `space_16`, e nome e valore non si toccano piu'.
+- Controllo dei pattern vietati di `review.md`: nessun colore, raggio, ombra o durata nuovi; solo token e margini esistenti. Non rivisto a schermo dopo la correzione: da guardare alla prossima prova sull'emulatore.
 
 ### Passo 4: Padel Elite, prima i collegati e gli altri dietro una ricerca
 
