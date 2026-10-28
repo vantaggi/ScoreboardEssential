@@ -119,7 +119,9 @@ class MatchHistoryActivity : AppCompatActivity() {
         matchWithTeams: MatchWithTeams,
     ) {
         val match = matchWithTeams.match
-        val etichetta = "${match.sportId}-${matchWithTeams.team1?.name ?: "Team 1"}-vs-${matchWithTeams.team2?.name ?: "Team 2"}"
+        val uno = EtichettaSquadra.mostrato(matchWithTeams.team1?.name, "Team 1")
+        val due = EtichettaSquadra.mostrato(matchWithTeams.team2?.name, "Team 2")
+        val etichetta = "${match.sportId}-$uno-vs-$due"
         lifecycleScope.launch {
             val esito = viewModel.buildSavedExport(match.matchId) ?: return@launch
             MatchExportUtils.shareExport(this@MatchHistoryActivity, esito, etichetta, match.startedAt ?: match.timestamp)

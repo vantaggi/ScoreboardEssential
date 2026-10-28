@@ -298,7 +298,7 @@ class DirettaNelViewModelTest {
             org.mockito.kotlin
                 .verify(
                     matchDao,
-                ).closeMatch(chiusa.capture(), any<List<Int>>(), any<List<Int>>())
+                ).closeMatch(chiusa.capture(), any<List<Int>>(), any<List<Int>>(), org.mockito.kotlin.anyOrNull())
         }
         assertEquals(id, chiusa.firstValue.matchUuid)
     }

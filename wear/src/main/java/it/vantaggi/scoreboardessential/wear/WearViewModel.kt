@@ -501,10 +501,16 @@ class WearViewModel(
 
     /**
      * Partita in corso: il v2 dice che e' cominciata e non finita; senza v2, un tocco in coda
-     * vuol dire che qualcuno sta giocando.
+     * vuol dire che qualcuno sta giocando. In tutti e due i casi lo e' anche col solo cronometro
+     * partito: il telefono manda matchInProgress solo col registro non vuoto, e uno 0-0 a tempo
+     * restava senza icona e senza schermo acceso fino al primo punto (giro di prove del 28-10).
      */
     val partitaInCorso: Boolean
-        get() = _scoreState.value?.let { it.matchInProgress && !it.matchOver } ?: (_pendingCount.value > 0)
+        get() {
+            val cronometro = _cronometroPartito.value
+            return _scoreState.value?.let { !it.matchOver && (it.matchInProgress || cronometro) }
+                ?: (_pendingCount.value > 0 || cronometro)
+        }
 
     /** Il controllo periodico della schermata accesa: a partita finita il collegamento non interessa. */
     fun refreshConnectionSePartitaInCorso() {
@@ -681,7 +687,20 @@ class WearViewModel(
     private val _matchTimer = MutableStateFlow("00:00")
     val matchTimer = _matchTimer.asStateFlow()
     private var matchTimerJob: Job? = null
+
+    /**
+     * Il cronometro della partita corre o ha gia' contato qualcosa: uno 0-0 a tempo e' una partita in
+     * corso anche senza un punto nel registro ([partitaInCorso]). Un flusso, perche' l'icona e lo
+     * schermo acceso devono accendersi quando il cronometro parte, non al primo punto.
+     */
+    private val _cronometroPartito = MutableStateFlow(false)
+    val cronometroPartito = _cronometroPartito.asStateFlow()
+
     private var matchTimeInSeconds = 0L
+        set(value) {
+            field = value
+            _cronometroPartito.value = isMatchTimerRunning || value > 0L
+        }
 
     // Stato timer partita. Il quadrante lo legge (cronometro bianco se corre, grigio se fermo): la
     // proprieta' resta quella di prima, con un flusso dietro che tiene i due in accordo.
@@ -691,6 +710,7 @@ class WearViewModel(
         set(value) {
             field = value
             _matchTimerRunning.value = value
+            _cronometroPartito.value = value || matchTimeInSeconds > 0L
         }
 
     // Keeper Timer

@@ -724,7 +724,7 @@ class MainViewModelTest {
 
             assertEquals(true, viewModel.endMatch())
             advanceUntilIdle()
-            verify(matchDao).closeMatch(any(), any(), any())
+            verify(matchDao).closeMatch(any(), any(), any(), any())
         }
 
     /**
@@ -732,6 +732,9 @@ class MainViewModelTest {
      * della chiusura parte urgente, perche' e' l'unica conferma che l'orologio aspetta (il registro resta
      * vuoto e nessun v2 gli dice che la partita e' chiusa). Rosso se endMatch torna a guardare solo il
      * registro, o se il MATCH_STATE a false torna non urgente.
+     *
+     * Il nome scelto per la squadra 2 arriva allo storico (giro di prove del 28-10: lo 0-0 della
+     * "Polisportiva Sangiorgese" compariva come "Team 2"). Rosso se la chiusura non passa le squadre.
      */
     @Test
     fun `uno 0-0 col cronometro avviato si salva e la chiusura arriva urgente all'orologio`() =
@@ -745,13 +748,16 @@ class MainViewModelTest {
 
             @Suppress("UNCHECKED_CAST")
             (campo("_matchTimerValue") as androidx.lifecycle.MutableLiveData<Long>).value = 5 * 60_000L
+            viewModel.setTeam2Name("Polisportiva Sangiorgese")
 
             assertEquals(true, viewModel.endMatch())
             advanceUntilIdle()
             val salvata = org.mockito.kotlin.argumentCaptor<Match>()
-            verify(matchDao).closeMatch(salvata.capture(), any(), any())
+            val squadre = org.mockito.kotlin.argumentCaptor<Pair<Team, Team>>()
+            verify(matchDao).closeMatch(salvata.capture(), any(), any(), squadre.capture())
             assertEquals(0, salvata.firstValue.team1Score)
             assertEquals(0, salvata.firstValue.team2Score)
+            assertEquals("Polisportiva Sangiorgese", squadre.firstValue.second.name)
             verify(connessione).sendData(eq(WearConstants.PATH_MATCH_STATE), eq(mapOf(WearConstants.KEY_MATCH_ACTIVE to false)), eq(true))
         }
 
