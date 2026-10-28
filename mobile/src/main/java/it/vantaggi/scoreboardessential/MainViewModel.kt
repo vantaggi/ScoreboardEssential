@@ -638,7 +638,7 @@ class MainViewModel(
         if (sportId != _activeSport.value) annullaLaPartitaDellaSerata()
         // La diretta e' del padel e di QUESTA partita: cambiando sport non c'e' piu' niente da trasmettere.
         chiudiLaDiretta(conRisultato = false)
-        sportRules = SportRegistry.forMatch(sportId, deuce = regoleDel40[sportId])
+        sportRules = SportRegistry.forMatch(sportId, deuce = regoleDel40[sportId] ?: SportRegistry.defaultDeuce(sportId))
         engine = MatchEngine(sportRules)
         matchClock.reset()
         _activeSport.value = sportRules.id
@@ -680,7 +680,7 @@ class MainViewModel(
      */
     private fun allineaRegolaDel40() {
         if (engine.log.isNotEmpty() || ripristinoInAttesa) return
-        val voluta = regoleDel40[sportRules.id] ?: SportRegistry.byId(sportRules.id).config.deuce
+        val voluta = regoleDel40[sportRules.id] ?: SportRegistry.defaultDeuce(sportRules.id)
         if (sportRules !is RacketRules || voluta == sportRules.config.deuce) return
         sportRules = SportRegistry.forMatch(sportRules.id, sportRules.config.serveOrder, voluta)
         engine = MatchEngine(sportRules)
@@ -2701,6 +2701,9 @@ class MainViewModel(
             connectionManager.sendData(
                 path = WearConstants.PATH_MATCH_STATE,
                 data = data,
+                // La chiusura e' urgente: per uno 0-0 giocato a tempo e' l'unica conferma che il polso
+                // aspetta, e un DataItem non urgente puo' arrivare dopo i suoi 10 secondi di CHIUSURA...
+                urgent = !isActive,
             )
         }
     }
