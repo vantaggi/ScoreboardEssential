@@ -541,7 +541,8 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         if (!preso && impostazione == WearConstants.SETTING_KEEPER) {
             val secondi = valore.toLongOrNull()
             if (secondi != null && DurataPortiere.chiestaDalPolsoValida(secondi)) {
-                CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { matchSettingsRepository.setKeeperTimerDuration(secondi) }
+                val impostazioni = (application as? ScoreboardEssentialApplication)?.matchSettingsRepository
+                impostazioni?.let { CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { it.setKeeperTimerDuration(secondi) } }
             }
         }
     }
