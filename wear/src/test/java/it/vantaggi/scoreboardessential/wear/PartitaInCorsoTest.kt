@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Looper
 import android.os.SystemClock
+import android.view.WindowManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
@@ -155,8 +156,11 @@ class PartitaInCorsoTest {
         assertTrue(serviziAvviati().contains(nomeServizio))
     }
 
-    private fun schermoTenutoAcceso() =
-        controller.get().window.attributes.flags and android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON != 0
+    private fun schermoTenutoAcceso(): Boolean {
+        val flag = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+        val finestra = controller.get().window
+        return finestra.attributes.flags and flag != 0
+    }
 
     /** "Schermo acceso" del menu: rosso se il flag manca con l'interruttore acceso, se c'e' a interruttore spento o a partita finita. */
     @Test
