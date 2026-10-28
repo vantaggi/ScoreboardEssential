@@ -762,6 +762,35 @@ class MainViewModelTest {
         }
 
     /**
+     * SCARTA su uno 0-0 col solo cronometro avviato: la partita si butta via e il tempo si azzera anche al
+     * polso. Prima diceva "non iniziata" e il cronometro restava a 00:05 su telefono e orologio (giro di
+     * prove del 28-10, Fase 4). Rosso se discardMatch torna a guardare solo il registro.
+     */
+    @Test
+    fun `scarta su uno 0-0 col solo cronometro azzera il tempo anche al polso`() =
+        runTest {
+            val matchDao = campo("matchDao") as MatchDao
+            val connessione = campo("connectionManager") as OptimizedWearDataSync
+            viewModel.selectSport(SportRegistry.FOOTBALL)
+            shadowOf(Looper.getMainLooper()).idle()
+            advanceUntilIdle()
+            assertEquals("senza punti e a tempo fermo non c'e' niente da scartare", false, viewModel.discardMatch())
+
+            @Suppress("UNCHECKED_CAST")
+            (campo("_matchTimerValue") as androidx.lifecycle.MutableLiveData<Long>).value = 5_000L
+            org.mockito.Mockito.clearInvocations(connessione)
+
+            assertEquals(true, viewModel.discardMatch())
+            advanceUntilIdle()
+            verify(connessione, atLeastOnce()).sendData(
+                eq(WearConstants.PATH_TIMER_STATE),
+                eq(mapOf(WearConstants.KEY_TIMER_MILLIS to 0L, WearConstants.KEY_TIMER_RUNNING to false)),
+                any(),
+            )
+            verify(matchDao, never()).closeMatch(any(), any(), any(), any())
+        }
+
+    /**
      * Rilievo della validazione (L1): la rosa tiene la copia del giocatore letta quando e' stato aggiunto, e la
      * fine partita la riscriveva per intero con un @Update per contare la presenza. Il gol
      * segnato nella partita, gia' scritto nel database, tornava indietro.

@@ -5,6 +5,8 @@ import android.text.Spanned
 import android.text.style.SuperscriptSpan
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TableLayout
+import android.widget.TableRow
 import android.widget.TextView
 import androidx.room.Room
 import com.google.android.material.card.MaterialCardView
@@ -33,6 +35,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 /**
  * La Cronaca aperta su partite vere, lette dal database: ogni sezione dice cio' che la partita
@@ -433,5 +436,32 @@ class ChronicleActivityTest {
         assertEquals(listOf("77", "65"), conApice.map { it.text.toString() })
         // Il grafico nomina i due lati: il secondo segno oltre al colore.
         assertEquals(listOf("Rossi", "Blu"), graficoDi(cronaca).labels.map { it.substringBefore(" +") })
+    }
+
+    /**
+     * Col testo al 200% un nome lungo restava su una riga e allargava la tabella del tabellone oltre il
+     * bordo destro del gruppo (giro di prove del 28-10, Fase 4: «Sangiorgese» tagliato). Ora la colonna
+     * dei nomi si stringe e il nome va a capo. Rosso se la colonna torna a non stringersi.
+     */
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `al 200 per cento il nome lungo resta dentro il tabellone`() {
+        runBlocking {
+            database.teamDao().insertWithId(Team(id = 5, name = "Polisportiva Sangiorgese", color = 0xFF00E5FF.toInt(), logoUri = null))
+        }
+        RuntimeEnvironment.setFontScale(2f)
+        val punti = (1..3).flatMap { game(1) } + (1..2).flatMap { game(2) }
+        val cronaca = apri(salva(punti, serveOrder = "", stepMs = null, team2Id = 5))
+
+        val tabella =
+            tutteLeViste(cronaca.findViewById(R.id.section_scoreboard)).filterIsInstance<TableLayout>().single()
+        val righe = tutteLeViste(tabella).filterIsInstance<TableRow>()
+        assertTrue("il tabellone ha le righe dei lati", righe.size >= 2)
+        righe.forEach { riga ->
+            val ultima = riga.getChildAt(riga.childCount - 1)
+            assertTrue("una cella finisce a ${ultima.right} oltre la tabella larga ${tabella.width}", ultima.right <= tabella.width)
+        }
+        val nome = testiDellaCronaca(cronaca).single { it.text.toString() == "Polisportiva Sangiorgese" }
+        assertTrue("il nome lungo e' largo ${nome.width}, piu' della tabella", nome.width <= tabella.width)
     }
 }

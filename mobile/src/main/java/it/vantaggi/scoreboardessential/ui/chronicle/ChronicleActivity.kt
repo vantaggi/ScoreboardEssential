@@ -225,12 +225,18 @@ class ChronicleActivity : AppCompatActivity() {
         val columns =
             s.sets.map { it.games to it.tieBreak } +
                 listOfNotNull(s.current?.takeIf { it.games.sum() > 0 }?.let { it.games to null })
-        val table = TableLayout(this).apply { setColumnStretchable(0, true) }
+        // La colonna dei nomi si stringe e va a capo: col testo al 200% un nome lungo («Polisportiva
+        // Sangiorgese») allargava la tabella oltre il bordo destro del gruppo.
+        val table =
+            TableLayout(this).apply {
+                setColumnStretchable(0, true)
+                setColumnShrinkable(0, true)
+            }
         for (side in 1..2) {
             val label =
                 text(teams[side - 1], size = BODY_SP, weight = WEIGHT_MEDIUM).apply {
                     etichettaConBarretta(paints[side - 1], color(R.color.elite_surface))
-                    maxLines = 1
+                    maxLines = 2
                     ellipsize = TextUtils.TruncateAt.END
                 }
             // Chi ha perso si legge senza il colore: testo secondario e peso 400 (il colore non e'
@@ -414,7 +420,11 @@ class ChronicleActivity : AppCompatActivity() {
     ) {
         val order = Match.decodeServeOrder(match.serveOrder)
         val names = lineup.associate { it.localId to it.name }
-        val table = TableLayout(this).apply { setColumnStretchable(0, true) }
+        val table =
+            TableLayout(this).apply {
+                setColumnStretchable(0, true)
+                setColumnShrinkable(0, true)
+            }
         addTableRow(
             table,
             caption(getString(R.string.chronicle_serve_header_player)),
