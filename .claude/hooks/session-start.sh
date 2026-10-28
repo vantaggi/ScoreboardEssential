@@ -48,21 +48,29 @@ fi
 # repo1.maven.org e repo.maven.apache.org rispondono 429 a circa meta' delle richieste, e ne'
 # Gradle ne' Robolectric (che scarica android-all-instrumented a runtime) ritentano: la prima
 # build ha richiesto 11 lanci. L'init script sta fuori dal repo, quindi la build del repo e
-# la CI non cambiano; nel cloud il mirror viene per primo e Maven Central resta di riserva.
+# la CI non cambiano.
 mkdir -p "${HOME}/.gradle/init.d"
 cat > "${HOME}/.gradle/init.d/maven-central-mirror.gradle" <<'GRADLE'
+// Ogni mavenCentral() della build punta al mirror: aggiungerlo in testa non bastava, perche'
+// i plugin che il mirror non ha (AGP, foojay, ktlint) passavano comunque da Central, con 429.
+// L'ordine dei repository resta quello di settings.gradle.
 def mirror = 'https://maven-central.storage-download.googleapis.com/maven2/'
-beforeSettings { settings ->
-    // Il portale subito dopo: foojay e il plugin ktlint su Central non ci sono, e senza
-    // questa riga Gradle li cercava li' prendendo 429 (uno, sul marker di ksp, aveva fatto
-    // fallire la build).
-    settings.pluginManagement.repositories {
-        maven { url = mirror }
-        gradlePluginPortal()
+def suMirror = { repos ->
+    repos.withType(MavenArtifactRepository).configureEach { r ->
+        def u = r.url.toString()
+        if (u.startsWith('https://repo.maven.apache.org/') || u.startsWith('https://repo1.maven.org/')) {
+            r.url = mirror
+        }
     }
-    settings.dependencyResolutionManagement.repositories { maven { url = mirror } }
+}
+beforeSettings { settings ->
+    suMirror(settings.pluginManagement.repositories)
+    suMirror(settings.dependencyResolutionManagement.repositories)
+    suMirror(settings.buildscript.repositories)
 }
 allprojects {
+    suMirror(buildscript.repositories)
+    suMirror(repositories)
     tasks.withType(Test).configureEach {
         systemProperty 'robolectric.dependency.repo.url', mirror
         systemProperty 'robolectric.dependency.repo.id', 'maven-central-mirror'
