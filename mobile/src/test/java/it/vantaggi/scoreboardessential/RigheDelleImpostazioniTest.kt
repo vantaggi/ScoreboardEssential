@@ -24,6 +24,17 @@ import org.robolectric.shadows.ShadowDialog
 class RigheDelleImpostazioniTest {
     private fun impostazioni(): MatchSettingsActivity = Robolectric.buildActivity(MatchSettingsActivity::class.java).setup().get()
 
+    /** Lo sport attivo arriva dalle impostazioni salvate, in una coroutine: si aspetta che il valore sia a schermo. */
+    private fun conLoSportCaricato(): MatchSettingsActivity {
+        val schermata = impostazioni()
+        repeat(100) {
+            shadowOf(Looper.getMainLooper()).idle()
+            if (schermata.findViewById<TextView>(R.id.sportValue).text.isNotEmpty()) return schermata
+            Thread.sleep(50)
+        }
+        return schermata
+    }
+
     @Test
     fun `le righe mostrano il valore in uso e non un campo da scrivere`() {
         val schermata = conLoSportCaricato()
