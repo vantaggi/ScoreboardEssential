@@ -629,6 +629,7 @@
             android:text="@string/label_sheet_this_match"
             android:textAppearance="@style/TextAppearance.App.Caption" />
 
+        <!-- I due comandi hanno la stessa altezza anche se uno va a capo (200%): match_parent li alza al piu' alto. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -638,7 +639,7 @@
                 android:id="@+id/share_match_button"
                 style="@style/Widget.App.Button.Secondary"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:maxLines="2"
                 android:paddingHorizontal="@dimen/space_8"
@@ -648,7 +649,7 @@
                 android:id="@+id/sheet_reset_timer_button"
                 style="@style/Widget.App.Button.Secondary"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_marginStart="@dimen/space_8"
                 android:layout_weight="1"
                 android:maxLines="2"
