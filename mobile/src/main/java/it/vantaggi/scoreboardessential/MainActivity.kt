@@ -622,6 +622,12 @@ class MainActivity :
         }
     }
 
+    /** Lo slot del portiere c'e' dove lo sport lo prevede e finche' la durata non e' spenta (0) nelle impostazioni. */
+    private fun mostraSlotPortiere() {
+        val acceso = capabilities?.hasAuxCountdown == true && (viewModel.keeperAttivo.value ?: true)
+        findViewById<View>(R.id.keeper_slot).visibility = if (acceso) View.VISIBLE else View.GONE
+    }
+
     /**
      * Accende e spegne le sezioni in base a cosa lo sport prevede. Nessun `when` sullo sport:
      * l'unica cosa che questa schermata sa e' quali capacita' le servono.
@@ -630,12 +636,6 @@ class MainActivity :
      * cambio sport, che a partita iniziata la guardia blocca. Durante la partita niente cambia
      * misura (vedi content_scoreboard_live).
      */
-    /** Lo slot del portiere c'e' dove lo sport lo prevede e finche' la durata non e' spenta (0) nelle impostazioni. */
-    private fun mostraSlotPortiere() {
-        val acceso = capabilities?.hasAuxCountdown == true && (viewModel.keeperAttivo.value ?: true)
-        findViewById<View>(R.id.keeper_slot).visibility = if (acceso) View.VISIBLE else View.GONE
-    }
-
     private fun applyCapabilities(sportCapabilities: SportCapabilities) {
         capabilities = sportCapabilities
         // Negli sport a set sottrarre un punto non e' un'operazione definita: il comando annulla
