@@ -558,7 +558,7 @@ Parto da "Mezzo secondo" e ne tengo l'ossatura. Sul tondo da 192dp il quadrante 
 - [Quadrante nel padel, collegato, partita in corso](design/wear-quadrante-nel-padel-collegato-partita-in-corso.svg): Padel collegato, 40-15, 4-3 nei game. La squadra 1 (sinistra) serve: pallino bianco sul lato esterno. Colori di squadra solo nelle strisce. Riga E senza anomalie: mostra il gesto in grigio. In basso il glifo del menu. Nessun pallino di collegamento: il silenzio vuol dire che va tutto bene.
 - [Quadrante nel calcio, telefono scollegato, 2 punti in coda](design/wear-quadrante-nel-calcio-telefono-scollegato-2-punti.svg): Calcio senza telefono. Il 3-2 è calcolato al polso con :core; le cifre restano bianche. La riga E dice '2 IN CODA' in ambra. In fascia A il cronometro corre, bianco, e a destra il portiere 'K 4:12' in rosa con l'anello sul bordo. Nessun controllo fra i due lati.
 - [Quadrante nel tennis, partita finita](design/wear-quadrante-nel-tennis-partita-finita.svg): Tennis finito 2-1 nei set. Risultato a piena intensità, non più ad alpha 0.4. Fascia A vuota, perché a partita finita non c'è un set in corso. I set chiusi stanno in D; la riga E dice PARTITA FINITA; niente pallino del servizio. I lati non vibrano e non mandano niente.
-- [Ambient nel calcio, collegato, nessuna anomalia](design/wear-ambient-nel-calcio-collegato-nessuna-anomalia.svg): Polso abbassato: fondo nero, cifre light bianche nella stessa posizione, minuti senza secondi. Strisce, anello, K e menu sono nascosti; riga E vuota perché non c'è niente che non va. Con burn-in protection la radice si sposta di ±4dp a ogni aggiornamento.
+- [Ambient nel calcio, collegato, nessuna anomalia](design/wear-ambient-nel-calcio-collegato-nessuna-anomalia.svg): Polso abbassato: fondo nero, cifre light bianche nella stessa posizione, minuti senza secondi. Strisce, anello e menu sono nascosti, il K resta come "K 5'" (vedi sotto); riga E vuota perché non c'è niente che non va. Con burn-in protection la radice si sposta di ±4dp a ogni aggiornamento.
 
 ### Il colore della squadra
 
@@ -964,7 +964,8 @@ In ambient:
 - cifre nella stessa posizione e misura, sans-serif-condensed-light bianco;
 - calcio: A = "34'", aggiornata in onUpdateAmbient;
 - racchetta: A invariata e pallino del servizio;
-- nascosti: strisce, anello, K, D, glifo del menu, suggerimento;
+- nascosti: strisce, anello, D, glifo del menu, suggerimento;
+- portiere (calcio, 28-10-2026): il K resta nel suo posto, in minuti per eccesso e senza anello: `K 5'` sopra il minuto, `K <1'` nell'ultimo minuto, `K 0'` a conto finito; bianco se corre, #BDBDBD se e' fermo, spento o non partito niente. I secondi non si scrivono: il sistema ridisegna una volta al minuto e un valore che invecchia direbbe il falso proprio alla scadenza (linee guida Wear OS: niente valori che invecchiano). Scelta di Cioti fra tre bozze (A minuti, B minuti e tacche, C ora di scadenza). `FaceText.portiereAmbient`, `MainActivity.ambientPortiere`;
 - riga E solo con un'anomalia o a partita finita, in #BDBDBD.
 burnInProtectionRequired: la radice si sposta di ±4dp a ogni aggiornamento. lowBitAmbient: niente anti-alias.
 All'uscita dall'ambient e in onResume: 500ms in cui i tocchi sui lati sono ignorati in silenzio. Tema Theme.ScoreboardEssential.Face con android:windowSwipeToDismiss=false, solo per MainActivity: si esce col tasto. Le altre schermate tengono lo swipe come indietro.
