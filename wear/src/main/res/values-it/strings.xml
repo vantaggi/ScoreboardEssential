@@ -92,6 +92,9 @@
     <string name="wear_setting_vibration">Vibrazione</string>
     <string name="wear_setting_vibration_on">A ogni punto</string>
     <string name="wear_setting_vibration_off">Solo avvisi</string>
+    <string name="wear_setting_screen">Schermo acceso</string>
+    <string name="wear_setting_screen_on">Per tutta la partita</string>
+    <string name="wear_setting_screen_off">Come da sistema</string>
     <string name="wear_setting_keeper">Portiere</string>
     <string name="wear_keeper_off">Off</string>
     <string name="wear_keeper_seconds">%1$d s</string>

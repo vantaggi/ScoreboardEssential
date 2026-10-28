@@ -18,6 +18,9 @@ enum class IdVoce {
     /** Dell'orologio: tocco dopo tocco accende o spegne la vibrazione dei punti. */
     VIBRAZIONE,
 
+    /** Dell'orologio: tiene lo schermo acceso mentre la partita e' in corso, senza ambient e senza quadrante. */
+    SCHERMO_ACCESO,
+
     /** Solo dove c'e' il portiere (il calcio): la durata del suo timer. */
     PORTIERE,
 }
@@ -70,6 +73,11 @@ sealed class SottotitoloVoce {
         val accesa: Boolean,
     ) : SottotitoloVoce()
 
+    /** Lo schermo acceso in partita: acceso, o come decide il sistema. */
+    data class SchermoAcceso(
+        val acceso: Boolean,
+    ) : SottotitoloVoce()
+
     /** Voce attiva: il risultato che verra' salvato, gia' impaginato ("3–2"). */
     data class SalvaRisultato(
         val risultato: String,
@@ -107,6 +115,8 @@ data class InputMenu(
     val portiere: String = "",
     /** La vibrazione dei punti dell'orologio. */
     val vibrazionePunti: Boolean = true,
+    /** Lo schermo resta acceso mentre la partita e' in corso. */
+    val schermoAcceso: Boolean = false,
     /**
      * Il cronometro della partita e' partito: anche a registro vuoto c'e' una partita da salvare (lo 0-0
      * giocato a tempo), con lo stesso criterio di endMatch sul telefono.
@@ -139,14 +149,15 @@ object MenuVoci {
         )
 
     /**
-     * Le impostazioni essenziali, nell'ordine: la regola del 40-40, la vibrazione, il portiere. Il resto
+     * Le impostazioni essenziali, nell'ordine: la regola del 40-40, la vibrazione, lo schermo acceso, il portiere. Il resto
      * si sceglie una volta sola dal telefono. Le due che chiede il telefono hanno i suoi blocchi; la
-     * vibrazione e' del polso e si cambia sempre.
+     * vibrazione e lo schermo acceso sono del polso e si cambiano sempre.
      */
     fun impostazioni(input: InputMenu): List<Voce> =
         listOfNotNull(
             if (input.regola40.isNotEmpty()) voceRegola40(input) else null,
             Voce(IdVoce.VIBRAZIONE, true, SottotitoloVoce.Vibrazione(input.vibrazionePunti)),
+            Voce(IdVoce.SCHERMO_ACCESO, true, SottotitoloVoce.SchermoAcceso(input.schermoAcceso)),
             if (input.portiere.isNotEmpty()) vocePortiere(input) else null,
         )
 

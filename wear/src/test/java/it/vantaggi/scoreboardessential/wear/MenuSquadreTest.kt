@@ -87,6 +87,7 @@ class MenuSquadreTest {
     fun `le impostazioni stanno in fondo, il 40-40 torna al quadrante e la vibrazione si cambia sul posto`() {
         val contesto = RuntimeEnvironment.getApplication()
         PreferenzeDelPolso(contesto).vibrazionePunti = true
+        PreferenzeDelPolso(contesto).schermoAcceso = false
         val input = ferma.copy(regola40 = "Killer point")
         val menu =
             Robolectric
@@ -109,7 +110,7 @@ class MenuSquadreTest {
                 .text
                 .toString()
 
-        assertEquals(2, gruppo.childCount)
+        assertEquals(3, gruppo.childCount)
         assertEquals(menu.getString(R.string.wear_setting_deuce), titolo(0))
         assertEquals("Killer point", sotto(0))
         assertEquals(menu.getString(R.string.wear_setting_vibration_on), sotto(1))
@@ -117,6 +118,14 @@ class MenuSquadreTest {
         gruppo.getChildAt(1).performClick()
         assertEquals(menu.getString(R.string.wear_setting_vibration_off), sotto(1))
         assertEquals(false, PreferenzeDelPolso(contesto).vibrazionePunti)
+
+        // Lo schermo acceso e' del polso come la vibrazione: si cambia sul posto e resta scelto.
+        assertEquals(menu.getString(R.string.wear_setting_screen), titolo(2))
+        assertEquals(menu.getString(R.string.wear_setting_screen_off), sotto(2))
+        gruppo.getChildAt(2).performClick()
+        assertEquals(menu.getString(R.string.wear_setting_screen_on), sotto(2))
+        assertEquals(true, PreferenzeDelPolso(contesto).schermoAcceso)
+        PreferenzeDelPolso(contesto).schermoAcceso = false
 
         gruppo.getChildAt(0).performClick()
         val esito = shadowOf(menu)

@@ -11,6 +11,7 @@ import android.os.SystemClock
 import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.view.WindowManager
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -335,6 +336,22 @@ class MainActivity : ComponentActivity() {
         val visibile = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
         if (attiva && visibile) chiediPermessoNotificheUnaVolta()
         PartitaInCorsoServizio.imposta(this, attiva, visibile)
+        tieniLoSchermoAcceso(attiva && PreferenzeDelPolso(this).schermoAcceso)
+    }
+
+    /**
+     * "Schermo acceso" del menu: finche' la partita e' in corso lo schermo non si spegne e non
+     * entra in ambient, quindi il tabellone resta dov'e' anche oltre il massimo di "Mostra ultima
+     * app" del sistema (2 minuti sul Galaxy Watch). Costa batteria, per questo e' spento di default.
+     * Si toglie con la fine della partita e con l'interruttore spento; non vale in ambient, dove
+     * il flag non e' mai arrivato.
+     */
+    internal fun tieniLoSchermoAcceso(acceso: Boolean) {
+        if (acceso) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 
     private fun chiediPermessoNotificheUnaVolta() {
@@ -567,6 +584,7 @@ class MainActivity : ComponentActivity() {
             regola40 = stato?.deuceLabel.orEmpty(),
             portiere = portiereDi(stato),
             vibrazionePunti = PreferenzeDelPolso(this).vibrazionePunti,
+            schermoAcceso = PreferenzeDelPolso(this).schermoAcceso,
             tempoAvviato = viewModel.tempoAvviato,
         )
     }
@@ -878,6 +896,7 @@ class MainActivity : ComponentActivity() {
     internal fun aggiornaAmbient() {
         if (!ambient) return
         renderContesto()
+        ambientPortiere(viewModel.keeperTimer.value)
         spostaBurnIn()
     }
 
@@ -909,7 +928,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun sovrapponiAmbient() {
         if (!ambient) return
-        listOf(binding.team1Score, binding.team2Score, binding.matchTimer).forEach { vista ->
+        listOf(binding.team1Score, binding.team2Score, binding.matchTimer, binding.keeperTimer).forEach { vista ->
             if (vista.typeface !== carattereLeggero) vista.typeface = carattereLeggero
             vista.paint.isAntiAlias = !ambientBitBassi
         }
@@ -922,10 +941,10 @@ class MainActivity : ComponentActivity() {
             binding.team1Stripe,
             binding.team2Stripe,
             binding.keeperProgressBar,
-            binding.keeperTimer,
             binding.faceDetail,
             binding.menuGlyph,
         ).forEach { it.visibility = View.INVISIBLE }
+        ambientPortiere(viewModel.keeperTimer.value)
         binding.chiCapsule.visibility = View.GONE
         // A polso abbassato la riga parla solo di anomalie (rosso e ambra) e della partita finita:
         // il suggerimento (TIENI: -1) e i transitori positivi (n CONSEGNATI, INVIO n..., CAMBIO
@@ -941,7 +960,7 @@ class MainActivity : ComponentActivity() {
     private fun ripristinaDaAmbient() {
         binding.root.translationX = 0f
         binding.root.translationY = 0f
-        listOf(binding.team1Score, binding.team2Score, binding.matchTimer).forEach { vista ->
+        listOf(binding.team1Score, binding.team2Score, binding.matchTimer, binding.keeperTimer).forEach { vista ->
             vista.typeface = carattereGrasso
             vista.paint.isAntiAlias = true
         }
@@ -1051,10 +1070,13 @@ class MainActivity : ComponentActivity() {
      * dall'ambient va ridisegnato con lo stato di adesso.
      */
     private fun renderPortiere(state: KeeperTimerState) {
-        // In ambient il portiere e' spento e il collector gira ogni secondo: non si tocca la
-        // visibilita' (K e anello passerebbero VISIBLE e poi INVISIBLE a ogni giro). L'uscita
-        // dall'ambient lo ridisegna con lo stato di adesso.
-        if (ambient) return
+        // In ambient il portiere e' solo il testo in minuti e il collector gira ogni secondo: ambientPortiere
+        // riscrive solo se il testo cambia, e l'anello resta spento (K e anello non passano VISIBLE e
+        // poi INVISIBLE a ogni giro). L'uscita dall'ambient lo ridisegna con lo stato di adesso.
+        if (ambient) {
+            ambientPortiere(state)
+            return
+        }
         // SEMPRE VISIBILE, finche' lo sport ha davvero un timer ausiliario.
         val auxAvailable = viewModel.scoreState.value?.hasAuxTimer != false
         mostraPortiere(auxAvailable)
@@ -1102,6 +1124,33 @@ class MainActivity : ComponentActivity() {
             }
         }
         sovrapponiAmbient()
+    }
+
+    /**
+     * Il conto del portiere a polso abbassato: "K 5'" al posto di "K 4:12" nel suo stesso posto,
+     * senza anello e senza colore ([FaceText.portiereAmbient]). Bianco se corre, grigio se e' fermo;
+     * se il portiere e' spento, non e' partito o lo sport non lo ha, non c'e' niente da dire.
+     */
+    private fun ambientPortiere(state: KeeperTimerState) {
+        if (!ambient) return
+        val vista = binding.keeperTimer
+        val auxAvailable = viewModel.scoreState.value?.hasAuxTimer != false
+        val secondi =
+            when (state) {
+                is KeeperTimerState.Running -> state.secondsRemaining
+                is KeeperTimerState.Paused -> state.secondsRemaining
+                is KeeperTimerState.Finished -> 0
+                is KeeperTimerState.Hidden -> null
+            }
+        if (secondi == null || !auxAvailable) {
+            vista.visibility = View.INVISIBLE
+            return
+        }
+        val testo = FaceText.portiereAmbient(secondi)
+        if (vista.text.toString() != testo) vista.text = testo
+        val fermo = state is KeeperTimerState.Paused
+        vista.setTextColor(ContextCompat.getColor(this, if (fermo) R.color.ambient_gray else R.color.ink_white))
+        vista.visibility = View.VISIBLE
     }
 
     private fun observeViewModel() {

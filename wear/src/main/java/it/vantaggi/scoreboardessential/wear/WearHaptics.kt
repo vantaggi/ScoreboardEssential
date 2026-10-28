@@ -100,9 +100,15 @@ class PreferenzeDelPolso(
         get() = prefs.getBoolean(KEY_VIBRAZIONE_PUNTI, true)
         set(valore) = prefs.edit { putBoolean(KEY_VIBRAZIONE_PUNTI, valore) }
 
+    /** Tiene lo schermo acceso finche' la partita e' in corso: spento di default, perche' costa batteria. */
+    var schermoAcceso: Boolean
+        get() = prefs.getBoolean(KEY_SCHERMO_ACCESO, false)
+        set(valore) = prefs.edit { putBoolean(KEY_SCHERMO_ACCESO, valore) }
+
     companion object {
         private const val FILE = "preferenze_polso"
         private const val KEY_VIBRAZIONE_PUNTI = "vibrazione_punti"
+        private const val KEY_SCHERMO_ACCESO = "schermo_acceso"
     }
 }
 
