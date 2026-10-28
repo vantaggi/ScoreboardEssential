@@ -357,6 +357,7 @@ class ColonnaDiGiocoTest {
     @Test
     fun nelCalcio_un_nome_lungo_resta_intero_in_alto_e_nella_striscia_a_360dp() {
         val nome = "Polisportiva Sangiorgese"
+        val altezzeDelNome = mutableListOf<Int>()
         for (scala in listOf(1f, 2f)) {
             val radice = gonfia(scala)
             mostraGliSlotDelServizio(radice.findViewById(R.id.names_row), sportConServizio = false)
@@ -378,11 +379,83 @@ class ColonnaDiGiocoTest {
             // Il nome e la barretta stanno nella riga dei nomi da 48dp.
             val riga = radice.findViewById<View>(R.id.names_row)
             val barretta = radice.findViewById<View>(R.id.team1_color_bar)
-            val fondo = IntArray(2).also { barretta.getLocationInWindow(it) }[1] + barretta.height
-            val cima = IntArray(2).also { riga.getLocationInWindow(it) }[1]
+            val fondo = cimaNellaRadice(barretta) + barretta.height
+            val cima = cimaNellaRadice(riga)
             assertTrue("a scala $scala la barretta esce dalla riga dei nomi", fondo - cima <= riga.height)
+            assertNomeIntero("a scala $scala", nome1, barretta)
+            altezzeDelNome += nome1.layout.height
 
             assertTuttoIlTesto("la striscia a scala $scala", striscia, righeMassime = 2)
+            assertTrue("la striscia scende sotto i 13dp: ${striscia.textSize / densita}dp", striscia.textSize >= 13 * densita - 0.5f)
+            assertTrue(
+                "a scala $scala la striscia e' alta ${striscia.layout.height}px, ne ha ${56 * densita}px",
+                striscia.layout.height <= 56 * densita,
+            )
+        }
+        // I testi del gioco sono in dp: l'interlinea non cresce con la scala dei caratteri.
+        assertEquals("il nome su due righe cresce col testo grande", altezzeDelNome[0], altezzeDelNome[1])
+    }
+
+    /**
+     * La cima della vista nella radice gonfiata. Non getLocationInWindow: senza finestra da' sempre
+     * 0, e il confronto fra barretta e riga dei nomi passava comunque.
+     */
+    private fun cimaNellaRadice(vista: View): Int {
+        var cima = 0
+        var corrente: View? = vista
+        while (corrente != null) {
+            cima += corrente.top
+            corrente = corrente.parent as? View
+        }
+        return cima
+    }
+
+    /**
+     * Il nome si legge intero: la vista e' alta quanto le sue righe (la «g» di «Sangiorgese» non e'
+     * tagliata in fondo) e finisce prima della barretta, che ha il suo margine sopra.
+     */
+    private fun assertNomeIntero(
+        quando: String,
+        nome: TextView,
+        barretta: View,
+    ) {
+        val righe = nome.layout.height + nome.totalPaddingTop + nome.totalPaddingBottom
+        assertTrue("$quando il nome ha righe alte ${righe}px in una vista di ${nome.height}px", righe <= nome.height)
+        val fondoDelNome = cimaNellaRadice(nome) + nome.height
+        val cimaDellaBarretta = cimaNellaRadice(barretta)
+        assertTrue(
+            "$quando il nome finisce a ${fondoDelNome}px e la barretta comincia a ${cimaDellaBarretta}px",
+            fondoDelNome <= cimaDellaBarretta,
+        )
+    }
+
+    /**
+     * Dal secondo giro di prove (28 ottobre 2026): nel padel a 360dp la striscia a una riga si
+     * tagliava coi puntini, «Point Polisportiva Sangiorgese · 0-…», e il punteggio si perdeva. Ora,
+     * se non entra a 13dp, va su due righe fra le parole dentro i 56dp; anche il nome col pallino del
+     * servizio resta intero. Rosso se la frase perde il punteggio o esce dalla striscia.
+     */
+    @Test
+    fun nelPadel_la_striscia_con_un_nome_lungo_tiene_il_punteggio() {
+        val nome = "Polisportiva Sangiorgese"
+        for (scala in listOf(1f, 2f)) {
+            val radice = gonfia(scala)
+            mostraGliSlotDelServizio(radice.findViewById(R.id.names_row), sportConServizio = true)
+            // Negli sport a set il -1 non c'e'.
+            for (id in listOf(R.id.team1_subtract_button_card, R.id.team2_subtract_button_card)) {
+                radice.findViewById<View>(id).visibility = View.GONE
+            }
+            val nome1 = radice.findViewById<TextView>(R.id.team1_name_textview)
+            nome1.text = nome
+            val striscia = radice.findViewById<TextView>(R.id.last_action_text)
+            striscia.maxLines = 1
+            striscia.text = radice.context.getString(R.string.strip_point, nome, "0-30")
+            misura(radice, larghezzaDp = 360)
+            val densita = radice.resources.displayMetrics.density
+
+            assertTuttoIlTesto("il nome col servizio a scala $scala", nome1, righeMassime = 2)
+            assertNomeIntero("col servizio a scala $scala", nome1, radice.findViewById(R.id.team1_color_bar))
+            assertTuttoIlTesto("la striscia del padel a scala $scala", striscia, righeMassime = 2)
             assertTrue("la striscia scende sotto i 13dp: ${striscia.textSize / densita}dp", striscia.textSize >= 13 * densita - 0.5f)
             assertTrue(
                 "a scala $scala la striscia e' alta ${striscia.layout.height}px, ne ha ${56 * densita}px",
