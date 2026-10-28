@@ -223,6 +223,37 @@ class ColonnaDiGiocoTest {
         }
     }
 
+    /**
+     * I testi del gioco sono a misura fissa (dp, come il tempo e il portiere): il tabellone ha slot
+     * fissi e si legge a due metri, e a 360dp col testo al 200% nomi, striscia e intestazione
+     * finivano ellissati ("Te..."). Rosso se uno di questi torna in sp e cresce con la scala.
+     */
+    @Test
+    fun itestiDelGioco_non_crescono_con_la_scala_dei_caratteri() {
+        val ids =
+            listOf(
+                R.id.timer_start_button,
+                R.id.match_period_textview,
+                R.id.team1_name_textview,
+                R.id.team2_name_textview,
+                R.id.team1_subtract_button_card,
+                R.id.team2_subtract_button_card,
+                R.id.last_action_text,
+                R.id.undo_goal_button,
+            )
+        val normale = gonfia(1f)
+        val enorme = gonfia(2f)
+        for (id in ids) {
+            val nome = normale.resources.getResourceEntryName(id)
+            assertEquals(
+                "$nome cresce con la scala dei caratteri",
+                normale.findViewById<TextView>(id).textSize,
+                enorme.findViewById<TextView>(id).textSize,
+                0.01f,
+            )
+        }
+    }
+
     @Test
     fun la_didascalia_del_dettaglio_a_partita_finita_e_SET() {
         assertEquals(R.string.caption_set_game, didascaliaDelDettaglio("6-4 · 3-2", partitaFinita = false))
