@@ -46,8 +46,9 @@ jobs:
       - name: 4. Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # Prima di tutto ktlint: dura mezzo minuto, e il 28 ottobre 2026 quattro run rossi su
-      # undici erano suoi, scoperti solo dopo i 10 minuti dei test. Ora cadono al primo minuto.
+      # Prima di tutto ktlint: dura mezzo minuto, e il 28 ottobre 2026 almeno quattro dei
+      # dodici run rossi erano suoi, scoperti solo dopo i 10 minuti dei test. Ora cadono al
+      # primo minuto.
       - name: 5. Run Ktlint Check
         run: ./gradlew ktlintCheck
 
