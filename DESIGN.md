@@ -2665,6 +2665,25 @@ Nell'elenco con la rosa di Padel Elite ogni giocatore della dashboard non ancora
 - **Pattern vietati.** Tolta la stessa didascalia ripetuta su ogni riga.
 - **Non toccato.** La ricerca in cima e lo sport con la spunta (resto del passo 7) restano da fare.
 
+### Passo 3c, le Impostazioni a righe
+
+Scelta di Cioti sulla bozza (28 ottobre 2026, B): sport, regola del 40-40 e lingua non sono piu' menu a tendina ma righe col nome a sinistra, il valore a destra e la freccia (stesso gesto della riga Padel Elite). Il tocco apre un foglio (`scegliDaElenco`, `MaterialAlertDialogBuilder` a scelta singola) con la spunta su quello in uso; toccarne una la sceglie e chiude, Annulla chiude. Il blocco del cambio sport o 40-40 a partita in corso dice come prima (snackbar). La riga del 40-40 resta nascosta fuori dagli sport con racchetta e la frase delle regole sta sotto le due righe.
+
+- Stati: normale e premuto (`Widget.App.Pressable`), fuoco (anello), disattivo no (la riga e' sempre toccabile), errore (snackbar del blocco), movimento ridotto (nessun movimento nuovo).
+- Schermo stretto e 200%: il nome va a capo, il valore resta a destra; da guardare a schermo.
+- Debiti: la durata del portiere resta un campo numerico (la bozza la mostrava come riga con "3 minuti"); non visto a schermo.
+- Controllo dei pattern vietati: nessun colore, spaziatura o durata scritti a mano; una sola famiglia di icone; nessuna ombra.
+
+#### Prova a schermo del 28 ottobre 2026 (telefono vero SM-S948B, main 1007632, apk con lo stesso hash della build)
+
+Visti e ok: punti 1 (Squadra 1/2, niente riga del portiere), 2 (quattro gruppi), 3 (Padel Elite: collegati prima, ricerca, Aggiorna), 4 (Cronaca con una partita povera di punti), 5 ("Ieri" e solo l'ora), 7 (Giocatori nel padel: partite, ricerca, ordine senza "Per gol"), 9 (avviso una volta sola). Non provabili col telefono com'e': "Oggi" nello Storico, la classifica e il calcio (servirebbe cambiare sport e toccare la partita in corso), "Azzera" (serve un giocatore con partite), la Cronaca ricca.
+
+Difetti trovati e corretti in questa PR:
+- Dialogo del colore squadra: due colori su otto (la `GridLayout` a pesi con cerchi da 48dp fissi); ora due righe da quattro, ogni cerchio in una cella a peso 1 (`dialog_team_palette.xml`). `LayoutAStrettoTest`.
+- Storico a 360dp e 200%: il cestino usciva dalla scheda; i tre comandi stanno in un `Flow` che va a capo (`match_item.xml`). `LayoutAStrettoTest`.
+
+Difetti noti, non corretti qui (tutti a 360dp e 200%): etichette della schermata di gioco troncate e didascalia "Game" persa; hint "Nome squadra" troncati nelle Impostazioni; la riga delle regole dello Storico lascia il "7" da solo ("tie-break a / 7", anche a 100%); la prima riga del Registro ("Partita ripresa") non ha l'ora. La slider di luminosita' nella ruota del colore non si vede, da verificare.
+
 ### Debiti dichiarati del passo 7b
 
 1. Nessuna ricerca nel dialogo: con una rosa di cinquanta nomi si scorre ancora. Serve un dialogo con un campo e una lista filtrata al posto dell'adattatore del `MaterialAlertDialog`; non l'ho fatto di notte perche' tocca la scelta dalla dashboard di Padel Elite, che e' in produzione.

@@ -122,44 +122,33 @@ class MatchSettingsActivity : AppCompatActivity() {
     }
 
     private fun setupLanguageDropdown() {
-        val languages = listOf("English", "Italiano")
-        val adapter =
-            android.widget.ArrayAdapter(
-                this,
-                android.R.layout.simple_dropdown_item_1line,
-                languages,
-            )
-        (binding.languageAutoComplete as? android.widget.AutoCompleteTextView)?.setAdapter(adapter)
-
-        // Il selettore mostra la lingua che la schermata sta davvero usando, anche quando nessuno
+        val lingue = listOf("en" to "English", "it" to "Italiano")
+        // La riga mostra la lingua che la schermata sta davvero usando, anche quando nessuno
         // l'ha scelta e viene dal sistema: non c'e' una seconda copia salvata che possa smentirla.
-        val shown = LocaleHelper.currentLanguage(this)
-        binding.languageAutoComplete.setText(if (shown == "it") "Italiano" else "English", false)
+        binding.languageValue.text = lingue.first { it.first == LocaleHelper.currentLanguage(this) }.second
 
-        binding.languageAutoComplete.setOnItemClickListener { _, _, position, _ ->
-            val selectedLang = if (position == 0) "en" else "it"
-            if (LocaleHelper.currentLanguage(this) != selectedLang) {
-                // Niente recreate(): le Activity aperte le ricrea chi applica la lingua, il
-                // sistema da API 33 e AppCompat sotto.
-                LocaleHelper.apply(selectedLang)
+        binding.languageRow.setOnClickListener {
+            val corrente = lingue.indexOfFirst { it.first == LocaleHelper.currentLanguage(this) }
+            scegliDaElenco(getString(R.string.language), lingue.map { it.second }, corrente) { posizione ->
+                val scelta = lingue[posizione].first
+                if (LocaleHelper.currentLanguage(this) != scelta) {
+                    // Niente recreate(): le Activity aperte le ricrea chi applica la lingua, il
+                    // sistema da API 33 e AppCompat sotto.
+                    LocaleHelper.apply(scelta)
+                }
             }
         }
     }
 
     private fun setupSportDropdown() {
         val sportIds = SportRegistry.selectable().map { it.id }
-        val adapter =
-            android.widget.ArrayAdapter(
-                this,
-                android.R.layout.simple_dropdown_item_1line,
-                sportIds.map { sportLabel(this, it) },
-            )
-        binding.sportAutoComplete.setAdapter(adapter)
-
-        binding.sportAutoComplete.setOnItemClickListener { _, _, position, _ ->
-            val selectedSport = sportIds[position]
-            if (viewModel.activeSport.value != selectedSport) {
-                viewModel.saveActiveSport(selectedSport)
+        binding.sportRow.setOnClickListener {
+            val corrente = sportIds.indexOf(viewModel.activeSport.value)
+            scegliDaElenco(getString(R.string.settings_sport_title), sportIds.map { sportLabel(this, it) }, corrente) { posizione ->
+                val selectedSport = sportIds[posizione]
+                if (viewModel.activeSport.value != selectedSport) {
+                    viewModel.saveActiveSport(selectedSport)
+                }
             }
         }
     }
@@ -167,16 +156,12 @@ class MatchSettingsActivity : AppCompatActivity() {
     /** Le tre regole del 40-40, nell'ordine di [DeuceRule]; il nome si legge da [etichettaDel40]. */
     private fun setupDeuceDropdown() {
         val regole = DeuceRule.entries
-        val adapter =
-            android.widget.ArrayAdapter(
-                this,
-                android.R.layout.simple_dropdown_item_1line,
-                regole.map { etichettaDel40(it) },
-            )
-        binding.deuceAutoComplete.setAdapter(adapter)
-        binding.deuceAutoComplete.setOnItemClickListener { _, _, position, _ ->
-            val scelta = regole[position]
-            if (viewModel.deuceRule.value != scelta) viewModel.saveDeuceRule(scelta)
+        binding.deuceRuleLayout.setOnClickListener {
+            val corrente = regole.indexOf(viewModel.deuceRule.value)
+            scegliDaElenco(getString(R.string.settings_deuce_title), regole.map { etichettaDel40(it) }, corrente) { posizione ->
+                val scelta = regole[posizione]
+                if (viewModel.deuceRule.value != scelta) viewModel.saveDeuceRule(scelta)
+            }
         }
     }
 
@@ -231,18 +216,12 @@ class MatchSettingsActivity : AppCompatActivity() {
 
         // Come lo sport: la voce mostrata e la riga delle regole seguono il ViewModel.
         viewModel.deuceRule.observe(this) { regola ->
-            val label = etichettaDel40(regola)
-            if (binding.deuceAutoComplete.text.toString() != label) {
-                binding.deuceAutoComplete.setText(label, false)
-            }
+            binding.deuceValue.text = etichettaDel40(regola)
             viewModel.activeSport.value?.let { binding.sportRulesText.text = sportRulesLine(this, it, regola) }
         }
 
         viewModel.activeSport.observe(this) { sportId ->
-            val label = sportLabel(this, sportId)
-            if (binding.sportAutoComplete.text.toString() != label) {
-                binding.sportAutoComplete.setText(label, false)
-            }
+            binding.sportValue.text = sportLabel(this, sportId)
             binding.sportRulesText.text = sportRulesLine(this, sportId, viewModel.deuceRule.value)
             // Il 40-40 esiste solo negli sport con racchetta.
             binding.deuceRuleLayout.visibility =

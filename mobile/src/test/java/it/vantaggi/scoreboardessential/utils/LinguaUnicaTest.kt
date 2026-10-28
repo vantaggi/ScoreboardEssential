@@ -1,7 +1,7 @@
 package it.vantaggi.scoreboardessential.utils
 
 import android.content.Context
-import android.widget.AutoCompleteTextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.room.Room
@@ -21,6 +21,7 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowDialog
 import java.io.File
 
 /**
@@ -66,9 +67,10 @@ class LinguaUnicaTest {
                 .buildActivity(MatchSettingsActivity::class.java)
                 .setup()
                 .get()
-        val selettore = impostazioni.findViewById<AutoCompleteTextView>(R.id.languageAutoComplete)
-        // La seconda voce del menu e' "Italiano".
-        selettore.onItemClickListener.onItemClick(null, selettore, 1, 1L)
+        impostazioni.findViewById<android.view.View>(R.id.languageRow).performClick()
+        // La seconda voce del foglio e' "Italiano".
+        val foglio = ShadowDialog.getLatestDialog() as AlertDialog
+        foglio.listView.performItemClick(null, 1, 1L)
     }
 
     @Test

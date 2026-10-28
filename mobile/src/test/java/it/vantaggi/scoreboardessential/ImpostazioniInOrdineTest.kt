@@ -57,7 +57,7 @@ class ImpostazioniInOrdineTest {
     @Test
     fun `la lingua sta nel gruppo App con l'alto contrasto, non con le regole`() {
         val impostazioni = gonfiaLeImpostazioni()
-        val lingua = impostazioni.findViewById<View>(R.id.languageAutoComplete)
+        val lingua = impostazioni.findViewById<View>(R.id.languageRow)
         val contrasto = impostazioni.findViewById<View>(R.id.highContrastSwitch)
         val sport = impostazioni.findViewById<View>(R.id.sportRulesText)
 
