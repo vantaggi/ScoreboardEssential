@@ -6,15 +6,20 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.children
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.chip.Chip
 import com.google.android.material.tabs.TabLayout
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
+import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.databinding.ActivityStatisticsBinding
 import it.vantaggi.scoreboardessential.sportLabel
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
 import it.vantaggi.scoreboardessential.utils.enableEdgeToEdgeConAspetto
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
 class StatisticsActivity : AppCompatActivity() {
@@ -22,7 +27,8 @@ class StatisticsActivity : AppCompatActivity() {
     private val viewModel: StatisticsViewModel by viewModels {
         StatisticsViewModel.Factory(application)
     }
-    private lateinit var adapter: StatisticsAdapter
+    private lateinit var goalsAdapter: StatisticsAdapter
+    private lateinit var winsAdapter: RecordAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,22 +51,31 @@ class StatisticsActivity : AppCompatActivity() {
         }
 
         setupUI()
-        // Lo sport in uso decide la classifica: gol nel calcio, partite vinte nel padel e nel tennis.
+        // Si parte dallo sport in uso (gol nel calcio, partite vinte nel padel e nel tennis); poi lo
+        // sport lo sceglie la schermata. Dopo una rotazione il ViewModel ricorda quello guardato.
         lifecycleScope.launch {
-            val sportId = (application as ScoreboardEssentialApplication).matchSettingsRepository.getActiveSport()
-            if (StatisticsViewModel.contaIGol(sportId)) observeGoals() else observeWins(sportId)
+            if (viewModel.sport.value == null) {
+                viewModel.setSport((application as ScoreboardEssentialApplication).matchSettingsRepository.getActiveSport())
+            }
+            viewModel.sport.filterNotNull().collectLatest { sportId ->
+                segnaLoSport(sportId)
+                if (StatisticsViewModel.contaIGol(sportId)) observeGoals() else observeWins()
+            }
         }
     }
 
     private fun setupUI() {
         binding.toolbar.setNavigationOnClickListener { finish() }
 
-        adapter = StatisticsAdapter()
+        goalsAdapter = StatisticsAdapter()
+        winsAdapter = RecordAdapter()
         binding.recyclerStats.layoutManager = LinearLayoutManager(this)
-        binding.recyclerStats.adapter = adapter
+        binding.recyclerStats.adapter = goalsAdapter
         binding.recyclerStats.addItemDecoration(InsetDividerDecoration(this))
         // Lo stato vuoto ha una strada: tornare alla partita, da dove si salva.
         binding.emptyState.actionButton.setOnClickListener { finish() }
+
+        setupSportChips()
 
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.stats_tab_general))
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.stats_tab_attack))
@@ -83,30 +98,63 @@ class StatisticsActivity : AppCompatActivity() {
         )
     }
 
+    /** Un chip per sport, gli stessi dei filtri per ruolo dei Giocatori: se ne sceglie uno solo. */
+    private fun setupSportChips() {
+        SportRegistry.selectable().forEach { regole ->
+            val chip =
+                (layoutInflater.inflate(R.layout.item_chip_filter, binding.sportChipGroup, false) as Chip).apply {
+                    text = sportLabel(this@StatisticsActivity, regole.id)
+                    id = View.generateViewId()
+                    tag = regole.id
+                    isCheckable = true
+                }
+            binding.sportChipGroup.addView(chip)
+        }
+        binding.sportChipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
+            val scelto = checkedIds.firstOrNull()?.let { group.findViewById<Chip>(it)?.tag as? String }
+            if (scelto != null) viewModel.setSport(scelto)
+        }
+    }
+
+    /** Il chip dello sport guardato, anche quando lo sport arriva dalle Impostazioni e non da un tocco. */
+    private fun segnaLoSport(sportId: String) {
+        val chip =
+            binding.sportChipGroup.children
+                .filterIsInstance<Chip>()
+                .firstOrNull { it.tag == sportId }
+        if (chip != null && !chip.isChecked) binding.sportChipGroup.check(chip.id)
+    }
+
+    /** Il calcio: le tre schede, i gol di chi ha giocato a calcio. */
     private suspend fun observeGoals() {
+        binding.tabLayout.visibility = View.VISIBLE
+        binding.statsHeading.visibility = View.GONE
+        binding.emptyState.setMessage(getString(R.string.stats_empty_title), getString(R.string.stats_empty_hint))
+        binding.recyclerStats.adapter = goalsAdapter
         viewModel.topScorers.collect { stats ->
             // Una classifica di soli zeri non e' una classifica: lo stato vuoto e basta.
             val vuota = Classifica.eVuota(stats.map { it.goals })
             binding.statsGroup.visibility = if (vuota) View.GONE else View.VISIBLE
             binding.emptyState.visibility = if (vuota) View.VISIBLE else View.GONE
-            if (!vuota) adapter.submitList(stats)
+            if (!vuota) goalsAdapter.submitList(stats)
         }
     }
 
-    /** Padel e tennis: niente schede, la riga del titolo e le partite vinte su quelle giocate. */
-    private suspend fun observeWins(sportId: String) {
+    /**
+     * Padel e tennis: niente schede, la riga del titolo e le partite vinte su quelle giocate. Lo sport
+     * lo dice il chip scelto, e il titolo non lo ripete.
+     */
+    private suspend fun observeWins() {
         binding.tabLayout.visibility = View.GONE
         binding.statsHeading.visibility = View.VISIBLE
-        binding.statsHeading.text = getString(R.string.stats_wins_heading, sportLabel(this, sportId))
+        binding.statsHeading.text = getString(R.string.stats_wins_heading)
         binding.emptyState.setMessage(getString(R.string.stats_empty_title), getString(R.string.stats_wins_empty_hint))
-        val vittorie = RecordAdapter()
-        binding.recyclerStats.adapter = vittorie
-        viewModel.setSport(sportId)
+        binding.recyclerStats.adapter = winsAdapter
         viewModel.records.collect { righe ->
             val vuota = Classifica.eVuota(righe.map { it.won })
             binding.statsGroup.visibility = if (vuota) View.GONE else View.VISIBLE
             binding.emptyState.visibility = if (vuota) View.VISIBLE else View.GONE
-            if (!vuota) vittorie.submitList(righe)
+            if (!vuota) winsAdapter.submitList(righe)
         }
     }
 }

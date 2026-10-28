@@ -27,7 +27,7 @@ class GetPlayerStatsUseCaseReactiveTest {
     fun setup() {
         playerDao = mock()
         matchDao = mock()
-        whenever(matchDao.getPlayerWinCounts()).thenReturn(flowOf(emptyList()))
+        whenever(matchDao.getPlayerSportCounts()).thenReturn(flowOf(emptyList()))
         getPlayerStatsUseCase = GetPlayerStatsUseCase(playerDao, matchDao)
     }
 

@@ -124,10 +124,13 @@ class AddEditPlayerActivity : AppCompatActivity() {
         return true
     }
 
-    /** "Azzera le statistiche" c'e' solo per un giocatore che esiste e ha qualcosa da azzerare. */
+    /**
+     * "Azzera i gol" c'e' solo per un giocatore che esiste e ha gol. Le partite non si azzerano: si
+     * contano dallo storico, sport per sport.
+     */
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         val player = giocatore?.player
-        menu.findItem(R.id.action_reset_stats)?.isVisible = player != null && (player.appearances > 0 || player.goals > 0)
+        menu.findItem(R.id.action_reset_stats)?.isVisible = player != null && player.goals > 0
         return super.onPrepareOptionsMenu(menu)
     }
 

@@ -49,17 +49,22 @@ class StatisticsViewModel(
         filter.value = newFilter
     }
 
-    /** Lo sport in uso (revisione dei menu, passo 6): decide se la classifica e' di gol o di partite vinte. */
-    private val sport = MutableStateFlow<String?>(null)
+    /**
+     * Lo sport di cui si guardano le statistiche (revisione dei menu, passo 6): decide se la classifica
+     * e' di gol o di partite vinte. Parte da quello in uso, ma si cambia dalla schermata senza toccare
+     * le Impostazioni: chi gioca a piu' sport li guarda uno alla volta. Null finche' non e' stato letto.
+     */
+    private val _sport = MutableStateFlow<String?>(null)
+    val sport: StateFlow<String?> = _sport
 
     fun setSport(sportId: String) {
-        sport.value = sportId
+        _sport.value = sportId
     }
 
     /** Nel padel e nel tennis, senza marcatori: le partite giocate e vinte nello sport in uso. */
     @OptIn(ExperimentalCoroutinesApi::class)
     val records: StateFlow<List<PlayerRecord>> =
-        sport
+        _sport
             .flatMapLatest { id ->
                 if (id == null || contaIGol(id)) flowOf(emptyList()) else matchDao.getPlayerRecords(id, LIMIT)
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

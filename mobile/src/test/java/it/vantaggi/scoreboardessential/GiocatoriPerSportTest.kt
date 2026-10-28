@@ -10,10 +10,13 @@ import androidx.room.Room
 import com.google.android.material.textfield.TextInputEditText
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.AppDatabase
+import it.vantaggi.scoreboardessential.database.Match
+import it.vantaggi.scoreboardessential.database.MatchPlayerCrossRef
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerRoleCrossRef
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.database.Role
+import it.vantaggi.scoreboardessential.database.Team
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -32,8 +35,10 @@ import org.robolectric.annotation.Config
  * I Giocatori seguono lo sport in uso (passo 6b della revisione dei menu). Nel padel la riga e' il
  * nome e le partite, senza gol ne' ruoli, e non ci sono i filtri per ruolo ne' l'ordine "Per gol";
  * nel calcio ci sono tutti. La ricerca e' un campo nella pagina e ignora maiuscole e accenti.
+ * Le partite in riga sono quelle dello sport in uso, contate dallo storico: chi gioca a piu' sport non
+ * vede nel calcio le partite di padel.
  * Rosso se nel padel tornano gol, ruoli o "Per gol", se il calcio li perde, se l'ordine in uso non
- * ha la spunta, o se la ricerca distingue «Nicolò» da «nicolo».
+ * ha la spunta, se la ricerca distingue «Nicolò» da «nicolo», o se una riga somma gli sport.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "it")
@@ -49,9 +54,12 @@ class GiocatoriPerSportTest {
                 .build()
         istanza(db)
         runBlocking {
+            db.teamDao().insertWithId(Team(id = 1, name = "Rossi", color = 0, logoUri = null))
+            db.teamDao().insertWithId(Team(id = 2, name = "Blu", color = 0, logoUri = null))
             db.playerDao().insertRole(Role(roleId = 1, name = "Portiere", category = "PORTA"))
-            db.playerDao().insert(Player(playerId = 1, playerName = "Nicolò", appearances = 1, goals = 2))
-            db.playerDao().insert(Player(playerId = 2, playerName = "Bruno", appearances = 3, goals = 0))
+            // Il totale della colonna somma gli sport e qui non conta: le righe leggono lo storico.
+            db.playerDao().insert(Player(playerId = 1, playerName = "Nicolò", appearances = 9, goals = 2))
+            db.playerDao().insert(Player(playerId = 2, playerName = "Bruno", appearances = 9, goals = 0))
             db.playerDao().addRoleToPlayer(PlayerRoleCrossRef(playerId = 1, roleId = 1))
         }
     }
@@ -66,6 +74,16 @@ class GiocatoriPerSportTest {
         val campo = AppDatabase::class.java.getDeclaredField("instance")
         campo.isAccessible = true
         campo.set(null, valore)
+    }
+
+    /** Una partita chiusa di [sport] con i [giocatori] sul lato 1. */
+    private fun partita(
+        sport: String,
+        vararg giocatori: Int,
+    ) = runBlocking {
+        val match = Match(team1Id = 1, team2Id = 2, team1Score = 1, team2Score = 0, timestamp = 1L, sportId = sport)
+        val id = db.matchDao().insert(match).toInt()
+        db.matchDao().insertMatchPlayerCrossRefs(giocatori.map { MatchPlayerCrossRef(id, it, teamNumber = 1) })
     }
 
     private fun sport(id: String) {
@@ -109,6 +127,10 @@ class GiocatoriPerSportTest {
     @Test
     fun `nel padel la riga e' il nome e le partite, senza ruoli ne' Per gol`() {
         sport(SportRegistry.PADEL)
+        repeat(3) { partita(SportRegistry.PADEL, 2) }
+        partita(SportRegistry.PADEL, 1)
+        // Le partite di calcio non si sommano a quelle di padel.
+        partita(SportRegistry.FOOTBALL, 1, 2)
         val giocatori = Robolectric.buildActivity(PlayersManagementActivity::class.java).setup().get()
         val lista = giocatori.findViewById<RecyclerView>(R.id.players_recyclerview)
         attendi("le righe del padel non sono arrivate") { valori(lista) == listOf("Bruno: 3 partite", "Nicolò: 1 partita") }
@@ -122,6 +144,10 @@ class GiocatoriPerSportTest {
     @Test
     fun `nel calcio ci sono i gol, i ruoli e Per gol`() {
         sport(SportRegistry.FOOTBALL)
+        repeat(3) { partita(SportRegistry.FOOTBALL, 2) }
+        partita(SportRegistry.FOOTBALL, 1)
+        // Le partite di padel non si sommano a quelle di calcio.
+        repeat(2) { partita(SportRegistry.PADEL, 1, 2) }
         val giocatori = Robolectric.buildActivity(PlayersManagementActivity::class.java).setup().get()
         val lista = giocatori.findViewById<RecyclerView>(R.id.players_recyclerview)
         attendi("le righe del calcio non sono arrivate") {
@@ -137,6 +163,7 @@ class GiocatoriPerSportTest {
     @Test
     fun `la ricerca e' un campo nella pagina e ignora gli accenti`() {
         sport(SportRegistry.PADEL)
+        partita(SportRegistry.PADEL, 1, 2)
         val giocatori = Robolectric.buildActivity(PlayersManagementActivity::class.java).setup().get()
         val lista = giocatori.findViewById<RecyclerView>(R.id.players_recyclerview)
         attendi("le righe non sono arrivate") { valori(lista).size == 2 }

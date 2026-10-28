@@ -90,4 +90,30 @@ class PartiteVinteDelloSportTest {
             )
             assertEquals(emptyList<PlayerRecord>(), db.matchDao().getPlayerRecords(SportRegistry.TENNIS, 10).first())
         }
+
+    @Test
+    fun `le partite di ogni giocatore restano separate per sport`() =
+        runBlocking {
+            partita(SportRegistry.PADEL, 1 to 0)
+            partita(SportRegistry.PADEL, 0 to 1)
+            partita(SportRegistry.FOOTBALL, 3 to 1)
+            // Non conta: la partita in corso.
+            partita(SportRegistry.FOOTBALL, 0 to 5, inCorso = true)
+
+            val conteggi = db.matchDao().getPlayerSportCounts().first()
+
+            assertEquals(
+                setOf(
+                    PlayerSportCount(1, SportRegistry.PADEL, played = 2, won = 1),
+                    PlayerSportCount(1, SportRegistry.FOOTBALL, played = 1, won = 1),
+                    PlayerSportCount(3, SportRegistry.PADEL, played = 2, won = 1),
+                    PlayerSportCount(3, SportRegistry.FOOTBALL, played = 1, won = 0),
+                ),
+                conteggi.filter { it.playerId == 1 || it.playerId == 3 }.toSet(),
+            )
+            assertEquals(mapOf(1 to 1, 2 to 1, 3 to 1, 4 to 1), conteggi.playedIn(SportRegistry.FOOTBALL))
+            assertEquals(mapOf(1 to 2, 2 to 2, 3 to 2, 4 to 2), conteggi.playedIn(SportRegistry.PADEL))
+            assertEquals(mapOf(1 to 1, 2 to 1, 3 to 0, 4 to 0), conteggi.wonIn(SportRegistry.FOOTBALL))
+            assertEquals(emptyMap<Int, Int>(), conteggi.playedIn(SportRegistry.TENNIS))
+        }
 }

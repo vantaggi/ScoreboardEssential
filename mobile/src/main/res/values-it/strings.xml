@@ -347,11 +347,11 @@
     <string name="filter_all">Tutti</string>
     <string name="no_players_yet">Nessun giocatore</string>
     <string name="no_players_hint">Aggiungi chi gioca con te: i giocatori entrano nelle rose e ne contano gol e presenze.</string>
-    <string name="reset_stats">Azzera le statistiche</string>
-    <string name="reset_stats_title">Azzerare le statistiche?</string>
-    <string name="reset_stats_message">Partite e gol di %1$s tornano a zero.</string>
+    <string name="reset_stats">Azzera i gol</string>
+    <string name="reset_stats_title">Azzerare i gol?</string>
+    <string name="reset_stats_message">I gol di %1$s tornano a zero. Le partite restano nello storico.</string>
     <string name="reset_stats_confirm">Azzera</string>
-    <string name="stats_reset">Statistiche azzerate</string>
+    <string name="stats_reset">Gol azzerati</string>
     <string name="delete_player_title">Eliminare il giocatore?</string>
     <string name="delete_player_message">Vuoi davvero eliminare %1$s? Non si potrà tornare indietro.</string>
     <string name="player_deleted_named">%1$s eliminato</string>
@@ -387,7 +387,7 @@
         <item quantity="other">%1$d vinte su %2$d</item>
     </plurals>
     <string name="stats_record_description">%1$d. %2$s, %3$s</string>
-    <string name="stats_wins_heading">%1$s · partite vinte</string>
+    <string name="stats_wins_heading">Partite vinte</string>
     <string name="stats_wins_empty_hint">Le partite vinte si contano dalle partite chiuse con i giocatori in campo. Salva una partita con le coppie per vederle qui.</string>
     <string name="settings_teams_title">Squadre</string>
     <string name="settings_match_title">Regole</string>
