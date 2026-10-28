@@ -5,12 +5,19 @@
     percentuale dell'altezza e ha il suo margine di corda in dimens (a 0 nei quadrati). Misure a
     192dp, dal design:
 
-        A  18-48    contesto: cronometro a sinistra, portiere a destra (nel calcio), game del set
+        A  24-56    contesto: cronometro a sinistra, portiere a destra (nel calcio), game del set
+                    (testi; i bersagli restano 0-46)
         B  50-124   le due cifre, bianche, a dimensione fissa (il rotolo le muove solo dentro la loro scatola)
         C  126-130  le strisce di squadra
         D  132-148  dettaglio: periodo e set chiusi
-        E  150-166  riga di stato (StatoFiducia)
+        E  150-166  riga di stato (StatoFiducia); nel calcio sta in D, che li' e' vuota e larga
+                    abbastanza da restare dentro l'anello del portiere
+        E' 150-170  CHI?, per 8s dopo un gol, al posto della riga di stato
         F  168-188  il glifo del menu
+
+    Ogni testo e segno sta ad almeno 3dp dal bordo interno dell'anello del portiere, su ogni forma
+    (QuadranteDentroLAnelloTest): l'anello e' un cerchio sul tondo e un rettangolo arrotondato lungo
+    la cornice sul quadrato (AnelloQuadrato).
 
     Il fondo nero lo da' il tema del quadrante (Theme.ScoreboardEssential.Face), non questo layout.
 
@@ -51,12 +58,21 @@
             app:layout_constraintGuide_percent="0.5" />
 
         <!-- Altezze delle fasce, in frazione di 192dp. -->
+        <!-- I testi della fascia A: 24-56, piu' in basso dei bersagli. A 18-48 l'angolo alto del
+             cronometro entrava nell'anello del portiere (la corda e' piu' stretta in alto). -->
         <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guide_18"
+            android:id="@+id/guide_24"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.09375" />
+            app:layout_constraintGuide_percent="0.125" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_56"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.2917" />
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guide_46"
@@ -64,13 +80,6 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             app:layout_constraintGuide_percent="0.2396" />
-
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guide_48"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.25" />
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guide_50"
@@ -113,6 +122,13 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             app:layout_constraintGuide_percent="0.7813" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_170"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.8854" />
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guide_168"
@@ -160,8 +176,9 @@
             app:layout_constraintEnd_toEndOf="parent" />
 
         <!--
-            CHI?: per 8s dopo un gol confermato prende il posto del glifo, dentro lo stesso
-            bersaglio (btnMenu, che resta sotto e riceve il tocco). Non e' cliccabile da solo e
+            CHI?: per 8s dopo un gol confermato prende il posto della riga di stato (bozza W2a di
+            Cioti), dentro il bersaglio del menu (btnMenu, che resta sotto e riceve il tocco). Nella
+            fascia del glifo finiva dentro l'anello del portiere. Non e' cliccabile da solo e
             TalkBack non lo legge: la descrizione del bersaglio cambia con lui.
         -->
         <TextView
@@ -178,8 +195,8 @@
             android:paddingEnd="12dp"
             android:text="@string/wear_who_short"
             android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/guide_168"
-            app:layout_constraintBottom_toTopOf="@id/guide_188"
+            app:layout_constraintTop_toBottomOf="@id/guide_150"
+            app:layout_constraintBottom_toTopOf="@id/guide_170"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             tools:visibility="gone" />
@@ -212,8 +229,8 @@
 
         <!--
             Fascia A, testi. Il cronometro (nel calcio) sta a destra, fermo su x=91; il portiere a
-            sinistra, fermo da x=101: le due posizioni non cambiano quando cambia il testo. Il
-            gruppo e' largo circa 92dp contro i 102 utili dentro l'anello a quell'altezza. Nella
+            sinistra, fermo da x=101: le due posizioni non cambiano quando cambia il testo. Misura
+            fissa in dp (18 e 14): col carattere di sistema grande il gruppo cresceva fino all'anello. Nella
             racchetta il K non c'e' e i game del set in corso stanno al centro dello schermo:
             MainActivity (posizionaContesto) allarga allora la vista a tutta la fascia e la centra.
         -->
@@ -227,8 +244,8 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:text="00:00"
-            app:layout_constraintTop_toBottomOf="@id/guide_18"
-            app:layout_constraintBottom_toTopOf="@id/guide_48"
+            app:layout_constraintTop_toBottomOf="@id/guide_24"
+            app:layout_constraintBottom_toTopOf="@id/guide_56"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/guide_center"
             android:layout_marginEnd="@dimen/face_context_gap" />
@@ -243,8 +260,8 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:text="K"
-            app:layout_constraintTop_toBottomOf="@id/guide_18"
-            app:layout_constraintBottom_toTopOf="@id/guide_48"
+            app:layout_constraintTop_toBottomOf="@id/guide_24"
+            app:layout_constraintBottom_toTopOf="@id/guide_56"
             app:layout_constraintStart_toEndOf="@id/guide_center"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginStart="5dp" />

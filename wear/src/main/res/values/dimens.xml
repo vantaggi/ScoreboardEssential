@@ -26,6 +26,10 @@
 
     <dimen name="face_margin_d">16dp</dimen>
     <dimen name="face_margin_e">30dp</dimen>
+    <!-- Nel calcio la riga di stato sta in D (132-148), vuota negli sport col cronometro: li' la corda
+         dentro l'anello del portiere e' abbastanza larga per la frase piu' lunga. 34dp tengono
+         l'angolo basso del testo a 3dp dal bordo interno dell'anello (83,5dp dal centro). -->
+    <dimen name="face_margin_e_cronometro">34dp</dimen>
 
     <!-- Il vuoto fra il testo della fascia A e il centro, dal lato del cronometro. -->
     <dimen name="face_context_gap">5dp</dimen>
@@ -35,7 +39,10 @@
          esterno a distanza di corda, il secondo (batte il secondo giocatore) accanto, verso le
          cifre, ma piu' in alto del loro bordo. -->
     <dimen name="face_dot_size">8dp</dimen>
-    <dimen name="face_dot_inset">14dp</dimen>
+    <!-- Bozza W1a di Cioti: piu' dentro. A 14dp lo spigolo del pallino era a 3dp dalla cornice, e in
+         ambient lo spostamento anti burn-in (4dp) lo portava fuori dallo schermo. A 30dp sta sopra il
+         bordo alto delle cifre e a 3dp dall'anello del portiere. -->
+    <dimen name="face_dot_inset">30dp</dimen>
     <!-- Il vuoto fra i due pallini, quando batte il secondo giocatore. -->
     <dimen name="face_dot_gap">3dp</dimen>
     <!-- Dal bordo alto del lato: i pallini stanno sopra l'altezza delle cifre, cosi' il secondo
@@ -56,6 +63,13 @@
     <!-- Il glifo dei tre puntini sta nella banda 168-188 (di 192dp), ma l'anello del portiere ha il bordo interno a 83,5dp dal centro: i puntini esterni lo toccavano. 12dp di margine sotto alzano il glifo di 6dp. -->
     <dimen name="face_menu_glyph_lift">12dp</dimen>
 
+    <!-- L'anello del portiere. Sul tondo e' un cerchio (circular_progress_bar, innerRadiusRatio 2,3:
+         bordo interno a 83,5dp dal centro sul 192dp). Sul quadrato segue la cornice (bozza W3b di
+         Cioti, AnelloQuadrato): un rettangolo arrotondato a 2dp dal bordo, spesso quanto il cerchio. -->
+    <dimen name="keeper_ring_thickness">6dp</dimen>
+    <dimen name="keeper_ring_square_inset">2dp</dimen>
+    <dimen name="keeper_ring_square_radius">30dp</dimen>
+
     <!-- La scelta del marcatore: quanto sta sotto il bordo alto del tondo l'intestazione, e quanto
          rientrano le righe dai lati. Nei quadrati servono meno. -->
     <dimen name="scorer_top_inset">22dp</dimen>
@@ -68,8 +82,11 @@
          punteggio sbagliato. Non e' un testo da leggere ingrandito: e' gia' la cosa piu' grande
          dello schermo, e a ingrandirsi sono gli altri livelli. -->
     <dimen name="face_score_text_size">58dp</dimen>
-    <dimen name="face_context_text_size">20sp</dimen>
-    <dimen name="face_keeper_text_size">14sp</dimen>
+    <!-- Cronometro e portiere a misura fissa, come le cifre: in sp il carattere di sistema grande
+         (fino a 1,24) allargava il gruppo fino all'anello del portiere. 18dp e non piu' 20: a 20 il
+         primo carattere del cronometro entrava nell'anello anche a misura normale. -->
+    <dimen name="face_context_text_size">18dp</dimen>
+    <dimen name="face_keeper_text_size">14dp</dimen>
     <dimen name="face_detail_text_size">13sp</dimen>
 
     <!-- La riga di stato: dimensione massima e altezza fissa; sotto, l'autoSize arriva a 10sp. -->

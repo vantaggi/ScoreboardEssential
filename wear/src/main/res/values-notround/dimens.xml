@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-    Quadrati: niente cerchio che taglia gli angoli, quindi i margini di fascia sono 0. L'anello del
-    portiere resta, e lo spazio recuperato negli angoli resta vuoto. Le cifre tengono la fascia del
-    pallino (12dp) e la striscia segue il loro centro. Il pallino sta a 6dp dal bordo dello schermo:
-    a 2dp, sul quadrato, quasi toccava la cornice.
+    Quadrati: niente cerchio che taglia gli angoli. L'anello del portiere corre lungo la cornice
+    (AnelloQuadrato, bordo interno a 8dp dallo schermo), quindi i testi di D ed E stanno a 12dp dai
+    lati, 3dp dentro l'anello. Le cifre tengono la fascia del pallino (12dp) e la striscia segue il
+    loro centro. Il pallino sta a 14dp dal bordo (bozza W1a): a 6dp sembrava appoggiato alla cornice.
     -->
-    <dimen name="face_margin_d">0dp</dimen>
-    <dimen name="face_margin_e">0dp</dimen>
+    <dimen name="face_margin_d">12dp</dimen>
+    <dimen name="face_margin_e">12dp</dimen>
+    <dimen name="face_margin_e_cronometro">12dp</dimen>
 
-    <dimen name="face_dot_inset">6dp</dimen>
+    <dimen name="face_dot_inset">14dp</dimen>
     <dimen name="face_digits_outer">12dp</dimen>
     <dimen name="face_stripe_inset">38dp</dimen>
 

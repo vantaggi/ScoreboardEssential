@@ -265,13 +265,12 @@ class QuadranteFasceTest {
 
         val centro = q.dp(b.root.width) / 2f
         // Il cronometro e' allineato a destra, il K a sinistra: dal centro verso fuori.
-        val sinistra = q.dp(cronometro.right) - q.dp(penna(cronometro, 20f).measureText("84:12").toInt())
-        val destra = q.dp(portiere.left) + q.dp(penna(portiere, 14f).measureText("K 4:12").toInt())
+        val sinistra = q.dp(cronometro.right) - q.dp(penna(cronometro, 18f, TypedValue.COMPLEX_UNIT_DIP).measureText("84:12").toInt())
+        val destra = q.dp(portiere.left) + q.dp(penna(portiere, 14f, TypedValue.COMPLEX_UNIT_DIP).measureText("K 4:12").toInt())
         // Raggio interno dell'anello: la ProgressBar ha innerRadiusRatio 2.3, quindi 192/2.3 = 83.5dp.
         val raggio = centro * 2f / 2.3f
-        // Il design misura la corda a y=32dp (102dp utili contro i 93 del gruppo). Piu' in alto, al
-        // bordo alto delle cifre, la corda e' piu' stretta: li' l'angolo dell'8 sfiora l'anello, ed
-        // e' il rischio aperto (a) del design, da guardare nel Layout Inspector.
+        // La corda a y=32dp. L'angolo alto del testo, che li' sfiorava l'anello, lo controlla
+        // QuadranteDentroLAnelloTest sull'inchiostro vero.
         val y = 32f
         val semicorda = sqrt(raggio * raggio - (centro - y) * (centro - y))
         assertTrue("il cronometro esce a sinistra: $sinistra contro ${centro - semicorda}", sinistra >= centro - semicorda)
@@ -298,8 +297,8 @@ class QuadranteFasceTest {
 
         // Il margine di corda di D (16dp) lascia la meta' superiore del cerchio all'altezza giusta.
         assertEquals(16f, q.dp(b.faceDetail.left), 0.5f)
-        // La fascia A, a 20sp, entra nel suo spazio anche col cronometro piu' largo.
-        val cronometro = penna(b.matchTimer, 20f).measureText("88:88")
+        // La fascia A, a 18dp, entra nel suo spazio anche col cronometro piu' largo.
+        val cronometro = penna(b.matchTimer, 18f, TypedValue.COMPLEX_UNIT_DIP).measureText("88:88")
         assertTrue(cronometro <= larghezzaUtile(b.matchTimer))
     }
 
@@ -339,7 +338,7 @@ class QuadranteFasceTest {
 
     @Test
     @Config(qualifiers = "w192dp-h192dp-notround-notnight")
-    fun `quadrato, i margini di fascia sono a zero e le misure restano quelle del tondo`() {
+    fun `quadrato, i margini di fascia stanno dentro l'anello e le misure restano quelle del tondo`() {
         val q = apri()
         q.applica(stato("AV", "40", giochi = "6-4", periodo = "Set 2", servizio = 2))
         val b = q.binding
@@ -353,11 +352,12 @@ class QuadranteFasceTest {
         verificaLati(q)
         verificaStrisce(q)
         verificaBersagli(q)
-        // Margini a 0: la riga di stato e il dettaglio arrivano ai bordi dello schermo.
-        assertEquals(0, b.gestureHint.left)
-        assertEquals(0, b.faceDetail.left)
-        // L'anello resta, bianco di nulla: e' la prima vista della radice.
+        // Margini a 12dp: la riga di stato e il dettaglio stanno 3dp dentro l'anello lungo la cornice.
+        assertEquals(12f, q.dp(b.gestureHint.left), 0.5f)
+        assertEquals(12f, q.dp(b.faceDetail.left), 0.5f)
+        // L'anello resta: e' la prima vista della radice, e sul quadrato segue la cornice (W3b).
         assertTrue(b.keeperProgressBar.parent === b.root)
+        assertTrue(b.keeperProgressBar.progressDrawable is AnelloQuadrato)
     }
 
     // --- fascia A: TalkBack e posizione ---
@@ -499,7 +499,7 @@ class QuadranteFasceTest {
 
     @Test
     @Config(qualifiers = "w227dp-h227dp-notround-notnight")
-    fun `quadrato grande, misure del tondo grande e margini a zero`() {
+    fun `quadrato grande, misure del tondo grande e margini dentro l'anello`() {
         val q = apri()
         q.applica(stato("AV", "40", giochi = "6-4", periodo = "Set 2"))
         val b = q.binding
@@ -507,7 +507,7 @@ class QuadranteFasceTest {
         verificaCifre(q, 68f)
         verificaLati(q)
         verificaStrisce(q)
-        assertEquals(0, b.gestureHint.left)
+        assertEquals(12f, q.dp(b.gestureHint.left), 0.5f)
     }
 
     // --- i pallini del servizio: uno o due, senza spostare niente ---

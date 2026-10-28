@@ -237,6 +237,10 @@ class MainActivity : ComponentActivity() {
         setContentView(binding.root)
         rotolo1 = NumberRoll(binding.team1Score)
         rotolo2 = NumberRoll(binding.team2Score)
+        // Sul quadrato l'anello del portiere segue la cornice invece di restare un cerchio (W3b).
+        if (!resources.configuration.isScreenRound) {
+            binding.keeperProgressBar.progressDrawable = AnelloQuadrato(this)
+        }
 
         setupClickListeners()
         describeSides()
@@ -461,13 +465,16 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Mentre CHI? e' offerto il glifo del menu lascia il posto alla capsula e il bersaglio cambia
-     * descrizione, cosi' TalkBack dice che cosa fa il tocco. Quando l'offerta finisce torna il menu.
+     * Mentre CHI? e' offerto la capsula prende il posto della riga di stato (bozza W2a di Cioti) e il
+     * bersaglio cambia descrizione, cosi' TalkBack dice che cosa fa il tocco; il glifo del menu resta.
+     * Quando l'offerta finisce torna la riga. In ambient la capsula non c'e' e la riga parla delle
+     * anomalie, quindi resta in vista.
      */
     private fun renderFinestraChi(finestra: WearViewModel.FinestraChi?) {
         val offerta = finestra != null
         binding.chiCapsule.visibility = if (offerta) View.VISIBLE else View.GONE
-        binding.menuGlyph.visibility = if (offerta) View.INVISIBLE else View.VISIBLE
+        binding.gestureHint.visibility = if (offerta && !ambient) View.INVISIBLE else View.VISIBLE
+        binding.menuGlyph.visibility = View.VISIBLE
         binding.btnMenu.contentDescription = getString(if (offerta) R.string.wear_who_scored else R.string.cd_menu)
         sovrapponiAmbient()
     }
@@ -864,7 +871,8 @@ class MainActivity : ComponentActivity() {
             passoBurnIn = 0
             spostaBurnIn()
             renderContesto()
-            sovrapponiAmbient()
+            // Toglie CHI? e rimette in vista la riga di stato, poi sovrappone l'ambient.
+            renderFinestraChi(viewModel.finestraChi.value)
         } else if (eraAmbient) {
             // La guardia prima del ridisegno: uscendo dall'ambient niente rotolo.
             apriGuardia()
@@ -992,12 +1000,14 @@ class MainActivity : ComponentActivity() {
         val stato = viewModel.scoreState.value
         if (stato != null && !stato.hasClock) {
             posizionaContesto(centrato = true)
+            posizionaRigaDiStato(conCronometro = false)
             binding.matchTimer.text = FaceText.split(stato).first
             binding.matchTimer.setTextColor(ContextCompat.getColor(this, R.color.ink_white))
             binding.touchTimer.isClickable = false
             return
         }
         posizionaContesto(centrato = false)
+        posizionaRigaDiStato(conCronometro = true)
         // In ambient solo i minuti ("34'"): i secondi non si aggiornano a polso abbassato. Il testo si
         // riscrive solo se cambia, perche' il cronometro del ViewModel batte ogni secondo.
         val tempo = viewModel.matchTimer.value.let { if (ambient) FaceText.minuti(it) else it }
@@ -1031,6 +1041,25 @@ class MainActivity : ComponentActivity() {
             parametri.endToStart = R.id.guide_center
             parametri.marginEnd = resources.getDimensionPixelSize(R.dimen.face_context_gap)
         }
+        vista.layoutParams = parametri
+    }
+
+    /**
+     * Dove sta la riga di stato. Nella racchetta in E (150-166), sotto il dettaglio dei set. Negli
+     * sport col cronometro, che hanno l'anello del portiere, sale in D (132-148): D li' e' sempre
+     * vuota, e in E la corda dentro l'anello e' troppo stretta per la frase piu' lunga. Si decide
+     * dallo sport e non dall'anello, cosi' la riga non salta quando il portiere parte.
+     */
+    private fun posizionaRigaDiStato(conCronometro: Boolean) {
+        val vista = binding.gestureHint
+        val parametri = vista.layoutParams as ConstraintLayout.LayoutParams
+        val sopra = if (conCronometro) R.id.guide_132 else R.id.guide_150
+        if (parametri.topToBottom == sopra) return
+        parametri.topToBottom = sopra
+        val margine =
+            resources.getDimensionPixelSize(if (conCronometro) R.dimen.face_margin_e_cronometro else R.dimen.face_margin_e)
+        parametri.marginStart = margine
+        parametri.marginEnd = margine
         vista.layoutParams = parametri
     }
 

@@ -17,6 +17,7 @@ import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -125,13 +126,34 @@ class MarcatoreQuadranteTest {
     }
 
     @Test
-    fun `dopo il gol confermato il glifo lascia il posto a CHI e il bersaglio lo dice`() {
+    fun `dopo il gol confermato CHI prende il posto della riga di stato e il bersaglio lo dice`() {
+        assertEquals(View.VISIBLE, binding.gestureHint.visibility)
         golConfermato()
 
         assertEquals(View.VISIBLE, binding.chiCapsule.visibility)
         assertEquals(controller.get().getString(R.string.wear_who_short), binding.chiCapsule.text.toString())
-        assertEquals(View.INVISIBLE, binding.menuGlyph.visibility)
+        // Bozza W2a: la capsula sta dove sta la riga di stato, che si fa da parte; il glifo resta.
+        assertEquals(View.INVISIBLE, binding.gestureHint.visibility)
+        assertEquals(View.VISIBLE, binding.menuGlyph.visibility)
         assertEquals(controller.get().getString(R.string.wear_who_scored), binding.btnMenu.contentDescription)
+    }
+
+    /** Rosso se in ambient, mentre CHI? e' offerto, la riga resta nascosta: le anomalie non si direbbero. */
+    @Test
+    fun `in ambient CHI sparisce e la riga di stato torna in vista`() {
+        golConfermato()
+        assertEquals(View.INVISIBLE, binding.gestureHint.visibility)
+
+        controller.get().applyAmbient(true)
+        idle()
+
+        assertNotEquals(View.VISIBLE, binding.chiCapsule.visibility)
+        assertEquals(View.VISIBLE, binding.gestureHint.visibility)
+
+        controller.get().applyAmbient(false)
+        idle()
+        assertEquals("l'offerta e' ancora aperta: torna la capsula", View.VISIBLE, binding.chiCapsule.visibility)
+        assertEquals(View.INVISIBLE, binding.gestureHint.visibility)
     }
 
     @Test
@@ -164,6 +186,7 @@ class MarcatoreQuadranteTest {
         avanza(8_000L)
 
         assertEquals(View.GONE, binding.chiCapsule.visibility)
+        assertEquals("finita l'offerta torna la riga di stato", View.VISIBLE, binding.gestureHint.visibility)
         assertEquals(View.VISIBLE, binding.menuGlyph.visibility)
         binding.btnMenu.performClick()
         val avviata = shadowOf(controller.get()).nextStartedActivityForResult.intent
