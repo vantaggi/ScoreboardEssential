@@ -74,6 +74,7 @@ import it.vantaggi.scoreboardessential.repository.SerataPrefsStore
 import it.vantaggi.scoreboardessential.repository.SerataStore
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
+import it.vantaggi.scoreboardessential.service.PartitaInCorsoServizio
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
@@ -822,6 +823,9 @@ class MainViewModel(
     private var sportRimandato: String? = null
     private val azioniSullaPartita =
         setOf(
+            // La richiesta di risincronizzazione risponde col motore ripristinato, non con lo 0-0 di prima del ripristino:
+            // il servizio dell'orologio sveglia il motore proprio per rispondere a chi la manda.
+            SimplifiedDataLayerListenerService.ACTION_REQUEST_SYNC,
             SimplifiedDataLayerListenerService.ACTION_SCORE_UPDATE,
             SimplifiedDataLayerListenerService.ACTION_MATCH_STATE_UPDATE,
             SimplifiedDataLayerListenerService.ACTION_SCORE_INTENT,
@@ -1591,6 +1595,17 @@ class MainViewModel(
     /** Il pulsante di annullamento segue il motore: c'e' se il suo registro ha qualcosa da togliere. */
     private fun aggiornaAnnullamento() {
         _canUndo.postValue(engine.canUndo())
+        // Dove passa ogni cambio del registro passa anche "c'e' una partita": il servizio in primo piano la segue.
+        sincronizzaServizioPartita()
+    }
+
+    /**
+     * Allinea il servizio in primo piano a "c'e' una partita in corso". Tiene vivo il processo col telefono in
+     * tasca: senza, Samsung lo congela e il motore smette di rispondere all'orologio. Parte solo con l'app
+     * visibile (altrimenti il sistema lo rifiuta senza danni): la schermata lo richiede a ogni onResume.
+     */
+    fun sincronizzaServizioPartita() {
+        PartitaInCorsoServizio.imposta(getApplication(), partitaInCorso())
     }
 
     /**

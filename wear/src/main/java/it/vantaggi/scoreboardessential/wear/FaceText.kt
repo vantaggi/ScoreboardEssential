@@ -67,6 +67,19 @@ internal object FaceText {
         return "$minuti'"
     }
 
+    /**
+     * Il conto del portiere in ambient: solo minuti, "K 5'", perche' il sistema ridisegna una volta al
+     * minuto e un "0:37" scritto a 0:37 resterebbe fermo fino a 59 secondi, proprio quando il conto
+     * sta finendo. I minuti sono per eccesso (4:12 e' "K 5'"): scrive "ne restano al piu' cinque".
+     * Nell'ultimo minuto, che e' vero per tutto il minuto, "K <1'"; a conto finito "K 0'".
+     */
+    fun portiereAmbient(secondiRimasti: Int): String =
+        when {
+            secondiRimasti <= 0 -> "K 0'"
+            secondiRimasti <= 60 -> "K <1'"
+            else -> "K ${(secondiRimasti + 59) / 60}'"
+        }
+
     /** "4-3" diventa "4 – 3"; una stringa che non e' una coppia di game resta com'e'. */
     private fun trattinoLungo(segmento: String): String {
         val coppia = GAME.matchEntire(segmento) ?: return segmento

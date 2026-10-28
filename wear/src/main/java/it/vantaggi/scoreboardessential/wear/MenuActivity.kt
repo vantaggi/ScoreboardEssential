@@ -61,6 +61,10 @@ class MenuActivity : ComponentActivity() {
          */
         const val CHIUSURA_AUTOMATICA_MS = 20_000L
 
+        /** Voci il cui titolo o sottotitolo cambia a ogni tocco: TalkBack deve dirlo. */
+        private val VOCI_CHE_CAMBIANO_SUL_POSTO =
+            setOf(IdVoce.FINE_PARTITA, IdVoce.SCARTA_CODA, IdVoce.VIBRAZIONE, IdVoce.SCHERMO_ACCESO)
+
         private const val EXTRA_IN_CODA = "menu_in_coda"
         private const val EXTRA_COLLEGATO = "menu_collegato"
         private const val EXTRA_PARTITA_INIZIATA = "menu_partita_iniziata"
@@ -75,6 +79,7 @@ class MenuActivity : ComponentActivity() {
         private const val EXTRA_REGOLA_40 = "menu_regola_40"
         private const val EXTRA_PORTIERE = "menu_portiere"
         private const val EXTRA_VIBRAZIONE = "menu_vibrazione"
+        private const val EXTRA_SCHERMO_ACCESO = "menu_schermo_acceso"
         private const val EXTRA_TEMPO_AVVIATO = "menu_tempo_avviato"
         private const val SEPARATORE_GIOCATORI = "\n"
 
@@ -96,6 +101,7 @@ class MenuActivity : ComponentActivity() {
                 .putExtra(EXTRA_REGOLA_40, input.regola40)
                 .putExtra(EXTRA_PORTIERE, input.portiere)
                 .putExtra(EXTRA_VIBRAZIONE, input.vibrazionePunti)
+                .putExtra(EXTRA_SCHERMO_ACCESO, input.schermoAcceso)
                 .putExtra(EXTRA_SQUADRE_NOMI, squadre.map { it.nome }.toTypedArray())
                 .putExtra(EXTRA_SQUADRE_GIOCATORI, squadre.map { it.giocatori.joinToString(SEPARATORE_GIOCATORI) }.toTypedArray())
                 .putExtra(EXTRA_SQUADRE_COLORI, squadre.map { it.colore }.toIntArray())
@@ -158,6 +164,7 @@ class MenuActivity : ComponentActivity() {
                 regola40 = intent.getStringExtra(EXTRA_REGOLA_40).orEmpty(),
                 portiere = intent.getStringExtra(EXTRA_PORTIERE).orEmpty(),
                 vibrazionePunti = intent.getBooleanExtra(EXTRA_VIBRAZIONE, true),
+                schermoAcceso = intent.getBooleanExtra(EXTRA_SCHERMO_ACCESO, false),
                 tempoAvviato = intent.getBooleanExtra(EXTRA_TEMPO_AVVIATO, false),
             )
 
@@ -211,7 +218,7 @@ class MenuActivity : ComponentActivity() {
             card.setOnClickListener { alTocco(riga.voce) }
             // Armarsi e rientrare cambia titolo e sottotitolo: TalkBack deve dirlo, perche' chi non
             // vede la card rossa non saprebbe che il tocco e' gia' armato. La vibrazione cambia sul posto.
-            if (voce.id == IdVoce.FINE_PARTITA || voce.id == IdVoce.SCARTA_CODA || voce.id == IdVoce.VIBRAZIONE) {
+            if (voce.id in VOCI_CHE_CAMBIANO_SUL_POSTO) {
                 card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
             }
             contenitore.addView(card)
@@ -255,6 +262,17 @@ class MenuActivity : ComponentActivity() {
                     it.voce = it.voce.copy(sottotitolo = SottotitoloVoce.Vibrazione(accesa))
                 }
                 if (accesa) VibratoreWearHaptics.di(this).tick()
+                disegna()
+            }
+
+            // Del polso, come la vibrazione: si cambia qui e MainActivity lo applica al ritorno.
+            IdVoce.SCHERMO_ACCESO -> {
+                val acceso = !input.schermoAcceso
+                PreferenzeDelPolso(this).schermoAcceso = acceso
+                input = input.copy(schermoAcceso = acceso)
+                righe.filter { it.voce.id == IdVoce.SCHERMO_ACCESO }.forEach {
+                    it.voce = it.voce.copy(sottotitolo = SottotitoloVoce.SchermoAcceso(acceso))
+                }
                 disegna()
             }
 
@@ -376,6 +394,7 @@ class MenuActivity : ComponentActivity() {
             IdVoce.PROSSIMA_PARTITA -> R.drawable.ic_groups
             IdVoce.REGOLA_40 -> R.drawable.ic_sports_tennis
             IdVoce.VIBRAZIONE -> R.drawable.ic_vibration
+            IdVoce.SCHERMO_ACCESO -> R.drawable.ic_light_mode
             IdVoce.PORTIERE -> R.drawable.ic_sports_handball
             IdVoce.FINE_PARTITA -> R.drawable.ic_flag
             IdVoce.SCARTA_CODA -> R.drawable.ic_delete
@@ -406,6 +425,10 @@ class MenuActivity : ComponentActivity() {
 
             IdVoce.VIBRAZIONE -> {
                 getString(R.string.wear_setting_vibration)
+            }
+
+            IdVoce.SCHERMO_ACCESO -> {
+                getString(R.string.wear_setting_screen)
             }
 
             IdVoce.PORTIERE -> {
@@ -470,5 +493,9 @@ internal fun SottotitoloVoce.testo(context: Context): String =
 
         is SottotitoloVoce.Vibrazione -> {
             context.getString(if (accesa) R.string.wear_setting_vibration_on else R.string.wear_setting_vibration_off)
+        }
+
+        is SottotitoloVoce.SchermoAcceso -> {
+            context.getString(if (acceso) R.string.wear_setting_screen_on else R.string.wear_setting_screen_off)
         }
     }

@@ -2,6 +2,8 @@ package it.vantaggi.scoreboardessential
 
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.wearable.DataEvent
@@ -19,6 +21,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class SimplifiedDataLayerListenerService : WearableListenerService() {
     companion object {
@@ -71,6 +75,48 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         /** Il nodo che ha mandato l'arretrato: il ViewModel ci tiene l'ultimo id applicato (L5). */
         const val EXTRA_NODE_ID = "node_id"
 
+        /** Quanto si aspetta che il motore nasca sul thread principale prima di cadere sulla custodia. */
+        private const val ATTESA_MOTORE_MS = 4_000L
+
+        /**
+         * Il motore della partita c'e' sempre, quando l'orologio chiede qualcosa: se il processo e' risorto per
+         * questo messaggio (o la schermata e' chiusa e il motore e' stato lasciato andare), lo si fa nascere qui.
+         * Senza, il tocco finiva nel vuoto: il polso non vedeva il punteggio nuovo finche' l'app non si riapriva.
+         *
+         * Iniettabile: sotto test non c'e' una partita vera da svegliare, e il punto dei test del servizio e'
+         * cosa fa quando il motore non c'e'. In produzione e' [ScoreboardEssentialApplication.motore].
+         */
+        internal var assicuraIlMotore: (Context) -> Unit = { context ->
+            (context.applicationContext as? ScoreboardEssentialApplication)?.let { svegliaIlMotore(it) }
+        }
+
+        private fun svegliaIlMotore(app: ScoreboardEssentialApplication) {
+            val crea = {
+                try {
+                    app.motore()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Il motore non e' nato: il tocco resta in custodia", e)
+                }
+            }
+            // I messaggi del Data Layer arrivano su un thread di lavoro: il ViewModel scrive LiveData e nasce sul
+            // principale, e il servizio aspetta che sia nato per sapere se qualcuno ascolta il broadcast.
+            if (Looper.myLooper() == Looper.getMainLooper()) {
+                crea()
+                return
+            }
+            val nato = CountDownLatch(1)
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    crea()
+                } finally {
+                    nato.countDown()
+                }
+            }
+            if (!nato.await(ATTESA_MOTORE_MS, TimeUnit.MILLISECONDS)) {
+                Log.w(TAG, "Il motore non e' nato entro ${ATTESA_MOTORE_MS}ms")
+            }
+        }
+
         /**
          * Come si risponde a un nodo. Iniettabile: sotto test non c'e' Play Services, e il punto e'
          * COSA si risponde, non il trasporto. In produzione e' un MessageClient verso quel nodo.
@@ -88,6 +134,18 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         super.onCreate()
         // L'id del nodo locale serve a handleDataEvent, che non puo' aspettarlo: lo si chiede subito.
         NodoLocale.richiedi(this)
+    }
+
+    /**
+     * Passa una richiesta dell'orologio al motore. Se nessuno ascolta (nessuna schermata, motore lasciato andare o
+     * processo appena risorto) il motore nasce adesso e il broadcast si rimanda: `false` solo se non e' nato davvero,
+     * ed e' l'unico caso in cui valgono ancora la custodia e il NACK.
+     */
+    private fun inoltra(intent: Intent): Boolean {
+        val manager = LocalBroadcastManager.getInstance(this)
+        if (manager.sendBroadcast(intent)) return true
+        assicuraIlMotore(this)
+        return manager.sendBroadcast(intent)
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -153,7 +211,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                         putExtra(WearConstants.KEY_TEAM1_SCORE, team1)
                         putExtra(WearConstants.KEY_TEAM2_SCORE, team2)
                     }
-                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+                inoltra(intent)
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "Broadcasted score update")
                 }
@@ -173,7 +231,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                         putExtra(WearConstants.KEY_TIMER_MILLIS, millis)
                         putExtra(WearConstants.KEY_TIMER_RUNNING, isRunning)
                     }
-                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+                inoltra(intent)
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "Broadcasted timer update")
                 }
@@ -181,7 +239,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
 
             WearConstants.PATH_TEAM_NAMES -> {
                 val intent = Intent(ACTION_TEAM_NAMES_UPDATE)
-                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+                inoltra(intent)
             }
 
             WearConstants.PATH_KEEPER_TIMER -> {
@@ -206,7 +264,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                         putExtra(WearConstants.KEY_KEEPER_RUNNING, isRunning)
                         putExtra(WearConstants.KEY_KEEPER_DURATION, durata)
                     }
-                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+                inoltra(intent)
             }
 
             WearConstants.PATH_MATCH_STATE -> {
@@ -215,7 +273,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                     Intent(ACTION_MATCH_STATE_UPDATE).apply {
                         putExtra(WearConstants.KEY_MATCH_ACTIVE, isActive)
                     }
-                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+                inoltra(intent)
             }
         }
     }
@@ -228,7 +286,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         try {
             when (messageEvent.path) {
                 WearConstants.MSG_REQUEST_SYNC -> {
-                    LocalBroadcastManager.getInstance(this).sendBroadcast(Intent(ACTION_REQUEST_SYNC))
+                    inoltra(Intent(ACTION_REQUEST_SYNC))
                     if (BuildConfig.DEBUG) {
                         Log.d(TAG, "Broadcasted sync request")
                     }
@@ -317,7 +375,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                 putExtra(WearConstants.KEY_INTENT_KIND, kind)
                 putExtra(WearConstants.KEY_AT_MILLIS, quando)
             }
-        val preso = LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+        val preso = inoltra(intent)
         // Nessun ricevitore: il ViewModel non c'e' (app chiusa con indietro, uno swipe, processo ucciso)
         // e il broadcast e' andato nel vuoto. L'orologio non ha vibrato la conferma (aspetta lo stato) ma
         // non rimanda il tocco, quindi il punto si metteva da parte qui e lo applica il ViewModel alla
@@ -376,7 +434,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         lastSeqByNode[sourceNodeId] = seq
 
         val preso =
-            LocalBroadcastManager.getInstance(this).sendBroadcast(
+            inoltra(
                 Intent(ACTION_INTENT_BATCH).apply {
                     putExtra(WearConstants.KEY_INTENT_BATCH, batch)
                     putExtra(WearConstants.KEY_SEQ, seq)
@@ -450,7 +508,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         }
         lastSeqByNode[sourceNodeId] = seq
 
-        LocalBroadcastManager.getInstance(this).sendBroadcast(
+        inoltra(
             Intent(ACTION_SPORT_INTENT).apply { putExtra(WearConstants.KEY_SPORT_ID, sportId) },
         )
     }
@@ -487,7 +545,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         }
         lastSeqByNode[sourceNodeId] = seq
 
-        LocalBroadcastManager.getInstance(this).sendBroadcast(
+        inoltra(
             Intent(ACTION_SERATA_INTENT).apply {
                 putExtra(WearConstants.KEY_SERATA_ACTION, azione)
                 putExtra(WearConstants.KEY_NEXT_BASE, base)
@@ -528,7 +586,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         lastSeqByNode[sourceNodeId] = seq
 
         val preso =
-            LocalBroadcastManager.getInstance(this).sendBroadcast(
+            inoltra(
                 Intent(ACTION_SETTING_INTENT).apply {
                     putExtra(WearConstants.KEY_SETTING, impostazione)
                     putExtra(WearConstants.KEY_SETTING_VALUE, valore)
@@ -578,7 +636,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                 putExtra(WearConstants.EXTRA_TEAM_NUMBER, teamNumber)
                 if (playerId != null) putExtra(WearConstants.KEY_PLAYER_ID, playerId)
             }
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+        inoltra(intent)
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Broadcasted scorer selection for team $teamNumber")
         }

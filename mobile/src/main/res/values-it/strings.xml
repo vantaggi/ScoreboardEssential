@@ -424,4 +424,7 @@
     <string name="empty_action_back_to_match">Torna alla partita</string>
     <string name="stats_row_description">%1$d. %2$s, %3$s, %4$s</string>
     <string name="players_empty_action">Aggiungi giocatore</string>
+    <string name="partita_in_corso_channel">Partita in corso</string>
+    <string name="partita_in_corso_title">Partita in corso</string>
+    <string name="partita_in_corso_text">Tabellone e orologio restano allineati</string>
 </resources>

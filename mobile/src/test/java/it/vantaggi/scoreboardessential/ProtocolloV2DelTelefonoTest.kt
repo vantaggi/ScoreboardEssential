@@ -42,6 +42,7 @@ class ProtocolloV2DelTelefonoTest {
         )
 
     private val ricevuti = mutableListOf<Intent>()
+    private val assicuraDiProduzione = SimplifiedDataLayerListenerService.assicuraIlMotore
     private lateinit var manager: LocalBroadcastManager
     private lateinit var service: SimplifiedDataLayerListenerService
     private lateinit var nodoA: String
@@ -70,10 +71,13 @@ class ProtocolloV2DelTelefonoTest {
         (azioniRegistrate.get(manager) as MutableMap<*, *>).clear()
         val filtro = IntentFilter().apply { azioni.forEach { addAction(it) } }
         manager.registerReceiver(receiver, filtro)
+        // Il motore vero non nasce sotto test: i test di custodia sono quelli di un motore che non c'e'.
+        SimplifiedDataLayerListenerService.assicuraIlMotore = {}
     }
 
     @After
     fun tearDown() {
+        SimplifiedDataLayerListenerService.assicuraIlMotore = assicuraDiProduzione
         manager.unregisterReceiver(receiver)
     }
 
@@ -418,6 +422,66 @@ class ProtocolloV2DelTelefonoTest {
         } finally {
             SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
             IntentiInAttesa(app).prendiTutte()
+        }
+    }
+
+    /**
+     * Il difetto del telefono in tasca: con la schermata chiusa non c'era nessun motore, il tocco finiva in
+     * custodia e il polso non rivedeva il punteggio finche' l'app non si riapriva. Ora il servizio sveglia il motore
+     * (qui un ricevitore, come quello del ViewModel che nasce) e il tocco gli arriva subito: niente custodia.
+     * Rosso se `inoltra` torna a un sendBroadcast solo: il tocco va da parte e il polso riceve la custodia.
+     */
+    @Test
+    fun `un tocco senza ricevitori sveglia il motore e gli arriva, senza custodia`() {
+        val app = ApplicationProvider.getApplicationContext<android.app.Application>()
+        IntentiInAttesa(app).prendiTutte()
+        catturaLeRisposte()
+        var svegli = 0
+        SimplifiedDataLayerListenerService.assicuraIlMotore = {
+            svegli++
+            manager.registerReceiver(receiver, IntentFilter().apply { azioni.forEach { addAction(it) } })
+        }
+        try {
+            manager.unregisterReceiver(receiver)
+
+            consegna(tocco(nodoA, 61, lato = 2))
+
+            assertEquals("il motore e' stato svegliato una volta", 1, svegli)
+            assertEquals(listOf(2), lati())
+            assertEquals("niente da parte: lo applica il motore", 0, IntentiInAttesa(app).prendiTutte().size)
+            assertEquals("niente custodia: il polso vedra' lo stato", 0, risposte.size)
+        } finally {
+            SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
+            IntentiInAttesa(app).prendiTutte()
+        }
+    }
+
+    @Test
+    fun `con un ricevitore gia' presente il motore non viene svegliato`() {
+        var svegli = 0
+        SimplifiedDataLayerListenerService.assicuraIlMotore = { svegli++ }
+
+        consegna(tocco(nodoA, 62))
+
+        assertEquals(1, ricevuti.size)
+        assertEquals(0, svegli)
+    }
+
+    @Test
+    fun `un arretrato senza ricevitori sveglia il motore e non riceve il NACK`() {
+        catturaLeRisposte()
+        SimplifiedDataLayerListenerService.assicuraIlMotore = {
+            manager.registerReceiver(receiver, IntentFilter().apply { azioni.forEach { addAction(it) } })
+        }
+        try {
+            manager.unregisterReceiver(receiver)
+
+            consegna(arretratoConId(nodoA, 63, 903L))
+
+            assertEquals(1, ricevuti.size)
+            assertEquals(0, risposte.size)
+        } finally {
+            SimplifiedDataLayerListenerService.rispondi = rispondiDiProduzione
         }
     }
 

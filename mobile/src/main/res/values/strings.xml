@@ -419,4 +419,8 @@
     <string name="empty_action_back_to_match">Back to the match</string>
     <string name="stats_row_description">%1$d. %2$s, %3$s, %4$s</string>
     <string name="players_empty_action">Add player</string>
+    <string name="partita_in_corso_channel">Match in progress</string>
+    <string name="partita_in_corso_title">Match in progress</string>
+    <string name="partita_in_corso_text">Scoreboard and watch stay in sync</string>
+    <string name="partita_in_corso_special_use_description" translatable="false">Keeps the app running while a match is in progress so the watch always sees the current score, even with the phone in a pocket.</string>
 </resources>
