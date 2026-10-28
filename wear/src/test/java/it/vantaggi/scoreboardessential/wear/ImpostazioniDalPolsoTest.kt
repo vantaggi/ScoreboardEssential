@@ -117,7 +117,7 @@ class ImpostazioniDalPolsoTest {
 
     @Test
     fun `la durata in uso resta nella lista del portiere, in ordine e una volta sola`() {
-        assertEquals(listOf(0L, 40L, 60L, 120L, 180L, 240L, 300L), DurataPortiere.scelte(40L).take(7))
+        assertEquals(listOf(0L, 60L, 120L, 180L, 240L, 270L, 300L), DurataPortiere.scelte(270L).take(7))
         assertEquals(15, DurataPortiere.scelte(300L).size)
     }
 
@@ -128,8 +128,10 @@ class ImpostazioniDalPolsoTest {
         assertEquals(1800L, lista.last())
         // Il cambio si fa ogni 4-10 minuti: tutti presenti.
         assertEquals(true, lista.containsAll(listOf(240L, 300L, 360L, 600L)))
-        // Il vecchio 30 s del telefono non sparisce se e' in uso, ma non e' fra le scelte di serie.
+        // Solo minuti: i 30 s di prima non sono una scelta, nemmeno quando il telefono li ha in uso.
         assertEquals(false, DurataPortiere.scelte(300L).contains(30L))
-        assertEquals(true, DurataPortiere.scelte(30L).contains(30L))
+        assertEquals(false, DurataPortiere.scelte(30L).contains(30L))
+        // Una durata in uso piu' lunga di un minuto, anche non intera, resta in lista.
+        assertEquals(true, DurataPortiere.scelte(270L).contains(270L))
     }
 }

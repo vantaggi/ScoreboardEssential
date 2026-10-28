@@ -10,7 +10,13 @@ import android.content.Context
 object DurataPortiere {
     private val SCELTE = listOf(0L, 60L, 120L, 180L, 240L, 300L, 360L, 420L, 480L, 540L, 600L, 720L, 900L, 1200L, 1800L)
 
-    fun scelte(attuale: Long): List<Long> = (SCELTE + attuale).filter { it >= 0 }.distinct().sorted()
+    /**
+     * Sotto il minuto non si offre niente: i secondi di un tempo che non e' piu' il predefinito (30 s)
+     * restavano in lista come voce in uso. Se il telefono ne ha uno, il menu lo mostra comunque come valore.
+     */
+    fun scelte(attuale: Long): List<Long> = (SCELTE + attuale).filter { it == 0L || it >= MINUTO }.distinct().sorted()
+
+    private const val MINUTO = 60L
 }
 
 /** "Off", "45 s", "2 min", "1 min 30 s". */
