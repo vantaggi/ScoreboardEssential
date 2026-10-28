@@ -55,6 +55,7 @@
             android:maxLines="1"
             android:text="00:00"
             android:textAppearance="@style/TextAppearance.App.Game.Clock"
+            android:textSize="32dp"
             android:textColor="@color/elite_text_secondary"
             android:onClick="startStopTimer"
             app:backgroundTint="@color/elite_surface"
@@ -63,7 +64,7 @@
             app:iconGravity="textStart"
             app:iconPadding="6dp"
             app:iconSize="@dimen/icon_prominent"
-            tools:ignore="HardcodedText" />
+            tools:ignore="HardcodedText,SpUsage" />
 
         <!-- Il portiere: sempre presente nel calcio. Il tocco avvia dalla durata piena o riparte da capo. -->
         <com.google.android.material.card.MaterialCardView
