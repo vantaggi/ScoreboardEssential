@@ -2665,6 +2665,15 @@ Nell'elenco con la rosa di Padel Elite ogni giocatore della dashboard non ancora
 - **Pattern vietati.** Tolta la stessa didascalia ripetuta su ogni riga.
 - **Non toccato.** La ricerca in cima e lo sport con la spunta (resto del passo 7) restano da fare.
 
+### Passo 3c, le Impostazioni a righe
+
+Scelta di Cioti sulla bozza (28 ottobre 2026, B): sport, regola del 40-40 e lingua non sono piu' menu a tendina ma righe col nome a sinistra, il valore a destra e la freccia (stesso gesto della riga Padel Elite). Il tocco apre un foglio (`scegliDaElenco`, `MaterialAlertDialogBuilder` a scelta singola) con la spunta su quello in uso; toccarne una la sceglie e chiude, Annulla chiude. Il blocco del cambio sport o 40-40 a partita in corso dice come prima (snackbar). La riga del 40-40 resta nascosta fuori dagli sport con racchetta e la frase delle regole sta sotto le due righe.
+
+- Stati: normale e premuto (`Widget.App.Pressable`), fuoco (anello), disattivo no (la riga e' sempre toccabile), errore (snackbar del blocco), movimento ridotto (nessun movimento nuovo).
+- Schermo stretto e 200%: il nome va a capo, il valore resta a destra; da guardare a schermo.
+- Debiti: la durata del portiere resta un campo numerico (la bozza la mostrava come riga con "3 minuti"); non visto a schermo.
+- Controllo dei pattern vietati: nessun colore, spaziatura o durata scritti a mano; una sola famiglia di icone; nessuna ombra.
+
 ### Debiti dichiarati del passo 7b
 
 1. Nessuna ricerca nel dialogo: con una rosa di cinquanta nomi si scorre ancora. Serve un dialogo con un campo e una lista filtrata al posto dell'adattatore del `MaterialAlertDialog`; non l'ho fatto di notte perche' tocca la scelta dalla dashboard di Padel Elite, che e' in produzione.
