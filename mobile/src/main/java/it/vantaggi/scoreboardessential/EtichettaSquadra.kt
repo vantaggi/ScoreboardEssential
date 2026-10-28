@@ -70,9 +70,17 @@ object EtichettaSquadra {
                 { nome -> iniziale(nome).takeIf { it.isNotEmpty() }?.let { sigla(nome) + it } ?: quattro(nome) },
             )
         for (passo in passi) {
-            val ripetute = risultato.filter { it.isNotEmpty() }.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+            val ripetute =
+                risultato
+                    .filter { it.isNotEmpty() }
+                    .groupingBy { it }
+                    .eachCount()
+                    .filterValues { it > 1 }
+                    .keys
             if (ripetute.isEmpty()) break
-            nomi.indices.filter { risultato[it] in ripetute }.forEach { risultato[it] = passo(nomi[it]) }
+            for (i in nomi.indices) {
+                if (risultato[i] in ripetute) risultato[i] = passo(nomi[i])
+            }
         }
         return risultato
     }
