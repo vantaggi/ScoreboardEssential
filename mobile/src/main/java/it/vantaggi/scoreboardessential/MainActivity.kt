@@ -650,6 +650,7 @@ class MainActivity :
         findViewById<View>(R.id.team1_subtract_button_card).visibility = if (sportASet) View.GONE else View.VISIBLE
         findViewById<View>(R.id.team2_subtract_button_card).visibility = if (sportASet) View.GONE else View.VISIBLE
         findViewById<View>(R.id.score_detail_container).visibility = if (sportASet) View.VISIBLE else View.GONE
+        mostraGliSlotDelServizio(findViewById(R.id.names_row), sportASet)
 
         // Il tempo e il portiere sono slot della barra: senza cronometro spariscono e il testo del
         // periodo (che fa da molla) prende il loro posto. L'ingranaggio e il reset non sono piu' in
@@ -2038,6 +2039,21 @@ internal fun mostraNomeSquadra(
 ) {
     testo.text = nome
     contenitore.contentDescription = contenitore.context.getString(R.string.cd_edit_team_name, nome)
+}
+
+/**
+ * Lo slot dei pallini del servizio c'e' solo negli sport che hanno il servizio (padel e tennis).
+ * Nel calcio non servirebbe a niente e a 360dp con testo grande rubava 34dp al nome della squadra
+ * ("Squa..."). Si decide al cambio sport come ogni altra visibilita' della colonna di gioco, mai
+ * a partita in corso. Sta fuori dall'Activity perche' sotto Robolectric MainActivity non si monta.
+ */
+internal fun mostraGliSlotDelServizio(
+    righeDeiNomi: View,
+    sportConServizio: Boolean,
+) {
+    for (id in listOf(R.id.team1_serve_slot, R.id.team2_serve_slot)) {
+        righeDeiNomi.findViewById<View>(id).visibility = if (sportConServizio) View.VISIBLE else View.GONE
+    }
 }
 
 /**
