@@ -515,6 +515,8 @@ class MainActivity :
             updateKeeperTimerTextView(timeInMillis)
         }
 
+        viewModel.keeperAttivo.observe(this) { mostraSlotPortiere() }
+
         // Il colore del conto dipende anche dal fatto che corra: si riscrive al cambio di stato.
         viewModel.isKeeperTimerRunning.observe(this) {
             updateKeeperTimerTextView(viewModel.keeperTimerValue.value ?: 0L)
@@ -622,6 +624,12 @@ class MainActivity :
         }
     }
 
+    /** Lo slot del portiere c'e' dove lo sport lo prevede e finche' la durata non e' spenta (0) nelle impostazioni. */
+    private fun mostraSlotPortiere() {
+        val acceso = capabilities?.hasAuxCountdown == true && (viewModel.keeperAttivo.value ?: true)
+        findViewById<View>(R.id.keeper_slot).visibility = if (acceso) View.VISIBLE else View.GONE
+    }
+
     /**
      * Accende e spegne le sezioni in base a cosa lo sport prevede. Nessun `when` sullo sport:
      * l'unica cosa che questa schermata sa e' quali capacita' le servono.
@@ -648,7 +656,7 @@ class MainActivity :
         // barra: stanno nel foglio, dove il reset segue lo stesso cronometro.
         val orologioVisibile = sportCapabilities.clock != ClockMode.NONE
         timerStartButton.visibility = if (orologioVisibile) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.keeper_slot).visibility = if (sportCapabilities.hasAuxCountdown) View.VISIBLE else View.GONE
+        mostraSlotPortiere()
         findViewById<View>(R.id.sheet_reset_timer_button).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
         // Le rose restano in ogni sport: nel padel e nel tennis sono l'unico posto dove si
         // assegnano i giocatori ai lati, e senza di loro l'export verso Padel Elite (4 giocatori,

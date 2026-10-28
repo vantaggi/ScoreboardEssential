@@ -67,6 +67,9 @@
     <string name="cancel">Cancel</string>
     <string name="language">Language</string>
     <string name="keeper_timer_seconds">Keeper timer (seconds)</string>
+    <string name="keeper_timer_minutes">Keeper duration (minutes)</string>
+    <string name="settings_keeper_title">Timed keeper change</string>
+    <string name="settings_keeper_summary">Off: no countdown and no bar, the change is made by hand</string>
     <string name="btn_team_1_color">Team 1 color</string>
     <string name="btn_team_2_color">Team 2 color</string>
 
@@ -242,6 +245,7 @@
     <!-- Le righe informative del registro. In inglese restano le parole di prima, che i test leggono. -->
     <string name="log_keeper_expired">Keeper timer expired!</string>
     <string name="log_keeper_set">Keeper timer set to %d seconds</string>
+    <string name="log_keeper_off">Keeper timer off</string>
     <string name="log_keeper_started">Keeper timer started (%ds)</string>
     <string name="log_keeper_reset">Keeper timer reset</string>
     <string name="log_player_added">%1$s added to %2$s</string>

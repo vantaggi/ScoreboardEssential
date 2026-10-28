@@ -587,9 +587,9 @@ class MainActivity : ComponentActivity() {
     /** Quale impostazione sta scegliendo la lista aperta: una alla volta. */
     private var impostazioneInScelta: String? = null
 
-    /** La durata del portiere a parole, vuota dove lo sport non ha il portiere. */
+    /** La durata del portiere a parole ("Off" se spento), vuota dove lo sport non ha il portiere. */
     private fun portiereDi(stato: WearScoreState?): String =
-        if (stato != null && stato.hasAuxTimer && stato.keeperSeconds > 0) etichettaPortiere(this, stato.keeperSeconds) else ""
+        if (stato != null && stato.portiereOfferto) etichettaPortiere(this, stato.keeperSeconds) else ""
 
     private fun apriSceltaRegola40() {
         val stato = viewModel.scoreState.value ?: return
@@ -604,8 +604,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun apriSceltaPortiere() {
-        val attuale = viewModel.scoreState.value?.keeperSeconds ?: return
-        if (attuale <= 0) return
+        val stato = viewModel.scoreState.value ?: return
+        if (!stato.portiereOfferto) return
+        val attuale = stato.keeperSeconds
         val scelte = DurataPortiere.scelte(attuale)
         apriScelta(
             WearConstants.SETTING_KEEPER,

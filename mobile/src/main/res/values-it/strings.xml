@@ -64,6 +64,9 @@
     <string name="cancel">Annulla</string>
     <string name="language">Lingua</string>
     <string name="keeper_timer_seconds">Timer portiere (secondi)</string>
+    <string name="keeper_timer_minutes">Durata del portiere (minuti)</string>
+    <string name="settings_keeper_title">Cambio portiere a tempo</string>
+    <string name="settings_keeper_summary">Spento: niente conto e niente barra, il cambio si fa a mano</string>
     <string name="btn_team_1_color">Colore squadra 1</string>
     <string name="btn_team_2_color">Colore squadra 2</string>
 
@@ -239,6 +242,7 @@
     <!-- Le righe informative del registro. -->
     <string name="log_keeper_expired">Tempo del portiere scaduto</string>
     <string name="log_keeper_set">Portiere a %d secondi</string>
+    <string name="log_keeper_off">Portiere spento</string>
     <string name="log_keeper_started">Portiere avviato (%d s)</string>
     <string name="log_keeper_reset">Portiere azzerato</string>
     <string name="log_player_added">%1$s entra in %2$s</string>
