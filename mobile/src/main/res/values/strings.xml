@@ -81,6 +81,8 @@
     <string name="undo_goal_title">Undo Last Goal?</string>
     <string name="undo_goal_message">This will revert the score and remove the goal from the log.</string>
     <string name="undo">Undo</string>
+    <string name="undo_goal_confirm">Undo goal</string>
+    <string name="undo_goal_keep">Keep goal</string>
     <string name="no_available_players">No available players. Create new players in Player Management.</string>
     <string name="manage">Manage</string>
     <string name="add_player_title">Add Player to Team %d</string>
