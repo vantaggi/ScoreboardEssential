@@ -2674,6 +2674,16 @@ Scelta di Cioti sulla bozza (28 ottobre 2026, B): sport, regola del 40-40 e ling
 - Debiti: la durata del portiere resta un campo numerico (la bozza la mostrava come riga con "3 minuti"); non visto a schermo.
 - Controllo dei pattern vietati: nessun colore, spaziatura o durata scritti a mano; una sola famiglia di icone; nessuna ombra.
 
+#### Prova a schermo del 28 ottobre 2026 (telefono vero SM-S948B, main 1007632, apk con lo stesso hash della build)
+
+Visti e ok: punti 1 (Squadra 1/2, niente riga del portiere), 2 (quattro gruppi), 3 (Padel Elite: collegati prima, ricerca, Aggiorna), 4 (Cronaca con una partita povera di punti), 5 ("Ieri" e solo l'ora), 7 (Giocatori nel padel: partite, ricerca, ordine senza "Per gol"), 9 (avviso una volta sola). Non provabili col telefono com'e': "Oggi" nello Storico, la classifica e il calcio (servirebbe cambiare sport e toccare la partita in corso), "Azzera" (serve un giocatore con partite), la Cronaca ricca.
+
+Difetti trovati e corretti in questa PR:
+- Dialogo del colore squadra: due colori su otto (la `GridLayout` a pesi con cerchi da 48dp fissi); ora due righe da quattro, ogni cerchio in una cella a peso 1 (`dialog_team_palette.xml`). `LayoutAStrettoTest`.
+- Storico a 360dp e 200%: il cestino usciva dalla scheda; i tre comandi stanno in un `Flow` che va a capo (`match_item.xml`). `LayoutAStrettoTest`.
+
+Difetti noti, non corretti qui (tutti a 360dp e 200%): etichette della schermata di gioco troncate e didascalia "Game" persa; hint "Nome squadra" troncati nelle Impostazioni; la riga delle regole dello Storico lascia il "7" da solo ("tie-break a / 7", anche a 100%); la prima riga del Registro ("Partita ripresa") non ha l'ora. La slider di luminosita' nella ruota del colore non si vede, da verificare.
+
 ### Debiti dichiarati del passo 7b
 
 1. Nessuna ricerca nel dialogo: con una rosa di cinquanta nomi si scorre ancora. Serve un dialogo con un campo e una lista filtrata al posto dell'adattatore del `MaterialAlertDialog`; non l'ho fatto di notte perche' tocca la scelta dalla dashboard di Padel Elite, che e' in produzione.

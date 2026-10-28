@@ -14,141 +14,193 @@
     android:paddingHorizontal="@dimen/space_16"
     android:paddingTop="@dimen/space_8">
 
-    <GridLayout
+    <!-- Due righe da quattro: ogni cerchio sta in una cella di pari larghezza (la griglia a pesi ne mostrava due su otto). -->
+    <LinearLayout
         android:id="@+id/team_palette_grid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:columnCount="4">
+        android:orientation="vertical">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/team_palette_1"
-            style="@style/Widget.App.Button.Secondary"
-            android:layout_width="@dimen/control_touch"
-            android:layout_height="@dimen/control_touch"
-            android:layout_columnWeight="1"
-            android:layout_gravity="center"
-            android:layout_marginVertical="@dimen/space_8"
-            android:contentDescription="@string/team_palette_name_1"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:paddingHorizontal="0dp"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/team_palette_2"
-            style="@style/Widget.App.Button.Secondary"
-            android:layout_width="@dimen/control_touch"
-            android:layout_height="@dimen/control_touch"
-            android:layout_columnWeight="1"
-            android:layout_gravity="center"
-            android:layout_marginVertical="@dimen/space_8"
-            android:contentDescription="@string/team_palette_name_2"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:paddingHorizontal="0dp"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/team_palette_3"
-            style="@style/Widget.App.Button.Secondary"
-            android:layout_width="@dimen/control_touch"
-            android:layout_height="@dimen/control_touch"
-            android:layout_columnWeight="1"
-            android:layout_gravity="center"
-            android:layout_marginVertical="@dimen/space_8"
-            android:contentDescription="@string/team_palette_name_3"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:paddingHorizontal="0dp"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+    <com.google.android.material.button.MaterialButton
+                android:id="@+id/team_palette_1"
+                style="@style/Widget.App.Button.Secondary"
+                android:layout_width="@dimen/control_touch"
+                android:layout_height="@dimen/control_touch"
+                android:layout_gravity="center"
+                android:layout_marginVertical="@dimen/space_8"
+                android:contentDescription="@string/team_palette_name_1"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingHorizontal="0dp"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+            </FrameLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/team_palette_4"
-            style="@style/Widget.App.Button.Secondary"
-            android:layout_width="@dimen/control_touch"
-            android:layout_height="@dimen/control_touch"
-            android:layout_columnWeight="1"
-            android:layout_gravity="center"
-            android:layout_marginVertical="@dimen/space_8"
-            android:contentDescription="@string/team_palette_name_4"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:paddingHorizontal="0dp"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/team_palette_5"
-            style="@style/Widget.App.Button.Secondary"
-            android:layout_width="@dimen/control_touch"
-            android:layout_height="@dimen/control_touch"
-            android:layout_columnWeight="1"
-            android:layout_gravity="center"
-            android:layout_marginVertical="@dimen/space_8"
-            android:contentDescription="@string/team_palette_name_5"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:paddingHorizontal="0dp"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+    <com.google.android.material.button.MaterialButton
+                android:id="@+id/team_palette_2"
+                style="@style/Widget.App.Button.Secondary"
+                android:layout_width="@dimen/control_touch"
+                android:layout_height="@dimen/control_touch"
+                android:layout_gravity="center"
+                android:layout_marginVertical="@dimen/space_8"
+                android:contentDescription="@string/team_palette_name_2"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingHorizontal="0dp"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+            </FrameLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/team_palette_6"
-            style="@style/Widget.App.Button.Secondary"
-            android:layout_width="@dimen/control_touch"
-            android:layout_height="@dimen/control_touch"
-            android:layout_columnWeight="1"
-            android:layout_gravity="center"
-            android:layout_marginVertical="@dimen/space_8"
-            android:contentDescription="@string/team_palette_name_6"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:paddingHorizontal="0dp"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/team_palette_7"
-            style="@style/Widget.App.Button.Secondary"
-            android:layout_width="@dimen/control_touch"
-            android:layout_height="@dimen/control_touch"
-            android:layout_columnWeight="1"
-            android:layout_gravity="center"
-            android:layout_marginVertical="@dimen/space_8"
-            android:contentDescription="@string/team_palette_name_7"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:paddingHorizontal="0dp"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+    <com.google.android.material.button.MaterialButton
+                android:id="@+id/team_palette_3"
+                style="@style/Widget.App.Button.Secondary"
+                android:layout_width="@dimen/control_touch"
+                android:layout_height="@dimen/control_touch"
+                android:layout_gravity="center"
+                android:layout_marginVertical="@dimen/space_8"
+                android:contentDescription="@string/team_palette_name_3"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingHorizontal="0dp"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+            </FrameLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/team_palette_8"
-            style="@style/Widget.App.Button.Secondary"
-            android:layout_width="@dimen/control_touch"
-            android:layout_height="@dimen/control_touch"
-            android:layout_columnWeight="1"
-            android:layout_gravity="center"
-            android:layout_marginVertical="@dimen/space_8"
-            android:contentDescription="@string/team_palette_name_8"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:paddingHorizontal="0dp"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
 
-    </GridLayout>
+    <com.google.android.material.button.MaterialButton
+                android:id="@+id/team_palette_4"
+                style="@style/Widget.App.Button.Secondary"
+                android:layout_width="@dimen/control_touch"
+                android:layout_height="@dimen/control_touch"
+                android:layout_gravity="center"
+                android:layout_marginVertical="@dimen/space_8"
+                android:contentDescription="@string/team_palette_name_4"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingHorizontal="0dp"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+    <com.google.android.material.button.MaterialButton
+                android:id="@+id/team_palette_5"
+                style="@style/Widget.App.Button.Secondary"
+                android:layout_width="@dimen/control_touch"
+                android:layout_height="@dimen/control_touch"
+                android:layout_gravity="center"
+                android:layout_marginVertical="@dimen/space_8"
+                android:contentDescription="@string/team_palette_name_5"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingHorizontal="0dp"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+    <com.google.android.material.button.MaterialButton
+                android:id="@+id/team_palette_6"
+                style="@style/Widget.App.Button.Secondary"
+                android:layout_width="@dimen/control_touch"
+                android:layout_height="@dimen/control_touch"
+                android:layout_gravity="center"
+                android:layout_marginVertical="@dimen/space_8"
+                android:contentDescription="@string/team_palette_name_6"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingHorizontal="0dp"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+    <com.google.android.material.button.MaterialButton
+                android:id="@+id/team_palette_7"
+                style="@style/Widget.App.Button.Secondary"
+                android:layout_width="@dimen/control_touch"
+                android:layout_height="@dimen/control_touch"
+                android:layout_gravity="center"
+                android:layout_marginVertical="@dimen/space_8"
+                android:contentDescription="@string/team_palette_name_7"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingHorizontal="0dp"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+    <com.google.android.material.button.MaterialButton
+                android:id="@+id/team_palette_8"
+                style="@style/Widget.App.Button.Secondary"
+                android:layout_width="@dimen/control_touch"
+                android:layout_height="@dimen/control_touch"
+                android:layout_gravity="center"
+                android:layout_marginVertical="@dimen/space_8"
+                android:contentDescription="@string/team_palette_name_8"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingHorizontal="0dp"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:shapeAppearance="@style/ShapeAppearance.App.Swatch" />
+            </FrameLayout>
+        </LinearLayout>
+    </LinearLayout>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/team_color_other_button"

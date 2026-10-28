@@ -1,5 +1,6 @@
 package it.vantaggi.scoreboardessential
 
+import android.os.Looper
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -10,6 +11,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowDialog
 
@@ -24,7 +26,7 @@ class RigheDelleImpostazioniTest {
 
     @Test
     fun `le righe mostrano il valore in uso e non un campo da scrivere`() {
-        val schermata = impostazioni()
+        val schermata = conLoSportCaricato()
 
         assertTrue("lo sport non e' una riga", schermata.findViewById<View>(R.id.sportRow).isClickable)
         assertTrue("la lingua non e' una riga", schermata.findViewById<View>(R.id.languageRow).isClickable)
@@ -40,7 +42,7 @@ class RigheDelleImpostazioniTest {
 
     @Test
     fun `il tocco sullo sport apre il foglio con la spunta sullo sport in uso`() {
-        val schermata = impostazioni()
+        val schermata = conLoSportCaricato()
         schermata.findViewById<View>(R.id.sportRow).performClick()
 
         val foglio = ShadowDialog.getLatestDialog() as AlertDialog

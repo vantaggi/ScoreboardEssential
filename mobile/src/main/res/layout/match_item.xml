@@ -200,13 +200,22 @@
                 tools:text="Giocatori: John, Doe, Jane, Smith" />
 
             <!-- Esporta sta accanto a Elimina: i comandi di una partita dello storico stanno sulla sua scheda. -->
-            <LinearLayout
-                android:layout_width="wrap_content"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:layout_marginEnd="@dimen/space_8"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_marginEnd="@dimen/space_8">
+
+                <!-- I comandi vanno a capo invece di uscire dalla scheda: a 360dp e al 200% il cestino non sparisce. -->
+                <androidx.constraintlayout.helper.widget.Flow
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:constraint_referenced_ids="chronicle_match_button,export_match_button,delete_match_button"
+                    app:flow_horizontalBias="1"
+                    app:flow_horizontalStyle="packed"
+                    app:flow_wrapMode="chain"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <!-- La Cronaca si apre da qui, come l'export: e' un comando di questa partita. -->
                 <com.google.android.material.button.MaterialButton
@@ -241,7 +250,7 @@
                     android:foreground="@drawable/bg_focus_ring"
                     app:srcCompat="@drawable/ic_delete"
                     app:tint="@color/elite_error" />
-            </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
         </LinearLayout>
 
     </LinearLayout>
