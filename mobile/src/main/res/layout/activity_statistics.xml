@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Statistiche (G-4, revisione dei menu passo 6). Le schede seguono lo sport in uso. Nel calcio il
-    compito e' vedere chi ha segnato di piu': tre schede (Generale, Attacco, Difesa) con un solo
-    indicatore lime e una riga per giocatore (nome e gol). Nel padel e nel tennis non ci sono gol: niente
-    schede, una riga di titolo ("Padel · partite vinte") e la classifica delle partite vinte su quelle
-    giocate. In tutti e due i casi un gruppo tonale con righe separate da linee sottili rientrate.
+    Statistiche (G-4, revisione dei menu passo 6). In cima si sceglie lo sport (parte da quello in uso) e
+    sotto la schermata lo segue. Nel calcio il compito e' vedere chi ha segnato di piu': tre schede
+    (Generale, Attacco, Difesa) con un solo indicatore lime e una riga per giocatore (nome e gol). Nel
+    padel e nel tennis non ci sono gol: niente schede, una riga di titolo ("Partite vinte") e la
+    classifica delle partite vinte su quelle giocate. In tutti e due i casi un gruppo tonale con righe
+    separate da linee sottili rientrate.
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -20,12 +21,35 @@
         android:layout_height="?attr/actionBarSize"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Lo sport di cui si guardano le statistiche: una scelta sola, parte da quello in uso. -->
+    <HorizontalScrollView
+        android:id="@+id/sport_filter_scrollview"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_4"
+        android:scrollbars="none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/sport_chip_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="@dimen/space_16"
+            android:paddingEnd="@dimen/space_16"
+            app:selectionRequired="true"
+            app:singleLine="true"
+            app:singleSelection="true" />
+
+    </HorizontalScrollView>
+
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
         style="@style/Widget.App.TabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/toolbar" />
+        app:layout_constraintTop_toBottomOf="@id/sport_filter_scrollview" />
 
     <!-- Solo negli sport senza marcatori, al posto delle schede. -->
     <TextView

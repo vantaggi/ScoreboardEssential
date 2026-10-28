@@ -322,4 +322,22 @@ interface MatchDao {
         sportId: String,
         limit: Int,
     ): Flow<List<PlayerRecord>>
+
+    /**
+     * Le partite chiuse di ogni giocatore, giocate e vinte, uno sport per volta. Con questa si
+     * separano le statistiche per sport senza sommarle: [Player.appearances] e' un totale unico.
+     * Solo letture: nessuna colonna nuova, nessuna migrazione.
+     */
+    @Query(
+        """
+        SELECT cr.playerId AS playerId, m.sportId AS sportId, COUNT(*) AS played,
+          SUM(CASE WHEN (cr.teamNumber = 1 AND m.team1Score > m.team2Score)
+                     OR (cr.teamNumber = 2 AND m.team2Score > m.team1Score) THEN 1 ELSE 0 END) AS won
+        FROM MatchPlayerCrossRef cr
+        INNER JOIN matches m ON cr.matchId = m.matchId
+        WHERE m.isActive = 0
+        GROUP BY cr.playerId, m.sportId
+    """,
+    )
+    fun getPlayerSportCounts(): Flow<List<PlayerSportCount>>
 }

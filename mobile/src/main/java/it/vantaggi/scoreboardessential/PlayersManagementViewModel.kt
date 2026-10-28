@@ -76,10 +76,23 @@ class PlayersManagementViewModel(
             when (currentSortOrder) {
                 SortOrder.NAME_ASC -> filteredList.sortedBy { it.player.playerName.lowercase() }
                 SortOrder.GOALS_DESC -> filteredList.sortedByDescending { it.player.goals }
-                SortOrder.APPEARANCES_DESC -> filteredList.sortedByDescending { it.player.appearances }
+                SortOrder.APPEARANCES_DESC -> filteredList.sortedByDescending { partiteDi(it.player) }
             }
         _players.value = sortedList
     }
+
+    /**
+     * Le partite giocate nello sport in uso, per giocatore, dallo storico. Null finche' non sono
+     * arrivate: vale allora il totale della colonna, che somma tutti gli sport.
+     */
+    private var partitePerGiocatore: Map<Int, Int>? = null
+
+    fun setPartite(partite: Map<Int, Int>) {
+        partitePerGiocatore = partite
+        applyFiltersAndSorting()
+    }
+
+    private fun partiteDi(player: Player): Int = partitePerGiocatore?.let { it[player.playerId] ?: 0 } ?: player.appearances
 
     fun setRoleFilter(roleId: Int?) {
         _selectedRoleFilter.value = roleId
@@ -148,12 +161,12 @@ class PlayersManagementViewModel(
     }
 
     /**
-     * Presenze e gol a zero; i ruoli restano quelli che sono. Sospesa: Modifica giocatore aspetta la
-     * scrittura prima di dire "Statistiche azzerate".
+     * Gol a zero; i ruoli restano quelli che sono, e le partite anche: si contano dallo storico, sport
+     * per sport. Sospesa: Modifica giocatore aspetta la scrittura prima di dire "Gol azzerati".
      */
     suspend fun resetStats(playerWithRoles: PlayerWithRoles) {
         playerRepository.updatePlayerWithRoles(
-            playerWithRoles.player.copy(appearances = 0, goals = 0),
+            playerWithRoles.player.copy(goals = 0),
             playerWithRoles.roles.map { it.roleId },
         )
     }

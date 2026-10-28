@@ -22,6 +22,7 @@ import com.google.android.material.textfield.TextInputEditText
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.database.Role
+import it.vantaggi.scoreboardessential.database.playedIn
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.ui.EmptyStateView
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
@@ -101,6 +102,12 @@ class PlayersManagementActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val sportId = (application as ScoreboardEssentialApplication).matchSettingsRepository.getActiveSport()
             mostraLoSport(StatisticsViewModel.contaIGol(sportId))
+            // Le partite sono quelle dello sport in uso, dallo storico: la colonna del giocatore le somma tutte.
+            database.matchDao().getPlayerSportCounts().collect { conteggi ->
+                val partite = conteggi.playedIn(sportId)
+                viewModel.setPartite(partite)
+                adapter.partite = partite
+            }
         }
     }
 

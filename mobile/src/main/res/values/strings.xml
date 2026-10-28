@@ -344,11 +344,11 @@
     <string name="filter_all">All</string>
     <string name="no_players_yet">No players</string>
     <string name="no_players_hint">Add the people you play with: players join the rosters and their goals and appearances are counted.</string>
-    <string name="reset_stats">Reset stats</string>
-    <string name="reset_stats_title">Reset stats?</string>
-    <string name="reset_stats_message">%1$s\'s matches and goals go back to zero.</string>
+    <string name="reset_stats">Reset goals</string>
+    <string name="reset_stats_title">Reset goals?</string>
+    <string name="reset_stats_message">%1$s\'s goals go back to zero. Matches stay in the history.</string>
     <string name="reset_stats_confirm">Reset</string>
-    <string name="stats_reset">Stats reset</string>
+    <string name="stats_reset">Goals reset</string>
     <string name="delete_player_title">Delete Player?</string>
     <string name="delete_player_message">Are you sure you want to delete %1$s? This action cannot be undone.</string>
     <string name="player_deleted_named">%1$s deleted</string>
@@ -380,7 +380,7 @@
         <item quantity="other">%1$d wins of %2$d</item>
     </plurals>
     <string name="stats_record_description">%1$d. %2$s, %3$s</string>
-    <string name="stats_wins_heading">%1$s · matches won</string>
+    <string name="stats_wins_heading">Matches won</string>
     <string name="stats_wins_empty_hint">Wins are counted from finished matches with players on court. Save a match with the pairs to see them here.</string>
     <string name="settings_teams_title">Teams</string>
     <string name="settings_match_title">Rules</string>

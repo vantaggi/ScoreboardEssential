@@ -2689,3 +2689,21 @@ Difetti noti, non corretti qui (tutti a 360dp e 200%): etichette della schermata
 1. Nessuna ricerca nel dialogo: con una rosa di cinquanta nomi si scorre ancora. Serve un dialogo con un campo e una lista filtrata al posto dell'adattatore del `MaterialAlertDialog`; non l'ho fatto di notte perche' tocca la scelta dalla dashboard di Padel Elite, che e' in produzione.
 2. Lo sport nelle Impostazioni e' ancora un menu a tendina; la riga "Sport: Padel" con il dialogo e la spunta e' legata al debito 2 del passo 3b (righe nome e valore) e cambia molti test: da fare insieme.
 3. Non visto a schermo: verificato solo dai test e dalla CI.
+
+### Statistiche per sport (28 ottobre 2026, bozza A scelta nel thread)
+
+Sul calcio le Statistiche mostravano ancora le partite di tutti gli sport insieme: `Player.appearances` e' un totale unico, e chi gioca a calcio e a padel vedeva nel calcio le partite di padel (e un giocatore di solo padel poteva comparire a zero gol). Per guardare il padel bisognava cambiare lo sport nelle Impostazioni.
+
+- **Gerarchia e layout.** Sotto la barra, un chip per sport (Calcio, Padel, Tennis; scelta sola, sempre uno scelto): parte dallo sport in uso, ma si cambia lì senza toccare le Impostazioni. Sotto resta quello di prima: nel calcio le tre schede e i gol, nel padel e nel tennis la riga di titolo e le partite vinte. Il titolo ora dice solo "Partite vinte": lo sport lo dice il chip scelto e non si ripete. Nelle bozze il selettore era segmentato; l'ho fatto coi chip dei filtri per ruolo dei Giocatori (`item_chip_filter`) per non aggiungere un componente: **conflitto dichiarato** con `SegmentedControl` (indicatore che scivola), da rivedere se Cioti lo vuole segmentato.
+- **Dati.** Nuova query `MatchDao.getPlayerSportCounts()`: partite chiuse giocate e vinte per giocatore e per sport, dalle formazioni salvate. Solo letture, nessuna colonna nuova, nessuna migrazione. `GetPlayerStatsUseCase` la usa per le partite e la percentuale del calcio, e toglie dalla classifica chi non ha giocato a calcio ne' ha gol. I Giocatori mostrano le partite dello sport in uso, e "Per partite giocate" ordina per quelle.
+- **Azzera.** Le partite si contano dallo storico, quindi non si azzerano piu' dal giocatore: la voce diventa "Azzera i gol" (visibile solo con gol), e il messaggio dice che le partite restano nello storico. Prima azzerava anche `appearances`, che ormai non si mostra piu'.
+- **Componenti riusati.** Chip, gruppo tonale, righe e stato vuoto di prima; nessun token, colore, spaziatura o durata nuovi.
+- **Stati.** Calcio con gol; calcio senza gol (stato vuoto); padel o tennis con partite; senza partite chiuse con giocatori (stato vuoto con il perche'); chip scelto (testo, bordo e riempimento dello stile `Widget.App.Chip`, non solo il colore). Dopo una rotazione resta lo sport guardato. Movimento: nessuno nuovo.
+- **Pattern vietati.** Tolto il titolo che ripeteva lo sport del chip; niente card nuove, niente ombre.
+
+### Debiti dichiarati delle Statistiche per sport
+
+1. **Bozza B (scheda del giocatore con un blocco per sport)** non fatta: `getPlayerSportCounts` ha gia' i dati, serve la schermata.
+2. I Giocatori seguono lo sport in uso (non hanno il selettore): le partite sono di quello sport.
+3. Le partite salvate prima delle formazioni (o senza giocatori in campo) non contano, come per le vittorie. Il totale vecchio di `appearances` resta nella colonna ma non si mostra.
+4. Non visto a schermo: verificato solo dai test e dalla CI.

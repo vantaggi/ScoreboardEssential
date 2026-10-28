@@ -28,6 +28,17 @@ class PlayersManagementAdapter(
             notifyItemRangeChanged(0, itemCount)
         }
 
+    /**
+     * Le partite giocate nello sport in uso, per giocatore. Null finche' non sono arrivate: vale
+     * allora il totale della colonna, che somma tutti gli sport.
+     */
+    var partite: Map<Int, Int>? = null
+        set(valore) {
+            if (field == valore) return
+            field = valore
+            notifyItemRangeChanged(0, itemCount)
+        }
+
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int,
@@ -43,7 +54,8 @@ class PlayersManagementAdapter(
         holder: PlayerViewHolder,
         position: Int,
     ) {
-        holder.bind(getItem(position), contaIGol)
+        val item = getItem(position)
+        holder.bind(item, contaIGol, partite?.let { it[item.player.playerId] ?: 0 })
     }
 
     class PlayerViewHolder(
@@ -58,10 +70,11 @@ class PlayersManagementAdapter(
         fun bind(
             playerWithRoles: PlayerWithRoles,
             contaIGol: Boolean = true,
+            partite: Int? = null,
         ) {
             val player = playerWithRoles.player
             nameTextView.text = player.playerName
-            valueTextView.text = valoreDelGiocatore(itemView.resources, player, contaIGol)
+            valueTextView.text = valoreDelGiocatore(itemView.resources, player, contaIGol, partite ?: player.appearances)
 
             // Le viste si riciclano: i ruoli si scrivono in entrambi i casi.
             rolesGroup.setRoles(if (contaIGol) playerWithRoles.roles else emptyList())
@@ -87,14 +100,18 @@ class PlayersManagementAdapter(
     }
 }
 
-/** «3 partite», e nel calcio «3 partite · 5 gol»: il valore che conta, sotto il nome. */
+/**
+ * «3 partite», e nel calcio «3 partite · 5 gol»: il valore che conta, sotto il nome. Le [partite] sono
+ * quelle dello sport in uso; senza, il totale della colonna.
+ */
 internal fun valoreDelGiocatore(
     resources: Resources,
     player: Player,
     contaIGol: Boolean,
+    partite: Int = player.appearances,
 ): String {
-    val partite = resources.getQuantityString(R.plurals.player_value_matches, player.appearances, player.appearances)
-    if (!contaIGol) return partite
+    val partiteGiocate = resources.getQuantityString(R.plurals.player_value_matches, partite, partite)
+    if (!contaIGol) return partiteGiocate
     val gol = resources.getQuantityString(R.plurals.stats_goals, player.goals, player.goals)
-    return resources.getString(R.string.player_value_with_goals, partite, gol)
+    return resources.getString(R.string.player_value_with_goals, partiteGiocate, gol)
 }
