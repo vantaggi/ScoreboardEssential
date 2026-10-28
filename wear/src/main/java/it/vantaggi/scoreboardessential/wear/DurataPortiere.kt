@@ -34,13 +34,19 @@ internal fun etichettaPortiere(
     return when {
         minuti == 0 -> context.getString(R.string.wear_keeper_seconds, resto)
         resto == 0 -> context.getString(R.string.wear_keeper_minutes, minuti)
-        resto % SECONDI_PER_DECIMO == 0 -> {
-            val formato = NumberFormat.getNumberInstance(context.resources.configuration.locales[0])
-            formato.maximumFractionDigits = 1
-            context.getString(R.string.wear_keeper_minutes_decimal, formato.format(secondi / 60.0))
-        }
+        resto % SECONDI_PER_DECIMO == 0 -> context.getString(R.string.wear_keeper_minutes_decimal, minutiConDecimali(context, secondi))
         else -> context.getString(R.string.wear_keeper_minutes_seconds, minuti, resto)
     }
+}
+
+/** "4,5" in italiano, "4.5" in inglese: un decimale al massimo. */
+private fun minutiConDecimali(
+    context: Context,
+    secondi: Long,
+): String {
+    val formato = NumberFormat.getNumberInstance(context.resources.configuration.locales[0])
+    formato.maximumFractionDigits = 1
+    return formato.format(secondi / 60.0)
 }
 
 private const val SECONDI_PER_DECIMO = 6
