@@ -291,6 +291,51 @@ class SerataDelTelefonoTest {
             assertNull(vm.stato.value.selezione)
         }
 
+    /**
+     * La schermata resta aperta e l'orologio ruota e poi comincia la partita (scrive MainViewModel). Rosso se
+     * la schermata resta sulle coppie vecchie, se tiene la selezione o se dopo Inizia si puo' ancora cambiare.
+     */
+    @Test
+    fun `allineaAllaMemoria segue i cambi fatti dall'orologio con la schermata aperta`() =
+        runTest {
+            val ids = rosa("A", "B", "C", "D", "E")
+            store.save(Serata.nuova(ids))
+            val vm = nuovoViewModel()
+            advanceUntilIdle()
+            vm.toccaIlPosto(0)
+
+            store.save(store.load()!!.ruota())
+            vm.allineaAllaMemoria()
+            assertEquals(store.load(), vm.stato.value.serata)
+            assertNull(vm.stato.value.selezione)
+            assertTrue(vm.stato.value.puoIniziare)
+
+            store.save(store.load()!!.consegna())
+            vm.allineaAllaMemoria()
+            assertTrue("Inizia dal polso: sola lettura", vm.stato.value.inCorso)
+            assertFalse(vm.stato.value.puoIniziare)
+
+            store.save(store.load()!!.chiudiPartita())
+            vm.allineaAllaMemoria()
+            assertFalse("partita chiusa: si compone la prossima", vm.stato.value.inCorso)
+        }
+
+    /** Rosso se una scrittura della schermata stessa butta la selezione appena fatta o cambia la sola lettura. */
+    @Test
+    fun `allineaAllaMemoria non tocca niente se la memoria dice gia' quello che si vede`() =
+        runTest {
+            val ids = rosa("A", "B", "C", "D")
+            store.save(Serata.nuova(ids))
+            val vm = nuovoViewModel()
+            advanceUntilIdle()
+            vm.toccaIlPosto(0)
+            val prima = vm.stato.value
+
+            vm.allineaAllaMemoria()
+
+            assertEquals(prima, vm.stato.value)
+        }
+
     @Test
     fun `in sola lettura nessun comando cambia la serata`() =
         runTest {

@@ -42,6 +42,25 @@ class EtichettaSquadraTest {
         assertEquals("", EtichettaSquadra.sigla("  "))
     }
 
+    /** Rosso se torna "PRO/PRO - PRO/PRO", visto al giro sugli emulatori con i giocatori di prova. */
+    @Test
+    fun `le sigle che si ripetono fra chi e' in campo si distinguono`() {
+        assertEquals(listOf("PRO1", "PRO2", "PRO3", "PRO4"), EtichettaSquadra.sigle(listOf("Prova 1", "Prova 2", "Prova 3", "Prova 4")))
+        assertEquals(listOf("ROSS", "ROSE", "VAN"), EtichettaSquadra.sigle(listOf("Rossi", "Rosetti", "Vantaggi")))
+        assertEquals(listOf("ROSM", "ROSL"), EtichettaSquadra.sigle(listOf("Rossi Mario", "Rossetti Luca")))
+        // Senza seconda parola resta la quarta lettera; due nomi identici restano uguali.
+        assertEquals(listOf("BIAN", "BIAN"), EtichettaSquadra.sigle(listOf("Bianchi", "Bianco")))
+        assertEquals(listOf("VAN", "GLO"), EtichettaSquadra.sigle(listOf("Vantaggi", "Glorio")))
+    }
+
+    /** Rosso se le sigle di una coppia ignorano gli avversari: "Prova 1/Prova 2" contro "Prova 3/Prova 4". */
+    @Test
+    fun `la coppia si distingue anche dagli avversari`() {
+        assertEquals("PRO1/PRO2", EtichettaSquadra.di("TEAM 1", listOf("Prova 1", "Prova 2"), listOf("Prova 3", "Prova 4")))
+        assertEquals("VAN/GLO", EtichettaSquadra.di("TEAM 1", listOf("Vantaggi", "Glorio"), listOf("Rossi", "Bianchi")))
+        assertEquals("VANT/GLO", EtichettaSquadra.di("TEAM 1", listOf("Vantaggi", "Glorio"), listOf("Vanni", "Bianchi")))
+    }
+
     @Test
     fun `un giocatore senza lettere lascia il nome`() {
         assertEquals("TEAM 1", EtichettaSquadra.di("TEAM 1", listOf("Vantaggi", "42")))

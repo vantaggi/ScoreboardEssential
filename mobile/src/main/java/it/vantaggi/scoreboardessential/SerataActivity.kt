@@ -2,6 +2,7 @@ package it.vantaggi.scoreboardessential
 
 import android.app.Activity
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
@@ -49,6 +50,14 @@ class SerataActivity : AppCompatActivity() {
     private lateinit var presenti: SerataRigheAdapter
     private lateinit var proposte: SerataRigheAdapter
 
+    private lateinit var prefs: SharedPreferences
+
+    // Tenuto in un campo: SharedPreferences ricorda gli ascoltatori con un riferimento debole.
+    private val serataCambiata =
+        SharedPreferences.OnSharedPreferenceChangeListener { _, chiave ->
+            if (chiave == SerataPrefsStore.CHIAVE) viewModel.allineaAllaMemoria()
+        }
+
     /** L'ultimo messaggio con "Annulla", per i test. */
     @VisibleForTesting
     internal var avvisoConAnnulla: Snackbar? = null
@@ -62,7 +71,7 @@ class SerataActivity : AppCompatActivity() {
             title = getString(R.string.title_serata)
         }
 
-        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         val database = AppDatabase.getDatabase(application)
         viewModel =
             ViewModelProvider(
@@ -166,6 +175,13 @@ class SerataActivity : AppCompatActivity() {
         super.onStart()
         // Tornando sulla schermata la serata puo' essere cambiata: una partita chiusa, anche dall'orologio.
         viewModel.ricarica()
+        // E mentre resta aperta: Ruota, scambio e Inizia dall'orologio li scrive MainViewModel.
+        prefs.registerOnSharedPreferenceChangeListener(serataCambiata)
+    }
+
+    override fun onStop() {
+        prefs.unregisterOnSharedPreferenceChangeListener(serataCambiata)
+        super.onStop()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

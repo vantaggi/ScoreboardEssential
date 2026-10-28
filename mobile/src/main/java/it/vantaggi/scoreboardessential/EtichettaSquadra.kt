@@ -17,13 +17,18 @@ object EtichettaSquadra {
     // "TEAM 1" del ViewModel, "Team 1" delle impostazioni, "Squadra 1" se qualcuno l'ha tradotto a mano.
     private val PREDEFINITO = Regex("""(team|squadra)\s*\d+""", RegexOption.IGNORE_CASE)
 
+    /**
+     * [avversari] sono gli altri in campo: le sigle si distinguono su tutti, cosi' "Prova 1" e "Prova 2"
+     * non fanno "PRO/PRO" (vedi [sigle]).
+     */
     fun di(
         nomeScelto: String,
         giocatori: List<String>,
+        avversari: List<String> = emptyList(),
     ): String {
         if (!predefinito(nomeScelto)) return nomeScelto
         if (giocatori.isEmpty() || giocatori.size > GIOCATORI_MASSIMI) return nomeScelto
-        val sigle = giocatori.map(::sigla)
+        val sigle = sigle(giocatori + avversari).take(giocatori.size)
         if (sigle.any { it.isEmpty() }) return nomeScelto
         return sigle.joinToString(SEPARATORE)
     }
@@ -46,8 +51,50 @@ object EtichettaSquadra {
      * giocatori sono scritti col solo cognome (come nella dashboard) o cognome e nome, e "Ferrario
      * Stefano" deve dare FER e non STE. Apostrofi e segni restano fuori ("D'Amico" da DAM).
      */
-    fun sigla(nomeGiocatore: String): String {
-        val cognome = nomeGiocatore.trim().split(Regex("""\s+""")).first()
-        return cognome.filter { it.isLetter() }.take(LETTERE).uppercase()
+    fun sigla(nomeGiocatore: String): String = cognome(nomeGiocatore).take(LETTERE).uppercase()
+
+    /**
+     * Le sigle di chi e' in campo insieme, diverse fra loro dove si puo'. Al giro sui telefoni di prova
+     * "Prova 1".."Prova 4" davano "PRO/PRO - PRO/PRO" e non si capiva chi fosse chi; succede anche con
+     * cognomi che cominciano uguale. Chi si ripete prende una quarta lettera del cognome (Rossi e Rossetti:
+     * ROSS e ROSS, Bianchi e Bianco: BIAN e BIAN restano uguali), poi le prime tre piu' l'iniziale della
+     * seconda parola (PRO1, PRO2; ROSM, ROSL per Rossi Mario e Rossi Luca). Due nomi identici restano uguali.
+     * Sigle piu' corte di cosi' sul polso entrano gia'; piu' lunghe no.
+     */
+    fun sigle(nomi: List<String>): List<String> {
+        val risultato = nomi.map(::sigla).toMutableList()
+        val quattro = { nome: String -> cognome(nome).take(LETTERE + 1).uppercase() }
+        val passi =
+            listOf(
+                quattro,
+                { nome -> iniziale(nome).takeIf { it.isNotEmpty() }?.let { sigla(nome) + it } ?: quattro(nome) },
+            )
+        for (passo in passi) {
+            val ripetute =
+                risultato
+                    .filter { it.isNotEmpty() }
+                    .groupingBy { it }
+                    .eachCount()
+                    .filterValues { it > 1 }
+                    .keys
+            if (ripetute.isEmpty()) break
+            for (i in nomi.indices) {
+                if (risultato[i] in ripetute) risultato[i] = passo(nomi[i])
+            }
+        }
+        return risultato
     }
+
+    private fun parole(nome: String): List<String> = nome.trim().split(Regex("""\s+"""))
+
+    private fun cognome(nome: String): String = parole(nome).first().filter { it.isLetter() }
+
+    /** La prima lettera o cifra della seconda parola, in maiuscolo; niente se c'e' una parola sola. */
+    private fun iniziale(nome: String): String =
+        parole(nome)
+            .drop(1)
+            .firstOrNull()
+            ?.firstOrNull { it.isLetterOrDigit() }
+            ?.uppercase()
+            .orEmpty()
 }

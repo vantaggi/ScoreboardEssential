@@ -189,6 +189,26 @@ class SerataViewModel(
         leggiLaDashboard(mostraLaLettura = _stato.value.dashboard !is SerataDashboard.Pronta)
     }
 
+    /**
+     * La serata e' cambiata nella memoria mentre la schermata e' aperta: l'orologio ha ruotato, scambiato o
+     * cominciato la partita (lo scrive MainViewModel). Prima la schermata restava sulle coppie vecchie fino
+     * alla riapertura. Se la memoria dice gia' quello che si vede (la scrittura e' di questa schermata) non
+     * cambia niente; altrimenti la selezione si butta, come in [ricarica]. Una partita consegnata nel
+     * frattempo rende la schermata di sola lettura; quella chiusa la riapre.
+     */
+    fun allineaAllaMemoria() {
+        val inMemoria = store.load()
+        val stato = _stato.value
+        if (inMemoria == stato.serata) return
+        val inCorso =
+            when {
+                inMemoria?.inGioco != null -> true
+                stato.serata?.inGioco != null -> false
+                else -> stato.inCorso
+            }
+        _stato.value = stato.copy(serata = inMemoria, selezione = null, inCorso = inCorso)
+    }
+
     /** "Riprova" dopo un errore: rilegge mostrando che sta leggendo. */
     fun riprovaLaDashboard() = leggiLaDashboard(mostraLaLettura = true)
 
