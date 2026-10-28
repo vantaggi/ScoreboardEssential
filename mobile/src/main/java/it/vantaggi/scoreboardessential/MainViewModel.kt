@@ -478,24 +478,34 @@ class MainViewModel(
     /** Il nome scelto per la squadra 2, da proporre nel dialogo che lo cambia. */
     val team2ChosenName: LiveData<String> = _team2Name
 
-    /** Il nome mostrato della squadra 1: quello scelto, o "VAN/GLO" se e' il predefinito. */
-    val team1Name: LiveData<String> = nomeMostrato(_team1Name, _team1Players)
+    /** Il nome mostrato della squadra 1: quello scelto, "VAN/GLO" o "Squadra 1" nella lingua in uso. */
+    val team1Name: LiveData<String> = nomeMostrato(_team1Name, _team1Players, R.string.label_team_1)
 
-    /** Il nome mostrato della squadra 2: quello scelto, o "VAN/GLO" se e' il predefinito. */
-    val team2Name: LiveData<String> = nomeMostrato(_team2Name, _team2Players)
+    /** Il nome mostrato della squadra 2: quello scelto, "VAN/GLO" o "Squadra 2" nella lingua in uso. */
+    val team2Name: LiveData<String> = nomeMostrato(_team2Name, _team2Players, R.string.label_team_2)
 
     private fun nomeMostrato(
         scelto: LiveData<String>,
         rosa: LiveData<List<PlayerWithRoles>>,
+        @StringRes predefinitoLocale: Int,
     ): LiveData<String> =
         MediatorLiveData<String>().apply {
             fun ricalcola() {
-                val nome = EtichettaSquadra.di(scelto.value.orEmpty(), rosa.value.orEmpty().map { it.player.playerName })
+                val nome = EtichettaSquadra.mostrato(nomeSegnale(scelto, rosa), testo(predefinitoLocale))
                 if (value != nome) value = nome
             }
             addSource(scelto) { ricalcola() }
             addSource(rosa) { ricalcola() }
         }
+
+    /**
+     * Il nome come lo leggono l'orologio e le partite salvate: il predefinito resta "TEAM 1" nei dati
+     * (e' il segnale "nessun nome scelto"), a schermo diventa il predefinito della lingua.
+     */
+    private fun nomeSegnale(
+        scelto: LiveData<String>,
+        rosa: LiveData<List<PlayerWithRoles>>,
+    ): String = EtichettaSquadra.di(scelto.value.orEmpty(), rosa.value.orEmpty().map { it.player.playerName })
 
     // Team Colors: i predefiniti hanno una sola fonte, ColorRepository (giallo e verde).
     private val _team1Color = MutableLiveData(colorRepository.getTeam1DefaultColor())
@@ -2389,10 +2399,8 @@ class MainViewModel(
 
     /** Il nome della squadra nel registro: il predefinito ("Team 1") nella lingua in uso. */
     private fun nomeNelRegistro(squadra: Int): String =
-        EtichettaSquadra.mostrato(
-            if (squadra == 1) team1Name.value else team2Name.value,
-            testo(if (squadra == 1) R.string.label_team_1 else R.string.label_team_2),
-        )
+        (if (squadra == 1) team1Name.value else team2Name.value)
+            ?: testo(if (squadra == 1) R.string.label_team_1 else R.string.label_team_2)
 
     private fun addMatchEvent(
         event: String,
@@ -2623,8 +2631,8 @@ class MainViewModel(
         viewModelScope.launch {
             val data =
                 mapOf(
-                    WearConstants.KEY_TEAM1_NAME to (team1Name.value ?: "TEAM 1"),
-                    WearConstants.KEY_TEAM2_NAME to (team2Name.value ?: "TEAM 2"),
+                    WearConstants.KEY_TEAM1_NAME to nomeSegnale(_team1Name, _team1Players),
+                    WearConstants.KEY_TEAM2_NAME to nomeSegnale(_team2Name, _team2Players),
                 )
             connectionManager.sendData(
                 path = WearConstants.PATH_TEAM_NAMES,
@@ -2780,11 +2788,11 @@ class MainViewModel(
     fun shareMatchResults() {
         val data =
             MatchReportData(
-                team1Name = team1Name.value ?: "TEAM 1",
+                team1Name = nomeSegnale(_team1Name, _team1Players),
                 team1Score = _team1Score.value ?: 0,
                 team1Color = _team1Color.value,
                 team1Players = _team1Players.value ?: emptyList(),
-                team2Name = team2Name.value ?: "TEAM 2",
+                team2Name = nomeSegnale(_team2Name, _team2Players),
                 team2Score = _team2Score.value ?: 0,
                 team2Color = _team2Color.value,
                 team2Players = _team2Players.value ?: emptyList(),

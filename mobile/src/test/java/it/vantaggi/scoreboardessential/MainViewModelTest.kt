@@ -538,7 +538,14 @@ class MainViewModelTest {
 
             assertEquals("VAN/GLO", viewModel.team1Name.value)
             assertEquals("il nome scelto resta il predefinito, per il dialogo", "TEAM 1", viewModel.team1ChosenName.value)
-            assertEquals("l'altra squadra senza giocatori resta com'e'", "TEAM 2", viewModel.team2Name.value)
+            // Rosso se a schermo torna il predefinito dei dati ("TEAM 2") invece di quello della lingua.
+            viewModel.team2Name.observeForever(nameObserver)
+            assertEquals(
+                "l'altra squadra senza giocatori mostra il predefinito della lingua",
+                mockApplication.getString(R.string.label_team_2),
+                viewModel.team2Name.value,
+            )
+            viewModel.team2Name.removeObserver(nameObserver)
             val nomiAllOrologio =
                 mockingDetails(mockConnectionManager)
                     .invocations
