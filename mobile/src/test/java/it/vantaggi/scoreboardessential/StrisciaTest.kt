@@ -58,7 +58,7 @@ class StrisciaTest {
     fun `nel calcio senza marcatore la striscia chiede chi ha segnato e si puo toccare`() {
         val stato = striscia(listOf(gol(1, 0), avvio))
 
-        assertEquals("Gol Rossi · chi ha segnato? ›", stato.testo)
+        assertEquals("Gol Rossi\nChi ha segnato? ›", stato.testo)
         assertNotNull("il gol senza marcatore e' la scorciatoia", stato.daAttribuire)
         assertEquals("e porta l'indice del motore di quel gol", 0, stato.daAttribuire?.engineIndex)
     }
@@ -67,7 +67,7 @@ class StrisciaTest {
     fun `la striscia segue l'ultimo gol e la squadra che l'ha segnato`() {
         val stato = striscia(listOf(gol(2, 1), gol(1, 0), avvio))
 
-        assertEquals("Gol Blu · chi ha segnato? ›", stato.testo)
+        assertEquals("Gol Blu\nChi ha segnato? ›", stato.testo)
         assertEquals(1, stato.daAttribuire?.engineIndex)
         assertEquals(2, stato.daAttribuire?.team)
     }
@@ -84,7 +84,7 @@ class StrisciaTest {
     fun `un avvio in testa non nasconde l'ultimo gol`() {
         val stato = striscia(listOf(avvio, gol(1, 0)))
 
-        assertEquals("Gol Rossi · chi ha segnato? ›", stato.testo)
+        assertEquals("Gol Rossi\nChi ha segnato? ›", stato.testo)
     }
 
     @Test
@@ -100,7 +100,7 @@ class StrisciaTest {
     fun `un gol dopo la correzione torna a essere l'ultima azione`() {
         val stato = striscia(listOf(gol(2, 2), correzione, gol(1, 0), avvio))
 
-        assertEquals("Gol Blu · chi ha segnato? ›", stato.testo)
+        assertEquals("Gol Blu\nChi ha segnato? ›", stato.testo)
         assertEquals(2, stato.daAttribuire?.engineIndex)
     }
 
@@ -119,7 +119,7 @@ class StrisciaTest {
         assertEquals("Gol Blu · Anna", dopoIlPrimo.testo)
 
         val dopoAnnulla = striscia(listOf(gol(1, 0), avvio))
-        assertEquals("Gol Rossi · chi ha segnato? ›", dopoAnnulla.testo)
+        assertEquals("Gol Rossi\nChi ha segnato? ›", dopoAnnulla.testo)
 
         val dopoAncora = striscia(listOf(avvio))
         assertEquals("Nessun gol", dopoAncora.testo)
@@ -215,7 +215,7 @@ class StrisciaTest {
 
     @Test
     fun `finche le capacita non arrivano vale il calcio`() {
-        assertTrue(striscia(listOf(gol(1, 0)), capacita = null).testo.contains("chi ha segnato"))
+        assertTrue(striscia(listOf(gol(1, 0)), capacita = null).testo.contains("Chi ha segnato"))
     }
 
     @Test
@@ -228,7 +228,7 @@ class StrisciaTest {
     @Test
     @Config(qualifiers = "en")
     fun `in inglese il testo segue la lingua`() {
-        assertEquals("Goal Rossi · who scored? ›", striscia(listOf(gol(1, 0))).testo)
+        assertEquals("Goal Rossi\nWho scored? ›", striscia(listOf(gol(1, 0))).testo)
         assertEquals("No goals yet", striscia(emptyList()).testo)
     }
 

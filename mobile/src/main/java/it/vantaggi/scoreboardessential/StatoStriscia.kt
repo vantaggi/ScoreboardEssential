@@ -10,7 +10,9 @@ import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 /**
  * Cosa dice la striscia dell'ultima azione e cosa succede se la si tocca.
  *
- * @property testo il testo base, su una riga. Cambia il testo, mai l'altezza della striscia.
+ * @property testo il testo base, su una riga, o su due quando chiede il marcatore («Gol Rossi» sopra,
+ *   «Chi ha segnato? ›» sotto: bozza A1 di Cioti, perche' su una riga a 360dp si tagliava). Cambia il
+ *   testo, mai l'altezza della striscia: due righe a 16dp stanno nei 56dp.
  * @property daAttribuire il gol senza marcatore che il tocco apre nel dialogo, o null se la
  *   striscia non offre niente da toccare.
  * @property terminaPartita a partita finita il tocco apre il dialogo di fine partita: la striscia
@@ -20,14 +22,17 @@ internal data class StatoStriscia(
     val testo: String,
     val daAttribuire: MatchEvent? = null,
     val terminaPartita: Boolean = false,
-)
+) {
+    /** Quante righe ha il testo: la vista le mostra tutte, e non di piu'. */
+    val righe: Int get() = if ('\n' in testo) 2 else 1
+}
 
 /**
  * Il testo base della striscia, dall'ultima azione del registro (il registro e' in ordine
  * cronologico inverso, quindi il primo SCORE e' l'ultimo segnato).
  *
- * Nel calcio e' «Gol Rossi · Marco B.», oppure «Gol Rossi · chi ha segnato? ›» quando il marcatore
- * manca: in quel caso il gol e' anche [StatoStriscia.daAttribuire], la stessa cosa che apre la riga
+ * Nel calcio e' «Gol Rossi · Marco B.», oppure «Gol Rossi», a capo, «Chi ha segnato? ›» quando il
+ * marcatore manca: in quel caso il gol e' anche [StatoStriscia.daAttribuire], la stessa cosa che apre la riga
  * del registro. Se il marcatore non e' noto e non c'e' niente da attribuire resta «Gol Rossi».
  * Negli sport senza marcatore e' «Punto Rossi · 40-30», con i primari del display, oppure
  * «Game Rossi · 5-3» al punto che chiude un game (i primari sono gia' tornati a 0-0).

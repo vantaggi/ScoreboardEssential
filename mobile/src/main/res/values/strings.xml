@@ -94,7 +94,7 @@
     <!-- Striscia dell'ultima azione: testo base dal primo SCORE del registro, sempre su una riga. -->
     <string name="strip_none_goal">No goals yet</string>
     <string name="strip_none_point">No points yet</string>
-    <string name="strip_goal_unattributed">Goal %1$s · who scored? ›</string>
+    <string name="strip_goal_unattributed">Goal %1$s\nWho scored? ›</string>
     <string name="strip_goal">Goal %1$s</string>
     <string name="strip_goal_by">Goal %1$s · %2$s</string>
     <string name="strip_point">Point %1$s · %2$s</string>

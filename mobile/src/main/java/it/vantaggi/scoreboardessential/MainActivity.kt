@@ -828,6 +828,7 @@ class MainActivity :
                 viewModel.team2Name.value ?: "Team 2",
             )
         ViewCompat.setAccessibilityLiveRegion(lastActionText, ViewCompat.ACCESSIBILITY_LIVE_REGION_NONE)
+        lastActionText.maxLines = stato.righe
         lastActionText.text = stato.testo
         impostaAzioneDellaStriscia(stato.daAttribuire, stato.terminaPartita)
     }
@@ -860,6 +861,7 @@ class MainActivity :
         lastActionText.removeCallbacks(fineMessaggioInStriscia)
         messaggioInStriscia = true
         ViewCompat.setAccessibilityLiveRegion(lastActionText, ViewCompat.ACCESSIBILITY_LIVE_REGION_POLITE)
+        lastActionText.maxLines = 1
         lastActionText.text = testo
         impostaAzioneDellaStriscia(null)
         lastActionText.postDelayed(fineMessaggioInStriscia, DURATA_MESSAGGIO_STRISCIA_MS)

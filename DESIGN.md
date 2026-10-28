@@ -2798,3 +2798,17 @@ Cioti ha scelto la A e ha detto che la B va bene dopo. La A dice chi e' in testa
 1. Niente container transform dalla riga alla scheda (`RowDetail`): si apre come un'altra schermata.
 2. La scheda non mostra i ruoli ne' permette di modificare il giocatore (resta in Giocatori).
 3. Non visto a schermo: verificato solo dai test e dalla CI.
+
+## Revisione della home - 28 ottobre 2026
+
+Controllo delle home di telefono e orologio contro la Constitution, con le catture degli emulatori accoppiati e del telefono vero. Analisi, catture e bozze nella pagina «Analisi delle home di telefono e orologio» (artifact di Cioti); le scelte sono sue, fatte con un commento sulla bozza: A1, B1, D1 (telefono), W1a, W2a, W3b, W4a (orologio). Gia' unito: testi del gioco a misura fissa (#214), puntini del menu sopra l'anello e niente slot del servizio nel calcio (#215).
+
+### Passo 5, telefono: striscia del calcio e durata del portiere (A1, B1, D1)
+
+- **Compito e valore.** Nel gioco la striscia dice l'ultima azione e, nel calcio, chiede il marcatore; nelle Impostazioni il campo della durata del portiere dice che cosa si scrive. Valore: il testo intero.
+- **Gerarchia e layout.** A1: il gol senza marcatore va su due righe, «Gol Squadra 1» sopra e «Chi ha segnato? ›» sotto, nella striscia di sempre da 56dp (due righe a 16dp ci stanno: l'altezza non cambia e non sposta niente). Le altre frasi restano su una riga coi puntini (`StatoStriscia.righe`). B1: l'etichetta del campo sta sopra il campo, `Caption`, e va a capo; il campo non ha piu' l'etichetta nel bordo, che a 360dp col testo al 200% si tagliava. Etichetta e campo si mostrano e si nascondono insieme (`keeperTimerField`). D1: il cambio del punteggio sul telefono resta com'e'.
+- **Componenti riusati.** `TextAppearance.App.Game.Command` a 16dp, `Widget.App.TextInputLayout`, `TextAppearance.App.Caption`, `space_4`. Nessun token, colore, durata o icona nuovi.
+- **Stati.** Striscia: normale, toccabile (apre il marcatore), premuta (pressione condivisa), messaggio di 3 secondi (una riga), partita finita. Campo: normale, fuoco, errore sotto il campo, nascosto col portiere spento. TalkBack legge l'etichetta come nome del campo (`labelFor`) e la striscia come due frasi. Movimento: nessuno nuovo.
+- **Schermo stretto e 200%.** La striscia e' in dp come il resto del gioco: a 360dp le due righe stanno intere a ogni scala (`ColonnaDiGiocoTest`). L'etichetta del campo va a capo.
+- **Pattern vietati (`review.md`).** Nessun colore, spazio o durata scritti a mano; nessuna ombra; niente maiuscolo; un solo peso nella striscia.
+- **Non visto a schermo**: solo test JVM e CI.
