@@ -328,6 +328,7 @@ class WearProtocolGoldenTest {
                 "KEY_SETTING_VALUE" to "setting_value",
                 "SETTING_DEUCE" to "deuce",
                 "SETTING_KEEPER" to "keeper",
+                "KEY_KEEPER_OFFERED" to "keeper_offered",
                 // Messaggi v1
                 "MSG_SCORER_SELECTED" to "/scoreboard/scorer_selected",
                 "MSG_REQUEST_SYNC" to "/scoreboard/request_sync",

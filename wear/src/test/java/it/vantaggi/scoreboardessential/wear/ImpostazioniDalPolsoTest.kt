@@ -3,7 +3,6 @@ package it.vantaggi.scoreboardessential.wear
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -118,8 +117,19 @@ class ImpostazioniDalPolsoTest {
 
     @Test
     fun `la durata in uso resta nella lista del portiere, in ordine e una volta sola`() {
-        assertEquals(listOf(15L, 30L, 40L, 45L, 60L, 90L, 120L, 180L, 300L), DurataPortiere.scelte(40L))
-        assertEquals(8, DurataPortiere.scelte(30L).size)
-        assertFalse(DurataPortiere.scelte(0L).contains(0L))
+        assertEquals(listOf(0L, 40L, 60L, 120L, 180L, 240L, 300L), DurataPortiere.scelte(40L).take(7))
+        assertEquals(15, DurataPortiere.scelte(300L).size)
+    }
+
+    @Test
+    fun `la lista del portiere e a minuti, parte da Off e va fino a mezz'ora`() {
+        val lista = DurataPortiere.scelte(300L)
+        assertEquals(0L, lista.first())
+        assertEquals(1800L, lista.last())
+        // Il cambio si fa ogni 4-10 minuti: tutti presenti.
+        assertEquals(true, lista.containsAll(listOf(240L, 300L, 360L, 600L)))
+        // Il vecchio 30 s del telefono non sparisce se e' in uso, ma non e' fra le scelte di serie.
+        assertEquals(false, DurataPortiere.scelte(300L).contains(30L))
+        assertEquals(true, DurataPortiere.scelte(30L).contains(30L))
     }
 }

@@ -342,8 +342,11 @@ object WearConstants {
     const val KEY_DEUCE_IDS = "deuce_ids"
     const val KEY_DEUCE_LABELS = "deuce_labels"
 
-    /** La durata del timer del portiere in secondi; 0 dove lo sport non ha il portiere. */
+    /** La durata del timer del portiere in secondi; 0 dove lo sport non ha il portiere o se il portiere e' spento. */
     const val KEY_KEEPER_SECONDS = "keeper_seconds"
+
+    /** Lo sport ha il portiere, acceso o spento: il menu del polso offre la scelta (con Off) anche a 0 secondi. */
+    const val KEY_KEEPER_OFFERED = "keeper_offered"
 
     /**
      * L'orologio chiede di cambiare un'impostazione del telefono: [KEY_SEQ], [KEY_SETTING] e
@@ -353,7 +356,7 @@ object WearConstants {
     const val KEY_SETTING = "setting"
     const val KEY_SETTING_VALUE = "setting_value"
 
-    /** Quale impostazione: la regola del 40-40 (valore: il nome di `DeuceRule`) o il portiere (secondi). */
+    /** Quale impostazione: la regola del 40-40 (valore: il nome di `DeuceRule`) o il portiere (secondi, 0 per spegnerlo). */
     const val SETTING_DEUCE = "deuce"
     const val SETTING_KEEPER = "keeper"
 

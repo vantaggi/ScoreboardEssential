@@ -124,7 +124,7 @@ enum class EsitoAvvioSerata {
 private val SPORT_DELLA_SERATA = setOf(SportRegistry.PADEL, SportRegistry.TENNIS)
 
 // Le durate del portiere che il polso puo' chiedere, in secondi: oltre e' un valore che il menu non manda.
-private val PORTIERE_SECONDI = 5L..600L
+private val PORTIERE_SECONDI = 5L..3600L
 
 // Chiavi in app_prefs: l'ultimo arretrato dell'orologio applicato (per nodo, e l'ultimo di tutti).
 private const val PREF_BATCH_APPLICATO = "batch_applicato_"
@@ -352,7 +352,8 @@ class MainViewModel(
                         val durata = intent.getLongExtra(WearConstants.KEY_KEEPER_DURATION, 0L)
                         if (!running && millis == 0L) {
                             resetKeeperTimer(fromRemote = true)
-                        } else if (running != (_isKeeperTimerRunning.value ?: false)) {
+                        } else if (keeperTimerDuration > 0 && running != (_isKeeperTimerRunning.value ?: false)) {
+                            // Portiere spento (durata 0): un avvio dall'orologio non lo riaccende.
                             if (running) {
                                 if (millis > 0) {
                                     // La durata configurata, mai il residuo di una ripresa. Senza la
@@ -515,6 +516,11 @@ class MainViewModel(
     private val _isKeeperTimerExpired = MutableLiveData(false)
     val isKeeperTimerExpired: LiveData<Boolean> = _isKeeperTimerExpired
     private var keeperTimerDuration = 300000L // 5 minutes default
+
+    private val _keeperAttivo = MutableLiveData(true)
+
+    /** Falso quando la durata e' 0: il portiere e' spento e lo slot del conto non si mostra. */
+    val keeperAttivo: LiveData<Boolean> = _keeperAttivo
 
     // All Players (for selection)
     private val _allPlayers = MutableLiveData<List<PlayerWithRoles>>(emptyList())
@@ -1328,7 +1334,8 @@ class MainViewModel(
 
             WearConstants.SETTING_KEEPER -> {
                 val secondi = valore.toLongOrNull()
-                if (secondi != null && secondi in PORTIERE_SECONDI && sportRules.capabilities.hasAuxCountdown) {
+                // 0 spegne il portiere: niente conto, niente slot, niente cambio a tempo.
+                if (secondi != null && (secondi == 0L || secondi in PORTIERE_SECONDI) && sportRules.capabilities.hasAuxCountdown) {
                     viewModelScope.launch { matchSettingsRepository.setKeeperTimerDuration(secondi) }
                     return
                 }
@@ -1513,8 +1520,11 @@ class MainViewModel(
                 WearConstants.KEY_DEUCE_LABELS to
                     regoleDel40AlPolso.joinToString(WearConstants.SPORT_SEPARATOR) { deuceLabel(getApplication(), it) },
                 WearConstants.KEY_KEEPER_SECONDS to (if (capacita.hasAuxCountdown) keeperTimerDuration / 1000 else 0L),
+                // Il portiere c'e' nello sport anche se e' spento: il menu del polso offre la scelta con Off.
+                WearConstants.KEY_KEEPER_OFFERED to capacita.hasAuxCountdown,
                 WearConstants.KEY_CAP_HAS_CLOCK to (capacita.clock != ClockMode.NONE),
-                WearConstants.KEY_CAP_HAS_AUX_TIMER to capacita.hasAuxCountdown,
+                // Spento, l'orologio non mostra ne' il conto ne' il suo bersaglio di tocco.
+                WearConstants.KEY_CAP_HAS_AUX_TIMER to (capacita.hasAuxCountdown && keeperTimerDuration > 0),
                 WearConstants.KEY_CAP_ATTRIBUTES_SCORER to capacita.attributesScorer,
                 WearConstants.KEY_CAP_DECREMENT_IS_UNDO to capacita.decrementIsUndo,
                 // Lo sport corrente e quelli fra cui si puo' scegliere, gia' tradotti: e'
@@ -2336,8 +2346,16 @@ class MainViewModel(
     ) {
         keeperTimerDuration = seconds * 1000
         _keeperTimerValue.value = keeperTimerDuration
+        _keeperAttivo.value = seconds > 0
+        // Spento: il conto in corso si ferma, non resta a girare dietro a uno slot nascosto.
+        if (seconds <= 0 && isServiceBound) {
+            _isKeeperTimerExpired.value = false
+            matchTimerService?.resetKeeperTimer()
+        }
         // Solo dove il portiere c'e': nel padel il registro diceva "Keeper timer set to 30 seconds".
-        if (registra && sportRules.capabilities.hasAuxCountdown) addMatchEvent(testo(R.string.log_keeper_set, seconds))
+        if (registra && sportRules.capabilities.hasAuxCountdown) {
+            addMatchEvent(if (seconds > 0) testo(R.string.log_keeper_set, seconds) else testo(R.string.log_keeper_off))
+        }
         // Sync default duration to Wear
         sendKeeperTimerUpdate(false, keeperTimerDuration)
         // La durata e' anche nello stato v2, per il menu del polso.
@@ -2345,7 +2363,7 @@ class MainViewModel(
     }
 
     fun startKeeperTimer(fromRemote: Boolean = false) {
-        if (!isServiceBound) return
+        if (!isServiceBound || keeperTimerDuration <= 0) return
         _isKeeperTimerExpired.value = false
         matchTimerService?.startKeeperTimer(keeperTimerDuration, fromRemote)
         addMatchEvent(testo(R.string.log_keeper_started, keeperTimerDuration / 1000))
@@ -2361,7 +2379,7 @@ class MainViewModel(
      * ha chiesto.
      */
     fun toccaIlPortiere() {
-        if (!isServiceBound) return
+        if (!isServiceBound || keeperTimerDuration <= 0) return
         _isKeeperTimerExpired.value = false
         matchTimerService?.restartKeeperTimer(keeperTimerDuration)
         addMatchEvent(testo(R.string.log_keeper_started, keeperTimerDuration / 1000))

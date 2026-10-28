@@ -85,9 +85,22 @@
 
                     <View style="@style/Widget.App.RowDivider" android:layout_width="match_parent" android:layout_height="@dimen/border_width" android:layout_marginStart="@dimen/space_16" />
 
-                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="@dimen/space_16" android:layout_marginVertical="@dimen/space_12" android:hint="@string/keeper_timer_seconds">
+                    <!-- Il cambio portiere a tempo: spento non c'e' il conto ne' la barra, e si cambia a mano (per gol subiti, per esempio). -->
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:minHeight="@dimen/control_touch" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
-                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/keeperTimerEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/settings_keeper_title" android:textAppearance="@style/TextAppearance.App.RowTitle" />
+
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_4" android:text="@string/settings_keeper_summary" android:textAppearance="@style/TextAppearance.App.Caption" />
+                        </LinearLayout>
+
+                        <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/keeperSwitch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/space_16" android:contentDescription="@string/settings_keeper_title" />
+                    </LinearLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout android:id="@+id/keeperTimerLayout" style="@style/Widget.App.TextInputLayout" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="@dimen/space_16" android:layout_marginBottom="@dimen/space_12" android:hint="@string/keeper_timer_minutes">
+
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/keeperTimerEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="numberDecimal" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 

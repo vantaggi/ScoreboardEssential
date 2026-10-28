@@ -100,7 +100,13 @@ data class WearScoreState(
     val deuceLabels: List<String> = emptyList(),
     /** La durata del portiere in secondi; 0 dove non c'e' il portiere o se il telefono non la manda. */
     val keeperSeconds: Long = 0L,
+    /** Lo sport ha il portiere, anche spento (0 secondi): il menu offre la scelta con Off. */
+    val keeperOffered: Boolean = false,
 ) {
+    /** Il menu offre il portiere: lo manda il telefono nuovo, e uno vecchio lo dice con una durata. */
+    val portiereOfferto: Boolean
+        get() = keeperOffered || keeperSeconds > 0
+
     /** L'etichetta della regola del 40-40 in vigore, vuota se il menu non la puo' offrire. */
     val deuceLabel: String
         get() {
@@ -154,6 +160,7 @@ data class WearScoreState(
                 deuceIds = elenco(dataMap.getString(WearConstants.KEY_DEUCE_IDS, "")),
                 deuceLabels = elenco(dataMap.getString(WearConstants.KEY_DEUCE_LABELS, "")),
                 keeperSeconds = lungo(dataMap, WearConstants.KEY_KEEPER_SECONDS),
+                keeperOffered = dataMap.getBoolean(WearConstants.KEY_KEEPER_OFFERED, false),
             )
         }
 

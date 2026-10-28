@@ -76,7 +76,7 @@ class MatchSettingsRepository(
 
     suspend fun getKeeperTimerDuration(): Long =
         withContext(Dispatchers.IO) {
-            sharedPreferences.getLong(KEY_KEEPER_TIMER_DURATION, 30L)
+            sharedPreferences.getLong(KEY_KEEPER_TIMER_DURATION, DEFAULT_KEEPER_SECONDS)
         }
 
     /**
@@ -133,7 +133,7 @@ class MatchSettingsRepository(
                             prefs.getString(KEY_TEAM2_NAME, DEFAULT_TEAM2_NAME) ?: DEFAULT_TEAM2_NAME,
                             prefs.getInt(KEY_TEAM1_COLOR, colorRepository.getTeam1DefaultColor()),
                             prefs.getInt(KEY_TEAM2_COLOR, colorRepository.getTeam2DefaultColor()),
-                            prefs.getLong(KEY_KEEPER_TIMER_DURATION, 30L),
+                            prefs.getLong(KEY_KEEPER_TIMER_DURATION, DEFAULT_KEEPER_SECONDS),
                             prefs.getString(KEY_ACTIVE_SPORT, DEFAULT_SPORT) ?: DEFAULT_SPORT,
                             regoleDel40(prefs),
                         ),
@@ -147,7 +147,7 @@ class MatchSettingsRepository(
                     sharedPreferences.getString(KEY_TEAM2_NAME, DEFAULT_TEAM2_NAME) ?: DEFAULT_TEAM2_NAME,
                     sharedPreferences.getInt(KEY_TEAM1_COLOR, colorRepository.getTeam1DefaultColor()),
                     sharedPreferences.getInt(KEY_TEAM2_COLOR, colorRepository.getTeam2DefaultColor()),
-                    sharedPreferences.getLong(KEY_KEEPER_TIMER_DURATION, 30L),
+                    sharedPreferences.getLong(KEY_KEEPER_TIMER_DURATION, DEFAULT_KEEPER_SECONDS),
                     sharedPreferences.getString(KEY_ACTIVE_SPORT, DEFAULT_SPORT) ?: DEFAULT_SPORT,
                     regoleDel40(sharedPreferences),
                 ),
@@ -165,6 +165,9 @@ class MatchSettingsRepository(
         private const val KEY_KEEPER_TIMER_DURATION = "keeper_timer_duration"
         private const val KEY_ACTIVE_SPORT = "active_sport"
         private const val DEFAULT_SPORT = "football"
+
+        /** Cinque minuti: e' il cambio portiere di tutti i giorni. */
+        private const val DEFAULT_KEEPER_SECONDS = 300L
 
         /**
          * I nomi predefiniti come stanno nei dati: dicono "nessun nome scelto" (EtichettaSquadra) e
