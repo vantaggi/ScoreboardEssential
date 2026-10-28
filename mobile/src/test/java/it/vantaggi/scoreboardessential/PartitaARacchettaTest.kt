@@ -165,6 +165,18 @@ class PartitaARacchettaTest {
         assertEquals("Vince Maria Antonietta Della · 6-3", testoDellaBarra(context, padel.id, display, lungo, "Bianchi") { true })
     }
 
+    /**
+     * Dal giro di prove del 28 ottobre 2026: a 360dp col testo al 200% la barra diceva «Padel ·
+     * serve Polisportiva Sa…». Rosso se, quando la coda non entra, la barra non resta il solo periodo.
+     */
+    @Test
+    fun `con un nome lungo che non entra la barra dice solo il periodo, il servizio resta nel pallino`() {
+        val display = padel.display(padel.initial())
+        val lungo = "Polisportiva Sangiorgese"
+        assertEquals("Padel", testoDellaBarra(context, padel.id, display, lungo, "Bianchi") { it.length <= 24 })
+        assertEquals("Padel · serve $lungo", testoDellaBarra(context, padel.id, display, lungo, "Bianchi") { true })
+    }
+
     @Test
     fun `il vincitore si legge dai primari e solo a partita finita`() {
         assertEquals(1, vincitoreDellaPartita(padel.display(padelFinito(1))))

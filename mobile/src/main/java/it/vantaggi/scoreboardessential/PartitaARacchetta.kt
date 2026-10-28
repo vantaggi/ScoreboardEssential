@@ -53,7 +53,9 @@ private fun punteggioDellaPartita(display: ScoreDisplay): String =
  *
  * [entra] dice se un testo candidato sta nella barra. La barra ha una riga e taglia con l'ellissi
  * in coda: con un nome lungo il taglio mangiava il punteggio, che e' la parte che conta. Se il testo
- * della vittoria non entra si accorcia il nome («Vince Maria Anto… · 6-3»), mai il punteggio.
+ * della vittoria non entra si accorcia il nome («Vince Maria Anto… · 6-3»), mai il punteggio. Se
+ * non entra «· serve <nome>» resta solo il periodo («Padel», non «Padel · serve Polisportiva Sa…»):
+ * il servizio e' gia' nel pallino accanto al nome e nella sua descrizione.
  */
 internal fun testoDellaBarra(
     context: Context,
@@ -78,11 +80,12 @@ internal fun testoDellaBarra(
             2 -> nomeSquadra2
             else -> null
         }
+    // Chi serve lo dice gia' il pallino accanto al nome: se la coda non entra si toglie.
     val testo =
         when {
             base == null -> ""
             servente.isNullOrBlank() -> base
-            else -> context.getString(R.string.score_period_serving, base, servente)
+            else -> context.getString(R.string.score_period_serving, base, servente).takeIf(entra) ?: base
         }
     return testo
 }
