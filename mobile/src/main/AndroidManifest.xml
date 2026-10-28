@@ -90,6 +90,20 @@
         </service>
 
         <!--
+            Tiene vivo il processo, e con lui il motore della partita, mentre si gioca: col telefono in tasca il
+            sistema congela un processo senza servizio in primo piano e l'orologio non rivede il punteggio. Parte
+            solo con la partita in corso e l'app visibile; non esportato.
+        -->
+        <service
+            android:name=".service.PartitaInCorsoServizio"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.property.FOREGROUND_SERVICE_TYPE_SPECIAL_USE_DESCRIPTION"
+                android:resource="@string/partita_in_corso_special_use_description" />
+        </service>
+
+        <!--
             La diretta (D-3): parte solo quando l'utente accende l'interruttore, o quando la diretta riprende dopo
             la morte del processo, e si ferma con la diretta. Non esportato: lo avvia solo l'app.
         -->

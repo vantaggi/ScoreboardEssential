@@ -45,6 +45,7 @@ class SimplifiedDataLayerListenerServiceTest {
     private lateinit var mockUri: Uri
 
     private lateinit var dataMapItemStatic: MockedStatic<DataMapItem>
+    private val assicuraDiProduzione = SimplifiedDataLayerListenerService.assicuraIlMotore
 
     @Before
     fun setup() {
@@ -60,12 +61,15 @@ class SimplifiedDataLayerListenerServiceTest {
 
         dataMapItemStatic = mockStatic(DataMapItem::class.java)
         NodoLocale.azzera()
+        // Sotto test il motore vero non nasce: qui conta cosa fa il servizio, non l'Application.
+        SimplifiedDataLayerListenerService.assicuraIlMotore = {}
     }
 
     @After
     fun tearDown() {
         dataMapItemStatic.close()
         NodoLocale.azzera()
+        SimplifiedDataLayerListenerService.assicuraIlMotore = assicuraDiProduzione
     }
 
     /**
