@@ -19,6 +19,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -97,6 +98,9 @@ private const val PROVA_DI_MISURA = 100f
 
 // Nel dettaglio dei set il separatore fra set chiusi e game correnti ("6-4 · 3-2"): con lui la didascalia e' SET · GAME.
 private const val SEPARATORE_SET_GAME = " · "
+
+// Dalla scala dei caratteri in su le due formazioni del foglio vanno una sotto l'altra.
+private const val SCALA_FORMAZIONI_IMPILATE = 1.5f
 
 // Il tempo piu' lungo che il pulsante del cronometro mostra: oltre i 99 minuti le cifre diventano sei.
 private const val TEMPO_PIU_LUNGO = "100:00"
@@ -417,6 +421,7 @@ class MainActivity :
         team2FormationView = findViewById(R.id.team2_formation_view)
         team1FormationLabel = findViewById(R.id.team1_formation_label)
         team2FormationLabel = findViewById(R.id.team2_formation_label)
+        disponiLeFormazioni(findViewById(R.id.formations_row), resources.configuration.fontScale)
     }
 
     private fun setupRecyclerViews() {
@@ -2056,6 +2061,31 @@ internal fun mostraGliSlotDelServizio(
 ) {
     for (id in listOf(R.id.team1_serve_slot, R.id.team2_serve_slot)) {
         righeDeiNomi.findViewById<View>(id).visibility = if (sportConServizio) View.VISIBLE else View.GONE
+    }
+}
+
+/**
+ * Le due formazioni del foglio PARTITA stanno affiancate; col testo dal 150% in su una sotto
+ * l'altra, a tutta larghezza. Affiancate a 360dp col testo al 200% la colonna era piu' stretta di
+ * una parola sola («Squadra 1: nessuna formazione» andava a capo dentro «forma-zione»). Si decide
+ * alla creazione, come la scala dei caratteri. Sta fuori dall'Activity per i test.
+ */
+internal fun disponiLeFormazioni(
+    riga: LinearLayout,
+    scalaCaratteri: Float,
+) {
+    if (scalaCaratteri < SCALA_FORMAZIONI_IMPILATE) return
+    riga.orientation = LinearLayout.VERTICAL
+    val stacco = riga.resources.getDimensionPixelSize(R.dimen.space_16)
+    for (indice in 0 until riga.childCount) {
+        val figlio = riga.getChildAt(indice)
+        val parametri = figlio.layoutParams as LinearLayout.LayoutParams
+        parametri.width = LinearLayout.LayoutParams.MATCH_PARENT
+        parametri.weight = 0f
+        parametri.marginStart = 0
+        parametri.marginEnd = 0
+        parametri.topMargin = if (indice == 0) 0 else stacco
+        figlio.layoutParams = parametri
     }
 }
 

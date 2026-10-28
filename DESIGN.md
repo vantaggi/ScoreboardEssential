@@ -2838,3 +2838,15 @@ Controllo delle home di telefono e orologio contro la Constitution, con le cattu
 - **Test.** `QuadranteDentroLAnelloTest` misura l'inchiostro di cronometro, K, cifre, strisce, puntini del menu, frasi lunghe e CHI? contro il bordo interno dell'anello (almeno 3dp) su tondo e quadrato, 192 e 227dp, e i pallini contro la cornice oltre il burn-in; rosso se un testo torna a toccare l'anello. `MarcatoreQuadranteTest` (CHI? al posto della riga, ambient), `OrologioG7Test` (sequenza a 40 e 120ms, 160ms in tutto), `QuadranteFasceTest` (penne in dp, anello rettangolare sul quadrato).
 - **Pattern vietati (`review.md`).** Nessun colore, durata o curva scritti a mano; nessuna ombra; nessun ciclo; il lime solo sui pallini del servizio; in ambient nessun colore.
 - **Non visto a schermo**: solo test JVM e CI. Da vedere sull'AVD reso tondo, sul quadrato e alla fine sul polso (`giro-unico.md`).
+
+### Passo 7, telefono: cio' che il giro di prove sugli emulatori ha trovato (28 ottobre 2026)
+
+- **Compito e valore.** Il tabellone si legge a due metri: i nomi e la striscia interi, il dettaglio del padel con la sua didascalia. Nel foglio le intestazioni delle formazioni senza parole spezzate.
+- **Nomi lunghi (calcio, 360dp, testo al 200%).** «Polisportiva Sangiorgese» diventava «Polisporti…» in alto e «Gol Polisportiva Sangiorge…» nella striscia. `TestoCheSiStringe` (vista del gioco, senza movimento): prova la misura del layout e scende di 1dp fino al minimo prima dei puntini; per i nomi, se una riga non basta, due righe spezzate solo fra le parole, da 16dp in giu', che con la barretta stanno nei 48dp della riga. Token nuovi (ruoli): `game_name_text_min` 14dp, `game_name_two_lines_max` 16dp, `game_strip_text_min` 13dp. Un nome che non entra neanche cosi' resta al minimo coi puntini, come prima.
+- **Dettaglio del padel al 200%.** Valore (24) e didascalia «Game» (12) erano in sp nel dettaglio da 48dp: la didascalia usciva. Ora sono in dp come gli altri testi del gioco (scelta del passo 2).
+- **Formazioni nel foglio al 200%.** Affiancate, a 360dp la colonna era piu' stretta di «formazione». Dal 150% in su vanno una sotto l'altra a tutta larghezza (`disponiLeFormazioni`, deciso alla creazione).
+- **Stati.** Nome corto (20dp, una riga), lungo (piu' piccolo o su due righe), lunghissimo (minimo coi puntini); striscia a una e due righe; foglio a testo normale e grande. Movimento: nessuno.
+- **Conflitti e debiti.** Il nome della squadra cambia misura col testo: e' l'unico testo del gioco che lo fa, e lo fa solo quando non entra. Nel padel coi pallini del servizio un nome di due parole lunghe resta coi puntini (lo slot toglie 34dp); i nomi del padel sono di solito le coppie.
+- **Pattern vietati (`review.md`).** Nessun colore o durata a mano; misure nuove nominate in dimens; niente ombre; nessun ciclo.
+- **Test.** `ColonnaDiGiocoTest` (nome lungo e striscia interi a 360dp a scala 1 e 2, didascalia dentro il dettaglio, valore e didascalia che non crescono con la scala), `FormazioniATestoGrandeTest`. **Non visto a schermo** dopo la correzione: solo CI.
+
