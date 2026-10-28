@@ -96,4 +96,8 @@
     <string name="wear_keeper_seconds">%1$d s</string>
     <string name="wear_keeper_minutes">%1$d min</string>
     <string name="wear_keeper_minutes_seconds">%1$d min %2$d s</string>
+
+    <!-- Icona sul quadrante mentre si gioca (Ongoing Activity): il canale e il testo della notifica. -->
+    <string name="wear_ongoing_channel">Partita in corso</string>
+    <string name="wear_ongoing_status">Partita in corso</string>
 </resources>

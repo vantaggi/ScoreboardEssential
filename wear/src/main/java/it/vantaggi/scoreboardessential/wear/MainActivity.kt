@@ -2,7 +2,10 @@ package it.vantaggi.scoreboardessential.wear
 
 import android.content.Context
 import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Typeface
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
@@ -26,6 +29,8 @@ import it.vantaggi.scoreboardessential.shared.communication.NodoLocale
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.wear.databinding.ActivityMainBinding
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -46,6 +51,9 @@ class MainActivity : ComponentActivity() {
 
         /** Quanto si sposta il quadrante in ambient se lo schermo chiede la protezione anti burn-in. */
         private const val SPOSTAMENTO_BURN_IN_DP = 4
+
+        private const val PREFS_PARTITA_IN_CORSO = "wear_partita_in_corso"
+        private const val CHIAVE_PERMESSO_CHIESTO = "permesso_notifiche_chiesto"
     }
 
     /**
@@ -211,6 +219,17 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+    /**
+     * Il permesso di mostrare notifiche (da Wear OS 4 e' a runtime): senza, la partita in corso non
+     * mette nessuna icona sul quadrante. Il sistema non ripete la domanda dopo due rifiuti, e noi la
+     * facciamo una volta sola in ogni caso ([chiediPermessoNotificheUnaVolta]).
+     */
+    private val permessoNotifiche =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    /** Falso nei test che non vogliono la finestra del permesso fra le attivita' avviate. */
+    internal var chiediPermessoNotifiche = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MovimentoRidotto.applica(this, theme)
@@ -223,6 +242,7 @@ class MainActivity : ComponentActivity() {
         describeSides()
         viewModel.refreshPendingCount()
         observeViewModel()
+        osservaPartitaInCorso()
 
         osservaAmbient()
 
@@ -293,6 +313,37 @@ class MainActivity : ComponentActivity() {
         // Al risveglio la riga di stato deve dire com'e' il collegamento ADESSO, non com'era
         // all'avvio.
         viewModel.refreshConnection()
+        sincronizzaPartitaInCorso()
+    }
+
+    /**
+     * Mentre la partita e' in corso il quadrante di sistema mostra l'icona che riporta qui
+     * ([PartitaInCorsoServizio]). Si osserva fuori da repeatOnLifecycle: la fine della partita deve
+     * togliere l'icona anche se lo schermo e' spento; l'inizio la mette solo a schermo acceso, e se
+     * arriva a schermo spento la rimette onResume.
+     */
+    private fun osservaPartitaInCorso() {
+        lifecycleScope.launch {
+            combine(viewModel.scoreState, viewModel.pendingCount) { _, _ -> viewModel.partitaInCorso }
+                .distinctUntilChanged()
+                .collect { sincronizzaPartitaInCorso() }
+        }
+    }
+
+    internal fun sincronizzaPartitaInCorso() {
+        val attiva = viewModel.partitaInCorso
+        val visibile = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+        if (attiva && visibile) chiediPermessoNotificheUnaVolta()
+        PartitaInCorsoServizio.imposta(this, attiva, visibile)
+    }
+
+    private fun chiediPermessoNotificheUnaVolta() {
+        if (!chiediPermessoNotifiche || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        val prefs = getSharedPreferences(PREFS_PARTITA_IN_CORSO, Context.MODE_PRIVATE)
+        if (prefs.getBoolean(CHIAVE_PERMESSO_CHIESTO, false)) return
+        prefs.edit().putBoolean(CHIAVE_PERMESSO_CHIESTO, true).apply()
+        permessoNotifiche.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     /**
@@ -346,6 +397,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        // Chiusa da chi gioca: l'icona sul quadrante non ha piu' niente da riaprire. Distrutta dal
+        // sistema invece (isFinishing falso) l'icona resta, ed e' proprio lei che la riporta.
+        if (isFinishing) PartitaInCorsoServizio.imposta(this, attiva = false, visibile = false)
         androidx.localbroadcastmanager.content.LocalBroadcastManager
             .getInstance(this)
             .unregisterReceiver(broadcastReceiver)

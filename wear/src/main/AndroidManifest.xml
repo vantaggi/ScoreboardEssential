@@ -3,6 +3,10 @@
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Icona della partita in corso sul quadrante (Ongoing Activity): servizio in primo piano e notifica. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature android:name="android.hardware.type.watch" />
 
@@ -36,6 +40,19 @@
             poterli consegnare ("Permission Denial"). Il quadrante si aggiornava solo rileggendo i
             DataItem al risveglio. Il controllo su chi chiama lo fa gia' WearableListenerService.
         -->
+        <!--
+            Tiene l'icona della partita in corso sul quadrante. Lo avvia solo l'attivita', a schermo acceso,
+            e si ferma con la partita. Non esportato.
+        -->
+        <service
+            android:name=".PartitaInCorsoServizio"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.property.FOREGROUND_SERVICE_TYPE_SPECIAL_USE_DESCRIPTION"
+                android:value="Keeps a shortcut to the scoreboard on the watch face while a match is in progress." />
+        </service>
+
         <service
             android:name=".WearDataLayerService"
             android:exported="true">
