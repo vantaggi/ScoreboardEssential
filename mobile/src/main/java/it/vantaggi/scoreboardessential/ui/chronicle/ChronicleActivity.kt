@@ -33,6 +33,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isNotEmpty
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.chip.ChipGroup
+import it.vantaggi.scoreboardessential.EtichettaSquadra
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.core.GameStat
@@ -115,8 +116,8 @@ class ChronicleActivity : AppCompatActivity() {
     ) {
         val teams =
             listOf(
-                riga.team1?.name ?: getString(R.string.label_team_1),
-                riga.team2?.name ?: getString(R.string.label_team_2),
+                EtichettaSquadra.mostrato(riga.team1?.name, getString(R.string.label_team_1)),
+                EtichettaSquadra.mostrato(riga.team2?.name, getString(R.string.label_team_2)),
             )
         // Il colore con cui si e' giocato; i predefiniti (lime e ciano) solo se la squadra non c'e' piu'.
         val paints =

@@ -2838,3 +2838,16 @@ Controllo delle home di telefono e orologio contro la Constitution, con le cattu
 - **Test.** `QuadranteDentroLAnelloTest` misura l'inchiostro di cronometro, K, cifre, strisce, puntini del menu, frasi lunghe e CHI? contro il bordo interno dell'anello (almeno 3dp) su tondo e quadrato, 192 e 227dp, e i pallini contro la cornice oltre il burn-in; rosso se un testo torna a toccare l'anello. `MarcatoreQuadranteTest` (CHI? al posto della riga, ambient), `OrologioG7Test` (sequenza a 40 e 120ms, 160ms in tutto), `QuadranteFasceTest` (penne in dp, anello rettangolare sul quadrato).
 - **Pattern vietati (`review.md`).** Nessun colore, durata o curva scritti a mano; nessuna ombra; nessun ciclo; il lime solo sui pallini del servizio; in ambient nessun colore.
 - **Non visto a schermo**: solo test JVM e CI. Da vedere sull'AVD reso tondo, sul quadrato e alla fine sul polso (`giro-unico.md`).
+
+## Dal giro di prove - 28 ottobre 2026
+
+### Nome della squadra nello storico e 0-0 a tempo al polso
+
+- **Compito e valore.** Lo storico serve a ritrovare una partita, e il valore e' il punteggio con le due squadre: se la squadra si chiamava "Polisportiva Sangiorgese", lo storico deve dire quel nome e non "Squadra 2". Al polso uno 0-0 col cronometro che corre e' una partita: l'icona sul quadrante di sistema e "Schermo acceso" partono col cronometro.
+- **Causa.** Ogni partita puntava alle squadre 1 e 2, righe della tabella `teams` mai scritte: lo storico e la Cronaca cadevano sempre sul predefinito, per tutti i nomi. Al polso `partitaInCorso` leggeva solo `matchInProgress`, che il telefono manda col registro non vuoto.
+- **Scelte.** Alla chiusura si scrivono due righe di `teams` col nome segnale (quello che legge anche l'orologio: il nome scelto, le sigle della coppia o "TEAM 1") e il colore del tabellone, con id sempre oltre il 2 perche' le partite vecchie non prendano il nome della prima squadra salvata. Nessuna colonna nuova e nessuna migrazione: la tabella e la relazione c'erano gia'. Il predefinito si mostra nella lingua in uso anche nella Cronaca e nel nome del file d'export (`EtichettaSquadra.mostrato`).
+- **Componenti riusati.** `match_item` e la Cronaca come sono, con `TeamInk` sul colore salvato (prima sempre `team_side_1`/`team_side_2`, che restano il ripiego). Nessun token, colore, icona o durata nuovi.
+- **Stati.** Partita nuova con nome scelto, con sigle, senza nome (predefinito della lingua); partita salvata prima (predefinito, colori di lato). Al polso: 0-0 a tempo fermo (non in corso), cronometro partito o in pausa (in corso), cronometro azzerato o partita finita (non in corso).
+- **Debito dichiarato.** Nella riga dello storico il nome resta su una riga coi puntini (`maxLines` 1, com'era): un nome lungo come "Polisportiva Sangiorgese" a 360dp al 200% puo' chiudersi con "…". Da vedere a schermo prima di decidere se andare a capo.
+- **Pattern vietati (`review.md`).** Nessun colore, spazio o durata scritti a mano; nessun elemento nuovo a schermo.
+- **Non visto a schermo**: solo test JVM e CI.

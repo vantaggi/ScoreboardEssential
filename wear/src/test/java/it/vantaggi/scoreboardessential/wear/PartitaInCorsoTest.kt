@@ -184,6 +184,51 @@ class PartitaInCorsoTest {
         }
     }
 
+    /**
+     * Uno 0-0 a tempo: il telefono dice matchInProgress=false finche' il registro e' vuoto, ma il
+     * cronometro e' partito. Icona e schermo acceso arrivano col cronometro, non al primo punto, e se
+     * ne vanno quando il telefono lo azzera (fine o scarto della partita). Rosso se [WearViewModel.partitaInCorso]
+     * torna a guardare solo il v2 (giro di prove del 28-10).
+     */
+    @Test
+    fun `uno 0-0 col solo cronometro e' una partita in corso`() {
+        val preferenze = PreferenzeDelPolso(app)
+        try {
+            preferenze.schermoAcceso = true
+            controller.create().start().resume()
+            applica(stato(inCorso = false))
+            serviziAvviati()
+            assertTrue("0-0 a tempo fermo: niente da tenere acceso", !schermoTenutoAcceso())
+
+            viewModel.syncMatchTimer(0L, isRunning = true)
+            idle()
+            assertTrue("il cronometro parte: l'icona", serviziAvviati().contains(nomeServizio))
+            assertTrue("il cronometro parte: lo schermo resta acceso", schermoTenutoAcceso())
+
+            viewModel.syncMatchTimer(65_000L, isRunning = false)
+            idle()
+            assertTrue("in pausa la partita resta in corso", viewModel.partitaInCorso && schermoTenutoAcceso())
+
+            serviziFermati()
+            viewModel.syncMatchTimer(0L, isRunning = false)
+            idle()
+            assertTrue("cronometro azzerato: l'icona se ne va", serviziFermati().contains(nomeServizio))
+            assertTrue("cronometro azzerato: lo schermo segue il sistema", !schermoTenutoAcceso())
+        } finally {
+            preferenze.schermoAcceso = false
+        }
+    }
+
+    @Test
+    fun `una partita finita col cronometro ancora fermo sul tempo non e' in corso`() {
+        controller.create().start().resume()
+        applica(stato(finita = true))
+        viewModel.syncMatchTimer(65_000L, isRunning = false)
+        idle()
+
+        assertTrue(!viewModel.partitaInCorso)
+    }
+
     @Test
     fun `a schermo spento la fine della partita toglie comunque l'icona`() {
         controller.create().start().resume()

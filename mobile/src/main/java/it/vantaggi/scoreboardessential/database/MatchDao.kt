@@ -9,6 +9,9 @@ import androidx.room.Transaction
 import it.vantaggi.scoreboardessential.core.MatchPlayer
 import kotlinx.coroutines.flow.Flow
 
+/** L'ultimo id di squadra a cui puntano le partite salvate prima che le squadre si scrivessero. */
+private const val ULTIMO_ID_SENZA_RIGA = 2
+
 @Dao
 interface MatchDao {
     @Query("SELECT * FROM matches WHERE matchId = :matchId")
@@ -242,6 +245,35 @@ interface MatchDao {
     @Query("UPDATE players SET appearances = appearances + 1 WHERE playerId IN (:playerIds)")
     suspend fun incrementAppearances(playerIds: List<Int>)
 
+    @Query("SELECT MAX(id) FROM teams")
+    suspend fun maxTeamId(): Int?
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertTeam(team: Team): Long
+
+    /** Le squadre della partita: le righe di [Team] scritte alla chiusura, coi nomi e i colori di quel momento. */
+    @Query("UPDATE matches SET team1Id = :team1Id, team2Id = :team2Id WHERE matchId = :matchId")
+    suspend fun updateMatchTeams(
+        matchId: Int,
+        team1Id: Int,
+        team2Id: Int,
+    )
+
+    /**
+     * Scrive le due squadre di una partita e ne restituisce gli id, sempre oltre [ULTIMO_ID_SENZA_RIGA].
+     *
+     * Le partite salvate prima puntano tutte a 1 e 2, righe che non sono mai state scritte: lo storico le
+     * mostra col predefinito. Con l'id automatico la prima squadra salvata prenderebbe l'1, e il suo nome
+     * comparirebbe su tutte le partite vecchie.
+     */
+    @Transaction
+    suspend fun insertMatchTeams(squadre: Pair<Team, Team>): Pair<Int, Int> {
+        val base = maxOf(maxTeamId() ?: 0, ULTIMO_ID_SENZA_RIGA)
+        insertTeam(squadre.first.copy(id = base + 1))
+        insertTeam(squadre.second.copy(id = base + 2))
+        return (base + 1) to (base + 2)
+    }
+
     /**
      * Salva una partita finita: la riga, le presenze e le formazioni, tutto o niente.
      *
@@ -249,19 +281,26 @@ interface MatchDao {
      * nello storico senza giocatori e [getPlayerWinCounts] non la contava.
      *
      * Con [Match.matchId] diverso da zero chiude quella riga viva invece di inserirne una nuova.
+     *
+     * [squadre] sono i nomi e i colori con cui si e' giocato: senza, lo storico diceva "Squadra 2" anche
+     * per la "Polisportiva Sangiorgese" del tabellone, perche' la partita puntava a righe mai scritte.
      */
     @Transaction
     suspend fun closeMatch(
         match: Match,
         team1PlayerIds: List<Int>,
         team2PlayerIds: List<Int>,
+        squadre: Pair<Team, Team>? = null,
     ) {
+        val ids = squadre?.let { insertMatchTeams(it) }
         val matchId =
             if (match.matchId != 0) {
                 finalizeMatch(match.matchId, match.team1Score, match.team2Score, match.eventLog, match.timestamp)
+                if (ids != null) updateMatchTeams(match.matchId, ids.first, ids.second)
                 match.matchId
             } else {
-                insert(match).toInt()
+                val riga = if (ids != null) match.copy(team1Id = ids.first, team2Id = ids.second) else match
+                insert(riga).toInt()
             }
         incrementAppearances(team1PlayerIds + team2PlayerIds)
         // La riga viva ha gia' le formazioni scritte dal primo punto: si riscrivono con le rose

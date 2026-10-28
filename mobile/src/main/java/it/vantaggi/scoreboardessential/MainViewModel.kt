@@ -51,6 +51,7 @@ import it.vantaggi.scoreboardessential.database.MatchDao
 import it.vantaggi.scoreboardessential.database.Player
 import it.vantaggi.scoreboardessential.database.PlayerDao
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
+import it.vantaggi.scoreboardessential.database.Team
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
 import it.vantaggi.scoreboardessential.domain.models.MatchEventType
 import it.vantaggi.scoreboardessential.domain.models.MatchReportData
@@ -2583,6 +2584,10 @@ class MainViewModel(
         if (chiusuraInCorso) return true
         chiusuraInCorso = true
 
+        // I nomi e i colori del tabellone di adesso, prima che la serata proponga la coppia successiva:
+        // sono quelli che lo storico e la Cronaca devono dire per questa partita.
+        val squadre = squadreDaSalvare()
+
         // Finita e salvata: la diretta si chiude COL FILE FINALE, che il lavoro in coda rifa' dal database (con il
         // vincitore) appena la riga e' scritta. Da qui in poi nessuna pubblicazione per questa partita.
         chiudiLaDiretta(conRisultato = true)
@@ -2635,6 +2640,7 @@ class MainViewModel(
                     // un @Update di riga intera riportava indietro i gol segnati in questa partita.
                     team1PlayerIds = team1Roster.map { it.player.playerId },
                     team2PlayerIds = team2Roster.map { it.player.playerId },
+                    squadre = squadre,
                 )
                 currentMatchId = null
 
@@ -2649,6 +2655,22 @@ class MainViewModel(
         }
         return true
     }
+
+    /**
+     * Le due squadre come le scrive lo storico: il nome segnale ("TEAM 1" senza un nome scelto, che a
+     * schermo diventa il predefinito della lingua) e il colore del tabellone.
+     */
+    private fun squadreDaSalvare(): Pair<Team, Team> =
+        Team(
+            name = nomeSegnale(_team1Name, _team1Players),
+            color = _team1Color.value ?: colorRepository.getTeam1DefaultColor(),
+            logoUri = null,
+        ) to
+            Team(
+                name = nomeSegnale(_team2Name, _team2Players),
+                color = _team2Color.value ?: colorRepository.getTeam2DefaultColor(),
+                logoUri = null,
+            )
 
     // --- Haptic Feedback ---
     private fun triggerHapticFeedback() {

@@ -160,4 +160,63 @@ class ChiusuraPartitaTest {
             assertThat(esito.isFailure).isTrue()
             assertThat(formazioni(vivaId)).containsExactly(marco to 1, luca to 1).inOrder()
         }
+
+    /**
+     * Le squadre si scrivono con la partita: lo storico legge nome e colore dalla riga di [Team]. Prima
+     * ogni partita puntava a 1 e 2, righe mai scritte, e la "Polisportiva Sangiorgese" del tabellone
+     * tornava "Squadra 2". Rosso se closeMatch ignora le squadre, sulla riga viva come su quella nuova.
+     */
+    @Test
+    fun `la chiusura scrive nomi e colori delle squadre, sulla riga viva e su quella nuova`() =
+        runTest {
+            val vivaId =
+                matchDao
+                    .insert(Match(team1Id = 1, team2Id = 2, team1Score = 0, team2Score = 0, timestamp = 0L, isActive = true))
+                    .toInt()
+            matchDao.closeMatch(
+                Match(matchId = vivaId, team1Id = 1, team2Id = 2, team1Score = 2, team2Score = 1, timestamp = 10L),
+                team1PlayerIds = emptyList(),
+                team2PlayerIds = emptyList(),
+                squadre = squadra("TEAM 1", 11) to squadra("Polisportiva Sangiorgese", 22),
+            )
+            matchDao.closeMatch(
+                Match(team1Id = 1, team2Id = 2, team1Score = 0, team2Score = 0, timestamp = 20L),
+                team1PlayerIds = emptyList(),
+                team2PlayerIds = emptyList(),
+                squadre = squadra("VAN/GLO", 33) to squadra("Rossi", 44),
+            )
+
+            val storico = matchDao.getFinishedMatchesWithTeams().first().associateBy { it.match.timestamp }
+            assertThat(storico.getValue(10L).team2?.name).isEqualTo("Polisportiva Sangiorgese")
+            assertThat(storico.getValue(10L).team2?.color).isEqualTo(22)
+            assertThat(storico.getValue(10L).team1?.name).isEqualTo("TEAM 1")
+            assertThat(storico.getValue(20L).team1?.name).isEqualTo("VAN/GLO")
+            assertThat(storico.getValue(20L).team2?.color).isEqualTo(44)
+        }
+
+    /**
+     * Le partite salvate prima puntano a 1 e 2 senza una riga: devono restare col predefinito. Con l'id
+     * automatico la prima squadra scritta prendeva l'1, e il suo nome finiva su tutto lo storico vecchio.
+     */
+    @Test
+    fun `le squadre nuove non danno il loro nome alle partite salvate prima`() =
+        runTest {
+            matchDao.insert(Match(team1Id = 1, team2Id = 2, team1Score = 3, team2Score = 1, timestamp = 5L))
+
+            matchDao.closeMatch(
+                Match(team1Id = 1, team2Id = 2, team1Score = 1, team2Score = 0, timestamp = 10L),
+                team1PlayerIds = emptyList(),
+                team2PlayerIds = emptyList(),
+                squadre = squadra("Rossi", 1) to squadra("Blu", 2),
+            )
+
+            val vecchia = matchDao.getFinishedMatchesWithTeams().first().single { it.match.timestamp == 5L }
+            assertThat(vecchia.team1).isNull()
+            assertThat(vecchia.team2).isNull()
+        }
+
+    private fun squadra(
+        nome: String,
+        colore: Int,
+    ) = Team(name = nome, color = colore, logoUri = null)
 }
