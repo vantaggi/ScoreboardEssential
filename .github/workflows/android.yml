@@ -46,11 +46,17 @@ jobs:
       - name: 4. Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: 5. Run tests for all modules
-        run: ./gradlew test
-
-      - name: 6. Run Ktlint Check
+      # Prima di tutto ktlint: dura mezzo minuto, e il 28 ottobre 2026 quattro run rossi su
+      # undici erano suoi, scoperti solo dopo i 10 minuti dei test. Ora cadono al primo minuto.
+      - name: 5. Run Ktlint Check
         run: ./gradlew ktlintCheck
+
+      # testDebugUnitTest invece di test: "test" fa girare ogni suite due volte, per debug
+      # e per release (~3 minuti in piu', stessi test sullo stesso codice: BuildConfig.DEBUG
+      # serve solo ai log). Il codice release resta compilato e minificato dallo step 9.
+      # --parallel: mobile e wear compilano e provano insieme sui 4 core del runner.
+      - name: 6. Run unit tests for all modules
+        run: ./gradlew --parallel :core:test testDebugUnitTest
 
       # Nessuno step eseguiva lint: l'artefatto "lint-reports" in coda al
       # workflow e' stato vuoto a ogni run da quando esiste.

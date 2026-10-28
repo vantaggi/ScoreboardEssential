@@ -104,6 +104,12 @@ momento di massima attenzione, e **`reset_scores_button`** che confondeva "azzer
 
 Questo comando è `VERIFY` in tutto il documento.
 
+**Nel container cloud (senza Android SDK) ./gradlew non parte**, ma il formato si controlla lo
+stesso: `scripts/ktlint-cloud.sh` (stesso motore ktlint della CI, ~15 s; `--format` corregge).
+Va lanciato prima di ogni push: un errore di ktlint costa altrimenti un giro di CI.
+La CI fa `ktlintCheck` per primo e poi `testDebugUnitTest`: i test unitari girano per la sola
+variante debug, il codice release lo esercitano `assembleRelease` e R8.
+
 **Non serve impostare `JAVA_HOME`.** Dal commit "fissa il JDK del daemon a 17" il
 daemon prende Java 17 da `gradle/gradle-daemon-jvm.properties`, anche se il
 launcher è la JBR di Android Studio (oggi JDK 25, che Gradle 8.x non può
