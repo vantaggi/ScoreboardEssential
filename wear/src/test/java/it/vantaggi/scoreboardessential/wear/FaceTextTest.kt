@@ -153,4 +153,15 @@ class FaceTextTest {
         assertNull(FaceText.vincitore(statoDi(padel, *primoSet).copy(side1Primary = "6", side2Primary = "6")))
         assertNull(FaceText.vincitore(statoDi(padel, *primoSet).copy(side1Primary = "AV", side2Primary = "40")))
     }
+
+    @Test
+    fun `il portiere in ambient e' in minuti per eccesso e senza secondi`() {
+        assertEquals("K 5'", FaceText.portiereAmbient(300))
+        assertEquals("K 5'", FaceText.portiereAmbient(252))
+        assertEquals("K 4'", FaceText.portiereAmbient(240))
+        assertEquals("K 2'", FaceText.portiereAmbient(61))
+        assertEquals("l'ultimo minuto non porta i secondi", "K <1'", FaceText.portiereAmbient(60))
+        assertEquals("K <1'", FaceText.portiereAmbient(1))
+        assertEquals("K 0'", FaceText.portiereAmbient(0))
+    }
 }

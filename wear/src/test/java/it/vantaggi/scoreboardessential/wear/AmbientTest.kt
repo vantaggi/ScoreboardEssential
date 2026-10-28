@@ -181,11 +181,13 @@ class AmbientTest {
             binding.team1Stripe,
             binding.team2Stripe,
             binding.keeperProgressBar,
-            binding.keeperTimer,
             binding.faceDetail,
             binding.menuGlyph,
         ).forEach { assertEquals("${it.id} in ambient", View.INVISIBLE, it.visibility) }
         assertNotEquals(View.VISIBLE, binding.chiCapsule.visibility)
+        // Il portiere scaduto resta, ma in minuti e senza rosso.
+        assertEquals(View.VISIBLE, binding.keeperTimer.visibility)
+        assertEquals("K 0'", binding.keeperTimer.text.toString())
         // L'anomalia si dice ancora, ma in grigio chiaro e non in rosso.
         assertEquals(attivita().getString(R.string.wear_status_not_confirmed), binding.gestureHint.text.toString())
         assertEquals(colore(R.color.ambient_gray), binding.gestureHint.currentTextColor)
@@ -251,22 +253,59 @@ class AmbientTest {
     }
 
     @Test
-    fun `in ambient il portiere non cambia visibilita' ai tick`() {
+    fun `in ambient il portiere e' in minuti, senza anello, e all'uscita torna con i secondi`() {
+        applica(stato(hasClock = true))
+        viewModel.setKeeperTimerState(KeeperTimerState.Running(252))
+        idle()
+        assertEquals("K 4:12", binding.keeperTimer.text.toString())
+
+        attivita().applyAmbient(true)
+        idle()
+
+        assertEquals("per eccesso: 4:12 e' al piu' 5 minuti", "K 5'", binding.keeperTimer.text.toString())
+        assertEquals(View.VISIBLE, binding.keeperTimer.visibility)
+        assertEquals(View.INVISIBLE, binding.keeperProgressBar.visibility)
+        assertEquals(colore(R.color.ink_white), binding.keeperTimer.currentTextColor)
+        assertSame("cifre sottili come le altre", binding.team1Score.typeface, binding.keeperTimer.typeface)
+
+        // Il conto avanza: nell'ultimo minuto non si scrivono secondi che poi invecchiano.
+        viewModel.setKeeperTimerState(KeeperTimerState.Running(119))
+        idle()
+        assertEquals("K 2'", binding.keeperTimer.text.toString())
+        viewModel.setKeeperTimerState(KeeperTimerState.Running(37))
+        idle()
+        assertEquals("K <1'", binding.keeperTimer.text.toString())
+        assertEquals(View.INVISIBLE, binding.keeperProgressBar.visibility)
+
+        // Fermo e' grigio, come il cronometro.
+        viewModel.setKeeperTimerState(KeeperTimerState.Paused(37))
+        idle()
+        assertEquals("K <1'", binding.keeperTimer.text.toString())
+        assertEquals(colore(R.color.ambient_gray), binding.keeperTimer.currentTextColor)
+
+        // All'uscita il portiere si ridisegna con lo stato di adesso e il carattere di prima.
+        attivita().applyAmbient(false)
+        idle()
+        assertEquals("K 0:37", binding.keeperTimer.text.toString())
+        assertEquals(View.VISIBLE, binding.keeperProgressBar.visibility)
+        assertNotSame("fuori dall'ambient non resta il carattere light", binding.team1Score.typeface, binding.keeperTimer.typeface)
+    }
+
+    @Test
+    fun `in ambient il portiere spento o non partito non dice niente`() {
         applica(stato(hasClock = true))
         attivita().applyAmbient(true)
         idle()
-        // Una visibilita' che il render non produce mai: se dopo il tick e' cambiata, ha toccato il K.
-        binding.keeperTimer.visibility = View.GONE
+        assertEquals("non partito", View.INVISIBLE, binding.keeperTimer.visibility)
 
         viewModel.setKeeperTimerState(KeeperTimerState.Running(119))
         idle()
-
-        assertEquals(View.GONE, binding.keeperTimer.visibility)
-
-        // All'uscita il portiere si ridisegna con lo stato di adesso.
-        attivita().applyAmbient(false)
-        idle()
         assertEquals(View.VISIBLE, binding.keeperTimer.visibility)
+
+        // Un tick di ambient riscrive il conto di adesso.
+        viewModel.setKeeperTimerState(KeeperTimerState.Running(59))
+        attivita().aggiornaAmbient()
+        assertEquals("K <1'", binding.keeperTimer.text.toString())
     }
 
     @Test
