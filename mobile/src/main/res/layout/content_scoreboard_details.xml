@@ -551,7 +551,9 @@
                 android:text="@string/label_formations"
                 android:textAppearance="@style/TextAppearance.App.Caption" />
 
+            <!-- Le due formazioni affiancate; col testo grande una sotto l'altra (disponiLeFormazioni). -->
             <LinearLayout
+                android:id="@+id/formations_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:baselineAligned="false"

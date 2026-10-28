@@ -238,12 +238,16 @@
                             android:visibility="invisible" />
                     </LinearLayout>
 
-                    <TextView
+                    <it.vantaggi.scoreboardessential.ui.TestoCheSiStringe
                         android:id="@+id/team1_name_textview"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
+                        android:gravity="center"
                         android:maxLines="1"
+                        app:minimo="@dimen/game_name_text_min"
+                        app:aCapoSeNonBasta="true"
+                        app:massimoADueRighe="@dimen/game_name_two_lines_max"
                         android:textAppearance="@style/TextAppearance.App.Game.Name"
                         android:textSize="20dp"
                         tools:text="TEAM 1"
@@ -311,12 +315,16 @@
                             android:visibility="invisible" />
                     </LinearLayout>
 
-                    <TextView
+                    <it.vantaggi.scoreboardessential.ui.TestoCheSiStringe
                         android:id="@+id/team2_name_textview"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
+                        android:gravity="center"
                         android:maxLines="1"
+                        app:minimo="@dimen/game_name_text_min"
+                        app:aCapoSeNonBasta="true"
+                        app:massimoADueRighe="@dimen/game_name_two_lines_max"
                         android:textAppearance="@style/TextAppearance.App.Game.Name"
                         android:textSize="20dp"
                         tools:text="TEAM 2"
@@ -419,15 +427,19 @@
             android:layout_height="wrap_content"
             android:maxLines="1"
             android:textAppearance="@style/TextAppearance.App.Game.Value"
+            android:textSize="24dp"
             android:textColor="@color/elite_text_primary"
-            tools:text="5-3" />
+            tools:text="5-3"
+            tools:ignore="SpUsage" />
 
         <TextView
             android:id="@+id/score_detail_caption"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="@style/TextAppearance.App.Game.Caption"
-            tools:text="GAME" />
+            android:textSize="12dp"
+            tools:text="GAME"
+            tools:ignore="SpUsage" />
     </LinearLayout>
 
     <!--
@@ -448,13 +460,14 @@
         android:paddingStart="16dp"
         android:paddingEnd="0dp">
 
-        <TextView
+        <it.vantaggi.scoreboardessential.ui.TestoCheSiStringe
             android:id="@+id/last_action_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="1"
+            app:minimo="@dimen/game_strip_text_min"
             android:textAppearance="@style/TextAppearance.App.Game.Command"
             android:textSize="16dp"
             android:textColor="@color/elite_text_primary"

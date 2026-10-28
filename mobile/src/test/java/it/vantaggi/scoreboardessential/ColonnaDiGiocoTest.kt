@@ -240,6 +240,8 @@ class ColonnaDiGiocoTest {
                 R.id.team2_subtract_button_card,
                 R.id.last_action_text,
                 R.id.undo_goal_button,
+                R.id.score_detail_value,
+                R.id.score_detail_caption,
             )
         val normale = gonfia(1f)
         val enorme = gonfia(2f)
@@ -321,6 +323,95 @@ class ColonnaDiGiocoTest {
         }
         // Le altre frasi restano su una riga.
         assertEquals(1, StatoStriscia("Gol Squadra 1 · Marco B.").righe)
+    }
+
+    /** Tutto il testo e' disegnato, senza puntini, e ogni a capo cade fra due parole. */
+    private fun assertTuttoIlTesto(
+        cosa: String,
+        vista: TextView,
+        righeMassime: Int,
+    ) {
+        val layout = vista.layout
+        val testo = vista.text.toString()
+        val ultima = layout.lineCount - 1
+        assertTrue("$cosa: '$testo' sta in ${layout.lineCount} righe, ne ha $righeMassime", layout.lineCount <= righeMassime)
+        for (riga in 0..ultima) {
+            assertEquals("$cosa: la riga $riga di '$testo' ha i puntini", 0, layout.getEllipsisCount(riga))
+        }
+        assertEquals("$cosa perde caratteri: '$testo'", testo.length, layout.getLineEnd(ultima))
+        for (riga in 0 until ultima) {
+            assertTrue(
+                "$cosa: '$testo' va a capo dentro una parola",
+                testo[layout.getLineEnd(riga) - 1].isWhitespace(),
+            )
+        }
+    }
+
+    /**
+     * Dal giro di prove del 28 ottobre 2026: nel calcio a 360dp col testo al 200% il nome lungo
+     * «Polisportiva Sangiorgese» diventava «Polisporti…» in alto e «Gol Polisportiva Sangiorge…»
+     * nella striscia. Il nome si stringe fino a 14dp e poi va su due righe fra le parole, sempre
+     * dentro la riga dei nomi con la barretta; la frase della striscia si stringe fino a 13dp.
+     * Rosso se torna un puntino, se si perde una lettera o se un nome va a capo dentro una parola.
+     */
+    @Test
+    fun nelCalcio_un_nome_lungo_resta_intero_in_alto_e_nella_striscia_a_360dp() {
+        val nome = "Polisportiva Sangiorgese"
+        for (scala in listOf(1f, 2f)) {
+            val radice = gonfia(scala)
+            mostraGliSlotDelServizio(radice.findViewById(R.id.names_row), sportConServizio = false)
+            val nome1 = radice.findViewById<TextView>(R.id.team1_name_textview)
+            val nome2 = radice.findViewById<TextView>(R.id.team2_name_textview)
+            nome1.text = nome
+            nome2.text = "Rossi"
+            val striscia = radice.findViewById<TextView>(R.id.last_action_text)
+            val stato = StatoStriscia(radice.context.getString(R.string.strip_goal_unattributed, nome))
+            striscia.maxLines = stato.righe
+            striscia.text = stato.testo
+            misura(radice, larghezzaDp = 360)
+            val densita = radice.resources.displayMetrics.density
+
+            assertTuttoIlTesto("il nome a scala $scala", nome1, righeMassime = 2)
+            assertTuttoIlTesto("il nome corto a scala $scala", nome2, righeMassime = 1)
+            assertEquals("il nome corto resta a 20dp", 20 * densita, nome2.textSize, 0.5f)
+            assertTrue("il nome lungo scende sotto i 14dp: ${nome1.textSize / densita}dp", nome1.textSize >= 14 * densita - 0.5f)
+            // Il nome e la barretta stanno nella riga dei nomi da 48dp.
+            val riga = radice.findViewById<View>(R.id.names_row)
+            val barretta = radice.findViewById<View>(R.id.team1_color_bar)
+            val fondo = IntArray(2).also { barretta.getLocationInWindow(it) }[1] + barretta.height
+            val cima = IntArray(2).also { riga.getLocationInWindow(it) }[1]
+            assertTrue("a scala $scala la barretta esce dalla riga dei nomi", fondo - cima <= riga.height)
+
+            assertTuttoIlTesto("la striscia a scala $scala", striscia, righeMassime = 2)
+            assertTrue("la striscia scende sotto i 13dp: ${striscia.textSize / densita}dp", striscia.textSize >= 13 * densita - 0.5f)
+            assertTrue(
+                "a scala $scala la striscia e' alta ${striscia.layout.height}px, ne ha ${56 * densita}px",
+                striscia.layout.height <= 56 * densita,
+            )
+        }
+    }
+
+    /**
+     * Padel al 200%: la didascalia «Game» sotto il 3-2 spariva, perche' valore e didascalia erano in
+     * sp e il dettaglio e' alto 48dp. Ora sono in dp come gli altri testi del gioco. Rosso se la
+     * didascalia esce dal dettaglio.
+     */
+    @Test
+    fun nelPadel_la_didascalia_del_dettaglio_resta_dentro_anche_a_testo_grande() {
+        for (scala in listOf(1f, 2f)) {
+            val radice = gonfia(scala)
+            val dettaglio = radice.findViewById<ViewGroup>(R.id.score_detail_container)
+            dettaglio.visibility = View.VISIBLE
+            radice.findViewById<TextView>(R.id.score_detail_value).text = "3-2"
+            val didascalia = radice.findViewById<TextView>(R.id.score_detail_caption)
+            didascalia.text = radice.context.getString(R.string.caption_game)
+            misura(radice, larghezzaDp = 360)
+            assertTrue("a scala $scala la didascalia comincia sopra il dettaglio", didascalia.top >= 0)
+            assertTrue(
+                "a scala $scala la didascalia finisce a ${didascalia.bottom}px, il dettaglio e' alto ${dettaglio.height}px",
+                didascalia.bottom <= dettaglio.height,
+            )
+        }
     }
 
     @Test
