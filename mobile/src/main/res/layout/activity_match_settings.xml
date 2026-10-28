@@ -29,7 +29,7 @@
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
-                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:hint="@string/team_1_name">
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:hint="@string/label_team_1">
 
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/team1NameEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" />
                     </com.google.android.material.textfield.TextInputLayout>
@@ -41,7 +41,7 @@
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
-                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:hint="@string/team_2_name">
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:hint="@string/label_team_2">
 
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/team2NameEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" />
                     </com.google.android.material.textfield.TextInputLayout>

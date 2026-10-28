@@ -63,8 +63,6 @@
     <string name="team_color_use">Usa questo colore</string>
     <string name="cancel">Annulla</string>
     <string name="language">Lingua</string>
-    <string name="team_1_name">Nome squadra 1</string>
-    <string name="team_2_name">Nome squadra 2</string>
     <string name="keeper_timer_seconds">Timer portiere (secondi)</string>
     <string name="btn_team_1_color">Colore squadra 1</string>
     <string name="btn_team_2_color">Colore squadra 2</string>
@@ -225,7 +223,7 @@
     <string name="rules_golden_point">punto secco sul 40–40</string>
     <string name="rules_advantage">vantaggi</string>
     <string name="rules_killer_point">un vantaggio, poi punto secco</string>
-    <string name="rules_tiebreak_to">tie-break a %1$d</string>
+    <string name="rules_tiebreak_to">tie-break a&#160;%1$d</string>
     <string name="rules_stopwatch">Cronometro</string>
     <string name="rules_keeper_change">cambio portiere</string>
     <!-- Anteprima del colore di squadra: un punteggio di esempio e il nome -->
