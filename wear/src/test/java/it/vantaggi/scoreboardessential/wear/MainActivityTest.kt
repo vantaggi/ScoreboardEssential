@@ -83,6 +83,8 @@ class MainActivityTest {
         runBlocking { Mockito.`when`(telefono.sendMessage(Mockito.anyString(), Mockito.any())).thenReturn(true) }
         viewModel = WearViewModel(app, telefono, orologio = { SystemClock.uptimeMillis() + 1_000_000L })
         controller = Robolectric.buildActivity(MainActivity::class.java)
+        // La finestra del permesso delle notifiche non c'entra con le attivita' che questo test aspetta.
+        controller.get().chiediPermessoNotifiche = false
         val fabbrica =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
