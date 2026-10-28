@@ -2670,12 +2670,12 @@ class MainViewModel(
      */
     private fun squadreDaSalvare(): Pair<Team, Team> =
         Team(
-            name = nomeSegnale(_team1Name, _team1Players),
+            name = nomeSegnale(_team1Name, _team1Players, _team2Players),
             color = _team1Color.value ?: ContextCompat.getColor(getApplication(), R.color.team_side_1),
             logoUri = null,
         ) to
             Team(
-                name = nomeSegnale(_team2Name, _team2Players),
+                name = nomeSegnale(_team2Name, _team2Players, _team1Players),
                 color = _team2Color.value ?: ContextCompat.getColor(getApplication(), R.color.team_side_2),
                 logoUri = null,
             )
