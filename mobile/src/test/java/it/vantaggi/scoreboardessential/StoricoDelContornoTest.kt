@@ -152,6 +152,24 @@ class StoricoDelContornoTest {
         assertTrue(meta, Regex("""Calcio · \d\d:\d\d · 2 min""").matches(meta))
     }
 
+    /**
+     * L'ora della riga e' quella d'inizio, come nella Cronaca: con la chiusura la stessa partita diceva
+     * 19:02 nello storico e 19:01 nella Cronaca (giro di prove del 28-10). Senza inizio resta la chiusura.
+     * Rosso se la riga torna a leggere la chiusura.
+     */
+    @Test
+    @Config(qualifiers = "it")
+    fun `l'ora della riga e' quella d'inizio come nella Cronaca`() {
+        val ora = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+        val (_, vista) = scheda(partita(SportRegistry.PADEL, 6 to 4, minuti = 47))
+        val meta = testo(vista, R.id.timestamp_textview).text.toString()
+        assertTrue(meta, meta.contains(ora.format(java.util.Date(fine - 47 * 60_000L))))
+
+        val (_, senzaInizio) = scheda(partita(SportRegistry.FOOTBALL, 0 to 0))
+        val metaSenza = testo(senzaInizio, R.id.timestamp_textview).text.toString()
+        assertTrue(metaSenza, metaSenza.contains(ora.format(java.util.Date(fine))))
+    }
+
     @Test
     @Config(qualifiers = "it")
     fun `l'elenco dei giocatori ha l'etichetta nella lingua dell'app`() {

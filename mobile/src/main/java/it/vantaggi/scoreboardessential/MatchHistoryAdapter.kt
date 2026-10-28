@@ -226,14 +226,18 @@ internal fun coloreDelPunteggio(
     lato: Int,
 ): Int = if (vincitore == null || vincitore == lato) R.color.elite_text_primary else R.color.elite_text_secondary
 
-/** «Padel · 18:30 · 47 min»: sport, ora e, se c'e', durata. Il giorno e' il titolo sopra la scheda (passo 5b). */
+/**
+ * «Padel · 18:30 · 47 min»: sport, ora d'inizio e, se c'e', durata. Il giorno e' il titolo sopra la scheda
+ * (passo 5b). L'ora e' quella d'inizio, come nella Cronaca: con quella di chiusura la stessa partita diceva
+ * 19:02 nello storico e 19:01 nella Cronaca. Senza inizio (partite vecchie, 0-0 a tempo) resta la chiusura.
+ */
 internal fun metaDellaPartita(
     context: Context,
     item: MatchHistoryUiState,
 ): String {
     val match = item.matchWithTeams.match
     val sport = sportLabel(context, match.sportId)
-    val ora = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(match.timestamp))
+    val ora = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(match.startedAt ?: match.timestamp))
     val durata = item.durationMillis
     val testo =
         if (durata == null) {
