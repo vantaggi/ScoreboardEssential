@@ -22,7 +22,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.StringRes
@@ -72,6 +71,7 @@ import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import it.vantaggi.scoreboardessential.utils.MatchReportUtils
 import it.vantaggi.scoreboardessential.utils.NumberRoll
 import it.vantaggi.scoreboardessential.utils.TimeUtils
+import it.vantaggi.scoreboardessential.utils.enableEdgeToEdgeConAspetto
 import it.vantaggi.scoreboardessential.utils.etichettaConBarretta
 import it.vantaggi.scoreboardessential.views.FormationView
 import kotlinx.coroutines.Dispatchers
@@ -271,7 +271,7 @@ class MainActivity :
         // da recuperare, una volta, la scelta fatta con la versione precedente.
         it.vantaggi.scoreboardessential.utils.LocaleHelper
             .migrateLegacyChoice(this)
-        enableEdgeToEdge()
+        enableEdgeToEdgeConAspetto()
 
         setContentView(R.layout.activity_main)
 
@@ -515,6 +515,8 @@ class MainActivity :
             updateKeeperTimerTextView(timeInMillis)
         }
 
+        viewModel.keeperAttivo.observe(this) { mostraSlotPortiere() }
+
         // Il colore del conto dipende anche dal fatto che corra: si riscrive al cambio di stato.
         viewModel.isKeeperTimerRunning.observe(this) {
             updateKeeperTimerTextView(viewModel.keeperTimerValue.value ?: 0L)
@@ -570,7 +572,9 @@ class MainActivity :
         // Lo stato si legge dal glifo e dal colore del tempo, non da una parola che cambia larghezza.
         viewModel.isMatchTimerRunning.observe(this) { isRunning ->
             timerStartButton.setIconResource(if (isRunning) R.drawable.ic_pause else R.drawable.ic_play_arrow)
-            timerStartButton.setTextColor(ContextCompat.getColor(this, if (isRunning) R.color.ink_white else R.color.elite_text_secondary))
+            timerStartButton.setTextColor(
+                ContextCompat.getColor(this, if (isRunning) R.color.elite_game_ink else R.color.elite_text_secondary),
+            )
             ViewCompat.setStateDescription(
                 timerStartButton,
                 getString(if (isRunning) R.string.timer_state_running else R.string.timer_state_stopped),
@@ -620,6 +624,12 @@ class MainActivity :
         }
     }
 
+    /** Lo slot del portiere c'e' dove lo sport lo prevede e finche' la durata non e' spenta (0) nelle impostazioni. */
+    private fun mostraSlotPortiere() {
+        val acceso = capabilities?.hasAuxCountdown == true && (viewModel.keeperAttivo.value ?: true)
+        findViewById<View>(R.id.keeper_slot).visibility = if (acceso) View.VISIBLE else View.GONE
+    }
+
     /**
      * Accende e spegne le sezioni in base a cosa lo sport prevede. Nessun `when` sullo sport:
      * l'unica cosa che questa schermata sa e' quali capacita' le servono.
@@ -646,7 +656,7 @@ class MainActivity :
         // barra: stanno nel foglio, dove il reset segue lo stesso cronometro.
         val orologioVisibile = sportCapabilities.clock != ClockMode.NONE
         timerStartButton.visibility = if (orologioVisibile) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.keeper_slot).visibility = if (sportCapabilities.hasAuxCountdown) View.VISIBLE else View.GONE
+        mostraSlotPortiere()
         findViewById<View>(R.id.sheet_reset_timer_button).visibility = if (orologioVisibile) View.VISIBLE else View.GONE
         // Le rose restano in ogni sport: nel padel e nel tennis sono l'unico posto dove si
         // assegnano i giocatori ai lati, e senza di loro l'export verso Padel Elite (4 giocatori,
@@ -1355,7 +1365,7 @@ class MainActivity :
      */
     private fun applyMatchOver(display: ScoreDisplay) {
         aggiornaZone()
-        val bianco = ContextCompat.getColor(this, R.color.ink_white)
+        val bianco = ContextCompat.getColor(this, R.color.elite_game_ink)
         val grigio = ContextCompat.getColor(this, R.color.elite_text_secondary)
         team1ScoreTextView.setTextColor(coloreDelNumero(1, display, bianco, grigio))
         team2ScoreTextView.setTextColor(coloreDelNumero(2, display, bianco, grigio))
@@ -1954,10 +1964,11 @@ internal fun schermoDaTenereAcceso(
  * Il colore della squadra sulla zona + e sulla barretta sotto il nome, e MAI dietro un testo.
  *
  * La zona prende il colore vero e il glifo l'inchiostro [TeamInk] (nero o bianco puro, almeno
- * 4,58:1 con qualsiasi colore). Se il colore sul nero sta sotto 3:1 (un blu notte come #1A237E fa
- * 1,59) la zona si distinguerebbe male dallo sfondo e prende lo stroke da 2dp; la barretta
- * sottile invece non ha spazio per un contorno e usa [TeamInk.graphicOnBlack]. Sta fuori
- * dall'Activity perche' sotto Robolectric MainActivity non si monta.
+ * 4,58:1 con qualsiasi colore). Se il colore sul campo di gioco (nero nel tema scuro, bianco nel
+ * chiaro) sta sotto 3:1 (un blu notte come #1A237E sul nero fa 1,59, il lime sul bianco 1,3) la zona
+ * si distinguerebbe male dallo sfondo e prende lo stroke da 2dp; la barretta sottile invece non ha
+ * spazio per un contorno e usa [TeamInk.graphicOnSurface]. Sta fuori dall'Activity perche' sotto
+ * Robolectric MainActivity non si monta.
  */
 internal fun applicaColoreDiSquadra(
     zona: MaterialCardView,
@@ -1966,18 +1977,19 @@ internal fun applicaColoreDiSquadra(
     colore: Int,
 ) {
     val inchiostro = TeamInk.on(colore)
+    val campo = ContextCompat.getColor(zona.context, R.color.elite_game_background)
     zona.setCardBackgroundColor(colore)
     // Nessuna increspatura: il riscontro del tocco e' la pressione condivisa (scala 0,97 e opacita' 0,85).
     zona.rippleColor = ColorStateList.valueOf(Color.TRANSPARENT)
     zona.strokeColor = ContextCompat.getColor(zona.context, R.color.elite_text_primary)
     zona.strokeWidth =
-        if (TeamInk.contrast(colore, TeamInk.NERO) < CONTRASTO_MINIMO_GRAFICA) {
+        if (TeamInk.contrast(colore, campo) < CONTRASTO_MINIMO_GRAFICA) {
             (STROKE_ZONA_DP * zona.resources.displayMetrics.density).toInt()
         } else {
             0
         }
     glifo.imageTintList = ColorStateList.valueOf(inchiostro)
-    barretta.setBackgroundColor(TeamInk.graphicOnBlack(colore))
+    barretta.setBackgroundColor(TeamInk.graphicOnSurface(colore, campo))
 }
 
 /**
@@ -2009,7 +2021,7 @@ internal fun applicaStatoDellaZona(
     zona.strokeWidth = zona.resources.getDimensionPixelSize(R.dimen.border_width)
     zona.rippleColor = ColorStateList.valueOf(Color.TRANSPARENT)
     // La barra sta sulla zona grigia, non sul nero: il 3:1 si misura contro la zona spenta.
-    barraDellaZona.setBackgroundColor(TeamInk.graphicOn(colore, rialzata))
+    barraDellaZona.setBackgroundColor(TeamInk.graphicOnSurface(colore, rialzata))
 }
 
 /**

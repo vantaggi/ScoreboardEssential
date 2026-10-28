@@ -97,7 +97,12 @@
     <string name="wear_setting_vibration_on">Every point</string>
     <string name="wear_setting_vibration_off">Alerts only</string>
     <string name="wear_setting_keeper">Keeper</string>
+    <string name="wear_keeper_off">Off</string>
     <string name="wear_keeper_seconds">%1$d s</string>
     <string name="wear_keeper_minutes">%1$d min</string>
     <string name="wear_keeper_minutes_seconds">%1$d min %2$d s</string>
+
+    <!-- Icona sul quadrante mentre si gioca (Ongoing Activity): il canale e il testo della notifica. -->
+    <string name="wear_ongoing_channel">Match in progress</string>
+    <string name="wear_ongoing_status">Match in progress</string>
 </resources>

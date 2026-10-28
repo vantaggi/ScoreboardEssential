@@ -63,9 +63,10 @@
     <string name="team_color_use">Usa questo colore</string>
     <string name="cancel">Annulla</string>
     <string name="language">Lingua</string>
-    <string name="team_1_name">Nome squadra 1</string>
-    <string name="team_2_name">Nome squadra 2</string>
     <string name="keeper_timer_seconds">Timer portiere (secondi)</string>
+    <string name="keeper_timer_minutes">Durata del portiere (minuti)</string>
+    <string name="settings_keeper_title">Cambio portiere a tempo</string>
+    <string name="settings_keeper_summary">Spento: niente conto e niente barra, il cambio si fa a mano</string>
     <string name="btn_team_1_color">Colore squadra 1</string>
     <string name="btn_team_2_color">Colore squadra 2</string>
 
@@ -225,7 +226,7 @@
     <string name="rules_golden_point">punto secco sul 40–40</string>
     <string name="rules_advantage">vantaggi</string>
     <string name="rules_killer_point">un vantaggio, poi punto secco</string>
-    <string name="rules_tiebreak_to">tie-break a %1$d</string>
+    <string name="rules_tiebreak_to">tie-break a&#160;%1$d</string>
     <string name="rules_stopwatch">Cronometro</string>
     <string name="rules_keeper_change">cambio portiere</string>
     <!-- Anteprima del colore di squadra: un punteggio di esempio e il nome -->
@@ -241,6 +242,7 @@
     <!-- Le righe informative del registro. -->
     <string name="log_keeper_expired">Tempo del portiere scaduto</string>
     <string name="log_keeper_set">Portiere a %d secondi</string>
+    <string name="log_keeper_off">Portiere spento</string>
     <string name="log_keeper_started">Portiere avviato (%d s)</string>
     <string name="log_keeper_reset">Portiere azzerato</string>
     <string name="log_player_added">%1$s entra in %2$s</string>
@@ -390,6 +392,11 @@
     <string name="settings_teams_title">Squadre</string>
     <string name="settings_match_title">Regole</string>
     <string name="settings_app_title">App</string>
+    <string name="appearance_title">Aspetto</string>
+    <string name="appearance_dark">Scuro</string>
+    <string name="appearance_light">Chiaro</string>
+    <string name="appearance_system">Come il telefono</string>
+    <string name="appearance_value_suspended">%1$s · sospeso con alto contrasto</string>
     <string name="settings_high_contrast_title">Alto contrasto</string>
     <string name="settings_high_contrast_summary">Testo più luminoso e bordi più netti. Segue il contrasto del sistema finché non scegli.</string>
     <string name="history_empty_reason">Una partita compare qui quando la salvi a fine partita. Gioca e termina una partita per vederla.</string>

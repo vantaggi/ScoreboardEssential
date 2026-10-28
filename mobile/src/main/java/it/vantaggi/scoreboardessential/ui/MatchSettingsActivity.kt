@@ -12,6 +12,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
+import it.vantaggi.scoreboardessential.DurataPortiere
 import it.vantaggi.scoreboardessential.EtichettaSquadra
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
@@ -26,7 +27,9 @@ import it.vantaggi.scoreboardessential.sportLabel
 import it.vantaggi.scoreboardessential.sportRulesLine
 import it.vantaggi.scoreboardessential.ui.TavolozzaDiSquadra
 import it.vantaggi.scoreboardessential.utils.AltoContrasto
+import it.vantaggi.scoreboardessential.utils.Aspetto
 import it.vantaggi.scoreboardessential.utils.LocaleHelper
+import it.vantaggi.scoreboardessential.utils.ScelteAspetto
 import it.vantaggi.scoreboardessential.utils.anteprimaDiSquadra
 import it.vantaggi.scoreboardessential.utils.dipingiDiSquadra
 
@@ -59,6 +62,7 @@ class MatchSettingsActivity : AppCompatActivity() {
         setupListeners()
         setupPadelElite()
         setupAltoContrasto()
+        setupAspetto()
     }
 
     override fun onResume() {
@@ -91,6 +95,32 @@ class MatchSettingsActivity : AppCompatActivity() {
         binding.highContrastSwitch.setOnCheckedChangeListener { _, attivo ->
             AltoContrasto.scegli(this, attivo)
             recreate()
+        }
+    }
+
+    /**
+     * L'aspetto: scuro, chiaro o come il telefono. Il valore e' la scelta; con l'alto contrasto acceso (solo scuro) il
+     * chiaro resta sospeso e la riga lo dice. Cambiare ricrea la schermata col tema nuovo; le altre activity le ricrea
+     * chi applica il tema ([Aspetto]) quando tornano in primo piano.
+     */
+    private fun setupAspetto() {
+        val scelte = ScelteAspetto.entries
+
+        fun nome(scelta: ScelteAspetto) = getString(Aspetto.nomeDi(scelta))
+
+        fun valore(): String {
+            val scelta = Aspetto.scelta(this)
+            val sospeso = AltoContrasto.attivo(this) && scelta != ScelteAspetto.SCURO
+            return if (sospeso) getString(R.string.appearance_value_suspended, nome(scelta)) else nome(scelta)
+        }
+        binding.appearanceValue.text = valore()
+        binding.appearanceRow.setOnClickListener {
+            scegliDaElenco(getString(R.string.appearance_title), scelte.map(::nome), scelte.indexOf(Aspetto.scelta(this))) { posizione ->
+                if (scelte[posizione] != Aspetto.scelta(this)) {
+                    Aspetto.scegli(this, scelte[posizione])
+                    recreate()
+                }
+            }
         }
     }
 
@@ -195,10 +225,18 @@ class MatchSettingsActivity : AppCompatActivity() {
         }
 
         viewModel.keeperTimerDuration.observe(this) { duration ->
-            if (binding.keeperTimerEdittext.text.toString() != duration.toString()) {
-                binding.keeperTimerEdittext.setText(duration.toString())
+            // Il ViewModel e' la verita': l'interruttore e il campo si allineano senza riscrivere.
+            aggiornandoIlPortiere = true
+            binding.keeperSwitch.isChecked = duration > 0
+            binding.keeperTimerLayout.visibility = if (duration > 0) android.view.View.VISIBLE else android.view.View.GONE
+            if (duration > 0) {
+                val testo = DurataPortiere.minutiDi(duration)
+                if (binding.keeperTimerEdittext.text.toString() != testo) binding.keeperTimerEdittext.setText(testo)
             }
+            aggiornandoIlPortiere = false
         }
+
+        viewModel.keeperUltimaDurata.observe(this) { if (it > 0) ultimaDurataPortiere = it }
 
         // La voce mostrata segue sempre il ViewModel: se una scrittura non passasse, il selettore
         // tornerebbe da solo sulla scelta precedente invece di mentire.
@@ -238,6 +276,12 @@ class MatchSettingsActivity : AppCompatActivity() {
         }
     }
 
+    /** Vero mentre l'interruttore e il campo si allineano al ViewModel: il cambio non e' un tocco. */
+    private var aggiornandoIlPortiere = false
+
+    /** L'ultima durata acceso, per quando l'interruttore si riaccende. */
+    private var ultimaDurataPortiere = DurataPortiere.PREDEFINITA_SECONDI
+
     private fun setupListeners() {
         binding.team1NameEdittext.setOnFocusChangeListener { _, hasFocus ->
             if (!hasFocus) {
@@ -251,14 +295,10 @@ class MatchSettingsActivity : AppCompatActivity() {
             }
         }
 
-        binding.keeperTimerEdittext.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) {
-                val duration =
-                    binding.keeperTimerEdittext.text
-                        .toString()
-                        .toLongOrNull() ?: 0L
-                viewModel.saveKeeperTimerDuration(duration)
-            }
+        // Acceso ripropone l'ultima durata scelta (cinque minuti la prima volta); spento scrive 0.
+        binding.keeperSwitch.isSaveEnabled = false
+        binding.keeperSwitch.setOnCheckedChangeListener { _, acceso ->
+            if (!aggiornandoIlPortiere) viewModel.saveKeeperTimerDuration(if (acceso) ultimaDurataPortiere else 0L)
         }
 
         binding.team1ColorButton.setOnClickListener {
@@ -278,6 +318,15 @@ class MatchSettingsActivity : AppCompatActivity() {
             .forEach { campo ->
                 campo.setOnFocusChangeListener { _, haIlFuoco -> if (!haIlFuoco) salvaCampi() }
             }
+
+        // Il tasto fatto della tastiera salva: prima il valore restava nel campo fino a quando non si usciva.
+        binding.keeperTimerEdittext.setOnEditorActionListener { campo, azione, _ ->
+            if (azione == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+                salvaCampi()
+                campo.clearFocus()
+            }
+            false
+        }
     }
 
     /**
@@ -289,11 +338,11 @@ class MatchSettingsActivity : AppCompatActivity() {
     private fun salvaCampi() {
         viewModel.saveTeam1Name(binding.team1NameEdittext.text.toString())
         viewModel.saveTeam2Name(binding.team2NameEdittext.text.toString())
-        viewModel.saveKeeperTimerDuration(
-            binding.keeperTimerEdittext.text
-                .toString()
-                .toLongOrNull() ?: 30L,
-        )
+        // Spento non c'e' niente da leggere: il campo e' nascosto e scriverlo riaccenderebbe il portiere.
+        if (binding.keeperSwitch.isChecked) {
+            val scritta = DurataPortiere.secondiDi(binding.keeperTimerEdittext.text.toString())
+            viewModel.saveKeeperTimerDuration(scritta ?: ultimaDurataPortiere)
+        }
     }
 
     override fun onPause() {

@@ -79,6 +79,24 @@ class MatchSettingsViewModelTest {
             assertEquals("e lo sport resta quello di prima", SportRegistry.FOOTBALL, viewModel.activeSport.value)
         }
 
+    /**
+     * Spegnere il portiere scrive 0, ma riaccenderlo deve tornare all'ultima durata: la schermata
+     * riaperta riportava sempre i cinque minuti. Rosso se l'ultima durata si perde a 0 o non segue
+     * la durata appena scritta.
+     */
+    @Test
+    fun `spegnere il portiere non fa perdere l'ultima durata`() =
+        runTest(UnconfinedTestDispatcher()) {
+            Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+            val (viewModel, _) = conRigaViva("")
+
+            viewModel.saveKeeperTimerDuration(360L)
+            viewModel.saveKeeperTimerDuration(0L)
+
+            assertEquals(0L, viewModel.keeperTimerDuration.value)
+            assertEquals(360L, viewModel.keeperUltimaDurata.value)
+        }
+
     /** Il ViewModel con una riga viva di calcio che porta [eventLog], e il repository finto. */
     private suspend fun conRigaViva(eventLog: String): Pair<MatchSettingsViewModel, MatchSettingsRepository> {
         val repository = mock(MatchSettingsRepository::class.java)

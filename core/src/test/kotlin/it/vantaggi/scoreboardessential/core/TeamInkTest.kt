@@ -139,6 +139,24 @@ class TeamInkTest {
     }
 
     @Test
+    fun `la grafica su un fondo qualsiasi sceglie il verso dal fondo, scuro schiarisce e chiaro scurisce`() {
+        val grigio = argb(0x2C2C2C)
+        val carta = argb(0xF4F5F7)
+        ogniColore { colore ->
+            val suScuro = TeamInk.graphicOnSurface(colore, grigio)
+            val suChiaro = TeamInk.graphicOnSurface(colore, carta)
+            assertEquals(TeamInk.graphicOn(colore, grigio), suScuro)
+            assertEquals(TeamInk.graphicOnLight(colore, carta), suChiaro)
+            assertTrue(TeamInk.contrast(suChiaro, carta) >= 3.0)
+            assertTrue(TeamInk.luminance(suChiaro) <= TeamInk.luminance(colore) + 1e-9)
+        }
+        // Il lime del lato 1 su bianco, che da solo fa 1,3:1, diventa un oliva; sul nero resta lime.
+        val lime = argb(0xC8F135)
+        assertTrue(TeamInk.contrast(TeamInk.graphicOnSurface(lime, TeamInk.BIANCO), TeamInk.BIANCO) >= 3.0)
+        assertEquals(lime, TeamInk.graphicOnSurface(lime, TeamInk.NERO))
+    }
+
+    @Test
     fun `casi fissi della grafica su carta chiara`() {
         val carta = TeamInk.BIANCO
         // Chi ha gia' 3:1 resta com'e'.

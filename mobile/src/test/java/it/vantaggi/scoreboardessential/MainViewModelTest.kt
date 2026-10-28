@@ -3257,18 +3257,54 @@ class MainViewModelTest {
             assertEquals(300L, statiV2().last()[WearConstants.KEY_KEEPER_SECONDS])
             assertEquals("", statiV2().last()[WearConstants.KEY_DEUCE_IDS])
 
+            assertEquals(true, statiV2().last()[WearConstants.KEY_KEEPER_OFFERED])
+
             viewModel.applicaImpostazioneDalPolso(WearConstants.SETTING_KEEPER, "45")
+            viewModel.applicaImpostazioneDalPolso(WearConstants.SETTING_KEEPER, "300")
+            viewModel.applicaImpostazioneDalPolso(WearConstants.SETTING_KEEPER, "0")
             viewModel.applicaImpostazioneDalPolso(WearConstants.SETTING_KEEPER, "3")
+            viewModel.applicaImpostazioneDalPolso(WearConstants.SETTING_KEEPER, "7200")
             viewModel.applicaImpostazioneDalPolso(WearConstants.SETTING_KEEPER, "mezzo minuto")
             advanceUntilIdle()
             verify(mockMatchSettingsRepository).setKeeperTimerDuration(45L)
+            verify(mockMatchSettingsRepository).setKeeperTimerDuration(300L)
+            // Zero e' Off: il portiere si spegne.
+            verify(mockMatchSettingsRepository).setKeeperTimerDuration(0L)
             verify(mockMatchSettingsRepository, never()).setKeeperTimerDuration(3L)
+            verify(mockMatchSettingsRepository, never()).setKeeperTimerDuration(7200L)
 
             val padel = nuovoViewModel(sportSalvato = SportRegistry.PADEL)
             advanceUntilIdle()
             padel.applicaImpostazioneDalPolso(WearConstants.SETTING_KEEPER, "60")
             advanceUntilIdle()
             verify(mockMatchSettingsRepository, never()).setKeeperTimerDuration(60L)
+        }
+
+    /**
+     * Portiere spento (durata 0): lo stato v2 dice che lo sport ha il portiere ma l'orologio non
+     * mostra il conto (capacita aux a falso), lo slot del telefono si spegne e un tocco non avvia
+     * niente.
+     */
+    @Test
+    fun `con il portiere spento l'orologio non vede il conto ma il menu lo offre`() =
+        runTest {
+            advanceUntilIdle()
+            assertEquals(true, statiV2().last()[WearConstants.KEY_CAP_HAS_AUX_TIMER])
+
+            viewModel.setKeeperTimer(0L)
+            advanceUntilIdle()
+
+            val stato = statiV2().last()
+            assertEquals(0L, stato[WearConstants.KEY_KEEPER_SECONDS])
+            assertEquals(true, stato[WearConstants.KEY_KEEPER_OFFERED])
+            assertEquals(false, stato[WearConstants.KEY_CAP_HAS_AUX_TIMER])
+            assertEquals(false, viewModel.keeperAttivo.value)
+
+            viewModel.setKeeperTimer(360L)
+            advanceUntilIdle()
+            assertEquals(360L, statiV2().last()[WearConstants.KEY_KEEPER_SECONDS])
+            assertEquals(true, statiV2().last()[WearConstants.KEY_CAP_HAS_AUX_TIMER])
+            assertEquals(true, viewModel.keeperAttivo.value)
         }
 
     /** Il ViewModel di [viewModel] rifatto da capo, con i suoi finti, e queste impostazioni. */

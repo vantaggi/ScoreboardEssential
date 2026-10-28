@@ -30,6 +30,10 @@
     <!-- Marchio: l'unico accento del contorno. Il testo sopra il lime e' il fondo, mai il bianco (1,3:1). -->
     <color name="elite_lime">#C8F135</color>
     <color name="elite_on_lime_standard">#0D0D0F</color>
+    <!-- L'accento e il campo di gioco: nel tema scuro lime, nero puro e cifre bianche (DESIGN.md, Colori). -->
+    <color name="elite_accent_standard">@color/elite_lime</color>
+    <color name="elite_game_background_standard">#000000</color>
+    <color name="elite_game_ink_standard">#FFFFFF</color>
     <!-- Anello di fuoco: lime nel tema standard, bianco in quello ad alto contrasto (G-10). -->
     <color name="elite_focus_ring_standard">@color/elite_lime</color>
     <!-- Successo = lime, come nella dashboard. -->

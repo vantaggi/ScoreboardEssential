@@ -15,6 +15,7 @@ import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.PlayerRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.utils.AltoContrasto
+import it.vantaggi.scoreboardessential.utils.Aspetto
 import it.vantaggi.scoreboardessential.utils.MovimentoRidotto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,6 +48,7 @@ open class ScoreboardEssentialApplication : Application() {
         super.onCreate()
         MovimentoRidotto.registra(this)
         AltoContrasto.registra(this)
+        Aspetto.registra(this)
         createNotificationChannel()
         sistemaLaDirettaDiPrima()
     }

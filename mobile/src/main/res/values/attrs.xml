@@ -26,6 +26,11 @@
     <attr name="eliteInfoSubtle" format="color" />
     <attr name="eliteStatePressed" format="color" />
     <attr name="eliteFocusRing" format="color" />
+    <!-- L'accento: lime sul nero, un verde oliva scuro sul chiaro (il lime su bianco fa 1,3:1). -->
+    <attr name="eliteAccent" format="color" />
+    <!-- Il fondo e l'inchiostro del gioco: nero e bianco nel tema scuro, bianco e quasi nero nel chiaro. -->
+    <attr name="eliteGameBackground" format="color" />
+    <attr name="eliteGameInk" format="color" />
 
     <!--
         Lo stato vuoto (G-4): che cosa e' vuoto, perche', che fare. L'azione e' facoltativa, ma una

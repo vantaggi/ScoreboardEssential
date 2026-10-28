@@ -66,9 +66,10 @@
     <string name="team_color_use">Use this color</string>
     <string name="cancel">Cancel</string>
     <string name="language">Language</string>
-    <string name="team_1_name">Team 1 name</string>
-    <string name="team_2_name">Team 2 name</string>
     <string name="keeper_timer_seconds">Keeper timer (seconds)</string>
+    <string name="keeper_timer_minutes">Keeper duration (minutes)</string>
+    <string name="settings_keeper_title">Timed keeper change</string>
+    <string name="settings_keeper_summary">Off: no countdown and no bar, the change is made by hand</string>
     <string name="btn_team_1_color">Team 1 color</string>
     <string name="btn_team_2_color">Team 2 color</string>
 
@@ -228,7 +229,7 @@
     <string name="rules_golden_point">golden point at 40–40</string>
     <string name="rules_advantage">advantage</string>
     <string name="rules_killer_point">one advantage, then golden point</string>
-    <string name="rules_tiebreak_to">tie-break to %1$d</string>
+    <string name="rules_tiebreak_to">tie-break to&#160;%1$d</string>
     <string name="rules_stopwatch">Stopwatch</string>
     <string name="rules_keeper_change">keeper change</string>
     <!-- Anteprima del colore di squadra: un punteggio di esempio e il nome -->
@@ -244,6 +245,7 @@
     <!-- Le righe informative del registro. In inglese restano le parole di prima, che i test leggono. -->
     <string name="log_keeper_expired">Keeper timer expired!</string>
     <string name="log_keeper_set">Keeper timer set to %d seconds</string>
+    <string name="log_keeper_off">Keeper timer off</string>
     <string name="log_keeper_started">Keeper timer started (%ds)</string>
     <string name="log_keeper_reset">Keeper timer reset</string>
     <string name="log_player_added">%1$s added to %2$s</string>
@@ -385,6 +387,11 @@
     <string name="settings_teams_title">Teams</string>
     <string name="settings_match_title">Rules</string>
     <string name="settings_app_title">App</string>
+    <string name="appearance_title">Appearance</string>
+    <string name="appearance_dark">Dark</string>
+    <string name="appearance_light">Light</string>
+    <string name="appearance_system">Like the phone</string>
+    <string name="appearance_value_suspended">%1$s · paused by high contrast</string>
     <string name="settings_high_contrast_title">High contrast</string>
     <string name="settings_high_contrast_summary">Brighter text and sharper borders. Follows the system contrast until you choose.</string>
     <string name="history_empty_reason">A match shows up here once you save it at the end. Play and end a match to see it.</string>

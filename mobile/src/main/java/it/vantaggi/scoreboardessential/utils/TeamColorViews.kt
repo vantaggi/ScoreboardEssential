@@ -63,7 +63,7 @@ fun TextView.etichettaConBarretta(
     val densita = resources.displayMetrics.density
     val barretta =
         GradientDrawable().apply {
-            setColor(if (sfondoChiaro) TeamInk.graphicOnLight(colore, sfondo) else TeamInk.graphicOn(colore, sfondo))
+            setColor(if (sfondoChiaro) TeamInk.graphicOnLight(colore, sfondo) else TeamInk.graphicOnSurface(colore, sfondo))
             cornerRadius = 2 * densita
         }
     background =

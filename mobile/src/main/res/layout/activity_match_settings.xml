@@ -29,7 +29,7 @@
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
-                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:hint="@string/team_1_name">
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:hint="@string/label_team_1">
 
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/team1NameEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" />
                     </com.google.android.material.textfield.TextInputLayout>
@@ -41,7 +41,7 @@
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
-                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:hint="@string/team_2_name">
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:hint="@string/label_team_2">
 
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/team2NameEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" />
                     </com.google.android.material.textfield.TextInputLayout>
@@ -85,9 +85,22 @@
 
                     <View style="@style/Widget.App.RowDivider" android:layout_width="match_parent" android:layout_height="@dimen/border_width" android:layout_marginStart="@dimen/space_16" />
 
-                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.App.TextInputLayout" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="@dimen/space_16" android:layout_marginVertical="@dimen/space_12" android:hint="@string/keeper_timer_seconds">
+                    <!-- Il cambio portiere a tempo: spento non c'e' il conto ne' la barra, e si cambia a mano (per gol subiti, per esempio). -->
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:minHeight="@dimen/control_touch" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
-                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/keeperTimerEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/settings_keeper_title" android:textAppearance="@style/TextAppearance.App.RowTitle" />
+
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_4" android:text="@string/settings_keeper_summary" android:textAppearance="@style/TextAppearance.App.Caption" />
+                        </LinearLayout>
+
+                        <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/keeperSwitch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/space_16" android:contentDescription="@string/settings_keeper_title" />
+                    </LinearLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout android:id="@+id/keeperTimerLayout" style="@style/Widget.App.TextInputLayout" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="@dimen/space_16" android:layout_marginBottom="@dimen/space_12" android:hint="@string/keeper_timer_minutes">
+
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/keeperTimerEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" android:digits="0123456789.," android:imeOptions="actionDone" android:inputType="numberDecimal" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
@@ -126,6 +139,17 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
 
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/settings_app_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/elite_text_secondary" android:accessibilityHeading="true" />
+
+                <LinearLayout android:id="@+id/appearanceRow" style="@style/Widget.App.Pressable" android:layout_width="match_parent" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:foreground="@drawable/bg_focus_ring" android:gravity="center_vertical" android:minHeight="@dimen/control_touch" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
+
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/appearance_title" android:textAppearance="@style/TextAppearance.App.RowTitle" />
+
+                    <TextView android:id="@+id/appearanceValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/space_12" android:textAppearance="@style/TextAppearance.App.Caption" />
+
+                    <ImageView android:layout_width="@dimen/icon_standard" android:layout_height="@dimen/icon_standard" android:layout_marginStart="@dimen/space_8" android:importantForAccessibility="no" android:src="@drawable/ic_chevron_right" app:tint="@color/elite_text_secondary" />
+                </LinearLayout>
+
+                <View style="@style/Widget.App.RowDivider" android:layout_width="match_parent" android:layout_height="@dimen/border_width" android:layout_marginStart="@dimen/space_16" />
 
                 <LinearLayout android:id="@+id/languageRow" style="@style/Widget.App.Pressable" android:layout_width="match_parent" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:foreground="@drawable/bg_focus_ring" android:gravity="center_vertical" android:minHeight="@dimen/control_touch" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 

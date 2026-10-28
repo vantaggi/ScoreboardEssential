@@ -2,6 +2,6 @@
 <!-- Chip: testo primario, lime se selezionato, disattivo con text-disabled. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:color="?attr/eliteTextDisabled" android:state_enabled="false" />
-    <item android:color="@color/elite_lime" android:state_checked="true" />
+    <item android:color="?attr/eliteAccent" android:state_checked="true" />
     <item android:color="?attr/eliteTextPrimary" />
 </selector>

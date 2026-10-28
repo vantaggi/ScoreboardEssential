@@ -71,5 +71,5 @@
         android:importantForAccessibility="no"
         android:src="@drawable/ic_check"
         android:visibility="invisible"
-        app:tint="@color/elite_lime" />
+        app:tint="@color/elite_accent" />
 </LinearLayout>

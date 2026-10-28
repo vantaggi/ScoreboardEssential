@@ -130,7 +130,7 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/space_16"
         android:contentDescription="@string/label_add_player"
-        app:backgroundTint="@color/elite_lime"
+        app:backgroundTint="@color/elite_accent"
         app:tint="@color/elite_on_lime"
         app:shapeAppearance="@style/ShapeAppearance.App.Control"
         app:srcCompat="@drawable/ic_person_add" />

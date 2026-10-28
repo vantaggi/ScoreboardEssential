@@ -38,6 +38,11 @@ class MatchSettingsViewModel(
     private val _keeperTimerDuration = MutableLiveData<Long>()
     val keeperTimerDuration: LiveData<Long> = _keeperTimerDuration
 
+    private val _keeperUltimaDurata = MutableLiveData<Long>()
+
+    /** L'ultima durata acceso: l'interruttore del portiere la riporta quando si riaccende. */
+    val keeperUltimaDurata: LiveData<Long> = _keeperUltimaDurata
+
     private val _activeSport = MutableLiveData<String>()
 
     /** Lo sport scelto. E' la sola sorgente della voce mostrata nel selettore. */
@@ -62,6 +67,7 @@ class MatchSettingsViewModel(
             _team1Color.value = repository.getTeam1Color()
             _team2Color.value = repository.getTeam2Color()
             _keeperTimerDuration.value = repository.getKeeperTimerDuration()
+            _keeperUltimaDurata.value = repository.getKeeperLastOnDuration()
             _activeSport.value = repository.getActiveSport()
             caricaRegolaDel40()
         }
@@ -103,6 +109,7 @@ class MatchSettingsViewModel(
         viewModelScope.launch {
             repository.setKeeperTimerDuration(duration)
             _keeperTimerDuration.value = duration
+            if (duration > 0) _keeperUltimaDurata.value = duration
         }
     }
 

@@ -2,7 +2,6 @@ package it.vantaggi.scoreboardessential.ui.statistics
 
 import android.os.Bundle
 import android.view.View
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -18,6 +17,7 @@ import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.databinding.ActivityStatisticsBinding
 import it.vantaggi.scoreboardessential.sportLabel
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
+import it.vantaggi.scoreboardessential.utils.enableEdgeToEdgeConAspetto
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
@@ -32,7 +32,7 @@ class StatisticsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdgeConAspetto()
         binding = ActivityStatisticsBinding.inflate(layoutInflater)
         setContentView(binding.root)
         // La stessa barra con la stessa freccia di PlayersManagementActivity e

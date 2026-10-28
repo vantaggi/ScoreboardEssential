@@ -52,7 +52,7 @@ class StatisticsAdapter : ListAdapter<PlayerStatsDTO, StatisticsAdapter.ViewHold
             nameTextView.text = item.playerName
             val gol = resources.getQuantityString(R.plurals.stats_goals, item.goals, item.goals)
             goalsTextView.text = gol
-            goalsTextView.setTextColor(context.getColor(if (leader) R.color.elite_lime else R.color.elite_text_primary))
+            goalsTextView.setTextColor(context.getColor(if (leader) R.color.elite_accent else R.color.elite_text_primary))
             val presenze = resources.getQuantityString(R.plurals.stats_appearances, item.appearances, item.appearances)
             itemView.contentDescription = resources.getString(R.string.stats_row_description, rank, item.playerName, gol, presenze)
         }

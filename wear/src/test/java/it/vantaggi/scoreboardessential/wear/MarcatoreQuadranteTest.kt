@@ -62,6 +62,8 @@ class MarcatoreQuadranteTest {
         Mockito.`when`(telefono.connectionState).thenReturn(MutableStateFlow(ConnectionState.Connected(1)))
         viewModel = WearViewModel(app, telefono, orologio = { SystemClock.uptimeMillis() + 1_000_000L })
         controller = Robolectric.buildActivity(MainActivity::class.java)
+        // La finestra del permesso delle notifiche non c'entra con le attivita' che questo test aspetta.
+        controller.get().chiediPermessoNotifiche = false
         val fabbrica =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")

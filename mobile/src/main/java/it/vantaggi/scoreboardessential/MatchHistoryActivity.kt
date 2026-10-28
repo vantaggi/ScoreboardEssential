@@ -2,7 +2,6 @@ package it.vantaggi.scoreboardessential
 
 import android.os.Bundle
 import android.view.View
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -19,12 +18,13 @@ import it.vantaggi.scoreboardessential.ui.MatchHistoryViewModel
 import it.vantaggi.scoreboardessential.ui.MatchHistoryViewModelFactory
 import it.vantaggi.scoreboardessential.ui.chronicle.ChronicleActivity
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
+import it.vantaggi.scoreboardessential.utils.enableEdgeToEdgeConAspetto
 import kotlinx.coroutines.launch
 
 class MatchHistoryActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdgeConAspetto()
         setContentView(R.layout.activity_match_history)
         // La stessa barra con la stessa freccia di PlayersManagementActivity e
         // AddEditPlayerActivity. parentActivityName e' gia' dichiarato nel manifest per tutte

@@ -21,7 +21,6 @@ import android.widget.LinearLayout
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
 import androidx.annotation.ColorRes
 import androidx.annotation.DimenRes
 import androidx.annotation.FontRes
@@ -46,6 +45,7 @@ import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.sportLabel
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
+import it.vantaggi.scoreboardessential.utils.enableEdgeToEdgeConAspetto
 import it.vantaggi.scoreboardessential.utils.etichettaConBarretta
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -75,7 +75,7 @@ import it.vantaggi.scoreboardessential.shared.R as SharedR
 class ChronicleActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdgeConAspetto()
         setContentView(R.layout.activity_chronicle)
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)

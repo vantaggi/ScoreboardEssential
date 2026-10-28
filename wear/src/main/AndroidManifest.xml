@@ -3,6 +3,10 @@
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Icona della partita in corso sul quadrante (Ongoing Activity): servizio in primo piano e notifica. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature android:name="android.hardware.type.watch" />
 
@@ -13,7 +17,7 @@
 
         <!-- Wear capabilities defined in res/values/wear.xml -->
 
-        <activity android:name=".MainActivity" android:exported="true" android:label="@string/app_name" android:theme="@style/Theme.ScoreboardEssential.Face">
+        <activity android:screenOrientation="portrait" android:name=".MainActivity" android:exported="true" android:label="@string/app_name" android:theme="@style/Theme.ScoreboardEssential.Face">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -21,13 +25,13 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".PlayerSelectionActivity" android:exported="false" android:label="Select Scorer" />
+        <activity android:screenOrientation="portrait" android:name=".PlayerSelectionActivity" android:exported="false" android:label="Select Scorer" />
 
-        <activity android:name=".SportSelectionActivity" android:exported="false" android:taskAffinity="" android:label="@string/wear_sport" />
+        <activity android:screenOrientation="portrait" android:name=".SportSelectionActivity" android:exported="false" android:taskAffinity="" android:label="@string/wear_sport" />
 
-        <activity android:name=".MenuActivity" android:exported="false" android:taskAffinity="" android:label="@string/wear_menu_title" />
+        <activity android:screenOrientation="portrait" android:name=".MenuActivity" android:exported="false" android:taskAffinity="" android:label="@string/wear_menu_title" />
 
-        <activity android:name=".ProssimaPartitaActivity" android:exported="false" android:taskAffinity="" android:label="@string/wear_next_match" />
+        <activity android:screenOrientation="portrait" android:name=".ProssimaPartitaActivity" android:exported="false" android:taskAffinity="" android:label="@string/wear_next_match" />
 
         <!--
             Nessun android:permission su questo servizio. Qui c'era BIND_WEARABLE_LISTENER_SERVICE,
@@ -36,6 +40,19 @@
             poterli consegnare ("Permission Denial"). Il quadrante si aggiornava solo rileggendo i
             DataItem al risveglio. Il controllo su chi chiama lo fa gia' WearableListenerService.
         -->
+        <!--
+            Tiene l'icona della partita in corso sul quadrante. Lo avvia solo l'attivita', a schermo acceso,
+            e si ferma con la partita. Non esportato.
+        -->
+        <service
+            android:name=".PartitaInCorsoServizio"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.property.FOREGROUND_SERVICE_TYPE_SPECIAL_USE_DESCRIPTION"
+                android:value="Keeps a shortcut to the scoreboard on the watch face while a match is in progress." />
+        </service>
+
         <service
             android:name=".WearDataLayerService"
             android:exported="true">
