@@ -267,6 +267,7 @@ class AmbientTest {
         assertEquals(View.INVISIBLE, binding.keeperProgressBar.visibility)
         assertEquals(colore(R.color.ink_white), binding.keeperTimer.currentTextColor)
         assertSame("cifre sottili come le altre", binding.team1Score.typeface, binding.keeperTimer.typeface)
+        val light = binding.keeperTimer.typeface
 
         // Il conto avanza: nell'ultimo minuto non si scrivono secondi che poi invecchiano.
         viewModel.setKeeperTimerState(KeeperTimerState.Running(119))
@@ -288,7 +289,7 @@ class AmbientTest {
         idle()
         assertEquals("K 0:37", binding.keeperTimer.text.toString())
         assertEquals(View.VISIBLE, binding.keeperProgressBar.visibility)
-        assertNotSame("fuori dall'ambient non resta il carattere light", binding.team1Score.typeface, binding.keeperTimer.typeface)
+        assertNotSame("fuori dall'ambient non resta il carattere light", light, binding.keeperTimer.typeface)
     }
 
     @Test
