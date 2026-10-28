@@ -1,5 +1,6 @@
 package it.vantaggi.scoreboardessential.wear
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -7,7 +8,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -46,6 +46,10 @@ class PartitaInCorsoServizio : Service() {
         return START_NOT_STICKY
     }
 
+    // InlinedApi: il tipo specialUse e' di API 34, ma e' una costante e prima di allora il sistema
+    // ignora il tipo. WearRecents: il tocco parte da una notifica, fuori da ogni attivita': senza
+    // NEW_TASK non si avvia; SINGLE_TOP porta in cima il tabellone gia' aperto, senza svuotare il task.
+    @SuppressLint("InlinedApi", "WearRecents")
     private fun startForegroundConNotifica() {
         creaCanale(this)
         val tocco =
@@ -78,7 +82,7 @@ class PartitaInCorsoServizio : Service() {
             this,
             ID_NOTIFICA,
             notifica.build(),
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0,
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
         )
     }
 
