@@ -1226,8 +1226,8 @@ class MainActivity :
                 MaterialAlertDialogBuilder(this)
                     .setTitle(getString(R.string.undo_goal_title))
                     .setMessage(getString(R.string.undo_goal_message))
-                    .setPositiveButton(getString(R.string.undo)) { _, _ -> annullaEMostra() }
-                    .setNegativeButton(getString(R.string.cancel), null)
+                    .setPositiveButton(getString(R.string.undo_goal_confirm)) { _, _ -> annullaEMostra() }
+                    .setNegativeButton(getString(R.string.undo_goal_keep), null)
                     .show()
             } else {
                 annullaEMostra()

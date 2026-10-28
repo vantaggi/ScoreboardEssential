@@ -78,6 +78,8 @@
     <string name="undo_goal_title">Annullare il gol appena segnato?</string>
     <string name="undo_goal_message">Questo annullerà il punteggio e rimuoverà il gol dal registro.</string>
     <string name="undo">Annulla</string>
+    <string name="undo_goal_confirm">Annulla il gol</string>
+    <string name="undo_goal_keep">Tieni il gol</string>
     <string name="no_available_players">Nessun giocatore disponibile. Crea nuovi giocatori in Giocatori.</string>
     <string name="manage">Gestisci</string>
     <string name="add_player_title">Aggiungi un giocatore alla squadra %d</string>
