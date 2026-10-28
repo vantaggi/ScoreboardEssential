@@ -4,8 +4,11 @@ import android.os.Looper
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.textfield.TextInputLayout
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -67,5 +70,26 @@ class RigheDelleImpostazioniTest {
                 .getItem(spuntata)
                 .toString(),
         )
+    }
+
+    /**
+     * Bozza B1 di Cioti: la durata del portiere ha l'etichetta sopra il campo, che va a capo, e non
+     * nel bordo del campo, dove a 360dp col testo al 200% si tagliava. Rosso se l'etichetta torna
+     * dentro il campo (hint), se si stacca dal campo o se non puo' andare a capo.
+     */
+    @Test
+    fun `la durata del portiere ha l'etichetta sopra il campo, intera`() {
+        val schermata = impostazioni()
+        val etichetta = schermata.findViewById<TextView>(R.id.keeperTimerLabel)
+        val campo = schermata.findViewById<TextInputLayout>(R.id.keeperTimerLayout)
+        val gruppo = schermata.findViewById<View>(R.id.keeperTimerField)
+
+        assertEquals(schermata.getString(R.string.keeper_timer_minutes), etichetta.text.toString())
+        assertNull("l'etichetta e' ancora nel bordo del campo", campo.hint)
+        assertEquals("l'etichetta non dice a TalkBack di che campo e'", R.id.keeperTimerEdittext, etichetta.labelFor)
+        assertSame("etichetta e campo si mostrano e si nascondono insieme", gruppo, etichetta.parent)
+        assertSame(gruppo, campo.parent)
+        assertEquals("l'etichetta deve poter andare a capo", Int.MAX_VALUE, etichetta.maxLines)
+        assertNull("l'etichetta non deve avere i puntini", etichetta.ellipsize)
     }
 }

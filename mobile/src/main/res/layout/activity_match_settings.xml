@@ -98,10 +98,16 @@
                         <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/keeperSwitch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/space_16" android:contentDescription="@string/settings_keeper_title" />
                     </LinearLayout>
 
-                    <com.google.android.material.textfield.TextInputLayout android:id="@+id/keeperTimerLayout" style="@style/Widget.App.TextInputLayout" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="@dimen/space_16" android:layout_marginBottom="@dimen/space_12" android:hint="@string/keeper_timer_minutes">
+                    <!-- La durata: l'etichetta sta sopra il campo e va a capo, invece di stare nel bordo del campo, dove a caratteri grandi si tagliava («Durata del portiere (minu…»). Bozza B1 scelta da Cioti. -->
+                    <LinearLayout android:id="@+id/keeperTimerField" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="@dimen/space_16" android:layout_marginBottom="@dimen/space_12" android:orientation="vertical">
 
-                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/keeperTimerEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" android:digits="0123456789.," android:imeOptions="actionDone" android:inputType="numberDecimal" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                        <TextView android:id="@+id/keeperTimerLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/space_4" android:labelFor="@+id/keeperTimerEdittext" android:text="@string/keeper_timer_minutes" android:textAppearance="@style/TextAppearance.App.Caption" />
+
+                        <com.google.android.material.textfield.TextInputLayout android:id="@+id/keeperTimerLayout" style="@style/Widget.App.TextInputLayout" android:layout_width="match_parent" android:layout_height="wrap_content">
+
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/keeperTimerEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" android:digits="0123456789.," android:imeOptions="actionDone" android:inputType="numberDecimal" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
                 </LinearLayout>
 
             </LinearLayout>

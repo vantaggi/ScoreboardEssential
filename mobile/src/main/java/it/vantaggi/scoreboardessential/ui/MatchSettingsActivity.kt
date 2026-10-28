@@ -228,7 +228,7 @@ class MatchSettingsActivity : AppCompatActivity() {
             // Il ViewModel e' la verita': l'interruttore e il campo si allineano senza riscrivere.
             aggiornandoIlPortiere = true
             binding.keeperSwitch.isChecked = duration > 0
-            binding.keeperTimerLayout.visibility = if (duration > 0) android.view.View.VISIBLE else android.view.View.GONE
+            binding.keeperTimerField.visibility = if (duration > 0) android.view.View.VISIBLE else android.view.View.GONE
             if (duration > 0) {
                 val testo = DurataPortiere.minutiDi(duration)
                 if (binding.keeperTimerEdittext.text.toString() != testo) binding.keeperTimerEdittext.setText(testo)

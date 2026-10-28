@@ -285,6 +285,44 @@ class ColonnaDiGiocoTest {
         }
     }
 
+    /**
+     * Bozza A1 di Cioti: nel calcio il gol senza marcatore sta su due righe, «Gol Squadra 1» sopra e
+     * «Chi ha segnato? ›» sotto. Su una riga a 360dp diventava «Gol Squadra 1 · chi ha segn…». Rosso
+     * se la frase torna su una riga sola (va a capo da sola o perde caratteri), se una delle due
+     * righe ha i puntini o se le due righe non stanno nella striscia da 56dp.
+     */
+    @Test
+    fun nelCalcio_il_gol_senza_marcatore_sta_intero_su_due_righe_a_360dp() {
+        for (scala in listOf(1f, 2f)) {
+            val radice = gonfia(scala)
+            val testo = radice.findViewById<TextView>(R.id.last_action_text)
+            val stato = StatoStriscia(radice.context.getString(R.string.strip_goal_unattributed, "Squadra 1"))
+            assertEquals("la frase non e' su due righe: '${stato.testo}'", 2, stato.righe)
+            testo.maxLines = stato.righe
+            testo.text = stato.testo
+            misura(radice, larghezzaDp = 360)
+            val densita = radice.resources.displayMetrics.density
+            val layout = testo.layout
+            assertEquals("a scala $scala: '${testo.text}' non sta in due righe", 2, layout.lineCount)
+            for (riga in 0 until 2) {
+                assertEquals("a scala $scala la riga $riga ha i puntini", 0, layout.getEllipsisCount(riga))
+            }
+            assertEquals("a scala $scala la frase perde caratteri", testo.text.length, layout.getLineEnd(1))
+            assertTrue(
+                "a scala $scala le due righe sono alte ${layout.height}px, la striscia ${56 * densita}px",
+                layout.height <= 56 * densita,
+            )
+            assertEquals(
+                "la striscia resta alta 56dp",
+                56 * densita,
+                radice.findViewById<View>(R.id.last_action_strip).height.toFloat(),
+                1f,
+            )
+        }
+        // Le altre frasi restano su una riga.
+        assertEquals(1, StatoStriscia("Gol Squadra 1 · Marco B.").righe)
+    }
+
     @Test
     fun laColonna_riempie_lo_schermo_e_le_zone_sono_bersagli_da_48dp() {
         val radice = gonfia(1f)
