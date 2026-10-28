@@ -165,6 +165,25 @@ class MenuActivityTest {
         assertNull(ShadowToast.getTextOfLatestToast())
     }
 
+    /**
+     * Lo 0-0 giocato a tempo, passando dall'intent come nel menu vero: [MenuVociTest] prova la funzione
+     * pura, qui si prova che tempoAvviato arrivi davvero all'activity. Rosso se l'extra non viene scritto
+     * o riletto: la voce resterebbe spenta con "Niente da salvare" (PR #220 lo aveva dimenticato).
+     */
+    @Test
+    fun `a registro vuoto col tempo avviato FINE PARTITA e' accesa e chiude`() {
+        val activity = apri(base.copy(partitaIniziata = false, tempoAvviato = true, risultato = "0–0"))
+
+        assertTrue(fine(activity).isEnabled)
+
+        fine(activity).performClick()
+        avanza(1_000)
+        fine(activity).performClick()
+
+        assertTrue(activity.isFinishing)
+        assertEquals(MenuActivity.AZIONE_FINE, azione(activity))
+    }
+
     @Test
     fun `a partita non cominciata FINE PARTITA e' spenta e dice che non c'e' niente da salvare`() {
         val activity = apri(base.copy(partitaIniziata = false))

@@ -80,6 +80,7 @@ class MenuActivity : ComponentActivity() {
         private const val EXTRA_PORTIERE = "menu_portiere"
         private const val EXTRA_VIBRAZIONE = "menu_vibrazione"
         private const val EXTRA_SCHERMO_ACCESO = "menu_schermo_acceso"
+        private const val EXTRA_TEMPO_AVVIATO = "menu_tempo_avviato"
         private const val SEPARATORE_GIOCATORI = "\n"
 
         /**
@@ -111,6 +112,7 @@ class MenuActivity : ComponentActivity() {
                 .putExtra(EXTRA_SPORT, input.sport)
                 .putExtra(EXTRA_RISULTATO, input.risultato)
                 .putExtra(EXTRA_RIFIUTATI, input.rifiutati)
+                .putExtra(EXTRA_TEMPO_AVVIATO, input.tempoAvviato)
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -163,6 +165,7 @@ class MenuActivity : ComponentActivity() {
                 portiere = intent.getStringExtra(EXTRA_PORTIERE).orEmpty(),
                 vibrazionePunti = intent.getBooleanExtra(EXTRA_VIBRAZIONE, true),
                 schermoAcceso = intent.getBooleanExtra(EXTRA_SCHERMO_ACCESO, false),
+                tempoAvviato = intent.getBooleanExtra(EXTRA_TEMPO_AVVIATO, false),
             )
 
         aggiungiVoci(findViewById(R.id.menu_voci), MenuVoci.calcola(input))
