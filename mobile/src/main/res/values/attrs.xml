@@ -42,4 +42,11 @@
         <attr name="emptyReason" format="string" />
         <attr name="emptyAction" format="string" />
     </declare-styleable>
+
+    <!-- TestoCheSiStringe: la misura piu' piccola, e per i nomi le due righe e la loro misura massima. -->
+    <declare-styleable name="TestoCheSiStringe">
+        <attr name="minimo" format="dimension" />
+        <attr name="aCapoSeNonBasta" format="boolean" />
+        <attr name="massimoADueRighe" format="dimension" />
+    </declare-styleable>
 </resources>

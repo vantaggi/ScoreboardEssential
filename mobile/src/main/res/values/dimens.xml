@@ -9,6 +9,11 @@
     <dimen name="game_names_height">48dp</dimen>
     <dimen name="game_detail_height">48dp</dimen>
     <dimen name="game_strip_height">56dp</dimen>
+    <!-- Nomi lunghi delle squadre e frasi lunghe della striscia: fin dove si stringono prima dei
+         puntini (TestoCheSiStringe). I nomi su due righe stanno a 16dp con la barretta nei 48dp. -->
+    <dimen name="game_name_text_min">14dp</dimen>
+    <dimen name="game_name_two_lines_max">16dp</dimen>
+    <dimen name="game_strip_text_min">13dp</dimen>
     <dimen name="game_zone_height">112dp</dimen>
     <!--
         Limiti del numero, in dp e non in sp: la dimensione si calcola una volta in MainActivity
