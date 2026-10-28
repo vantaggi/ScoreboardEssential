@@ -11,6 +11,7 @@ import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -181,5 +182,31 @@ class PalliniDelServizioTest {
             repeat(4) { stato = padel.apply(stato, ScoringEvent.Point(if (game % 2 == 0) 1 else 2)) }
         }
         assertEquals(listOf(1, 1, 2, 2), visti)
+    }
+
+    /**
+     * Nel calcio non c'e' servizio: lo slot dei pallini (28dp piu' 6 di margine) togliera' spazio al
+     * nome. Rosso se nel calcio lo slot resta, o se nel padel sparisce.
+     */
+    @Test
+    fun `lo slot del servizio c'e' solo negli sport che hanno il servizio e il nome si allarga nel calcio`() {
+        val radice = gonfia()
+        val righe = radice.findViewById<View>(R.id.names_row)
+        val nome = radice.findViewById<View>(R.id.team1_name_textview)
+        val densita = radice.resources.displayMetrics.density
+        val slot = radice.findViewById<View>(R.id.team1_serve_slot)
+        // Un nome troppo lungo per entrare: il testo si ellissa e la sua larghezza e' lo spazio che ha.
+        radice.findViewById<android.widget.TextView>(R.id.team1_name_textview).text = "SQUADRA CON UN NOME LUNGHISSIMO"
+
+        mostraGliSlotDelServizio(righe, sportConServizio = true)
+        misura(radice)
+        assertEquals("nel padel lo slot c'e'", View.VISIBLE, slot.visibility)
+        val conLoSlot = nome.width
+
+        mostraGliSlotDelServizio(righe, sportConServizio = false)
+        misura(radice)
+        assertEquals("nel calcio lo slot e' GONE", View.GONE, slot.visibility)
+        assertEquals("anche quello della squadra 2", View.GONE, radice.findViewById<View>(R.id.team2_serve_slot).visibility)
+        assertTrue("il nome si allarga di almeno 30dp: ${nome.width - conLoSlot}px", nome.width - conLoSlot >= 30 * densita)
     }
 }
