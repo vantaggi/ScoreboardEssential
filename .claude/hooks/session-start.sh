@@ -41,8 +41,28 @@ fi
 # La 36 la prendiamo subito, cosi' la prima build non si ferma a scaricarla.
 yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK" --licenses >/dev/null 2>&1 || true
 if [ ! -d "$SDK/platforms/android-36" ]; then
-    "$SDK/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK" "platforms;android-36" "platform-tools" >/dev/null
+    "$SDK/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK" "platforms;android-36" "platform-tools" >/dev/null 2>&1
 fi
+
+# Maven Central dal mirror di Google, scelta di Cioti del 28 ottobre 2026: dal container
+# repo1.maven.org e repo.maven.apache.org rispondono 429 a circa meta' delle richieste, e ne'
+# Gradle ne' Robolectric (che scarica android-all-instrumented a runtime) ritentano: la prima
+# build ha richiesto 11 lanci. L'init script sta fuori dal repo, quindi la build del repo e
+# la CI non cambiano; nel cloud il mirror viene per primo e Maven Central resta di riserva.
+mkdir -p "${HOME}/.gradle/init.d"
+cat > "${HOME}/.gradle/init.d/maven-central-mirror.gradle" <<'GRADLE'
+def mirror = 'https://maven-central.storage-download.googleapis.com/maven2/'
+beforeSettings { settings ->
+    settings.pluginManagement.repositories { maven { url = mirror } }
+    settings.dependencyResolutionManagement.repositories { maven { url = mirror } }
+}
+allprojects {
+    tasks.withType(Test).configureEach {
+        systemProperty 'robolectric.dependency.repo.url', mirror
+        systemProperty 'robolectric.dependency.repo.id', 'maven-central-mirror'
+    }
+}
+GRADLE
 
 # local.properties e' ignorato da git: qui dice a Gradle dov'e' l'SDK.
 echo "sdk.dir=$SDK" > local.properties
