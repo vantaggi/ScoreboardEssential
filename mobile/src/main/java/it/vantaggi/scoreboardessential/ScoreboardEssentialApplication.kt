@@ -3,6 +3,10 @@ package it.vantaggi.scoreboardessential
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.os.Looper
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.padelelite.DirettaAvvisoNotifica
 import it.vantaggi.scoreboardessential.padelelite.DirettaChiusuraWorker
@@ -41,6 +45,38 @@ open class ScoreboardEssentialApplication : Application() {
      */
     open val padelElite: PadelEliteServices by lazy { PadelEliteServices(this, PadelEliteConfig.fromBuildConfig(), matchRepository) }
 
+    /**
+     * Il motore della partita, cioe' il [MainViewModel], vive nel processo e non nella schermata.
+     *
+     * Prima stava nello store dell'Activity: chiusa la schermata (indietro, o l'Activity distrutta dal sistema col
+     * telefono in tasca) il motore moriva, e i punti dell'orologio arrivavano a un servizio senza nessuno a cui
+     * darli. Il polso li metteva in coda ("preso in custodia") ma non rivedeva il punteggio finche' l'app non si
+     * riapriva. Ora chi ha bisogno del motore lo chiede qui, sia la schermata sia il servizio dell'orologio
+     * ([SimplifiedDataLayerListenerService]): e' lo stesso oggetto, uno solo per processo.
+     */
+    private val motoreStore = ViewModelStore()
+    private val motoreOwner =
+        object : ViewModelStoreOwner {
+            override val viewModelStore: ViewModelStore get() = motoreStore
+        }
+
+    /** Il motore della partita; lo crea alla prima richiesta. Solo dal thread principale: il ViewModel scrive LiveData. */
+    fun motore(): MainViewModel {
+        check(Looper.myLooper() == Looper.getMainLooper()) { "Il motore si chiede dal thread principale" }
+        return ViewModelProvider(
+            motoreOwner,
+            MainViewModel.MainViewModelFactory(matchRepository, userPreferencesRepository, matchSettingsRepository, this),
+        )[MainViewModel::class.java]
+    }
+
+    /**
+     * Libera il motore: la schermata chiusa a partita ferma lo lascia andare, come faceva lo store dell'Activity.
+     * Con una partita in corso non si chiama: e' quel motore che continua a servire l'orologio.
+     */
+    fun liberaIlMotore() {
+        motoreStore.clear()
+    }
+
     override fun onCreate() {
         // Il contesto dell'applicazione non riceve il tema del manifest (solo le activity): i token elite_* seguono il
         // tema (G-10), e senza questa riga un getColor() da servizio, ricevitore o test uscirebbe magenta.
@@ -60,6 +96,9 @@ open class ScoreboardEssentialApplication : Application() {
 
         /** La notifica fissa della diretta (D-3): importanza bassa, niente suono ne' vibrazione. */
         const val CHANNEL_ID_DIRETTA = "scoreboard_diretta_channel"
+
+        /** La notifica fissa del servizio che tiene vivo il motore durante la partita: importanza bassa, muta. */
+        const val CHANNEL_ID_PARTITA = "scoreboard_partita_channel"
     }
 
     /**
@@ -112,6 +151,15 @@ open class ScoreboardEssentialApplication : Application() {
                 enableVibration(false)
             }
         notificationManager.createNotificationChannel(direttaChannel)
+
+        // Partita Channel (Low Importance - Silent): la notifica fissa del servizio che tiene vivo il motore
+        val partitaChannel =
+            NotificationChannel(CHANNEL_ID_PARTITA, getString(R.string.partita_in_corso_channel), NotificationManager.IMPORTANCE_LOW).apply {
+                setShowBadge(false)
+                setSound(null, null)
+                enableVibration(false)
+            }
+        notificationManager.createNotificationChannel(partitaChannel)
 
         // Alarm Channel (High Importance - Sound & Pop-up)
         val alarmName = "Timer Alarms" // You might want to extract this to strings.xml later if strict localization is needed

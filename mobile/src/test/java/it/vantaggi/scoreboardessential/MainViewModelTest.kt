@@ -39,6 +39,7 @@ import it.vantaggi.scoreboardessential.repository.MatchSettings
 import it.vantaggi.scoreboardessential.repository.MatchSettingsRepository
 import it.vantaggi.scoreboardessential.repository.UserPreferencesRepository
 import it.vantaggi.scoreboardessential.service.MatchTimerService
+import it.vantaggi.scoreboardessential.service.PartitaInCorsoServizio
 import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 import it.vantaggi.scoreboardessential.ui.MatchHistoryUiState
@@ -1455,6 +1456,43 @@ class MainViewModelTest {
             assertEquals(0, viewModel.team1Score.value)
             verify(playerDao).decrementGoals(7)
             viewModel.team1Score.removeObserver(scoreObserver)
+        }
+
+    /**
+     * Col telefono in tasca il processo non deve essere congelato: finche' c'e' una partita un servizio in primo
+     * piano lo tiene vivo, e col motore dentro risponde all'orologio. Parte col primo punto, una volta sola, e
+     * si ferma quando il registro e' di nuovo vuoto. Rosso senza `sincronizzaServizioPartita` in
+     * `aggiornaAnnullamento`: nessun avvio.
+     */
+    @Test
+    fun `il primo punto accende il servizio in primo piano e l'annullo lo spegne`() =
+        runTest {
+            val avviatoPrima = PartitaInCorsoServizio.avvia
+            val fermatoPrima = PartitaInCorsoServizio.ferma
+            var avvii = 0
+            var arresti = 0
+            PartitaInCorsoServizio.dimentica()
+            PartitaInCorsoServizio.avvia = { _, _ -> avvii++ }
+            PartitaInCorsoServizio.ferma = { _, _ -> arresti++ }
+            try {
+                viewModel.addScore(1)
+                advanceUntilIdle()
+                assertEquals("il primo punto accende il servizio", 1, avvii)
+
+                viewModel.addScore(2)
+                advanceUntilIdle()
+                assertEquals("il secondo non lo richiede", 1, avvii)
+                assertEquals(0, arresti)
+
+                viewModel.undoLastGoal()
+                viewModel.undoLastGoal()
+                advanceUntilIdle()
+                assertEquals("registro vuoto: il servizio si ferma", 1, arresti)
+            } finally {
+                PartitaInCorsoServizio.avvia = avviatoPrima
+                PartitaInCorsoServizio.ferma = fermatoPrima
+                PartitaInCorsoServizio.dimentica()
+            }
         }
 
     /**

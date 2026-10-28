@@ -23,7 +23,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -142,15 +141,9 @@ private const val CONTRASTO_MINIMO_GRAFICA = 3.0
 class MainActivity :
     AppCompatActivity(),
     SelectScorerDialogFragment.ScorerDialogListener {
-    private val viewModel: MainViewModel by viewModels {
-        val application = application as ScoreboardEssentialApplication
-        MainViewModel.MainViewModelFactory(
-            application.matchRepository,
-            application.userPreferencesRepository,
-            application.matchSettingsRepository,
-            application,
-        )
-    }
+    // Il motore e' del processo, non della schermata (ScoreboardEssentialApplication.motore): chiusa questa
+    // Activity il motore resta, se c'e' una partita, a servire l'orologio.
+    private val viewModel: MainViewModel by lazy { (application as ScoreboardEssentialApplication).motore() }
 
     // Core view references
     private lateinit var team1ScoreTextView: TextView
@@ -365,12 +358,20 @@ class MainActivity :
         }
         // Anche il gruppo si sceglie altrove: la rosa si rilegge in sottofondo, e "Aggiungi" la trova pronta.
         viewModel.preparaLaRosaDelGruppo()
+        // Una partita cominciata dal polso a schermo spento non ha potuto avviare il servizio in primo piano
+        // (il sistema lo consente solo a un'app visibile): ora che siamo visibili si riprova.
+        viewModel.sincronizzaServizioPartita()
     }
 
     override fun onDestroy() {
         // Il ritorno al testo base dopo 3 secondi e' accodato sulla vista: non deve sopravvivere
         // all'Activity e tenerla in vita fino alla sua scadenza.
         if (::lastActionText.isInitialized) lastActionText.removeCallbacks(fineMessaggioInStriscia)
+        // Chiusa da chi gioca (non ruotata, non distrutta dal sistema) a partita ferma: il motore non serve a
+        // nessuno e si lascia andare, come prima. Con una partita in corso resta, e continua a rispondere al polso.
+        if (isFinishing && !isChangingConfigurations && !viewModel.partitaInCorso()) {
+            (application as ScoreboardEssentialApplication).liberaIlMotore()
+        }
         super.onDestroy()
     }
 
