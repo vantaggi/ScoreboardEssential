@@ -53,7 +53,13 @@ mkdir -p "${HOME}/.gradle/init.d"
 cat > "${HOME}/.gradle/init.d/maven-central-mirror.gradle" <<'GRADLE'
 def mirror = 'https://maven-central.storage-download.googleapis.com/maven2/'
 beforeSettings { settings ->
-    settings.pluginManagement.repositories { maven { url = mirror } }
+    // Il portale subito dopo: foojay e il plugin ktlint su Central non ci sono, e senza
+    // questa riga Gradle li cercava li' prendendo 429 (uno, sul marker di ksp, aveva fatto
+    // fallire la build).
+    settings.pluginManagement.repositories {
+        maven { url = mirror }
+        gradlePluginPortal()
+    }
     settings.dependencyResolutionManagement.repositories { maven { url = mirror } }
 }
 allprojects {

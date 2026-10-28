@@ -107,6 +107,10 @@ Questo comando è `VERIFY` in tutto il documento.
 **Nel container cloud (senza Android SDK) ./gradlew non parte**, ma il formato si controlla lo
 stesso: `scripts/ktlint-cloud.sh` (stesso motore ktlint della CI, ~15 s; `--format` corregge).
 Va lanciato prima di ogni push: un errore di ktlint costa altrimenti un giro di CI.
+Con l'ambiente cloud nuovo (dl.google.com aperto, 28 ottobre 2026) anche `./gradlew` parte:
+l'hook `.claude/hooks/session-start.sh` installa JDK 17 e Android SDK e mette Maven Central dal
+mirror di Google (init script in `~/.gradle/init.d`, solo nel cloud). Prima build ~5 minuti,
+poi una modifica si riprova in ~2 minuti, un test filtrato (`--tests`) in ~16 secondi.
 La CI fa `ktlintCheck` per primo e poi `testDebugUnitTest`: i test unitari girano per la sola
 variante debug, il codice release lo esercitano `assembleRelease` e R8.
 
