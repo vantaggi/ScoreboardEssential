@@ -232,8 +232,8 @@ class PadelEliteActivity : AppCompatActivity() {
     /**
      * "Giocatori del gruppo". Stati: scegli un gruppo, in caricamento (una riga di testo), vuota e
      * errore di rete (EmptyStateView col suo comando), pronta. Pronta ha due parti ([RosaInVista]):
-     * i collegati, sempre in vista, e quelli da collegare dietro la ricerca, con i nomi uguali da
-     * confermare gia' in vista. La sessione scaduta riporta al modulo di accesso.
+     * i collegati e quelli da collegare, tutti in vista (la ricerca li stringe), con i nomi uguali da
+     * confermare in cima. La sessione scaduta riporta al modulo di accesso.
      */
     private fun mostraRosa(stato: RosaUi) {
         val messaggio = findViewById<TextView>(R.id.rosa_message)
@@ -293,10 +293,9 @@ class PadelEliteActivity : AppCompatActivity() {
         vista.collegati.forEach { aggiungiRiga(collegati, it, pronta.freeLocals) }
         vista.daCollegare.forEach { aggiungiRiga(daCollegare, it, pronta.freeLocals) }
         gruppoDaCollegare.isVisible = vista.daCollegare.isNotEmpty()
-        // Il suggerimento a campo vuoto, "nessuno" se la ricerca non trova niente; con righe trovate tace.
+        // "Nessuno" solo se la ricerca non trova niente; a campo vuoto ci sono gia' tutti i nomi.
         val trovati = vista.daCollegare.any { it.proposedLocalName == null }
-        suggerimento.isVisible = cerca.isBlank() || !trovati
-        suggerimento.setText(if (cerca.isBlank()) R.string.padel_elite_rosa_search_hint else R.string.padel_elite_rosa_no_match)
+        suggerimento.isVisible = cerca.isNotBlank() && !trovati
     }
 
     /** Una riga della rosa: il nome della dashboard e, sotto, lo stato del collegamento a parole. */
