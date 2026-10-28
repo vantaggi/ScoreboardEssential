@@ -966,7 +966,7 @@ In ambient:
 - racchetta: A invariata e pallino del servizio;
 - nascosti: strisce, anello, D, glifo del menu, suggerimento;
 - portiere (calcio, 28-10-2026): il K resta nel suo posto, in minuti per eccesso e senza anello: `K 5'` sopra il minuto, `K <1'` nell'ultimo minuto, `K 0'` a conto finito; bianco se corre, #BDBDBD se e' fermo, spento o non partito niente. I secondi non si scrivono: il sistema ridisegna una volta al minuto e un valore che invecchia direbbe il falso proprio alla scadenza (linee guida Wear OS: niente valori che invecchiano). Scelta di Cioti fra tre bozze (A minuti, B minuti e tacche, C ora di scadenza). `FaceText.portiereAmbient`, `MainActivity.ambientPortiere`;
-- schermo acceso in partita (28-10-2026): sull'SM-L350 "Mostra ultima app" a 5 secondi riporta al quadrante anche con l'icona della partita; a 2 minuti (il massimo) regge. Voce "Schermo acceso" (`visibility`, `ic_visibility`) nel gruppo Impostazioni, del polso, spenta di default: a partita in corso `FLAG_KEEP_SCREEN_ON`, niente ambient e piu' batteria. Sottotitolo "Per tutta la partita" / "Come da sistema".
+- schermo acceso in partita (28-10-2026): sull'SM-L350 "Mostra ultima app" a 5 secondi riporta al quadrante anche con l'icona della partita; a 2 minuti (il massimo) regge. Voce "Schermo acceso" (`light_mode`, `ic_light_mode`) nel gruppo Impostazioni, del polso, spenta di default: a partita in corso `FLAG_KEEP_SCREEN_ON`, niente ambient e piu' batteria. Sottotitolo "Per tutta la partita" / "Come da sistema".
 - riga E solo con un'anomalia o a partita finita, in #BDBDBD.
 burnInProtectionRequired: la radice si sposta di ±4dp a ogni aggiornamento. lowBitAmbient: niente anti-alias.
 All'uscita dall'ambient e in onResume: 500ms in cui i tocchi sui lati sono ignorati in silenzio. Tema Theme.ScoreboardEssential.Face con android:windowSwipeToDismiss=false, solo per MainActivity: si esce col tasto. Le altre schermate tengono lo swipe come indietro.
@@ -1473,7 +1473,7 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Scegli lo sport | `sports` | - | `ic_sports` |
 | Fine partita | `flag` | - | `ic_flag` |
 | Vibrazione | `vibration` | - | `ic_vibration` |
-| Schermo acceso in partita | `visibility` | - | `ic_visibility` |
+| Schermo acceso in partita | `light_mode` | - | `ic_light_mode` |
 | Storico delle partite | `history` | `ic_history` | - |
 | Cronaca della partita | `timeline` | `ic_timeline` | - |
 | Presenze | `event_available` | `ic_event_available` | - |

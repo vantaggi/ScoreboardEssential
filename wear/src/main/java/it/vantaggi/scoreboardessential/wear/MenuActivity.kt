@@ -391,7 +391,7 @@ class MenuActivity : ComponentActivity() {
             IdVoce.PROSSIMA_PARTITA -> R.drawable.ic_groups
             IdVoce.REGOLA_40 -> R.drawable.ic_sports_tennis
             IdVoce.VIBRAZIONE -> R.drawable.ic_vibration
-            IdVoce.SCHERMO_ACCESO -> R.drawable.ic_visibility
+            IdVoce.SCHERMO_ACCESO -> R.drawable.ic_light_mode
             IdVoce.PORTIERE -> R.drawable.ic_sports_handball
             IdVoce.FINE_PARTITA -> R.drawable.ic_flag
             IdVoce.SCARTA_CODA -> R.drawable.ic_delete
