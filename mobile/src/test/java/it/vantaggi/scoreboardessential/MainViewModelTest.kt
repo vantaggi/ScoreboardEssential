@@ -3227,6 +3227,56 @@ class MainViewModelTest {
         }
 
     /**
+     * Il padel nasce al killer point per chi non ha mai scelto (28 ottobre 2026) e lo dice anche
+     * all'orologio, che non ha una regola sua. Rosso se applySport torna a leggere la configurazione
+     * del registro (punto secco) quando le impostazioni non hanno una scelta.
+     */
+    @Test
+    fun `il padel senza scelta nel 40-40 gioca il killer point e lo dice all'orologio`() =
+        runTest {
+            val nuovo = nuovoViewModel(sportSalvato = SportRegistry.PADEL)
+            advanceUntilIdle()
+
+            val engine =
+                nuovo.javaClass
+                    .getDeclaredField("engine")
+                    .apply { isAccessible = true }
+                    .get(nuovo) as MatchEngine
+            assertEquals(DeuceRule.KILLER_POINT, engine.rules.config.deuce)
+            val padel = statiV2().last { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL }
+            assertEquals("KILLER_POINT", padel[WearConstants.KEY_DEUCE_RULE])
+        }
+
+    /** Chi ha scelto il punto secco lo tiene anche col nuovo predefinito. Rosso se il predefinito vince sulla scelta. */
+    @Test
+    fun `il punto secco scelto resta il punto secco`() =
+        runTest {
+            val nuovo =
+                nuovoViewModel(
+                    sportSalvato = SportRegistry.PADEL,
+                    regoleDel40 = mapOf(SportRegistry.PADEL to DeuceRule.GOLDEN_POINT),
+                )
+            advanceUntilIdle()
+
+            val padel = statiV2().last { it[WearConstants.KEY_SPORT_ID] == SportRegistry.PADEL }
+            assertEquals("GOLDEN_POINT", padel[WearConstants.KEY_DEUCE_RULE])
+        }
+
+    /**
+     * Una partita salvata prima della versione 16 non ha la regola ("") e si giocava a punto secco:
+     * col nuovo predefinito non deve riaprirsi al killer point, o il suo 40-40 non sarebbe un game.
+     * Rosso se Match.regole() usa il predefinito invece della configurazione per la riga vuota.
+     */
+    @Test
+    fun `una partita di padel senza regola salvata si riprende a punto secco`() =
+        runTest {
+            partitaSalvata("1|1,2,1,2,1,2,1", sportId = SportRegistry.PADEL, deuceRule = "")
+            advanceUntilIdle()
+
+            assertEquals(DeuceRule.GOLDEN_POINT, motore().rules.config.deuce)
+        }
+
+    /**
      * Dal polso la regola del 40-40 si scrive nelle impostazioni, come dal telefono, e lo stato v2 porta
      * le regole fra cui scegliere. A partita cominciata, o con un nome che non e' una regola, non si
      * scrive niente. Si rompe togliendo la guardia del registro o le chiavi dallo stato.

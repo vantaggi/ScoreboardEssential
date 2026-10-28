@@ -2492,6 +2492,18 @@ Richiesta del proprietario: dall'orologio i punti arrivano al telefono, ma "non 
 1. Il file della partita (export e Diretta) porta gia' la regola in `config.deuce`, e la dashboard la traduce in `goldenPoint` e `killerPoint` (`docs/dashboard/riferimento-match-log.js`): ora puo' valere `KILLER_POINT` o `ADVANTAGE`. Non provato contro la dashboard vera (produzione).
 2. L'orologio non ha un selettore: la regola si sceglie sul telefono.
 
+## Killer point predefinito nel padel - 28 ottobre 2026
+
+Richiesta del proprietario: nel padel "Sul 40-40" parte dal killer point, sul telefono e sull'orologio. L'impostazione e' una sola: vive sul telefono (`MatchSettingsRepository`, chiave `deuce_rule_<sport>`), il polso la legge dallo stato v2 (`deuce_rule`) e la cambia con `SETTING_DEUCE`, che il telefono scrive nella stessa chiave. Quindi cambia un solo punto.
+
+**Cosa cambia.** `SportRegistry.defaultDeuce(id)`: killer point per il padel, la configurazione per gli altri sport. Lo usano `MainViewModel` (`applySport`, `allineaRegolaDel40`) e `MatchSettingsViewModel` dove non c'e' una scelta salvata. Chi ha gia' scelto (anche il punto secco) tiene la sua regola; il tennis resta ai vantaggi. Nessuna migrazione, nessuna chiave nuova, protocollo dell'orologio invariato.
+
+**Cosa NON cambia, di proposito.** La configurazione del padel nel registro resta il punto secco: e' la regola con cui si rigiocano le partite salvate con `deuceRule` vuoto (prima dello schema 16) e il conto dell'orologio senza regola dal telefono. Cambiarla riscriverebbe il registro delle partite vecchie. Le partite nuove salvano sempre il nome della regola.
+
+**Piano UI.** Nessun cambio di interfaccia: stessa riga, stesso selettore, un valore mostrato diverso. Nessun colore, icona, movimento o testo nuovo; nessun conflitto. Controllo dei pattern vietati di `review.md`: niente di nuovo da controllare.
+
+**Come si prova.** `SportRegistryTest` (il predefinito del padel e' il killer point, la configurazione resta il punto secco), `MatchSettingsViewModelTest` (il selettore mostra il killer point senza scelta e la scelta salvata se c'e'), `MainViewModelTest` (padel senza scelta: killer point e lo dice all'orologio; punto secco scelto: resta; riga salvata senza regola: si riprende a punto secco).
+
 ## Revisione di menu e pagine - 27 ottobre 2026
 
 Richiesta del proprietario: i menu di telefono e orologio sono "poco leggibili e molto confusionari", e sull'orologio lo spazio non e' usato bene; poi, approvata la direzione, la revisione di tutte le pagine (non il tabellone). Audit con le foto prese stasera sul telefono S26 e sul Galaxy Watch (480x480, 340dpi, circa 227dp) e proposta schermata per schermata: <https://claude.ai/artifact/R97K4QRxHkd33ohzcpMQf5>. Le foto stanno sul PC in `build\audit_menu_prima\` (ignorata da git).
