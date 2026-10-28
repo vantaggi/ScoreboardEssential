@@ -113,6 +113,17 @@ object TeamInk {
         return NERO
     }
 
+    /**
+     * La grafica di squadra su un fondo QUALSIASI: su un fondo scuro si schiarisce ([graphicOn]), su uno
+     * chiaro si scurisce ([graphicOnLight]). Il verso lo decide la luminanza del fondo: da [SOGLIA] in su il
+     * nero contrasta di piu' del bianco. Serve alle superfici del telefono, che hanno il tema scuro e il chiaro.
+     */
+    fun graphicOnSurface(
+        argb: Int,
+        sfondo: Int,
+        min: Double = 3.0,
+    ): Int = if (luminance(sfondo) >= SOGLIA) graphicOnLight(argb, sfondo, min) else graphicOn(argb, sfondo, min)
+
     private fun lineare(canale: Int): Double {
         val c = canale / 255.0
         return if (c <= 0.04045) c / 12.92 else ((c + 0.055) / 1.055).pow(2.4)

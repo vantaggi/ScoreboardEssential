@@ -117,5 +117,5 @@ object ChronicleText {
     fun graphicOn(
         paint: Int,
         background: Int,
-    ): Int = TeamInk.graphicOn(paint, background, GRAPHIC_MIN)
+    ): Int = TeamInk.graphicOnSurface(paint, background, GRAPHIC_MIN)
 }

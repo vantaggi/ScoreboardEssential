@@ -46,7 +46,7 @@ fun invioLook(
         }
 
         InvioState.IMPORTED -> {
-            InvioLook(context.getString(R.string.padel_elite_status_imported), R.drawable.ic_check_circle, R.color.elite_lime)
+            InvioLook(context.getString(R.string.padel_elite_status_imported), R.drawable.ic_check_circle, R.color.elite_accent)
         }
 
         InvioState.DISCARDED -> {

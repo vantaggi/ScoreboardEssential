@@ -401,9 +401,10 @@
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/team1_swap_button"
                         style="@style/Widget.App.Button.Secondary"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_8"
+                        android:paddingHorizontal="@dimen/space_8"
                         android:text="@string/label_pair_swap"
                         app:icon="@drawable/ic_swap_horiz"
                         app:iconSize="@dimen/icon_standard" />
@@ -482,9 +483,10 @@
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/team2_swap_button"
                         style="@style/Widget.App.Button.Secondary"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/space_8"
+                        android:paddingHorizontal="@dimen/space_8"
                         android:text="@string/label_pair_swap"
                         app:icon="@drawable/ic_swap_horiz"
                         app:iconSize="@dimen/icon_standard" />
