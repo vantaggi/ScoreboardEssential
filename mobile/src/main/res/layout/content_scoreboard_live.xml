@@ -468,6 +468,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             app:minimo="@dimen/game_strip_text_min"
+            app:aCapoSeNonBasta="true"
             android:textAppearance="@style/TextAppearance.App.Game.Command"
             android:textSize="16dp"
             android:textColor="@color/elite_text_primary"

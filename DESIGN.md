@@ -2856,9 +2856,13 @@ Controllo delle home di telefono e orologio contro la Constitution, con le cattu
 - **Dettaglio del padel al 200%.** Valore (24) e didascalia «Game» (12) erano in sp nel dettaglio da 48dp: la didascalia usciva. Ora sono in dp come gli altri testi del gioco (scelta del passo 2).
 - **Formazioni nel foglio al 200%.** Affiancate, a 360dp la colonna era piu' stretta di «formazione». Dal 150% in su vanno una sotto l'altra a tutta larghezza (`disponiLeFormazioni`, deciso alla creazione).
 - **Stati.** Nome corto (20dp, una riga), lungo (piu' piccolo o su due righe), lunghissimo (minimo coi puntini); striscia a una e due righe; foglio a testo normale e grande. Movimento: nessuno.
-- **Conflitti e debiti.** Il nome della squadra cambia misura col testo: e' l'unico testo del gioco che lo fa, e lo fa solo quando non entra. Nel padel coi pallini del servizio un nome di due parole lunghe resta coi puntini (lo slot toglie 34dp); i nomi del padel sono di solito le coppie.
+- **Conflitti e debiti.** Il nome della squadra cambia misura col testo: e' l'unico testo del gioco che lo fa, e lo fa solo quando non entra. Nel padel lo slot del servizio toglie 34dp, ma il -1 non c'e': un nome di due parole lunghe va su due righe (secondo giro, sotto).
 - **Pattern vietati (`review.md`).** Nessun colore o durata a mano; misure nuove nominate in dimens; niente ombre; nessun ciclo.
 - **Test.** `ColonnaDiGiocoTest` (nome lungo e striscia interi a 360dp a scala 1 e 2, didascalia dentro il dettaglio, valore e didascalia che non crescono con la scala), `FormazioniATestoGrandeTest`. **Non visto a schermo** dopo la correzione: solo CI.
+- **Secondo giro (28 ottobre 2026, sera).** A schermo OK «Game», le formazioni e il nome su due righe senza puntini. Due difetti:
+  - *La seconda riga del nome tagliata in fondo e attaccata alla barretta* (scuro e chiaro, 200%). L'interlinea veniva dallo stile (`TitleMedium`, 24sp): in sp, al 200% cresceva di una dozzina di dp anche con il testo in dp, e le due righe non stavano nei 48dp con la barretta. `TestoCheSiStringe` usa ora l'interlinea naturale del carattere alla misura scelta (anche dopo ogni cambio di misura, perche' da Android 14 un'interlinea in sp torna da sola). Nessun valore nuovo.
+  - *Nel padel la striscia a una riga perdeva il punteggio coi puntini* («Point Polisportiva Sangiorgese · 0-…»). La striscia va a capo come i nomi: se a 13dp non entra su una riga, due righe fra le parole dentro i 56dp (come la striscia del calcio di A1). Lo stesso per i messaggi brevi della striscia.
+  - Test: `ColonnaDiGiocoTest`, il nome lungo non e' piu' alto della sua vista, finisce prima della barretta e ha la stessa altezza a scala 1 e 2; nuovo `nelPadel_la_striscia_con_un_nome_lungo_tiene_il_punteggio` (striscia intera col punteggio e nome col pallino del servizio, senza il -1, a scala 1 e 2). **Non visto a schermo** dopo la correzione.
 
 ## Dal giro di prove - 28 ottobre 2026
 

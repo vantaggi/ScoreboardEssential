@@ -20,8 +20,14 @@ import it.vantaggi.scoreboardessential.R
  * `minimo`, finche' ogni riga entra intera nella larghezza. Le righe sono quelle che il testo chiede
  * (`maxLines`, deciso da chi lo usa). Con `aCapoSeNonBasta` (i nomi) se su una riga non entra a
  * nessuna misura prova due righe, spezzate solo fra parole, partendo da `massimoADueRighe`: due righe
- * piu' grandi non starebbero nella riga dei nomi con la barretta. Se non entra neanche cosi' resta
- * il minimo con i puntini in fondo, come prima. Nessun movimento: la misura cambia solo col testo.
+ * piu' grandi non starebbero nella riga dei nomi con la barretta. Vale anche per la striscia del
+ * padel, dove i puntini si mangiavano il punteggio («Point Polisportiva Sangiorgese · 0-…»). Se non
+ * entra neanche cosi' resta il minimo con i puntini in fondo, come prima. Nessun movimento: la misura
+ * cambia solo col testo.
+ *
+ * L'interlinea e' quella naturale del carattere alla misura scelta. Quella dello stile (24sp del
+ * TitleMedium) era in sp: al 200% cresceva di una dozzina di dp, e le due righe del nome non stavano
+ * piu' nei 48dp con la barretta (la «g» di «Sangiorgese» tagliata in fondo).
  */
 class TestoCheSiStringe
     @JvmOverloads
@@ -34,7 +40,9 @@ class TestoCheSiStringe
         private val minimo: Float
         private val aCapoSeNonBasta: Boolean
         private val massimoADueRighe: Float
-        private val righeChieste: Int
+
+        /** Le righe che chiede chi usa il testo; quelle in piu' per andare a capo le decide [adatta]. */
+        private var righeChieste: Int
 
         init {
             val valori = context.obtainStyledAttributes(attrs, R.styleable.TestoCheSiStringe)
@@ -45,6 +53,16 @@ class TestoCheSiStringe
             righeChieste = maxLines
             // Mai a meta' parola: con la sillabazione «Polispor-tiva» sembrerebbe un errore.
             hyphenationFrequency = Layout.HYPHENATION_FREQUENCY_NONE
+            interlineaNaturale()
+        }
+
+        override fun setMaxLines(maxLines: Int) {
+            righeChieste = maxLines
+            super.setMaxLines(maxLines)
+        }
+
+        private fun interlineaNaturale() {
+            if (lineSpacingExtra != 0f || lineSpacingMultiplier != 1f) setLineSpacing(0f, 1f)
         }
 
         override fun onMeasure(
@@ -61,7 +79,7 @@ class TestoCheSiStringe
         private fun adatta(spazio: Int) {
             val testo = text?.toString().orEmpty()
             if (testo.isEmpty()) return
-            val righe = if (aCapoSeNonBasta) righeChieste else maxLines
+            val righe = righeChieste
             val passo = resources.displayMetrics.density
             var scelta: Pair<Float, Int>? = null
             var px = grande
@@ -69,16 +87,18 @@ class TestoCheSiStringe
                 if (entra(testo, px, righe, spazio)) scelta = px to righe
                 px -= passo
             }
-            if (scelta == null && aCapoSeNonBasta) {
+            if (scelta == null && aCapoSeNonBasta && righe == 1) {
                 px = minOf(grande, massimoADueRighe)
                 while (scelta == null && px >= minimo - 0.5f) {
                     if (entra(testo, px, 2, spazio)) scelta = px to 2
                     px -= passo
                 }
             }
-            val (misura, quante) = scelta ?: (minimo to if (aCapoSeNonBasta) 2 else righe)
+            val (misura, quante) = scelta ?: (minimo to if (aCapoSeNonBasta) maxOf(righe, 2) else righe)
             if (textSize != misura) super.setTextSize(TypedValue.COMPLEX_UNIT_PX, misura)
-            if (aCapoSeNonBasta && maxLines != quante) maxLines = quante
+            // Da Android 14 un'interlinea data in sp torna a ogni cambio di misura.
+            interlineaNaturale()
+            if (maxLines != quante) super.setMaxLines(quante)
         }
 
         /** Il testo sta in [righe] righe larghe [spazio], intero, senza puntini e senza parole spezzate. */
