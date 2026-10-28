@@ -53,6 +53,8 @@
 
     <!-- Il bersaglio inferiore: il menu, e per 8s dopo un gol CHI?. -->
     <dimen name="face_menu_inset">24dp</dimen>
+    <!-- Il glifo dei tre puntini sta nella banda 168-188 (di 192dp), ma l'anello del portiere ha il bordo interno a 83,5dp dal centro: i puntini esterni lo toccavano. 12dp di margine sotto alzano il glifo di 6dp. -->
+    <dimen name="face_menu_glyph_lift">12dp</dimen>
 
     <!-- La scelta del marcatore: quanto sta sotto il bordo alto del tondo l'intestazione, e quanto
          rientrano le righe dai lati. Nei quadrati servono meno. -->
