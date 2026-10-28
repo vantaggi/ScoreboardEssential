@@ -71,7 +71,15 @@ class MatchSettingsRepository(
         withContext(Dispatchers.IO) {
             sharedPreferences.edit {
                 putLong(KEY_KEEPER_TIMER_DURATION, duration)
+                // L'ultima durata acceso: spento vale 0, e riaccendere deve tornare a quella.
+                if (duration > 0) putLong(KEY_KEEPER_LAST_ON, duration)
             }
+        }
+
+    /** L'ultima durata del portiere maggiore di zero; cinque minuti se non ce n'e' mai stata una. */
+    suspend fun getKeeperLastOnDuration(): Long =
+        withContext(Dispatchers.IO) {
+            sharedPreferences.getLong(KEY_KEEPER_LAST_ON, DEFAULT_KEEPER_SECONDS).takeIf { it > 0 } ?: DEFAULT_KEEPER_SECONDS
         }
 
     suspend fun getKeeperTimerDuration(): Long =
@@ -163,6 +171,7 @@ class MatchSettingsRepository(
         private const val KEY_TEAM1_COLOR = "team1_color"
         private const val KEY_TEAM2_COLOR = "team2_color"
         private const val KEY_KEEPER_TIMER_DURATION = "keeper_timer_duration"
+        private const val KEY_KEEPER_LAST_ON = "keeper_timer_last_on"
         private const val KEY_ACTIVE_SPORT = "active_sport"
         private const val DEFAULT_SPORT = "football"
 

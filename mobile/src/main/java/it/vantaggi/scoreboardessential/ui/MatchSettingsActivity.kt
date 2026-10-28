@@ -201,12 +201,13 @@ class MatchSettingsActivity : AppCompatActivity() {
             binding.keeperSwitch.isChecked = duration > 0
             binding.keeperTimerLayout.visibility = if (duration > 0) android.view.View.VISIBLE else android.view.View.GONE
             if (duration > 0) {
-                ultimaDurataPortiere = duration
                 val testo = DurataPortiere.minutiDi(duration)
                 if (binding.keeperTimerEdittext.text.toString() != testo) binding.keeperTimerEdittext.setText(testo)
             }
             aggiornandoIlPortiere = false
         }
+
+        viewModel.keeperUltimaDurata.observe(this) { if (it > 0) ultimaDurataPortiere = it }
 
         // La voce mostrata segue sempre il ViewModel: se una scrittura non passasse, il selettore
         // tornerebbe da solo sulla scelta precedente invece di mentire.
@@ -288,6 +289,15 @@ class MatchSettingsActivity : AppCompatActivity() {
             .forEach { campo ->
                 campo.setOnFocusChangeListener { _, haIlFuoco -> if (!haIlFuoco) salvaCampi() }
             }
+
+        // Il tasto fatto della tastiera salva: prima il valore restava nel campo fino a quando non si usciva.
+        binding.keeperTimerEdittext.setOnEditorActionListener { campo, azione, _ ->
+            if (azione == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+                salvaCampi()
+                campo.clearFocus()
+            }
+            false
+        }
     }
 
     /**

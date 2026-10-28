@@ -100,7 +100,7 @@
 
                     <com.google.android.material.textfield.TextInputLayout android:id="@+id/keeperTimerLayout" style="@style/Widget.App.TextInputLayout" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="@dimen/space_16" android:layout_marginBottom="@dimen/space_12" android:hint="@string/keeper_timer_minutes">
 
-                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/keeperTimerEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="numberDecimal" />
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/keeperTimerEdittext" android:layout_width="match_parent" android:layout_height="wrap_content" android:digits="0123456789.," android:imeOptions="actionDone" android:inputType="numberDecimal" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
