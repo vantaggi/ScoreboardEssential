@@ -21,5 +21,4 @@ fun List<PlayerSportCount>.playedIn(sportId: String): Map<Int, Int> =
     filter { it.sportId == sportId }.associate { it.playerId to it.played }
 
 /** Le partite vinte in [sportId], per giocatore. */
-fun List<PlayerSportCount>.wonIn(sportId: String): Map<Int, Int> =
-    filter { it.sportId == sportId }.associate { it.playerId to it.won }
+fun List<PlayerSportCount>.wonIn(sportId: String): Map<Int, Int> = filter { it.sportId == sportId }.associate { it.playerId to it.won }
