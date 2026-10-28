@@ -1,5 +1,6 @@
 package it.vantaggi.scoreboardessential.wear
 
+import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.RectF
 import android.os.Looper
@@ -53,6 +54,9 @@ class QuadranteDentroLAnelloTest {
     private lateinit var viewModel: WearViewModel
     private lateinit var fasce: ViewGroup
     private var densita = 1f
+
+    /** Tutto cio' che sta troppo vicino all'anello o alla cornice: si dice tutto insieme alla fine. */
+    private val fuori = mutableListOf<String>()
 
     private fun apri() {
         val app = RuntimeEnvironment.getApplication()
@@ -125,14 +129,15 @@ class QuadranteDentroLAnelloTest {
         vista.paint.getTextBounds(testo, 0, testo.length, glifi)
         val origine = rettangolo(vista)
         val x = origine.left + vista.compoundPaddingLeft + layout.getLineLeft(0)
-        val base = origine.top + vista.extendedPaddingTop + layout.getLineBaseline(0)
+        // totalPaddingTop comprende lo spostamento della gravita' verticale (center_vertical).
+        val base = origine.top + vista.totalPaddingTop + layout.getLineBaseline(0)
         return RectF(x + glifi.left, base + glifi.top, x + layout.getLineRight(0) - layout.getLineLeft(0), base + glifi.bottom)
     }
 
-    /** I tre puntini del glifo del menu: a +-8dp dal centro dell'immagine, di 2dp di raggio. */
-    private fun puntiniDelMenu(): RectF {
+    /** I due puntini esterni del glifo del menu: a +-8dp dal centro dell'immagine, di 2dp di raggio. */
+    private fun puntiniDelMenu(): List<PointF> {
         val r = rettangolo(binding.menuGlyph)
-        return RectF(r.centerX() - 10 * densita, r.centerY() - 2 * densita, r.centerX() + 10 * densita, r.centerY() + 2 * densita)
+        return listOf(PointF(r.centerX() - 8 * densita, r.centerY()), PointF(r.centerX() + 8 * densita, r.centerY()))
     }
 
     private fun nome(vista: View) = vista.resources.getResourceEntryName(vista.id)
@@ -191,9 +196,38 @@ class QuadranteDentroLAnelloTest {
     private fun verificaDentro(
         cosa: String,
         r: RectF,
+    ) = annota(cosa, ariaDallAnello(r), r.toString())
+
+    /** Un puntino tondo di 2dp di raggio: conta il cerchio, non il rettangolo che lo contiene. */
+    private fun verificaPuntino(
+        cosa: String,
+        centro: PointF,
     ) {
-        val aria = ariaDallAnello(r)
-        assertTrue("$cosa sta a %.1fdp dal bordo interno dell'anello, ne servono 3 (%s)".format(aria, r), aria >= 3f - 0.01f)
+        val raggio = 2 * densita
+        val r = RectF(centro.x - raggio, centro.y - raggio, centro.x + raggio, centro.y + raggio)
+        val aria =
+            if (fasce.resources.configuration.isScreenRound) {
+                ariaDallAnello(RectF(centro.x, centro.y, centro.x, centro.y)) - 2f
+            } else {
+                ariaDallAnello(r)
+            }
+        annota(cosa, aria, "centro ${dp(centro.x)},${dp(centro.y)}dp")
+    }
+
+    private fun annota(
+        cosa: String,
+        aria: Float,
+        dove: String,
+    ) {
+        if (aria < 3f - 0.01f) fuori += "$cosa a %.1fdp dall'anello (ne servono 3; %s)".format(aria, dove)
+    }
+
+    private fun dilloSeFuori() {
+        val config = fasce.resources.configuration
+        assertTrue(
+            "${if (config.isScreenRound) "tondo" else "quadrato"} da ${config.screenWidthDp}dp: ${fuori.joinToString("; ")}",
+            fuori.isEmpty(),
+        )
     }
 
     /** Il quadrante del calcio col portiere che corre, la frase piu' lunga e, a parte, CHI?. */
@@ -213,7 +247,7 @@ class QuadranteDentroLAnelloTest {
         verificaDentro("le cifre della squadra 2", inchiostro(binding.team2Score))
         verificaDentro("la striscia della squadra 1", rettangolo(binding.team1Stripe))
         verificaDentro("la striscia della squadra 2", rettangolo(binding.team2Stripe))
-        verificaDentro("i puntini del menu", puntiniDelMenu())
+        puntiniDelMenu().forEach { verificaPuntino("un puntino del menu", it) }
 
         // La frase piu' lunga della riga di stato, stretta dall'autoSize come a schermo.
         val app = RuntimeEnvironment.getApplication()
@@ -239,15 +273,18 @@ class QuadranteDentroLAnelloTest {
         verificaDentro("la capsula CHI?", rettangolo(binding.chiCapsule))
     }
 
+    private fun soloCalcio() {
+        verificaCalcio()
+        dilloSeFuori()
+    }
+
     /** Il padel con due pallini per lato (batte il secondo giocatore): il caso piu' largo. */
     private fun verificaPallini() {
         apri()
         listOf(1, 2).forEach { lato ->
             applica(stato("AV", "40", calcio = false, servizio = lato, giocatore = 2))
             val pallini =
-                if (lato ==
-                    1
-                ) {
+                if (lato == 1) {
                     listOf(binding.team1ServeDot, binding.team1ServeDotSecond)
                 } else {
                     listOf(binding.team2ServeDot, binding.team2ServeDotSecond)
@@ -278,10 +315,9 @@ class QuadranteDentroLAnelloTest {
             } else {
                 minOf(r.left, r.top, lato - r.right, lato - r.bottom)
             }
-        assertTrue(
-            "uno spigolo sta a %.1fdp dalla cornice, con il burn-in ne servono piu' di 4".format(dp(margine)),
-            margine > max(spostamento, 0f),
-        )
+        if (margine <= max(spostamento, 0f)) {
+            fuori += "un pallino a %.1fdp dalla cornice (con il burn-in ne servono piu' di 4)".format(dp(margine))
+        }
     }
 
     private fun verificaTutto() {
@@ -290,6 +326,7 @@ class QuadranteDentroLAnelloTest {
         listOf(binding.team1ServeDot, binding.team1ServeDotSecond, binding.team2ServeDot, binding.team2ServeDotSecond)
             .filter { it.visibility == View.VISIBLE }
             .forEach { verificaCornice(rettangolo(it)) }
+        dilloSeFuori()
     }
 
     @Test
@@ -310,11 +347,11 @@ class QuadranteDentroLAnelloTest {
 
     @Test
     @Config(qualifiers = "it-w192dp-h192dp-round-notnight")
-    fun `tondo da 192dp in italiano`() = verificaCalcio()
+    fun `tondo da 192dp in italiano`() = soloCalcio()
 
     @Test
     @Config(qualifiers = "it-w192dp-h192dp-notround-notnight")
-    fun `quadrato da 192dp in italiano`() = verificaCalcio()
+    fun `quadrato da 192dp in italiano`() = soloCalcio()
 
     /** Nel calcio la riga di stato sale in D, nella racchetta resta in E: non salta col portiere. */
     @Test
