@@ -530,7 +530,18 @@ class WearViewModel(
      * chiusura vale solo se il registro e' passato da non vuoto a vuoto DOPO il comando.
      */
     private var registroPienoAlComando = false
+
+    /**
+     * Lo 0-0 giocato a tempo: al comando il registro era vuoto e il cronometro avviato. Il registro
+     * resta vuoto anche dopo la chiusura, quindi nessun v2 la conferma: la conferma e' il MATCH_STATE
+     * che il telefono manda solo da endMatch ([partitaChiusaDalTelefono]).
+     */
+    private var soloTempoAlComando = false
     private var chiusuraJob: Job? = null
+
+    /** Il cronometro della partita e' partito (anche se ora e' fermo): uno 0-0 a tempo si salva. */
+    val tempoAvviato: Boolean
+        get() = matchTimeInSeconds > 0L
 
     /**
      * La fine partita scelta dal menu. Oltre al comando (sotto) c'e' cio' che il polso DICE mentre
@@ -559,6 +570,7 @@ class WearViewModel(
     fun chiudiPartita(): Boolean {
         if (_pendingCount.value > 0 || batchInVolo != null || ricevute.isNotEmpty()) return false
         registroPienoAlComando = statoDalTelefono?.matchInProgress == true
+        soloTempoAlComando = !registroPienoAlComando && tempoAvviato
         chiusuraInAttesa = true
         mostraTransitorio(Transitorio.Chiusura, DURATA_ATTESA_CHIUSURA_MS)
         chiusuraJob?.cancel()
@@ -844,13 +856,8 @@ class WearViewModel(
             pending.size > 0 && rebuildLocalState() -> Unit
             else -> _scoreState.value = state
         }
-        // Il telefono ha chiuso: CHIUSURA... ha finito, e NON CONFERMATA non deve piu' scattare.
-        // Si toglie solo CHIUSURA...: un altro messaggio (un tocco non confermato) non e' suo.
-        if (chiusuraInAttesa && registroPienoAlComando && !state.matchInProgress) {
-            chiusuraInAttesa = false
-            chiusuraJob?.cancel()
-            if (transitorio is Transitorio.Chiusura) transitorio = null
-        }
+        // Il registro e' passato da pieno a vuoto dopo il comando: il telefono ha chiuso.
+        if (chiusuraInAttesa && registroPienoAlComando && !state.matchInProgress) chiusuraConfermata()
         // Lo stato puo' restare identico mentre l'ora cambia: il collector non se ne accorgerebbe.
         ricalcolaFiducia()
         // Un telefono che parla adesso e' raggiungibile, e una coda senza un tentativo vivo (un NACK
@@ -1847,6 +1854,27 @@ class WearViewModel(
     }
 
     // --- Reset ---
+
+    /** Il telefono ha chiuso: CHIUSURA... ha finito, e NON CONFERMATA non deve piu' scattare. */
+    private fun chiusuraConfermata() {
+        chiusuraInAttesa = false
+        chiusuraJob?.cancel()
+        // Si toglie solo CHIUSURA...: un altro messaggio (un tocco non confermato) non e' suo.
+        if (transitorio is Transitorio.Chiusura) transitorio = null
+    }
+
+    /**
+     * Il MATCH_STATE a false: il telefono lo manda solo da endMatch, a partita salvata. Azzera il polso
+     * e, per uno 0-0 giocato a tempo, e' la conferma della chiusura chiesta dal polso. Con un registro
+     * pieno al comando la conferma resta il v2 ([applyStateV2]), come prima.
+     */
+    fun partitaChiusaDalTelefono() {
+        resetMatch(fromRemote = true)
+        if (chiusuraInAttesa && soloTempoAlComando) {
+            chiusuraConfermata()
+            ricalcolaFiducia()
+        }
+    }
 
     fun resetMatch(
         fromRemote: Boolean = false,

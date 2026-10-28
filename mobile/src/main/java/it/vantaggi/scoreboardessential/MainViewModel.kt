@@ -2686,6 +2686,9 @@ class MainViewModel(
             connectionManager.sendData(
                 path = WearConstants.PATH_MATCH_STATE,
                 data = data,
+                // La chiusura e' urgente: per uno 0-0 giocato a tempo e' l'unica conferma che il polso
+                // aspetta, e un DataItem non urgente puo' arrivare dopo i suoi 10 secondi di CHIUSURA...
+                urgent = !isActive,
             )
         }
     }

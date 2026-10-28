@@ -10,8 +10,9 @@ import org.junit.Test
  *
  * Il caso base e' un telefono raggiungibile, nessun punto in coda, padel a partita non cominciata:
  * ogni test cambia UNA cosa, cosi' il blocco che scatta e' quello che il nome dice. SPORT e FINE
- * PARTITA non sono mai accese insieme (lo sport si cambia solo a registro vuoto, la partita si
- * chiude solo a registro pieno): i test di FINE PARTITA partono da `partitaIniziata = true`.
+ * PARTITA sono accese insieme solo nello 0-0 a tempo avviato (lo sport si cambia a registro vuoto, la
+ * partita si chiude a registro pieno o col cronometro partito): i test di FINE PARTITA partono da
+ * `partitaIniziata = true`.
  */
 class MenuVociTest {
     private fun input(
@@ -21,7 +22,8 @@ class MenuVociTest {
         haElencoSport: Boolean = true,
         sport: String = "Padel",
         risultato: String = "3–2",
-    ) = InputMenu(inCoda, collegato, partitaIniziata, haElencoSport, sport, risultato)
+        tempoAvviato: Boolean = false,
+    ) = InputMenu(inCoda, collegato, partitaIniziata, haElencoSport, sport, risultato, tempoAvviato = tempoAvviato)
 
     private fun voce(
         id: IdVoce,
@@ -114,6 +116,22 @@ class MenuVociTest {
 
         assertFalse(fine.attiva)
         assertEquals(SottotitoloVoce.NienteDaSalvare, fine.sottotitolo)
+    }
+
+    /**
+     * Uno 0-0 giocato a tempo: registro vuoto ma cronometro partito. Il telefono lo salva (endMatch guarda
+     * registro e cronometro), quindi la voce e' accesa e promette lo 0-0. Rosso se il blocco torna a
+     * guardare solo il registro: era il difetto segnalato da Cioti il 28 ottobre 2026.
+     */
+    @Test
+    fun `a registro vuoto col tempo avviato FINE PARTITA e' attiva e salva lo 0-0`() {
+        val fine = voce(IdVoce.FINE_PARTITA, input(tempoAvviato = true, risultato = "0–0"))
+
+        assertTrue(fine.attiva)
+        assertEquals(SottotitoloVoce.SalvaRisultato("0–0"), fine.sottotitolo)
+        // I blocchi di prima restano: la coda e il telefono assente vincono anche sul tempo.
+        assertEquals(SottotitoloVoce.PrimaConsegna(1), voce(IdVoce.FINE_PARTITA, input(tempoAvviato = true, inCoda = 1)).sottotitolo)
+        assertEquals(SottotitoloVoce.ServeIlTelefono, voce(IdVoce.FINE_PARTITA, input(tempoAvviato = true, collegato = false)).sottotitolo)
     }
 
     @Test

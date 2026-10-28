@@ -727,6 +727,34 @@ class MainViewModelTest {
         }
 
     /**
+     * Uno 0-0 giocato a tempo: nessun punto, cronometro avviato. Si salva come 0-0, e il MATCH_STATE
+     * della chiusura parte urgente, perche' e' l'unica conferma che l'orologio aspetta (il registro resta
+     * vuoto e nessun v2 gli dice che la partita e' chiusa). Rosso se endMatch torna a guardare solo il
+     * registro, o se il MATCH_STATE a false torna non urgente.
+     */
+    @Test
+    fun `uno 0-0 col cronometro avviato si salva e la chiusura arriva urgente all'orologio`() =
+        runTest {
+            val matchDao = campo("matchDao") as MatchDao
+            val connessione = campo("connectionManager") as OptimizedWearDataSync
+            viewModel.selectSport(SportRegistry.FOOTBALL)
+            shadowOf(Looper.getMainLooper()).idle()
+            advanceUntilIdle()
+            assertEquals("senza punti e a tempo fermo non c'e' niente da salvare", false, viewModel.endMatch())
+
+            @Suppress("UNCHECKED_CAST")
+            (campo("_matchTimerValue") as androidx.lifecycle.MutableLiveData<Long>).value = 5 * 60_000L
+
+            assertEquals(true, viewModel.endMatch())
+            advanceUntilIdle()
+            val salvata = org.mockito.kotlin.argumentCaptor<Match>()
+            verify(matchDao).closeMatch(salvata.capture(), any(), any())
+            assertEquals(0, salvata.firstValue.team1Score)
+            assertEquals(0, salvata.firstValue.team2Score)
+            verify(connessione).sendData(eq(WearConstants.PATH_MATCH_STATE), eq(mapOf(WearConstants.KEY_MATCH_ACTIVE to false)), eq(true))
+        }
+
+    /**
      * Rilievo della validazione (L1): la rosa tiene la copia del giocatore letta quando e' stato aggiunto, e la
      * fine partita la riscriveva per intero con un @Update per contare la presenza. Il gol
      * segnato nella partita, gia' scritto nel database, tornava indietro.

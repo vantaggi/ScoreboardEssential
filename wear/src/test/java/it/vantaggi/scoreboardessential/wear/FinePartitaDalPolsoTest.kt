@@ -205,6 +205,53 @@ class FinePartitaDalPolsoTest {
         assertEquals(Transitorio.ChiusuraNonConfermata, viewModel.statoFiducia.value)
     }
 
+    /**
+     * Lo 0-0 giocato a tempo: il registro e' vuoto prima e dopo la chiusura, quindi nessun v2 la
+     * conferma. La conferma e' il MATCH_STATE a false che il telefono manda da endMatch. Rosso se
+     * [WearViewModel.partitaChiusaDalTelefono] non chiude CHIUSURA...: dopo 10 secondi il polso
+     * direbbe NON CONFERMATA a una partita salvata.
+     */
+    @Test
+    fun `uno 0-0 a tempo si chiude dal polso e la conferma e' il MATCH_STATE del telefono`() {
+        viewModel.applyStateV2(calcio3a2().copy(side1Primary = "0", side2Primary = "0", matchInProgress = false, eventLog = registro(0)))
+        viewModel.syncMatchTimer(5 * 60_000L, false)
+        assertTrue("col cronometro a 5 minuti il tempo e' avviato", viewModel.tempoAvviato)
+
+        assertTrue(viewModel.chiudiPartita())
+        assestati()
+        assertEquals(1, messaggi(WearConstants.MSG_SCORE_INTENT).size)
+        assertEquals(Transitorio.Chiusura, viewModel.statoFiducia.value)
+
+        // Un v2 a registro vuoto non e' una conferma: era vuoto anche prima.
+        viewModel.applyStateV2(calcio3a2().copy(side1Primary = "0", side2Primary = "0", matchInProgress = false, eventLog = registro(0)))
+        assestati()
+        assertEquals(Transitorio.Chiusura, viewModel.statoFiducia.value)
+
+        viewModel.partitaChiusaDalTelefono()
+        assestati()
+        assertFalse("CHIUSURA... finisce: ${viewModel.statoFiducia.value}", viewModel.statoFiducia.value is Transitorio.Chiusura)
+        assertFalse("il polso e' azzerato", viewModel.tempoAvviato)
+        testDispatcher.scheduler.advanceTimeBy(WearViewModel.DURATA_ATTESA_CHIUSURA_MS + 1)
+        assestati()
+        assertFalse(
+            "nessun NON CONFERMATA a una partita salvata: ${viewModel.statoFiducia.value}",
+            viewModel.statoFiducia.value == Transitorio.ChiusuraNonConfermata,
+        )
+    }
+
+    /** Il contrario: col registro pieno al comando la conferma resta il v2, non il MATCH_STATE. */
+    @Test
+    fun `col registro pieno al comando il MATCH_STATE da solo non conferma la chiusura`() {
+        viewModel.applyStateV2(calcio3a2())
+        assertTrue(viewModel.chiudiPartita())
+        assestati()
+
+        viewModel.partitaChiusaDalTelefono()
+        assestati()
+
+        assertEquals(Transitorio.Chiusura, viewModel.statoFiducia.value)
+    }
+
     // --- Rilievo 2: con la coda piena la partita non si chiude, due partite non si fondono ---
 
     @Test
