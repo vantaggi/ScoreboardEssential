@@ -62,7 +62,7 @@ class ChiaroTest {
     private val nomi: (Int) -> String = { app.resources.getResourceEntryName(it) }
 
     /** Le superfici del tema: tutto cio' che puo' stare sotto un testo o un bordo. */
-    private val superfici = listOf(R.color.elite_background, R.color.elite_surface, R.color.elite_surface_raised)
+    private val superfici = listOf(R.color.background_canvas, R.color.background_surface, R.color.background_elevated)
 
     private fun sotto(
         contesto: Context,
@@ -81,47 +81,47 @@ class ChiaroTest {
 
     @Test
     fun `il testo primario e secondario ha almeno 4,5 a 1 su ogni superficie, anche col passaggio del puntatore`() {
-        val testi = listOf(R.color.elite_text_primary, R.color.elite_text_secondary)
-        assertEquals(emptyList<String>(), sotto(chiaro(), 4.5, testi, superfici + R.color.elite_surface_hover))
+        val testi = listOf(R.color.text_primary, R.color.text_secondary)
+        assertEquals(emptyList<String>(), sotto(chiaro(), 4.5, testi, superfici + R.color.state_hover))
     }
 
     @Test
     fun `l'accento e' leggibile come testo e icona, e il testo sopra l'accento regge`() {
         val c = chiaro()
-        assertEquals(emptyList<String>(), sotto(c, 4.5, listOf(R.color.elite_accent), superfici))
-        assertTrue("on-accent sull'accento", contrasto(c, R.color.elite_on_lime, R.color.elite_accent) >= 4.5)
+        assertEquals(emptyList<String>(), sotto(c, 4.5, listOf(R.color.accent_default), superfici))
+        assertTrue("on-accent sull'accento", contrasto(c, R.color.on_accent, R.color.accent_default) >= 4.5)
     }
 
     @Test
     fun `il contorno dei comandi, l'anello di fuoco e il testo disattivato reggono su ogni superficie`() {
         val c = chiaro()
-        assertEquals(emptyList<String>(), sotto(c, 3.0, listOf(R.color.elite_outline, R.color.elite_focus_ring), superfici))
+        assertEquals(emptyList<String>(), sotto(c, 3.0, listOf(R.color.border_strong, R.color.focus_ring), superfici))
         // Il disattivato e' sotto 4,5 per scelta della Constitution (solo etichette spente): non scende sotto 2,8.
-        assertEquals(emptyList<String>(), sotto(c, 2.8, listOf(R.color.elite_text_disabled), superfici))
+        assertEquals(emptyList<String>(), sotto(c, 2.8, listOf(R.color.text_disabled), superfici))
     }
 
     @Test
     fun `i colori di stato si leggono come testo sulle superfici e nell'avviso sul proprio fondo`() {
         val c = chiaro()
-        val stati = listOf(R.color.elite_warning, R.color.elite_error, R.color.elite_info)
+        val stati = listOf(R.color.status_warning, R.color.status_error, R.color.status_info)
         assertEquals(emptyList<String>(), sotto(c, 4.5, stati, superfici))
         val avvisi =
             listOf(
-                R.color.elite_success_subtle to R.color.elite_accent,
-                R.color.elite_warning_subtle to R.color.elite_warning,
-                R.color.elite_error_subtle to R.color.elite_error,
-                R.color.elite_info_subtle to R.color.elite_info,
+                R.color.status_success_subtle to R.color.accent_default,
+                R.color.status_warning_subtle to R.color.status_warning,
+                R.color.status_error_subtle to R.color.status_error,
+                R.color.status_info_subtle to R.color.status_info,
             )
         avvisi.forEach { (fondo, etichetta) ->
             assertTrue("${nomi(etichetta)} su ${nomi(fondo)}", contrasto(c, etichetta, fondo) >= 4.5)
-            assertTrue("testo primario su ${nomi(fondo)}", contrasto(c, R.color.elite_text_primary, fondo) >= 4.5)
+            assertTrue("testo primario su ${nomi(fondo)}", contrasto(c, R.color.text_primary, fondo) >= 4.5)
         }
     }
 
     @Test
     fun `le cifre del gioco si leggono sul campo di gioco, almeno 7 a 1`() {
-        assertTrue(contrasto(chiaro(), R.color.elite_game_ink, R.color.elite_game_background) >= 7.0)
-        assertTrue(contrasto(scuro(), R.color.elite_game_ink, R.color.elite_game_background) >= 7.0)
+        assertTrue(contrasto(chiaro(), R.color.text_on_watch, R.color.background_watch) >= 7.0)
+        assertTrue(contrasto(scuro(), R.color.text_on_watch, R.color.background_watch) >= 7.0)
     }
 
     // --- L'overlay cambia i ruoli, e solo quando c'e' ---
@@ -129,9 +129,9 @@ class ChiaroTest {
     @Test
     fun `senza l'overlay il tema e' quello scuro di sempre, lime e nero puro`() {
         val s = scuro()
-        assertEquals(s.getColor(R.color.elite_lime), s.getColor(R.color.elite_accent))
-        assertEquals(0xFF000000.toInt(), s.getColor(R.color.elite_game_background))
-        assertEquals(0xFFFFFFFF.toInt(), s.getColor(R.color.elite_game_ink))
+        assertEquals(s.getColor(R.color.accent_default_standard), s.getColor(R.color.accent_default))
+        assertEquals(0xFF000000.toInt(), s.getColor(R.color.background_watch))
+        assertEquals(0xFFFFFFFF.toInt(), s.getColor(R.color.text_on_watch))
     }
 
     @Test
@@ -140,29 +140,29 @@ class ChiaroTest {
         val c = chiaro()
         val ruoli =
             listOf(
-                R.color.elite_background,
-                R.color.elite_surface,
-                R.color.elite_surface_raised,
-                R.color.elite_surface_hover,
-                R.color.elite_border,
-                R.color.elite_border_strong,
-                R.color.elite_outline,
-                R.color.elite_text_primary,
-                R.color.elite_text_secondary,
-                R.color.elite_text_disabled,
-                R.color.elite_on_lime,
-                R.color.elite_warning,
-                R.color.elite_error,
-                R.color.elite_info,
-                R.color.elite_success_subtle,
-                R.color.elite_warning_subtle,
-                R.color.elite_error_subtle,
-                R.color.elite_info_subtle,
-                R.color.elite_state_pressed,
-                R.color.elite_focus_ring,
-                R.color.elite_accent,
-                R.color.elite_game_background,
-                R.color.elite_game_ink,
+                R.color.background_canvas,
+                R.color.background_surface,
+                R.color.background_elevated,
+                R.color.state_hover,
+                R.color.border_group,
+                R.color.border_subtle,
+                R.color.border_strong,
+                R.color.text_primary,
+                R.color.text_secondary,
+                R.color.text_disabled,
+                R.color.on_accent,
+                R.color.status_warning,
+                R.color.status_error,
+                R.color.status_info,
+                R.color.status_success_subtle,
+                R.color.status_warning_subtle,
+                R.color.status_error_subtle,
+                R.color.status_info_subtle,
+                R.color.state_pressed,
+                R.color.focus_ring,
+                R.color.accent_default,
+                R.color.background_watch,
+                R.color.text_on_watch,
             )
         val uguali = ruoli.filter { s.getColor(it) == c.getColor(it) }.map(nomi)
         assertEquals("ruoli rimasti scuri nel tema chiaro", emptyList<String>(), uguali)
@@ -171,10 +171,10 @@ class ChiaroTest {
     @Test
     fun `fondo, gruppo e testo del tema chiaro sono quelli della carta del report`() {
         val c = chiaro()
-        assertEquals(c.getColor(R.color.print_background), c.getColor(R.color.elite_background))
-        assertEquals(c.getColor(R.color.print_surface), c.getColor(R.color.elite_surface))
-        assertEquals(c.getColor(R.color.print_text_primary), c.getColor(R.color.elite_text_primary))
-        assertEquals(c.getColor(R.color.print_text_secondary), c.getColor(R.color.elite_text_secondary))
+        assertEquals(c.getColor(R.color.background_canvas_print), c.getColor(R.color.background_canvas))
+        assertEquals(c.getColor(R.color.background_surface_print), c.getColor(R.color.background_surface))
+        assertEquals(c.getColor(R.color.text_primary_print), c.getColor(R.color.text_primary))
+        assertEquals(c.getColor(R.color.text_secondary_print), c.getColor(R.color.text_secondary))
     }
 
     // --- La scelta dell'aspetto ---

@@ -54,7 +54,7 @@ class TintaDelleSuperficiTest {
     fun `il fondo del dialogo e' background-elevated senza tinta del lime`() {
         val contesto = contesto()
 
-        assertEquals(contesto.getColor(R.color.elite_surface_raised), fondoDelDialogo(contesto))
+        assertEquals(contesto.getColor(R.color.background_elevated), fondoDelDialogo(contesto))
     }
 
     @Test

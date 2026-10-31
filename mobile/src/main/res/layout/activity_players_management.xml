@@ -11,7 +11,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/elite_background"
+    android:background="@color/background_canvas"
     android:fitsSystemWindows="true"
     tools:context=".PlayersManagementActivity">
 
@@ -130,8 +130,8 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/space_16"
         android:contentDescription="@string/label_add_player"
-        app:backgroundTint="@color/elite_accent"
-        app:tint="@color/elite_on_lime"
+        app:backgroundTint="@color/accent_default"
+        app:tint="@color/on_accent"
         app:shapeAppearance="@style/ShapeAppearance.App.Control"
         app:srcCompat="@drawable/ic_person_add" />
 

@@ -64,7 +64,7 @@
                 android:accessibilityHeading="true"
                 android:text="@string/label_roles"
                 android:textAppearance="@style/TextAppearance.App.RowTitle"
-                android:textColor="@color/elite_text_secondary" />
+                android:textColor="@color/text_secondary" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/roles_recycler_view"

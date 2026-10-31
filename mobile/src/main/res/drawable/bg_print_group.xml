@@ -4,9 +4,9 @@
     nessuna ombra. E' lo stesso gruppo del telefono (Widget.App.Group) nei valori chiari della carta.
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/print_surface" />
+    <solid android:color="@color/background_surface_print" />
     <stroke
         android:width="@dimen/border_width"
-        android:color="@color/print_border" />
+        android:color="@color/border_subtle_print" />
     <corners android:radius="@dimen/radius_surface" />
 </shape>

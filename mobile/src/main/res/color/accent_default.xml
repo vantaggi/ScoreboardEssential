@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Token accent_default (accento): segue il tema (scuro, chiaro, alto contrasto) tramite ?attr/colorAccentDefault. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="?attr/colorAccentDefault" />
+</selector>

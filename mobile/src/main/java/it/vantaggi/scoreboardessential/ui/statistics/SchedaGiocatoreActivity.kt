@@ -101,7 +101,7 @@ class SchedaGiocatoreActivity : AppCompatActivity() {
             )
         parametri.marginStart = resources.getDimensionPixelSize(R.dimen.space_16)
         return View(this).apply {
-            setBackgroundColor(getColor(R.color.elite_border_strong))
+            setBackgroundColor(getColor(R.color.border_subtle))
             layoutParams = parametri
         }
     }

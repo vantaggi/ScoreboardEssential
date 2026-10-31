@@ -119,7 +119,7 @@ class SelettoreDelColoreTest {
         dialogo.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
         attendiIlSalvataggio()
 
-        assertEquals(RuntimeEnvironment.getApplication().getColor(R.color.team_palette_6), preferenze.getInt("team1_color", 0))
+        assertEquals(RuntimeEnvironment.getApplication().getColor(R.color.user_6), preferenze.getInt("team1_color", 0))
     }
 
     /** Un colore preso dalla ruota non e' nella tavolozza: nessun cerchio segnato, e "Usa" lo conferma com'e'. */
@@ -136,7 +136,12 @@ class SelettoreDelColoreTest {
     @Test
     fun `i colori della tavolozza si staccano dal nero e dalle superfici`() {
         val app = RuntimeEnvironment.getApplication()
-        val fondi = listOf(R.color.ink_black, R.color.elite_surface, R.color.elite_surface_raised).map { app.getColor(it) }
+        val fondi =
+            listOf(
+                R.color.background_watch_standard,
+                R.color.background_surface,
+                R.color.background_elevated,
+            ).map { app.getColor(it) }
         TavolozzaDiSquadra.colori.forEach { id ->
             fondi.forEach { fondo ->
                 val contrasto =

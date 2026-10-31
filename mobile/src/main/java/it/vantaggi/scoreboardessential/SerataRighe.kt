@@ -99,7 +99,7 @@ class SerataRigheAdapter(
                 if (riga.selezionata) R.style.TextAppearance_App_RowTitleSelected else R.style.TextAppearance_App_RowTitle,
             )
             titolo.setTextColor(
-                ContextCompat.getColor(contesto, if (riga.attiva) R.color.elite_text_primary else R.color.elite_text_disabled),
+                ContextCompat.getColor(contesto, if (riga.attiva) R.color.text_primary else R.color.text_disabled),
             )
             nota.visibility = if (riga.nota != null) View.VISIBLE else View.GONE
             nota.text = riga.nota

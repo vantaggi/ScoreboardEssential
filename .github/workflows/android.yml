@@ -59,6 +59,14 @@ jobs:
       - name: 6. Run unit tests for all modules
         run: ./gradlew --parallel :core:test testDebugUnitTest
 
+      # Misura dell'adozione della UI Constitution (09-checks): valori scritti a mano, nomi doppi,
+      # testi da tradurre e la geometria del quadrante, che il passo 6 ha scritto in wear/build/misura.
+      # Per ora e' solo un avviso nel riepilogo della run: lo script esce sempre con 0. Ogni conteggio
+      # diventa bloccante quando arriva a zero (passo g del piano, docs/ui-constitution/misura.md).
+      - name: 6b. Measure UI Constitution adoption (warning only)
+        if: always()
+        run: python3 scripts/misura-ui.py | tee -a "$GITHUB_STEP_SUMMARY"
+
       # Nessuno step eseguiva lint: l'artefatto "lint-reports" in coda al
       # workflow e' stato vuoto a ogni run da quando esiste.
       - name: 7. Run Android Lint

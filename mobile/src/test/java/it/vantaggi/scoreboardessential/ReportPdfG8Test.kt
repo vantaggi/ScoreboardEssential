@@ -50,8 +50,8 @@ class ReportPdfG8Test {
 
     private fun file(percorso: String) = File("src/main/$percorso")
 
-    private val carta get() = base.getColor(R.color.print_background)
-    private val gruppo get() = base.getColor(R.color.print_surface)
+    private val carta get() = base.getColor(R.color.background_canvas_print)
+    private val gruppo get() = base.getColor(R.color.background_surface_print)
 
     private fun giocatore(nome: String) = PlayerWithRoles(Player(playerName = nome, appearances = 3, goals = 2), emptyList())
 
@@ -169,7 +169,13 @@ class ReportPdfG8Test {
             assertTrue("$nome e' ancora definito", !colori.contains("name=\"$nome\""))
         }
         // La carta e' fatta di token con nome di ruolo, nessuno e' un colore di prima.
-        for (nome in listOf("print_background", "print_surface", "print_border", "print_text_primary", "print_text_secondary")) {
+        for (nome in listOf(
+            "background_canvas_print",
+            "background_surface_print",
+            "border_subtle_print",
+            "text_primary_print",
+            "text_secondary_print",
+        )) {
             assertTrue("$nome manca", colori.contains("name=\"$nome\""))
         }
     }
@@ -254,16 +260,16 @@ class ReportPdfG8Test {
 
     @Test
     fun `senza colore scelto i lati sono lime e ciano come nella Cronaca`() {
-        assertEquals(base.getColor(R.color.elite_lime), base.getColor(R.color.team_side_1))
-        assertEquals(base.getColor(R.color.elite_cyan), base.getColor(R.color.team_side_2))
+        assertEquals(base.getColor(R.color.accent_default_standard), base.getColor(R.color.team_side_1))
+        assertEquals(base.getColor(R.color.chart_2), base.getColor(R.color.team_side_2))
 
         val vista = pagina(partita())
         val lime = barretta(vista.findViewById(R.id.pdf_team1_name))
         val ciano = barretta(vista.findViewById(R.id.pdf_team2_name))
         // Sono ancora lime e ciano (la tinta resta) ma scuriti: il lime puro fa 1,2:1 sul gruppo e non si vedrebbe.
-        assertEquals(TeamInk.graphicOnLight(base.getColor(R.color.elite_lime), gruppo), lime)
-        assertEquals(TeamInk.graphicOnLight(base.getColor(R.color.elite_cyan), gruppo), ciano)
-        assertTrue(TeamInk.contrast(base.getColor(R.color.elite_lime), gruppo) < 3.0)
+        assertEquals(TeamInk.graphicOnLight(base.getColor(R.color.accent_default_standard), gruppo), lime)
+        assertEquals(TeamInk.graphicOnLight(base.getColor(R.color.chart_2), gruppo), ciano)
+        assertTrue(TeamInk.contrast(base.getColor(R.color.accent_default_standard), gruppo) < 3.0)
         assertTrue(TeamInk.contrast(lime, gruppo) >= 3.0 && TeamInk.contrast(ciano, gruppo) >= 3.0)
     }
 
@@ -286,16 +292,16 @@ class ReportPdfG8Test {
 
     @Test
     fun `i token della carta reggono 4,5 a 1 il testo e il testo non e' mai il colore della squadra`() {
-        val primario = base.getColor(R.color.print_text_primary)
-        val secondario = base.getColor(R.color.print_text_secondary)
+        val primario = base.getColor(R.color.text_primary_print)
+        val secondario = base.getColor(R.color.text_secondary_print)
         for (fondo in listOf(carta, gruppo)) {
             assertTrue(TeamInk.contrast(primario, fondo) >= 4.5)
             assertTrue(TeamInk.contrast(secondario, fondo) >= 4.5)
         }
         // Falsificazione: i testi del tema scuro su carta non passano, e nemmeno il lime come testo.
-        assertTrue(TeamInk.contrast(base.getColor(R.color.elite_text_primary), carta) < 4.5)
-        assertTrue(TeamInk.contrast(base.getColor(R.color.elite_text_secondary), carta) < 4.5)
-        assertTrue(TeamInk.contrast(base.getColor(R.color.elite_lime), carta) < 4.5)
+        assertTrue(TeamInk.contrast(base.getColor(R.color.text_primary), carta) < 4.5)
+        assertTrue(TeamInk.contrast(base.getColor(R.color.text_secondary), carta) < 4.5)
+        assertTrue(TeamInk.contrast(base.getColor(R.color.accent_default_standard), carta) < 4.5)
     }
 
     @Test
@@ -372,7 +378,7 @@ class ReportPdfG8Test {
         assertEquals(1, vuota.childCount)
         val stato = vuota.getChildAt(0) as TextView
         assertEquals(base.getString(R.string.report_pdf_no_players), stato.text.toString())
-        assertEquals(base.getColor(R.color.print_text_secondary), stato.currentTextColor)
+        assertEquals(base.getColor(R.color.text_secondary_print), stato.currentTextColor)
         assertEquals(2, vista.findViewById<LinearLayout>(R.id.pdf_team2_players_list).childCount)
     }
 

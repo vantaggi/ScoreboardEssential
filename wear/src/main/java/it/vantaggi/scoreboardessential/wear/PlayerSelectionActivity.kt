@@ -293,7 +293,7 @@ class PlayerAdapter(
         ) {
             playerName.text = player.name
             playerName.setTextColor(
-                ContextCompat.getColor(itemView.context, if (salta) R.color.elite_text_secondary else R.color.ink_white),
+                ContextCompat.getColor(itemView.context, if (salta) R.color.text_secondary else R.color.text_on_watch),
             )
             // INVISIBLE e non GONE: SALTA resta allineato ai nomi.
             playerBar.visibility = if (salta) View.INVISIBLE else View.VISIBLE

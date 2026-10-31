@@ -7,5 +7,5 @@
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
-    <solid android:color="@color/elite_lime" />
+    <solid android:color="@color/accent_default" />
 </shape>

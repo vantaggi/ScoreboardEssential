@@ -83,7 +83,7 @@ class SelezioneSportTest {
         assertTrue("manca la spunta come icona", spunta != null)
         assertEquals(dp(attivita, 16f).toInt(), spunta.bounds.width())
         assertTrue("il testo non deve portare il carattere della spunta", !inUso.text.contains("✓"))
-        assertEquals(ContextCompat.getColor(attivita, R.color.elite_text_primary), inUso.currentTextColor)
+        assertEquals(ContextCompat.getColor(attivita, R.color.text_primary), inUso.currentTextColor)
 
         listOf(0, 2).forEach {
             assertEquals(View.GONE, riga(attivita, it).findViewById<TextView>(R.id.sport_current).visibility)
@@ -115,7 +115,7 @@ class SelezioneSportTest {
             val sottotitolo = sottotitoli.getChildAt(it).findViewById<TextView>(R.id.sport_current)
             assertTrue(
                 "\"${sottotitolo.text}\" ha il colore della spunta nel menu",
-                sottotitolo.currentTextColor != ContextCompat.getColor(menu, R.color.elite_text_primary),
+                sottotitolo.currentTextColor != ContextCompat.getColor(menu, R.color.text_primary),
             )
         }
     }

@@ -6,4 +6,4 @@
     android:layout_height="wrap_content"
     android:minHeight="@dimen/control_touch"
     android:textAppearance="?attr/textAppearanceBodyLarge"
-    android:textColor="@color/elite_text_primary" />
+    android:textColor="@color/text_primary" />

@@ -18,7 +18,7 @@ class InsetDividerDecoration(
     private val spessore = context.resources.getDimension(R.dimen.border_width)
     private val pennello =
         Paint().apply {
-            color = context.getColor(R.color.elite_border_strong)
+            color = context.getColor(R.color.border_subtle)
             style = Paint.Style.FILL
         }
 

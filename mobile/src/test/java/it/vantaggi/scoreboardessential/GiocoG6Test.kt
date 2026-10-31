@@ -95,10 +95,10 @@ class GiocoG6Test {
     fun `il pallino del servizio e' lime e si legge sul nero`() {
         val pallino = contesto().getDrawable(R.drawable.bg_serve_dot) as GradientDrawable
         val colore = pallino.color!!.defaultColor
-        assertEquals(contesto().getColor(R.color.elite_lime), colore)
+        assertEquals(contesto().getColor(R.color.accent_default_standard), colore)
         assertTrue("pallino su nero %.2f".format(TeamInk.contrast(colore, TeamInk.NERO)), TeamInk.contrast(colore, TeamInk.NERO) >= 4.5)
         // Falsificazione: il bianco di prima era un altro colore.
-        assertNotEquals(contesto().getColor(R.color.ink_white), colore)
+        assertNotEquals(contesto().getColor(R.color.text_on_watch_standard), colore)
         // Il lime non e' l'unico segno: il pallino sta nello slot accanto al nome, che e' una forma e una posizione.
         val radice = LayoutInflater.from(contesto()).inflate(R.layout.content_scoreboard_live, null)
         assertEquals(

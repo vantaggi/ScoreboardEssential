@@ -14,7 +14,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/elite_background"
+    android:background="@color/background_canvas"
     android:fitsSystemWindows="true"
     tools:context=".SerataActivity">
 
@@ -59,14 +59,14 @@
                     android:id="@+id/serata_readonly_notice"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@color/elite_info_subtle"
+                    android:background="@color/status_info_subtle"
                     android:orientation="horizontal"
                     android:visibility="gone">
 
                     <View
                         android:layout_width="@dimen/space_4"
                         android:layout_height="match_parent"
-                        android:background="@color/elite_info" />
+                        android:background="@color/status_info" />
 
                     <TextView
                         android:id="@+id/serata_readonly_text"
@@ -79,7 +79,7 @@
                         android:padding="@dimen/space_12"
                         android:text="@string/serata_readonly"
                         android:textAppearance="@style/TextAppearance.App.Caption"
-                        android:textColor="@color/elite_text_primary" />
+                        android:textColor="@color/text_primary" />
                 </LinearLayout>
 
                 <!-- Prossima partita: i quattro posti, e i tre comandi che la cambiano. -->
@@ -296,7 +296,7 @@
             android:id="@+id/serata_start_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/elite_background"
+            android:background="@color/background_canvas"
             android:orientation="vertical"
             android:paddingHorizontal="@dimen/space_16"
             android:paddingBottom="@dimen/space_16">

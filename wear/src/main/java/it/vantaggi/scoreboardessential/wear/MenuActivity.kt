@@ -338,7 +338,7 @@ class MenuActivity : ComponentActivity() {
     private fun colore(id: Int) = ContextCompat.getColor(this, id)
 
     /**
-     * Le voci sono righe di un gruppo tonale: sullo stesso tono del gruppo (elite_surface), e solo
+     * Le voci sono righe di un gruppo tonale: sullo stesso tono del gruppo (background_surface), e solo
      * la voce armata si riempie, di status-error. Una voce spenta cambia il titolo in text-disabled
      * (la Constitution lo ammette per le etichette spente); il perche' sta nel sottotitolo, che
      * resta text-secondary e si legge a 4,5:1.
@@ -349,8 +349,8 @@ class MenuActivity : ComponentActivity() {
             val armata = conferma.armata && armataId == voce.id
             val fondo =
                 when {
-                    armata -> colore(R.color.elite_error)
-                    else -> colore(R.color.elite_surface)
+                    armata -> colore(R.color.status_error)
+                    else -> colore(R.color.background_surface)
                 }
             riga.card.setCardBackgroundColor(fondo)
             riga.card.isEnabled = voce.attiva
@@ -359,10 +359,10 @@ class MenuActivity : ComponentActivity() {
             val inchiostro =
                 colore(
                     when {
-                        armata -> R.color.ink_black
-                        !voce.attiva -> R.color.elite_text_disabled
-                        voce.id == IdVoce.FINE_PARTITA || voce.id == IdVoce.SCARTA_CODA -> R.color.elite_error
-                        else -> R.color.elite_text_primary
+                        armata -> R.color.background_watch
+                        !voce.attiva -> R.color.text_disabled
+                        voce.id == IdVoce.FINE_PARTITA || voce.id == IdVoce.SCARTA_CODA -> R.color.status_error
+                        else -> R.color.text_primary
                     },
                 )
             riga.titolo.setTextColor(inchiostro)
@@ -377,9 +377,9 @@ class MenuActivity : ComponentActivity() {
             riga.sottotitolo.setTextColor(
                 colore(
                     when {
-                        armata -> R.color.ink_black
-                        voce.sottotitolo.eDaConsegnare() -> R.color.elite_warning
-                        else -> R.color.elite_text_secondary
+                        armata -> R.color.background_watch
+                        voce.sottotitolo.eDaConsegnare() -> R.color.status_warning
+                        else -> R.color.text_secondary
                     },
                 ),
             )

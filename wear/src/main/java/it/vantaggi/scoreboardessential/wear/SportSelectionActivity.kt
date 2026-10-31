@@ -87,7 +87,7 @@ class SportSelectionActivity : ComponentActivity() {
     ) {
         riga.findViewById<TextView>(R.id.sport_name).text = scelta.label
         val stato = riga.findViewById<TextView>(R.id.sport_current)
-        val colore = ContextCompat.getColor(this, R.color.elite_text_primary)
+        val colore = ContextCompat.getColor(this, R.color.text_primary)
         val lato = resources.getDimensionPixelSize(R.dimen.icon_compact)
         val spunta = ContextCompat.getDrawable(this, R.drawable.ic_check)!!.mutate()
         spunta.setBounds(0, 0, lato, lato)

@@ -56,11 +56,11 @@
             android:text="00:00"
             android:textAppearance="@style/TextAppearance.App.Game.Clock"
             android:textSize="32dp"
-            android:textColor="@color/elite_text_secondary"
+            android:textColor="@color/text_secondary"
             android:onClick="startStopTimer"
-            app:backgroundTint="@color/elite_surface"
+            app:backgroundTint="@color/background_surface"
             app:icon="@drawable/ic_play_arrow"
-            app:iconTint="@color/elite_text_primary"
+            app:iconTint="@color/text_primary"
             app:iconGravity="textStart"
             app:iconPadding="6dp"
             app:iconSize="@dimen/icon_prominent"
@@ -78,7 +78,7 @@
             app:cardBackgroundColor="@android:color/transparent"
             app:cardElevation="0dp"
             app:shapeAppearance="@style/ShapeAppearance.App.Badge"
-            app:strokeColor="@color/elite_outline"
+            app:strokeColor="@color/border_strong"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -105,7 +105,7 @@
                     android:maxLines="1"
                     android:text="05:00"
                     android:textAppearance="@style/TextAppearance.App.Game.Value"
-                    android:textColor="@color/elite_text_secondary"
+                    android:textColor="@color/text_secondary"
                     android:textSize="24dp"
                     tools:ignore="HardcodedText,SpUsage" />
             </LinearLayout>
@@ -122,7 +122,7 @@
             android:paddingHorizontal="4dp"
             android:textAppearance="@style/TextAppearance.App.Game.Command"
             android:textSize="16dp"
-            android:textColor="@color/elite_text_primary"
+            android:textColor="@color/text_primary"
             tools:text="PADEL · SERVE ROSSI"
             tools:ignore="SpUsage" />
 
@@ -152,7 +152,7 @@
             app:iconGravity="textStart"
             app:iconPadding="0dp"
             app:iconSize="@dimen/icon_prominent"
-            app:iconTint="@color/elite_text_primary" />
+            app:iconTint="@color/text_primary" />
     </LinearLayout>
 
     <!--
@@ -428,7 +428,7 @@
             android:maxLines="1"
             android:textAppearance="@style/TextAppearance.App.Game.Value"
             android:textSize="24dp"
-            android:textColor="@color/elite_text_primary"
+            android:textColor="@color/text_primary"
             tools:text="5-3"
             tools:ignore="SpUsage" />
 
@@ -471,7 +471,7 @@
             app:aCapoSeNonBasta="true"
             android:textAppearance="@style/TextAppearance.App.Game.Command"
             android:textSize="16dp"
-            android:textColor="@color/elite_text_primary"
+            android:textColor="@color/text_primary"
             tools:ignore="SpUsage" />
 
         <com.google.android.material.button.MaterialButton
@@ -488,12 +488,12 @@
             android:text="@string/undo"
             android:textAppearance="@style/TextAppearance.App.Game.Command"
             android:textSize="16dp"
-            android:textColor="@color/elite_text_primary"
+            android:textColor="@color/text_primary"
             app:icon="@drawable/ic_undo"
             app:iconGravity="textStart"
             app:iconPadding="4dp"
             app:iconSize="@dimen/icon_prominent"
-            app:iconTint="@color/elite_text_primary"
+            app:iconTint="@color/text_primary"
             tools:ignore="SpUsage" />
     </LinearLayout>
 
@@ -525,7 +525,7 @@
             app:cardBackgroundColor="@color/team_side_1"
             app:cardElevation="0dp"
             app:shapeAppearance="@style/ShapeAppearance.App.Control"
-            app:strokeColor="@color/elite_text_primary"
+            app:strokeColor="@color/text_primary"
             app:strokeWidth="0dp">
 
             <ImageView
@@ -559,7 +559,7 @@
             app:cardBackgroundColor="@color/team_side_2"
             app:cardElevation="0dp"
             app:shapeAppearance="@style/ShapeAppearance.App.Control"
-            app:strokeColor="@color/elite_text_primary"
+            app:strokeColor="@color/text_primary"
             app:strokeWidth="0dp">
 
             <ImageView

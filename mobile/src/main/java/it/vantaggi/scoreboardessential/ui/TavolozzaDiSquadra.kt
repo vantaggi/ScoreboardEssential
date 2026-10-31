@@ -13,26 +13,26 @@ import it.vantaggi.scoreboardessential.R
 object TavolozzaDiSquadra {
     val colori =
         listOf(
-            R.color.team_palette_1,
-            R.color.team_palette_2,
-            R.color.team_palette_3,
-            R.color.team_palette_4,
-            R.color.team_palette_5,
-            R.color.team_palette_6,
-            R.color.team_palette_7,
-            R.color.team_palette_8,
+            R.color.user_1,
+            R.color.user_2,
+            R.color.user_3,
+            R.color.user_4,
+            R.color.user_5,
+            R.color.user_6,
+            R.color.user_7,
+            R.color.user_8,
         )
 
     val cerchi =
         listOf(
-            R.id.team_palette_1,
-            R.id.team_palette_2,
-            R.id.team_palette_3,
-            R.id.team_palette_4,
-            R.id.team_palette_5,
-            R.id.team_palette_6,
-            R.id.team_palette_7,
-            R.id.team_palette_8,
+            R.id.user_1,
+            R.id.user_2,
+            R.id.user_3,
+            R.id.user_4,
+            R.id.user_5,
+            R.id.user_6,
+            R.id.user_7,
+            R.id.user_8,
         )
 
     /** Il cerchio del colore [colore], o null se e' un colore della ruota fuori dalla tavolozza. */
@@ -51,7 +51,7 @@ object TavolozzaDiSquadra {
     ) {
         val context = cerchio.context
         cerchio.isSelected = scelto
-        cerchio.strokeColor = ColorStateList.valueOf(context.getColor(if (scelto) R.color.elite_text_primary else R.color.elite_outline))
+        cerchio.strokeColor = ColorStateList.valueOf(context.getColor(if (scelto) R.color.text_primary else R.color.border_strong))
         cerchio.strokeWidth =
             context.resources.getDimensionPixelSize(if (scelto) R.dimen.focus_ring_width else R.dimen.border_width)
         cerchio.icon = if (scelto) ContextCompat.getDrawable(context, R.drawable.ic_check) else null

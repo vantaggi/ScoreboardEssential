@@ -10,7 +10,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/ink_black"
+    android:background="@color/background_watch"
     android:orientation="vertical"
     android:paddingTop="@dimen/scorer_top_inset">
 
@@ -22,7 +22,7 @@
         android:gravity="center"
         android:includeFontPadding="false"
         android:maxLines="1"
-        android:textColor="@color/elite_text_primary"
+        android:textColor="@color/text_primary"
         android:textSize="14sp"
         android:textFontWeight="600"
         tools:text="GOL · 3–2" />

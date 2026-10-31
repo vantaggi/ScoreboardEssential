@@ -80,7 +80,7 @@ class ChronicleTextTest {
     }
 
     /**
-     * Barrette e linea dell'andamento stanno sul gruppo #161618 (elite_surface), non sul nero: il
+     * Barrette e linea dell'andamento stanno sul gruppo #161618 (background_surface), non sul nero: il
      * blu notte va schiarito fino a 3:1 contro il gruppo; il giallo, il lime e il ciano, che li'
      * hanno gia' contrasto, restano i loro.
      */

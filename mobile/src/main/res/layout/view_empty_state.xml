@@ -11,7 +11,7 @@
         android:layout_width="@dimen/icon_prominent"
         android:layout_height="@dimen/icon_prominent"
         android:importantForAccessibility="no"
-        app:tint="@color/elite_text_secondary" />
+        app:tint="@color/text_secondary" />
 
     <TextView
         android:id="@+id/empty_title"

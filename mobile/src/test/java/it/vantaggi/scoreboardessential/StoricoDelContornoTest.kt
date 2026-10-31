@@ -99,8 +99,8 @@ class StoricoDelContornoTest {
     // Chi ha vinto si legge senza il colore: testo primario il vincitore, secondario lo sconfitto.
     @Test
     fun `il vincitore e' chiaro e lo sconfitto e' grigio`() {
-        val chiaro = base.getColor(R.color.elite_text_primary)
-        val grigio = base.getColor(R.color.elite_text_secondary)
+        val chiaro = base.getColor(R.color.text_primary)
+        val grigio = base.getColor(R.color.text_secondary)
 
         val (_, vince1) = scheda(partita(SportRegistry.FOOTBALL, 3 to 1))
         assertEquals(chiaro, testo(vince1, R.id.team1_score_textview).currentTextColor)

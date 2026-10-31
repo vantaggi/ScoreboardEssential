@@ -83,7 +83,7 @@ class CronacaG5Test {
             emptyList<String>(),
             difettiDelLayout("""<com.google.android.material.card.MaterialCardView style="@style/Widget.App.Group" />"""),
         )
-        assertEquals(emptyList<String>(), difettiDelCodice("setTextColor(color(R.color.elite_text_primary))"))
+        assertEquals(emptyList<String>(), difettiDelCodice("setTextColor(color(R.color.text_primary))"))
     }
 
     // --- Stringhe: niente maiuscolo, in nessuna lingua ---
@@ -152,12 +152,12 @@ class CronacaG5Test {
         val sfondo = file("res/drawable/ic_launcher_background_vs.xml").readText()
         val primo = file("res/drawable/ic_launcher_foreground_vs.xml").readText()
         // Il launcher non ha il tema dell'app: i colori sono quelli pieni, non i token che seguono il tema.
-        assertTrue("il fondo non e' background-canvas", sfondo.contains("@color/elite_background_standard"))
-        assertTrue("manca il lime", primo.contains("@color/elite_lime"))
-        assertTrue("manca il testo primario", primo.contains("@color/elite_text_primary_standard"))
+        assertTrue("il fondo non e' background-canvas", sfondo.contains("@color/background_canvas_standard"))
+        assertTrue("manca il lime", primo.contains("@color/accent_default_standard"))
+        assertTrue("manca il testo primario", primo.contains("@color/text_primary_standard"))
         assertTrue(
             "l'icona cita un token che segue il tema",
-            !Regex("@color/elite_(background|text_primary)\"").containsMatchIn(sfondo + primo),
+            !Regex("@color/(background_canvas|accent_default|text_primary)\"").containsMatchIn(sfondo + primo),
         )
         // Falsificazione: il fondo e le colonne di prima erano Street e il controllo li vede.
         assertTrue(coloriStreet.containsMatchIn("""<solid android:color="@color/asphalt_dark"/>"""))

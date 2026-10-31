@@ -104,8 +104,8 @@ class ComponentiDelContornoTest {
         assertEquals(dp(R.dimen.radius_control), raggioDelBottone(bottone), 0.5f)
         assertEquals(8f * densita, raggioDelBottone(bottone), 0.5f)
         assertTrue("altezza ${bottone.measuredHeight}", bottone.measuredHeight >= 48 * densita)
-        assertEquals(token(R.color.elite_lime), bottone.backgroundTintList!!.defaultColor)
-        assertEquals(token(R.color.elite_on_lime), bottone.currentTextColor)
+        assertEquals(token(R.color.accent_default_standard), bottone.backgroundTintList!!.defaultColor)
+        assertEquals(token(R.color.on_accent), bottone.currentTextColor)
         assertEquals(0f, bottone.elevation, 0f)
         // Nessun maiuscolo forzato: il bottone dice l'azione.
         assertFalse(bottone.isAllCaps)
@@ -128,11 +128,11 @@ class ComponentiDelContornoTest {
 
         assertEquals(8f * densita, raggioDelBottone(bottone), 0.5f)
         assertTrue(bottone.measuredHeight >= 48 * densita)
-        assertEquals(token(R.color.elite_surface_raised), bottone.backgroundTintList!!.defaultColor)
-        assertEquals(token(R.color.elite_outline), bottone.strokeColor.defaultColor)
+        assertEquals(token(R.color.background_elevated), bottone.backgroundTintList!!.defaultColor)
+        assertEquals(token(R.color.border_strong), bottone.strokeColor.defaultColor)
         assertEquals(dp(R.dimen.border_width).toInt(), bottone.strokeWidth)
         // Testo primario, non secondario: col secondario un comando attivo si confondeva col disattivo.
-        assertEquals(token(R.color.elite_text_primary), bottone.currentTextColor)
+        assertEquals(token(R.color.text_primary), bottone.currentTextColor)
     }
 
     private fun colorePredefinito(
@@ -150,8 +150,8 @@ class ComponentiDelContornoTest {
     // Il distruttivo e' solo testo in colore errore; il testuale e' solo testo primario; nessuno dei due ha un fondo.
     @Test
     fun `il distruttivo e il testuale sono solo testo`() {
-        assertEquals(token(R.color.elite_error), colorePredefinito(R.style.Widget_App_Button_Destructive, android.R.attr.textColor))
-        assertEquals(token(R.color.elite_text_primary), colorePredefinito(R.style.Widget_App_Button_Text, android.R.attr.textColor))
+        assertEquals(token(R.color.status_error), colorePredefinito(R.style.Widget_App_Button_Destructive, android.R.attr.textColor))
+        assertEquals(token(R.color.text_primary), colorePredefinito(R.style.Widget_App_Button_Text, android.R.attr.textColor))
     }
 
     @Test
@@ -163,8 +163,8 @@ class ComponentiDelContornoTest {
             }
         val fondo = bottone.backgroundTintList!!.getColorForState(intArrayOf(-android.R.attr.state_enabled), 0)
 
-        assertEquals(token(R.color.elite_surface_raised), fondo)
-        assertEquals(token(R.color.elite_text_disabled), bottone.currentTextColor)
+        assertEquals(token(R.color.background_elevated), fondo)
+        assertEquals(token(R.color.text_disabled), bottone.currentTextColor)
     }
 
     // Un solo primario per regione: nelle schermate del contorno al massimo un bottone lime visibile.
@@ -184,7 +184,12 @@ class ComponentiDelContornoTest {
             val primari =
                 tutti(radice, MaterialButton::class.java)
                     .map { it as MaterialButton }
-                    .filter { it.visibility == View.VISIBLE && it.backgroundTintList?.defaultColor == token(R.color.elite_lime) }
+                    .filter {
+                        it.visibility == View.VISIBLE && it.backgroundTintList?.defaultColor ==
+                            token(
+                                R.color.accent_default_standard,
+                            )
+                    }
             assertTrue("${contesto.resources.getResourceEntryName(id)} ha ${primari.size} primari", primari.size <= 1)
             primariTrovati += primari.size
         }
@@ -209,8 +214,8 @@ class ComponentiDelContornoTest {
                 assertEquals(0f, g.cardElevation, 0f)
                 assertEquals(0f, g.elevation, 0f)
                 assertEquals(dp(R.dimen.border_width).toInt(), g.strokeWidth)
-                assertEquals(token(R.color.elite_border), g.strokeColorStateList!!.defaultColor)
-                assertEquals(token(R.color.elite_surface), g.cardBackgroundColor.defaultColor)
+                assertEquals(token(R.color.border_group), g.strokeColorStateList!!.defaultColor)
+                assertEquals(token(R.color.background_surface), g.cardBackgroundColor.defaultColor)
                 assertEquals(14f * densita, g.radius, 0.5f)
             }
         }
@@ -224,10 +229,10 @@ class ComponentiDelContornoTest {
         assertEquals(0f, card.elevation, 0f)
         assertEquals(14f * densita, card.radius, 0.5f)
         assertEquals(dp(R.dimen.border_width).toInt(), card.strokeWidth)
-        assertEquals(token(R.color.elite_surface_raised), card.cardBackgroundColor.defaultColor)
+        assertEquals(token(R.color.background_elevated), card.cardBackgroundColor.defaultColor)
         val bordo = card.strokeColorStateList!!
-        assertEquals(token(R.color.elite_border_strong), bordo.defaultColor)
-        assertEquals(token(R.color.elite_lime), bordo.getColorForState(intArrayOf(android.R.attr.state_checked), 0))
+        assertEquals(token(R.color.border_subtle), bordo.defaultColor)
+        assertEquals(token(R.color.accent_default_standard), bordo.getColorForState(intArrayOf(android.R.attr.state_checked), 0))
         assertNotNull("la card prende la pressione condivisa", card.stateListAnimator)
     }
 
@@ -249,20 +254,20 @@ class ComponentiDelContornoTest {
         val s = a.getColorStateList(0)!!
         a.recycle()
 
-        assertEquals(token(R.color.elite_surface), campo.boxBackgroundColor)
-        assertEquals(token(R.color.elite_outline), s.defaultColor)
+        assertEquals(token(R.color.background_surface), campo.boxBackgroundColor)
+        assertEquals(token(R.color.border_strong), s.defaultColor)
         assertEquals(
-            token(R.color.elite_lime),
+            token(R.color.accent_default_standard),
             s.getColorForState(intArrayOf(android.R.attr.state_focused, android.R.attr.state_enabled), 0),
         )
         assertEquals(dp(R.dimen.border_width).toInt(), campo.boxStrokeWidth)
         assertEquals(dp(R.dimen.focus_ring_width).toInt(), campo.boxStrokeWidthFocused)
-        assertEquals(token(R.color.elite_error), campo.boxStrokeErrorColor!!.defaultColor)
+        assertEquals(token(R.color.status_error), campo.boxStrokeErrorColor!!.defaultColor)
 
         campo.error = "Il nome e' obbligatorio"
         val messaggio = campo.findViewById<TextView>(M3.id.textinput_error)
         assertEquals("Il nome e' obbligatorio", messaggio.text.toString())
-        assertEquals(token(R.color.elite_error), messaggio.currentTextColor)
+        assertEquals(token(R.color.status_error), messaggio.currentTextColor)
     }
 
     // --- Chip e badge ---
@@ -273,12 +278,12 @@ class ComponentiDelContornoTest {
         chip.text = "ATTACCO"
 
         assertEquals(0, chip.chipBackgroundColor!!.defaultColor ushr 24)
-        assertEquals(token(R.color.elite_outline), chip.chipStrokeColor!!.defaultColor)
+        assertEquals(token(R.color.border_strong), chip.chipStrokeColor!!.defaultColor)
         assertEquals(dp(R.dimen.border_width), chip.chipStrokeWidth, 0.5f)
         val selezionato = intArrayOf(android.R.attr.state_checked, android.R.attr.state_enabled)
-        assertEquals(token(R.color.elite_lime), chip.chipStrokeColor!!.getColorForState(selezionato, 0))
-        assertEquals(token(R.color.elite_lime), chip.textColors.getColorForState(selezionato, 0))
-        assertEquals(token(R.color.elite_text_primary), chip.textColors.defaultColor)
+        assertEquals(token(R.color.accent_default_standard), chip.chipStrokeColor!!.getColorForState(selezionato, 0))
+        assertEquals(token(R.color.accent_default_standard), chip.textColors.getColorForState(selezionato, 0))
+        assertEquals(token(R.color.text_primary), chip.textColors.defaultColor)
 
         chip.isCheckable = true
         chip.isChecked = true
@@ -305,8 +310,8 @@ class ComponentiDelContornoTest {
         val spento = intArrayOf(android.R.attr.state_enabled)
         val tinta: ColorStateList = casella.buttonTintList!!
 
-        assertEquals(token(R.color.elite_lime), tinta.getColorForState(acceso, 0))
-        assertEquals(token(R.color.elite_outline), tinta.getColorForState(spento, 0))
+        assertEquals(token(R.color.accent_default_standard), tinta.getColorForState(acceso, 0))
+        assertEquals(token(R.color.border_strong), tinta.getColorForState(spento, 0))
         assertTrue(casella.minimumHeight >= 48 * densita)
 
         val interruttore = MaterialSwitch(contesto)
@@ -323,7 +328,7 @@ class ComponentiDelContornoTest {
         val sfondo = a.getDrawable(1) as GradientDrawable
         a.recycle()
         assertEquals(14f * densita, sfondo.cornerRadius, 0.5f)
-        assertEquals(token(R.color.elite_surface_raised), sfondo.color!!.defaultColor)
+        assertEquals(token(R.color.background_elevated), sfondo.color!!.defaultColor)
 
         // Il dialogo del builder M3 prende la forma dall'overlay del tema.
         val dialogo = MaterialAlertDialogBuilder(contesto).setTitle("Titolo").setMessage("Messaggio").create()

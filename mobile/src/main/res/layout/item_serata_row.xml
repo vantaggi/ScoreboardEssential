@@ -31,7 +31,7 @@
         android:layout_marginEnd="@dimen/space_12"
         android:importantForAccessibility="no"
         android:visibility="gone"
-        app:tint="@color/elite_text_primary" />
+        app:tint="@color/text_primary" />
 
     <TextView
         android:id="@+id/serata_row_lead"
@@ -71,5 +71,5 @@
         android:importantForAccessibility="no"
         android:src="@drawable/ic_check"
         android:visibility="invisible"
-        app:tint="@color/elite_accent" />
+        app:tint="@color/accent_default" />
 </LinearLayout>

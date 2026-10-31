@@ -224,7 +224,7 @@ class MatchHistoryAdapter(
 internal fun coloreDelPunteggio(
     vincitore: Int?,
     lato: Int,
-): Int = if (vincitore == null || vincitore == lato) R.color.elite_text_primary else R.color.elite_text_secondary
+): Int = if (vincitore == null || vincitore == lato) R.color.text_primary else R.color.text_secondary
 
 /**
  * «Padel · 18:30 · 47 min»: sport, ora d'inizio e, se c'e', durata. Il giorno e' il titolo sopra la scheda

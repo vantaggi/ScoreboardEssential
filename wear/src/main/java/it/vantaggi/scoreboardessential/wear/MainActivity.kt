@@ -850,8 +850,8 @@ class MainActivity : ComponentActivity() {
             lato.isClickable = !state.matchOver
         }
         val vincitore = FaceText.vincitore(state)
-        val bianco = ContextCompat.getColor(this, R.color.ink_white)
-        val grigio = ContextCompat.getColor(this, R.color.elite_text_secondary)
+        val bianco = ContextCompat.getColor(this, R.color.text_on_watch)
+        val grigio = ContextCompat.getColor(this, R.color.text_secondary)
         binding.team1Score.setTextColor(if (vincitore == 2) grigio else bianco)
         binding.team2Score.setTextColor(if (vincitore == 1) grigio else bianco)
     }
@@ -961,7 +961,7 @@ class MainActivity : ComponentActivity() {
         if (frase.tono != Tono.ROSSO && frase.tono != Tono.AMBRA && frase != Frase.PartitaFinita) {
             binding.gestureHint.text = ""
         }
-        binding.gestureHint.setTextColor(ContextCompat.getColor(this, R.color.ambient_gray))
+        binding.gestureHint.setTextColor(ContextCompat.getColor(this, R.color.text_ambient))
     }
 
     /** Fuori dall'ambient: caratteri, strisce e dettaglio tornano, il resto lo ridisegna lo stato. */
@@ -1021,7 +1021,7 @@ class MainActivity : ComponentActivity() {
             posizionaContesto(centrato = true)
             posizionaRigaDiStato(conCronometro = false)
             binding.matchTimer.text = FaceText.split(stato).first
-            binding.matchTimer.setTextColor(ContextCompat.getColor(this, R.color.ink_white))
+            binding.matchTimer.setTextColor(ContextCompat.getColor(this, R.color.text_on_watch))
             binding.touchTimer.isClickable = false
             return
         }
@@ -1033,8 +1033,8 @@ class MainActivity : ComponentActivity() {
         if (binding.matchTimer.text.toString() != tempo) binding.matchTimer.text = tempo
         val corre = viewModel.matchTimerRunning.value
         // Fermo e' text-secondary; in ambient il grigio senza tinta, perche' li' non c'e' colore.
-        val fermo = if (ambient) R.color.ambient_gray else R.color.elite_text_secondary
-        binding.matchTimer.setTextColor(ContextCompat.getColor(this, if (corre) R.color.ink_white else fermo))
+        val fermo = if (ambient) R.color.text_ambient else R.color.text_secondary
+        binding.matchTimer.setTextColor(ContextCompat.getColor(this, if (corre) R.color.text_on_watch else fermo))
         binding.touchTimer.isClickable = true
     }
 
@@ -1112,7 +1112,7 @@ class MainActivity : ComponentActivity() {
         when (state) {
             is KeeperTimerState.Hidden -> {
                 binding.keeperTimer.text = "K"
-                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.elite_text_secondary))
+                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
                 binding.keeperProgressBar.visibility = View.INVISIBLE
             }
 
@@ -1126,7 +1126,7 @@ class MainActivity : ComponentActivity() {
                         state.secondsRemaining % 60,
                     )
                 // Il lime e' di chi serve: il conto che corre e' testo primario, come il cronometro.
-                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.elite_text_primary))
+                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
                 binding.keeperProgressBar.visibility =
                     if (auxAvailable) View.VISIBLE else View.INVISIBLE
             }
@@ -1139,7 +1139,7 @@ class MainActivity : ComponentActivity() {
                         state.secondsRemaining / 60,
                         state.secondsRemaining % 60,
                     )
-                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.elite_text_secondary))
+                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
                 binding.keeperProgressBar.visibility =
                     if (auxAvailable) View.VISIBLE else View.INVISIBLE
             }
@@ -1147,7 +1147,7 @@ class MainActivity : ComponentActivity() {
             is KeeperTimerState.Finished -> {
                 // Scaduto: "K 0:00" in rosso, come "K 4:12" mentre corre.
                 binding.keeperTimer.text = getString(R.string.wear_keeper_running, 0, 0)
-                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.elite_error))
+                binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.status_error))
                 binding.keeperProgressBar.visibility =
                     if (auxAvailable) View.VISIBLE else View.INVISIBLE
             }
@@ -1178,7 +1178,7 @@ class MainActivity : ComponentActivity() {
         val testo = FaceText.portiereAmbient(secondi)
         if (vista.text.toString() != testo) vista.text = testo
         val fermo = state is KeeperTimerState.Paused
-        vista.setTextColor(ContextCompat.getColor(this, if (fermo) R.color.ambient_gray else R.color.ink_white))
+        vista.setTextColor(ContextCompat.getColor(this, if (fermo) R.color.text_ambient else R.color.text_on_watch))
         vista.visibility = View.VISIBLE
     }
 
@@ -1341,8 +1341,8 @@ private fun testoScollegato(
 /** Il colore del ruolo (status-error, status-warning, text-primary, text-secondary): ambra e rosso li distingue la parola. */
 internal fun Tono.colore(): Int =
     when (this) {
-        Tono.ROSSO -> R.color.elite_error
-        Tono.AMBRA -> R.color.elite_warning
-        Tono.CHIARO -> R.color.elite_text_primary
-        Tono.GRIGIO -> R.color.elite_text_secondary
+        Tono.ROSSO -> R.color.status_error
+        Tono.AMBRA -> R.color.status_warning
+        Tono.CHIARO -> R.color.text_primary
+        Tono.GRIGIO -> R.color.text_secondary
     }

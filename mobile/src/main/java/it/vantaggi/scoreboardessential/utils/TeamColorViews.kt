@@ -39,7 +39,7 @@ fun MaterialButton.dipingiDiSquadra(colore: Int) {
  */
 fun TextView.etichettaDiSquadra(
     colore: Int,
-    sfondo: Int = context.getColor(R.color.elite_surface_raised),
+    sfondo: Int = context.getColor(R.color.background_elevated),
 ) {
     riempiDiSquadra(colore, sfondo)
     setTextColor(TeamInk.on(colore))
@@ -56,8 +56,8 @@ fun TextView.etichettaDiSquadra(
  */
 fun TextView.etichettaConBarretta(
     colore: Int,
-    sfondo: Int = context.getColor(R.color.elite_surface),
-    testo: Int = context.getColor(R.color.elite_text_primary),
+    sfondo: Int = context.getColor(R.color.background_surface),
+    testo: Int = context.getColor(R.color.text_primary),
     sfondoChiaro: Boolean = false,
 ) {
     val densita = resources.displayMetrics.density
@@ -88,7 +88,7 @@ fun View.riempiDiSquadra(
         MaterialShapeDrawable(forma).apply {
             fillColor = ColorStateList.valueOf(colore)
             if (TeamInk.contrast(colore, sfondo) < CONTRASTO_GRAFICA) {
-                setStroke(resources.displayMetrics.density, context.getColor(R.color.elite_text_secondary))
+                setStroke(resources.displayMetrics.density, context.getColor(R.color.text_secondary))
             }
         }
 }
@@ -104,7 +104,7 @@ fun TextView.anteprimaDiSquadra(
     colore: Int,
     nome: String,
 ) {
-    etichettaDiSquadra(colore, context.getColor(R.color.elite_surface_raised))
+    etichettaDiSquadra(colore, context.getColor(R.color.background_elevated))
     text = context.getString(R.string.color_preview_text, nome)
 }
 

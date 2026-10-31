@@ -68,18 +68,18 @@ class TokenDelPolsoTest {
         comuni.forEach { assertEquals("il token $it diverge fra telefono e orologio", telefonoColori.getValue(it), polso.getValue(it)) }
 
         listOf(
-            "elite_lime",
-            "elite_on_lime",
-            "elite_text_primary",
-            "elite_text_secondary",
-            "elite_error",
-            "elite_warning",
-            "ink_black",
+            "accent_default",
+            "on_accent",
+            "text_primary",
+            "text_secondary",
+            "status_error",
+            "status_warning",
+            "background_watch",
             "team_side_1",
             "team_side_2",
         ).forEach { assertTrue("manca $it sull'orologio", it in polso) }
-        assertEquals("#000000", polso.getValue("ink_black"))
-        assertEquals("#C8F135", polso.getValue("elite_lime"))
+        assertEquals("#000000", polso.getValue("background_watch"))
+        assertEquals("#C8F135", polso.getValue("accent_default"))
         assertEquals("#C8F135", polso.getValue("team_side_1"))
         assertEquals("#00E5FF", polso.getValue("team_side_2"))
 

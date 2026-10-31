@@ -8,7 +8,7 @@
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/elite_background" android:fitsSystemWindows="true" tools:context=".ui.MatchSettingsActivity">
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/background_canvas" android:fitsSystemWindows="true" tools:context=".ui.MatchSettingsActivity">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
@@ -25,7 +25,7 @@
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
 
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/settings_teams_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/elite_text_secondary" android:accessibilityHeading="true" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/settings_teams_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/text_secondary" android:accessibilityHeading="true" />
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
@@ -57,7 +57,7 @@
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
 
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/settings_match_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/elite_text_secondary" android:accessibilityHeading="true" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/settings_match_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/text_secondary" android:accessibilityHeading="true" />
 
                 <LinearLayout android:id="@+id/sportRow" style="@style/Widget.App.Pressable" android:layout_width="match_parent" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:foreground="@drawable/bg_focus_ring" android:gravity="center_vertical" android:minHeight="@dimen/control_touch" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
@@ -65,7 +65,7 @@
 
                     <TextView android:id="@+id/sportValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/space_12" android:textAppearance="@style/TextAppearance.App.Caption" />
 
-                    <ImageView android:layout_width="@dimen/icon_standard" android:layout_height="@dimen/icon_standard" android:layout_marginStart="@dimen/space_8" android:importantForAccessibility="no" android:src="@drawable/ic_chevron_right" app:tint="@color/elite_text_secondary" />
+                    <ImageView android:layout_width="@dimen/icon_standard" android:layout_height="@dimen/icon_standard" android:layout_marginStart="@dimen/space_8" android:importantForAccessibility="no" android:src="@drawable/ic_chevron_right" app:tint="@color/text_secondary" />
                 </LinearLayout>
 
                 <!-- La regola del 40-40, solo negli sport con racchetta: punto secco, killer point, vantaggi. -->
@@ -75,7 +75,7 @@
 
                     <TextView android:id="@+id/deuceValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/space_12" android:textAppearance="@style/TextAppearance.App.Caption" />
 
-                    <ImageView android:layout_width="@dimen/icon_standard" android:layout_height="@dimen/icon_standard" android:layout_marginStart="@dimen/space_8" android:importantForAccessibility="no" android:src="@drawable/ic_chevron_right" app:tint="@color/elite_text_secondary" />
+                    <ImageView android:layout_width="@dimen/icon_standard" android:layout_height="@dimen/icon_standard" android:layout_marginStart="@dimen/space_8" android:importantForAccessibility="no" android:src="@drawable/ic_chevron_right" app:tint="@color/text_secondary" />
                 </LinearLayout>
 
                 <!-- Le regole che il motore applica allo sport scelto, composte da SportRegistry. -->
@@ -122,7 +122,7 @@
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
 
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/padel_elite_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/elite_text_secondary" android:accessibilityHeading="true" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/padel_elite_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/text_secondary" android:accessibilityHeading="true" />
 
                 <LinearLayout android:id="@+id/padelEliteRow" style="@style/Widget.App.Pressable" android:layout_width="match_parent" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:foreground="@drawable/bg_focus_ring" android:gravity="center_vertical" android:minHeight="@dimen/control_touch" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
@@ -133,7 +133,7 @@
                         <TextView android:id="@+id/padelEliteStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/space_4" android:text="@string/padel_elite_settings_signed_out" android:textAppearance="@style/TextAppearance.App.Caption" />
                     </LinearLayout>
 
-                    <ImageView android:layout_width="@dimen/icon_standard" android:layout_height="@dimen/icon_standard" android:layout_marginStart="@dimen/space_12" android:importantForAccessibility="no" android:src="@drawable/ic_chevron_right" app:tint="@color/elite_text_secondary" />
+                    <ImageView android:layout_width="@dimen/icon_standard" android:layout_height="@dimen/icon_standard" android:layout_marginStart="@dimen/space_12" android:importantForAccessibility="no" android:src="@drawable/ic_chevron_right" app:tint="@color/text_secondary" />
                 </LinearLayout>
 
             </LinearLayout>
@@ -144,7 +144,7 @@
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
 
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/settings_app_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/elite_text_secondary" android:accessibilityHeading="true" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/space_16" android:paddingTop="@dimen/space_16" android:text="@string/settings_app_title" android:textAppearance="@style/TextAppearance.App.RowTitle" android:textColor="@color/text_secondary" android:accessibilityHeading="true" />
 
                 <LinearLayout android:id="@+id/appearanceRow" style="@style/Widget.App.Pressable" android:layout_width="match_parent" android:layout_height="wrap_content" android:clickable="true" android:focusable="true" android:foreground="@drawable/bg_focus_ring" android:gravity="center_vertical" android:minHeight="@dimen/control_touch" android:orientation="horizontal" android:paddingHorizontal="@dimen/space_16" android:paddingVertical="@dimen/space_12">
 
@@ -152,7 +152,7 @@
 
                     <TextView android:id="@+id/appearanceValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/space_12" android:textAppearance="@style/TextAppearance.App.Caption" />
 
-                    <ImageView android:layout_width="@dimen/icon_standard" android:layout_height="@dimen/icon_standard" android:layout_marginStart="@dimen/space_8" android:importantForAccessibility="no" android:src="@drawable/ic_chevron_right" app:tint="@color/elite_text_secondary" />
+                    <ImageView android:layout_width="@dimen/icon_standard" android:layout_height="@dimen/icon_standard" android:layout_marginStart="@dimen/space_8" android:importantForAccessibility="no" android:src="@drawable/ic_chevron_right" app:tint="@color/text_secondary" />
                 </LinearLayout>
 
                 <View style="@style/Widget.App.RowDivider" android:layout_width="match_parent" android:layout_height="@dimen/border_width" android:layout_marginStart="@dimen/space_16" />
@@ -163,7 +163,7 @@
 
                     <TextView android:id="@+id/languageValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="@dimen/space_12" android:textAppearance="@style/TextAppearance.App.Caption" />
 
-                    <ImageView android:layout_width="@dimen/icon_standard" android:layout_height="@dimen/icon_standard" android:layout_marginStart="@dimen/space_8" android:importantForAccessibility="no" android:src="@drawable/ic_chevron_right" app:tint="@color/elite_text_secondary" />
+                    <ImageView android:layout_width="@dimen/icon_standard" android:layout_height="@dimen/icon_standard" android:layout_marginStart="@dimen/space_8" android:importantForAccessibility="no" android:src="@drawable/ic_chevron_right" app:tint="@color/text_secondary" />
                 </LinearLayout>
 
                 <View style="@style/Widget.App.RowDivider" android:layout_width="match_parent" android:layout_height="@dimen/border_width" android:layout_marginStart="@dimen/space_16" />

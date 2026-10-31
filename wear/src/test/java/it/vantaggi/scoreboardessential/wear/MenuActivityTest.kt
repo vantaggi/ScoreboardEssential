@@ -91,9 +91,9 @@ class MenuActivityTest {
         assertFalse(activity.isFinishing)
         assertEquals(activity.getString(R.string.wear_menu_end_confirm, "6–4"), titolo(fine(activity)))
         assertEquals(activity.getString(R.string.wear_menu_tap_again), sottotitolo(fine(activity)).text.toString())
-        assertEquals(colore(R.color.elite_error), fine(activity).cardBackgroundColor.defaultColor)
+        assertEquals(colore(R.color.status_error), fine(activity).cardBackgroundColor.defaultColor)
         // Testo nero sul rosso pieno, come dice il design (5.46:1).
-        assertEquals(colore(R.color.ink_black), sottotitolo(fine(activity)).currentTextColor)
+        assertEquals(colore(R.color.background_watch), sottotitolo(fine(activity)).currentTextColor)
         assertNull(ShadowToast.getTextOfLatestToast())
     }
 
@@ -119,7 +119,7 @@ class MenuActivityTest {
         fine(activity).performClick()
 
         assertFalse(activity.isFinishing)
-        assertEquals(colore(R.color.elite_error), fine(activity).cardBackgroundColor.defaultColor)
+        assertEquals(colore(R.color.status_error), fine(activity).cardBackgroundColor.defaultColor)
         // La finestra non e' ripartita: un millisecondo dopo, il secondo tocco vale.
         avanza(1)
         fine(activity).performClick()
@@ -135,13 +135,13 @@ class MenuActivityTest {
         avanza(ConfermaSulPosto.SCADENZA_MS)
 
         assertEquals(prima, titolo(fine(activity)))
-        assertEquals(colore(R.color.elite_surface), fine(activity).cardBackgroundColor.defaultColor)
-        assertEquals(colore(R.color.elite_error), fine(activity).findViewById<TextView>(R.id.sport_name).currentTextColor)
+        assertEquals(colore(R.color.background_surface), fine(activity).cardBackgroundColor.defaultColor)
+        assertEquals(colore(R.color.status_error), fine(activity).findViewById<TextView>(R.id.sport_name).currentTextColor)
 
         // Con la card com'era, il tocco non puo' valere come conferma: arma di nuovo.
         fine(activity).performClick()
         assertFalse(activity.isFinishing)
-        assertEquals(colore(R.color.elite_error), fine(activity).cardBackgroundColor.defaultColor)
+        assertEquals(colore(R.color.status_error), fine(activity).cardBackgroundColor.defaultColor)
     }
 
     @Test
@@ -153,7 +153,7 @@ class MenuActivityTest {
             activity.resources.getQuantityString(R.plurals.wear_menu_deliver_first, 2, 2),
             sottotitolo(fine(activity)).text.toString(),
         )
-        assertEquals(colore(R.color.elite_warning), sottotitolo(fine(activity)).currentTextColor)
+        assertEquals(colore(R.color.status_warning), sottotitolo(fine(activity)).currentTextColor)
 
         fine(activity).performClick()
         avanza(1_000)

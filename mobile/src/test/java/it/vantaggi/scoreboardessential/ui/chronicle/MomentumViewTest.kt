@@ -78,11 +78,11 @@ class MomentumViewTest {
 
     @Test
     fun `lime e ciano reggono 3 a 1 sul gruppo`() {
-        val gruppo = ctx.getColor(R.color.elite_surface)
+        val gruppo = ctx.getColor(R.color.background_surface)
         assertTrue(TeamInk.contrast(lime, gruppo) >= 3.0)
         assertTrue(TeamInk.contrast(ciano, gruppo) >= 3.0)
-        assertEquals(lime, ctx.getColor(R.color.elite_lime))
-        assertEquals(ciano, ctx.getColor(R.color.elite_cyan))
+        assertEquals(lime, ctx.getColor(R.color.accent_default_standard))
+        assertEquals(ciano, ctx.getColor(R.color.chart_2))
     }
 
     /** Il secondo segno oltre al colore: il nome di ciascun lato, con il suo vantaggio massimo se c'e'. */
@@ -98,7 +98,7 @@ class MomentumViewTest {
     /** Il tratteggio: lungo la colonna del set si alternano pieno e vuoto; senza fine set resta solo l'asse. */
     @Test
     fun `le linee di fine set sono tratteggiate`() {
-        val outline = ctx.getColor(R.color.elite_outline)
+        val outline = ctx.getColor(R.color.border_strong)
 
         fun tratti(b: Bitmap): Int {
             // La vista lascia lo spessore della linea (2dp) a sinistra e a destra.

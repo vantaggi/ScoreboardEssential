@@ -252,7 +252,7 @@ class ProssimaPartitaActivity : ComponentActivity() {
                 coppie.consegnata -> getString(R.string.wear_next_delivered)
                 else -> getString(R.string.wear_next_hint)
             }
-        avviso.setTextColor(colore(if (senzaRisposta) R.color.elite_warning else R.color.elite_text_secondary))
+        avviso.setTextColor(colore(if (senzaRisposta) R.color.status_warning else R.color.text_secondary))
 
         findViewById<TextView>(R.id.prossima_sigla1).text = coppie.sigle.getOrNull(0).orEmpty()
         findViewById<TextView>(R.id.prossima_sigla2).text = coppie.sigle.getOrNull(1).orEmpty()
@@ -292,9 +292,9 @@ class ProssimaPartitaActivity : ComponentActivity() {
         riga.findViewById<View>(R.id.player_bar).setBackgroundColor(TeamInk.graphicOnBlack(coloreCoppia) or TeamInk.NERO)
         riga.findViewById<TextView>(R.id.player_name).apply {
             text = nome
-            setTextColor(colore(if (eScelto) R.color.elite_lime else R.color.elite_text_primary))
+            setTextColor(colore(if (eScelto) R.color.accent_default else R.color.text_primary))
         }
-        riga.setBackgroundColor(colore(if (eScelto) R.color.elite_surface_raised else R.color.elite_surface))
+        riga.setBackgroundColor(colore(if (eScelto) R.color.background_elevated else R.color.background_surface))
         riga.isSelected = eScelto
         riga.isEnabled = inAttesa == null
         riga.contentDescription =

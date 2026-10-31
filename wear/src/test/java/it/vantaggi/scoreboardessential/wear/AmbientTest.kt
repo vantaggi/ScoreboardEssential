@@ -171,8 +171,8 @@ class AmbientTest {
         calcioColorato()
         // Fuori dall'ambient i colori ci sono: senza questo il test non direbbe niente.
         assertEquals(View.VISIBLE, binding.team1Stripe.visibility)
-        assertEquals(colore(R.color.elite_error), binding.gestureHint.currentTextColor)
-        assertEquals(colore(R.color.elite_error), binding.keeperTimer.currentTextColor)
+        assertEquals(colore(R.color.status_error), binding.gestureHint.currentTextColor)
+        assertEquals(colore(R.color.status_error), binding.keeperTimer.currentTextColor)
 
         attivita().applyAmbient(true)
         idle()
@@ -190,7 +190,7 @@ class AmbientTest {
         assertEquals("K 0'", binding.keeperTimer.text.toString())
         // L'anomalia si dice ancora, ma in grigio chiaro e non in rosso.
         assertEquals(attivita().getString(R.string.wear_status_not_confirmed), binding.gestureHint.text.toString())
-        assertEquals(colore(R.color.ambient_gray), binding.gestureHint.currentTextColor)
+        assertEquals(colore(R.color.text_ambient), binding.gestureHint.currentTextColor)
         testiVisibili(binding.root).forEach {
             assertTrue("\"${it.text}\" ha un colore (#${Integer.toHexString(it.currentTextColor)})", eGrigio(it.currentTextColor))
         }
@@ -214,8 +214,8 @@ class AmbientTest {
         assertEquals(View.VISIBLE, binding.keeperTimer.visibility)
         assertEquals(View.VISIBLE, binding.keeperProgressBar.visibility)
         assertEquals(View.VISIBLE, binding.menuGlyph.visibility)
-        assertEquals(colore(R.color.elite_error), binding.gestureHint.currentTextColor)
-        assertEquals(colore(R.color.elite_error), binding.keeperTimer.currentTextColor)
+        assertEquals(colore(R.color.status_error), binding.gestureHint.currentTextColor)
+        assertEquals(colore(R.color.status_error), binding.keeperTimer.currentTextColor)
     }
 
     @Test
@@ -231,7 +231,7 @@ class AmbientTest {
         applica(stato(hasClock = true).copy(matchOver = true))
         assertEquals(Frase.PartitaFinita, viewModel.statoFiducia.value)
         assertEquals(attivita().getString(R.string.wear_match_over), binding.gestureHint.text.toString())
-        assertEquals(colore(R.color.ambient_gray), binding.gestureHint.currentTextColor)
+        assertEquals(colore(R.color.text_ambient), binding.gestureHint.currentTextColor)
     }
 
     @Test
@@ -249,7 +249,7 @@ class AmbientTest {
         viewModel.mostraTransitorio(Transitorio.SportNonCambiato)
         idle()
         assertEquals(attivita().getString(R.string.wear_status_sport_unchanged), binding.gestureHint.text.toString())
-        assertEquals(colore(R.color.ambient_gray), binding.gestureHint.currentTextColor)
+        assertEquals(colore(R.color.text_ambient), binding.gestureHint.currentTextColor)
     }
 
     @Test
@@ -265,7 +265,7 @@ class AmbientTest {
         assertEquals("per eccesso: 4:12 e' al piu' 5 minuti", "K 5'", binding.keeperTimer.text.toString())
         assertEquals(View.VISIBLE, binding.keeperTimer.visibility)
         assertEquals(View.INVISIBLE, binding.keeperProgressBar.visibility)
-        assertEquals(colore(R.color.ink_white), binding.keeperTimer.currentTextColor)
+        assertEquals(colore(R.color.text_on_watch), binding.keeperTimer.currentTextColor)
         assertSame("cifre sottili come le altre", binding.team1Score.typeface, binding.keeperTimer.typeface)
         val light = binding.keeperTimer.typeface
 
@@ -282,7 +282,7 @@ class AmbientTest {
         viewModel.setKeeperTimerState(KeeperTimerState.Paused(37))
         idle()
         assertEquals("K <1'", binding.keeperTimer.text.toString())
-        assertEquals(colore(R.color.ambient_gray), binding.keeperTimer.currentTextColor)
+        assertEquals(colore(R.color.text_ambient), binding.keeperTimer.currentTextColor)
 
         // All'uscita il portiere si ridisegna con lo stato di adesso e il carattere di prima.
         attivita().applyAmbient(false)

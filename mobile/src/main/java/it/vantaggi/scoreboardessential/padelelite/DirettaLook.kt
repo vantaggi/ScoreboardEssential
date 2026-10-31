@@ -35,29 +35,29 @@ fun direttaLook(
                     DirettaServizioFase.SCADUTO -> context.getString(R.string.diretta_live_service_timeout, stato.gruppo)
                     else -> context.getString(R.string.diretta_live, stato.gruppo)
                 }
-            DirettaLook(testo, R.drawable.ic_sensors, R.color.elite_accent)
+            DirettaLook(testo, R.drawable.ic_sensors, R.color.accent_default)
         }
 
         DirettaFase.IN_ATTESA -> {
-            DirettaLook(testoDiAttesa(context, stato), R.drawable.ic_schedule, R.color.elite_warning)
+            DirettaLook(testoDiAttesa(context, stato), R.drawable.ic_schedule, R.color.status_warning)
         }
 
         DirettaFase.FERMA -> {
-            DirettaLook(ferma(context, stato), R.drawable.ic_cancel, R.color.elite_error)
+            DirettaLook(ferma(context, stato), R.drawable.ic_cancel, R.color.status_error)
         }
 
         DirettaFase.CHIUSA -> {
             when (chiusura) {
                 ChiusuraFase.IN_CORSO -> {
-                    DirettaLook(context.getString(R.string.diretta_closing), R.drawable.ic_schedule, R.color.elite_text_secondary)
+                    DirettaLook(context.getString(R.string.diretta_closing), R.drawable.ic_schedule, R.color.text_secondary)
                 }
 
                 ChiusuraFase.FALLITA -> {
-                    DirettaLook(context.getString(R.string.diretta_close_failed), R.drawable.ic_warning, R.color.elite_warning)
+                    DirettaLook(context.getString(R.string.diretta_close_failed), R.drawable.ic_warning, R.color.status_warning)
                 }
 
                 ChiusuraFase.NESSUNA -> {
-                    DirettaLook(context.getString(R.string.diretta_closed), R.drawable.ic_check_circle, R.color.elite_text_secondary)
+                    DirettaLook(context.getString(R.string.diretta_closed), R.drawable.ic_check_circle, R.color.text_secondary)
                 }
             }
         }

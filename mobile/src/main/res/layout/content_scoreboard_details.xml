@@ -48,7 +48,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/space_8"
-        android:background="@color/elite_error_subtle"
+        android:background="@color/status_error_subtle"
         android:orientation="horizontal"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
@@ -58,7 +58,7 @@
         <View
             android:layout_width="4dp"
             android:layout_height="match_parent"
-            android:background="@color/elite_error" />
+            android:background="@color/status_error" />
 
         <TextView
             android:id="@+id/watch_notice_text"
@@ -71,7 +71,7 @@
             android:padding="@dimen/space_12"
             android:text="@string/watch_batch_rejected"
             android:textAppearance="@style/TextAppearance.App.Caption"
-            android:textColor="@color/elite_text_primary" />
+            android:textColor="@color/text_primary" />
     </LinearLayout>
 
     <!--
@@ -199,7 +199,7 @@
                     android:layout_weight="1"
                     android:accessibilityLiveRegion="polite"
                     android:textAppearance="@style/TextAppearance.App.Caption"
-                    android:textColor="@color/elite_text_primary" />
+                    android:textColor="@color/text_primary" />
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -707,7 +707,7 @@
                         android:layout_marginEnd="@dimen/space_12"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_history"
-                        app:tint="@color/elite_text_primary" />
+                        app:tint="@color/text_primary" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -721,7 +721,7 @@
                         android:layout_height="@dimen/icon_standard"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_chevron_right"
-                        app:tint="@color/elite_text_secondary" />
+                        app:tint="@color/text_secondary" />
                 </LinearLayout>
 
                 <View
@@ -750,7 +750,7 @@
                         android:layout_marginEnd="@dimen/space_12"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_bar_chart"
-                        app:tint="@color/elite_text_primary" />
+                        app:tint="@color/text_primary" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -764,7 +764,7 @@
                         android:layout_height="@dimen/icon_standard"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_chevron_right"
-                        app:tint="@color/elite_text_secondary" />
+                        app:tint="@color/text_secondary" />
                 </LinearLayout>
 
                 <View
@@ -793,7 +793,7 @@
                         android:layout_marginEnd="@dimen/space_12"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_person"
-                        app:tint="@color/elite_text_primary" />
+                        app:tint="@color/text_primary" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -807,7 +807,7 @@
                         android:layout_height="@dimen/icon_standard"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_chevron_right"
-                        app:tint="@color/elite_text_secondary" />
+                        app:tint="@color/text_secondary" />
                 </LinearLayout>
 
                 <View
@@ -836,7 +836,7 @@
                         android:layout_marginEnd="@dimen/space_12"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_settings"
-                        app:tint="@color/elite_text_primary" />
+                        app:tint="@color/text_primary" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -850,7 +850,7 @@
                         android:layout_height="@dimen/icon_standard"
                         android:importantForAccessibility="no"
                         android:src="@drawable/ic_chevron_right"
-                        app:tint="@color/elite_text_secondary" />
+                        app:tint="@color/text_secondary" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

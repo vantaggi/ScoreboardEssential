@@ -13,5 +13,5 @@
     android:paddingTop="@dimen/space_16"
     android:paddingBottom="@dimen/space_4"
     android:textAppearance="@style/TextAppearance.App.RowTitle"
-    android:textColor="@color/elite_text_secondary"
+    android:textColor="@color/text_secondary"
     tools:text="Oggi" />
