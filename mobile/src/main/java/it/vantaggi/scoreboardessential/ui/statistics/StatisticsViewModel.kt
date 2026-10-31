@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class StatisticsViewModel(
@@ -32,18 +33,26 @@ class StatisticsViewModel(
 
     private val filter = MutableStateFlow(FilterType.ALL)
 
+    /** La scheda guardata nel calcio: dopo una rotazione la schermata la rimette scelta. */
+    val filtro: StateFlow<FilterType> = filter
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val topScorers: StateFlow<List<PlayerStatsDTO>> =
         filter
             .flatMapLatest { filterType ->
-                val categories =
-                    when (filterType) {
-                        FilterType.ALL -> null
-                        FilterType.ATTACK -> listOf("ATTACCO")
-                        FilterType.DEFENSE -> listOf("DIFESA", "PORTA")
-                    }
-                getPlayerStatsUseCase.getTopScorers(LIMIT, categories)
+                getPlayerStatsUseCase.getTopScorers(LIMIT, CATEGORIE[filterType])
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /**
+     * Le schede del calcio che valgono: Generale sempre, Attacco e Difesa solo se in classifica c'e'
+     * qualcuno con un ruolo di quella parte. Senza ruoli le due schede ripetevano Generale o erano
+     * vuote: cio' che non vale per i dati che ci sono sparisce, come i filtri per ruolo dei Giocatori.
+     */
+    val schede: StateFlow<List<FilterType>> =
+        getPlayerStatsUseCase
+            .getTopScorers(Int.MAX_VALUE, null)
+            .map { classifica -> schedeCon(classifica.flatMap { it.roles }.map { it.category }) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf(FilterType.ALL))
 
     fun setFilter(newFilter: FilterType) {
         filter.value = newFilter
@@ -71,6 +80,17 @@ class StatisticsViewModel(
 
     companion object {
         private const val LIMIT = 10
+
+        /** Le categorie di ruolo di ogni scheda; Generale non filtra. */
+        private val CATEGORIE =
+            mapOf(
+                FilterType.ATTACK to listOf("ATTACCO"),
+                FilterType.DEFENSE to listOf("DIFESA", "PORTA"),
+            )
+
+        /** Generale, e le schede di cui qualcuno ha una categoria fra [categorie]. */
+        fun schedeCon(categorie: Collection<String>): List<FilterType> =
+            listOf(FilterType.ALL) + CATEGORIE.filterValues { proprie -> proprie.any { it in categorie } }.keys
 
         /** Gli sport in cui segnando si dice chi ha segnato hanno la classifica dei gol; gli altri quella delle vittorie. */
         fun contaIGol(sportId: String): Boolean = SportRegistry.byId(sportId).capabilities.attributesScorer
