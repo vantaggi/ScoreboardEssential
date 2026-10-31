@@ -19,6 +19,7 @@ import it.vantaggi.scoreboardessential.databinding.ActivityStatisticsBinding
 import it.vantaggi.scoreboardessential.sportLabel
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
 import it.vantaggi.scoreboardessential.utils.enableEdgeToEdgeConAspetto
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
@@ -78,18 +79,11 @@ class StatisticsActivity : AppCompatActivity() {
 
         setupSportChips()
 
-        binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.stats_tab_general))
-        binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.stats_tab_attack))
-        binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.stats_tab_defense))
-
+        // Le schede le mette mostraLeSchede, quando si sa quali valgono.
         binding.tabLayout.addOnTabSelectedListener(
             object : TabLayout.OnTabSelectedListener {
                 override fun onTabSelected(tab: TabLayout.Tab?) {
-                    when (tab?.position) {
-                        0 -> viewModel.setFilter(StatisticsViewModel.FilterType.ALL)
-                        1 -> viewModel.setFilter(StatisticsViewModel.FilterType.ATTACK)
-                        2 -> viewModel.setFilter(StatisticsViewModel.FilterType.DEFENSE)
-                    }
+                    (tab?.tag as? StatisticsViewModel.FilterType)?.let(viewModel::setFilter)
                 }
 
                 override fun onTabUnselected(tab: TabLayout.Tab?) {}
@@ -133,20 +127,48 @@ class StatisticsActivity : AppCompatActivity() {
         if (chip != null && !chip.isChecked) binding.sportChipGroup.check(chip.id)
     }
 
-    /** Il calcio: le tre schede, i gol di chi ha giocato a calcio. */
+    /** Il calcio: le schede che valgono e i gol di chi ha giocato a calcio. */
     private suspend fun observeGoals() {
-        binding.tabLayout.visibility = View.VISIBLE
-        binding.statsHeading.visibility = View.GONE
-        binding.emptyState.setMessage(getString(R.string.stats_empty_title), getString(R.string.stats_empty_hint))
-        binding.recyclerStats.adapter = goalsAdapter
-        viewModel.topScorers.collect { stats ->
-            // Una classifica di soli zeri non e' una classifica: lo stato vuoto e basta.
-            val vuota = Classifica.eVuota(stats.map { it.goals })
-            binding.statsGroup.visibility = if (vuota) View.GONE else View.VISIBLE
-            binding.emptyState.visibility = if (vuota) View.VISIBLE else View.GONE
-            if (!vuota) goalsAdapter.submitList(stats)
+        coroutineScope {
+            binding.statsHeading.visibility = View.GONE
+            binding.emptyState.setMessage(getString(R.string.stats_empty_title), getString(R.string.stats_empty_hint))
+            binding.recyclerStats.adapter = goalsAdapter
+            launch { viewModel.schede.collect(::mostraLeSchede) }
+            viewModel.topScorers.collect { stats ->
+                // Una classifica di soli zeri non e' una classifica: lo stato vuoto e basta.
+                val vuota = Classifica.eVuota(stats.map { it.goals })
+                binding.statsGroup.visibility = if (vuota) View.GONE else View.VISIBLE
+                binding.emptyState.visibility = if (vuota) View.VISIBLE else View.GONE
+                if (!vuota) goalsAdapter.submitList(stats)
+            }
         }
     }
+
+    /**
+     * Le schede del calcio: Generale e, se qualcuno in classifica ha un ruolo di quella parte, Attacco
+     * e Difesa. Con la sola Generale la fila non c'e'. La scheda guardata resta scelta se vale ancora,
+     * anche dopo una rotazione; se non vale piu' si torna a Generale.
+     */
+    private fun mostraLeSchede(schede: List<StatisticsViewModel.FilterType>) {
+        val tabs = binding.tabLayout
+        tabs.visibility = if (schede.size > 1) View.VISIBLE else View.GONE
+        val scelta = viewModel.filtro.value.takeIf { it in schede } ?: StatisticsViewModel.FilterType.ALL
+        val attuali = (0 until tabs.tabCount).map { tabs.getTabAt(it)?.tag }
+        if (attuali != schede) {
+            tabs.removeAllTabs()
+            schede.forEach { scheda ->
+                tabs.addTab(tabs.newTab().setText(titoloDellaScheda(scheda)).setTag(scheda), scheda == scelta)
+            }
+        }
+        viewModel.setFilter(scelta)
+    }
+
+    private fun titoloDellaScheda(scheda: StatisticsViewModel.FilterType): Int =
+        when (scheda) {
+            StatisticsViewModel.FilterType.ALL -> R.string.stats_tab_general
+            StatisticsViewModel.FilterType.ATTACK -> R.string.stats_tab_attack
+            StatisticsViewModel.FilterType.DEFENSE -> R.string.stats_tab_defense
+        }
 
     /**
      * Padel e tennis: niente schede, la riga del titolo e le partite vinte su quelle giocate. Lo sport

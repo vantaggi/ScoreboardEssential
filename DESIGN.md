@@ -2977,3 +2977,22 @@ La stessa bozza A al polso, con le sigle di tre lettere. Le regole che telefono 
 - **Pattern vietati (10-review).** Nessun valore scritto a mano (misura a zero, geometria a zero su sette forme), testi in italiano e in inglese, un'icona dal catalogo (`ic_person`, copia di quella del telefono, nella tabella G-3), un'animazione sola che collega due stati con i token condivisi, nessun dialogo e nessun blocco del quadrante.
 - **Non visto a schermo.** Solo test JVM e Robolectric. Da guardare alla prova finale, sul tondo e sul quadrato: la capsula «Serve?» a inizio partita e i suoi 8 secondi, le tre domande e la correzione (corona, indietro, TalkBack), la sigla a fine game (fotogrammi, rallentatore x5, interruzione con un punto), il menu con la voce nuova, e che la scelta arrivi al telefono e torni nei pallini.
 
+
+### PR 7: le statistiche per sport, i resti (31 ottobre 2026)
+
+Il piano diceva: "Cio' che non vale per lo sport sparisce; grafico solo da tre punti in su". Quasi tutto era gia' fatto (#199, #207, #210, #213). Controllato schermata per schermata:
+
+| Dove | Cosa vale per lo sport | Stato |
+| --- | --- | --- |
+| Statistiche | Calcio: gol e schede per ruolo. Padel e tennis: partite vinte su giocate, niente schede e niente gol | Gia' fatto (#207) |
+| Scheda del giocatore | Un blocco per sport giocato; i gol solo nel calcio | Gia' fatto (#210) |
+| Giocatori | Gol, ruoli, filtri per ruolo e "Per gol" solo nel calcio | Gia' fatto (passo 6b) |
+| Giocatore, modifica | Ruoli solo nel calcio; "Azzera i gol" solo con gol | Gia' fatto |
+| Cronaca | Solo negli sport a racchetta; sezioni solo coi dati; andamento da tre punti in su (`MOMENTUM_MIN_POINTS`, provato da `ChronicleActivityTest`) | Gia' fatto (#199) |
+| Report PDF | Marcatori solo dove lo sport li chiede | Gia' fatto |
+| **Statistiche, calcio** | **Le schede Attacco e Difesa comparivano anche senza nessun giocatore con un ruolo: ripetevano Generale o erano vuote** | **Corretto qui** |
+
+- **Piano.** *Gerarchia e layout:* la fila delle schede c'e' solo se ha piu' di una scheda: Generale e, per ognuna fra Attacco (ruoli `ATTACCO`) e Difesa (`DIFESA`, `PORTA`), solo se qualcuno in classifica ha un ruolo di quella parte. Il centrocampo non ha una scheda e non ne accende nessuna. E' la regola dei filtri per ruolo dei Giocatori. *Componenti riusati:* lo stesso `TabLayout` con `Widget.App.TabLayout`, gli stessi testi. *Stati:* senza ruoli (nessuna fila, la classifica sotto i chip), con un solo lato (Generale e quella scheda), con tutti e due; la scheda guardata resta scelta quando ne arriva un'altra e dopo una rotazione (prima, dopo una rotazione, la fila tornava su Generale mentre il filtro restava quello di prima); se la scheda guardata non vale piu' si torna a Generale. Lo stato vuoto (tutti a zero gol) non ha la fila: non c'e' niente da filtrare. *Movimento:* nessuno nuovo. *Accessibilita':* la fila e' quella di prima, TalkBack legge le schede che ci sono. *Schermo stretto e 200%:* due schede invece di tre, nessun cambio di misura.
+- **Logica.** `StatisticsViewModel.schedeCon(categorie)` (funzione pura) e il flusso `schede`, dalla classifica intera del calcio coi ruoli; `filtro` espone la scheda guardata. `StatisticsActivity.mostraLeSchede` rifa' la fila solo se le schede cambiano.
+- **Pattern vietati (10-review).** Nessun valore scritto a mano, nessun testo nuovo, nessun componente nuovo; una fila di schede che diceva cose che non c'erano e' tolta.
+- **Non visto a schermo.** Solo test Robolectric (`StatistichePerSportTest`). Da guardare alla prova finale: Statistiche nel calcio senza ruoli, con un attaccante, con un portiere; rotazione con Attacco scelto.

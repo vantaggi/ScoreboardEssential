@@ -4,16 +4,20 @@ import android.content.Context
 import android.os.Looper
 import android.view.View
 import android.widget.TextView
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.tabs.TabLayout
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.AppDatabase
 import it.vantaggi.scoreboardessential.database.Match
 import it.vantaggi.scoreboardessential.database.MatchPlayerCrossRef
 import it.vantaggi.scoreboardessential.database.Player
+import it.vantaggi.scoreboardessential.database.PlayerRoleCrossRef
+import it.vantaggi.scoreboardessential.database.Role
 import it.vantaggi.scoreboardessential.database.Team
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -167,6 +171,8 @@ class StatistichePerSportTest {
     fun `il chip dello sport cambia la classifica senza toccare le impostazioni`() {
         sport(SportRegistry.FOOTBALL)
         runBlocking { db.playerDao().update(Player(playerId = 1, playerName = "Anna", appearances = 1, goals = 2)) }
+        // Con un ruolo d'attacco le schede del calcio ci sono: il cambio di sport le deve togliere.
+        ruolo(giocatore = 1, roleId = 1, categoria = "ATTACCO")
         partita(SportRegistry.FOOTBALL, listOf(1), listOf(2), punteggio = 2 to 0)
         partita(SportRegistry.PADEL, listOf(1, 2), listOf(3, 4))
         val statistiche = Robolectric.buildActivity(StatisticsActivity::class.java).setup().get()
@@ -254,6 +260,70 @@ class StatistichePerSportTest {
         }
 
         assertEquals(View.GONE, statistiche.findViewById<View>(R.id.stats_group).visibility)
-        assertEquals(View.VISIBLE, statistiche.findViewById<View>(R.id.tabLayout).visibility)
+        // Senza classifica non c'e' niente da filtrare per ruolo: le schede non ci sono.
+        assertEquals(View.GONE, statistiche.findViewById<View>(R.id.tabLayout).visibility)
+    }
+
+    private fun ruolo(
+        giocatore: Int,
+        roleId: Int,
+        categoria: String,
+    ) = runBlocking {
+        db.playerDao().insertRole(Role(roleId = roleId, name = categoria, category = categoria))
+        db.playerDao().insertPlayerRoles(listOf(PlayerRoleCrossRef(giocatore, roleId)))
+    }
+
+    private fun schede(statistiche: StatisticsActivity): List<String> {
+        val tabs = statistiche.findViewById<TabLayout>(R.id.tabLayout)
+        if (tabs.visibility != View.VISIBLE) return emptyList()
+        return (0 until tabs.tabCount).map { tabs.getTabAt(it)?.text.toString() }
+    }
+
+    /**
+     * Rosso se le schede Attacco e Difesa compaiono senza nessuno con quel ruolo in classifica, se non
+     * compaiono quando qualcuno lo ha, o se una scheda nuova fa perdere quella che si stava guardando.
+     */
+    @Test
+    fun `nel calcio Attacco e Difesa ci sono solo se qualcuno ha quel ruolo`() {
+        sport(SportRegistry.FOOTBALL)
+        runBlocking {
+            db.playerDao().update(Player(playerId = 1, playerName = "Anna", appearances = 1, goals = 2))
+            db.playerDao().update(Player(playerId = 2, playerName = "Bruno", appearances = 1, goals = 1))
+        }
+        partita(SportRegistry.FOOTBALL, listOf(1), listOf(2), punteggio = 2 to 1)
+        val statistiche = Robolectric.buildActivity(StatisticsActivity::class.java).setup().get()
+        val lista = statistiche.findViewById<RecyclerView>(R.id.recycler_stats)
+        attendi("la classifica non e' arrivata") { righe(lista).size == 2 }
+        assertEquals("senza ruoli nessuna scheda", emptyList<String>(), schede(statistiche))
+
+        ruolo(giocatore = 1, roleId = 1, categoria = "ATTACCO")
+        attendi("la scheda Attacco non e' arrivata") { schede(statistiche) == listOf("Generale", "Attacco") }
+
+        statistiche.findViewById<TabLayout>(R.id.tabLayout).getTabAt(1)!!.select()
+        attendi("Attacco non filtra") { righe(lista).size == 1 }
+
+        ruolo(giocatore = 2, roleId = 2, categoria = "PORTA")
+        attendi("la scheda Difesa non e' arrivata") { schede(statistiche) == listOf("Generale", "Attacco", "Difesa") }
+        assertEquals("Attacco", statistiche.findViewById<TabLayout>(R.id.tabLayout).let { it.getTabAt(it.selectedTabPosition)?.text })
+        assertEquals(
+            StatisticsViewModel.FilterType.ATTACK,
+            ViewModelProvider(
+                statistiche,
+                StatisticsViewModel.Factory(statistiche.application),
+            )[StatisticsViewModel::class.java].filtro.value,
+        )
+    }
+
+    /** Rosso se una categoria fuori dalle schede (il centrocampo) ne accende una. */
+    @Test
+    fun `le schede seguono le categorie dei ruoli`() {
+        val tutte = StatisticsViewModel.FilterType.entries
+        assertEquals(listOf(StatisticsViewModel.FilterType.ALL), StatisticsViewModel.schedeCon(emptyList()))
+        assertEquals(listOf(StatisticsViewModel.FilterType.ALL), StatisticsViewModel.schedeCon(listOf("CENTROCAMPO")))
+        assertEquals(tutte, StatisticsViewModel.schedeCon(listOf("PORTA", "ATTACCO")))
+        assertEquals(
+            listOf(StatisticsViewModel.FilterType.ALL, StatisticsViewModel.FilterType.DEFENSE),
+            StatisticsViewModel.schedeCon(listOf("DIFESA")),
+        )
     }
 }
