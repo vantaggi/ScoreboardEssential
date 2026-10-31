@@ -23,8 +23,15 @@ data class LoggedEvent(
  *
  *     <versione>|<token>,<token>,...
  *     token := ['c']<side>[':'<playerId>]['*'<weight>]['@'<millisDallInizio>]
+ *            | 's'<side><slot1><slot2>['@'<millisDallInizio>]
  *
- * Esempio: `1|1,2:7,c2,1:3*2@45000`.
+ * Esempio: `1|1,2:7,c2,1:3*2@45000,s212@61000`.
+ *
+ * Il token `s` e' la scelta di chi batte ([ScoringEvent.ServeChoice]): lato al servizio e, per
+ * ciascuna coppia, chi batte al suo prossimo turno, tre cifre 1 o 2. E' arrivato dopo il formato 1
+ * senza cambiarne la versione: i registri gia' scritti si leggono uguali, e una build che non lo
+ * conosce rifiuta il registro intero come per ogni token che non capisce, invece di contare la
+ * scelta come un punto.
  *
  * ## Perche' questi separatori
  *
@@ -55,6 +62,7 @@ object MatchLogCodec {
     private const val HEADER_SEP = '|'
     private const val TOKEN_SEP = ','
     private const val CORRECTION_PREFIX = 'c'
+    private const val SERVE_PREFIX = 's'
     private const val PLAYER_PREFIX = ':'
     private const val WEIGHT_PREFIX = '*'
     private const val TIME_PREFIX = '@'
@@ -147,6 +155,14 @@ object MatchLogCodec {
                 sb.append(CORRECTION_PREFIX).append(event.side)
             }
 
+            is ScoringEvent.ServeChoice -> {
+                sb
+                    .append(SERVE_PREFIX)
+                    .append(event.side)
+                    .append(event.slot1)
+                    .append(event.slot2)
+            }
+
             is ScoringEvent.Point -> {
                 sb.append(event.side)
                 if (event.playerId != null) {
@@ -165,6 +181,7 @@ object MatchLogCodec {
     }
 
     private fun decodeToken(token: String): LoggedEvent? {
+        if (token.startsWith(SERVE_PREFIX)) return decodeServe(token)
         var i = 0
         val isCorrection = token.startsWith(CORRECTION_PREFIX)
         if (isCorrection) i++
@@ -205,6 +222,20 @@ object MatchLogCodec {
             } else {
                 ScoringEvent.Point(side = side - '0', playerId = playerId, weight = weight ?: 1)
             }
+        return LoggedEvent(event, atMillis)
+    }
+
+    /** `s<side><slot1><slot2>[@millis]`: tre cifre 1 o 2, poi al massimo il tempo. */
+    private fun decodeServe(token: String): LoggedEvent? {
+        if (token.length < 4) return null
+        val digits = (1..3).map { token[it] }
+        if (digits.any { it != '1' && it != '2' }) return null
+        var atMillis: Long? = null
+        if (token.length > 4) {
+            if (token[4] != TIME_PREFIX) return null
+            atMillis = token.substring(5).toLongOrNull() ?: return null
+        }
+        val event = ScoringEvent.ServeChoice(side = digits[0] - '0', slot1 = digits[1] - '0', slot2 = digits[2] - '0')
         return LoggedEvent(event, atMillis)
     }
 

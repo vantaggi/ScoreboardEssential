@@ -206,11 +206,20 @@
 
                     <!-- Lo slot ha sempre la larghezza di due pallini: uno o due si accendono, ma
                          niente cambia misura a partita in corso. -->
-                    <LinearLayout
+                    <!-- A fine game, per qualche secondo, le sigle di chi serve prendono il posto dei pallini
+                         (bozza A di chi serve): stesso posto, stesso colore del pallino. -->
+                    <FrameLayout
                         android:id="@+id/team1_serve_slot"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/aria_tabellone"
+                        android:importantForAccessibility="no">
+
+                    <LinearLayout
+                        android:id="@+id/team1_serve_dots"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
                         android:gravity="center_vertical"
                         android:importantForAccessibility="no"
                         android:orientation="horizontal">
@@ -232,6 +241,18 @@
                             android:importantForAccessibility="no"
                             android:visibility="invisible" />
                     </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/team1_serve_next"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:importantForAccessibility="no"
+                        android:maxLines="1"
+                        android:textAppearance="@style/TextAppearance.App.Game.Servizio"
+                        android:visibility="gone"
+                        tools:text="ROS" />
+                    </FrameLayout>
 
                     <it.vantaggi.scoreboardessential.ui.TestoCheSiStringe
                         android:id="@+id/team1_name_textview"
@@ -282,11 +303,20 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <LinearLayout
+                    <!-- A fine game, per qualche secondo, le sigle di chi serve prendono il posto dei pallini
+                         (bozza A di chi serve): stesso posto, stesso colore del pallino. -->
+                    <FrameLayout
                         android:id="@+id/team2_serve_slot"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/aria_tabellone"
+                        android:importantForAccessibility="no">
+
+                    <LinearLayout
+                        android:id="@+id/team2_serve_dots"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
                         android:gravity="center_vertical"
                         android:importantForAccessibility="no"
                         android:orientation="horizontal">
@@ -308,6 +338,18 @@
                             android:importantForAccessibility="no"
                             android:visibility="invisible" />
                     </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/team2_serve_next"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:importantForAccessibility="no"
+                        android:maxLines="1"
+                        android:textAppearance="@style/TextAppearance.App.Game.Servizio"
+                        android:visibility="gone"
+                        tools:text="ROS" />
+                    </FrameLayout>
 
                     <it.vantaggi.scoreboardessential.ui.TestoCheSiStringe
                         android:id="@+id/team2_name_textview"

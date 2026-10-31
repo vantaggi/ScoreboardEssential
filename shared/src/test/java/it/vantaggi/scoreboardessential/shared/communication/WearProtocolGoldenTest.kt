@@ -117,6 +117,20 @@ class WearProtocolGoldenTest {
     }
 
     /**
+     * Chi serve, scelto al polso: un tipo d'intenzione nuovo con chiavi sue, e SENZA `side`. Un
+     * telefono non aggiornato scarta il messaggio per lato mancante invece di contarlo come un punto,
+     * che e' cio' che farebbe di un tipo sconosciuto con `side` (il suo ramo `else` e' il punto).
+     */
+    @Test
+    fun `la scelta di chi serve e' additiva e non porta il lato dei punti`() {
+        assertEquals("serve", WearConstants.INTENT_SERVE)
+        assertEquals("serve_side", WearConstants.KEY_SERVE_SIDE)
+        assertEquals("serve_slot1", WearConstants.KEY_SERVE_SLOT1)
+        assertEquals("serve_slot2", WearConstants.KEY_SERVE_SLOT2)
+        assertTrue(WearConstants.KEY_SERVE_SIDE != WearConstants.KEY_SIDE)
+    }
+
+    /**
      * La durata del portiere e' una chiave NUOVA sullo stesso path: `keeper_millis` non cambia
      * ne' valore ne' significato, cosi' un orologio o un telefono non aggiornato continua a
      * leggere quello che legge oggi (L8).
@@ -329,6 +343,11 @@ class WearProtocolGoldenTest {
                 "SETTING_DEUCE" to "deuce",
                 "SETTING_KEEPER" to "keeper",
                 "KEY_KEEPER_OFFERED" to "keeper_offered",
+                // Chi serve scelto al polso (solo righe AGGIUNTE)
+                "INTENT_SERVE" to "serve",
+                "KEY_SERVE_SIDE" to "serve_side",
+                "KEY_SERVE_SLOT1" to "serve_slot1",
+                "KEY_SERVE_SLOT2" to "serve_slot2",
                 // Messaggi v1
                 "MSG_SCORER_SELECTED" to "/scoreboard/scorer_selected",
                 "MSG_REQUEST_SYNC" to "/scoreboard/request_sync",

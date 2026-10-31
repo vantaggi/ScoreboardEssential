@@ -492,6 +492,16 @@
                         app:iconSize="@dimen/icon_standard" />
                 </LinearLayout>
             </LinearLayout>
+
+            <!-- A partita cominciata lo scambio si spegne: chi serve si corregge da qui, come un errore da sistemare. -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/serve_correct_button"
+                style="@style/Widget.App.Button.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_12"
+                android:text="@string/serve_correct_button"
+                android:visibility="gone" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

@@ -209,4 +209,37 @@ class PalliniDelServizioTest {
         assertEquals("anche quello della squadra 2", View.GONE, radice.findViewById<View>(R.id.team2_serve_slot).visibility)
         assertTrue("il nome si allarga di almeno 30dp: ${nome.width - conLoSlot}px", nome.width - conLoSlot >= 30 * densita)
     }
+
+    /**
+     * A fine game le sigle di chi serve prendono per tre secondi il posto dei pallini, poi tornano i
+     * pallini. Un cambio di punteggio prima le toglie subito. Col movimento ridotto il cambio e'
+     * secco, ed e' cosi' che si legge qui senza aspettare le dissolvenze. Rosso se le sigle non
+     * compaiono dalla parte di chi serve, se restano oltre i tre secondi o se l'interruzione le lascia.
+     */
+    @Test
+    fun `a fine game le sigle di chi serve stanno tre secondi al posto dei pallini`() {
+        val app = ApplicationProvider.getApplicationContext<Context>()
+        android.provider.Settings.Global
+            .putFloat(app.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 0f)
+        val radice = gonfia()
+        mostraIlServizio(radice, display(lato = 2, giocatore = 1), "ROSSI", "BIANCHI")
+        val sigla = radice.findViewById<android.widget.TextView>(R.id.team2_serve_next)
+        val pallini = radice.findViewById<View>(R.id.team2_serve_dots)
+
+        mostraChiServe(radice, lato = 2, sigla = "VER")
+        assertEquals(View.VISIBLE, sigla.visibility)
+        assertEquals("VER", sigla.text.toString())
+        assertEquals(0f, pallini.alpha)
+        assertEquals("dall'altra parte niente", View.GONE, radice.findViewById<View>(R.id.team1_serve_next).visibility)
+
+        org.robolectric.shadows.ShadowLooper
+            .idleMainLooper(3, java.util.concurrent.TimeUnit.SECONDS)
+        assertEquals(View.GONE, sigla.visibility)
+        assertEquals(1f, pallini.alpha)
+
+        mostraChiServe(radice, lato = 2, sigla = "VER")
+        togliChiServe(radice)
+        assertEquals("un punto entro i tre secondi le toglie", View.GONE, sigla.visibility)
+        assertEquals(1f, pallini.alpha)
+    }
 }

@@ -350,9 +350,11 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         // che e' di gran lunga il gesto piu' frequente.
         val kind = dataMap.getString(WearConstants.KEY_INTENT_KIND, WearConstants.INTENT_POINT)
 
-        // La chiusura della partita non riguarda un lato: senza lato valido gli altri gesti si
-        // scartano, lei no. Un telefono non aggiornato la scarterebbe per lato mancante.
-        val riguardaUnLato = kind != WearConstants.INTENT_END_MATCH
+        // La chiusura della partita e la scelta di chi serve non portano il lato dei punti: senza lato
+        // valido gli altri gesti si scartano, loro no. Un telefono non aggiornato le scarterebbe per
+        // lato mancante. La scelta ha il suo lato, in KEY_SERVE_SIDE, e lo controlla il ViewModel.
+        val senzaLato = kind == WearConstants.INTENT_END_MATCH || kind == WearConstants.INTENT_SERVE
+        val riguardaUnLato = !senzaLato
         if ((riguardaUnLato && !WearDataValidator.isValidTeamNumber(side)) || seq <= 0L) {
             Log.w(TAG, "Invalid score-intent fields (side=$side, seq=$seq). Ignoring.")
             return
@@ -374,6 +376,11 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
                 putExtra(WearConstants.KEY_SIDE, side)
                 putExtra(WearConstants.KEY_INTENT_KIND, kind)
                 putExtra(WearConstants.KEY_AT_MILLIS, quando)
+                if (kind == WearConstants.INTENT_SERVE) {
+                    putExtra(WearConstants.KEY_SERVE_SIDE, dataMap.getInt(WearConstants.KEY_SERVE_SIDE, 0))
+                    putExtra(WearConstants.KEY_SERVE_SLOT1, dataMap.getInt(WearConstants.KEY_SERVE_SLOT1, 0))
+                    putExtra(WearConstants.KEY_SERVE_SLOT2, dataMap.getInt(WearConstants.KEY_SERVE_SLOT2, 0))
+                }
             }
         val preso = inoltra(intent)
         // Nessun ricevitore: il ViewModel non c'e' (app chiusa con indietro, uno swipe, processo ucciso)
@@ -381,7 +388,7 @@ class SimplifiedDataLayerListenerService : WearableListenerService() {
         // non rimanda il tocco, quindi il punto si metteva da parte qui e lo applica il ViewModel alla
         // creazione (L5). Solo i gesti di punteggio: una chiusura o un cambio sport arrivati ore dopo
         // agirebbero su un'altra partita, e al polso hanno gia' detto NON CONFERMATA.
-        if (!preso && kind != WearConstants.INTENT_END_MATCH) {
+        if (!preso && !senzaLato) {
             val tenuto = IntentiInAttesa(this).aggiungi(kind, side, quando.takeIf { it > 0L } ?: System.currentTimeMillis())
             // Il polso non vede crescere il registro e direbbe NON CONFERMATO: l'utente ripeterebbe il
             // tocco, e alla riapertura i due si applicherebbero. Si dice "preso in custodia" SOLO se la

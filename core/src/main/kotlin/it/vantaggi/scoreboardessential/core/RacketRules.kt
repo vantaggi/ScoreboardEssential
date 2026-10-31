@@ -55,6 +55,7 @@ class RacketRules(
         event: ScoringEvent,
     ): ScoreState {
         if (state !is RacketScore || state.wonBy != null) return state
+        if (event is ScoringEvent.ServeChoice) return chooseServe(state, event)
         // Correction non ha semantica qui: decrementIsUndo = true, quindi il "-1" e' un
         // annullamento che il chiamante ottiene rifacendo il fold, non un evento per il motore.
         if (event !is ScoringEvent.Point) return state
@@ -80,15 +81,37 @@ class RacketRules(
                     config.sets > 1 -> "Set ${state.closedSets.size + 1}"
                     else -> null
                 },
-            servingSide = if (ended) null else state.serveIndex % 2 + 1,
+            servingSide = if (ended) null else state.servingTeam + 1,
             servingPlayerId =
-                if (ended || config.serveOrder.size != 4) null else config.serveOrder[state.serveIndex % 4],
-            servingPlayerSlot = if (ended || !inCoppia) null else servingPlayerSlot(state.serveIndex),
+                if (ended || config.serveOrder.size != 4) null else config.serveOrder[state.servingOrderIndex],
+            servingPlayerSlot = if (ended || !inCoppia) null else state.servingSlot,
             matchOver = ended,
         )
     }
 
     // --- motore ------------------------------------------------------------------------------
+
+    /**
+     * Chi batte, scelto a mano. Una scelta che dice cio' che la rotazione dice gia' non cambia lo
+     * stato, e quindi non entra nel registro: "Cambia" e poi la stessa coppia non lascia tracce.
+     * Lati o slot fuori range lasciano tutto com'e', come ogni evento senza senso.
+     */
+    private fun chooseServe(
+        state: RacketScore,
+        event: ScoringEvent.ServeChoice,
+    ): RacketScore {
+        val team = event.side - 1
+        if (team != 0 && team != 1) return state
+        if (event.slot1 !in 1..2 || event.slot2 !in 1..2) return state
+        val slots = listOf(event.slot1, event.slot2)
+        val now = state.serveIndex
+        // Nel singolare gli slot non dicono niente: conta solo il lato.
+        val same =
+            state.servingTeam == team &&
+                (!inCoppia || (state.slotAt(now) == slots[team] && state.slotAt(now + 1) == slots[1 - team]))
+        if (same) return state
+        return state.copy(serveAnchor = ServeAnchor(at = now, team = team, slots = slots))
+    }
 
     private fun scorePoint(
         state: RacketScore,
@@ -274,5 +297,8 @@ class RacketRules(
  * squadre, 2 e 3 per i secondi: il numero di pallini segue 1, 1, 2, 2 a ogni game. Nel tie-break
  * l'indice avanza dopo il primo punto e poi ogni due, e alla chiusura torna a quello d'apertura
  * piu' uno: la formula non ha casi speciali, perche' li ha gia' il contatore.
+ *
+ * E' la rotazione SENZA una scelta di chi batte: con una scelta conta [RacketScore.slotAt], che
+ * senza scelta da' lo stesso valore.
  */
 fun servingPlayerSlot(serveIndex: Int): Int = serveIndex % 4 / 2 + 1

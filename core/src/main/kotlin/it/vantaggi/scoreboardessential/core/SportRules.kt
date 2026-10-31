@@ -18,6 +18,24 @@ sealed interface ScoringEvent {
     data class Correction(
         override val side: Int,
     ) : ScoringEvent
+
+    /**
+     * Chi batte, scelto o corretto a mano: non e' un punto, e nessuno lo conta come tale.
+     *
+     * [side] e' il lato che serve adesso. [slot1] e [slot2] dicono quale giocatore di ciascuna
+     * coppia batte al prossimo turno della sua squadra (1 il primo, 2 il secondo): per [side] e'
+     * il turno in corso, per l'altra squadra il turno dopo. Si usa a inizio set (la coppia sceglie
+     * chi apre) e per correggere un errore a partita in corso: da qui la rotazione riparte senza
+     * riscrivere il passato, quindi i punti gia' giocati restano a chi li aveva serviti.
+     *
+     * Nel singolare gli slot non contano e valgono 1. Lo sport che non modella il servizio lo
+     * ignora, come ogni evento senza effetto.
+     */
+    data class ServeChoice(
+        override val side: Int,
+        val slot1: Int = 1,
+        val slot2: Int = 1,
+    ) : ScoringEvent
 }
 
 /** Come si contano i punti. Rispecchia la modalita' gia' presente in Padel Elite. */

@@ -17,6 +17,7 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.view.WindowManager
+import android.view.animation.AnimationUtils
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -65,10 +66,12 @@ import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.ui.InsetDividerDecoration
 import it.vantaggi.scoreboardessential.ui.MatchSettingsActivity
 import it.vantaggi.scoreboardessential.ui.onboarding.OnboardingActivity
+import it.vantaggi.scoreboardessential.ui.scegliDaElenco
 import it.vantaggi.scoreboardessential.ui.statistics.StatisticsActivity
 import it.vantaggi.scoreboardessential.utils.ExportBlocked
 import it.vantaggi.scoreboardessential.utils.MatchExportUtils
 import it.vantaggi.scoreboardessential.utils.MatchReportUtils
+import it.vantaggi.scoreboardessential.utils.MovimentoRidotto
 import it.vantaggi.scoreboardessential.utils.NumberRoll
 import it.vantaggi.scoreboardessential.utils.TimeUtils
 import it.vantaggi.scoreboardessential.utils.enableEdgeToEdgeConAspetto
@@ -464,6 +467,9 @@ class MainActivity :
         // e' la stessa cifra di prima, per gli sport a set e' "40"/"AV" con il dettaglio dei set
         // sotto. La schermata non sa che sport si sta giocando.
         viewModel.scoreDisplay.observe(this) { display ->
+            // Ogni cambio di punteggio interrompe le sigle di fine game: se il game e' appena finito,
+            // fineGame le rimette subito dopo, con chi serve adesso.
+            togliChiServe(findViewById(android.R.id.content))
             rollaIlPunteggio(1, rotolo1, team1ScoreTextView, display.side1Primary)
             rollaIlPunteggio(2, rotolo2, team2ScoreTextView, display.side2Primary)
             bindScoreDetail(display.side1Secondary, display.matchOver)
@@ -472,6 +478,14 @@ class MainActivity :
             aggiornaDescrizioni()
             aggiornaSchermoAcceso()
             aggiornaStriscia()
+            aggiornaCorrezioneDelServizio()
+        }
+
+        // A fine game, per qualche secondo, le sigle di chi serve adesso al posto dei pallini.
+        viewModel.fineGame.observe(this) {
+            val display = viewModel.scoreDisplay.value ?: return@observe
+            val sigla = siglaDiChiServe(display, rose()[0], rose()[1]) ?: return@observe
+            mostraChiServe(findViewById(android.R.id.content), display.servingSide ?: return@observe, sigla)
         }
 
         viewModel.team1Name.observe(this) { name ->
@@ -537,12 +551,15 @@ class MainActivity :
             team1RosterAdapter.submitList(players)
             updateFormation(1, players)
             aggiornaLeCoppie()
+            // La proposta di chi serve porta le sigle dei giocatori.
+            aggiornaStriscia()
         }
 
         viewModel.team2Players.observe(this) { players ->
             team2RosterAdapter.submitList(players)
             updateFormation(2, players)
             aggiornaLeCoppie()
+            aggiornaStriscia()
         }
 
         // La notizia dell'orologio e' uno stato: il badge e la card restano finche' non c'e' una
@@ -613,6 +630,7 @@ class MainActivity :
             refreshUndoButtonState()
             // Il registro non vuoto e' anche il lucchetto dello scambio delle coppie.
             aggiornaLeCoppie()
+            aggiornaCorrezioneDelServizio()
         }
 
         viewModel.sportCapabilities.observe(this) { sportCapabilities ->
@@ -835,11 +853,86 @@ class MainActivity :
                 viewModel.scoreDisplay.value,
                 viewModel.team1Name.value ?: getString(R.string.label_team_1),
                 viewModel.team2Name.value ?: getString(R.string.label_team_2),
+                rose()[0],
+                rose()[1],
             )
         ViewCompat.setAccessibilityLiveRegion(lastActionText, ViewCompat.ACCESSIBILITY_LIVE_REGION_NONE)
         lastActionText.maxLines = stato.righe
         lastActionText.text = stato.testo
-        impostaAzioneDellaStriscia(stato.daAttribuire, stato.terminaPartita)
+        impostaAzioneDellaStriscia(stato.daAttribuire, stato.terminaPartita, stato.sceltaDelServizio)
+    }
+
+    /** I nomi dei giocatori delle due squadre, nell'ordine del servizio. */
+    private fun rose(): List<List<String>> =
+        listOf(
+            viewModel.team1Players.value
+                .orEmpty()
+                .map { it.player.playerName },
+            viewModel.team2Players.value
+                .orEmpty()
+                .map { it.player.playerName },
+        )
+
+    private fun nomiDelleSquadre(): List<String> =
+        listOf(
+            viewModel.team1Name.value ?: getString(R.string.label_team_1),
+            viewModel.team2Name.value ?: getString(R.string.label_team_2),
+        )
+
+    /**
+     * La scelta di chi serve a inizio set (bozza A di chi serve): prima la coppia, poi in ciascuna
+     * coppia chi serve per primo, a cominciare da quella che apre. Ogni passo e' il foglio delle
+     * Impostazioni con la spunta sulla proposta: chi la tiene tocca la voce gia' segnata. Annulla, a
+     * qualunque passo, non cambia niente. Senza i due nomi per coppia si sceglie solo la coppia.
+     */
+    private fun apriSceltaDelServizio() {
+        val lato = viewModel.scoreDisplay.value?.servingSide ?: return
+        val nomi = nomiDelleSquadre()
+        val rose = rose()
+        scegliDaElenco(getString(R.string.serve_choice_title), nomi, lato - 1) { scelta ->
+            val apre = scelta + 1
+            val slot = intArrayOf(viewModel.prossimoAServire(1) ?: 1, viewModel.prossimoAServire(2) ?: 1)
+            val domande = domandeDelPrimo(this, apre, nomi, rose, viewModel::prossimoAServire)
+
+            fun passo(indice: Int) {
+                val domanda = domande.getOrNull(indice)
+                if (domanda == null) {
+                    viewModel.scegliChiServe(apre, slot[0], slot[1])
+                    return
+                }
+                val (titolo, foglio) = domanda
+                scegliDaElenco(titolo, foglio.voci.map { it.testo }, foglio.spunta) { voce ->
+                    val scelto = foglio.voci[voce]
+                    slot[scelto.lato - 1] = scelto.slot
+                    passo(indice + 1)
+                }
+            }
+            passo(0)
+        }
+    }
+
+    /**
+     * «Chi sta servendo adesso?» a partita in corso, dal foglio PARTITA: un errore da sistemare, non
+     * un ordine nuovo. La rotazione riparte da chi si sceglie, i punti gia' giocati non cambiano.
+     */
+    private fun apriCorrezioneDelServizio() {
+        val display = viewModel.scoreDisplay.value ?: return
+        if (display.servingSide == null) return
+        val foglio = foglioDellaCorrezione(this, display, nomiDelleSquadre(), rose(), viewModel::prossimoAServire)
+        scegliDaElenco(getString(R.string.serve_correct_title), foglio.voci.map { it.testo }, foglio.spunta) { voce ->
+            val scelta = foglio.voci[voce]
+            viewModel.correggiChiServe(scelta.lato, scelta.slot)
+        }
+    }
+
+    /**
+     * «Correggi chi serve» c'e' negli sport col servizio, a partita cominciata e non finita: prima del
+     * primo punto la proposta e' nella striscia.
+     */
+    private fun aggiornaCorrezioneDelServizio() {
+        val display = viewModel.scoreDisplay.value
+        val visibile = display?.servingSide != null && !display.matchOver && viewModel.canUndo.value == true
+        findViewById<View>(R.id.serve_correct_button).visibility = if (visibile) View.VISIBLE else View.GONE
     }
 
     /**
@@ -851,10 +944,12 @@ class MainActivity :
     private fun impostaAzioneDellaStriscia(
         daAttribuire: MatchEvent?,
         terminaPartita: Boolean = false,
+        sceltaDelServizio: Boolean = false,
     ) {
         val azione =
             when {
                 terminaPartita -> View.OnClickListener { showEndMatchConfirmation() }
+                sceltaDelServizio -> View.OnClickListener { apriSceltaDelServizio() }
                 daAttribuire != null -> View.OnClickListener { apriAttribuzione(daAttribuire) }
                 else -> null
             }
@@ -1284,6 +1379,7 @@ class MainActivity :
 
         findViewById<Button>(R.id.team1_swap_button).setOnClickListener { viewModel.swapPlayers(1) }
         findViewById<Button>(R.id.team2_swap_button).setOnClickListener { viewModel.swapPlayers(2) }
+        findViewById<Button>(R.id.serve_correct_button).setOnClickListener { apriCorrezioneDelServizio() }
 
         findViewById<Button>(R.id.serata_open_button).setOnClickListener { apriLaSerata() }
 
@@ -2135,5 +2231,95 @@ internal fun mostraIlServizio(
         // quella dei figli, quindi chi serve va detto anche li'.
         val modifica = slot.context.getString(R.string.cd_edit_team_name, nome)
         radice.findViewById<View>(ids[0]).contentDescription = if (frase == null) modifica else "$modifica. $frase"
+    }
+}
+
+/**
+ * A fine game, per tre secondi, le sigle di chi serve adesso prendono il posto dei pallini, dalla
+ * parte della squadra che serve, con il loro colore (bozza A di chi serve, 31 ottobre 2026). Due
+ * stati, pallini e sigle, collegati da una dissolvenza incrociata di duration_fast; col movimento
+ * ridotto il cambio e' secco. Sta fuori dall'Activity per i test, come [mostraIlServizio].
+ *
+ * Un altro cambio di punteggio entro i tre secondi la interrompe ([togliChiServe]). TalkBack non la
+ * legge: chi serve e' gia' nella descrizione dello slot, e la striscia dice il game.
+ */
+internal fun mostraChiServe(
+    radice: View,
+    lato: Int,
+    sigla: String,
+    durataMs: Long = DURATA_MESSAGGIO_STRISCIA_MS,
+) {
+    togliChiServe(radice, subito = true)
+    val (idPallini, idSigla) =
+        if (lato ==
+            2
+        ) {
+            R.id.team2_serve_dots to R.id.team2_serve_next
+        } else {
+            R.id.team1_serve_dots to R.id.team1_serve_next
+        }
+    val pallini = radice.findViewById<View>(idPallini) ?: return
+    val testo = radice.findViewById<TextView>(idSigla) ?: return
+    testo.text = sigla
+    testo.visibility = View.VISIBLE
+    if (MovimentoRidotto.attivo(radice.context)) {
+        testo.alpha = 1f
+        pallini.alpha = 0f
+    } else {
+        val durata = radice.resources.getInteger(R.integer.duration_fast).toLong()
+        val curva = AnimationUtils.loadInterpolator(radice.context, R.interpolator.ease_standard)
+        testo.alpha = 0f
+        testo
+            .animate()
+            .alpha(1f)
+            .setDuration(durata)
+            .setInterpolator(curva)
+        pallini
+            .animate()
+            .alpha(0f)
+            .setDuration(durata)
+            .setInterpolator(curva)
+    }
+    val fine = Runnable { togliChiServe(radice, subito = false) }
+    // Dal looper principale e non dalla vista: una vista non ancora agganciata alla finestra tiene i
+    // post in coda finche' non si aggancia.
+    val principale = android.os.Handler(android.os.Looper.getMainLooper())
+    testo.setTag(R.id.team1_serve_next, principale to fine)
+    principale.postDelayed(fine, durataMs)
+}
+
+/** Rimette i pallini al posto delle sigle: con la dissolvenza alla fine dei tre secondi, [subito] se interrotta. */
+internal fun togliChiServe(
+    radice: View,
+    subito: Boolean = true,
+) {
+    listOf(R.id.team1_serve_dots to R.id.team1_serve_next, R.id.team2_serve_dots to R.id.team2_serve_next).forEach { (idPallini, idSigla) ->
+        val pallini = radice.findViewById<View>(idPallini) ?: return@forEach
+        val testo = radice.findViewById<TextView>(idSigla) ?: return@forEach
+        (testo.getTag(R.id.team1_serve_next) as? Pair<*, *>)?.let { (gestore, fine) ->
+            (gestore as? android.os.Handler)?.removeCallbacks(fine as? Runnable ?: return@let)
+        }
+        testo.setTag(R.id.team1_serve_next, null)
+        if (testo.visibility != View.VISIBLE) return@forEach
+        testo.animate().cancel()
+        pallini.animate().cancel()
+        if (subito || MovimentoRidotto.attivo(radice.context)) {
+            testo.visibility = View.GONE
+            pallini.alpha = 1f
+        } else {
+            val durata = radice.resources.getInteger(R.integer.duration_fast).toLong()
+            val curva = AnimationUtils.loadInterpolator(radice.context, R.interpolator.ease_standard)
+            pallini
+                .animate()
+                .alpha(1f)
+                .setDuration(durata)
+                .setInterpolator(curva)
+            testo
+                .animate()
+                .alpha(0f)
+                .setDuration(durata)
+                .setInterpolator(curva)
+                .withEndAction { testo.visibility = View.GONE }
+        }
     }
 }
