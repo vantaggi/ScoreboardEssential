@@ -2927,7 +2927,7 @@ Oggi la rotazione e' fissa (A1, B1, A2, B2 dalle rose), la squadra 1 serve sempr
 ### PR 4: le liste del polso (31 ottobre 2026)
 
 - **Misura.** Menu, scelta dello sport e prossima partita erano gia' conformi a 08-wearable (revisione dei menu, #197): tutta larghezza col 5% di margine, titolo che scorre via, righe che si stringono sul tondo, corona che scorre la lista, chiusura del menu dopo 20s riarmati a ogni scorrimento. Fuori regola c'era solo la scelta del marcatore.
-- **Scelta.** Bozze nel piano, scheda "Bozze PR 4"; consiglio A, scritta in attesa della scelta del proprietario.
+- **Scelta.** Bozze nel piano, scheda "Bozze PR 4"; il proprietario ha scelto A (31 ottobre 2026).
   - L'intestazione ("Gol · 3–2" e la barra della squadra) e' la prima riga della lista e scorre via con lei (`IntestazioneAdapter` in un `ConcatAdapter`).
   - La lista parte dall'alto coi margini delle altre liste (`lista_margine_*`) invece di centrare SALTA: all'apertura si leggono SALTA e due nomi invece di uno.
   - Sul tondo le righe si stringono vicino al bordo con `BordoTondo`, come nel menu (`ScalaTonda`, il callback del `WearableLinearLayoutManager`), invece dell'arco di serie.
