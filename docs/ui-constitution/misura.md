@@ -10,7 +10,12 @@ python3 scripts/misura-ui.py               # la tabella
 python3 scripts/misura-ui.py --dettaglio   # con ogni riga trovata
 ```
 
-In CI lo script gira dopo i test unitari (passo 6b di "Android CI/CD") e scrive la tabella nel riepilogo della run, come avviso: esce sempre con 0.
+In CI lo script gira dopo i test unitari (passo 6b di "Android CI/CD"), scrive la tabella nel riepilogo della run ed e' **bloccante** dalla PR 10 (31 ottobre 2026): con `--blocca` elenca cio' che ha trovato ed esce con 1, e la CI diventa rossa. Prima dello script gira il suo test (`scripts/test_misura_ui.py`), che prova che un colore scritto a mano o un quadrante fuori misura lo fanno davvero uscire con 1.
+
+```bash
+python3 scripts/misura-ui.py --blocca                     # come la CI
+python3 -m unittest discover -s scripts -p 'test_*.py'    # il test dello script
+```
 
 ## Conteggi
 
@@ -58,4 +63,4 @@ La prima misura (PR 1) aveva 4 fuori misura sul tondo da 192dp, tutti la riga di
 | Corpi del testo e spaziature dell'orologio | 4 (menu dell'orologio): a zero |
 | Corpi del testo e spaziature del telefono, testi a mano, identificativi | 5 (telefono): a zero |
 | Colori a mano, nomi doppi | 5: a zero |
-| Ogni conteggio a zero | 10 (controlli bloccanti) |
+| Ogni conteggio a zero | 10 (controlli bloccanti): bloccante in CI dal 31 ottobre 2026 |

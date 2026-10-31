@@ -5,23 +5,27 @@ Conta cio' che i controlli automatici del sistema devono portare a zero, senza c
 
     python3 scripts/misura-ui.py              stampa il report in Markdown
     python3 scripts/misura-ui.py --dettaglio  aggiunge l'elenco delle righe trovate
+    python3 scripts/misura-ui.py --blocca     esce con 1 se un conteggio non e' zero (la CI)
 
-I numeri sono la barra di avanzamento dell'adozione (docs/ui-constitution/misura.md). In CI gira come
-avviso: esce sempre con 0. Quando un conteggio arriva a zero diventa bloccante (passo g del piano).
+I numeri sono la barra di avanzamento dell'adozione (docs/ui-constitution/misura.md). Dal 31 ottobre
+2026 sono tutti a zero e in CI sono bloccanti (PR 10 del piano): con --blocca lo script elenca cio'
+che ha trovato ed esce con 1. MISURA_UI_RADICE sposta la radice (la usa il test dello script).
 
 La geometria del quadrante non si misura qui ma con il test Robolectric
 `GeometriaDelPolsoTest` (modulo :wear), che scrive `wear/build/misura/geometria-<forma>.txt`: se i
 file ci sono, il report li riporta.
 """
 
+import os
 import re
 import sys
 from collections import defaultdict
 from pathlib import Path
 
-RADICE = Path(__file__).resolve().parent.parent
+RADICE = Path(os.environ.get("MISURA_UI_RADICE") or Path(__file__).resolve().parent.parent).resolve()
 MODULI = ["mobile", "wear"]
 DETTAGLIO = "--dettaglio" in sys.argv
+BLOCCA = "--blocca" in sys.argv
 
 
 def righe(file: Path):
@@ -289,6 +293,20 @@ def main():
         print(g)
     else:
         print("Geometria del quadrante: lanciare `./gradlew :wear:testDebugUnitTest --tests '*GeometriaDelPolsoTest'` per i file `wear/build/misura/geometria-<forma>.txt`.")
+    if BLOCCA:
+        trovati = [
+            f"{c.nome}, {'telefono' if m == 'mobile' else 'orologio'}: {d}"
+            for c in tutte
+            for m in MODULI
+            for d in c.per_modulo[m]
+        ]
+        if g:
+            trovati += [riga for riga in g.splitlines() if riga.strip() and not re.search(r": 0 fuori misura", riga)]
+        if trovati:
+            print("\nControlli bloccanti della UI Constitution (09-checks): ogni conteggio deve restare a zero.", file=sys.stderr)
+            for t in trovati:
+                print(f"- {t}", file=sys.stderr)
+            sys.exit(1)
     if DETTAGLIO:
         for c in tutte:
             for m in MODULI:
