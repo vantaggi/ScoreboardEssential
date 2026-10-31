@@ -32,16 +32,26 @@ class TokenDelPolsoTest {
             "signal_amber",
         )
 
-    /** nome -> valore, con gli alias `@color/x` risolti. */
+    /**
+     * nome -> valore dei colori di [file], con gli alias `@color/x` risolti. Un alias puo' puntare a un
+     * colore di un altro file della stessa cartella (sul telefono `text_primary_print` e' il valore di
+     * `colors_chiaro.xml`): per risolverlo si leggono tutti i `colors*.xml` accanto.
+     */
     private fun colori(file: File): Map<String, String> {
-        val grezzi =
+        fun leggi(f: File) =
             Regex("<color name=\"([a-z0-9_]+)\">([^<]+)</color>")
-                .findAll(file.readText())
+                .findAll(f.readText())
                 .associate { it.groupValues[1] to it.groupValues[2].trim() }
+        val propri = leggi(file)
+        val accanto =
+            file.parentFile
+                .listFiles { f -> f.name.startsWith("colors") && f.extension == "xml" }
+                .orEmpty()
+                .fold(emptyMap<String, String>()) { tutti, f -> tutti + leggi(f) }
 
         fun risolvi(valore: String): String =
-            if (valore.startsWith("@color/")) risolvi(grezzi.getValue(valore.removePrefix("@color/"))) else valore.uppercase()
-        return grezzi.mapValues { risolvi(it.value) }
+            if (valore.startsWith("@color/")) risolvi(accanto.getValue(valore.removePrefix("@color/"))) else valore.uppercase()
+        return propri.mapValues { risolvi(it.value) }
     }
 
     private fun interi(file: File): Map<String, String> =

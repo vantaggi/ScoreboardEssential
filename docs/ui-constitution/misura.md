@@ -35,7 +35,7 @@ In CI lo script gira dopo i test unitari (passo 6b di "Android CI/CD") e scrive 
 
 Dal 31 ottobre 2026 (PR 4 per l'orologio, PR 5 per il telefono) ogni conteggio e' a zero. Che cosa c'era e dove e' andato:
 
-- **Colori (2).** I due velini della barra di navigazione in `utils/Aspetto.kt`: ora `scrim_navigazione_chiaro` e `scrim_navigazione_scuro`.
+- **Colori (2).** I due velini della barra di navigazione in `utils/Aspetto.kt`: ora `scrim_barre_luminose` e `scrim_barre_scure` (non `_chiaro` e `_scuro`: la misura legge quei suffissi come valori di un tema).
 - **Corpi del testo (27 + 13).** Sul telefono le cifre e le etichette del tabellone (in dp, negli stili `TextAppearance.App.Game.*.Fissa`), poi storico, statistiche, formazione e PDF; sull'orologio i titoli e le righe dei menu (`TextAppearance.Lista.*`).
 - **Spaziature (40 + 7).** `space_*` dove il valore e' sulla scala; 2dp e 6dp del telefono hanno un nome (`aria_fine`, `aria_tabellone`) e restano un debito dichiarato in `DESIGN.md` (PR 5).
 - **Nomi doppi (5).** La carta del PDF (`*_print`) ora e' un alias dei valori del tema chiaro.

@@ -72,8 +72,8 @@
         I velini dietro la navigazione a tre tasti, gli stessi che mette enableEdgeToEdge() della
         piattaforma: bianco al 90% sull'app chiara, grigio quasi nero al 50% sulla scura (Aspetto.kt).
     -->
-    <color name="scrim_navigazione_chiaro">#E6FFFFFF</color>
-    <color name="scrim_navigazione_scuro">#801B1B1B</color>
+    <color name="scrim_barre_luminose">#E6FFFFFF</color>
+    <color name="scrim_barre_scure">#801B1B1B</color>
 
     <!--
         CARTA (report PDF, G-8): gli stessi ruoli del tema scuro, nei valori chiari della Constitution.

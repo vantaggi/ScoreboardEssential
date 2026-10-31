@@ -26,8 +26,8 @@ fun ComponentActivity.enableEdgeToEdgeConAspetto() {
     val stato = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { !Aspetto.chiaro(this) }
     val navigazione =
         SystemBarStyle.auto(
-            ContextCompat.getColor(this, R.color.scrim_navigazione_chiaro),
-            ContextCompat.getColor(this, R.color.scrim_navigazione_scuro),
+            ContextCompat.getColor(this, R.color.scrim_barre_luminose),
+            ContextCompat.getColor(this, R.color.scrim_barre_scure),
         ) { !Aspetto.chiaro(this) }
     enableEdgeToEdge(statusBarStyle = stato, navigationBarStyle = navigazione)
 }
