@@ -38,8 +38,10 @@ import it.vantaggi.scoreboardessential.core.MatchPlayer
 import it.vantaggi.scoreboardessential.core.MatchSummarizer
 import it.vantaggi.scoreboardessential.core.MatchSummary
 import it.vantaggi.scoreboardessential.core.RacketRules
+import it.vantaggi.scoreboardessential.core.RacketScore
 import it.vantaggi.scoreboardessential.core.Risultato
 import it.vantaggi.scoreboardessential.core.ScoreDisplay
+import it.vantaggi.scoreboardessential.core.ScoreState
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.Serata
 import it.vantaggi.scoreboardessential.core.SportCapabilities
@@ -392,6 +394,17 @@ class MainViewModel(
                             endMatch()
                             return
                         }
+                        // Chi serve, scelto al polso: ha il suo lato e i suoi slot, il motore scarta
+                        // valori fuori range da solo.
+                        if (intent.getStringExtra(WearConstants.KEY_INTENT_KIND) == WearConstants.INTENT_SERVE) {
+                            scegliChiServe(
+                                lato = intent.getIntExtra(WearConstants.KEY_SERVE_SIDE, 0),
+                                slot1 = intent.getIntExtra(WearConstants.KEY_SERVE_SLOT1, 0),
+                                slot2 = intent.getIntExtra(WearConstants.KEY_SERVE_SLOT2, 0),
+                                atMillis = intent.getLongExtra(WearConstants.KEY_AT_MILLIS, 0L).takeIf { it > 0L },
+                            )
+                            return
+                        }
                         val side = intent.getIntExtra(WearConstants.KEY_SIDE, 0)
                         if (side != 1 && side != 2) return
                         // Il lato dice DOVE, il tipo dice COSA. Tenerli separati e' cio' che evita
@@ -610,10 +623,12 @@ class MainViewModel(
      * campo, che e' il posto peggiore per compilare schermate.
      *
      * Si applica solo a partita ferma: cambiare la rotazione a meta' partita falserebbe
-     * l'attribuzione dei punti gia' giocati.
+     * l'attribuzione dei punti gia' giocati. Una scelta di chi serve fatta prima del primo punto non
+     * ferma la partita: le rose si possono ancora cambiare, e la scelta si rifa' sulle regole nuove.
      */
     private fun refreshServeOrder() {
-        if (engine.log.isNotEmpty()) return
+        val scelte = engine.log
+        if (scelte.any { it.event !is ScoringEvent.ServeChoice }) return
         val uno = _team1Players.value.orEmpty()
         val due = _team2Players.value.orEmpty()
         // Con meno di due per lato non c'e' un ordine: se ce n'era uno (una rosa che si svuota)
@@ -632,6 +647,7 @@ class MainViewModel(
         if (ordine == sportRules.config.serveOrder) return
         sportRules = SportRegistry.forMatch(sportRules.id, ordine, sportRules.config.deuce)
         engine = MatchEngine(sportRules)
+        if (scelte.isNotEmpty()) engine.restoreLog(scelte)
         _scoreDisplay.value = sportRules.display(engine.state)
         // Il tennis diventa doppio o singolare con le rose: i giocatori per lato seguono l'ordine.
         if (_sportCapabilities.value != sportRules.capabilities) _sportCapabilities.value = sportRules.capabilities
@@ -746,6 +762,20 @@ class MainViewModel(
 
     /** L'orologio ha chiesto un cambio sport a partita gia' cominciata. */
     val sportChangeRejected = SingleLiveEvent<Unit>()
+
+    /**
+     * Un game si e' appena chiuso in avanti (un punto, non un annullamento) e la partita continua: la
+     * schermata mostra per qualche secondo, accanto al pallino, chi serve adesso (bozza A di chi serve).
+     */
+    val fineGame = SingleLiveEvent<Unit>()
+
+    /**
+     * I game giocati e la lunghezza del registro nell'ultimo stato pubblicato. Un game chiuso in avanti
+     * e' un evento in piu' nel registro e un game in piu': un annullamento accorcia il registro, e un
+     * motore nuovo (partita nuova, ripristino) non e' un evento in piu' di quello di prima.
+     */
+    private var gameGiocatiPubblicati = 0
+    private var registroPubblicato = 0
 
     private val _watchNotice = MutableLiveData<WatchNotice?>(null)
 
@@ -1596,6 +1626,14 @@ class MainViewModel(
     private fun publishEngineState() {
         val (uno, due) = engine.state.headline()
         _scoreDisplay.value = sportRules.display(engine.state)
+        val racchetta = engine.state as? RacketScore
+        val giocati = racchetta?.let { s -> s.closedSets.sumOf { it.games.sum() } + s.gamesInSet.sum() } ?: 0
+        val eventi = engine.log.size
+        if (eventi == registroPubblicato + 1 && giocati == gameGiocatiPubblicati + 1 && racchetta?.wonBy == null) {
+            fineGame.value = Unit
+        }
+        gameGiocatiPubblicati = giocati
+        registroPubblicato = eventi
         updateScore(uno, due)
         persistLiveMatch()
         aggiornaAnnullamento()
@@ -1847,6 +1885,16 @@ class MainViewModel(
                     addMatchEvent(
                         testo(R.string.log_score_correction, nomeNelRegistro(squadra)),
                         team = squadra,
+                        engineIndex = indice,
+                        pubblica = false,
+                    )
+                }
+
+                is ScoringEvent.ServeChoice -> {
+                    addMatchEvent(
+                        testo(R.string.log_serve_choice, nomeDiChiServe(stato)),
+                        team = squadra,
+                        type = MatchEventType.SERVE,
                         engineIndex = indice,
                         pubblica = false,
                     )
@@ -2187,6 +2235,70 @@ class MainViewModel(
     }
 
     /**
+     * Chi serve, scelto a inizio set o arrivato dal polso: il lato che serve adesso e, per ciascuna
+     * coppia, chi serve al suo prossimo turno (1 il primo giocatore, 2 il secondo).
+     *
+     * Entra nel registro come un punto, quindi ANNULLA la toglie e il ripristino la rifa'. Una scelta
+     * che dice cio' che la rotazione dice gia', o valori fuori range, non cambiano niente e non
+     * lasciano righe: e' il motore a deciderlo.
+     */
+    fun scegliChiServe(
+        lato: Int,
+        slot1: Int,
+        slot2: Int,
+        atMillis: Long? = null,
+    ) {
+        if (rimandataDalRipristino { scegliChiServe(lato, slot1, slot2, atMillis) }) return
+        val prima = engine.state
+        engine.apply(ScoringEvent.ServeChoice(side = lato, slot1 = slot1, slot2 = slot2), tempoDiPartita(atMillis))
+        if (engine.state == prima) return
+        publishEngineState()
+        addMatchEvent(
+            testo(R.string.log_serve_choice, nomeDiChiServe(engine.state)),
+            team = lato,
+            type = MatchEventType.SERVE,
+            engineIndex = engine.log.lastIndex,
+        )
+    }
+
+    /**
+     * La correzione a partita in corso: "adesso serve il giocatore [slot] del lato [lato]". La
+     * rotazione riparte da li', i punti gia' giocati restano a chi li aveva serviti. Chi serve per
+     * l'altra coppia lo decide il motore ([RacketScore.serveCorrection]).
+     */
+    fun correggiChiServe(
+        lato: Int,
+        slot: Int,
+    ) {
+        val stato = engine.state as? RacketScore ?: return
+        val scelta = stato.serveCorrection(side = lato, slot = slot)
+        scegliChiServe(scelta.side, scelta.slot1, scelta.slot2)
+    }
+
+    /**
+     * Chi serve per la coppia [lato] al suo prossimo turno, 1 o 2: per la coppia che serve e' il
+     * turno in corso. Null fuori dagli sport a racchetta. E' la spunta delle scelte di chi serve.
+     */
+    fun prossimoAServire(lato: Int): Int? {
+        val stato = engine.state as? RacketScore ?: return null
+        return if (lato - 1 == stato.servingTeam) stato.servingSlot else stato.slotAt(stato.serveIndex + 1)
+    }
+
+    /**
+     * Il nome di chi serve nello stato [stato], per il registro: il giocatore quando l'ordine di
+     * servizio lo dice, altrimenti la squadra.
+     */
+    private fun nomeDiChiServe(stato: ScoreState): String {
+        val racchetta = stato as? RacketScore ?: return ""
+        val id = sportRules.config.serveOrder.getOrNull(racchetta.servingOrderIndex)
+        val giocatore =
+            id?.let { cercato ->
+                (_team1Players.value.orEmpty() + _team2Players.value.orEmpty()).find { it.player.playerId == cercato }
+            }
+        return giocatore?.player?.playerName ?: nomeNelRegistro(racchetta.servingTeam + 1)
+    }
+
+    /**
      * La riga del registro a schermo per un punto appena entrato nel motore, senza marcatore.
      *
      * Sincrona, e senza pila accanto: l'annullamento la ritrova dal suo [engineIndex], e il
@@ -2338,6 +2450,7 @@ class MainViewModel(
         val cosa =
             when {
                 evento is ScoringEvent.Correction -> R.string.log_undo_correction
+                evento is ScoringEvent.ServeChoice -> R.string.log_undo_serve
                 sportRules.capabilities.attributesScorer -> R.string.log_undo_goal
                 else -> R.string.log_undo_point
             }

@@ -21,6 +21,12 @@ enum class MatchEventType {
      */
     GAME,
 
+    /**
+     * La scelta di chi serve (`ScoringEvent.ServeChoice`): una riga del motore, che ANNULLA toglie
+     * come un punto, ma non un punto. La striscia la distingue da una correzione.
+     */
+    SERVE,
+
     /** Tutto il resto: inizio partita, timer, correzioni, annullamenti. */
     INFO,
 }

@@ -39,11 +39,14 @@ object FootballRules : SportRules {
         // chiusa lasciano tutto com'e'. Il terzo caso qui e' irraggiungibile -- wonBy non viene
         // mai valorizzato dal calcio -- ma vale per uno stato costruito altrove.
         if (state !is CounterScore || event.side !in 1..2 || state.wonBy != null) return state
+        // Il calcio non modella il servizio: la scelta di chi batte non ha effetto.
+        if (event is ScoringEvent.ServeChoice) return state
 
         val delta =
             when (event) {
                 is ScoringEvent.Point -> event.weight
                 is ScoringEvent.Correction -> -1
+                is ScoringEvent.ServeChoice -> 0
             }
         val index = event.side - 1
         // coerceAtLeast(0) ricalca subtractScore: il "-1" e' una correzione di battitura, non un

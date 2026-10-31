@@ -5088,4 +5088,108 @@ class MainViewModelTest {
                 chiudiDatabase(db)
             }
         }
+
+    /**
+     * Chi serve, scelto a mano (bozza A): entra nel registro come un'azione del motore, ha la sua
+     * riga, e ANNULLA lo toglie. Rosso se la scelta non arriva al motore, se la riga non nasce o se
+     * l'annullamento la lascia.
+     */
+    @Test
+    fun `chi serve si sceglie, ha la sua riga e si annulla`() =
+        runTest {
+            val righe = Observer<List<MatchEvent>> {}
+            viewModel.matchEvents.observeForever(righe)
+            viewModel.selectSport(SportRegistry.PADEL)
+            advanceUntilIdle()
+            // Lato 1: Rossi e Bianchi; lato 2: Verdi e Neri. Ordine A1, B1, A2, B2 = 1, 2, 3, 4.
+            listOf(1 to "Rossi", 2 to "Verdi", 3 to "Bianchi", 4 to "Neri").forEach { (id, nome) ->
+                viewModel.addPlayerToTeam(PlayerWithRoles(Player(id, nome, 0, 0), emptyList()), if (id % 2 == 1) 1 else 2)
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            advanceUntilIdle()
+            assertEquals(1, viewModel.scoreDisplay.value?.servingPlayerId)
+
+            viewModel.scegliChiServe(lato = 2, slot1 = 1, slot2 = 2)
+            shadowOf(Looper.getMainLooper()).idle()
+            assertEquals(2, viewModel.scoreDisplay.value?.servingSide)
+            assertEquals(4, viewModel.scoreDisplay.value?.servingPlayerId)
+            val riga = viewModel.matchEvents.value?.first()
+            assertEquals("Serve Neri", riga?.event)
+            assertEquals(MatchEventType.SERVE, riga?.type)
+
+            viewModel.annullaUltimaAzione()
+            shadowOf(Looper.getMainLooper()).idle()
+            assertEquals(1, viewModel.scoreDisplay.value?.servingPlayerId)
+            assertEquals(null, viewModel.matchEvents.value?.firstOrNull { it.type == MatchEventType.SERVE })
+            viewModel.matchEvents.removeObserver(righe)
+        }
+
+    /**
+     * La correzione a partita in corso: "adesso serve Bianchi". Rosso se correggiChiServe non arriva
+     * al motore o se sposta i punti gia' giocati.
+     */
+    @Test
+    fun `la correzione di chi serve vale da adesso`() =
+        runTest {
+            viewModel.selectSport(SportRegistry.PADEL)
+            advanceUntilIdle()
+            listOf(1 to "Rossi", 2 to "Verdi", 3 to "Bianchi", 4 to "Neri").forEach { (id, nome) ->
+                viewModel.addPlayerToTeam(PlayerWithRoles(Player(id, nome, 0, 0), emptyList()), if (id % 2 == 1) 1 else 2)
+            }
+            advanceUntilIdle()
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            viewModel.correggiChiServe(lato = 1, slot = 2)
+            shadowOf(Looper.getMainLooper()).idle()
+            assertEquals(3, viewModel.scoreDisplay.value?.servingPlayerId)
+            assertEquals("15", viewModel.scoreDisplay.value?.side1Primary)
+        }
+
+    /**
+     * Una scelta fatta prima del primo punto non ferma le rose: aggiungere i giocatori dopo la
+     * scelta da' comunque i nomi alla partita. Rosso se refreshServeOrder torna a fermarsi a
+     * qualunque evento.
+     */
+    @Test
+    fun `scegliere chi serve prima delle rose non blocca le rose`() =
+        runTest {
+            viewModel.selectSport(SportRegistry.PADEL)
+            advanceUntilIdle()
+            viewModel.scegliChiServe(lato = 2, slot1 = 1, slot2 = 1)
+            listOf(1 to "Rossi", 2 to "Verdi", 3 to "Bianchi", 4 to "Neri").forEach { (id, nome) ->
+                viewModel.addPlayerToTeam(PlayerWithRoles(Player(id, nome, 0, 0), emptyList()), if (id % 2 == 1) 1 else 2)
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            advanceUntilIdle()
+            assertEquals(2, viewModel.scoreDisplay.value?.servingSide)
+            assertEquals(2, viewModel.scoreDisplay.value?.servingPlayerId)
+        }
+
+    /**
+     * Il game chiuso in avanti accende le sigle di chi serve (fineGame); l'annullamento che torna
+     * indietro no. Rosso se fineGame tace a fine game o scatta su un annullamento o a meta' game.
+     */
+    @Test
+    fun `fine game si annuncia solo quando un punto chiude il game`() =
+        runTest {
+            viewModel.selectSport(SportRegistry.PADEL)
+            advanceUntilIdle()
+            var volte = 0
+            val osservatore = Observer<Unit> { volte++ }
+            viewModel.fineGame.observeForever(osservatore)
+            repeat(3) { viewModel.addScore(1) }
+            advanceUntilIdle()
+            assertEquals("a meta' game niente", 0, volte)
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            assertEquals("il quarto punto chiude il game", 1, volte)
+            viewModel.annullaUltimaAzione()
+            viewModel.addScore(1)
+            advanceUntilIdle()
+            assertEquals("annullare e rifare il punto chiude di nuovo il game", 2, volte)
+            viewModel.annullaUltimaAzione()
+            advanceUntilIdle()
+            assertEquals("l'annullamento da solo no", 2, volte)
+            viewModel.fineGame.removeObserver(osservatore)
+        }
 }

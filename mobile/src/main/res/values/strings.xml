@@ -105,6 +105,16 @@
     <string name="strip_msg_undone_point">Undone: point %1$s</string>
     <string name="strip_msg_undone_goal">Undone: goal %1$s</string>
     <string name="strip_msg_undone_correction">Undone: correction %1$s</string>
+    <string name="strip_msg_undone_serve">Undone: who serves</string>
+    <string name="strip_msg_serve">Serve %1$s</string>
+    <string name="strip_serve_proposal">Serve %1$s · %2$s\nChange ›</string>
+    <string name="strip_serve_proposal_team">Serve %1$s\nChange ›</string>
+    <string name="serve_choice_title">Who serves?</string>
+    <string name="serve_choice_first">Who serves first for %1$s?</string>
+    <string name="serve_correct_button">Correct who serves</string>
+    <string name="serve_correct_title">Who is serving now?</string>
+    <string name="serve_correct_item">%1$s · %2$s</string>
+    <string name="cd_serve_next">%1$s serves</string>
     <string name="strip_msg_match_over">Match over</string>
     <string name="strip_match_over_end">Match over · end ›</string>
     <plurals name="strip_msg_from_watch">
@@ -254,6 +264,8 @@
     <string name="log_player_created">New player created: %s</string>
     <string name="log_score_correction">Score correction for %s</string>
     <string name="log_undo_correction">Undo: Correction removed</string>
+    <string name="log_serve_choice">Serve %s</string>
+    <string name="log_undo_serve">Undo: serve choice removed</string>
     <string name="log_undo_goal">Undo: Goal removed</string>
     <string name="log_undo_point">Undo: Point removed</string>
     <string name="log_match_ended">Match ended - Final Score: %1$d - %2$d</string>

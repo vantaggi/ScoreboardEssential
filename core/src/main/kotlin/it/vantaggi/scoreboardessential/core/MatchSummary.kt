@@ -133,7 +133,7 @@ data class ReportLabels(
  * ## Definizioni scelte, dove la statistica era ambigua
  *
  * - **Break**: un game vinto da chi NON serviva. Il lato al servizio si legge da
- *   `RacketScore.serveIndex % 2`, che il motore tiene sempre -- anche senza `serveOrder`, ed e'
+ *   `RacketScore.servingTeam`, che il motore tiene sempre -- anche senza `serveOrder`, ed e'
  *   lo stesso valore che il tabellone ha mostrato in campo durante la partita. Quindi i break si
  *   contano comunque: senza `serveOrder` manca il NOME di chi serviva, non il lato.
  * - **Il tie-break non e' un break.** Nel tie-break il servizio cambia ogni due punti: non c'e'
@@ -193,6 +193,11 @@ object MatchSummarizer {
             val next = rules.apply(state, entry.event)
             if (next == state) continue
             val event = entry.event
+            // La scelta di chi batte cambia lo stato ma non e' un punto: vale per quelli dopo.
+            if (event !is ScoringEvent.Point) {
+                state = next
+                continue
+            }
 
             totalPoints++
             if (entry.atMillis != null) lastMillis = entry.atMillis
@@ -213,9 +218,9 @@ object MatchSummarizer {
             val before = state as? RacketScore
             val after = next as? RacketScore
             if (before != null && after != null) {
-                val servingSide = before.serveIndex % 2 + 1
+                val servingSide = before.servingTeam + 1
                 if (hasServeOrder) {
-                    val tally = serveTally.getOrPut(order[before.serveIndex % PLAYERS_PER_MATCH]) { IntArray(2) }
+                    val tally = serveTally.getOrPut(order[before.servingOrderIndex]) { IntArray(2) }
                     tally[0]++
                     if (event.side == servingSide) tally[1]++
                 }

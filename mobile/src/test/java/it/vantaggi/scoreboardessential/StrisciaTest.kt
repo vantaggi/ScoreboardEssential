@@ -160,15 +160,87 @@ class StrisciaTest {
     }
 
     @Test
-    fun `al game che chiude il set la striscia dice il game del set chiuso`() {
-        // Tennis: sei game a zero chiudono il primo set. I secondari diventano «6-0 · 0-0»: il game
-        // da dire e' l'ultimo del set chiuso, non i game del set nuovo.
+    fun `al game che chiude il set la striscia propone chi serve nel set nuovo`() {
+        // Tennis: sei game a zero chiudono il primo set. I secondari diventano «0-6 · 0-0»: il set
+        // nuovo comincia, e la striscia propone chi serve (bozza A di chi serve). Il set chiuso resta
+        // nei secondari del tabellone.
         val display = displayDopo(SportRegistry.TENNIS, punti = 24, lato = 2)
         assertEquals("0-6 · 0-0", display.side1Secondary)
 
         val stato = striscia(listOf(gol(2, 23), avvio), capacita = SportRegistry.byId(SportRegistry.TENNIS).capabilities, display = display)
 
-        assertEquals("Game Blu · 0-6", stato.testo)
+        assertEquals("Serve Rossi\nCambia ›", stato.testo)
+        assertTrue(stato.sceltaDelServizio)
+    }
+
+    /** Il display vero del padel con quattro giocatori: A1, B1, A2, B2 = 1, 2, 3, 4. */
+    private fun padelInCoppia(vararg punti: Int): ScoreDisplay {
+        val regole = SportRegistry.forMatch(SportRegistry.PADEL, listOf(1, 2, 3, 4))
+        var stato = regole.initial()
+        punti.forEach { stato = regole.apply(stato, ScoringEvent.Point(side = it)) }
+        return regole.display(stato)
+    }
+
+    private val coppia1 = listOf("Rossi Mario", "Bianchi")
+    private val coppia2 = listOf("Verdi", "Neri Anna")
+
+    @Test
+    fun `a inizio partita la striscia propone chi serve con le sigle e si tocca per cambiare`() {
+        val stato = statoDellaStriscia(context, listOf(avvio), padel, padelInCoppia(), "ROS/BIA", "VER/NER", coppia1, coppia2)
+
+        assertEquals("Serve ROS · ROS/BIA\nCambia ›", stato.testo)
+        assertEquals(2, stato.righe)
+        assertTrue(stato.sceltaDelServizio)
+        assertNull(stato.daAttribuire)
+    }
+
+    @Test
+    fun `senza rose la proposta nomina la coppia`() {
+        val stato = statoDellaStriscia(context, listOf(avvio), padel, padelInCoppia(), "Rossi", "Blu")
+
+        assertEquals("Serve Rossi\nCambia ›", stato.testo)
+        assertTrue(stato.sceltaDelServizio)
+    }
+
+    @Test
+    fun `col primo punto del set la proposta lascia il posto all'ultima azione`() {
+        val stato = statoDellaStriscia(context, listOf(gol(1, 0), avvio), padel, padelInCoppia(1), "ROS/BIA", "VER/NER", coppia1, coppia2)
+
+        assertEquals("Punto ROS/BIA · 15-0", stato.testo)
+        assertTrue(!stato.sceltaDelServizio)
+    }
+
+    @Test
+    fun `una correzione di chi serve a set in corso dice chi serve adesso`() {
+        val regole = SportRegistry.forMatch(SportRegistry.PADEL, listOf(1, 2, 3, 4))
+        var motore = regole.apply(regole.initial(), ScoringEvent.Point(side = 1))
+        motore = regole.apply(motore, ScoringEvent.ServeChoice(side = 2, slot1 = 1, slot2 = 2))
+        val riga = MatchEvent("", "Serve Neri Anna", team = 2, type = MatchEventType.SERVE, engineIndex = 1)
+
+        val stato =
+            statoDellaStriscia(
+                context,
+                listOf(riga, gol(1, 0), avvio),
+                padel,
+                regole.display(motore),
+                "ROS/BIA",
+                "VER/NER",
+                coppia1,
+                coppia2,
+            )
+
+        assertEquals("Serve NER", stato.testo)
+        assertTrue(!stato.sceltaDelServizio)
+    }
+
+    @Test
+    fun `il tie-break non e' un inizio di set`() {
+        // 6-6: dodici game alternati a punti secchi, poi il tie-break comincia da 0-0.
+        val sei = (0 until 12).flatMap { g -> List(4) { if (g % 2 == 0) 1 else 2 } }
+        val display = padelInCoppia(*sei.toIntArray())
+        assertEquals("0", display.side1Primary)
+
+        assertTrue(!inizioDelSet(display))
     }
 
     @Test
@@ -261,6 +333,14 @@ class StrisciaTest {
         assertEquals("Annullato: punto Blu", testo(ScoringEvent.Point(side = 2), tennis))
         assertEquals("Annullato: gol Blu", testo(ScoringEvent.Point(side = 2), calcio))
         assertEquals("Annullato: correzione Rossi", testo(ScoringEvent.Correction(side = 1), calcio))
+    }
+
+    @Test
+    fun `annullare la scelta di chi serve lo dice`() {
+        assertEquals(
+            "Annullato: chi serve",
+            testoDellAnnullamento(context, ScoringEvent.ServeChoice(side = 2), padel, "Rossi", "Blu"),
+        )
     }
 
     @Test

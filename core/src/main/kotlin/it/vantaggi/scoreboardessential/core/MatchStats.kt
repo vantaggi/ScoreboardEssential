@@ -228,8 +228,8 @@ data class MatchStats(
          * parte perche' una partita riletta dallo storico lo conserva accanto al registro, non
          * dentro le regole; il servitore si ricava comunque dallo stato PRIMA del punto.
          *
-         * Il lato al servizio e' `serveIndex % 2 + 1`, come in [RacketRules.display]: l'ordine e'
-         * A1, B1, A2, B2 con A il lato 1, e il telefono lo costruisce cosi'. Senza un ordine di
+         * Il lato al servizio e' [RacketScore.servingTeam] + 1, come in [RacketRules.display]: l'ordine
+         * e' A1, B1, A2, B2 con A il lato 1, e il telefono lo costruisce cosi'. Senza un ordine di
          * quattro giocatori il servitore resta ignoto, e con lui palle break e game tenuti, come
          * nella dashboard. Fa eccezione il tennis singolare ([isSingles]): un giocatore per lato,
          * quindi chi serve lo dice l'alternanza stessa e i conteggi per lato sono pieni; resta
@@ -278,12 +278,17 @@ data class MatchStats(
                 val next = rules.apply(state, entry.event) as RacketScore
                 // Correzioni, lati fuori range, tocchi a partita finita: non sono punti giocati.
                 if (next == state) continue
+                // La scelta di chi batte cambia lo stato ma non e' un punto: vale per quelli dopo.
+                if (entry.event !is ScoringEvent.Point) {
+                    state = next
+                    continue
+                }
                 val side = entry.event.side
                 val team = side - 1
                 val i = points.size
                 val inTieBreak = state.game is GamePoints.TieBreak
-                val server = order?.get(state.serveIndex % PLAYERS_PER_MATCH)
-                val servingSide = if (knowsServingSide) state.serveIndex % 2 + 1 else null
+                val server = order?.get(state.servingOrderIndex)
+                val servingSide = if (knowsServingSide) state.servingTeam + 1 else null
 
                 // Che cosa c'era in palio: si prova a dare il punto a ciascuno dei due lati.
                 val probe = listOf(1, 2).map { rules.apply(state, ScoringEvent.Point(it)) as RacketScore }

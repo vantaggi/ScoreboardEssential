@@ -102,6 +102,16 @@
     <string name="strip_msg_undone_point">Annullato: punto %1$s</string>
     <string name="strip_msg_undone_goal">Annullato: gol %1$s</string>
     <string name="strip_msg_undone_correction">Annullato: correzione %1$s</string>
+    <string name="strip_msg_undone_serve">Annullato: chi serve</string>
+    <string name="strip_msg_serve">Serve %1$s</string>
+    <string name="strip_serve_proposal">Serve %1$s · %2$s\nCambia ›</string>
+    <string name="strip_serve_proposal_team">Serve %1$s\nCambia ›</string>
+    <string name="serve_choice_title">Chi serve?</string>
+    <string name="serve_choice_first">Chi serve per primo in %1$s?</string>
+    <string name="serve_correct_button">Correggi chi serve</string>
+    <string name="serve_correct_title">Chi sta servendo adesso?</string>
+    <string name="serve_correct_item">%1$s · %2$s</string>
+    <string name="cd_serve_next">Serve %1$s</string>
     <string name="strip_msg_match_over">Partita finita</string>
     <string name="strip_match_over_end">Partita finita · termina ›</string>
     <plurals name="strip_msg_from_watch">
@@ -251,6 +261,8 @@
     <string name="log_player_created">Nuovo giocatore: %s</string>
     <string name="log_score_correction">Correzione per %s</string>
     <string name="log_undo_correction">Annullata una correzione</string>
+    <string name="log_serve_choice">Serve %s</string>
+    <string name="log_undo_serve">Annullata la scelta di chi serve</string>
     <string name="log_undo_goal">Annullato un gol</string>
     <string name="log_undo_point">Annullato un punto</string>
     <string name="log_match_ended">Partita finita: %1$d – %2$d</string>

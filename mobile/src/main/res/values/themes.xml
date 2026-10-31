@@ -483,6 +483,11 @@
     <style name="TextAppearance.App.Game.Caption.Fissa">
         <item name="android:textSize">12dp</item>
     </style>
+    <!-- Le sigle di chi serve a fine game, al posto dei pallini: il loro colore, misura fissa del tabellone. -->
+    <style name="TextAppearance.App.Game.Servizio" parent="TextAppearance.App.Game.Command.Fissa">
+        <item name="android:textFontWeight">600</item>
+        <item name="android:textColor">@color/accent_default</item>
+    </style>
 
     <!-- Testo dei bottoni: Inter 600, senza maiuscolo forzato (i bottoni dicono l'azione). -->
     <style name="TextAppearance.App.Button" parent="TextAppearance.Material3.LabelLarge">

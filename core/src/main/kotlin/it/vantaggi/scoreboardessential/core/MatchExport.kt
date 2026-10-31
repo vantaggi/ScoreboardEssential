@@ -324,6 +324,11 @@ object MatchExporter {
         for (entry in log) {
             val next = rules.apply(state, entry.event)
             if (next == state) continue
+            // La scelta di chi batte cambia lo stato ma non e' un punto: vale per quelli dopo.
+            if (entry.event !is ScoringEvent.Point) {
+                state = next
+                continue
+            }
             timeline.add(
                 TimelinePoint(
                     side = entry.event.side,
@@ -346,7 +351,7 @@ object MatchExporter {
     private fun servingPlayerId(
         state: ScoreState,
         order: List<Int>,
-    ): Int? = if (order.size != PLAYERS_PER_MATCH || state !is RacketScore) null else order[state.serveIndex % PLAYERS_PER_MATCH]
+    ): Int? = if (order.size != PLAYERS_PER_MATCH || state !is RacketScore) null else order[state.servingOrderIndex]
 
     private fun problems(
         players: List<MatchPlayer>,

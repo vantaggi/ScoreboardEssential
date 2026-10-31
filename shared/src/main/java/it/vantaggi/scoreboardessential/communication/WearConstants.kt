@@ -191,6 +191,24 @@ object WearConstants {
      */
     const val INTENT_END_MATCH = "end_match"
 
+    /**
+     * Chi serve, scelto al polso a inizio set o corretto a partita in corso (`ScoringEvent.ServeChoice`).
+     * Come [INTENT_END_MATCH] non porta [KEY_SIDE]: un telefono che non la conosce la scarta per lato
+     * mancante invece di contarla come un punto. Il lato che serve e chi serve in ciascuna coppia
+     * viaggiano in [KEY_SERVE_SIDE], [KEY_SERVE_SLOT1] e [KEY_SERVE_SLOT2]. Non entra mai
+     * nell'arretrato: la scelta si fa col telefono raggiungibile, e torna al polso col registro.
+     */
+    const val INTENT_SERVE = "serve"
+
+    /** Il lato che serve adesso, 1 o 2, in [INTENT_SERVE]. */
+    const val KEY_SERVE_SIDE = "serve_side"
+
+    /** Chi serve al prossimo turno della coppia 1: 1 il primo giocatore, 2 il secondo. */
+    const val KEY_SERVE_SLOT1 = "serve_slot1"
+
+    /** Come [KEY_SERVE_SLOT1], per la coppia 2. */
+    const val KEY_SERVE_SLOT2 = "serve_slot2"
+
     // --- L5: arretrato con identita' e base ------------------------------------------------
     //
     // Tutte ADDITIVE. Un telefono che non le conosce le ignora (applica come prima: solo a registro
