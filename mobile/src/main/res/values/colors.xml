@@ -105,18 +105,19 @@
     <color name="team_side_2">@color/chart_2</color>
 
     <!--
-        team-palette (passo 7 della revisione dei menu): gli otto colori di squadra del dialogo del
-        colore, prima della ruota (che resta dietro "Altro colore"). I primi due sono i predefiniti.
-        Provati come grafica sul nero del tabellone e sulle superfici: almeno 6,57:1 sul nero, 5,65:1 su
-        background_surface e 5,20:1 su background_elevated (WCAG 1.4.11 chiede 3:1); l'inchiostro scuro di
-        TeamInk sopra regge almeno 6,07:1. Proposta da confermare con Cioti (DESIGN.md, passo 7).
+        Colori di squadra user-1..user-8 (UI Constitution, UserColors; PR 6, bozza B scelta dal
+        proprietario il 31 ottobre 2026): gli otto cerchi del dialogo del colore, prima della ruota (che
+        resta dietro "Altro colore"). Sono quelli del sistema, nel suo ordine, con un cambio solo: i due
+        predefiniti dei lati vengono per primi, e il ciano del lato 2 prende il posto del verde acqua
+        (#2EC4B6), della stessa famiglia. Uguali in ogni tema; testo nero sopra (TeamInk), contorno di
+        border_strong sulle superfici chiare (i cerchi lo hanno gia').
     -->
     <color name="user_1">@color/team_side_1</color>
     <color name="user_2">@color/team_side_2</color>
-    <color name="user_3">#FF5A5F</color>
-    <color name="user_4">#FF9F1C</color>
-    <color name="user_5">#FFD60A</color>
-    <color name="user_6">#4D8DFF</color>
-    <color name="user_7">#B18CFF</color>
-    <color name="user_8">#FF5FA2</color>
+    <color name="user_3">#4DA3FF</color>
+    <color name="user_4">#FF7A59</color>
+    <color name="user_5">#F15BB5</color>
+    <color name="user_6">#FFBE0B</color>
+    <color name="user_7">#A78BFA</color>
+    <color name="user_8">#F2F2F2</color>
 </resources>

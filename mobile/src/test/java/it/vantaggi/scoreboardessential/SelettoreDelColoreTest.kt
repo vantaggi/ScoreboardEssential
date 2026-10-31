@@ -96,7 +96,7 @@ class SelettoreDelColoreTest {
     /** Passo 7: otto colori gia' provati al posto della ruota, con la spunta su quello in uso. */
     @Test
     fun `il dialogo propone otto colori e segna quello della squadra`() {
-        val dialogo = apriIlColoreDellaSquadra1(0xFFFF9F1C.toInt())
+        val dialogo = apriIlColoreDellaSquadra1(0xFFFF7A59.toInt())
 
         val tutti = cerchi(dialogo)
         assertEquals(8, tutti.size)
@@ -149,6 +149,26 @@ class SelettoreDelColoreTest {
                         .calculateContrast(app.getColor(id), fondo)
                 assertTrue("${app.resources.getResourceEntryName(id)}: $contrasto:1 sotto 3:1", contrasto >= 3.0)
             }
+        }
+    }
+
+    /**
+     * PR 6 della UI Constitution, bozza B: i colori user-1..user-8 del sistema, nel suo ordine, con
+     * i due predefiniti dei lati davanti (lime e ciano al posto del verde acqua). Rosso se la tavolozza
+     * torna a quella del passo 7 o se cambia un valore senza aggiornare DESIGN.md.
+     */
+    @Test
+    fun `la tavolozza e' quella del sistema con i due lati davanti`() {
+        val app = RuntimeEnvironment.getApplication()
+        val attesi = listOf(0xC8F135, 0x00E5FF, 0x4DA3FF, 0xFF7A59, 0xF15BB5, 0xFFBE0B, 0xA78BFA, 0xF2F2F2)
+        assertEquals(attesi, TavolozzaDiSquadra.colori.map { app.getColor(it) and 0xFFFFFF })
+        // Testo scuro sopra ogni cerchio (on-accent): almeno 4,5:1, come vuole UserColors.
+        val inchiostro = app.getColor(R.color.background_watch_standard)
+        TavolozzaDiSquadra.colori.forEach { id ->
+            val contrasto =
+                androidx.core.graphics.ColorUtils
+                    .calculateContrast(inchiostro, app.getColor(id))
+            assertTrue("${app.resources.getResourceEntryName(id)}: $contrasto:1 sotto 4,5:1", contrasto >= 4.5)
         }
     }
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Il colore della squadra (passo 7 della revisione dei menu): otto colori gia' provati sul nero del
-    tabellone e sulle superfici (user_1..8), in cerchi da 48dp come il colore nelle
+    Il colore della squadra: gli otto colori user_1..8 della UI Constitution (PR 6, bozza B), provati
+    sul nero del tabellone e sulle superfici, in cerchi da 48dp come il colore nelle
     Impostazioni. Quello scelto ha l'anello chiaro e la spunta, e TalkBack lo sente selezionato: il
     colore non e' l'unico segno. La ruota resta dietro "Altro colore", un bottone di testo; il primario
     del dialogo e' "Usa questo colore" (MatchSettingsActivity).
