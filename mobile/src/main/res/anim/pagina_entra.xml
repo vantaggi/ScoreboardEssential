@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    N1 di 04-transitions (asse condiviso): la schermata figlia entra dal lato finale di shift-axis
+    mentre compare. Le molle non esistono nelle animazioni di finestra: ease_enter con duration_standard.
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/duration_standard"
+    android:interpolator="@interpolator/ease_enter"
+    android:shareInterpolator="true">
+    <translate
+        android:fromXDelta="@fraction/shift_axis"
+        android:toXDelta="0" />
+    <alpha
+        android:fromAlpha="0"
+        android:toAlpha="1" />
+</set>

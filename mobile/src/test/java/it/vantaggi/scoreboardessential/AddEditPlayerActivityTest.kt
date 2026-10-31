@@ -59,6 +59,22 @@ class AddEditPlayerActivityTest {
         }
     }
 
+    /** N7 di 04-transitions: un compito si chiude, non si torna indietro. Rosso se in alto c'e' ancora la freccia. */
+    @Test
+    fun `in alto c'e' Chiudi, non la freccia indietro`() {
+        val activity =
+            Robolectric
+                .buildActivity(AddEditPlayerActivity::class.java)
+                .setup()
+                .get()
+        val barra = activity.findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar)
+        assertEquals("Close", barra.navigationContentDescription?.toString())
+        barra.navigationIcon!!
+        // Il tocco su Chiudi chiude la pagina, come prima la freccia.
+        activity.onOptionsItemSelected(org.robolectric.fakes.RoboMenuItem(android.R.id.home))
+        assertEquals(true, activity.isFinishing)
+    }
+
     @Test
     fun savePlayer_withTooLongName_showsErrorAndDoesNotFinish() {
         val controller = Robolectric.buildActivity(AddEditPlayerActivity::class.java)

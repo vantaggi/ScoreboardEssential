@@ -26,7 +26,8 @@
             style="@style/Widget.App.Toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:navigationIcon="@drawable/ic_arrow_back"
+            app:navigationContentDescription="@string/label_close_sheet"
+            app:navigationIcon="@drawable/ic_close"
             app:title="@string/label_add_player" />
     </com.google.android.material.appbar.AppBarLayout>
 

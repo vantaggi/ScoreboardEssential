@@ -26,6 +26,15 @@
     <!-- La corsa del numero che rotola (NumberRoll), come parte dell'altezza della sua scatola. -->
     <fraction name="number_roll_travel">50%</fraction>
     <!--
+        Movimento fra le pagine (04-transitions, N1 e N2). shift-axis del sistema e' 32dp; le animazioni
+        di finestra non accettano i dp, quindi e' una parte della larghezza: 8% sono 32dp su un telefono
+        da 400dp. Positivo verso il lato finale (destra), negativo verso quello iniziale.
+    -->
+    <fraction name="shift_axis">8%</fraction>
+    <fraction name="shift_axis_indietro">-8%</fraction>
+    <!-- scale-popover: la scala da cui nascono dialoghi e menu (04-transitions, M1 e M5). -->
+    <item name="scale_popover" format="float" type="dimen">0.96</item>
+    <!--
         Ruoli della UI Constitution (DESIGN.md, Mappatura dei ruoli): spaziature, raggi, bersaglio.
         Un valore nuovo entra qui solo se nomina un ruolo riusabile.
     -->
@@ -39,12 +48,11 @@
     <dimen name="space_48">48dp</dimen>
     <dimen name="space_64">64dp</dimen>
     <!--
-        Fuori dalla scala della Constitution (4, 8, 12...), con un nome perche' non restino scritti a
-        mano: 2dp fra un nome e la sua barretta o la sua riga secondaria, 6dp dentro la barra di gioco e
-        accanto al pallino del servizio. Debito dichiarato in DESIGN.md (PR 5): da portare a 4 e 8.
+        Fuori dalla scala della Constitution (4, 8, 12...), l'ultimo: 2dp fra il nome di una squadra in
+        gioco e la sua barretta. Con 4dp, a 360dp un nome su due righe spinge la barretta fuori dalla riga
+        dei nomi da 48dp (ColonnaDiGiocoTest). Conflitto dichiarato in DESIGN.md (PR 8).
     -->
     <dimen name="aria_fine">2dp</dimen>
-    <dimen name="aria_tabellone">6dp</dimen>
     <!-- radius-control: bottoni, campi, voci. radius-surface: gruppi, card, foglio. -->
     <dimen name="radius_control">8dp</dimen>
     <dimen name="radius_surface">14dp</dimen>

@@ -1425,7 +1425,7 @@ La Constitution fissa il concetto, non il file (`Icons/README.md`: su Android Ma
 | Concetto | Simbolo (Material Symbols outlined) | Drawable del telefono | Drawable dell'orologio |
 |---|---|---|---|
 | Indietro | `arrow_back` | `ic_arrow_back` | - |
-| Chiudi | `close` | - | - |
+| Chiudi (anche la pagina di un compito, Nuovo giocatore) | `close` | `ic_close` | - |
 | Menu | `menu` | `ic_menu` | - |
 | Casa | `home` | - | - |
 | Vai al dettaglio | `chevron_right` | `ic_chevron_right` | - |
@@ -2996,3 +2996,20 @@ Il piano diceva: "Cio' che non vale per lo sport sparisce; grafico solo da tre p
 - **Logica.** `StatisticsViewModel.schedeCon(categorie)` (funzione pura) e il flusso `schede`, dalla classifica intera del calcio coi ruoli; `filtro` espone la scheda guardata. `StatisticsActivity.mostraLeSchede` rifa' la fila solo se le schede cambiano.
 - **Pattern vietati (10-review).** Nessun valore scritto a mano, nessun testo nuovo, nessun componente nuovo; una fila di schede che diceva cose che non c'erano e' tolta.
 - **Non visto a schermo.** Solo test Robolectric (`StatistichePerSportTest`). Da guardare alla prova finale: Statistiche nel calcio senza ruoli, con un attaccante, con un portiere; rotazione con Attacco scelto.
+
+### PR 8: le transizioni del telefono (31 ottobre 2026)
+
+Bozze A, B e C nel piano, scheda "Bozze PR 8"; questa PR e' la A, quella consigliata, in attesa della scelta del proprietario. Riguarda solo il telefono: il gioco non cambia, e l'orologio si chiude con lo scorrimento di sistema come vuole 08-wearable.
+
+- **Piano.** *Gerarchia:* la barra in alto resta la cosa ferma; si muove la pagina, poco. *Layout:* nessuno nuovo; Nuovo giocatore e Modifica giocatore hanno Chiudi (`ic_close`, `close` nella tabella G-3) al posto della freccia. *Componenti riusati:* il tema (`android:windowAnimationStyle`), gli stili dei menu e dei dialoghi, le curve `ease_enter` ed `ease_exit` e le durate di `integers.xml`. *Stati:* apertura, chiusura, indietro col gesto, interruzione (un tocco nuovo prende il posto dell'animazione, lo fa il sistema), movimento ridotto. *Accessibilita':* Chiudi ha la sua descrizione ("Chiudi"); il fuoco torna al bottone alla chiusura di dialoghi e menu, lo fa la piattaforma. *Schermo stretto e 200%:* le pagine scorrono di una parte della larghezza, non di dp; le spaziature del tabellone sono misurate a 360dp da `ColonnaDiGiocoTest`.
+- **Schede delle transizioni (05-motion).**
+  - *Pagina figlia (N1, N2).* Trigger: ogni schermata che se ne apre un'altra. Elemento fermo: nessuno (le pagine sono finestre). Rapporto: la nuova entra dal lato finale di `shift_axis` mentre compare (`duration_standard`, `ease_enter`), quella sotto va verso il lato iniziale e sparisce (`duration_fast`, `ease_exit`); indietro e' l'inverso. Ridotto: cambio secco. Scopo: dire "un livello piu' in fondo" e come tornare.
+  - *Indietro col gesto (N3).* Quello predittivo del sistema, gia' acceso (`enableOnBackInvokedCallback`).
+  - *Pagina di un compito (N7).* Nuovo giocatore e Modifica giocatore salgono dal basso (`duration_standard`, `ease_enter`) e ci tornano (`ease_exit`); la pagina dietro resta ferma. Le animazioni di una transizione le decide la finestra che si apre o si chiude, quindi lo stile (`Theme.ScoreboardEssential.Compito`) vale per le due pagine.
+  - *Dialogo (M5).* Al centro, opacita' e scala da `scale_popover` (0,96) in `duration_fast` con `ease_enter`; chiude in `duration_instant` con `ease_exit`. L'overlay di Material aveva la sua animazione: l'override sta sia nell'overlay sia nel tema del dialogo.
+  - *Menu dei bottoni in barra (M1).* Come il dialogo, ma dal suo angolo in alto a destra. Le transizioni di Material dei menu sono a null, altrimenti vincerebbero sullo stile.
+  - *Schede delle Statistiche (N5).* L'indicatore scorre (lo fa il `TabLayout`), la lista nuova compare in `duration_fast` con `ease_enter`. Un aggiornamento dei dati senza cambio di scheda non si muove (C10).
+- **Spaziature del tabellone (debito della PR 5).** I 6dp della barra di gioco (cronometro e riquadro del portiere) passano a `space_4`: a `space_8` il menu usciva dallo schermo a 360dp. Quelli accanto ai pallini del servizio passano a `space_8`. Nel registro e nella formazione i 2dp passano a `space_4`. Resta `aria_fine` (2dp) solo fra il nome di una squadra in gioco e la sua barretta: con 4dp un nome su due righe spinge la barretta fuori dalla riga da 48dp. **Conflitto dichiarato.**
+- **Conflitti dichiarati.** (1) Niente molle: le animazioni di finestra delle View non le hanno, al posto della molla di superficie c'e' `ease_enter` con `duration_standard`. (2) `shift_axis` e' l'8% della larghezza (32dp su 400dp): le animazioni di finestra non accettano i dp. (3) Movimento ridotto: con "Rimuovi animazioni" Android salta ogni animazione di finestra, il cambio e' secco e non una dissolvenza (come nella PR 3). (4) Il compito non chiede conferma se si chiude con un nome scritto e non salvato. (5) La pagina dietro il compito non si scurisce (servirebbe un velo fra due finestre). (6) Le lingue del telefono sono da sinistra a destra: il verso delle pagine non si specchia.
+- **Verifica di 04-transitions.** `TransizioniTest` calcola i fotogrammi a 0, 1/4, 1/2, 3/4 e alla fine di ogni animazione di pagina (verso unico, dentro la corsa, opacita' fra 0 e 1), legge dal tema chi usa cosa, prova la scala e il perno di dialoghi e menu e le durate contro i token. Non visti: rallentatore x5, interruzione a meta' e cinque tocchi di fila, indietro predittivo sopra queste animazioni, fotogrammi sul dispositivo. Si guardano alla prova finale.
+- **Pattern vietati (10-review).** Nessuna durata, curva o scala scritta a mano (tutto da `integers.xml`, `interpolator/` e `dimens.xml`); nessun rimbalzo, niente cicli, niente pagine che scorrono per tutta la larghezza; un'icona dal catalogo.

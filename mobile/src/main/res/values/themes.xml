@@ -163,6 +163,67 @@
 
         <!-- La pressione di ogni controllo (animator/press_feedback.xml); il movimento ridotto la sostituisce. -->
         <item name="pressFeedback">@animator/press_feedback</item>
+
+        <!--
+            Transizioni (04-transitions, PR 8): ogni schermata e' una pagina figlia (N1, N2) con l'asse
+            condiviso; i menu dei bottoni in barra nascono dal loro angolo (M1). L'indietro col gesto e'
+            quello predittivo del sistema (enableOnBackInvokedCallback nel manifest).
+        -->
+        <item name="android:windowAnimationStyle">@style/Animazioni.Pagina</item>
+        <item name="popupMenuStyle">@style/Widget.App.PopupMenu</item>
+        <item name="actionOverflowMenuStyle">@style/Widget.App.PopupMenu.Overflow</item>
+    </style>
+
+    <!-- N1 e N2: la figlia entra dal lato finale, quella sotto va verso l'iniziale; indietro al contrario. -->
+    <style name="Animazioni.Pagina" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/pagina_entra</item>
+        <item name="android:activityOpenExitAnimation">@anim/pagina_esce</item>
+        <item name="android:activityCloseEnterAnimation">@anim/pagina_torna</item>
+        <item name="android:activityCloseExitAnimation">@anim/pagina_chiude</item>
+    </style>
+
+    <!--
+        N7: la pagina di un compito (Nuovo giocatore, Modifica giocatore) sale dal basso e ci torna; la
+        pagina dietro resta ferma. Le animazioni di una transizione le decide la finestra che si apre o
+        si chiude, quindi questo stile vale per le due pagine.
+    -->
+    <style name="Animazioni.Compito" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/compito_sale</item>
+        <item name="android:activityOpenExitAnimation">@anim/compito_sotto</item>
+        <item name="android:activityCloseEnterAnimation">@anim/compito_sotto</item>
+        <item name="android:activityCloseExitAnimation">@anim/compito_scende</item>
+    </style>
+
+    <style name="Theme.ScoreboardEssential.Compito">
+        <item name="android:windowAnimationStyle">@style/Animazioni.Compito</item>
+    </style>
+
+    <!-- M5: il dialogo nasce al centro da scale-popover e ci torna. -->
+    <style name="Animazioni.Sovrapposto" parent="@android:style/Animation.Dialog">
+        <item name="android:windowEnterAnimation">@anim/sovrapposto_entra</item>
+        <item name="android:windowExitAnimation">@anim/sovrapposto_esce</item>
+    </style>
+
+    <!-- M1: il menu nasce dall'angolo in alto a destra del suo bottone e ci torna. -->
+    <style name="Animazioni.Menu" parent="">
+        <item name="android:windowEnterAnimation">@anim/menu_entra</item>
+        <item name="android:windowExitAnimation">@anim/menu_esce</item>
+    </style>
+
+    <!--
+        I menu dei bottoni (M1). Le transizioni di Material sostituirebbero lo stile delle animazioni:
+        a null, la finestra del menu usa Animazioni.Menu.
+    -->
+    <style name="Widget.App.PopupMenu" parent="Widget.Material3.PopupMenu">
+        <item name="android:popupAnimationStyle">@style/Animazioni.Menu</item>
+        <item name="android:popupEnterTransition">@null</item>
+        <item name="android:popupExitTransition">@null</item>
+    </style>
+
+    <style name="Widget.App.PopupMenu.Overflow" parent="Widget.Material3.PopupMenu.Overflow">
+        <item name="android:popupAnimationStyle">@style/Animazioni.Menu</item>
+        <item name="android:popupEnterTransition">@null</item>
+        <item name="android:popupExitTransition">@null</item>
     </style>
 
     <!--
@@ -507,6 +568,8 @@
         <item name="elevationOverlayEnabled">false</item>
         <item name="shapeAppearanceCornerExtraLarge">@style/ShapeAppearance.App.Overlay</item>
         <item name="alertDialogTheme">@style/ThemeOverlay.App.Dialog</item>
+        <!-- M5: l'overlay di Material ha la sua animazione e vincerebbe su quella del dialogo. -->
+        <item name="android:windowAnimationStyle">@style/Animazioni.Sovrapposto</item>
     </style>
 
     <style name="ThemeOverlay.App.MaterialAlertDialog.Chiaro" parent="ThemeOverlay.App.MaterialAlertDialog">
@@ -515,6 +578,7 @@
 
     <style name="ThemeOverlay.App.Dialog" parent="Theme.Material3.Dark.Dialog.Alert">
         <item name="elevationOverlayEnabled">false</item>
+        <item name="android:windowAnimationStyle">@style/Animazioni.Sovrapposto</item>
         <item name="android:windowBackground">@drawable/bg_overlay</item>
         <item name="dialogCornerRadius">@dimen/radius_overlay</item>
         <item name="android:backgroundDimEnabled">true</item>
@@ -524,6 +588,7 @@
     <!-- Il dialogo del tema chiaro: stessa forma e stesso velo, base chiara per i colori del framework. -->
     <style name="ThemeOverlay.App.Dialog.Chiaro" parent="Theme.Material3.Light.Dialog.Alert">
         <item name="elevationOverlayEnabled">false</item>
+        <item name="android:windowAnimationStyle">@style/Animazioni.Sovrapposto</item>
         <item name="android:windowBackground">@drawable/bg_overlay</item>
         <item name="dialogCornerRadius">@dimen/radius_overlay</item>
         <item name="android:backgroundDimEnabled">true</item>

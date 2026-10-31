@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    M1 e M5 di 04-transitions: un dialogo nasce al centro, un menu dall'angolo del suo bottone
+    (il perno lo da' lo stile che lo usa), con opacita' e scala da scale-popover.
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/duration_fast"
+    android:interpolator="@interpolator/ease_enter"
+    android:shareInterpolator="true">
+    <scale
+        android:fromXScale="@dimen/scale_popover"
+        android:fromYScale="@dimen/scale_popover"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:toXScale="1"
+        android:toYScale="1" />
+    <alpha
+        android:fromAlpha="0"
+        android:toAlpha="1" />
+</set>
