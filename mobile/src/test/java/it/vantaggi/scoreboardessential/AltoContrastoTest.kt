@@ -81,7 +81,7 @@ class AltoContrastoTest {
     private val nomi: (Int) -> String = { app.resources.getResourceEntryName(it) }
 
     /** Le superfici del tema: tutto cio' che puo' stare sotto un testo o un bordo. */
-    private val superfici = listOf(R.color.elite_background, R.color.elite_surface, R.color.elite_surface_raised)
+    private val superfici = listOf(R.color.background_canvas, R.color.background_surface, R.color.background_elevated)
 
     /** Ogni coppia (sopra, sotto) sotto la soglia, come testo leggibile. Vuota se il tema regge. */
     private fun sotto(
@@ -102,35 +102,35 @@ class AltoContrastoTest {
     @Test
     fun `il testo primario e secondario ha almeno 7 a 1 su ogni superficie, anche col passaggio del puntatore`() {
         val ac = altoContrasto()
-        val testi = listOf(R.color.elite_text_primary, R.color.elite_text_secondary)
-        val fondi = superfici + R.color.elite_surface_hover
+        val testi = listOf(R.color.text_primary, R.color.text_secondary)
+        val fondi = superfici + R.color.state_hover
         assertEquals(emptyList<String>(), sotto(ac, 7.0, testi, fondi))
     }
 
     @Test
     fun `il testo disattivato resta leggibile, 4,5 a 1 su ogni superficie`() {
-        assertEquals(emptyList<String>(), sotto(altoContrasto(), 4.5, listOf(R.color.elite_text_disabled), superfici))
+        assertEquals(emptyList<String>(), sotto(altoContrasto(), 4.5, listOf(R.color.text_disabled), superfici))
     }
 
     @Test
     fun `bordi, contorno dei comandi e fuoco hanno almeno 3 a 1 su ogni superficie`() {
         val ac = altoContrasto()
-        val bordi = listOf(R.color.elite_border, R.color.elite_border_strong, R.color.elite_outline)
+        val bordi = listOf(R.color.border_group, R.color.border_subtle, R.color.border_strong)
         assertEquals(emptyList<String>(), sotto(ac, 3.0, bordi, superfici))
         // L'anello di fuoco vale anche sul passaggio del puntatore.
-        assertEquals(emptyList<String>(), sotto(ac, 3.0, listOf(R.color.elite_focus_ring), superfici + R.color.elite_surface_hover))
+        assertEquals(emptyList<String>(), sotto(ac, 3.0, listOf(R.color.focus_ring), superfici + R.color.state_hover))
         // Il gruppo si vede per il bordo (sfondo e superficie coincidono): il bordo del gruppo e' il segno, 4,5 e oltre.
-        assertEquals(colore(ac, R.color.elite_background), colore(ac, R.color.elite_surface))
-        assertEquals(emptyList<String>(), sotto(ac, 4.5, listOf(R.color.elite_border), superfici))
+        assertEquals(colore(ac, R.color.background_canvas), colore(ac, R.color.background_surface))
+        assertEquals(emptyList<String>(), sotto(ac, 4.5, listOf(R.color.border_group), superfici))
     }
 
     @Test
     fun `lime, avviso, errore e informazione reggono 7 a 1 come testo e come icona su ogni superficie`() {
         val ac = altoContrasto()
-        val colori = listOf(R.color.elite_lime, R.color.elite_warning, R.color.elite_error, R.color.elite_info)
+        val colori = listOf(R.color.accent_default_standard, R.color.status_warning, R.color.status_error, R.color.status_info)
         assertEquals(emptyList<String>(), sotto(ac, 7.0, colori, superfici))
         // Il testo sopra il lime e' scuro e ha 7:1 sul lime, anche premuto (opacita' 0,85 sul fondo).
-        assertTrue(contrasto(ac, R.color.elite_on_lime, R.color.elite_lime) >= 7.0)
+        assertTrue(contrasto(ac, R.color.on_accent, R.color.accent_default_standard) >= 7.0)
     }
 
     @Test
@@ -138,13 +138,13 @@ class AltoContrastoTest {
         val ac = altoContrasto()
         val coppie =
             listOf(
-                R.color.elite_success to R.color.elite_success_subtle,
-                R.color.elite_warning to R.color.elite_warning_subtle,
-                R.color.elite_error to R.color.elite_error_subtle,
-                R.color.elite_info to R.color.elite_info_subtle,
+                R.color.status_success to R.color.status_success_subtle,
+                R.color.status_warning to R.color.status_warning_subtle,
+                R.color.status_error to R.color.status_error_subtle,
+                R.color.status_info to R.color.status_info_subtle,
             )
         for ((stato, fondo) in coppie) {
-            assertTrue("testo su ${nomi(fondo)}", contrasto(ac, R.color.elite_text_primary, fondo) >= 7.0)
+            assertTrue("testo su ${nomi(fondo)}", contrasto(ac, R.color.text_primary, fondo) >= 7.0)
             assertTrue("${nomi(stato)} su ${nomi(fondo)}", contrasto(ac, stato, fondo) >= 7.0)
         }
     }
@@ -156,25 +156,25 @@ class AltoContrastoTest {
             listOf(
                 R.color.team_side_1,
                 R.color.team_side_2,
-                R.color.elite_chart_3,
-                R.color.elite_chart_4,
-                R.color.elite_chart_5,
-                R.color.elite_cyan,
+                R.color.chart_3,
+                R.color.chart_4,
+                R.color.chart_5,
+                R.color.chart_2,
             )
-        assertEquals(emptyList<String>(), sotto(ac, 3.0, grafici, superfici + R.color.elite_surface_hover))
-        assertTrue(contrasto(ac, R.color.elite_lime, R.color.ink_black) >= 7.0)
+        assertEquals(emptyList<String>(), sotto(ac, 3.0, grafici, superfici + R.color.state_hover))
+        assertTrue(contrasto(ac, R.color.accent_default_standard, R.color.background_watch_standard) >= 7.0)
     }
 
     // Falsificazione: abbassare di un passo il testo secondario (al valore standard, 6,18:1 sul nero) fa fallire il controllo.
     @Test
     fun `il controllo dei 7 a 1 trova il testo secondario abbassato di un passo`() {
         val standard = standard()
-        val difetti = sotto(standard, 7.0, listOf(R.color.elite_text_secondary), superfici)
+        val difetti = sotto(standard, 7.0, listOf(R.color.text_secondary), superfici)
         assertTrue("il testo secondario standard non e' sotto 7:1: $difetti", difetti.isNotEmpty())
         // E lo stesso controllo, sul tema ad alto contrasto, e' vuoto.
-        assertEquals(emptyList<String>(), sotto(altoContrasto(), 7.0, listOf(R.color.elite_text_secondary), superfici))
+        assertEquals(emptyList<String>(), sotto(altoContrasto(), 7.0, listOf(R.color.text_secondary), superfici))
         // Un bordo abbassato al valore standard del bordo forte (1,36:1) fallisce il 3:1.
-        assertTrue(sotto(standard, 3.0, listOf(R.color.elite_border_strong), superfici).isNotEmpty())
+        assertTrue(sotto(standard, 3.0, listOf(R.color.border_subtle), superfici).isNotEmpty())
     }
 
     // --- Il tema standard non cambia ---
@@ -182,13 +182,13 @@ class AltoContrastoTest {
     @Test
     fun `senza l'overlay i token hanno i valori standard di sempre`() {
         val s = standard()
-        assertEquals(0xFF0D0D0F.toInt(), colore(s, R.color.elite_background))
-        assertEquals(0xFFD1D1D8.toInt(), colore(s, R.color.elite_text_primary))
-        assertEquals(0xFF8A8A9A.toInt(), colore(s, R.color.elite_text_secondary))
-        assertEquals(0xFF6E6E7E.toInt(), colore(s, R.color.elite_outline))
-        assertEquals(0xFFC8F135.toInt(), colore(s, R.color.elite_focus_ring))
+        assertEquals(0xFF0D0D0F.toInt(), colore(s, R.color.background_canvas))
+        assertEquals(0xFFD1D1D8.toInt(), colore(s, R.color.text_primary))
+        assertEquals(0xFF8A8A9A.toInt(), colore(s, R.color.text_secondary))
+        assertEquals(0xFF6E6E7E.toInt(), colore(s, R.color.border_strong))
+        assertEquals(0xFFC8F135.toInt(), colore(s, R.color.focus_ring))
         // E il contesto dell'applicazione, senza activity, risolve gli stessi valori (niente magenta).
-        assertEquals(0xFFD1D1D8.toInt(), app.getColor(R.color.elite_text_primary))
+        assertEquals(0xFFD1D1D8.toInt(), app.getColor(R.color.text_primary))
     }
 
     @Test
@@ -196,25 +196,25 @@ class AltoContrastoTest {
         val ac = altoContrasto()
         val attesi =
             mapOf(
-                R.color.elite_background to 0xFF000000,
-                R.color.elite_surface to 0xFF000000,
-                R.color.elite_surface_raised to 0xFF0D0D0F,
-                R.color.elite_text_primary to 0xFFFFFFFF,
-                R.color.elite_text_secondary to 0xFFC9C9D2,
-                R.color.elite_text_disabled to 0xFF8A8A9A,
-                R.color.elite_border_strong to 0xFF6E6E7E,
-                R.color.elite_border to 0xFF8A8A9A,
-                R.color.elite_outline to 0xFFB4B4C0,
-                R.color.elite_lime to 0xFFC8F135,
-                R.color.elite_focus_ring to 0xFFFFFFFF,
-                R.color.elite_on_lime to 0xFF000000,
-                R.color.elite_warning to 0xFFF0B35A,
-                R.color.elite_error to 0xFFFF8A8A,
-                R.color.elite_info to 0xFF9ED0F5,
-                R.color.elite_success_subtle to 0xFF0A1A10,
-                R.color.elite_warning_subtle to 0xFF1F1606,
-                R.color.elite_error_subtle to 0xFF2B0D0D,
-                R.color.elite_info_subtle to 0xFF0A1822,
+                R.color.background_canvas to 0xFF000000,
+                R.color.background_surface to 0xFF000000,
+                R.color.background_elevated to 0xFF0D0D0F,
+                R.color.text_primary to 0xFFFFFFFF,
+                R.color.text_secondary to 0xFFC9C9D2,
+                R.color.text_disabled to 0xFF8A8A9A,
+                R.color.border_subtle to 0xFF6E6E7E,
+                R.color.border_group to 0xFF8A8A9A,
+                R.color.border_strong to 0xFFB4B4C0,
+                R.color.accent_default_standard to 0xFFC8F135,
+                R.color.focus_ring to 0xFFFFFFFF,
+                R.color.on_accent to 0xFF000000,
+                R.color.status_warning to 0xFFF0B35A,
+                R.color.status_error to 0xFFFF8A8A,
+                R.color.status_info to 0xFF9ED0F5,
+                R.color.status_success_subtle to 0xFF0A1A10,
+                R.color.status_warning_subtle to 0xFF1F1606,
+                R.color.status_error_subtle to 0xFF2B0D0D,
+                R.color.status_info_subtle to 0xFF0A1822,
             )
         for ((id, valore) in attesi) assertEquals(nomi(id), valore.toInt(), colore(ac, id))
     }
@@ -226,13 +226,13 @@ class AltoContrastoTest {
         return Regex("""<style name="ThemeOverlay.App.AltoContrasto".*?</style>""", RegexOption.DOT_MATCHES_ALL).find(themes)!!.value
     }
 
-    /** Le voci dell'overlay che non sono un colore di ruolo (attributo elite*, valore *_alto_contrasto). */
+    /** Le voci dell'overlay che non sono un colore di ruolo (attributo color<Ruolo>, valore <ruolo>_alto_contrasto). */
     private fun vociNonColore(corpo: String): List<String> =
         Regex("""<item name="([^"]+)">([^<]*)</item>""")
             .findAll(corpo)
             .mapNotNull {
                 val (nome, valore) = it.destructured
-                if (Regex("""elite[A-Z]\w*""").matches(nome) && Regex("""@color/elite_\w+_alto_contrasto""").matches(valore)) null else nome
+                if (Regex("""color[A-Z]\w*""").matches(nome) && Regex("""@color/[a-z_]+_alto_contrasto""").matches(valore)) null else nome
             }.toList()
 
     @Test
@@ -251,7 +251,7 @@ class AltoContrastoTest {
     @Test
     fun `il controllo dell'overlay trova una forma, un peso e una pressione`() {
         val sbagliato =
-            """<style name="x" parent=""><item name="eliteTextPrimary">@color/elite_text_primary_alto_contrasto</item>""" +
+            """<style name="x" parent=""><item name="colorTextPrimary">@color/text_primary_alto_contrasto</item>""" +
                 """<item name="cornerSize">4dp</item><item name="android:textFontWeight">700</item>""" +
                 """<item name="pressFeedback">@animator/press_feedback_reduced</item></style>"""
         assertEquals(listOf("cornerSize", "android:textFontWeight", "pressFeedback"), vociNonColore(sbagliato))
@@ -316,7 +316,7 @@ class AltoContrastoTest {
         val radice = inflare(ac, R.layout.activity_match_settings)
         assertEquals(0xFF000000.toInt(), sfondoDi(radice))
         val titolo = radice.findViewById<TextView>(R.id.sportRulesText)
-        assertEquals(colore(ac, R.color.elite_text_secondary), titolo.currentTextColor)
+        assertEquals(colore(ac, R.color.text_secondary), titolo.currentTextColor)
         assertEquals(0xFFC9C9D2.toInt(), titolo.currentTextColor)
         // Nello standard le stesse viste hanno i valori di prima.
         val s = standard()
@@ -329,7 +329,7 @@ class AltoContrastoTest {
     fun `i bottoni secondari e primari prendono contorno e testo dall'overlay`() {
         val ac = altoContrasto()
         val secondario = MaterialButton(ac, null, M3.attr.materialButtonOutlinedStyle)
-        assertEquals(colore(ac, R.color.elite_text_primary), secondario.textColors.defaultColor)
+        assertEquals(colore(ac, R.color.text_primary), secondario.textColors.defaultColor)
         assertEquals(0xFFFFFFFF.toInt(), secondario.textColors.defaultColor)
         assertEquals(0xFFB4B4C0.toInt(), secondario.strokeColor.defaultColor)
         val primario = MaterialButton(ac)
@@ -363,15 +363,15 @@ class AltoContrastoTest {
             assertTrue("$nome ha %.2f sul nero".format(dopo1), dopo1 >= 7.0)
         }
         // Le cifre e il pallino restano bianco e lime su nero, uguali nei due temi.
-        assertEquals(colore(s, R.color.ink_white), colore(ac, R.color.ink_white))
-        assertEquals(colore(s, R.color.elite_lime), colore(ac, R.color.elite_lime))
+        assertEquals(colore(s, R.color.text_on_watch_standard), colore(ac, R.color.text_on_watch_standard))
+        assertEquals(colore(s, R.color.accent_default_standard), colore(ac, R.color.accent_default_standard))
     }
 
     // --- Scelta, sistema e applicazione alle activity ---
 
     private fun impostazioni() = Robolectric.buildActivity(MatchSettingsActivity::class.java).setup().get()
 
-    private fun testoPrimarioDi(activity: android.app.Activity) = activity.getColor(R.color.elite_text_primary)
+    private fun testoPrimarioDi(activity: android.app.Activity) = activity.getColor(R.color.text_primary)
 
     @Test
     fun `senza scelta e senza contrasto di sistema l'activity e' standard e l'interruttore e' spento`() {
@@ -426,16 +426,16 @@ class AltoContrastoTest {
     fun `ogni activity del telefono riceve l'overlay, non solo le impostazioni`() {
         AltoContrasto.scegli(app, true)
         val storico = Robolectric.buildActivity(it.vantaggi.scoreboardessential.MatchHistoryActivity::class.java).setup().get()
-        assertEquals(0xFFFFFFFF.toInt(), storico.getColor(R.color.elite_text_primary))
+        assertEquals(0xFFFFFFFF.toInt(), storico.getColor(R.color.text_primary))
         val giocatori = Robolectric.buildActivity(it.vantaggi.scoreboardessential.PlayersManagementActivity::class.java).setup().get()
-        assertEquals(0xFFFFFFFF.toInt(), giocatori.getColor(R.color.elite_text_primary))
+        assertEquals(0xFFFFFFFF.toInt(), giocatori.getColor(R.color.text_primary))
     }
 
     // Falsificazione: se l'applicazione non registrasse l'overlay, l'activity resterebbe standard.
     @Test
     fun `senza l'overlay applicato lo stesso contesto resta standard`() {
         AltoContrasto.scegli(app, true)
-        assertNotEquals(colore(standard(), R.color.elite_text_primary), colore(altoContrasto(), R.color.elite_text_primary))
+        assertNotEquals(colore(standard(), R.color.text_primary), colore(altoContrasto(), R.color.text_primary))
         assertTrue(AltoContrasto.attivo(app))
     }
 

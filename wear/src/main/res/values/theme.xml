@@ -7,19 +7,19 @@
         Material, non perche' un componente lo usi.
     -->
     <style name="Theme.ScoreboardEssential" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="colorPrimary">@color/elite_lime</item>
-        <item name="colorOnPrimary">@color/elite_on_lime</item>
+        <item name="colorPrimary">@color/accent_default</item>
+        <item name="colorOnPrimary">@color/on_accent</item>
         <!-- Il secondario e' neutro, come sul telefono. -->
-        <item name="colorSecondary">@color/elite_text_secondary</item>
-        <item name="colorOnSecondary">@color/ink_black</item>
-        <item name="colorError">@color/elite_error</item>
-        <item name="colorOnError">@color/ink_black</item>
-        <item name="android:colorBackground">@color/ink_black</item>
-        <item name="colorOnBackground">@color/elite_text_primary</item>
-        <item name="colorSurface">@color/elite_surface</item>
-        <item name="colorOnSurface">@color/elite_text_primary</item>
-        <item name="colorOnSurfaceVariant">@color/elite_text_secondary</item>
-        <item name="colorOutlineVariant">@color/elite_border_strong</item>
+        <item name="colorSecondary">@color/text_secondary</item>
+        <item name="colorOnSecondary">@color/background_watch</item>
+        <item name="colorError">@color/status_error</item>
+        <item name="colorOnError">@color/background_watch</item>
+        <item name="android:colorBackground">@color/background_watch</item>
+        <item name="colorOnBackground">@color/text_primary</item>
+        <item name="colorSurface">@color/background_surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorOutlineVariant">@color/border_subtle</item>
         <!-- Niente tinta di elevazione: le superfici si alzano di tono coi token, mai di tinta. -->
         <item name="elevationOverlayEnabled">false</item>
 
@@ -53,17 +53,17 @@
     <style name="TextAppearance.App.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">600</item>
-        <item name="android:textColor">@color/elite_text_primary</item>
+        <item name="android:textColor">@color/text_primary</item>
     </style>
     <style name="TextAppearance.App.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">600</item>
-        <item name="android:textColor">@color/elite_text_primary</item>
+        <item name="android:textColor">@color/text_primary</item>
     </style>
     <style name="TextAppearance.App.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">400</item>
-        <item name="android:textColor">@color/elite_text_secondary</item>
+        <item name="android:textColor">@color/text_secondary</item>
     </style>
 
     <!--
@@ -75,7 +75,7 @@
         Vale solo qui: le altre schermate tengono lo swipe come indietro.
     -->
     <style name="Theme.ScoreboardEssential.Face" parent="Theme.ScoreboardEssential">
-        <item name="android:windowBackground">@color/ink_black</item>
+        <item name="android:windowBackground">@color/background_watch</item>
         <item name="android:windowSwipeToDismiss">false</item>
     </style>
 
@@ -87,37 +87,37 @@
     -->
     <style name="TextAppearance.Face.Score" parent="android:TextAppearance">
         <item name="android:textSize">@dimen/face_score_text_size</item>
-        <item name="android:textColor">@color/ink_white</item>
+        <item name="android:textColor">@color/text_on_watch</item>
         <item name="android:fontFamily">sans-serif-condensed</item>
         <item name="android:textStyle">bold</item>
     </style>
     <style name="TextAppearance.Face.Context" parent="android:TextAppearance">
         <item name="android:textSize">@dimen/face_context_text_size</item>
-        <item name="android:textColor">@color/ink_white</item>
+        <item name="android:textColor">@color/text_on_watch</item>
         <item name="android:fontFamily">sans-serif-condensed</item>
         <item name="android:textStyle">bold</item>
     </style>
     <style name="TextAppearance.Face.Keeper" parent="android:TextAppearance">
         <item name="android:textSize">@dimen/face_keeper_text_size</item>
-        <item name="android:textColor">@color/elite_text_secondary</item>
+        <item name="android:textColor">@color/text_secondary</item>
         <item name="android:fontFamily">sans-serif-condensed</item>
         <item name="android:textStyle">bold</item>
     </style>
     <style name="TextAppearance.Face.Detail" parent="android:TextAppearance">
         <item name="android:textSize">@dimen/face_detail_text_size</item>
-        <item name="android:textColor">@color/elite_text_secondary</item>
+        <item name="android:textColor">@color/text_secondary</item>
         <item name="android:fontFamily">@font/inter</item>
     </style>
     <style name="TextAppearance.Face.Who" parent="android:TextAppearance">
         <item name="android:textSize">13sp</item>
-        <item name="android:textColor">@color/ink_white</item>
+        <item name="android:textColor">@color/text_on_watch</item>
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">600</item>
         <item name="android:letterSpacing">0.04</item>
     </style>
     <style name="TextAppearance.Face.Status" parent="android:TextAppearance">
         <item name="android:textSize">@dimen/wear_hint_text_size</item>
-        <item name="android:textColor">@color/elite_text_secondary</item>
+        <item name="android:textColor">@color/text_secondary</item>
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">600</item>
         <item name="android:letterSpacing">0.04</item>
@@ -138,7 +138,7 @@
         ombra e senza bordo, con la pressione condivisa. La linea fra le righe la mette il gruppo.
     -->
     <style name="Widget.App.GroupRow" parent="Widget.Material3.CardView.Filled">
-        <item name="cardBackgroundColor">@color/elite_surface</item>
+        <item name="cardBackgroundColor">@color/background_surface</item>
         <item name="cardElevation">0dp</item>
         <item name="android:elevation">0dp</item>
         <item name="strokeWidth">0dp</item>
@@ -169,7 +169,7 @@
         <item name="android:textColor">@color/bottone_primario_testo</item>
     </style>
     <style name="Widget.App.Button.Tonal">
-        <item name="backgroundTint">@color/elite_surface</item>
+        <item name="backgroundTint">@color/background_surface</item>
         <item name="android:textColor">@color/bottone_tonale_testo</item>
     </style>
 
@@ -180,7 +180,7 @@
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">500</item>
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">@color/elite_text_secondary</item>
+        <item name="android:textColor">@color/text_secondary</item>
         <item name="android:maxLines">1</item>
         <item name="android:ellipsize">end</item>
         <item name="android:importantForAccessibility">no</item>

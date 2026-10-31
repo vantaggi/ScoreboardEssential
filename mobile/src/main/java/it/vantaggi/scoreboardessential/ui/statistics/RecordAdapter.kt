@@ -50,7 +50,7 @@ class RecordAdapter(
             name.text = item.playerName
             val vinte = resources.getQuantityString(R.plurals.stats_wins, item.won, item.won, item.played)
             value.text = vinte
-            value.setTextColor(itemView.context.getColor(if (leader) R.color.elite_accent else R.color.elite_text_primary))
+            value.setTextColor(itemView.context.getColor(if (leader) R.color.accent_default else R.color.text_primary))
             itemView.contentDescription = resources.getString(R.string.stats_record_description, position + 1, item.playerName, vinte)
         }
     }

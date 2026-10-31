@@ -3,7 +3,7 @@
     <!-- Field Background -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@color/elite_background" />
+            <solid android:color="@color/background_canvas" />
             <corners android:radius="@dimen/radius_surface" />
         </shape>
     </item>
@@ -13,7 +13,7 @@
         <shape android:shape="rectangle">
             <stroke
                 android:width="4dp"
-                android:color="@color/elite_outline" />
+                android:color="@color/border_strong" />
             <corners android:radius="@dimen/radius_surface" />
             <solid android:color="@android:color/transparent" />
         </shape>
@@ -24,7 +24,7 @@
          <shape android:shape="line">
             <stroke
                 android:width="2dp"
-                android:color="@color/elite_outline"
+                android:color="@color/border_strong"
                 android:dashWidth="10dp"
                 android:dashGap="10dp" />
             <size android:height="2dp" />
@@ -34,7 +34,7 @@
     <!-- Center Circle (Optional, for realism) -->
     <item android:width="60dp" android:height="60dp" android:gravity="center">
         <shape android:shape="oval">
-            <stroke android:width="2dp" android:color="@color/elite_outline" />
+            <stroke android:width="2dp" android:color="@color/border_strong" />
             <solid android:color="@android:color/transparent" />
         </shape>
     </item>

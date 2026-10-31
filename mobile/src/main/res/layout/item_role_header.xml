@@ -10,4 +10,4 @@
     android:paddingEnd="@dimen/space_16"
     android:paddingBottom="@dimen/space_8"
     android:textAppearance="@style/TextAppearance.App.RowTitle"
-    android:textColor="@color/elite_text_secondary" />
+    android:textColor="@color/text_secondary" />

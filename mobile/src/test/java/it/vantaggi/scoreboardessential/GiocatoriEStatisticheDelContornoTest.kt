@@ -59,10 +59,10 @@ class GiocatoriEStatisticheDelContornoTest {
         val riga = StatisticsAdapter.ViewHolder(vista)
         riga.bind(PlayerStatsDTO(playerId = 1, playerName = "Mario", goals = 12, appearances = 15, winRate = 0.6f), 0)
 
-        val lime = base.getColor(R.color.elite_lime)
+        val lime = base.getColor(R.color.accent_default_standard)
         assertEquals(lime, vista.findViewById<TextView>(R.id.text_goals).currentTextColor)
         // Lime su superficie e nome in testo primario: tutti e due leggibili sul fondo del gruppo.
-        val fondoDelGruppo = base.getColor(R.color.elite_surface)
+        val fondoDelGruppo = base.getColor(R.color.background_surface)
         leggibile("gol del primo", lime, fondoDelGruppo)
         leggibile("nome", vista.findViewById<TextView>(R.id.text_player_name).currentTextColor, fondoDelGruppo)
         assertEquals("12 goals", vista.findViewById<TextView>(R.id.text_goals).text.toString())
@@ -74,7 +74,7 @@ class GiocatoriEStatisticheDelContornoTest {
         val vista = LayoutInflater.from(tema).inflate(R.layout.item_player_stat, FrameLayout(tema), false)
         StatisticsAdapter.ViewHolder(vista).bind(PlayerStatsDTO(2, "Luca", 4, 10, 0.5f), 1)
 
-        assertEquals(base.getColor(R.color.elite_text_primary), vista.findViewById<TextView>(R.id.text_goals).currentTextColor)
+        assertEquals(base.getColor(R.color.text_primary), vista.findViewById<TextView>(R.id.text_goals).currentTextColor)
     }
 
     // Rango e presenze non sono a vista: TalkBack le sente nella descrizione della riga.
@@ -141,7 +141,7 @@ class GiocatoriEStatisticheDelContornoTest {
             ),
         )
         assertEquals(4, gruppo.childCount)
-        val sfondo = base.getColor(R.color.elite_surface)
+        val sfondo = base.getColor(R.color.background_surface)
         val testi = mutableSetOf<Int>()
         for (i in 0 until gruppo.childCount) {
             val chip = gruppo.getChildAt(i) as Chip
@@ -160,7 +160,7 @@ class GiocatoriEStatisticheDelContornoTest {
 
         val icona = fab.imageTintList!!.defaultColor
         val fondo = fab.backgroundTintList!!.defaultColor
-        assertEquals(base.getColor(R.color.elite_lime), fondo)
+        assertEquals(base.getColor(R.color.accent_default_standard), fondo)
         leggibile("icona del FAB", icona, fondo)
     }
 
@@ -187,8 +187,8 @@ class GiocatoriEStatisticheDelContornoTest {
     @Test
     fun `nel PDF ogni squadra ha nome e punteggio leggibili e il colore e' una barretta`() {
         val vista = MatchReportUtils.buildReportView(tema, rapporto(bluNotte, giallo), attributesScorer = true)
-        val carta = base.getColor(R.color.print_background)
-        val gruppo = base.getColor(R.color.print_surface)
+        val carta = base.getColor(R.color.background_canvas_print)
+        val gruppo = base.getColor(R.color.background_surface_print)
 
         val lati =
             listOf(
@@ -199,7 +199,7 @@ class GiocatoriEStatisticheDelContornoTest {
             val nome = vista.findViewById<TextView>(nomeId)
             // Nome e punteggio non portano il colore della squadra: sono l'inchiostro della carta, 4,5:1 sul gruppo e sulla carta.
             for (testo in listOf(nome, vista.findViewById<TextView>(punteggioId))) {
-                assertEquals(base.getColor(R.color.print_text_primary), testo.currentTextColor)
+                assertEquals(base.getColor(R.color.text_primary_print), testo.currentTextColor)
                 leggibile("testo del PDF sul gruppo", testo.currentTextColor, gruppo)
                 leggibile("testo del PDF sulla carta", testo.currentTextColor, carta)
             }
@@ -217,7 +217,7 @@ class GiocatoriEStatisticheDelContornoTest {
     fun `nel PDF senza colore la barretta ripiega su lime e ciano`() {
         val senzaColori = rapporto(0, 0).copy(team1Color = null, team2Color = null)
         val vista = MatchReportUtils.buildReportView(tema, senzaColori, attributesScorer = true)
-        val gruppo = base.getColor(R.color.print_surface)
+        val gruppo = base.getColor(R.color.background_surface_print)
 
         // I predefiniti dei lati, come nella Cronaca; su carta chiara scendono a 3:1 restando verde e azzurro.
         assertEquals(

@@ -35,7 +35,7 @@
             android:ellipsize="end"
             android:fontFamily="@font/inter"
             android:maxLines="1"
-            android:textColor="@color/elite_text_primary"
+            android:textColor="@color/text_primary"
             android:textFontWeight="600"
             android:textSize="14sp"
             android:textAlignment="viewStart" />
@@ -47,7 +47,7 @@
             android:ellipsize="end"
             android:fontFamily="@font/inter"
             android:maxLines="2"
-            android:textColor="@color/elite_text_secondary"
+            android:textColor="@color/text_secondary"
             android:textSize="12sp"
             android:textAlignment="viewStart" />
     </LinearLayout>

@@ -32,7 +32,7 @@
         android:fontFamily="@font/inter"
         android:includeFontPadding="false"
         android:maxLines="1"
-        android:textColor="@color/ink_white"
+        android:textColor="@color/text_on_watch"
         android:textSize="18sp"
         android:textFontWeight="600"
         android:textAlignment="viewStart" />

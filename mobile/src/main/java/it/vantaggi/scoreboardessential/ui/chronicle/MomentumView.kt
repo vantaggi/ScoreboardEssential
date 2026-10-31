@@ -55,19 +55,19 @@ class MomentumView
             Paint().apply {
                 style = Paint.Style.STROKE
                 strokeWidth = density
-                color = ContextCompat.getColor(context, R.color.elite_outline)
+                color = ContextCompat.getColor(context, R.color.border_strong)
             }
         private val gridPaint =
             Paint().apply {
                 style = Paint.Style.STROKE
                 strokeWidth = density
-                color = ContextCompat.getColor(context, R.color.elite_border_strong)
+                color = ContextCompat.getColor(context, R.color.border_subtle)
             }
         private val setPaint =
             Paint().apply {
                 style = Paint.Style.STROKE
                 strokeWidth = density
-                color = ContextCompat.getColor(context, R.color.elite_outline)
+                color = ContextCompat.getColor(context, R.color.border_strong)
                 pathEffect = DashPathEffect(floatArrayOf(4 * density, 4 * density), 0f)
             }
 
@@ -76,7 +76,7 @@ class MomentumView
             TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
                 typeface = Typeface.create(inter, WEIGHT_MEDIUM, false)
                 textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, LABEL_SP, resources.displayMetrics)
-                color = ContextCompat.getColor(context, R.color.elite_text_primary)
+                color = ContextCompat.getColor(context, R.color.text_primary)
                 fontFeatureSettings = "tnum"
             }
         private val swatchPaint =

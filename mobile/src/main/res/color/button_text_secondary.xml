@@ -2,6 +2,6 @@
 <!-- Testo del bottone secondario: text-primary, disattivo con text-disabled. Era text-secondary,
      che a occhio non si distingue dal disattivo: i comandi attivi sembravano spenti. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="?attr/eliteTextDisabled" android:state_enabled="false" />
-    <item android:color="?attr/eliteTextPrimary" />
+    <item android:color="?attr/colorTextDisabled" android:state_enabled="false" />
+    <item android:color="?attr/colorTextPrimary" />
 </selector>

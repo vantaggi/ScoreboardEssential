@@ -104,7 +104,7 @@ class ContornoDelTelefonoG4Test {
         val trovati = mutableListOf<String>()
         if (xml.contains("textAllCaps=\"true\"")) trovati += "textAllCaps"
         Regex(
-            "@color/(concrete_gray|stencil_white|sidewalk_gray|graffiti_[a-z_]+|asphalt_[a-z]+|outline_gray|neon_cyan|team_spray_yellow|team_electric_green|error_red|error_text|elite_text_tertiary|elite_cyan)",
+            "@color/(concrete_gray|stencil_white|sidewalk_gray|graffiti_[a-z_]+|asphalt_[a-z]+|outline_gray|neon_cyan|team_spray_yellow|team_electric_green|error_red|error_text|elite_text_tertiary|chart_2)",
         ).findAll(xml)
             .forEach { trovati += it.value }
         if (xml.contains("selectableItemBackground")) trovati += "ripple di sistema"
@@ -349,7 +349,7 @@ class ContornoDelTelefonoG4Test {
     @Test
     fun `la linea fra le righe e' rientrata al testo e non c'e' dopo l'ultima`() {
         val bitmap = disegna(3)
-        val linea = contesto.getColor(R.color.elite_border_strong)
+        val linea = contesto.getColor(R.color.border_subtle)
         val inset = (16 * densita).toInt()
 
         // Fra la prima e la seconda riga: dal bordo del testo in poi, non prima.
@@ -368,11 +368,11 @@ class ContornoDelTelefonoG4Test {
     fun `le schede hanno testo primario sulla scelta, secondario sulle altre e l'indicatore lime`() {
         val tabs = tutti(gonfia("activity_statistics")).filterIsInstance<TabLayout>().single()
         val colori = tabs.tabTextColors!!
-        assertEquals(contesto.getColor(R.color.elite_text_primary), colori.getColorForState(intArrayOf(android.R.attr.state_selected), 0))
-        assertEquals(contesto.getColor(R.color.elite_text_secondary), colori.defaultColor)
+        assertEquals(contesto.getColor(R.color.text_primary), colori.getColorForState(intArrayOf(android.R.attr.state_selected), 0))
+        assertEquals(contesto.getColor(R.color.text_secondary), colori.defaultColor)
         val stile = File("src/main/res/values/styles.xml").readText()
         val corpo = Regex("""<style name="Widget.App.TabLayout".*?</style>""", RegexOption.DOT_MATCHES_ALL).find(stile)!!.value
-        assertTrue(corpo.contains("tabIndicatorColor\">?attr/eliteAccent"))
+        assertTrue(corpo.contains("tabIndicatorColor\">?attr/colorAccentDefault"))
     }
 
     // --- Storico: la scheda si apre sul dettaglio, e lo stato dell'invio resta in vista ---

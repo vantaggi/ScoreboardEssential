@@ -1,5 +1,7 @@
 # Street Vibe Evolved - Style Guide
 
+> **Superata** (ottobre 2026): l'interfaccia segue la UI Constitution. Le regole e i file dei token sono in `AGENTS.md`; questo documento resta solo come storia.
+
 ## 1. Manifesto del Design
 
 La nostra missione è infondere l'anima del calcio di strada in ogni pixel dell'applicazione. Ogni interazione deve trasmettere energia, grinta e creatività. I nostri pilastri sono:

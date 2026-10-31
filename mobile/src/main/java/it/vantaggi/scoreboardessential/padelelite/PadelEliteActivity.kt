@@ -361,7 +361,7 @@ class PadelEliteActivity : AppCompatActivity() {
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, resources.getDimensionPixelSize(R.dimen.border_width))
         parametri.marginStart = resources.getDimensionPixelSize(R.dimen.space_16)
         return View(this).apply {
-            setBackgroundColor(getColor(R.color.elite_border_strong))
+            setBackgroundColor(getColor(R.color.border_subtle))
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             layoutParams = parametri
         }
@@ -372,7 +372,7 @@ class PadelEliteActivity : AppCompatActivity() {
             RadioGroup.LayoutParams(RadioGroup.LayoutParams.MATCH_PARENT, resources.getDimensionPixelSize(R.dimen.border_width))
         parametri.marginStart = resources.getDimensionPixelSize(R.dimen.space_32)
         return View(this).apply {
-            setBackgroundColor(getColor(R.color.elite_border_strong))
+            setBackgroundColor(getColor(R.color.border_subtle))
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             layoutParams = parametri
         }

@@ -35,7 +35,7 @@
             android:paddingEnd="@dimen/space_12"
             android:textAppearance="@style/TextAppearance.App.Caption"
             app:drawableEndCompat="@drawable/ic_expand_more"
-            app:drawableTint="@color/elite_text_secondary"
+            app:drawableTint="@color/text_secondary"
             tools:text="Padel · 18:30 · 47 min" />
 
         <!-- Una riga per squadra: etichetta nel colore con cui si e' giocato, risultato a destra.
@@ -72,7 +72,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.App.Punteggio"
-                android:textColor="@color/elite_text_primary"
+                android:textColor="@color/text_primary"
                 android:textSize="32sp"
                 tools:text="10" />
         </LinearLayout>
@@ -109,7 +109,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.App.Punteggio"
-                android:textColor="@color/elite_text_secondary"
+                android:textColor="@color/text_secondary"
                 android:textSize="32sp"
                 tools:text="8" />
         </LinearLayout>
@@ -125,7 +125,7 @@
             android:gravity="center_vertical"
             android:paddingHorizontal="@dimen/space_16"
             android:textAppearance="@style/TextAppearance.App.Caption"
-            android:textColor="@color/elite_text_primary"
+            android:textColor="@color/text_primary"
             android:visibility="gone"
             app:drawableStartCompat="@drawable/ic_schedule"
             tools:text="Inviata: in attesa di un admin"
@@ -141,7 +141,7 @@
             android:paddingHorizontal="@dimen/space_16"
             android:text="@string/padel_elite_links_changed_hint"
             android:textAppearance="@style/TextAppearance.App.Caption"
-            android:textColor="@color/elite_text_secondary"
+            android:textColor="@color/text_secondary"
             android:visibility="gone"
             tools:visibility="visible" />
 
@@ -183,7 +183,7 @@
                 android:layout_marginTop="@dimen/space_12"
                 android:paddingHorizontal="@dimen/space_16"
                 android:textAppearance="@style/TextAppearance.App.Punteggio"
-                android:textColor="@color/elite_text_secondary"
+                android:textColor="@color/text_secondary"
                 android:textSize="14sp"
                 android:visibility="gone"
                 tools:text="6-4 · 3-6 · 7-6 (7-4)"
@@ -249,7 +249,7 @@
                     android:contentDescription="@string/delete_match"
                     android:foreground="@drawable/bg_focus_ring"
                     app:srcCompat="@drawable/ic_delete"
-                    app:tint="@color/elite_error" />
+                    app:tint="@color/status_error" />
             </androidx.constraintlayout.widget.ConstraintLayout>
         </LinearLayout>
 

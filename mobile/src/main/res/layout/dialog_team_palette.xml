@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Il colore della squadra (passo 7 della revisione dei menu): otto colori gia' provati sul nero del
-    tabellone e sulle superfici (team_palette_1..8), in cerchi da 48dp come il colore nelle
+    tabellone e sulle superfici (user_1..8), in cerchi da 48dp come il colore nelle
     Impostazioni. Quello scelto ha l'anello chiaro e la spunta, e TalkBack lo sente selezionato: il
     colore non e' l'unico segno. La ruota resta dietro "Altro colore", un bottone di testo; il primario
     del dialogo e' "Usa questo colore" (MatchSettingsActivity).
@@ -32,7 +32,7 @@
                 android:layout_weight="1">
 
     <com.google.android.material.button.MaterialButton
-                android:id="@+id/team_palette_1"
+                android:id="@+id/user_1"
                 style="@style/Widget.App.Button.Secondary"
                 android:layout_width="@dimen/control_touch"
                 android:layout_height="@dimen/control_touch"
@@ -53,7 +53,7 @@
                 android:layout_weight="1">
 
     <com.google.android.material.button.MaterialButton
-                android:id="@+id/team_palette_2"
+                android:id="@+id/user_2"
                 style="@style/Widget.App.Button.Secondary"
                 android:layout_width="@dimen/control_touch"
                 android:layout_height="@dimen/control_touch"
@@ -74,7 +74,7 @@
                 android:layout_weight="1">
 
     <com.google.android.material.button.MaterialButton
-                android:id="@+id/team_palette_3"
+                android:id="@+id/user_3"
                 style="@style/Widget.App.Button.Secondary"
                 android:layout_width="@dimen/control_touch"
                 android:layout_height="@dimen/control_touch"
@@ -95,7 +95,7 @@
                 android:layout_weight="1">
 
     <com.google.android.material.button.MaterialButton
-                android:id="@+id/team_palette_4"
+                android:id="@+id/user_4"
                 style="@style/Widget.App.Button.Secondary"
                 android:layout_width="@dimen/control_touch"
                 android:layout_height="@dimen/control_touch"
@@ -122,7 +122,7 @@
                 android:layout_weight="1">
 
     <com.google.android.material.button.MaterialButton
-                android:id="@+id/team_palette_5"
+                android:id="@+id/user_5"
                 style="@style/Widget.App.Button.Secondary"
                 android:layout_width="@dimen/control_touch"
                 android:layout_height="@dimen/control_touch"
@@ -143,7 +143,7 @@
                 android:layout_weight="1">
 
     <com.google.android.material.button.MaterialButton
-                android:id="@+id/team_palette_6"
+                android:id="@+id/user_6"
                 style="@style/Widget.App.Button.Secondary"
                 android:layout_width="@dimen/control_touch"
                 android:layout_height="@dimen/control_touch"
@@ -164,7 +164,7 @@
                 android:layout_weight="1">
 
     <com.google.android.material.button.MaterialButton
-                android:id="@+id/team_palette_7"
+                android:id="@+id/user_7"
                 style="@style/Widget.App.Button.Secondary"
                 android:layout_width="@dimen/control_touch"
                 android:layout_height="@dimen/control_touch"
@@ -185,7 +185,7 @@
                 android:layout_weight="1">
 
     <com.google.android.material.button.MaterialButton
-                android:id="@+id/team_palette_8"
+                android:id="@+id/user_8"
                 style="@style/Widget.App.Button.Secondary"
                 android:layout_width="@dimen/control_touch"
                 android:layout_height="@dimen/control_touch"

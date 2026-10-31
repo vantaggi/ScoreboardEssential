@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Casella e radio: selezionato lime (con il segno di spunta come secondo segno), altrimenti contorno a 3:1. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="?attr/eliteTextDisabled" android:state_enabled="false" />
-    <item android:color="?attr/eliteAccent" android:state_checked="true" />
-    <item android:color="?attr/eliteOutline" />
+    <item android:color="?attr/colorTextDisabled" android:state_enabled="false" />
+    <item android:color="?attr/colorAccentDefault" android:state_checked="true" />
+    <item android:color="?attr/colorBorderStrong" />
 </selector>

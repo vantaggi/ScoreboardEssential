@@ -82,6 +82,6 @@ class ImpostazioniDelContornoTest {
         val bordoChiara = (chiara.background as MaterialShapeDrawable).strokeWidth
         assertTrue("blu notte senza contorno", bordoScura > 0f)
         assertEquals("il giallo non ne ha bisogno", 0f, bordoChiara, 0f)
-        assertEquals(base.getColor(R.color.elite_text_secondary), (scura.background as MaterialShapeDrawable).strokeColor?.defaultColor)
+        assertEquals(base.getColor(R.color.text_secondary), (scura.background as MaterialShapeDrawable).strokeColor?.defaultColor)
     }
 }

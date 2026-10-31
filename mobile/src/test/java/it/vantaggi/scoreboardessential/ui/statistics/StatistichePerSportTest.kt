@@ -240,7 +240,7 @@ class StatistichePerSportTest {
             testiDelleRighe(lista),
         )
         // Due in testa a pari merito: nessun primo, nessun lime.
-        val lime = statistiche.getColor(R.color.elite_lime)
+        val lime = statistiche.getColor(R.color.accent_default_standard)
         val colori = (0 until lista.childCount).map { lista.getChildAt(it).findViewById<TextView>(R.id.text_goals).currentTextColor }
         assertEquals(emptyList<Int>(), colori.filter { it == lime })
     }

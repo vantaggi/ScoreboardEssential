@@ -68,7 +68,7 @@ import it.vantaggi.scoreboardessential.shared.R as SharedR
  *
  * Schermata di contorno (G-5): ogni sezione e' un gruppo tonale (surface su canvas) con righe
  * separate da linee sottili rientrate al testo, niente card e niente ombre. I colori sono i
- * ruoli `elite_*`; quelli dei lati sono il colore con cui si e' giocato (lime e ciano, chart-1 e
+ * ruoli dei token; quelli dei lati sono il colore con cui si e' giocato (lime e ciano, chart-1 e
  * chart-2, se l'utente non li ha cambiati), schiarito da TeamInk se non regge 3:1 sul gruppo, e
  * sono sempre grafica (barrette, tratti, linea): il testo resta nel testo primario. Tutti i
  * numeri sono Inter con cifre tabulari. Nessun maiuscolo.
@@ -235,7 +235,7 @@ class ChronicleActivity : AppCompatActivity() {
         for (side in 1..2) {
             val label =
                 text(teams[side - 1], size = BODY_SP, weight = WEIGHT_MEDIUM).apply {
-                    etichettaConBarretta(paints[side - 1], color(R.color.elite_surface))
+                    etichettaConBarretta(paints[side - 1], color(R.color.background_surface))
                     maxLines = 2
                     ellipsize = TextUtils.TruncateAt.END
                 }
@@ -246,7 +246,7 @@ class ChronicleActivity : AppCompatActivity() {
                 columns.map { (games, tieBreak) ->
                     text(
                         setScore(games[side - 1], tieBreak?.get(side - 1)),
-                        if (lost) R.color.elite_text_secondary else R.color.elite_text_primary,
+                        if (lost) R.color.text_secondary else R.color.text_primary,
                         size = SCORE_SP,
                         weight = if (lost) WEIGHT_REGULAR else WEIGHT_SEMIBOLD,
                     ).apply { minWidth = dimen(R.dimen.space_32) }
@@ -272,7 +272,7 @@ class ChronicleActivity : AppCompatActivity() {
             foot.addView(
                 text(
                     getString(R.string.chronicle_interrupted),
-                    R.color.elite_text_secondary,
+                    R.color.text_secondary,
                     size = CAPTION_SP,
                     weight = WEIGHT_SEMIBOLD,
                 ).apply {
@@ -285,7 +285,7 @@ class ChronicleActivity : AppCompatActivity() {
         foot.addView(
             text(
                 getString(R.string.chronicle_totals, s.pointsWon[0], s.pointsWon[1], s.gamesWon[0], s.gamesWon[1]),
-                R.color.elite_text_secondary,
+                R.color.text_secondary,
             ),
             LinearLayout.LayoutParams(0, WRAP, 1f),
         )
@@ -375,7 +375,7 @@ class ChronicleActivity : AppCompatActivity() {
         val bar = dimen(R.dimen.space_16)
         val plain = dimen(R.dimen.space_12)
         return text(shown, size = BODY_SP, weight = WEIGHT_MEDIUM).apply {
-            background = cellBackground(ChronicleText.graphicOn(paints[g.winner - 1], color(R.color.elite_surface_raised)), atStart)
+            background = cellBackground(ChronicleText.graphicOn(paints[g.winner - 1], color(R.color.background_elevated)), atStart)
             setPaddingRelative(if (atStart) bar else plain, dimen(R.dimen.space_8), if (atStart) plain else bar, dimen(R.dimen.space_8))
             // Il colore non e' l'unico segno di chi ha vinto il game: c'e' la posizione della barretta e il nome.
             contentDescription =
@@ -394,7 +394,7 @@ class ChronicleActivity : AppCompatActivity() {
         val density = resources.displayMetrics.density
         val base =
             GradientDrawable().apply {
-                setColor(color(R.color.elite_surface_raised))
+                setColor(color(R.color.background_elevated))
                 cornerRadius = resources.getDimension(R.dimen.radius_control)
             }
         val bar = GradientDrawable().apply { setColor(ink) }
@@ -490,7 +490,7 @@ class ChronicleActivity : AppCompatActivity() {
                 )
         rows.forEach { (label, ms) ->
             val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-            row.addView(text(label, R.color.elite_text_secondary), LinearLayout.LayoutParams(0, WRAP, 1f))
+            row.addView(text(label, R.color.text_secondary), LinearLayout.LayoutParams(0, WRAP, 1f))
             row.addView(text(ChronicleText.duration(resources, ms), weight = WEIGHT_SEMIBOLD))
             addRow(body, row)
         }
@@ -528,7 +528,7 @@ class ChronicleActivity : AppCompatActivity() {
     }
 
     /** Il colore di squadra come grafica sul gruppo: barrette e linea dell'andamento. */
-    private fun onSurface(paint: Int): Int = ChronicleText.graphicOn(paint, color(R.color.elite_surface))
+    private fun onSurface(paint: Int): Int = ChronicleText.graphicOn(paint, color(R.color.background_surface))
 
     /** Una barretta da 4dp nel colore di squadra davanti al testo; senza colore resta lo spazio. */
     private fun withBar(
@@ -560,7 +560,7 @@ class ChronicleActivity : AppCompatActivity() {
     ) {
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         box.addView(text(getString(title), size = BODY_SP, weight = WEIGHT_MEDIUM))
-        reason?.let { box.addView(text(getString(it), R.color.elite_text_secondary), blockParams(top = dimen(R.dimen.space_4))) }
+        reason?.let { box.addView(text(getString(it), R.color.text_secondary), blockParams(top = dimen(R.dimen.space_4))) }
         addRow(body, box)
     }
 
@@ -607,7 +607,7 @@ class ChronicleActivity : AppCompatActivity() {
     /** `border-subtle` di 1dp rientrata di space_16 (il bordo del testo); non e' letta da TalkBack. */
     private fun divider(params: LinearLayout.LayoutParams): View =
         View(this).apply {
-            setBackgroundColor(color(R.color.elite_border_strong))
+            setBackgroundColor(color(R.color.border_subtle))
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             params.marginStart = dimen(R.dimen.space_16)
             layoutParams = params
@@ -617,11 +617,11 @@ class ChronicleActivity : AppCompatActivity() {
     private fun badge() =
         GradientDrawable().apply {
             setColor(Color.TRANSPARENT)
-            setStroke(dimen(R.dimen.border_width), color(R.color.elite_outline))
+            setStroke(dimen(R.dimen.border_width), color(R.color.border_strong))
             cornerRadius = resources.getDimension(R.dimen.radius_badge)
         }
 
-    private fun caption(value: CharSequence): TextView = text(value, R.color.elite_text_secondary, size = CAPTION_SP)
+    private fun caption(value: CharSequence): TextView = text(value, R.color.text_secondary, size = CAPTION_SP)
 
     /**
      * Tutto il testo della Cronaca e' Inter con cifre tabulari (`tnum`): i numeri stanno in fila e
@@ -629,7 +629,7 @@ class ChronicleActivity : AppCompatActivity() {
      */
     private fun text(
         value: CharSequence,
-        @ColorRes ink: Int = R.color.elite_text_primary,
+        @ColorRes ink: Int = R.color.text_primary,
         size: Float = BODY_SP,
         weight: Int = WEIGHT_REGULAR,
     ): TextView =

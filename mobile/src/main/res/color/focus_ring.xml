@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Token focus_ring: segue il tema (standard o alto contrasto) tramite ?attr/colorFocusRing. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="?attr/colorFocusRing" />
+</selector>

@@ -60,7 +60,7 @@ class MenuG7Test {
             val riga = gruppo.getChildAt(it) as MaterialCardView
             assertEquals("ombra sulla riga $it", 0f, riga.cardElevation, 0f)
             assertEquals(0, riga.strokeWidth)
-            assertEquals(attivita.getColor(R.color.elite_surface), riga.cardBackgroundColor.defaultColor)
+            assertEquals(attivita.getColor(R.color.background_surface), riga.cardBackgroundColor.defaultColor)
             val angolo = riga.shapeAppearanceModel.topLeftCorner
             assertTrue("forma tagliata nella riga $it", angolo is RoundedCornerTreatment)
             assertEquals(dp(attivita, 8f), riga.shapeAppearanceModel.topLeftCornerSize.getCornerSize(RectF(0f, 0f, 200f, 52f)), 0.5f)

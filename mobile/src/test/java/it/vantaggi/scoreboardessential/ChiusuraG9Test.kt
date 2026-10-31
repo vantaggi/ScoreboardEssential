@@ -149,12 +149,12 @@ class ChiusuraG9Test {
         val sorgente = File("src/main/java/it/vantaggi/scoreboardessential/MainActivity.kt").readText()
         val funzione = sorgente.substringAfter("private fun updateKeeperTimerTextView").substringBefore("private fun dimensioneDelCambio")
         val corsa = funzione.lines().single { it.contains("inCorso ->") }
-        assertTrue("il conto che corre non e' testo primario: $corsa", corsa.contains("R.color.elite_text_primary"))
-        assertFalse("il lime non e' di chi corre: $corsa", funzione.contains("elite_lime"))
+        assertTrue("il conto che corre non e' testo primario: $corsa", corsa.contains("R.color.text_primary"))
+        assertFalse("il lime non e' di chi corre: $corsa", funzione.contains("accent_default_standard"))
         // Il fermo resta secondario e la scadenza resta l'allarme: tre stati, tre segni.
-        assertTrue(funzione.contains("else -> ContextCompat.getColor(this, R.color.elite_text_secondary)"))
+        assertTrue(funzione.contains("else -> ContextCompat.getColor(this, R.color.text_secondary)"))
         assertTrue(funzione.contains("scaduto -> nero"))
         // Falsificazione: la riga di prima.
-        assertFalse("inCorso -> ContextCompat.getColor(this, R.color.elite_lime)".contains("R.color.elite_text_primary"))
+        assertFalse("inCorso -> ContextCompat.getColor(this, R.color.accent_default_standard)".contains("R.color.text_primary"))
     }
 }

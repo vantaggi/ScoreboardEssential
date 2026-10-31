@@ -48,7 +48,7 @@
                 android:fontFamily="@font/inter"
                 android:textFontWeight="600"
                 android:textSize="15sp"
-                android:textColor="@color/elite_text_primary"
+                android:textColor="@color/text_primary"
                 android:textAlignment="viewStart" />
 
             <!-- La riga secondaria: "in uso" nella scelta dello sport, il perche' o il valore nel menu. -->

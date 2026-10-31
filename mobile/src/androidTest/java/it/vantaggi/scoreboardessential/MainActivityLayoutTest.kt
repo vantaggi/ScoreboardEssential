@@ -464,12 +464,12 @@ class MainActivityLayoutTest {
             scenario.onActivity {
                 assertEquals(
                     "il vincitore resta bianco",
-                    it.getColor(R.color.ink_white),
+                    it.getColor(R.color.text_on_watch_standard),
                     it.findViewById<TextView>(R.id.team1_score_textview).currentTextColor,
                 )
                 assertEquals(
                     "lo sconfitto e' grigio",
-                    it.getColor(R.color.elite_text_secondary),
+                    it.getColor(R.color.text_secondary),
                     it.findViewById<TextView>(R.id.team2_score_textview).currentTextColor,
                 )
                 assertEquals("la barra della zona spenta si vede", 1f, it.findViewById<View>(R.id.team1_zone_bar).alpha, 0f)
@@ -530,7 +530,7 @@ class MainActivityLayoutTest {
                 assertEquals("riaperta, la barra della zona si spegne", 0f, it.findViewById<View>(R.id.team1_zone_bar).alpha, 0f)
                 assertEquals(
                     "riaperto, il numero torna bianco",
-                    it.getColor(R.color.ink_white),
+                    it.getColor(R.color.text_on_watch_standard),
                     it.findViewById<TextView>(R.id.team2_score_textview).currentTextColor,
                 )
             }
@@ -679,10 +679,10 @@ class MainActivityLayoutTest {
                     "il tocco non ha avviato il conto",
                     aspettaCheAttivi(scenario) {
                         it.findViewById<TextView>(R.id.keeper_timer_textview).currentTextColor ==
-                            it.getColor(R.color.elite_text_primary)
+                            it.getColor(R.color.text_primary)
                     },
                 )
-                // Il conto scade: dopo la scadenza lo slot e' pieno elite_error con CAMBIO in elite_background.
+                // Il conto scade: dopo la scadenza lo slot e' pieno status_error con CAMBIO in background_canvas.
                 assertTrue(
                     "dopo la scadenza lo slot non e' diventato rosso",
                     aspettaCheAttivi(scenario) { modello.isKeeperTimerExpired.value == true },
@@ -692,11 +692,11 @@ class MainActivityLayoutTest {
                     val slot = it.findViewById<com.google.android.material.card.MaterialCardView>(R.id.keeper_slot)
                     val valore = it.findViewById<TextView>(R.id.keeper_timer_textview)
                     assertEquals(
-                        "lo slot scaduto e' pieno elite_error",
-                        it.getColor(R.color.elite_error),
+                        "lo slot scaduto e' pieno status_error",
+                        it.getColor(R.color.status_error),
                         slot.cardBackgroundColor.defaultColor,
                     )
-                    assertEquals("CAMBIO e' in elite_background", it.getColor(R.color.elite_background), valore.currentTextColor)
+                    assertEquals("CAMBIO e' in background_canvas", it.getColor(R.color.background_canvas), valore.currentTextColor)
                     assertEquals("lo slot scaduto dice CAMBIO", it.getString(R.string.label_keeper_change), valore.text.toString())
                     assertEquals(
                         "TalkBack dice lo stato e l'azione",
@@ -845,7 +845,7 @@ class MainActivityLayoutTest {
             // G-6: SCARTA e' testo primario (il rosso sul fondo rialzato del dialogo fa 4,35:1); solo SALVA e' lime.
             assertEquals(
                 "SCARTA deve essere il testo primario",
-                ContextCompat.getColor(ApplicationProvider.getApplicationContext(), R.color.elite_text_primary),
+                ContextCompat.getColor(ApplicationProvider.getApplicationContext(), R.color.text_primary),
                 coloreDelBottoneDelDialogo(R.string.btn_discard_match),
             )
             onView(withText(R.string.continue_action)).inRoot(isDialog()).perform(click())
@@ -1501,8 +1501,8 @@ class MainActivityLayoutTest {
     fun l_icona_dell_orologio_e_chiara_se_collegato_e_grigia_se_no() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             val contesto = ApplicationProvider.getApplicationContext<android.content.Context>()
-            val stencil = ContextCompat.getColor(contesto, R.color.elite_text_primary)
-            val grigio = ContextCompat.getColor(contesto, R.color.elite_text_secondary)
+            val stencil = ContextCompat.getColor(contesto, R.color.text_primary)
+            val grigio = ContextCompat.getColor(contesto, R.color.text_secondary)
 
             fun tinta(activity: MainActivity) = activity.findViewById<ImageView>(R.id.wear_status_icon).imageTintList?.defaultColor
 

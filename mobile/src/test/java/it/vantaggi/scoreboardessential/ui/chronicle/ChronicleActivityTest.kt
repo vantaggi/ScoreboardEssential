@@ -307,7 +307,7 @@ class ChronicleActivityTest {
         testi: List<TextView>,
         ctx: android.content.Context,
     ): List<String> {
-        val ammessi = setOf(ctx.getColor(R.color.elite_text_primary), ctx.getColor(R.color.elite_text_secondary))
+        val ammessi = setOf(ctx.getColor(R.color.text_primary), ctx.getColor(R.color.text_secondary))
         return testi
             .filter { it.isAllCaps || it.currentTextColor !in ammessi }
             .map { "${it.text} (maiuscolo=${it.isAllCaps}, colore=${Integer.toHexString(it.currentTextColor)})" }
@@ -341,7 +341,7 @@ class ChronicleActivityTest {
         val maiuscolo =
             TextView(cronaca).apply {
                 isAllCaps = true
-                setTextColor(cronaca.getColor(R.color.elite_text_primary))
+                setTextColor(cronaca.getColor(R.color.text_primary))
             }
         assertEquals(1, testiFuoriRegola(listOf(maiuscolo), cronaca).size)
     }
@@ -363,8 +363,8 @@ class ChronicleActivityTest {
         assertEquals(listOf("Tabellone", "Andamento", "Game per game", "Servizio", "Tempi", "Momenti chiave"), titoli)
         for (i in 0 until sezioni.childCount) {
             val gruppo = tutteLeViste(sezioni.getChildAt(i)).filterIsInstance<MaterialCardView>().single()
-            assertEquals(cronaca.getColor(R.color.elite_surface), gruppo.cardBackgroundColor.defaultColor)
-            assertEquals(cronaca.getColor(R.color.elite_border), gruppo.strokeColor)
+            assertEquals(cronaca.getColor(R.color.background_surface), gruppo.cardBackgroundColor.defaultColor)
+            assertEquals(cronaca.getColor(R.color.border_group), gruppo.strokeColor)
             assertEquals("la sezione $i ha un'ombra", 0f, gruppo.cardElevation, 0f)
         }
     }

@@ -11,7 +11,7 @@
     android:focusable="false"
     android:padding="0dp"
     android:textAppearance="?attr/textAppearanceLabelSmall"
-    android:textColor="@color/elite_text_secondary"
+    android:textColor="@color/text_secondary"
     app:chipMinTouchTargetSize="0dp"
     app:chipStartPadding="@dimen/space_4"
     app:chipEndPadding="@dimen/space_4"

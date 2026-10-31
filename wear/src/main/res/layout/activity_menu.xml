@@ -31,7 +31,7 @@
             android:layout_marginBottom="@dimen/space_8"
             android:accessibilityHeading="true"
             android:text="@string/wear_menu_title"
-            android:textColor="@color/elite_text_primary"
+            android:textColor="@color/text_primary"
             android:fontFamily="@font/inter"
             android:textFontWeight="600"
             android:textSize="14sp"
@@ -62,7 +62,7 @@
             android:gravity="center"
             android:maxLines="1"
             android:text="@string/wear_in_campo"
-            android:textColor="@color/elite_text_secondary"
+            android:textColor="@color/text_secondary"
             android:textFontWeight="500"
             android:textSize="12sp"
             android:visibility="gone" />
@@ -91,7 +91,7 @@
             android:gravity="center"
             android:maxLines="1"
             android:text="@string/wear_settings"
-            android:textColor="@color/elite_text_secondary"
+            android:textColor="@color/text_secondary"
             android:textFontWeight="500"
             android:textSize="12sp" />
 

@@ -1,5 +1,7 @@
 # Design - telefono e orologio, 24 settembre 2026
 
+> **Come leggere questo file (31 ottobre 2026).** Le regole dell'interfaccia sono nella **UI Constitution**, <https://claude.ai/artifact/8DhrtZW85wiHTsfw1vmXSn>, e non si ripetono qui. Le istruzioni per gli agenti sono in `AGENTS.md`, le parole a schermo in `GLOSSARIO.md`. Questo file tiene solo cio' che e' del progetto: la mappatura dei ruoli sui token Android, i contrasti, i conflitti dichiarati (sezione "Adattamento alla UI Constitution"), le scelte del proprietario e il registro dei passi. Le sezioni piu' vecchie citano i file della Constitution coi nomi di allora: `adapting.md` e' 01-adapting, `integration.md` 02-integration, `motion.md` 05-motion, `wearable.md` 08-wearable, `review.md` 10-review.
+
 Prodotto da un workflow di agenti su `0337026`: per ciascuna piattaforma tre proposte indipendenti da angoli diversi, un giudice che le ha confrontate (ricalcolando i contrasti WCAG e aprendo i file citati), una sintesi che parte dalla vincente e innesta il meglio delle altre. Tutto in sola lettura: **nessuna riga di codice e' stata cambiata**. Le bozze in `design/` sono SVG alle proporzioni reali (412x923 dp per il Pixel 9a, tondo da 192 dp per il Wear_OS_Small_Round) e servono a giudicare gerarchia e proporzioni, non sono schermate.
 
 Il punto di partenza sono i difetti di `VALIDAZIONE.md`: ogni schermata indica quali risolve o rende visibili.
@@ -1247,7 +1249,7 @@ Proposta: una collocazione per i valori e una per la logica.
 
 ## Adattamento alla UI Constitution - 6 ottobre 2026
 
-Il proprietario ha un design system trasversale, la **UI Constitution** (<https://claude.ai/artifact/8DhrtZW85wiHTsfw1vmXSn>), che il progetto adotta. Questa sezione e' l'**unica fonte** dell'adattamento: identita', mappatura dei ruoli, conflitti dichiarati e passi G-1b..G-10. Segue la procedura di `adapting.md` della Constitution: i valori del progetto vincono, si tengono i ruoli; i buchi si riempiono coi predefiniti e si dice quali sono.
+Il proprietario ha un design system trasversale, la **UI Constitution** (<https://claude.ai/artifact/8DhrtZW85wiHTsfw1vmXSn>), che il progetto adotta. Questa sezione e' l'**unica fonte** dell'adattamento: identita', mappatura dei ruoli, conflitti dichiarati e passi G-1b..G-10. Segue la procedura di 01-adapting della Constitution: i valori del progetto vincono, si tengono i ruoli; i buchi si riempiono coi predefiniti e si dice quali sono.
 
 La pista "Coerenza con Padel Elite" (sotto) resta per cio' che e' gia' fatto (G-0 e G-1) e per i **valori** di Padel Elite e i loro contrasti. I suoi passi G-2..G-9 sono stati **tolti** da li' e rifatti qui: li sostituiscono. Dove la pista dice JetBrains Mono, Heroicons o "pillole" va letto con questa sezione.
 
@@ -1263,64 +1265,46 @@ Restano valide: valori di Padel Elite mappati sui ruoli (G0 e la tabella sotto);
 
 ### Identita' (le sei righe, una per superficie)
 
-Telefono e orologio condividono accento, caratteri e nomi; non la densita' ne' il movimento (`adapting.md` punto 5).
-
-```text
-TELEFONO
-Product character: tabellone da bordo campo, letto di sfuggita e toccato col pollice; il contorno (storico, Cronaca, statistiche) e' la pagina di una dashboard sobria, la stessa di Padel Elite
-Density: balanced nel contorno; in gioco un numero per lato e niente altro (le tre fasce a slot fissi)
-Geometry: precise (raggi 8, 14, 14; gruppi tonali; mai angoli tagliati, mai pillole)
-Accent behavior: restrained (lime solo per l'azione primaria, la selezione, il fuoco e chi serve)
-Motion character: precise (due stati alla volta, nessuna decorazione, niente oltre 240ms)
-Primary domain pattern: tabellone a due meta' con punteggio tabulare, registro cronologico e Cronaca derivata dal motore
-Distinctive visual behavior: nero puro in gioco, cifre bianche giganti in Inter 600 tabulare, il colore della squadra solo nelle zone + e nella barretta (con inchiostro TeamInk), pallino lime per il servizio, il punteggio che rotola nella direzione del cambio
-
-OROLOGIO
-Product character: un numero al polso, letto in mezzo secondo e toccato con un dito; il resto e' sul telefono
-Density: compact (un valore focale, al massimo due di supporto, un'azione)
-Geometry: precise (tondo prima, quadrato dopo; nessuna card, nessuna ombra; raggi di Padel Elite nel menu)
-Accent behavior: functional (il lime marca una cosa sola: chi serve; in ambient nessun colore)
-Motion character: calm (corto, a molla 'control', niente in loop, niente al risveglio)
-Primary domain pattern: quadrante a fasce con la coppia di cifre al centro e il gesto del tocco, con ricevuta aptica per lato
-Distinctive visual behavior: cifre bianche su nero puro, strisce di squadra sotto le cifre, pallino lime sul lato di chi serve, vibrazione diversa a sinistra e a destra, ambient con le sole cifre sottili
-```
+Le sei righe del telefono e dell'orologio stanno in `AGENTS.md`, nella radice, dove gli agenti le leggono: non si ripetono qui. Telefono e orologio condividono accento, caratteri e nomi; non la densita' ne' il movimento (01-adapting, punto 5). Raggi, durate e pesi che le righe sottintendono sono nella tabella qui sotto.
 
 ### Mappatura dei ruoli della Constitution
+
+**Nomi dal 31 ottobre 2026 (scelta B del proprietario).** Ogni colore ha il nome del suo ruolo, uguale su telefono e orologio, con gli stessi valori: `elite_background` e' diventato `background_canvas`, `elite_lime` `accent_default`, `ink_black` `background_watch`, `ink_white` `text_on_watch`, `print_*` `<ruolo>_print`, `team_palette_N` `user_N`; sul telefono gli attributi del tema sono `color<Ruolo>` (`?attr/colorBackgroundCanvas`). Le sezioni piu' vecchie di questo file usano ancora i nomi di allora. La tabella qui sotto e' gia' coi nomi nuovi.
 
 Il tema e' uno solo, **scuro** (decisione G4): i valori sono quelli del tema scuro della Constitution; il chiaro non c'e' (conflitto dichiarato, sotto) e l'alto contrasto e' G-10. La fonte dei valori e' `mobile/src/main/res/values/colors.xml` (token `elite_*`), il quadrante la riceve in G-7. I nomi marcati *(nuovo)* non esistono ancora: li crea G-2.
 
 | Ruolo | Token Android | Valore | Origine |
 |---|---|---|---|
-| `background-canvas` | `elite_background` (`android:colorBackground`) | `#0D0D0F` | P |
-| `background-surface` | `elite_surface` (`colorSurface`) | `#161618` | P |
-| `background-elevated` | `elite_surface_raised` (`colorSurfaceContainerHigh`) | `#1E1E22` | P |
-| `background-watch` | `ink_black`; nero del gioco sul telefono e del quadrante | `#000000` | C (uguale al valore dell'app) |
-| `text-primary` | `elite_text_primary` (`colorOnSurface`); le cifre del gioco e del quadrante sono `ink_white` | `#D1D1D8` (cifre `#FFFFFF`) | P (cifre A: dati su nero) |
-| `text-secondary` | `elite_text_secondary` (`colorOnSurfaceVariant`) | `#8A8A9A` | P |
-| `text-disabled` | `elite_text_disabled` *(nuovo)* | `#6B7077` | C |
+| `background-canvas` | `background_canvas` (`android:colorBackground`) | `#0D0D0F` | P |
+| `background-surface` | `background_surface` (`colorSurface`) | `#161618` | P |
+| `background-elevated` | `background_elevated` (`colorSurfaceContainerHigh`) | `#1E1E22` | P |
+| `background-watch` | `background_watch`; nero del gioco sul telefono e del quadrante | `#000000` | C (uguale al valore dell'app) |
+| `text-primary` | `text_primary` (`colorOnSurface`); le cifre del gioco e del quadrante sono `text_on_watch` | `#D1D1D8` (cifre `#FFFFFF`) | P (cifre A: dati su nero) |
+| `text-secondary` | `text_secondary` (`colorOnSurfaceVariant`) | `#8A8A9A` | P |
+| `text-disabled` | `text_disabled` *(nuovo)* | `#6B7077` | C |
 | (nessun ruolo) | `elite_text_tertiary` | `#7F7F93` | P; la Constitution non ha un terzo livello leggibile: si usa `text-secondary`; il token si toglie in G-4 quando nessun layout lo cita |
-| `border-subtle` | `elite_border_strong` (`colorOutlineVariant`) | `#2A2A2E` | P (nel ruolo di linea sottile fra le righe di un gruppo) |
-| `border-group` | `elite_border` | `#1E1E22` | P; **visibile anche in scuro** (la Constitution lo vuole trasparente: qui i due toni distano 1,07:1) |
-| `border-strong` | `elite_outline` (`colorOutline`) | `#6E6E7E` | A (il bordo forte di Padel Elite fa 1,36:1 e non passa 3:1, vedi G-0) |
-| `accent-default` | `elite_lime` (`colorPrimary`) | `#C8F135` | P |
+| `border-subtle` | `border_subtle` (`colorOutlineVariant`) | `#2A2A2E` | P (nel ruolo di linea sottile fra le righe di un gruppo) |
+| `border-group` | `border_group` | `#1E1E22` | P; **visibile anche in scuro** (la Constitution lo vuole trasparente: qui i due toni distano 1,07:1) |
+| `border-strong` | `border_strong` (`colorOutline`) | `#6E6E7E` | A (il bordo forte di Padel Elite fa 1,36:1 e non passa 3:1, vedi G-0) |
+| `accent-default` | `accent_default` (`colorPrimary`) | `#C8F135` | P |
 | `accent-hover`, `accent-pressed` | derivati dal lime col feedback di pressione (opacita' 0,85): sul fondo `#ACCF2F` | derivati | A (P non ha stati; il blu della Constitution non si usa) |
-| `on-accent` | `elite_on_lime` (`colorOnPrimary`) | `#0D0D0F` | P |
-| `status-success` | `elite_success` (alias del lime) | `#C8F135` | P |
-| `status-warning` | `elite_warning` | `#E09A35` | P |
-| `status-error` | `elite_error` (`colorError`) | `#E05252` | P |
-| `status-info` | `elite_info` *(nuovo)* | `#7FBDEA` | C (P usa il ciano solo nei grafici) |
-| `status-success-subtle` | `elite_success_subtle` *(nuovo)* | `#15291F` | C |
-| `status-warning-subtle` | `elite_warning_subtle` *(nuovo)* | `#2E2410` | C |
-| `status-error-subtle` | `elite_error_subtle` *(nuovo)* | `#2A1415` | A (il `#33191A` di C con l'errore di P fa 4,25:1 e l'etichetta non passa 4,5) |
-| `status-info-subtle` | `elite_info_subtle` *(nuovo)* | `#14262F` | C |
-| `focus-ring` | `elite_lime`, tratto pieno 2dp con distanza 2dp | `#C8F135` | P (campi con focus lime; il blu di C si scarta) |
-| `state-hover` | `elite_surface_hover` (`colorSurfaceBright`), solo puntatore e tastiera | `#2A2A2E` | P |
-| `state-pressed` | `elite_state_pressed` *(nuovo)*: il testo primario al 12% | `#1FD1D1D8` | A (C dark e' `rgba(236,238,240,0.12)`: stessa regola sul testo di P) |
-| `state-selected` | `elite_surface_raised` piu' un secondo segno (indicatore lime, peso 600) | `#1E1E22` | P/A |
-| `scrim` | `elite_overlay` | nero all'85% (`#D9000000`) | P (C dark e' 60%) |
-| `chart-1` | `elite_lime` (lato 1) | `#C8F135` | P |
-| `chart-2` | `elite_cyan` (lato 2) | `#00E5FF` | P |
-| `chart-3`, `chart-4`, `chart-5` | `elite_chart_3`, `_4`, `_5` *(nuovi)* | `#F0A36B`, `#D79BDB`, `#A4A9B0` | C (dark, in ordine; saltati il blu e il verde acqua di C: troppo vicini al ciano) |
+| `on-accent` | `on_accent` (`colorOnPrimary`) | `#0D0D0F` | P |
+| `status-success` | `status_success` (alias del lime) | `#C8F135` | P |
+| `status-warning` | `status_warning` | `#E09A35` | P |
+| `status-error` | `status_error` (`colorError`) | `#E05252` | P |
+| `status-info` | `status_info` *(nuovo)* | `#7FBDEA` | C (P usa il ciano solo nei grafici) |
+| `status-success-subtle` | `status_success_subtle` *(nuovo)* | `#15291F` | C |
+| `status-warning-subtle` | `status_warning_subtle` *(nuovo)* | `#2E2410` | C |
+| `status-error-subtle` | `status_error_subtle` *(nuovo)* | `#2A1415` | A (il `#33191A` di C con l'errore di P fa 4,25:1 e l'etichetta non passa 4,5) |
+| `status-info-subtle` | `status_info_subtle` *(nuovo)* | `#14262F` | C |
+| `focus-ring` | `accent_default`, tratto pieno 2dp con distanza 2dp | `#C8F135` | P (campi con focus lime; il blu di C si scarta) |
+| `state-hover` | `state_hover` (`colorSurfaceBright`), solo puntatore e tastiera | `#2A2A2E` | P |
+| `state-pressed` | `state_pressed` *(nuovo)*: il testo primario al 12% | `#1FD1D1D8` | A (C dark e' `rgba(236,238,240,0.12)`: stessa regola sul testo di P) |
+| `state-selected` | `background_elevated` piu' un secondo segno (indicatore lime, peso 600) | `#1E1E22` | P/A |
+| `scrim` | `scrim` | nero all'85% (`#D9000000`) | P (C dark e' 60%) |
+| `chart-1` | `accent_default` (lato 1) | `#C8F135` | P |
+| `chart-2` | `chart_2` (lato 2) | `#00E5FF` | P |
+| `chart-3`, `chart-4`, `chart-5` | `chart_3`, `_4`, `_5` *(nuovi)* | `#F0A36B`, `#D79BDB`, `#A4A9B0` | C (dark, in ordine; saltati il blu e il verde acqua di C: troppo vicini al ciano) |
 | `chart-grid` | = `border-subtle` | `#2A2A2E` | C |
 | `radius-control` | 8dp (bottoni, campi, voci) | 8dp | P (C: 10) |
 | `radius-surface` | 14dp (gruppi, card, foglio) | 14dp | P (C: 16) |
@@ -1362,10 +1346,10 @@ I valori di P sono quelli gia' verificati da `TokenEliteTest`; qui si aggiungono
 | `chart-1`..`chart-5` su canvas / surface | 14,88-8,21 / 13,85-7,64 | 3:1 con ampio margine |
 | cifre `#FFFFFF` su nero / lime su nero (pallino) | 21,00 / 16,09 | AAA |
 | grigio `#9E9E9E` (cronometro fermo, perdente) su nero | 7,84 | AAA |
-| carta del PDF (G-8): `print_text_primary` `#1A1C1F` su `print_background` / `print_surface` | 17,08 / 15,65 | AAA |
-| carta del PDF: `print_text_secondary` `#5A5F66` su `print_background` / `print_surface` | 6,43 / 5,90 | AA |
-| carta del PDF: lime `#C8F135` e ciano `#00E5FF` su `print_surface` (come testo o barretta) | 1,20 / 1,41 | non passano: sulla carta sono barrette scurite a 3:1 (`#7E9821` 3,01, `#009CAD` 3,03) |
-| carta del PDF: `print_surface` su `print_background` / `print_border` su `print_surface` | 1,09 / 1,26 | decorativo: il gruppo si legge per tono e bordo (come in scuro) |
+| carta del PDF (G-8): `text_primary_print` `#1A1C1F` su `background_canvas_print` / `background_surface_print` | 17,08 / 15,65 | AAA |
+| carta del PDF: `text_secondary_print` `#5A5F66` su `background_canvas_print` / `background_surface_print` | 6,43 / 5,90 | AA |
+| carta del PDF: lime `#C8F135` e ciano `#00E5FF` su `background_surface_print` (come testo o barretta) | 1,20 / 1,41 | non passano: sulla carta sono barrette scurite a 3:1 (`#7E9821` 3,01, `#009CAD` 3,03) |
+| carta del PDF: `background_surface_print` su `background_canvas_print` / `border_subtle_print` su `background_surface_print` | 1,09 / 1,26 | decorativo: il gruppo si legge per tono e bordo (come in scuro) |
 
 ### Conflitti dichiarati
 
@@ -1642,7 +1626,7 @@ Il report e' una vista gonfiata e disegnata su un PDF: oggi `asphalt_dark` di fo
 
 #### G-9. Chiusura: maiuscolo dei messaggi, icona, pulizia e controllo finale. FATTO (7 ottobre 2026).
 
-Schermate dell'app accanto alle pagine della dashboard (storico, Cronaca, tabellone); tre AVD dell'orologio; carattere al 200% sul telefono; passata dei contrasti con `TokenEliteTest` e a occhio; decisione G5 (nome e icona) presa e applicata; `MIGRATION_PLAN.md` aggiornato; `CHANGELOG.md`, `STORE_LISTING.md` e le schermate della scheda Play se cambiano nome o icona. **Piu' i controlli di `review.md`** della Constitution: le **otto porte di qualita'** (compito e punto focale; ogni contenitore ha una ragione; larghezze strette e larghe, 200% e testo lungo senza salti; colori semantici, accento sobrio, raggi e ombre per ruolo; icone di una famiglia, comandi di sola icona con nome; ogni stato e ogni animazione con la sua ragione e il suo fallback; tastiera, fuoco, contrasto; riconoscibile senza il logo) e la **lista dei pattern vietati** (griglie di card uguali; sfumature e vetro; pillole ovunque; icone in quadrati colorati; emoji; maiuscolo ovunque; ombre sulle superfici ferme; entrate a scaglioni; effetti che spostano il layout; grigio su grigio), con il rapporto finale del lavoro (che cosa e' cambiato, componenti e token riusati, stati, movimenti, movimento ridotto, accessibilita', rischi). Le divergenze sono confrontate con la tabella dei **conflitti dichiarati**.
+Schermate dell'app accanto alle pagine della dashboard (storico, Cronaca, tabellone); tre AVD dell'orologio; carattere al 200% sul telefono; passata dei contrasti con `TokenEliteTest` e a occhio; decisione G5 (nome e icona) presa e applicata; `MIGRATION_PLAN.md` aggiornato; `CHANGELOG.md`, `STORE_LISTING.md` e le schermate della scheda Play se cambiano nome o icona. **Piu' i controlli di `review.md`** della Constitution (oggi 10-review: le porte di qualita' e i pattern vietati), con il rapporto finale del lavoro (che cosa e' cambiato, componenti e token riusati, stati, movimenti, movimento ridotto, accessibilita', rischi). Le divergenze sono confrontate con la tabella dei **conflitti dichiarati**.
 - **Costo:** medio
 - **File:** `MIGRATION_PLAN.md`, `CHANGELOG.md`, `STORE_LISTING.md`, `mobile/src/main/res/mipmap-anydpi-v26/ic_launcher*.xml`, `drawable/ic_launcher_*_vs.xml` (e i tre di `wear`), `strings.xml` e `values-it/strings.xml` (solo se G5 cambia il nome)
 - **Verifica:** `./gradlew test ktlintCheck lintDebug assembleDebug`; i vecchi nomi del blocco "STREET" spariti o giustificati; la lista dei pattern vietati controllata schermata per schermata e firmata; confronto visivo firmato dal proprietario.
@@ -2886,3 +2870,19 @@ Controllo delle home di telefono e orologio contro la Constitution, con le cattu
 - **Ora nello storico.** La riga dice l'ora d'inizio (`startedAt`), come la Cronaca; senza inizio (partite vecchie, 0-0 a tempo) la chiusura. Il titolo del giorno resta sulla chiusura.
 - **Debito dichiarato: la durata.** La durata dello storico e della Cronaca e' il tempo dell'ultimo evento del registro: un calcio chiuso a 15 s col solo gol a 2 s dice "2 s". Il cronometro finale non si salva; servirebbe una colonna nuova (migrazione), quindi resta cosi' finche' il proprietario non lo chiede.
 - **Stati.** Nome corto (una riga), lungo (due righe), lunghissimo (due righe e puntini); testo normale e 200%.
+
+## UI Constitution aggiornata - 31 ottobre 2026
+
+Il proprietario ha confermato che telefono e orologio seguono la UI Constitution nella versione attuale (sezioni numerate: 01-adapting, 02-integration, 04-transitions, 08-wearable, 09-checks e il resto) e ha approvato un piano in dieci PR, una per passo. Il piano, con le sue risposte, e' nel documento "Piano: ScoreboardEssential sulla UI Constitution" (<https://claude.ai/artifact/H26b7jL3ci9HaQwaohCo9n>). Le PR che cambiano l'aspetto le unisce lui dopo la prova su telefono e orologio; per ogni scelta grafica bozze A/B/C con la raccomandazione.
+
+### PR 1: installazione e misura (nessun cambio visivo)
+
+- **Istruzioni per gli agenti.** `AGENTS.md` nella radice, col testo di "Instructions for coding agents" di 02-integration: link al sistema, file dei token, glossario, identita' e toni. `CLAUDE.md` lo importa e tiene le regole del repository. Le sei righe dell'identita' non si ripetono piu' qui.
+- **Glossario.** `GLOSSARIO.md`: Squadra (mai "Team" a schermo), Partita, Set, Game (scelta del proprietario: non "Gioco"), Punto, Servizio, Cronaca, Storico e i termini che l'app usa gia'.
+- **Colori coi nomi dei ruoli** (scelta B del proprietario, contro la A che raccomandavo per il costo: circa 1.000 citazioni in 160 file). Valori invariati; mappatura nella tabella "Mappatura dei ruoli". Telefono e orologio usano gli stessi nomi; i valori di un tema (`_standard`, `_chiaro`, `_alto_contrasto`) si citano solo dai temi e dalle icone del launcher, che si disegnano senza tema.
+- **Misura** in `docs/ui-constitution/misura.md`: `scripts/misura-ui.py` e `MisuraGeometriaDelPolsoTest`, in CI come avviso (passo 6b).
+- **Non visto a schermo**: nessun cambio visivo atteso; lo dimostrano i test unitari, che confrontano i valori dei colori e non i nomi.
+
+### Chi batte (richiesta del proprietario, 31 ottobre 2026)
+
+Oggi la rotazione e' fissa (A1, B1, A2, B2 dalle rose), la squadra 1 serve sempre per prima, lo scambio si fa solo dal telefono prima del primo punto e l'orologio mostra uno o due pallini senza nome. Il proprietario vuole: a inizio set scegliere la coppia che serve vedendo le iniziali delle coppie, poi in ogni coppia chi batte per primo; poterlo correggere anche a partita in corso (e' la correzione di un errore, non un cambio d'ordine); a fine game, per qualche secondo, le iniziali del prossimo a battere. PR dedicata dopo la PR 2 (motore in `:core` e protocollo con l'orologio), bozze prima del codice.

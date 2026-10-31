@@ -142,10 +142,10 @@ object MatchReportUtils {
     ) {
         if (nomi.isEmpty()) {
             val vuoto = context.getString(R.string.report_pdf_no_players)
-            colonna.addView(riga(context, vuoto, context.getColor(R.color.print_text_secondary)))
+            colonna.addView(riga(context, vuoto, context.getColor(R.color.text_secondary_print)))
             return
         }
-        nomi.forEach { colonna.addView(riga(context, it, context.getColor(R.color.print_text_primary))) }
+        nomi.forEach { colonna.addView(riga(context, it, context.getColor(R.color.text_primary_print))) }
     }
 
     /** La pagina del report, gia' riempita ma non ancora misurata ne' disegnata. */
@@ -181,11 +181,11 @@ object MatchReportUtils {
         // cui si e' giocato (lime e ciano se la squadra non l'ha cambiato), scurito da TeamInk fino a
         // 3:1 sul gruppo perche' la pagina e' chiara. Il testo resta nell'inchiostro della carta, quindi
         // non dipende dal colore scelto. Senza colore si ripiega sui predefiniti dei lati.
-        val gruppo = pagina.getColor(R.color.print_surface)
+        val gruppo = pagina.getColor(R.color.background_surface_print)
         val colore1 = data.team1Color ?: pagina.getColor(R.color.team_side_1)
         val colore2 = data.team2Color ?: pagina.getColor(R.color.team_side_2)
-        val primario = pagina.getColor(R.color.print_text_primary)
-        val secondario = pagina.getColor(R.color.print_text_secondary)
+        val primario = pagina.getColor(R.color.text_primary_print)
+        val secondario = pagina.getColor(R.color.text_secondary_print)
         team1NameTextView.etichettaConBarretta(colore1, gruppo, primario, sfondoChiaro = true)
         team2NameTextView.etichettaConBarretta(colore2, gruppo, primario, sfondoChiaro = true)
         team1PlayersTitle.etichettaConBarretta(colore1, gruppo, secondario, sfondoChiaro = true)

@@ -36,7 +36,7 @@ internal class AnelloQuadrato(
             style = Paint.Style.STROKE
             strokeWidth = spessore
             strokeCap = Paint.Cap.BUTT
-            color = ContextCompat.getColor(context, R.color.elite_text_secondary)
+            color = ContextCompat.getColor(context, R.color.text_secondary)
         }
 
     private val giro = Path()

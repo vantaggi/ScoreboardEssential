@@ -82,7 +82,7 @@ class IconeDelTelefonoTest {
         assertTrue(pomello.contains("@drawable/ic_check"))
         assertFalse(File(drawable, "ic_switch_check.xml").exists())
         assertFalse("nessun colore nel selettore", Regex("#[0-9A-Fa-f]{3,8}").containsMatchIn(pomello.substringBefore("<shape")))
-        assertTrue(File(res, "values/styles.xml").readText().contains("name=\"thumbIconTint\">@color/elite_on_lime"))
+        assertTrue(File(res, "values/styles.xml").readText().contains("name=\"thumbIconTint\">@color/on_accent"))
     }
 
     @Test
@@ -91,7 +91,7 @@ class IconeDelTelefonoTest {
         assertEquals(null, difettoDelVettoriale(buono))
 
         assertTrue(difettoDelVettoriale(buono.replace("@android:color/white", "#FF0000")) != null)
-        assertTrue(difettoDelVettoriale(buono.replace("@android:color/white", "@color/elite_lime")) != null)
+        assertTrue(difettoDelVettoriale(buono.replace("@android:color/white", "@color/accent_default_standard")) != null)
         assertTrue(difettoDelVettoriale(buono.replace("android:viewportWidth=\"960\"", "android:viewportWidth=\"24\"")) != null)
         assertTrue(difettoDelVettoriale(buono.replace("android:tint=\"?attr/colorControlNormal\"", "")) != null)
     }

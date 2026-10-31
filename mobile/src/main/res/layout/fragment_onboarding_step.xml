@@ -16,7 +16,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/elite_accent"
+            app:tint="@color/accent_default"
             tools:src="@drawable/ic_watch" />
 
         <TextView

@@ -205,7 +205,7 @@ class PlayerSelectionActivityTest {
         val activity = apri()
 
         val radice = activity.findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
-        assertEquals(activity.getColor(R.color.ink_black), (radice.background as ColorDrawable).color)
+        assertEquals(activity.getColor(R.color.background_watch), (radice.background as ColorDrawable).color)
         assertTrue("senza focus la corona non scorre niente", activity.findViewById<View>(R.id.player_list).hasFocus())
     }
 

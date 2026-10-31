@@ -132,7 +132,7 @@ class OrologioG7Test {
         assertEquals(View.VISIBLE, binding.team1ServeDot.visibility)
         assertEquals(View.GONE, binding.team1ServeDotSecond.visibility)
         assertEquals(R.drawable.bg_serving_dot, risorsaDelDisegno(binding.team1ServeDot))
-        assertEquals(0xFFC8F135.toInt(), colore(R.color.elite_lime))
+        assertEquals(0xFFC8F135.toInt(), colore(R.color.accent_default))
 
         applica(stato("0", servizio = 2, slot = 2))
         assertEquals(View.VISIBLE, binding.team2ServeDot.visibility)
@@ -168,15 +168,15 @@ class OrologioG7Test {
 
         assertFalse("in ambient nessun riempimento", ambient.contains("<solid"))
         assertTrue(ambient.contains("<stroke"))
-        assertTrue(ambient.contains("@color/ink_white"))
+        assertTrue(ambient.contains("@color/text_on_watch"))
         assertFalse("in ambient nessun lime", ambient.contains("lime") || ambient.contains("C8F135", ignoreCase = true))
-        assertTrue(normale.contains("<solid android:color=\"@color/elite_lime\""))
+        assertTrue(normale.contains("<solid android:color=\"@color/accent_default\""))
     }
 
     @Test
     fun `falsificazione, se il pallino restasse lime in ambient il controllo lo vede`() {
         // Lo stesso controllo del test sopra, applicato a un disegno sbagliato di proposito.
-        val sbagliato = "<shape><solid android:color=\"@color/elite_lime\" /></shape>"
+        val sbagliato = "<shape><solid android:color=\"@color/accent_default\" /></shape>"
         assertTrue(sbagliato.contains("<solid"))
         assertNotEquals(R.drawable.bg_serving_dot, R.drawable.bg_serving_dot_ambient)
     }
@@ -187,8 +187,8 @@ class OrologioG7Test {
     fun `le strisce partono lime e ciano come sul telefono, e il colore mandato dal telefono vince`() {
         assertEquals(0xFFC8F135.toInt(), (binding.team1Stripe.background as ColorDrawable).color)
         assertEquals(0xFF00E5FF.toInt(), (binding.team2Stripe.background as ColorDrawable).color)
-        assertEquals(colore(R.color.team_side_1), colore(R.color.elite_lime))
-        assertEquals(colore(R.color.team_side_2), colore(R.color.elite_cyan))
+        assertEquals(colore(R.color.team_side_1), colore(R.color.accent_default))
+        assertEquals(colore(R.color.team_side_2), colore(R.color.chart_2))
 
         viewModel.setTeamColor(1, 0xFFFFD600.toInt())
         idle()

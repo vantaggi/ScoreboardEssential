@@ -69,8 +69,8 @@
 
     <issue
         id="Overdraw"
-        message="Possible overdraw: Root element paints background `@color/ink_black` with a theme that also paints a background (inferred theme is `@style/Theme.ScoreboardEssential`)"
-        errorLine1="    android:background=&quot;@color/ink_black&quot;"
+        message="Possible overdraw: Root element paints background `@color/background_watch` with a theme that also paints a background (inferred theme is `@style/Theme.ScoreboardEssential`)"
+        errorLine1="    android:background=&quot;@color/background_watch&quot;"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/activity_player_selection.xml"

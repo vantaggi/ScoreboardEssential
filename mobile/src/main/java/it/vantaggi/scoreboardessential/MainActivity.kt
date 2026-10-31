@@ -579,7 +579,7 @@ class MainActivity :
         viewModel.isMatchTimerRunning.observe(this) { isRunning ->
             timerStartButton.setIconResource(if (isRunning) R.drawable.ic_pause else R.drawable.ic_play_arrow)
             timerStartButton.setTextColor(
-                ContextCompat.getColor(this, if (isRunning) R.color.elite_game_ink else R.color.elite_text_secondary),
+                ContextCompat.getColor(this, if (isRunning) R.color.text_on_watch else R.color.text_secondary),
             )
             ViewCompat.setStateDescription(
                 timerStartButton,
@@ -1374,8 +1374,8 @@ class MainActivity :
      */
     private fun applyMatchOver(display: ScoreDisplay) {
         aggiornaZone()
-        val bianco = ContextCompat.getColor(this, R.color.elite_game_ink)
-        val grigio = ContextCompat.getColor(this, R.color.elite_text_secondary)
+        val bianco = ContextCompat.getColor(this, R.color.text_on_watch)
+        val grigio = ContextCompat.getColor(this, R.color.text_secondary)
         team1ScoreTextView.setTextColor(coloreDelNumero(1, display, bianco, grigio))
         team2ScoreTextView.setTextColor(coloreDelNumero(2, display, bianco, grigio))
     }
@@ -1398,7 +1398,7 @@ class MainActivity :
         statusIcon.setImageResource(if (collegato) R.drawable.ic_watch else R.drawable.ic_watch_off)
         statusIcon.imageTintList =
             ColorStateList.valueOf(
-                ContextCompat.getColor(this, if (collegato) R.color.elite_text_primary else R.color.elite_text_secondary),
+                ContextCompat.getColor(this, if (collegato) R.color.text_primary else R.color.text_secondary),
             )
         statusIcon.foreground = if (rifiutato) ContextCompat.getDrawable(this, R.drawable.bg_watch_notice_badge) else null
         // Il tooltip si vede solo tenendo premuto, e chi usa TalkBack non lo incontra:
@@ -1824,8 +1824,8 @@ class MainActivity :
                 }.setNegativeButton(getString(R.string.continue_action), null)
                 .show()
         // Un solo primario nel dialogo: SALVA e' lime, SCARTA e CONTINUA sono testo primario (la parola dice il resto).
-        dialogo.getButton(DialogInterface.BUTTON_NEUTRAL).setTextColor(ContextCompat.getColor(this, R.color.elite_text_primary))
-        dialogo.getButton(DialogInterface.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.elite_text_primary))
+        dialogo.getButton(DialogInterface.BUTTON_NEUTRAL).setTextColor(ContextCompat.getColor(this, R.color.text_primary))
+        dialogo.getButton(DialogInterface.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.text_primary))
     }
 
     // Il tempo sta nel testo del pulsante della barra: e' il pulsante a dire se corre, col glifo.
@@ -1844,20 +1844,20 @@ class MainActivity :
         val inCorso = timeInMillis > 0 && viewModel.isKeeperTimerRunning.value == true
         val stato = statoDelPortiere(inCorso, viewModel.isKeeperTimerExpired.value == true)
         val scaduto = stato == StatoPortiere.SCADUTO
-        // SCADUTO: slot pieno elite_error con «CAMBIO» in elite_background (5,08:1). L'errore e' un riempimento e
+        // SCADUTO: slot pieno status_error con «CAMBIO» in background_canvas (5,08:1). L'errore e' un riempimento e
         // lo sfondo l'inchiostro, come nelle zone +; il conto in corso e' testo primario.
-        val nero = ContextCompat.getColor(this, R.color.elite_background)
-        val rosso = ContextCompat.getColor(this, R.color.elite_error)
+        val nero = ContextCompat.getColor(this, R.color.background_canvas)
+        val rosso = ContextCompat.getColor(this, R.color.status_error)
         keeperSlot.setCardBackgroundColor(if (scaduto) rosso else Color.TRANSPARENT)
-        keeperSlot.strokeColor = if (scaduto) rosso else ContextCompat.getColor(this, R.color.elite_outline)
-        keeperTimerLabel.setTextColor(if (scaduto) nero else ContextCompat.getColor(this, R.color.elite_text_secondary))
+        keeperSlot.strokeColor = if (scaduto) rosso else ContextCompat.getColor(this, R.color.border_strong)
+        keeperTimerLabel.setTextColor(if (scaduto) nero else ContextCompat.getColor(this, R.color.text_secondary))
         keeperTimerTextView.text = if (scaduto) getString(R.string.label_keeper_change) else conto
         keeperTimerTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, if (scaduto) dimensioneDelCambio() else dimensioneDelConto)
         keeperTimerTextView.setTextColor(
             when {
                 scaduto -> nero
-                inCorso -> ContextCompat.getColor(this, R.color.elite_text_primary)
-                else -> ContextCompat.getColor(this, R.color.elite_text_secondary)
+                inCorso -> ContextCompat.getColor(this, R.color.text_primary)
+                else -> ContextCompat.getColor(this, R.color.text_secondary)
             },
         )
         keeperSlot.contentDescription = descrizioneDelPortiere(this, stato, conto)
@@ -1986,11 +1986,11 @@ internal fun applicaColoreDiSquadra(
     colore: Int,
 ) {
     val inchiostro = TeamInk.on(colore)
-    val campo = ContextCompat.getColor(zona.context, R.color.elite_game_background)
+    val campo = ContextCompat.getColor(zona.context, R.color.background_watch)
     zona.setCardBackgroundColor(colore)
     // Nessuna increspatura: il riscontro del tocco e' la pressione condivisa (scala 0,97 e opacita' 0,85).
     zona.rippleColor = ColorStateList.valueOf(Color.TRANSPARENT)
-    zona.strokeColor = ContextCompat.getColor(zona.context, R.color.elite_text_primary)
+    zona.strokeColor = ContextCompat.getColor(zona.context, R.color.text_primary)
     zona.strokeWidth =
         if (TeamInk.contrast(colore, campo) < CONTRASTO_MINIMO_GRAFICA) {
             (STROKE_ZONA_DP * zona.resources.displayMetrics.density).toInt()
@@ -2024,9 +2024,9 @@ internal fun applicaStatoDellaZona(
     barraDellaZona.alpha = if (finita) 1f else 0f
     if (!finita) return
     // Spenta: superficie rialzata con la sua linea (la zona resta una forma sul nero), senza ripple.
-    val rialzata = ContextCompat.getColor(zona.context, R.color.elite_surface_raised)
+    val rialzata = ContextCompat.getColor(zona.context, R.color.background_elevated)
     zona.setCardBackgroundColor(rialzata)
-    zona.strokeColor = ContextCompat.getColor(zona.context, R.color.elite_border_strong)
+    zona.strokeColor = ContextCompat.getColor(zona.context, R.color.border_subtle)
     zona.strokeWidth = zona.resources.getDimensionPixelSize(R.dimen.border_width)
     zona.rippleColor = ColorStateList.valueOf(Color.TRANSPARENT)
     // La barra sta sulla zona grigia, non sul nero: il 3:1 si misura contro la zona spenta.

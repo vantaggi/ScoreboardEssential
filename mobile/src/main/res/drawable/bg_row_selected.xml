@@ -6,7 +6,7 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_selected="true">
         <shape android:shape="rectangle">
-            <solid android:color="@color/elite_surface_raised" />
+            <solid android:color="@color/background_elevated" />
         </shape>
     </item>
     <item>

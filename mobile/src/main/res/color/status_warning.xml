@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Token status_warning: segue il tema (standard o alto contrasto) tramite ?attr/colorStatusWarning. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="?attr/colorStatusWarning" />
+</selector>

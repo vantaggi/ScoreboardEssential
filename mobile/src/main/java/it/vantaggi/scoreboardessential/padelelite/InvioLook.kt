@@ -29,36 +29,36 @@ fun invioLook(
                     },
                 ),
                 R.drawable.ic_schedule,
-                R.color.elite_text_secondary,
+                R.color.text_secondary,
             )
         }
 
         InvioState.SENT -> {
-            InvioLook(context.getString(R.string.padel_elite_status_sent), R.drawable.ic_hourglass_empty, R.color.elite_text_secondary)
+            InvioLook(context.getString(R.string.padel_elite_status_sent), R.drawable.ic_hourglass_empty, R.color.text_secondary)
         }
 
         InvioState.UPDATED -> {
-            InvioLook(context.getString(R.string.padel_elite_status_updated), R.drawable.ic_hourglass_empty, R.color.elite_text_secondary)
+            InvioLook(context.getString(R.string.padel_elite_status_updated), R.drawable.ic_hourglass_empty, R.color.text_secondary)
         }
 
         InvioState.PRESENT -> {
-            InvioLook(context.getString(R.string.padel_elite_status_present), R.drawable.ic_hourglass_empty, R.color.elite_text_secondary)
+            InvioLook(context.getString(R.string.padel_elite_status_present), R.drawable.ic_hourglass_empty, R.color.text_secondary)
         }
 
         InvioState.IMPORTED -> {
-            InvioLook(context.getString(R.string.padel_elite_status_imported), R.drawable.ic_check_circle, R.color.elite_accent)
+            InvioLook(context.getString(R.string.padel_elite_status_imported), R.drawable.ic_check_circle, R.color.accent_default)
         }
 
         InvioState.DISCARDED -> {
-            InvioLook(context.getString(R.string.padel_elite_status_discarded), R.drawable.ic_warning, R.color.elite_warning)
+            InvioLook(context.getString(R.string.padel_elite_status_discarded), R.drawable.ic_warning, R.color.status_warning)
         }
 
         InvioState.LOGIN_AGAIN -> {
-            InvioLook(context.getString(R.string.padel_elite_status_login_again), R.drawable.ic_lock, R.color.elite_warning)
+            InvioLook(context.getString(R.string.padel_elite_status_login_again), R.drawable.ic_lock, R.color.status_warning)
         }
 
         InvioState.UNSENDABLE -> {
-            InvioLook(unsendableText(context, info), R.drawable.ic_cancel, R.color.elite_error)
+            InvioLook(unsendableText(context, info), R.drawable.ic_cancel, R.color.status_error)
         }
     }
 

@@ -49,19 +49,19 @@ class TokenEliteTest {
     fun `i token hanno i valori della dashboard di Padel Elite`() {
         val attesi =
             mapOf(
-                R.color.elite_background to 0xFF0D0D0F,
-                R.color.elite_surface to 0xFF161618,
-                R.color.elite_surface_raised to 0xFF1E1E22,
-                R.color.elite_surface_hover to 0xFF2A2A2E,
-                R.color.elite_border to 0xFF1E1E22,
-                R.color.elite_border_strong to 0xFF2A2A2E,
-                R.color.elite_text_primary to 0xFFD1D1D8,
-                R.color.elite_text_secondary to 0xFF8A8A9A,
-                R.color.elite_lime to 0xFFC8F135,
-                R.color.elite_on_lime to 0xFF0D0D0F,
-                R.color.elite_cyan to 0xFF00E5FF,
-                R.color.elite_warning to 0xFFE09A35,
-                R.color.elite_error to 0xFFE05252,
+                R.color.background_canvas to 0xFF0D0D0F,
+                R.color.background_surface to 0xFF161618,
+                R.color.background_elevated to 0xFF1E1E22,
+                R.color.state_hover to 0xFF2A2A2E,
+                R.color.border_group to 0xFF1E1E22,
+                R.color.border_subtle to 0xFF2A2A2E,
+                R.color.text_primary to 0xFFD1D1D8,
+                R.color.text_secondary to 0xFF8A8A9A,
+                R.color.accent_default_standard to 0xFFC8F135,
+                R.color.on_accent to 0xFF0D0D0F,
+                R.color.chart_2 to 0xFF00E5FF,
+                R.color.status_warning to 0xFFE09A35,
+                R.color.status_error to 0xFFE05252,
             )
 
         for ((id, valore) in attesi) {
@@ -73,9 +73,9 @@ class TokenEliteTest {
     // e il velo e' nero all'85%.
     @Test
     fun `successo e ciano vecchio non sono valori a parte, il velo e' nero all'85 per cento`() {
-        assertEquals(token(R.color.elite_lime), token(R.color.elite_success))
+        assertEquals(token(R.color.accent_default_standard), token(R.color.status_success))
 
-        val velo = token(R.color.elite_overlay)
+        val velo = token(R.color.scrim)
         assertEquals(0, Color.red(velo) + Color.green(velo) + Color.blue(velo))
         assertEquals(217, Color.alpha(velo)) // 0,85 x 255 = 216,75
     }
@@ -86,64 +86,64 @@ class TokenEliteTest {
     fun `il testo primario e secondario passa AA su fondo e superfici`() {
         val fondi =
             mapOf(
-                "fondo" to R.color.elite_background,
-                "superficie" to R.color.elite_surface,
-                "rialzata" to R.color.elite_surface_raised,
+                "fondo" to R.color.background_canvas,
+                "superficie" to R.color.background_surface,
+                "rialzata" to R.color.background_elevated,
             )
 
         for ((nome, fondo) in fondi) {
-            assertAlmeno(4.5, R.color.elite_text_primary, fondo, "testo primario su $nome")
-            assertAlmeno(4.5, R.color.elite_text_secondary, fondo, "testo secondario su $nome")
+            assertAlmeno(4.5, R.color.text_primary, fondo, "testo primario su $nome")
+            assertAlmeno(4.5, R.color.text_secondary, fondo, "testo secondario su $nome")
         }
-        assertAlmeno(4.5, R.color.elite_text_primary, R.color.elite_surface_hover, "testo primario su hover")
+        assertAlmeno(4.5, R.color.text_primary, R.color.state_hover, "testo primario su hover")
     }
 
     // Il marchio: il lime si legge su ogni fondo e il testo sopra il lime e' il fondo scuro.
     @Test
     fun `il lime si vede sui fondi e il testo scuro sul lime passa AA`() {
-        assertAlmeno(4.5, R.color.elite_on_lime, R.color.elite_lime, "testo scuro su lime")
-        for (fondo in listOf(R.color.elite_background, R.color.elite_surface, R.color.elite_surface_raised)) {
-            assertAlmeno(4.5, R.color.elite_lime, fondo, "lime come testo su ${context.resources.getResourceEntryName(fondo)}")
+        assertAlmeno(4.5, R.color.on_accent, R.color.accent_default_standard, "testo scuro su lime")
+        for (fondo in listOf(R.color.background_canvas, R.color.background_surface, R.color.background_elevated)) {
+            assertAlmeno(4.5, R.color.accent_default_standard, fondo, "lime come testo su ${context.resources.getResourceEntryName(fondo)}")
         }
     }
 
     // Stati: avviso ed errore leggibili come testo su fondo e superficie; ciano come grafica.
     @Test
     fun `avviso, errore e ciano reggono come testo o come grafica`() {
-        for (fondo in listOf(R.color.elite_background, R.color.elite_surface)) {
+        for (fondo in listOf(R.color.background_canvas, R.color.background_surface)) {
             val nome = context.resources.getResourceEntryName(fondo)
-            assertAlmeno(4.5, R.color.elite_error, fondo, "errore su $nome")
-            assertAlmeno(4.5, R.color.elite_warning, fondo, "avviso su $nome")
-            assertAlmeno(3.0, R.color.elite_cyan, fondo, "ciano su $nome")
+            assertAlmeno(4.5, R.color.status_error, fondo, "errore su $nome")
+            assertAlmeno(4.5, R.color.status_warning, fondo, "avviso su $nome")
+            assertAlmeno(3.0, R.color.chart_2, fondo, "ciano su $nome")
         }
-        assertAlmeno(4.5, R.color.elite_warning, R.color.elite_surface_raised, "avviso su rialzata")
-        assertAlmeno(3.0, R.color.elite_cyan, R.color.elite_surface_raised, "ciano su rialzata")
+        assertAlmeno(4.5, R.color.status_warning, R.color.background_elevated, "avviso su rialzata")
+        assertAlmeno(3.0, R.color.chart_2, R.color.background_elevated, "ciano su rialzata")
     }
 
     // Il contorno dei comandi e dei campi (WCAG 1.4.11): 3:1 contro ogni fondo su cui sta.
     @Test
     fun `il contorno dei comandi ha 3 a 1 su fondo e superfici`() {
-        for (fondo in listOf(R.color.elite_background, R.color.elite_surface, R.color.elite_surface_raised)) {
-            assertAlmeno(3.0, R.color.elite_outline, fondo, "contorno su ${context.resources.getResourceEntryName(fondo)}")
+        for (fondo in listOf(R.color.background_canvas, R.color.background_surface, R.color.background_elevated)) {
+            assertAlmeno(3.0, R.color.border_strong, fondo, "contorno su ${context.resources.getResourceEntryName(fondo)}")
         }
     }
 
     // FALSIFICAZIONE. Queste asserzioni dicono dove i token della dashboard NON bastano, e perche'
-    // l'app ha aggiunto elite_outline e tiene il testo scuro sul lime. Se una cambia, e' la prova che
+    // l'app ha aggiunto border_strong e tiene il testo scuro sul lime. Se una cambia, e' la prova che
     // un valore e' stato toccato: si ricalcola e si aggiorna DESIGN.md.
     @Test
     fun `i limiti noti dei token della dashboard restano tali`() {
         // Il bordo forte della dashboard (1,4:1) non e' un contorno di comando: e' una separazione.
-        assertTrue(contrasto(R.color.elite_border_strong, R.color.elite_background) < 3.0)
-        assertTrue(contrasto(R.color.elite_border_strong, R.color.elite_surface_raised) < 3.0)
-        assertTrue(contrasto(R.color.elite_border, R.color.elite_surface) < 3.0)
+        assertTrue(contrasto(R.color.border_subtle, R.color.background_canvas) < 3.0)
+        assertTrue(contrasto(R.color.border_subtle, R.color.background_elevated) < 3.0)
+        assertTrue(contrasto(R.color.border_group, R.color.background_surface) < 3.0)
         // Il bianco sul lime sarebbe illeggibile (1,3:1): per questo onPrimary e' il fondo.
-        assertTrue(TeamInk.contrast(TeamInk.BIANCO, token(R.color.elite_lime)) < 3.0)
+        assertTrue(TeamInk.contrast(TeamInk.BIANCO, token(R.color.accent_default_standard)) < 3.0)
         // Il testo secondario sul lime non passa: sul pulsante primario non si usa.
-        assertTrue(contrasto(R.color.elite_text_secondary, R.color.elite_lime) < 4.5)
+        assertTrue(contrasto(R.color.text_secondary, R.color.accent_default_standard) < 4.5)
         // L'errore scende sotto 4,5 sulla superficie rialzata e il secondario sull'hover.
-        assertTrue(contrasto(R.color.elite_error, R.color.elite_surface_raised) < 4.5)
-        assertTrue(contrasto(R.color.elite_text_secondary, R.color.elite_surface_hover) < 4.5)
+        assertTrue(contrasto(R.color.status_error, R.color.background_elevated) < 4.5)
+        assertTrue(contrasto(R.color.text_secondary, R.color.state_hover) < 4.5)
     }
 
     // G-2: ogni ruolo aggiunto dalla UI Constitution risolve al valore dichiarato in DESIGN.md.
@@ -151,16 +151,16 @@ class TokenEliteTest {
     fun `i ruoli aggiunti da G-2 hanno i valori della tabella dei ruoli`() {
         val attesi =
             mapOf(
-                R.color.elite_text_disabled to 0xFF6B7077,
-                R.color.elite_info to 0xFF7FBDEA,
-                R.color.elite_success_subtle to 0xFF15291F,
-                R.color.elite_warning_subtle to 0xFF2E2410,
-                R.color.elite_error_subtle to 0xFF2A1415,
-                R.color.elite_info_subtle to 0xFF14262F,
-                R.color.elite_state_pressed to 0x1FD1D1D8,
-                R.color.elite_chart_3 to 0xFFF0A36B,
-                R.color.elite_chart_4 to 0xFFD79BDB,
-                R.color.elite_chart_5 to 0xFFA4A9B0,
+                R.color.text_disabled to 0xFF6B7077,
+                R.color.status_info to 0xFF7FBDEA,
+                R.color.status_success_subtle to 0xFF15291F,
+                R.color.status_warning_subtle to 0xFF2E2410,
+                R.color.status_error_subtle to 0xFF2A1415,
+                R.color.status_info_subtle to 0xFF14262F,
+                R.color.state_pressed to 0x1FD1D1D8,
+                R.color.chart_3 to 0xFFF0A36B,
+                R.color.chart_4 to 0xFFD79BDB,
+                R.color.chart_5 to 0xFFA4A9B0,
             )
 
         for ((id, valore) in attesi) {
@@ -206,33 +206,33 @@ class TokenEliteTest {
     fun `i fondi subtle, info e i colori dei grafici passano i contrasti dei ruoli`() {
         val subtle =
             mapOf(
-                "successo" to (R.color.elite_success_subtle to R.color.elite_success),
-                "avviso" to (R.color.elite_warning_subtle to R.color.elite_warning),
-                "errore" to (R.color.elite_error_subtle to R.color.elite_error),
-                "info" to (R.color.elite_info_subtle to R.color.elite_info),
+                "successo" to (R.color.status_success_subtle to R.color.status_success),
+                "avviso" to (R.color.status_warning_subtle to R.color.status_warning),
+                "errore" to (R.color.status_error_subtle to R.color.status_error),
+                "info" to (R.color.status_info_subtle to R.color.status_info),
             )
         for ((nome, coppia) in subtle) {
             val (fondo, stato) = coppia
-            assertAlmeno(4.5, R.color.elite_text_primary, fondo, "testo primario su subtle $nome")
+            assertAlmeno(4.5, R.color.text_primary, fondo, "testo primario su subtle $nome")
             assertAlmeno(4.5, stato, fondo, "etichetta $nome sul proprio subtle")
         }
 
-        for (fondo in listOf(R.color.elite_background, R.color.elite_surface, R.color.elite_surface_raised)) {
+        for (fondo in listOf(R.color.background_canvas, R.color.background_surface, R.color.background_elevated)) {
             val nome = context.resources.getResourceEntryName(fondo)
-            assertAlmeno(4.5, R.color.elite_info, fondo, "info su $nome")
+            assertAlmeno(4.5, R.color.status_info, fondo, "info su $nome")
         }
-        for (fondo in listOf(R.color.elite_background, R.color.elite_surface)) {
-            for (grafico in listOf(R.color.elite_chart_3, R.color.elite_chart_4, R.color.elite_chart_5)) {
+        for (fondo in listOf(R.color.background_canvas, R.color.background_surface)) {
+            for (grafico in listOf(R.color.chart_3, R.color.chart_4, R.color.chart_5)) {
                 assertAlmeno(3.0, grafico, fondo, "grafico ${context.resources.getResourceEntryName(grafico)}")
             }
         }
         // Il lime premuto (opacita' 0,85 sul fondo) tiene il testo scuro a 4,5.
         val premuto =
             ColorUtils.compositeColors(
-                ColorUtils.setAlphaComponent(token(R.color.elite_lime), 217),
-                token(R.color.elite_background),
+                ColorUtils.setAlphaComponent(token(R.color.accent_default_standard), 217),
+                token(R.color.background_canvas),
             )
-        assertTrue(TeamInk.contrast(token(R.color.elite_on_lime), premuto) >= 4.5)
+        assertTrue(TeamInk.contrast(token(R.color.on_accent), premuto) >= 4.5)
     }
 
     // FALSIFICAZIONE: il disattivo e' sotto 4,5 per scelta (solo etichette), quindi un testo che
@@ -240,8 +240,8 @@ class TokenEliteTest {
     // limite: con il valore "ovvio" della Constitution (#33191A) l'etichetta non passerebbe.
     @Test
     fun `i limiti noti dei ruoli nuovi restano tali`() {
-        assertTrue(contrasto(R.color.elite_text_disabled, R.color.elite_surface) < 4.5)
-        assertTrue(contrasto(R.color.elite_text_disabled, R.color.elite_surface) >= 3.0)
-        assertTrue(TeamInk.contrast(token(R.color.elite_error), 0xFF33191A.toInt()) < 4.5)
+        assertTrue(contrasto(R.color.text_disabled, R.color.background_surface) < 4.5)
+        assertTrue(contrasto(R.color.text_disabled, R.color.background_surface) >= 3.0)
+        assertTrue(TeamInk.contrast(token(R.color.status_error), 0xFF33191A.toInt()) < 4.5)
     }
 }
