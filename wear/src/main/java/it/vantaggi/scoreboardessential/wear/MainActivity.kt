@@ -54,6 +54,13 @@ class MainActivity : ComponentActivity() {
         /** Quanto si sposta il quadrante in ambient se lo schermo chiede la protezione anti burn-in. */
         private const val SPOSTAMENTO_BURN_IN_DP = 4
 
+        /**
+         * Di quanto puo' tremare l'ora di fine del portiere fra due tick (i secondi rimasti sono
+         * interi): entro questo scarto resta quella gia' scritta, oltre (ripresa dopo una pausa,
+         * conto ripartito) si ricalcola.
+         */
+        internal const val TOLLERANZA_FINE_PORTIERE_MS = 2_000L
+
         private const val PREFS_PARTITA_IN_CORSO = "wear_partita_in_corso"
         private const val CHIAVE_PERMESSO_CHIESTO = "permesso_notifiche_chiesto"
     }
@@ -63,6 +70,12 @@ class MainActivity : ComponentActivity() {
      * il tempo invece di aspettarlo. Di default e' il tempo di sistema che non torna indietro.
      */
     internal var orologio: () -> Long = SystemClock::elapsedRealtime
+
+    /** L'ora del muro, per l'ora di fine del portiere in ambient; i test la fissano. */
+    internal var adesso: () -> Long = System::currentTimeMillis
+
+    /** Quando finisce il conto del portiere che corre, fissato in ambient; null fuori. */
+    private var finePortiere: Long? = null
 
     /** Fino a quando i tocchi sui lati sono ignorati in silenzio; 0 se nessuna guardia e' aperta. */
     private var guardiaFinoA = 0L
@@ -1050,6 +1063,7 @@ class MainActivity : ComponentActivity() {
 
     /** Fuori dall'ambient: caratteri, strisce e dettaglio tornano, il resto lo ridisegna lo stato. */
     private fun ripristinaDaAmbient() {
+        finePortiere = null
         binding.root.translationX = 0f
         binding.root.translationY = 0f
         listOf(binding.team1Score, binding.team2Score, binding.matchTimer, binding.keeperTimer).forEach { vista ->
@@ -1240,9 +1254,12 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Il conto del portiere a polso abbassato: "K 5'" al posto di "K 4:12" nel suo stesso posto,
-     * senza anello e senza colore ([FaceText.portiereAmbient]). Bianco se corre, grigio se e' fermo;
-     * se il portiere e' spento, non e' partito o lo sport non lo ha, non c'e' niente da dire.
+     * Il conto del portiere a polso abbassato, nel posto di "K 4:12", senza anello e senza colore.
+     * Se corre scrive quando finisce, "K 21:47" (PR 9 della UI Constitution, bozza A): l'ambient
+     * ridisegna circa una volta al minuto in un momento che non si sa, e un conto in minuti
+     * invecchierebbe fra due aggiornamenti, l'ora di fine no. Fermo resta in minuti e grigio
+     * ([FaceText.portiereAmbient]), finito "K 0'"; la vibrazione della fine resta puntuale. Se il
+     * portiere e' spento, non e' partito o lo sport non lo ha, non c'e' niente da dire.
      */
     private fun ambientPortiere(state: KeeperTimerState) {
         if (!ambient) return
@@ -1256,14 +1273,44 @@ class MainActivity : ComponentActivity() {
                 is KeeperTimerState.Hidden -> null
             }
         if (secondi == null || !auxAvailable) {
+            finePortiere = null
             vista.visibility = View.INVISIBLE
             return
         }
-        val testo = FaceText.portiereAmbient(secondi)
+        val testo =
+            if (state is KeeperTimerState.Running) {
+                getString(R.string.wear_keeper_ends, oraDiFinePortiere(state.secondsRemaining))
+            } else {
+                finePortiere = null
+                FaceText.portiereAmbient(secondi)
+            }
         if (vista.text.toString() != testo) vista.text = testo
         val fermo = state is KeeperTimerState.Paused
         vista.setTextColor(ContextCompat.getColor(this, if (fermo) R.color.text_ambient else R.color.text_on_watch))
         vista.visibility = View.VISIBLE
+    }
+
+    /**
+     * L'ora in cui finisce il conto che corre, "21:47" (o "9:47" con l'orologio a 12 ore). Si fissa
+     * la prima volta e si tiene finche' la stima nuova non se ne allontana piu' di
+     * [TOLLERANZA_FINE_PORTIERE_MS]: un secondo di scarto fra il tick e l'ora non deve far saltare il
+     * minuto avanti e indietro.
+     */
+    private fun oraDiFinePortiere(secondiRimasti: Int): String {
+        val stima = adesso() + secondiRimasti * 1000L
+        val fine = finePortiere?.takeIf { kotlin.math.abs(it - stima) <= TOLLERANZA_FINE_PORTIERE_MS } ?: stima
+        finePortiere = fine
+        val formato =
+            if (android.text.format.DateFormat
+                    .is24HourFormat(this)
+            ) {
+                "HH:mm"
+            } else {
+                "h:mm"
+            }
+        return android.text.format.DateFormat
+            .format(formato, fine)
+            .toString()
     }
 
     private fun observeViewModel() {

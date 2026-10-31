@@ -252,8 +252,32 @@ class AmbientTest {
         assertEquals(colore(R.color.text_ambient), binding.gestureHint.currentTextColor)
     }
 
+    /** Le 21:43:00 di oggi nel fuso del test, e l'orologio a 24 ore. */
+    private fun alle2143(): Long {
+        android.provider.Settings.System.putString(
+            RuntimeEnvironment.getApplication().contentResolver,
+            android.provider.Settings.System.TIME_12_24,
+            "24",
+        )
+        return java.util.Calendar
+            .getInstance()
+            .apply {
+                set(java.util.Calendar.HOUR_OF_DAY, 21)
+                set(java.util.Calendar.MINUTE, 43)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }.timeInMillis
+    }
+
+    /**
+     * PR 9, bozza A: il conto che corre scrive l'ora di fine, che resta vera fra due aggiornamenti
+     * dell'ambient. Rosso se torna un conto in minuti ("K 5'") o in secondi mentre il conto corre.
+     */
     @Test
-    fun `in ambient il portiere e' in minuti, senza anello, e all'uscita torna con i secondi`() {
+    fun `in ambient il portiere che corre dice quando finisce, senza anello, e all'uscita torna con i secondi`() {
+        val partenza = alle2143()
+        var ora = partenza
+        attivita().adesso = { ora }
         applica(stato(hasClock = true))
         viewModel.setKeeperTimerState(KeeperTimerState.Running(252))
         idle()
@@ -262,38 +286,90 @@ class AmbientTest {
         attivita().applyAmbient(true)
         idle()
 
-        assertEquals("per eccesso: 4:12 e' al piu' 5 minuti", "K 5'", binding.keeperTimer.text.toString())
+        assertEquals("21:43 + 4:12 finisce alle 21:47", "K 21:47", binding.keeperTimer.text.toString())
         assertEquals(View.VISIBLE, binding.keeperTimer.visibility)
         assertEquals(View.INVISIBLE, binding.keeperProgressBar.visibility)
         assertEquals(colore(R.color.text_on_watch), binding.keeperTimer.currentTextColor)
         assertSame("cifre sottili come le altre", binding.team1Score.typeface, binding.keeperTimer.typeface)
         val light = binding.keeperTimer.typeface
 
-        // Il conto avanza: nell'ultimo minuto non si scrivono secondi che poi invecchiano.
+        // Il conto avanza col tempo: l'ora di fine non cambia, anche nell'ultimo minuto.
+        ora = partenza + 133_000L
         viewModel.setKeeperTimerState(KeeperTimerState.Running(119))
         idle()
-        assertEquals("K 2'", binding.keeperTimer.text.toString())
+        assertEquals("K 21:47", binding.keeperTimer.text.toString())
+        ora = partenza + 215_000L
         viewModel.setKeeperTimerState(KeeperTimerState.Running(37))
+        attivita().aggiornaAmbient()
         idle()
-        assertEquals("K <1'", binding.keeperTimer.text.toString())
+        assertEquals("nessun secondo che invecchia", "K 21:47", binding.keeperTimer.text.toString())
         assertEquals(View.INVISIBLE, binding.keeperProgressBar.visibility)
 
-        // Fermo e' grigio, come il cronometro.
+        // Fermo e' grigio e in minuti: un conto fermo non invecchia.
         viewModel.setKeeperTimerState(KeeperTimerState.Paused(37))
         idle()
         assertEquals("K <1'", binding.keeperTimer.text.toString())
         assertEquals(colore(R.color.text_ambient), binding.keeperTimer.currentTextColor)
 
+        // Ripreso un minuto dopo, l'ora di fine si sposta di un minuto.
+        ora = partenza + 275_000L
+        viewModel.setKeeperTimerState(KeeperTimerState.Running(37))
+        idle()
+        assertEquals("K 21:48", binding.keeperTimer.text.toString())
+
+        viewModel.setKeeperTimerState(KeeperTimerState.Finished)
+        idle()
+        assertEquals("K 0'", binding.keeperTimer.text.toString())
+
         // All'uscita il portiere si ridisegna con lo stato di adesso e il carattere di prima.
+        viewModel.setKeeperTimerState(KeeperTimerState.Paused(37))
         attivita().applyAmbient(false)
         idle()
         assertEquals("K 0:37", binding.keeperTimer.text.toString())
-        assertEquals(View.VISIBLE, binding.keeperProgressBar.visibility)
         assertNotSame("fuori dall'ambient non resta il carattere light", light, binding.keeperTimer.typeface)
+    }
+
+    /**
+     * I secondi rimasti sono interi e il tick non cade sul secondo esatto: con la fine alle
+     * 21:47:00 uno scarto di mezzo secondo darebbe 21:46. Rosso se l'ora si ricalcola a ogni tick.
+     */
+    @Test
+    fun `in ambient l'ora di fine del portiere non trema sul cambio di minuto`() {
+        val partenza = alle2143()
+        var ora = partenza
+        attivita().adesso = { ora }
+        applica(stato(hasClock = true))
+        viewModel.setKeeperTimerState(KeeperTimerState.Running(240))
+        attivita().applyAmbient(true)
+        idle()
+        assertEquals("K 21:47", binding.keeperTimer.text.toString())
+
+        ora = partenza + 10_500L
+        viewModel.setKeeperTimerState(KeeperTimerState.Running(229))
+        idle()
+        assertEquals("la stima 21:46:59,5 resta 21:47", "K 21:47", binding.keeperTimer.text.toString())
+    }
+
+    @Test
+    fun `in ambient il portiere segue l'orologio a 12 ore`() {
+        val partenza = alle2143()
+        android.provider.Settings.System.putString(
+            RuntimeEnvironment.getApplication().contentResolver,
+            android.provider.Settings.System.TIME_12_24,
+            "12",
+        )
+        attivita().adesso = { partenza }
+        applica(stato(hasClock = true))
+        viewModel.setKeeperTimerState(KeeperTimerState.Running(252))
+        attivita().applyAmbient(true)
+        idle()
+        assertEquals("K 9:47", binding.keeperTimer.text.toString())
     }
 
     @Test
     fun `in ambient il portiere spento o non partito non dice niente`() {
+        val partenza = alle2143()
+        attivita().adesso = { partenza }
         applica(stato(hasClock = true))
         attivita().applyAmbient(true)
         idle()
@@ -304,7 +380,7 @@ class AmbientTest {
         assertEquals(View.VISIBLE, binding.keeperTimer.visibility)
 
         // Un tick di ambient riscrive il conto di adesso.
-        viewModel.setKeeperTimerState(KeeperTimerState.Running(59))
+        viewModel.setKeeperTimerState(KeeperTimerState.Paused(59))
         attivita().aggiornaAmbient()
         assertEquals("K <1'", binding.keeperTimer.text.toString())
     }

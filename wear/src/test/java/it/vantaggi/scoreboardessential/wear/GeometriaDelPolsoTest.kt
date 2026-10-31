@@ -234,7 +234,26 @@ class GeometriaDelPolsoTest {
         }
     }
 
+    /**
+     * In ambient il portiere che corre scrive l'ora di fine (PR 9): la si fissa larga, alle 20:08 a
+     * 24 ore, col conto di 4:12 che parte alle 20:03:56.
+     */
     private fun ambient(on: Boolean) {
+        android.provider.Settings.System.putString(
+            RuntimeEnvironment.getApplication().contentResolver,
+            android.provider.Settings.System.TIME_12_24,
+            "24",
+        )
+        val partenza =
+            java.util.Calendar
+                .getInstance()
+                .apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, 20)
+                    set(java.util.Calendar.MINUTE, 3)
+                    set(java.util.Calendar.SECOND, 56)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                }.timeInMillis
+        controller.get().adesso = { partenza }
         controller.get().applyAmbient(on)
         idle()
     }
