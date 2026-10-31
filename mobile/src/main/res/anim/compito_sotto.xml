@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- N7: la pagina dietro il compito resta ferma, visibile, per tutta la salita o la discesa. -->
+<alpha xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/duration_standard"
+    android:fromAlpha="1"
+    android:toAlpha="1" />

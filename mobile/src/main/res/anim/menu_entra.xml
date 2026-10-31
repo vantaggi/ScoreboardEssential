@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    M1 di 04-transitions: il menu del bottone in alto a destra nasce dal suo angolo in alto a destra
+    con opacita' e scala da scale-popover.
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/duration_fast"
+    android:interpolator="@interpolator/ease_enter"
+    android:shareInterpolator="true">
+    <scale
+        android:fromXScale="@dimen/scale_popover"
+        android:fromYScale="@dimen/scale_popover"
+        android:pivotX="100%"
+        android:pivotY="0%"
+        android:toXScale="1"
+        android:toYScale="1" />
+    <alpha
+        android:fromAlpha="0"
+        android:toAlpha="1" />
+</set>

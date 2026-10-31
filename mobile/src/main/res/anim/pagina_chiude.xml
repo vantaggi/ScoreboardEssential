@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- N2: la schermata che si chiude va verso il lato finale e sparisce, in duration_fast. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/duration_fast"
+    android:interpolator="@interpolator/ease_exit"
+    android:shareInterpolator="true">
+    <translate
+        android:fromXDelta="0"
+        android:toXDelta="@fraction/shift_axis" />
+    <alpha
+        android:fromAlpha="1"
+        android:toAlpha="0" />
+</set>

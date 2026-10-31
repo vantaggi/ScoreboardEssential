@@ -32,7 +32,7 @@
         android:id="@+id/text_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/aria_fine"
+        android:layout_marginTop="@dimen/space_4"
         android:ellipsize="end"
         android:maxLines="1"
         android:textColor="@color/text_primary"

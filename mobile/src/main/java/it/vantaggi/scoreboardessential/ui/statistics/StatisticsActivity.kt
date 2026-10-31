@@ -1,9 +1,12 @@
 package it.vantaggi.scoreboardessential.ui.statistics
 
+import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.view.animation.AnimationUtils
 import androidx.activity.viewModels
+import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -31,6 +34,13 @@ class StatisticsActivity : AppCompatActivity() {
     }
     private lateinit var goalsAdapter: StatisticsAdapter
     private lateinit var winsAdapter: RecordAdapter
+
+    /** La scheda della classifica a schermo: cambiandola la lista nuova entra con una dissolvenza. */
+    private var filtroMostrato: StatisticsViewModel.FilterType? = null
+
+    /** L'ultima dissolvenza della lista, null finche' non si cambia scheda (la legge il test). */
+    @VisibleForTesting
+    internal var dissolvenza: ObjectAnimator? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,6 +150,9 @@ class StatisticsActivity : AppCompatActivity() {
                 binding.statsGroup.visibility = if (vuota) View.GONE else View.VISIBLE
                 binding.emptyState.visibility = if (vuota) View.VISIBLE else View.GONE
                 if (!vuota) goalsAdapter.submitList(stats)
+                val filtro = viewModel.filtro.value
+                if (filtroMostrato != null && filtroMostrato != filtro) dissolviLaLista()
+                filtroMostrato = filtro
             }
         }
     }
@@ -163,6 +176,21 @@ class StatisticsActivity : AppCompatActivity() {
         viewModel.setFilter(scelta)
     }
 
+    /**
+     * N5 di 04-transitions: cambiando scheda l'indicatore scorre (lo fa il TabLayout) e la lista nuova
+     * compare con una dissolvenza breve. Un aggiornamento dei dati senza cambio di scheda non si muove
+     * (C10). Col movimento ridotto l'animatore salta alla fine: la lista c'e' subito.
+     */
+    private fun dissolviLaLista() {
+        dissolvenza?.cancel()
+        dissolvenza =
+            ObjectAnimator.ofFloat(binding.recyclerStats, View.ALPHA, 0f, 1f).apply {
+                duration = resources.getInteger(R.integer.duration_fast).toLong()
+                interpolator = AnimationUtils.loadInterpolator(this@StatisticsActivity, R.interpolator.ease_enter)
+                start()
+            }
+    }
+
     private fun titoloDellaScheda(scheda: StatisticsViewModel.FilterType): Int =
         when (scheda) {
             StatisticsViewModel.FilterType.ALL -> R.string.stats_tab_general
@@ -175,6 +203,7 @@ class StatisticsActivity : AppCompatActivity() {
      * lo dice il chip scelto, e il titolo non lo ripete.
      */
     private suspend fun observeWins() {
+        filtroMostrato = null
         binding.tabLayout.visibility = View.GONE
         binding.statsHeading.visibility = View.VISIBLE
         binding.statsHeading.text = getString(R.string.stats_wins_heading)

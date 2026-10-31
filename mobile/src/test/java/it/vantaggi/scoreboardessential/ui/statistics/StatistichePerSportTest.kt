@@ -30,6 +30,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import java.time.Duration
 
 /**
  * Le Statistiche seguono lo sport in uso (passo 6). Nel padel niente schede da calcio (Generale,
@@ -312,6 +313,35 @@ class StatistichePerSportTest {
                 StatisticsViewModel.Factory(statistiche.application),
             )[StatisticsViewModel::class.java].filtro.value,
         )
+    }
+
+    /**
+     * N5 di 04-transitions: cambiando scheda la lista nuova compare con una dissolvenza di duration_fast.
+     * Rosso se compare di colpo, o se alla fine della dissolvenza non e' del tutto visibile.
+     */
+    @Test
+    fun `cambiando scheda la lista compare con una dissolvenza`() {
+        sport(SportRegistry.FOOTBALL)
+        runBlocking {
+            db.playerDao().update(Player(playerId = 1, playerName = "Anna", appearances = 1, goals = 2))
+            db.playerDao().update(Player(playerId = 2, playerName = "Bruno", appearances = 1, goals = 1))
+        }
+        ruolo(giocatore = 1, roleId = 1, categoria = "ATTACCO")
+        partita(SportRegistry.FOOTBALL, listOf(1), listOf(2), punteggio = 2 to 1)
+        val statistiche = Robolectric.buildActivity(StatisticsActivity::class.java).setup().get()
+        val lista = statistiche.findViewById<RecyclerView>(R.id.recycler_stats)
+        attendi("la scheda Attacco non e' arrivata") { schede(statistiche) == listOf("Generale", "Attacco") }
+        attendi("la classifica non e' arrivata") { righe(lista).size == 2 }
+        assertEquals("all'apertura niente dissolvenza", null, statistiche.dissolvenza)
+
+        statistiche.findViewById<TabLayout>(R.id.tabLayout).getTabAt(1)!!.select()
+        attendi("Attacco non filtra") { righe(lista).size == 1 }
+        val dissolvenza = statistiche.dissolvenza!!
+        assertEquals(lista, dissolvenza.target)
+        assertEquals("ALPHA", dissolvenza.propertyName?.uppercase())
+        assertEquals(statistiche.resources.getInteger(R.integer.duration_fast).toLong(), dissolvenza.duration)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(dissolvenza.duration + 20))
+        assertEquals(1f, lista.alpha)
     }
 
     /** Rosso se una categoria fuori dalle schede (il centrocampo) ne accende una. */

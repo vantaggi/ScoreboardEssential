@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- N7 di 04-transitions: la pagina di un compito sale dal bordo in basso. -->
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/duration_standard"
+    android:interpolator="@interpolator/ease_enter"
+    android:fromYDelta="100%"
+    android:toYDelta="0" />

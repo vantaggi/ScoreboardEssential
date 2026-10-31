@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M1 e M5: chiudendo torna verso la sua origine, in duration_instant. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@integer/duration_instant"
+    android:interpolator="@interpolator/ease_exit"
+    android:shareInterpolator="true">
+    <scale
+        android:fromXScale="1"
+        android:fromYScale="1"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:toXScale="@dimen/scale_popover"
+        android:toYScale="@dimen/scale_popover" />
+    <alpha
+        android:fromAlpha="1"
+        android:toAlpha="0" />
+</set>

@@ -45,7 +45,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/space_12"
         android:layout_marginEnd="@dimen/space_8"
-        android:layout_marginTop="@dimen/aria_fine"
+        android:layout_marginTop="@dimen/space_4"
         tools:text="Gol di Rossi"
         android:textAppearance="?attr/textAppearanceBodyLarge"
         android:lineSpacingMultiplier="1.1"

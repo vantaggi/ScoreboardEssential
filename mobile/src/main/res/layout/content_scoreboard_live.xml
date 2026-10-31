@@ -51,7 +51,7 @@
             android:insetTop="0dp"
             android:insetBottom="0dp"
             android:minWidth="0dp"
-            android:paddingHorizontal="@dimen/aria_tabellone"
+            android:paddingHorizontal="@dimen/space_4"
             android:maxLines="1"
             android:text="00:00"
             android:textAppearance="@style/TextAppearance.App.Game.Clock.Fissa"
@@ -61,7 +61,7 @@
             app:icon="@drawable/ic_play_arrow"
             app:iconTint="@color/text_primary"
             app:iconGravity="textStart"
-            app:iconPadding="@dimen/aria_tabellone"
+            app:iconPadding="@dimen/space_4"
             app:iconSize="@dimen/icon_prominent"
             tools:ignore="HardcodedText,SpUsage" />
 
@@ -85,7 +85,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:paddingHorizontal="@dimen/aria_tabellone">
+                android:paddingHorizontal="@dimen/space_4">
 
                 <TextView
                     android:id="@+id/keeper_timer_label"
@@ -212,7 +212,7 @@
                         android:id="@+id/team1_serve_slot"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="@dimen/aria_tabellone"
+                        android:layout_marginEnd="@dimen/space_8"
                         android:importantForAccessibility="no">
 
                     <LinearLayout
@@ -309,7 +309,7 @@
                         android:id="@+id/team2_serve_slot"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="@dimen/aria_tabellone"
+                        android:layout_marginEnd="@dimen/space_8"
                         android:importantForAccessibility="no">
 
                     <LinearLayout
