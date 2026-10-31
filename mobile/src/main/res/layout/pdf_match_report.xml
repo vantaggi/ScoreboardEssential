@@ -57,9 +57,8 @@
                 android:id="@+id/pdf_team1_score"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.App.Punteggio"
+                android:textAppearance="@style/TextAppearance.App.Punteggio.Grande"
                 android:textColor="@color/text_primary_print"
-                android:textSize="32sp"
                 tools:text="10" />
         </LinearLayout>
 
@@ -85,9 +84,8 @@
                 android:id="@+id/pdf_team2_score"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.App.Punteggio"
+                android:textAppearance="@style/TextAppearance.App.Punteggio.Grande"
                 android:textColor="@color/text_primary_print"
-                android:textSize="32sp"
                 tools:text="8" />
         </LinearLayout>
     </LinearLayout>

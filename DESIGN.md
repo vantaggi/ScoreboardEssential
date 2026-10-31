@@ -2939,3 +2939,14 @@ Oggi la rotazione e' fissa (A1, B1, A2, B2 dalle rose), la squadra 1 serve sempr
 - **Pattern vietati (10-review).** Nessun valore scritto a mano nei layout delle liste del polso; nessuna animazione nuova: la scala delle righe segue il dito e la corona.
 - **Non visto a schermo.** Le catture di Robolectric disegnano in software e non mostrano la scala delle righe (`animationMatrix`); la si vede sull'emulatore tondo o al polso, insieme alla lista che parte dall'alto.
 
+### PR 5: il telefono senza valori scritti a mano (31 ottobre 2026)
+
+- **Misura.** Comandi attivi mai grigi, impostazioni a righe e foglio Partita erano gia' a posto dalla revisione dei menu (passi 1, 3a, 3b, 3c): ogni stato disattivato passa da `text_disabled` e l'unico bottone spento a comando e' "Aggiungi un giocatore" mentre legge la rosa di Padel Elite. Restavano i resti contati da `scripts/misura-ui.py`, ora tutti a zero sul telefono come sull'orologio.
+- **Corpi del testo (27 → 0).** Il tabellone tiene le misure in dp (fisse col carattere al 200%) negli stili figli `TextAppearance.App.Game.*.Fissa`; il punteggio del contorno in `Punteggio.Grande`, `Medio`, `Piccolo`; la didascalia a 16sp in `Caption.Ampia`; anteprima del colore e segnaposto della formazione in stili propri. Dove il `textSize` ripeteva la misura dello stile (BodyMedium 14sp, BodyLarge 16sp) e' sparito.
+- **Spaziature (40 → 0).** 4, 8, 12 e 16dp diventano `space_*`. 2dp e 6dp sono fuori dalla scala della Constitution: hanno un nome (`aria_fine`, `aria_tabellone`) e restano un **debito dichiarato**, da portare a 4 e 8 con le bozze di una PR che tocca il tabellone (PR 8).
+- **Colori (2 → 0) e nomi doppi (5 → 0).** I velini della barra di navigazione sono token (`scrim_barre_luminose` e `scrim_barre_scure`: un nome che finisse in `_chiaro` si leggerebbe come il valore di un tema). La carta del PDF punta ai valori del tema chiaro: un valore solo per due usi.
+- **Testi (1 → 0) e identificativi (14 → 0).** "Event description" era il testo di prova di una riga del registro: ora e' `tools:text`. I ripieghi "Team 1" e "Team 2" a schermo sono `label_team_1/2` ("Squadra 1/2"). Il predefinito salvato resta "Team 1" nei dati, perche' e' il segnale "nessun nome scelto" anche per l'orologio e le partite salvate; lo script non lo conta piu' e a schermo passa da `EtichettaSquadra`.
+- **Cambio visibile.** Il segnaposto della formazione e l'anteprima del colore passano a Inter dove prima prendevano il carattere di sistema; misure e pesi invariati.
+- **Pattern vietati (10-review).** Nessun colore, corpo o spaziatura scritto a mano nei layout; nessuna animazione toccata.
+- **Non visto a schermo.** Solo test JVM e misura. Da guardare alla prova finale: tabellone a 360dp e carattere 200%, storico, formazione, PDF.
+

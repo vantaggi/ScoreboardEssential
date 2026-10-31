@@ -69,22 +69,30 @@
     <color name="background_watch_standard">#000000</color>
 
     <!--
+        I velini dietro la navigazione a tre tasti, gli stessi che mette enableEdgeToEdge() della
+        piattaforma: bianco al 90% sull'app chiara, grigio quasi nero al 50% sulla scura (Aspetto.kt).
+    -->
+    <color name="scrim_barre_luminose">#E6FFFFFF</color>
+    <color name="scrim_barre_scure">#801B1B1B</color>
+
+    <!--
         CARTA (report PDF, G-8): gli stessi ruoli del tema scuro, nei valori chiari della Constitution.
+        Sono alias dei valori del tema chiaro (colors_chiaro.xml): un valore solo, due usi.
         Il PDF esce dal telefono e si stampa: pagina bianca, testo quasi nero, gruppi in un grigio
         appena piu' scuro della carta. Il lime e il ciano di squadra non sono mai testo qui (1,31:1 e
         1,54:1 sul bianco): sono barrette, scurite da TeamInk.graphicOnLight fino a 3:1.
         Contrasti: testo primario 17,08:1 sulla carta e 15,65:1 sul gruppo; secondario 6,43:1 e 5,90:1.
     -->
     <!-- background-canvas su carta. -->
-    <color name="background_canvas_print">#FFFFFF</color>
+    <color name="background_canvas_print">@color/background_canvas_chiaro</color>
     <!-- background-surface su carta: il gruppo tonale. -->
-    <color name="background_surface_print">#F4F5F7</color>
+    <color name="background_surface_print">@color/background_surface_chiaro</color>
     <!-- border-group su carta: la linea sottile fra le righe e il bordo del gruppo (decorativa). -->
-    <color name="border_subtle_print">#D0D3D9</color>
+    <color name="border_subtle_print">@color/border_subtle_chiaro</color>
     <!-- text-primary su carta. -->
-    <color name="text_primary_print">#1A1C1F</color>
+    <color name="text_primary_print">@color/text_primary_chiaro</color>
     <!-- text-secondary su carta: didascalie e stati vuoti. -->
-    <color name="text_secondary_print">#5A5F66</color>
+    <color name="text_secondary_print">@color/text_secondary_chiaro</color>
 
     <!--
         Colori predefiniti delle squadre (G-6, decisione G2): lato 1 lime e lato 2 ciano, gli stessi della

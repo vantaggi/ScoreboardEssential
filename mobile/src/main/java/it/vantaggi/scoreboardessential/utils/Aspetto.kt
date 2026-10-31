@@ -12,6 +12,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import it.vantaggi.scoreboardessential.R
 import java.util.WeakHashMap
@@ -25,17 +26,11 @@ fun ComponentActivity.enableEdgeToEdgeConAspetto() {
     val stato = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { !Aspetto.chiaro(this) }
     val navigazione =
         SystemBarStyle.auto(
-            Color.argb(SCRIM_CHIARO_ALFA, SCRIM_CHIARO_TONO, SCRIM_CHIARO_TONO, SCRIM_CHIARO_TONO),
-            Color.argb(SCRIM_SCURO_ALFA, SCRIM_SCURO_TONO, SCRIM_SCURO_TONO, SCRIM_SCURO_TONO),
+            ContextCompat.getColor(this, R.color.scrim_barre_luminose),
+            ContextCompat.getColor(this, R.color.scrim_barre_scure),
         ) { !Aspetto.chiaro(this) }
     enableEdgeToEdge(statusBarStyle = stato, navigationBarStyle = navigazione)
 }
-
-// Gli stessi velini che enableEdgeToEdge() mette dietro la navigazione a tre tasti.
-private const val SCRIM_CHIARO_ALFA = 0xE6
-private const val SCRIM_CHIARO_TONO = 0xFF
-private const val SCRIM_SCURO_ALFA = 0x80
-private const val SCRIM_SCURO_TONO = 0x1B
 
 /** Le tre scelte dell'aspetto; [chiave] e' il valore salvato nelle preferenze. */
 enum class ScelteAspetto(

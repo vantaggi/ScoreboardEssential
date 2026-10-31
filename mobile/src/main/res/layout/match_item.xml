@@ -71,9 +71,8 @@
                 android:id="@+id/team1_score_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.App.Punteggio"
+                android:textAppearance="@style/TextAppearance.App.Punteggio.Grande"
                 android:textColor="@color/text_primary"
-                android:textSize="32sp"
                 tools:text="10" />
         </LinearLayout>
 
@@ -108,9 +107,8 @@
                 android:id="@+id/team2_score_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.App.Punteggio"
+                android:textAppearance="@style/TextAppearance.App.Punteggio.Grande"
                 android:textColor="@color/text_secondary"
-                android:textSize="32sp"
                 tools:text="8" />
         </LinearLayout>
 
@@ -182,9 +180,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_12"
                 android:paddingHorizontal="@dimen/space_16"
-                android:textAppearance="@style/TextAppearance.App.Punteggio"
+                android:textAppearance="@style/TextAppearance.App.Punteggio.Piccolo"
                 android:textColor="@color/text_secondary"
-                android:textSize="14sp"
                 android:visibility="gone"
                 tools:text="6-4 · 3-6 · 7-6 (7-4)"
                 tools:visibility="visible" />
@@ -195,8 +192,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_8"
                 android:paddingHorizontal="@dimen/space_16"
-                android:textAppearance="@style/TextAppearance.App.Caption"
-                android:textSize="16sp"
+                android:textAppearance="@style/TextAppearance.App.Caption.Ampia"
                 tools:text="Giocatori: John, Doe, Jane, Smith" />
 
             <!-- Esporta sta accanto a Elimina: i comandi di una partita dello storico stanno sulla sua scheda. -->

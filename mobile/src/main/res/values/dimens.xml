@@ -38,6 +38,13 @@
     <dimen name="space_32">32dp</dimen>
     <dimen name="space_48">48dp</dimen>
     <dimen name="space_64">64dp</dimen>
+    <!--
+        Fuori dalla scala della Constitution (4, 8, 12...), con un nome perche' non restino scritti a
+        mano: 2dp fra un nome e la sua barretta o la sua riga secondaria, 6dp dentro la barra di gioco e
+        accanto al pallino del servizio. Debito dichiarato in DESIGN.md (PR 5): da portare a 4 e 8.
+    -->
+    <dimen name="aria_fine">2dp</dimen>
+    <dimen name="aria_tabellone">6dp</dimen>
     <!-- radius-control: bottoni, campi, voci. radius-surface: gruppi, card, foglio. -->
     <dimen name="radius_control">8dp</dimen>
     <dimen name="radius_surface">14dp</dimen>
