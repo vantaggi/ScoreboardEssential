@@ -2901,7 +2901,7 @@ Oggi la rotazione e' fissa (A1, B1, A2, B2 dalle rose), la squadra 1 serve sempr
   - A: margini piu' larghi e corpo che scende fino a 10sp.
   - B, raccomandata: parole piu' corte, corpo invariato. 08-wearable chiede il testo piu' corto in basso sul tondo.
   - C: icona e una parola.
-  - Il branch segue B in attesa della risposta del proprietario: "Sport invariato", "%d non arrivati" (e "%d arrivati", per coppia), "Scollegato %s" senza il punto in mezzo; in inglese "Sport unchanged", "Awaiting phone", "Offline %s".
+  - Il proprietario ha scelto B (31 ottobre 2026, 13:43): "Sport invariato", "%d non arrivati" (e "%d arrivati", per coppia), "Scollegato %s" senza il punto in mezzo; in inglese "Sport unchanged", "Awaiting phone", "Offline %s".
   - La capsula CHI? passa da 12 a 11dp di aria per lato, con un token nuovo (`face_chi_padding`).
 - **Componenti riusati.** La riga di stato e la capsula come sono; nessun colore, durata o icona nuovi.
 - **Stati.** Ogni frase della riga di stato, nella racchetta e negli sport col cronometro; portiere fermo, in corsa e CHI?; attivo e ambient.
