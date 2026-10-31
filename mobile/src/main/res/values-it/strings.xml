@@ -53,12 +53,12 @@
     <string name="choose_team_color">Colore della squadra %d</string>
     <string name="team_palette_name_1">Lime</string>
     <string name="team_palette_name_2">Ciano</string>
-    <string name="team_palette_name_3">Rosso</string>
+    <string name="team_palette_name_3">Blu</string>
     <string name="team_palette_name_4">Arancio</string>
-    <string name="team_palette_name_5">Giallo</string>
-    <string name="team_palette_name_6">Blu</string>
+    <string name="team_palette_name_5">Rosa</string>
+    <string name="team_palette_name_6">Ambra</string>
     <string name="team_palette_name_7">Viola</string>
-    <string name="team_palette_name_8">Rosa</string>
+    <string name="team_palette_name_8">Bianco</string>
     <string name="team_color_other">Altro colore…</string>
     <string name="team_color_use">Usa questo colore</string>
     <string name="cancel">Annulla</string>

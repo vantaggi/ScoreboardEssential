@@ -56,12 +56,12 @@
     <string name="choose_team_color">Team %d color</string>
     <string name="team_palette_name_1">Lime</string>
     <string name="team_palette_name_2">Cyan</string>
-    <string name="team_palette_name_3">Red</string>
+    <string name="team_palette_name_3">Blue</string>
     <string name="team_palette_name_4">Orange</string>
-    <string name="team_palette_name_5">Yellow</string>
-    <string name="team_palette_name_6">Blue</string>
-    <string name="team_palette_name_7">Purple</string>
-    <string name="team_palette_name_8">Pink</string>
+    <string name="team_palette_name_5">Pink</string>
+    <string name="team_palette_name_6">Amber</string>
+    <string name="team_palette_name_7">Violet</string>
+    <string name="team_palette_name_8">White</string>
     <string name="team_color_other">Other color…</string>
     <string name="team_color_use">Use this color</string>
     <string name="cancel">Cancel</string>

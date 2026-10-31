@@ -7,8 +7,8 @@ import com.google.android.material.button.MaterialButton
 import it.vantaggi.scoreboardessential.R
 
 /**
- * Gli otto colori di squadra del dialogo del colore (passo 7 della revisione dei menu), nell'ordine
- * dei cerchi di `dialog_team_palette`. Il primo e il secondo sono i predefiniti dei due lati.
+ * Gli otto colori di squadra del dialogo del colore (user-1..user-8 della UI Constitution, PR 6),
+ * nell'ordine dei cerchi di `dialog_team_palette`. Il primo e il secondo sono i predefiniti dei due lati.
  */
 object TavolozzaDiSquadra {
     val colori =
