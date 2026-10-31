@@ -33,11 +33,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
-            android:fontFamily="@font/inter"
             android:maxLines="1"
             android:textColor="@color/text_primary"
-            android:textFontWeight="600"
-            android:textSize="14sp"
+            android:textAppearance="@style/TextAppearance.Lista.Titolo"
             android:textAlignment="viewStart" />
 
         <TextView
@@ -45,10 +43,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
-            android:fontFamily="@font/inter"
             android:maxLines="2"
             android:textColor="@color/text_secondary"
-            android:textSize="12sp"
+            android:textAppearance="@style/TextAppearance.Lista.Dettaglio"
             android:textAlignment="viewStart" />
     </LinearLayout>
 

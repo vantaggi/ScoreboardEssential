@@ -123,6 +123,37 @@
         <item name="android:letterSpacing">0.04</item>
     </style>
 
+    <!--
+        Le liste del polso (menu, sport, prossima partita, marcatore): cinque stili di testo invece di
+        corpi scritti nei layout. Corpi in sp, Inter, al massimo tre pesi (400, 500, 600). Il colore
+        resta nel layout: lo stesso stile serve su nero e su una riga di gruppo.
+    -->
+    <style name="TextAppearance.Lista.Titolo" parent="android:TextAppearance">
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">600</item>
+    </style>
+    <style name="TextAppearance.Lista.Sezione" parent="android:TextAppearance">
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">500</item>
+    </style>
+    <style name="TextAppearance.Lista.Dettaglio" parent="android:TextAppearance">
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">400</item>
+    </style>
+    <style name="TextAppearance.Lista.Voce" parent="android:TextAppearance">
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">600</item>
+    </style>
+    <style name="TextAppearance.Lista.Nome" parent="android:TextAppearance">
+        <item name="android:textSize">18sp</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">600</item>
+    </style>
+
     <!-- Forme della UI Constitution: radius-control 8dp, radius-surface 14dp. Tutte rounded. -->
     <style name="ShapeAppearance.App.Control" parent="ShapeAppearance.Material3.SmallComponent">
         <item name="cornerFamily">rounded</item>

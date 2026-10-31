@@ -16,19 +16,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:accessibilityHeading="true"
-        android:fontFamily="@font/inter"
         android:gravity="center"
         android:includeFontPadding="false"
         android:maxLines="1"
         android:textColor="@color/text_primary"
-        android:textSize="14sp"
-        android:textFontWeight="600"
+        android:textAppearance="@style/TextAppearance.Lista.Titolo"
         tools:text="GOL · 3–2" />
 
     <View
         android:id="@+id/goal_bar"
-        android:layout_width="28dp"
-        android:layout_height="4dp"
+        android:layout_width="@dimen/team_bar_title_width"
+        android:layout_height="@dimen/team_bar_width"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="@dimen/space_4"
         android:importantForAccessibility="no" />

@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:minHeight="52dp"
+        android:minHeight="@dimen/lista_riga_minima"
         android:paddingHorizontal="@dimen/space_12"
         android:paddingVertical="@dimen/voce_padding_verticale">
 
@@ -45,9 +45,7 @@
                 android:id="@+id/sport_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/inter"
-                android:textFontWeight="600"
-                android:textSize="15sp"
+                android:textAppearance="@style/TextAppearance.Lista.Voce"
                 android:textColor="@color/text_primary"
                 android:textAlignment="viewStart" />
 
@@ -57,13 +55,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/wear_sport_current"
-                android:fontFamily="@font/inter"
-                android:textSize="12sp"
+                android:textAppearance="@style/TextAppearance.Lista.Dettaglio"
                 android:letterSpacing="0"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:textAlignment="viewStart"
                 android:visibility="gone"
-                android:layout_marginTop="2dp" />
+                android:layout_marginTop="@dimen/voce_riga_secondaria_aria" />
         </LinearLayout>
 
     </LinearLayout>

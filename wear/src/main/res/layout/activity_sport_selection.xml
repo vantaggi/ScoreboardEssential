@@ -31,9 +31,7 @@
             android:accessibilityHeading="true"
             android:text="@string/wear_sport_title"
             android:textColor="@color/text_primary"
-            android:fontFamily="@font/inter"
-            android:textFontWeight="600"
-            android:textSize="14sp"
+            android:textAppearance="@style/TextAppearance.Lista.Titolo"
             android:maxLines="1"
             android:gravity="center" />
 
