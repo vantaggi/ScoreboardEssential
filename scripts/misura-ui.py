@@ -256,7 +256,10 @@ def testi():
         cerca_kotlin(letterali, m, r'(setText|makeText\([^,]+,|contentDescription\s*=|\.text\s*=|setTitle|setMessage)\s*\(?\s*"[^"]*[A-Za-z][^"]*"')
     ident = Conteggio("Identificativi che possono finire a schermo", "\"Team 1\" e simili come ripiego di un nome, o \"Team\" in una stringa italiana")
     for m in MODULI:
-        cerca_kotlin(ident, m, r'"Team [12]"')
+        # Il predefinito salvato (MatchSettingsRepository.DEFAULT_TEAM1_NAME) e' il segnale "nessun nome
+        # scelto" nei dati, letto anche dall'orologio e dalle partite gia' salvate: a schermo passa sempre da
+        # EtichettaSquadra, che lo traduce. Si conta solo quando fa da ripiego in un'espressione.
+        cerca_kotlin(ident, m, r'(?<!const val DEFAULT_TEAM1_NAME = )(?<!const val DEFAULT_TEAM2_NAME = )"Team [12]"')
         for nome, (valore, f) in sorted(stringhe(m, "values-it").items()):
             if re.search(r"\bTeam\b", valore):
                 ident.aggiungi(m, f"{f}: {nome}")

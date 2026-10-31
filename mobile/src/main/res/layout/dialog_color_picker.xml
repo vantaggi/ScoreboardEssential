@@ -19,14 +19,12 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="@dimen/space_16"
             android:ellipsize="end"
-            android:fontFamily="@font/inter"
             android:gravity="center"
             android:maxLines="2"
             android:minWidth="96dp"
             android:minHeight="64dp"
             android:padding="@dimen/space_8"
-            android:textSize="16sp"
-            android:textFontWeight="600"
+            android:textAppearance="@style/TextAppearance.App.Anteprima"
             tools:text="12\nROSSI" />
 
         <com.skydoves.colorpickerview.ColorPickerView

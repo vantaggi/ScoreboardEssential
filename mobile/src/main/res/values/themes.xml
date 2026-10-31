@@ -326,6 +326,27 @@
         <item name="android:textFontWeight">400</item>
         <item name="android:textColor">@color/text_secondary</item>
     </style>
+    <!-- La didascalia a 16sp: la spiegazione di uno stato vuoto o di un passo, i giocatori dello storico. -->
+    <style name="TextAppearance.App.Caption.Ampia">
+        <item name="android:textSize">16sp</item>
+    </style>
+    <!-- L'anteprima del colore di squadra: numero e nome sul colore scelto. -->
+    <style name="TextAppearance.App.Anteprima" parent="android:TextAppearance">
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">600</item>
+    </style>
+    <!-- Il segnaposto di un giocatore nella formazione: l'iniziale nel tondo e il nome sotto. -->
+    <style name="TextAppearance.App.Formazione.Iniziale" parent="android:TextAppearance">
+        <item name="android:textSize">18sp</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">600</item>
+    </style>
+    <style name="TextAppearance.App.Formazione.Nome" parent="android:TextAppearance">
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textFontWeight">400</item>
+    </style>
 
     <!--
         Il punteggio del contorno (storico, statistiche, Cronaca, foglio): Inter 600 con cifre
@@ -338,6 +359,16 @@
         <item name="android:textFontWeight">600</item>
         <item name="android:fontFeatureSettings">tnum</item>
         <item name="android:letterSpacing">0</item>
+    </style>
+    <!-- Il punteggio del contorno in tre misure: righe dello storico e PDF, statistiche, set. -->
+    <style name="TextAppearance.App.Punteggio.Grande">
+        <item name="android:textSize">32sp</item>
+    </style>
+    <style name="TextAppearance.App.Punteggio.Medio">
+        <item name="android:textSize">16sp</item>
+    </style>
+    <style name="TextAppearance.App.Punteggio.Piccolo">
+        <item name="android:textSize">14sp</item>
     </style>
 
     <!--
@@ -431,6 +462,26 @@
         <item name="android:textColor">@color/text_secondary</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!--
+        Il tabellone di gioco in dp e non in sp: le scritte stanno in spazi fissi e col carattere di
+        sistema grande (200%) non devono spingere fuori le cifre. Stessi stili di sopra, misura fissa.
+    -->
+    <style name="TextAppearance.App.Game.Clock.Fissa">
+        <item name="android:textSize">32dp</item>
+    </style>
+    <style name="TextAppearance.App.Game.Value.Fissa">
+        <item name="android:textSize">24dp</item>
+    </style>
+    <style name="TextAppearance.App.Game.Name.Fissa">
+        <item name="android:textSize">20dp</item>
+    </style>
+    <style name="TextAppearance.App.Game.Command.Fissa">
+        <item name="android:textSize">16dp</item>
+    </style>
+    <style name="TextAppearance.App.Game.Caption.Fissa">
+        <item name="android:textSize">12dp</item>
     </style>
 
     <!-- Testo dei bottoni: Inter 600, senza maiuscolo forzato (i bottoni dicono l'azione). -->

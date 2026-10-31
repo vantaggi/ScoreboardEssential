@@ -795,7 +795,10 @@ class MainActivity :
             findViewById(R.id.scoreboard_details),
             capabilities?.playersPerSide,
             listOf(rosa1.map { it.player.playerName }, rosa2.map { it.player.playerName }),
-            listOf(viewModel.team1Name.value ?: "Team 1", viewModel.team2Name.value ?: "Team 2"),
+            listOf(
+                viewModel.team1Name.value ?: getString(R.string.label_team_1),
+                viewModel.team2Name.value ?: getString(R.string.label_team_2),
+            ),
             viewModel.canUndo.value == true,
         )
     }
@@ -830,8 +833,8 @@ class MainActivity :
                 viewModel.matchEvents.value,
                 capabilities,
                 viewModel.scoreDisplay.value,
-                viewModel.team1Name.value ?: "Team 1",
-                viewModel.team2Name.value ?: "Team 2",
+                viewModel.team1Name.value ?: getString(R.string.label_team_1),
+                viewModel.team2Name.value ?: getString(R.string.label_team_2),
             )
         ViewCompat.setAccessibilityLiveRegion(lastActionText, ViewCompat.ACCESSIBILITY_LIVE_REGION_NONE)
         lastActionText.maxLines = stato.righe
@@ -1264,8 +1267,8 @@ class MainActivity :
                 this,
                 tolto,
                 capabilities,
-                viewModel.team1Name.value ?: "Team 1",
-                viewModel.team2Name.value ?: "Team 2",
+                viewModel.team1Name.value ?: getString(R.string.label_team_1),
+                viewModel.team2Name.value ?: getString(R.string.label_team_2),
             ),
         )
     }
@@ -1735,8 +1738,8 @@ class MainActivity :
      * #FF6E6E, solo qui: e' il comando che butta via la partita.
      */
     private fun showEndMatchConfirmation() {
-        val team1Name = viewModel.team1Name.value ?: "Team 1"
-        val team2Name = viewModel.team2Name.value ?: "Team 2"
+        val team1Name = viewModel.team1Name.value ?: getString(R.string.label_team_1)
+        val team2Name = viewModel.team2Name.value ?: getString(R.string.label_team_2)
         val display = viewModel.scoreDisplay.value ?: return
         val sport = viewModel.activeSport.value ?: SportRegistry.FOOTBALL
         val testo = testoDelDialogoDiFine(this, sport, display, team1Name, team2Name, modalitaAGame(sport))
@@ -1943,13 +1946,13 @@ class MainActivity :
         when (teamNumber) {
             1 -> {
                 team1FormationView.setFormation(formation)
-                val teamName = viewModel.team1Name.value ?: "Team 1"
+                val teamName = viewModel.team1Name.value ?: getString(R.string.label_team_1)
                 team1FormationLabel.text = testoFormazione(teamName, formation)
             }
 
             2 -> {
                 team2FormationView.setFormation(formation)
-                val teamName = viewModel.team2Name.value ?: "Team 2"
+                val teamName = viewModel.team2Name.value ?: getString(R.string.label_team_2)
                 team2FormationLabel.text = testoFormazione(teamName, formation)
             }
         }

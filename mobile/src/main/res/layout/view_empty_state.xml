@@ -28,8 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/space_8"
         android:gravity="center"
-        android:textAppearance="@style/TextAppearance.App.Caption"
-        android:textSize="16sp" />
+        android:textAppearance="@style/TextAppearance.App.Caption.Ampia" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/empty_action"
