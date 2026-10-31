@@ -161,6 +161,34 @@ class GiocoG6Test {
     }
 
     @Test
+    fun `una cifra alla volta, prima esce la vecchia in duration_instant e poi entra la nuova in duration_fast`() {
+        val r = app.resources
+        assertEquals(100, r.getInteger(R.integer.duration_instant))
+        assertEquals(160, r.getInteger(R.integer.duration_fast))
+        val s = montaLaCifra("0")
+        s.rotolo.mostra("1", NumberRoll.SU)
+        val corsa = s.rotolo.corsa!!
+        assertEquals("uscita piu' entrata", 260L, corsa.totalDuration)
+        val uscente = s.genitore.getChildAt(1)
+        // Fotogrammi ogni 10ms: le due cifre non sono mai visibili insieme, nemmeno mezze trasparenti.
+        for (t in 0L..260L step 10) {
+            corsa.setCurrentPlayTime(t)
+            assertFalse(
+                "a ${t}ms si vedono due cifre: vecchia ${uscente.alpha}, nuova ${s.cifra.alpha}",
+                uscente.alpha > 0f && s.cifra.alpha > 0f,
+            )
+        }
+        corsa.setCurrentPlayTime(50)
+        assertTrue("a 50ms la vecchia sta uscendo", uscente.alpha in 0.01f..0.99f)
+        assertEquals("e la nuova non c'e' ancora", 0f, s.cifra.alpha, 0f)
+        corsa.setCurrentPlayTime(180)
+        assertEquals("a 180ms la vecchia e' sparita", 0f, uscente.alpha, 0f)
+        assertTrue("e la nuova sta entrando", s.cifra.alpha in 0.01f..0.99f)
+        passano(400)
+        assertEquals(1, s.genitore.childCount)
+    }
+
+    @Test
     fun `quando il punteggio scende il verso e' l'opposto`() {
         val s = montaLaCifra("5")
         s.rotolo.mostra("4", NumberRoll.GIU)

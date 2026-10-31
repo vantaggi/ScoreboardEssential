@@ -1318,6 +1318,7 @@ Il tema e' uno solo, **scuro** (decisione G4): i valori sono quelli del tema scu
 | icone | Material Symbols **outlined**, peso 400, scaricate una per una come vettoriali (non il font); niente `icon-stroke` (vale per Lucide) | | C (`integration.md`); sostituisce Heroicons |
 | `duration-instant`, `-fast`, `-standard` | `duration_instant`, `duration_fast`, `duration_standard` *(nuovi, `integers.xml`)* | 100, 160, 240ms | C = tetto di P (240ms) |
 | `duration-expressive` | non si usa | 380ms | C; fuori dal tetto di P |
+| `ease-standard`, `ease-enter`, `ease-exit` | `R.interpolator.ease_standard`, `ease_enter`, `ease_exit` in tutti e due i moduli (`ease_enter` ed `ease_exit` dal 31 ottobre 2026, PR 3) | (0.2, 0, 0, 1), (0, 0, 0, 1), (0.3, 0, 1, 1) | C |
 | molle | `control` stiffness 743 e smorzamento 1,0; `surface` 400 e 0,83 (`SpringAnimation`, non `tween`) | | C (`integration.md`); `expressive` mai sull'orologio |
 
 **Tipografia.** Inter, tre pesi (400, 500, 600). Ruoli sulla scala M3 (come `integration.md`): `display` displaySmall, `page-title` headlineLarge, `section-heading` titleLarge, `body` bodyLarge, `label` labelLarge, `caption` bodySmall, `numeric` lo stile `Punteggio`. Pesi: `display`, `page-title`, `section-heading` e `body-strong` 600; `body` e `caption` 400; `label` 500; `numeric` 500 (600 per i punteggi grandi). Non servono altri pesi: **al massimo tre per schermata**, e il 700 e il 900 sono usciti dall'app. I corpi sono quelli della scala M3 in sp (36, 32, 22, 16, 14, 12), non i px della Constitution (scostamento dichiarato: sp, per il carattere al 200%); `display` non si usa negli strumenti.
@@ -2907,3 +2908,18 @@ Oggi la rotazione e' fissa (A1, B1, A2, B2 dalle rose), la squadra 1 serve sempr
 - **Stati.** Ogni frase della riga di stato, nella racchetta e negli sport col cronometro; portiere fermo, in corsa e CHI?; attivo e ambient.
 - **Pattern vietati (10-review).** Nessun valore scritto a mano nuovo: la spaziatura scritta a mano dell'orologio scende da 7 a 5. Nessun testo fuori dalle risorse.
 - **Non visto a schermo.** Catture dal test Robolectric (grafica nativa), non dall'emulatore. Prima di fidarsi del tondo emulato bisogna controllare che Android lo tratti come tondo (`am get-config` deve dire round; il 28 ottobre `Wear_OS_Small_Round` diceva notround). Al polso basta vedere una volta "Scollegato" con l'ora, a telefono spento.
+
+### PR 3: NumberRoll in sequenza (31 ottobre 2026)
+
+- **Scelta.** Il proprietario ha scelto la bozza A (piano, scheda "Bozze PR 3"): il componente NumberRoll cosi' com'e', uguale su telefono e orologio. Prima esce la cifra vecchia, in `duration_instant` con `ease_exit`, poi entra la nuova, in `duration_fast` con `ease_enter`: 260ms in tutto. Le due cifre non sono mai a schermo insieme. Supera D1 del 28 ottobre, che lasciava il telefono com'era: allora le due cifre si accavallavano per `duration_standard`. Supera anche W4a sull'orologio, che faceva 80ms + 80ms con `ease_standard`.
+- **Token nuovi.** `ease_enter` ed `ease_exit` (interpolatori, tutti e due i moduli), coi valori del sistema.
+- **Conflitto dichiarato: movimento ridotto.** Il componente chiede un breve cambio di opacita'. Su Android il movimento ridotto e' la scala delle animazioni a zero ("Rimuovi animazioni"), e con quella ogni animatore salta alla fine, dissolvenza compresa: la cifra resta sostituita subito, come prima. Era il punto C delle bozze, imposto dalla piattaforma.
+- **Interruzione.** Un cambio nuovo chiude subito il rotolo in corso e parte dal valore di adesso: un solo fantasma alla volta, come prima.
+- **Corsa.** Invariata: meta' della scatola sul telefono, un quarto sull'orologio (08-wearable: corsa piu' breve al polso). I tempi sono gli stessi.
+- **Verifica di 04-transitions.**
+  - Fotogrammi: `GiocoG6Test` guarda il rotolo ogni 10ms da 0 a 260ms e fallisce se le due cifre sono visibili insieme. `OrologioG7Test` guarda 40ms (esce la vecchia) e 120ms (entra la nuova).
+  - Interruzione: `un cambio nuovo sostituisce subito...` su tutti e due i moduli.
+  - Rallentatore x5: non visto, si fa a schermo con la scala delle animazioni a 5x.
+- **Stati.** Sale, scende, cambio a raffica, primo disegno, ambient e risveglio (l'orologio non rotola, come prima), movimento ridotto.
+- **Pattern vietati (10-review).** Nessuna durata o curva scritta a mano: tutto da `R.integer` e `R.interpolator`. Niente rimbalzo, niente cicli, nessuna animazione al risveglio.
+- **Non visto a schermo.** Solo test JVM. Al polso e sul telefono va visto un punto che sale e uno annullato (scende).
