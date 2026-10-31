@@ -1,15 +1,25 @@
 package it.vantaggi.scoreboardessential.wear
 
+import android.app.Activity
 import android.graphics.Matrix
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.wearable.CapabilityClient
+import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.NodeClient
+import it.vantaggi.scoreboardessential.shared.PlayerData
+import it.vantaggi.scoreboardessential.shared.communication.OptimizedWearDataSync
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -23,8 +33,11 @@ import org.robolectric.annotation.GraphicsMode
  * vicino al bordo alto e basso si stringono ([ListaTonda]) e quelle al centro sono intere; sul
  * quadrato restano tutte intere. Il titolo sta dentro la colonna e scorre via con lei.
  *
- * Rosso se il menu torna nel quadrato inscritto (righe strette) o se [ListaTonda] smette di
- * stringere le righe sul bordo.
+ * La scelta del marcatore fa lo stesso con [ScalaTonda] (UI Constitution, PR 4): prima le sue righe
+ * si piegavano ad arco, il comportamento di serie del WearableLinearLayoutManager.
+ *
+ * Rosso se il menu torna nel quadrato inscritto (righe strette), se [ListaTonda] smette di
+ * stringere le righe sul bordo, o se la lista del marcatore torna all'arco di serie.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -58,9 +71,9 @@ class ListeATuttaLarghezzaTest {
     }
 
     private fun dp(
-        menu: MenuActivity,
+        schermata: Activity,
         px: Int,
-    ): Float = px / menu.resources.displayMetrics.density
+    ): Float = px / schermata.resources.displayMetrics.density
 
     @Test
     @Config(qualifiers = "it-w192dp-h192dp-round-notnight-xhdpi")
@@ -94,5 +107,62 @@ class ListeATuttaLarghezzaTest {
         shadowOf(menu.mainLooper).idle()
 
         righe(menu).forEach { assertNull(it.animationMatrix) }
+    }
+
+    private fun posizione(riga: View): Float = IntArray(2).also { riga.getLocationInWindow(it) }[1].toFloat()
+
+    @After
+    fun ripristina() {
+        PlayerSelectionActivity.creaSync = { OptimizedWearDataSync(it) }
+    }
+
+    private fun apriMarcatore(): PlayerSelectionActivity {
+        val giocatori = (1..12).map { PlayerData(id = it, name = "Giocatore $it", roles = emptyList()) }
+        // I client GMS veri muoiono sul looper di Robolectric: finti, e nessuno li usa qui.
+        PlayerSelectionActivity.creaSync = { contesto ->
+            OptimizedWearDataSync(
+                contesto,
+                Mockito.mock(DataClient::class.java),
+                Mockito.mock(MessageClient::class.java),
+                Mockito.mock(CapabilityClient::class.java),
+                Mockito.mock(NodeClient::class.java),
+            )
+        }
+        val intent = PlayerSelectionActivity.intent(RuntimeEnvironment.getApplication(), 1, giocatori, 0xFFFFD600.toInt(), "3–2")
+        return Robolectric.buildActivity(PlayerSelectionActivity::class.java, intent).setup().get()
+    }
+
+    @Test
+    @Config(qualifiers = "it-w192dp-h192dp-round-notnight-xhdpi")
+    fun `sul tondo le righe del marcatore si stringono vicino al bordo come quelle del menu`() {
+        val marcatore = apriMarcatore()
+        shadowOf(marcatore.mainLooper).idle()
+        val lista = marcatore.findViewById<RecyclerView>(R.id.player_list)
+        val righe = (0 until lista.childCount).map(lista::getChildAt)
+
+        righe.forEach { assertEquals(172f, dp(marcatore, it.width), 1f) }
+        val diametro =
+            marcatore.window.decorView.width
+                .toFloat()
+        // Ogni riga ha la scala di BordoTondo per dove sta: stretta sul bordo, intera al centro.
+        righe.forEach { riga ->
+            val cima = posizione(riga)
+            val attesa = BordoTondo.scala(cima, cima + riga.height, riga.width.toFloat(), diametro)
+            assertEquals("riga a ${dp(marcatore, cima.toInt())}dp dalla cima", attesa, scala(riga), 0.001f)
+        }
+        assertTrue("nessuna riga stretta vicino al bordo", righe.any { scala(it) <= BordoTondo.SCALA_MINIMA + 0.001f })
+        // La riga che passa per il centro e' la piu' larga: e' quella che la corona mette a fuoco.
+        val alCentro = righe.first { posizione(it) <= diametro / 2 && posizione(it) + it.height >= diametro / 2 }
+        assertEquals(righe.maxOf { scala(it) }, scala(alCentro), 0.001f)
+    }
+
+    @Test
+    @Config(qualifiers = "it-w180dp-h180dp-notround-notnight-xhdpi")
+    fun `sul quadrato le righe del marcatore restano intere`() {
+        val marcatore = apriMarcatore()
+        shadowOf(marcatore.mainLooper).idle()
+        val lista = marcatore.findViewById<RecyclerView>(R.id.player_list)
+
+        (0 until lista.childCount).forEach { assertNull(lista.getChildAt(it).animationMatrix) }
     }
 }

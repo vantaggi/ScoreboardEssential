@@ -2,51 +2,32 @@
 <!--
     La scelta del marcatore. Sta su nero perche' e' una schermata di gioco: si apre dal bersaglio
     CHI? mentre la partita continua, e il nero e' lo sfondo di tutto cio' che si usa a partita in
-    corso. Niente BoxInsetLayout: la lista va a tutta larghezza, e al tondo pensa il centraggio dei
-    bordi della lista. In cima l'intestazione dice QUALE gol e la barra e' nel colore della squadra
-    che ha segnato (MainActivity lo passa, PlayerSelectionActivity lo porta a 3:1 sul nero).
+    corso. Niente BoxInsetLayout: la lista va a tutta larghezza con i margini delle altre liste del
+    polso, e sul tondo le righe si stringono vicino al bordo come nel menu (ScalaTonda). In cima
+    l'intestazione dice QUALE gol e la barra e' nel colore della squadra che ha segnato: e' la prima
+    riga della lista e scorre via con lei (08-wearable), non sta ferma sopra.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_watch"
-    android:orientation="vertical"
-    android:paddingTop="@dimen/scorer_top_inset">
-
-    <TextView
-        android:id="@+id/goal_header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/inter"
-        android:gravity="center"
-        android:includeFontPadding="false"
-        android:maxLines="1"
-        android:textColor="@color/text_primary"
-        android:textSize="14sp"
-        android:textFontWeight="600"
-        tools:text="GOL · 3–2" />
-
-    <View
-        android:id="@+id/goal_bar"
-        android:layout_width="28dp"
-        android:layout_height="4dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="4dp"
-        android:background="@color/team_side_1"
-        android:importantForAccessibility="no" />
+    android:orientation="vertical">
 
     <!--
-        Il focus serve alla corona: senza, ruotarla non scorre niente.
+        Il focus serve alla corona: senza, ruotarla non scorre niente. I margini alto e basso sono
+        quelli del menu: l'ultima riga arriva al centro dello schermo.
     -->
     <androidx.wear.widget.WearableRecyclerView
         android:id="@+id/player_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:clipToPadding="false"
         android:focusable="true"
         android:focusableInTouchMode="true"
+        android:paddingHorizontal="@dimen/lista_margine_lati"
+        android:paddingTop="@dimen/lista_margine_alto"
+        android:paddingBottom="@dimen/lista_margine_basso"
         android:scrollbars="none" />
 
     <TextView

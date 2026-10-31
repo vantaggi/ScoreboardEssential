@@ -50,7 +50,7 @@ import kotlin.coroutines.resume
  *
  * Il tempo e' di due specie e si sposta in due posti, come in [MenuActivityTest]: l'istante che
  * misura la guardia dei 400ms (l'orologio iniettato in [PlayerSelectionActivity.orologio]) e il
- * looper che fa scattare la chiusura dei 15s. [avanza] li muove insieme; niente Thread.sleep per il
+ * looper che fa scattare la chiusura dei 20s. [avanza] li muove insieme; niente Thread.sleep per il
  * tempo. L'unico attesa vera e' l'invio, che passa da Dispatchers.IO.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -118,13 +118,17 @@ class PlayerSelectionActivityTest {
         return activity
     }
 
+    /**
+     * La riga della rosa in [posizione]: 0 e' SALTA, 1 il primo giocatore. Nella lista l'intestazione
+     * sta prima di tutte, quindi la posizione nell'adattatore e' una in piu'.
+     */
     private fun riga(
         activity: PlayerSelectionActivity,
         posizione: Int,
     ): View =
         activity
             .findViewById<RecyclerView>(R.id.player_list)
-            .findViewHolderForAdapterPosition(posizione)!!
+            .findViewHolderForAdapterPosition(posizione + 1)!!
             .itemView
 
     private fun nome(
@@ -325,7 +329,8 @@ class PlayerSelectionActivityTest {
     fun `con la rosa vuota la lista ha SALTA e la scritta che dice perche'`() {
         val activity = apri(giocatori = emptyList())
 
-        assertEquals(1, activity.findViewById<RecyclerView>(R.id.player_list).adapter!!.itemCount)
+        // L'intestazione e SALTA: la lista non resta mai senza uscita.
+        assertEquals(2, activity.findViewById<RecyclerView>(R.id.player_list).adapter!!.itemCount)
         assertEquals(activity.getString(R.string.wear_skip), nome(activity, 0))
         assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.player_list).visibility)
         assertEquals(View.VISIBLE, activity.findViewById<View>(R.id.empty_state_text).visibility)
@@ -348,7 +353,7 @@ class PlayerSelectionActivityTest {
         assertEquals(View.GONE, activity.findViewById<View>(R.id.empty_state_text).visibility)
     }
 
-    // --- Invio in corso: i 15s non chiudono a meta' ---
+    // --- Invio in corso: i 20s non chiudono a meta' ---
 
     /** Un telefono che non risponde mai da solo: l'esito lo da' il test con [invioSospeso]. */
     private var invioSospeso: Continuation<Boolean>? = null
@@ -370,14 +375,14 @@ class PlayerSelectionActivityTest {
         }
 
     @Test
-    fun `un invio ancora senza esito non viene chiuso dai 15 secondi`() {
+    fun `un invio ancora senza esito non viene chiuso dai 20 secondi`() {
         val activity = apri(canale = telefonoCheNonRisponde)
         avanza(400L)
         riga(activity, 1).performClick()
         assertTrue(inInvio(activity))
 
-        // Il doppio tocco di TalkBack non passa da onUserInteraction: i 15s non si riarmano da soli.
-        avanza(15_000L)
+        // Il doppio tocco di TalkBack non passa da onUserInteraction: i 20s non si riarmano da soli.
+        avanza(20_000L)
         assertFalse("la schermata si e' chiusa prima dell'esito dell'invio", activity.isFinishing)
 
         // Quando l'esito arriva, si chiude (e vibra) come sempre.
@@ -388,46 +393,69 @@ class PlayerSelectionActivityTest {
     }
 
     @Test
-    fun `un input durante un invio non riarma i 15 secondi`() {
+    fun `un input durante un invio non riarma i 20 secondi`() {
         val activity = apri(canale = telefonoCheNonRisponde)
         avanza(400L)
         riga(activity, 1).performClick()
 
         avanza(10_000)
         activity.onUserInteraction()
-        avanza(15_000L)
+        avanza(20_000L)
 
         assertFalse("l'input durante l'invio ha riarmato la chiusura", activity.isFinishing)
     }
 
-    // --- Chiusura a 15s ---
+    // --- Chiusura a 20s ---
 
     @Test
-    fun `senza input la lista si chiude dopo 15 secondi`() {
+    fun `senza input la lista si chiude dopo 20 secondi`() {
         // L'avvio dell'activity consuma qualche millisecondo del looper di Robolectric: il conto dei
-        // 15 secondi parte da onCreate, dentro quella finestra. Si misura da prima e da dopo.
+        // 20 secondi parte da onCreate, dentro quella finestra. Si misura da prima e da dopo.
         val prima = SystemClock.uptimeMillis()
         val activity = apri()
         val dopo = SystemClock.uptimeMillis()
 
-        avanza(prima + 15_000L - 1 - dopo)
-        assertFalse("chiusa un istante prima dei 15s", activity.isFinishing)
+        avanza(prima + 20_000L - 1 - dopo)
+        assertFalse("chiusa un istante prima dei 20s", activity.isFinishing)
 
         avanza(dopo - prima + 1)
-        assertTrue("ancora aperta dopo i 15s", activity.isFinishing)
+        assertTrue("ancora aperta dopo i 20s", activity.isFinishing)
     }
 
     @Test
-    fun `un input riparte i 15 secondi`() {
+    fun `un input riparte i 20 secondi`() {
         val activity = apri()
         avanza(10_000)
 
         // La corona o un tocco: Activity.onUserInteraction.
         activity.onUserInteraction()
-        avanza(15_000L - 1)
-        assertFalse("i 15s non sono ripartiti dall'input", activity.isFinishing)
+        avanza(20_000L - 1)
+        assertFalse("i 20s non sono ripartiti dall'input", activity.isFinishing)
 
         avanza(1)
         assertTrue(activity.isFinishing)
+    }
+
+    // --- 08-wearable: titolo che scorre, righe strette sul tondo, 20 secondi ---
+
+    @Test
+    fun `la chiusura dura almeno i 20 secondi di 08-wearable`() {
+        assertTrue(PlayerSelectionActivity.CHIUSURA_AUTOMATICA_MS >= 20_000L)
+    }
+
+    @Test
+    fun `l'intestazione e' la prima riga della lista e scorre via con lei`() {
+        val giocatori = (1..12).map { PlayerData(id = it, name = "Giocatore $it", roles = emptyList()) }
+        val activity = apri(giocatori = giocatori)
+        val lista = activity.findViewById<RecyclerView>(R.id.player_list)
+        val intestazione = activity.findViewById<View>(R.id.goal_header)
+
+        // Dentro la lista, non sopra: la prima riga dell'adattatore.
+        assertTrue("l'intestazione sta fuori dalla lista", generateSequence(intestazione.parent) { it.parent }.any { it === lista })
+        assertEquals(lista.findViewHolderForAdapterPosition(0)!!.itemView, intestazione.parent)
+
+        lista.scrollBy(0, 300)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertNull("dopo lo scorrimento l'intestazione e' ancora in vista", lista.findViewHolderForAdapterPosition(0))
     }
 }

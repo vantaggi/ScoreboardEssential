@@ -70,11 +70,6 @@
     <dimen name="keeper_ring_square_inset">2dp</dimen>
     <dimen name="keeper_ring_square_radius">30dp</dimen>
 
-    <!-- La scelta del marcatore: quanto sta sotto il bordo alto del tondo l'intestazione, e quanto
-         rientrano le righe dai lati. Nei quadrati servono meno. -->
-    <dimen name="scorer_top_inset">22dp</dimen>
-    <dimen name="scorer_row_inset">22dp</dimen>
-
     <!-- Testi: le cifre sono a dimensione FISSA, niente autoSize, cosi' "AV" e "40" hanno la stessa
          misura da un lato all'altro e fra uno stato e l'altro. In dp e non in sp: stanno in colonne
          fisse da 68dp con una riga sola e senza puntini, e col carattere di sistema grande (fino a

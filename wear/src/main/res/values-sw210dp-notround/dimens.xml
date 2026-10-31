@@ -13,9 +13,6 @@
     <dimen name="face_digits_outer">14dp</dimen>
     <dimen name="face_stripe_inset">45dp</dimen>
 
-    <dimen name="scorer_top_inset">6dp</dimen>
-    <dimen name="scorer_row_inset">10dp</dimen>
-
     <!-- Liste del polso: sw210dp le darebbe le misure del tondo, qui tornano quelle del quadrato. -->
     <dimen name="lista_margine_lati">8dp</dimen>
     <dimen name="lista_margine_alto">8dp</dimen>

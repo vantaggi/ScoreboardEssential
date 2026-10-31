@@ -12,8 +12,8 @@
     android:gravity="center_vertical"
     android:minHeight="52dp"
     android:orientation="horizontal"
-    android:paddingStart="@dimen/scorer_row_inset"
-    android:paddingEnd="@dimen/scorer_row_inset"
+    android:paddingStart="@dimen/space_12"
+    android:paddingEnd="@dimen/space_12"
     android:stateListAnimator="?attr/pressFeedback">
 
     <View

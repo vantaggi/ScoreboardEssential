@@ -17,6 +17,7 @@ import androidx.activity.ComponentActivity
 import androidx.annotation.VisibleForTesting
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.RecyclerView
 import androidx.wear.widget.WearableLinearLayoutManager
 import androidx.wear.widget.WearableRecyclerView
@@ -43,7 +44,7 @@ data class WearPlayer(
  * dopo un gol confermato (WearViewModel.finestraChi). E' una schermata di gioco: su nero, con SALTA
  * in cima, righe da 52dp e la barra del colore della squadra che ha segnato. Per 400ms
  * dall'apertura i tocchi non scelgono nessuno: il dito che stava segnando e' ancora in aria, e il
- * rimbalzo non deve attribuire un gol a chi capita sotto. Dopo 15s senza input si chiude come
+ * rimbalzo non deve attribuire un gol a chi capita sotto. Dopo 20s senza input si chiude come
  * SALTA.
  */
 class PlayerSelectionActivity : ComponentActivity() {
@@ -60,8 +61,12 @@ class PlayerSelectionActivity : ComponentActivity() {
         /** Nei primi 400ms un tocco non sceglie nessuno, SALTA compreso. */
         internal const val GUARDIA_APERTURA_MS = 400L
 
-        /** Senza input la schermata torna al quadrante da sola, come se si fosse scelto SALTA. */
-        internal const val CHIUSURA_AUTOMATICA_MS = 15_000L
+        /**
+         * Senza input la schermata torna al quadrante da sola, come se si fosse scelto SALTA. Venti
+         * secondi come il menu, il minimo di 08-wearable per una lista piu' lunga di uno schermo:
+         * una rosa da calcio lo e', e chi la legge non deve vedersela chiudere sotto gli occhi.
+         */
+        internal const val CHIUSURA_AUTOMATICA_MS = 20_000L
 
         /**
          * Da dove prende il canale verso il telefono. Sostituibile sotto test per la stessa ragione
@@ -73,7 +78,7 @@ class PlayerSelectionActivity : ComponentActivity() {
         /**
          * L'istante con cui si misura la guardia dei 400ms. Iniettabile come
          * [MenuActivity.orologio]: un test sposta un numero invece di aspettare. La chiusura dei
-         * 15s passa invece dal looper, che i test spostano a parte.
+         * 20s passa invece dal looper, che i test spostano a parte.
          */
         @VisibleForTesting
         internal var orologio: () -> Long = SystemClock::uptimeMillis
@@ -116,8 +121,7 @@ class PlayerSelectionActivity : ComponentActivity() {
         teamNumber = if (WearDataValidator.isValidTeamNumber(rawTeamNumber)) rawTeamNumber else 1
 
         val colore = coloreBarra(intent.getIntExtra(EXTRA_COLOR, defaultColore(teamNumber)))
-        mostraIntestazione(colore, intent.getStringExtra(EXTRA_RISULTATO).orEmpty())
-        setupRecyclerView(colore)
+        setupRecyclerView(colore, intestazione(intent.getStringExtra(EXTRA_RISULTATO).orEmpty()))
         showPlayers(PlayerData.decodeList(intent.getStringExtra(WearDataLayerService.EXTRA_PLAYERS)))
         riarmaChiusura()
     }
@@ -133,25 +137,23 @@ class PlayerSelectionActivity : ComponentActivity() {
 
     private fun defaultColore(lato: Int): Int = ContextCompat.getColor(this, if (lato == 2) R.color.team_side_2 else R.color.team_side_1)
 
-    private fun mostraIntestazione(
-        colore: Int,
-        risultato: String,
-    ) {
-        findViewById<TextView>(R.id.goal_header).text =
-            if (risultato.isBlank()) {
-                getString(R.string.wear_goal_header_plain)
-            } else {
-                getString(R.string.wear_goal_header, risultato)
-            }
-        findViewById<View>(R.id.goal_bar).setBackgroundColor(colore)
-    }
+    private fun intestazione(risultato: String): String =
+        if (risultato.isBlank()) {
+            getString(R.string.wear_goal_header_plain)
+        } else {
+            getString(R.string.wear_goal_header, risultato)
+        }
 
-    private fun setupRecyclerView(colore: Int) {
+    private fun setupRecyclerView(
+        colore: Int,
+        titolo: String,
+    ) {
         playerList = findViewById(R.id.player_list)
         adapter = PlayerAdapter(colore) { player -> selectPlayer(player) }
-        playerList.layoutManager = WearableLinearLayoutManager(this)
-        playerList.adapter = adapter
-        playerList.isEdgeItemsCenteringEnabled = true
+        // L'intestazione e' la prima riga e scorre via con la lista (08-wearable): non ruba spazio
+        // ai nomi per tutto il tempo. Sul tondo le righe si stringono vicino al bordo come nel menu.
+        playerList.layoutManager = WearableLinearLayoutManager(this, ScalaTonda())
+        playerList.adapter = ConcatAdapter(IntestazioneAdapter(titolo, colore), adapter)
         // Anche scorrere con la corona e' input: non deve chiudere la lista sotto le dita.
         playerList.addOnScrollListener(
             object : RecyclerView.OnScrollListener() {
@@ -245,6 +247,31 @@ class PlayerSelectionActivity : ComponentActivity() {
         sync.cleanup()
         super.onDestroy()
     }
+}
+
+/** La prima riga della lista: QUALE gol e la barra della squadra. Una sola, mai toccabile. */
+class IntestazioneAdapter(
+    private val titolo: String,
+    private val coloreBarra: Int,
+) : RecyclerView.Adapter<IntestazioneAdapter.Riga>() {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int,
+    ) = Riga(LayoutInflater.from(parent.context).inflate(R.layout.item_intestazione_marcatore, parent, false))
+
+    override fun onBindViewHolder(
+        holder: Riga,
+        position: Int,
+    ) {
+        holder.itemView.findViewById<TextView>(R.id.goal_header).text = titolo
+        holder.itemView.findViewById<View>(R.id.goal_bar).setBackgroundColor(coloreBarra)
+    }
+
+    override fun getItemCount() = 1
+
+    class Riga(
+        itemView: View,
+    ) : RecyclerView.ViewHolder(itemView)
 }
 
 class PlayerAdapter(
