@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    ease-enter della UI Constitution, cubic-bezier(0, 0, 0, 1): cio' che entra. La cifra nuova del
+    NumberRoll la usa con duration_fast, dopo che la vecchia e' uscita.
+-->
+<pathInterpolator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:controlX1="0"
+    android:controlY1="0"
+    android:controlX2="0"
+    android:controlY2="1" />

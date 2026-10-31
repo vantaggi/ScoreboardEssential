@@ -243,7 +243,8 @@ class OrologioG7Test {
         assertEquals("il fantasma della cifra vecchia", 2, s.genitore.childCount)
         // Sotto Robolectric il looper porta l'animazione a fine corsa in un colpo: si guarda dentro
         // spostando l'animatore, come farebbe il tempo. Prima esce la vecchia, poi entra la nuova
-        // (bozza W4a): a 40ms la nuova non si vede ancora, a 120ms la vecchia non si vede piu'.
+        // (W4a, poi bozza A del 31 ottobre): a 40ms la nuova non si vede ancora, a 120ms la vecchia non si
+        // vede piu'.
         s.rotolo.corsa!!.setCurrentPlayTime(40)
         val uscente = s.genitore.getChildAt(1) as TextView
         assertEquals("0", uscente.text.toString())
@@ -264,7 +265,8 @@ class OrologioG7Test {
         assertEquals("il fantasma ha la scatola della cifra", s.cifra.width, uscente.width)
         assertEquals(s.cifra.height, uscente.height)
 
-        passa(attivita().resources.getInteger(R.integer.duration_fast).toLong() + 50)
+        val risorse = attivita().resources
+        passa(risorse.getInteger(R.integer.duration_instant) + risorse.getInteger(R.integer.duration_fast) + 50L)
         assertEquals("a fine corsa resta una sola cifra", 1, s.genitore.childCount)
         assertEquals(0f, s.cifra.translationY, 0f)
         assertEquals(1f, s.cifra.alpha, 0f)
@@ -302,16 +304,18 @@ class OrologioG7Test {
     }
 
     @Test
-    fun `la corsa e' un quarto della scatola, la meta' del telefono, e dura duration_fast`() {
+    fun `la corsa e' un quarto della scatola, la meta' del telefono, e dura come sul telefono`() {
         val risorse = attivita().resources
+        assertEquals(100, risorse.getInteger(R.integer.duration_instant))
         assertEquals(160, risorse.getInteger(R.integer.duration_fast))
         assertEquals(0.25f, risorse.getFraction(R.fraction.number_roll_travel, 1, 1), 0f)
 
         val s = montaLaCifra("0")
         s.rotolo.mostra("15", NumberRoll.SU)
         assertEquals(s.cifra.height * 0.25f, s.cifra.translationY, 0.5f)
-        // Uscita e entrata una dopo l'altra, 80ms ciascuna: in tutto duration_fast.
-        assertEquals(160L, s.rotolo.corsa!!.totalDuration)
+        // Uscita in duration_instant, poi entrata in duration_fast (bozza A del 31 ottobre): 260ms, come
+        // sul telefono. Prima erano 80ms + 80ms.
+        assertEquals(260L, s.rotolo.corsa!!.totalDuration)
         passa(300)
     }
 

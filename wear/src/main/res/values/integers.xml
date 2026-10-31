@@ -2,11 +2,12 @@
 <resources>
     <!--
         Durate della UI Constitution (DESIGN.md, Mappatura dei ruoli), in millisecondi, gli stessi del
-        telefono (un test li confronta). Sull'orologio non si supera duration_fast: la corsa e' piu'
-        breve e la molla expressive non si usa mai (wearable.md).
+        telefono (un test li confronta). Sull'orologio nessun movimento supera duration_fast: la corsa
+        e' piu' breve e la molla expressive non si usa mai (08-wearable). La cifra che rotola fa due
+        movimenti in fila, l'uscita in duration_instant e l'entrata in duration_fast, come sul telefono.
     -->
-    <!-- duration-instant: la pressione di ogni comando. -->
+    <!-- duration-instant: la pressione di ogni comando e l'uscita della cifra che rotola. -->
     <integer name="duration_instant">100</integer>
-    <!-- duration-fast: la cifra che rotola. -->
+    <!-- duration-fast: l'entrata della cifra che rotola. -->
     <integer name="duration_fast">160</integer>
 </resources>

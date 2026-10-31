@@ -13,17 +13,25 @@ import it.vantaggi.scoreboardessential.R
 
 /**
  * NumberRoll della UI Constitution (components/NumberRoll): il valore che cambia di un passo mostra
- * la direzione del cambio. La cifra vecchia esce e la nuova entra: salendo la vecchia esce in alto e
- * la nuova arriva dal basso, scendendo il contrario.
+ * la direzione del cambio, una cifra alla volta. Salendo la vecchia esce in alto e solo dopo la nuova
+ * arriva dal basso; scendendo il contrario. Le due cifre non sono mai a schermo insieme, nemmeno
+ * mezze trasparenti (bozza A del proprietario, 31 ottobre 2026: fino ad allora si accavallavano per
+ * duration_standard). Telefono e orologio usano la stessa sequenza; sull'orologio la corsa e' piu'
+ * breve.
  *
  * ```text
  * Transition name: Value step
  * Trigger: il punteggio di un lato cambia di un passo
+ * Source state: la cifra di prima
+ * Destination state: la cifra nuova
  * Persistent element: la scatola della cifra (larghezza fissa, vedi [fissaLaScatola])
+ * Spatial relationship: sale = la vecchia esce in alto, poi la nuova entra dal basso; scende = il contrario
  * Animated properties: translationY e alpha, niente layout
- * Duration or spring token: duration_standard con ease_standard
- * Interruption behavior: un cambio nuovo sostituisce subito quello in corso
- * Reduced-motion fallback: la cifra si sostituisce subito, senza traslazione
+ * Duration or spring token: duration_instant con ease_exit (uscita), poi duration_fast con ease_enter (entrata)
+ * Exit behavior: la vecchia sparisce del tutto prima che compaia la nuova
+ * Interruption behavior: un cambio nuovo chiude subito quello in corso e parte dal valore di adesso
+ * Reduced-motion fallback: la cifra si sostituisce subito: su Android il movimento ridotto e' la scala
+ *   delle animazioni a zero, e con quella anche una dissolvenza salterebbe alla fine (conflitto in DESIGN.md)
  * Purpose: far vedere che il punteggio e' cambiato e in che verso
  * ```
  *
@@ -53,6 +61,9 @@ class NumberRoll(
         if (vecchio == testo) return
         ferma()
         val genitore = cifra.parent as? ViewGroup
+        // Col movimento ridotto la cifra cambia subito. Il componente chiederebbe un breve cambio di
+        // opacita', ma su Android il movimento ridotto e' la scala delle animazioni a zero, e con quella
+        // ogni animatore, dissolvenza compresa, salta alla fine: il cambio immediato e' l'unico onesto.
         val senzaMovimento =
             direzione == 0 ||
                 genitore == null ||
@@ -76,22 +87,36 @@ class NumberRoll(
         fantasma = uscente
         cifra.text = testo
 
-        val durata = cifra.resources.getInteger(R.integer.duration_standard).toLong()
-        val curva = AnimationUtils.loadInterpolator(cifra.context, R.interpolator.ease_standard)
+        // Prima esce la vecchia (duration_instant, ease_exit), poi entra la nuova (duration_fast,
+        // ease_enter): mai due cifre a schermo nello stesso istante.
+        val risorse = cifra.resources
+        val uscitaMs = risorse.getInteger(R.integer.duration_instant).toLong()
+        val entrataMs = risorse.getInteger(R.integer.duration_fast).toLong()
         // Salendo la cifra vecchia va verso l'alto (y negativo) e la nuova parte dal basso.
         val verso = if (direzione > 0) -1f else 1f
         cifra.translationY = -verso * corsaInPixel
         cifra.alpha = 0f
-        val insieme =
+        val uscita =
             AnimatorSet().apply {
                 playTogether(
                     ObjectAnimator.ofFloat(uscente, View.TRANSLATION_Y, 0f, verso * corsaInPixel),
                     ObjectAnimator.ofFloat(uscente, View.ALPHA, 1f, 0f),
+                )
+                duration = uscitaMs
+                interpolator = AnimationUtils.loadInterpolator(cifra.context, R.interpolator.ease_exit)
+            }
+        val entrata =
+            AnimatorSet().apply {
+                playTogether(
                     ObjectAnimator.ofFloat(cifra, View.TRANSLATION_Y, -verso * corsaInPixel, 0f),
                     ObjectAnimator.ofFloat(cifra, View.ALPHA, 0f, 1f),
                 )
-                duration = durata
-                interpolator = curva
+                duration = entrataMs
+                interpolator = AnimationUtils.loadInterpolator(cifra.context, R.interpolator.ease_enter)
+            }
+        val insieme =
+            AnimatorSet().apply {
+                playSequentially(uscita, entrata)
                 addListener(
                     object : AnimatorListenerAdapter() {
                         override fun onAnimationEnd(animation: Animator) = ripulisci()
