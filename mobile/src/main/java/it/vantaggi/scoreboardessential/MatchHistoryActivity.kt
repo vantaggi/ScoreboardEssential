@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import it.vantaggi.scoreboardessential.core.EtichettaSquadra
 import it.vantaggi.scoreboardessential.database.MatchWithTeams
 import it.vantaggi.scoreboardessential.ui.EmptyStateView
 import it.vantaggi.scoreboardessential.ui.GiorniDelloStorico

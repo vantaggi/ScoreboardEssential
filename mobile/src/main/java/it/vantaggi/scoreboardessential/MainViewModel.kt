@@ -27,6 +27,7 @@ import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.ClockMode
 import it.vantaggi.scoreboardessential.core.Composizione
 import it.vantaggi.scoreboardessential.core.DeuceRule
+import it.vantaggi.scoreboardessential.core.EtichettaSquadra
 import it.vantaggi.scoreboardessential.core.ExportOrigin
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchClock
@@ -2281,7 +2282,7 @@ class MainViewModel(
      */
     fun prossimoAServire(lato: Int): Int? {
         val stato = engine.state as? RacketScore ?: return null
-        return if (lato - 1 == stato.servingTeam) stato.servingSlot else stato.slotAt(stato.serveIndex + 1)
+        return stato.nextSlot(lato)
     }
 
     /**

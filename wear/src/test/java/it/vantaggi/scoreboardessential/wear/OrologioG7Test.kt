@@ -398,11 +398,12 @@ class OrologioG7Test {
         assertEquals("in ambient nessun rotolo", prima, attivita().rotoliAvviati)
         assertEquals(0f, binding.team1Score.translationY, 0f)
         assertEquals(1f, binding.team1Score.alpha, 0f)
+        // La sigla di chi serve e' un testo suo, fisso nel layout: il fantasma e' un testo in piu' oltre a lei.
         assertEquals(
             "nessun fantasma accanto alla cifra",
             1,
             (binding.team1Score.parent as ViewGroup).let { g ->
-                (0 until g.childCount).count { g.getChildAt(it) is TextView }
+                (0 until g.childCount).count { g.getChildAt(it) is TextView && g.getChildAt(it).id != R.id.team1ServeNext }
             },
         )
     }

@@ -16,6 +16,7 @@
     <dimen name="face_dot_inset">35dp</dimen>
     <dimen name="face_dot_gap">4dp</dimen>
     <dimen name="face_dot_top">3dp</dimen>
+    <dimen name="face_serve_next_text_size">12sp</dimen>
     <dimen name="face_digits_gutter">5dp</dimen>
     <dimen name="face_digits_outer">28dp</dimen>
 

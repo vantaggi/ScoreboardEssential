@@ -13,10 +13,10 @@ import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
 import it.vantaggi.scoreboardessential.DurataPortiere
-import it.vantaggi.scoreboardessential.EtichettaSquadra
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
 import it.vantaggi.scoreboardessential.core.DeuceRule
+import it.vantaggi.scoreboardessential.core.EtichettaSquadra
 import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.databinding.ActivityMatchSettingsBinding

@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
 import it.vantaggi.scoreboardessential.core.DeuceRule
+import it.vantaggi.scoreboardessential.core.EtichettaSquadra
 import it.vantaggi.scoreboardessential.core.RacketRules
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.database.MatchWithTeams

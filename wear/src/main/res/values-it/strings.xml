@@ -42,6 +42,15 @@
     <string name="wear_who_scored">Chi ha segnato?</string>
     <string name="wear_no_players">Nessun giocatore</string>
     <string name="wear_who_short">Chi?</string>
+    <string name="wear_serve_short">Serve?</string>
+    <string name="wear_serve_choose">Scegli chi serve</string>
+    <string name="wear_serve_title">Chi serve?</string>
+    <string name="wear_serve_first">Chi serve per primo in %1$s?</string>
+    <string name="wear_serve_correct_title">Chi sta servendo adesso?</string>
+    <string name="wear_serve_proposed">Proposta</string>
+    <string name="wear_menu_serve">Correggi chi serve</string>
+    <string name="wear_serve_now">Serve %1$s</string>
+    <string name="cd_serve_next">Serve %1$s</string>
     <string name="wear_skip">Salta</string>
     <string name="wear_goal_header">Gol · %1$s</string>
     <string name="wear_goal_header_plain">Gol</string>

@@ -1,4 +1,4 @@
-package it.vantaggi.scoreboardessential
+package it.vantaggi.scoreboardessential.core
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

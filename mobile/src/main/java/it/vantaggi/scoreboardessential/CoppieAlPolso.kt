@@ -1,6 +1,7 @@
 package it.vantaggi.scoreboardessential
 
 import it.vantaggi.scoreboardessential.core.Composizione
+import it.vantaggi.scoreboardessential.core.EtichettaSquadra
 import it.vantaggi.scoreboardessential.core.Serata
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
 

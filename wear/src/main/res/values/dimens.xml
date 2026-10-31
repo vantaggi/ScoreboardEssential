@@ -48,6 +48,8 @@
     <!-- Dal bordo alto del lato: i pallini stanno sopra l'altezza delle cifre, cosi' il secondo
          non finisce mai sul testo. -->
     <dimen name="face_dot_top">2dp</dimen>
+    <!-- La sigla di chi serve a fine game, nel posto dei pallini: alta come loro in maiuscolo. -->
+    <dimen name="face_serve_next_text_size">10sp</dimen>
     <!-- Dove finiscono le cifre dal lato del centro: il resto del vuoto fra le due colonne. -->
     <dimen name="face_digits_gutter">4dp</dimen>
     <!-- Margine delle cifre dal lato esterno: corda piu' fascia del pallino. -->

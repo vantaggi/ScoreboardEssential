@@ -53,6 +53,7 @@ class MenuActivity : ComponentActivity() {
         const val AZIONE_PROSSIMA = "prossima"
         const val AZIONE_REGOLA_40 = "regola_40"
         const val AZIONE_PORTIERE = "portiere"
+        const val AZIONE_SERVIZIO = "servizio"
 
         /**
          * Senza nessun tocco ne' scorrimento la schermata torna al quadrante da sola. Erano 10 secondi:
@@ -81,6 +82,7 @@ class MenuActivity : ComponentActivity() {
         private const val EXTRA_VIBRAZIONE = "menu_vibrazione"
         private const val EXTRA_SCHERMO_ACCESO = "menu_schermo_acceso"
         private const val EXTRA_TEMPO_AVVIATO = "menu_tempo_avviato"
+        private const val EXTRA_CHI_SERVE = "menu_chi_serve"
         private const val SEPARATORE_GIOCATORI = "\n"
 
         /**
@@ -113,6 +115,7 @@ class MenuActivity : ComponentActivity() {
                 .putExtra(EXTRA_RISULTATO, input.risultato)
                 .putExtra(EXTRA_RIFIUTATI, input.rifiutati)
                 .putExtra(EXTRA_TEMPO_AVVIATO, input.tempoAvviato)
+                .putExtra(EXTRA_CHI_SERVE, input.chiServe)
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -166,6 +169,7 @@ class MenuActivity : ComponentActivity() {
                 vibrazionePunti = intent.getBooleanExtra(EXTRA_VIBRAZIONE, true),
                 schermoAcceso = intent.getBooleanExtra(EXTRA_SCHERMO_ACCESO, false),
                 tempoAvviato = intent.getBooleanExtra(EXTRA_TEMPO_AVVIATO, false),
+                chiServe = intent.getStringExtra(EXTRA_CHI_SERVE).orEmpty(),
             )
 
         aggiungiVoci(findViewById(R.id.menu_voci), MenuVoci.calcola(input))
@@ -250,6 +254,10 @@ class MenuActivity : ComponentActivity() {
 
             IdVoce.PORTIERE -> {
                 chiudiConAzione(AZIONE_PORTIERE)
+            }
+
+            IdVoce.CHI_SERVE -> {
+                chiudiConAzione(AZIONE_SERVIZIO)
             }
 
             // Del polso: si cambia qui, senza uscire, e il sottotitolo dice com'e' adesso. Riaccesa,
@@ -396,6 +404,7 @@ class MenuActivity : ComponentActivity() {
             IdVoce.VIBRAZIONE -> R.drawable.ic_vibration
             IdVoce.SCHERMO_ACCESO -> R.drawable.ic_light_mode
             IdVoce.PORTIERE -> R.drawable.ic_sports_handball
+            IdVoce.CHI_SERVE -> R.drawable.ic_person
             IdVoce.FINE_PARTITA -> R.drawable.ic_flag
             IdVoce.SCARTA_CODA -> R.drawable.ic_delete
         }
@@ -433,6 +442,10 @@ class MenuActivity : ComponentActivity() {
 
             IdVoce.PORTIERE -> {
                 getString(R.string.wear_setting_keeper)
+            }
+
+            IdVoce.CHI_SERVE -> {
+                getString(R.string.wear_menu_serve)
             }
 
             IdVoce.FINE_PARTITA -> {
