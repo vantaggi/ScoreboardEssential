@@ -64,13 +64,13 @@
     <string name="wear_status_closing">Closing…</string>
     <string name="wear_status_close_unconfirmed">Not confirmed</string>
     <string name="wear_status_changing_sport">Changing sport…</string>
-    <string name="wear_status_sport_unchanged">Sport not changed</string>
-    <string name="wear_status_phone_waiting">Waiting for phone</string>
+    <string name="wear_status_sport_unchanged">Sport unchanged</string>
+    <string name="wear_status_phone_waiting">Awaiting phone</string>
     <string name="wear_status_not_delivered" tools:ignore="PluralsCandidate">%1$d not delivered</string>
     <string name="wear_status_sending">Sending %1$d…</string>
     <string name="wear_status_queued" tools:ignore="PluralsCandidate">%1$d queued</string>
     <string name="wear_status_offline">Offline</string>
-    <string name="wear_status_offline_at">Offline · %1$s</string>
+    <string name="wear_status_offline_at">Offline %1$s</string>
     <string name="wear_scorer_not_sent">Scorer not sent</string>
 
     <!-- Next match of the evening and teams on court (match menu). -->

@@ -2880,9 +2880,30 @@ Il proprietario ha confermato che telefono e orologio seguono la UI Constitution
 - **Istruzioni per gli agenti.** `AGENTS.md` nella radice, col testo di "Instructions for coding agents" di 02-integration: link al sistema, file dei token, glossario, identita' e toni. `CLAUDE.md` lo importa e tiene le regole del repository. Le sei righe dell'identita' non si ripetono piu' qui.
 - **Glossario.** `GLOSSARIO.md`: Squadra (mai "Team" a schermo), Partita, Set, Game (scelta del proprietario: non "Gioco"), Punto, Servizio, Cronaca, Storico e i termini che l'app usa gia'.
 - **Colori coi nomi dei ruoli** (scelta B del proprietario, contro la A che raccomandavo per il costo: circa 1.000 citazioni in 160 file). Valori invariati; mappatura nella tabella "Mappatura dei ruoli". Telefono e orologio usano gli stessi nomi; i valori di un tema (`_standard`, `_chiaro`, `_alto_contrasto`) si citano solo dai temi e dalle icone del launcher, che si disegnano senza tema.
-- **Misura** in `docs/ui-constitution/misura.md`: `scripts/misura-ui.py` e `MisuraGeometriaDelPolsoTest`, in CI come avviso (passo 6b).
+- **Misura** in `docs/ui-constitution/misura.md`: `scripts/misura-ui.py` e `MisuraGeometriaDelPolsoTest` (dalla PR 2 `GeometriaDelPolsoTest`), in CI come avviso (passo 6b).
 - **Non visto a schermo**: nessun cambio visivo atteso; lo dimostrano i test unitari, che confrontano i valori dei colori e non i nomi.
 
 ### Chi batte (richiesta del proprietario, 31 ottobre 2026)
 
 Oggi la rotazione e' fissa (A1, B1, A2, B2 dalle rose), la squadra 1 serve sempre per prima, lo scambio si fa solo dal telefono prima del primo punto e l'orologio mostra uno o due pallini senza nome. Il proprietario vuole: a inizio set scegliere la coppia che serve vedendo le iniziali delle coppie, poi in ogni coppia chi batte per primo; poterlo correggere anche a partita in corso (e' la correzione di un errore, non un cambio d'ordine); a fine game, per qualche secondo, le iniziali del prossimo a battere. PR dedicata dopo la PR 2 (motore in `:core` e protocollo con l'orologio), bozze prima del codice.
+
+### PR 2: geometria dell'orologio (31 ottobre 2026)
+
+- **Piano.** Il test di misura della PR 1 (`GeometriaDelPolsoTest`, prima `MisuraGeometriaDelPolsoTest`) diventa bloccante. Controlla 3dp dall'anello e 8dp dalla cornice, in attivo e in ambient, su sette forme: tondo da 192 e 227dp in italiano e in inglese, e quadrato da 180, 192 e 227dp. La riga di stato si prova con ogni frase `wear_status_*` e `wear_hint_*`, con i numeri e l'ora piu' larghi ("88", "23:59"), nella racchetta e nel calcio. Una frase nuova troppo lunga fa fallire la CI.
+- **Che cosa ha trovato.** Solo nella racchetta, dove la riga di stato sta nella fascia E vicino al fondo del cerchio, e anche sul tondo da 227dp (l'orologio vero):
+  - "Sport non cambiato": 4,6dp dalla cornice sul 192, 3,8dp sul 227;
+  - "12 non consegnati": 7,1dp e 7,0dp;
+  - "Scollegato · 23:59": 6,5dp sul 192;
+  - in inglese "Sport not changed" (6,5dp e 6,4dp) e "Waiting for phone" (7,8dp sul 192);
+  - inoltre la capsula "Who?" del marcatore sta a 2,9dp dall'anello sul tondo da 192dp.
+  - Era il debito L7 della validazione ("la riga di stato senza telefono in italiano probabilmente non entra nel 192"): ora e' misurato.
+- **Scelta (bozze A/B/C nel piano, scheda "Bozze PR 2").**
+  - A: margini piu' larghi e corpo che scende fino a 10sp.
+  - B, raccomandata: parole piu' corte, corpo invariato. 08-wearable chiede il testo piu' corto in basso sul tondo.
+  - C: icona e una parola.
+  - Il proprietario ha scelto B (31 ottobre 2026, 13:43): "Sport invariato", "%d non arrivati" (e "%d arrivati", per coppia), "Scollegato %s" senza il punto in mezzo; in inglese "Sport unchanged", "Awaiting phone", "Offline %s".
+  - La capsula CHI? passa da 12 a 11dp di aria per lato, con un token nuovo (`face_chi_padding`).
+- **Componenti riusati.** La riga di stato e la capsula come sono; nessun colore, durata o icona nuovi.
+- **Stati.** Ogni frase della riga di stato, nella racchetta e negli sport col cronometro; portiere fermo, in corsa e CHI?; attivo e ambient.
+- **Pattern vietati (10-review).** Nessun valore scritto a mano nuovo: la spaziatura scritta a mano dell'orologio scende da 7 a 5. Nessun testo fuori dalle risorse.
+- **Non visto a schermo.** Catture dal test Robolectric (grafica nativa), non dall'emulatore. Prima di fidarsi del tondo emulato bisogna controllare che Android lo tratti come tondo (`am get-config` deve dire round; il 28 ottobre `Wear_OS_Small_Round` diceva notround). Al polso basta vedere una volta "Scollegato" con l'ora, a telefono spento.

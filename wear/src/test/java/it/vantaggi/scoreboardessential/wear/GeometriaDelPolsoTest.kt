@@ -29,24 +29,25 @@ import java.io.File
 import kotlin.math.hypot
 
 /**
- * MISURA, non verifica: quanti elementi del quadrante non rispettano la geometria di 08-wearable della
- * UI Constitution (passo 1 di "Adopting", 31 ottobre 2026). Scrive `build/misura/geometria-<forma>.txt`,
- * che `scripts/misura-ui.py` riporta nel report; non fallisce per un margine, solo se non ha misurato
- * niente. Il passo a del piano (PR 2) la trasforma in un test che fallisce e corregge cio' che trova.
- *
- * Le regole misurate, su tondo da 192 e 227dp e quadrato da 192 e 227dp, in attivo e in ambient:
+ * La geometria del quadrante secondo 08-wearable della UI Constitution, su ogni forma che l'app
+ * sostiene: tondo da 192 e 227dp (in italiano e in inglese, perche' la riga di stato cambia
+ * larghezza con la lingua) e quadrato da 180, 192 e 227dp, in attivo e in ambient.
  * - ogni testo e segno sta ad almeno 3dp dal bordo interno dell'anello del portiere, quando l'anello
  *   si disegna (in ambient no);
  * - ogni testo e segno sta ad almeno 8dp dalla cornice: 4dp di spostamento anti burn-in piu' 4dp d'aria.
  *   Sul tondo la cornice e' il cerchio intero, sul quadrato il bordo.
  *
  * Si misura l'inchiostro vero dei testi (il rettangolo dei glifi), le viste per strisce, pallini e
- * capsula, i due puntini esterni per il glifo del menu, come in [QuadranteDentroLAnelloTest], che
- * resta il test che fallisce per i 3dp dall'anello in attivo. Gira dalla cartella del modulo (`wear/`).
+ * capsula, i due puntini esterni per il glifo del menu, come in [QuadranteDentroLAnelloTest]. La riga di
+ * stato si prova con ogni frase che puo' dire (le stringhe `wear_status_*` e `wear_hint_*`), nella
+ * racchetta e negli sport col cronometro: una frase nuova troppo lunga fa fallire questo test.
+ *
+ * Nato come misura il 31 ottobre 2026 (PR 1 dell'adozione), bloccante dalla PR 2. Scrive anche
+ * `build/misura/geometria-<forma>.txt` per `scripts/misura-ui.py`. Gira dalla cartella del modulo (`wear/`).
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class MisuraGeometriaDelPolsoTest {
+class GeometriaDelPolsoTest {
     private lateinit var controller: ActivityController<MainActivity>
     private lateinit var binding: ActivityMainBinding
     private lateinit var viewModel: WearViewModel
@@ -192,7 +193,7 @@ class MisuraGeometriaDelPolsoTest {
                 "il dettaglio" to binding.faceDetail,
                 "la riga di stato" to binding.gestureHint,
             ).filter { visibile(it.second) }
-                .mapNotNull { (nome, vista) -> inchiostro(vista)?.let { nome to it } }
+                .mapNotNull { (nome, vista) -> inchiostro(vista)?.let { "$nome \"${vista.text}\"" to it } }
         val segni =
             listOf(
                 "la striscia della squadra 1" to binding.team1Stripe,
@@ -236,6 +237,44 @@ class MisuraGeometriaDelPolsoTest {
         idle()
     }
 
+    /** Ogni frase che la riga di stato puo' dire, coi numeri e l'ora piu' larghi che possono capitare. */
+    private fun frasi(): List<Pair<String, String>> {
+        val risorse = fasce.resources
+        return R.string::class.java.fields
+            .filter { it.name.startsWith("wear_status_") || it.name.startsWith("wear_hint_") }
+            .sortedBy { it.name }
+            .map { campo ->
+                val id = campo.getInt(null)
+                // %d e' un conteggio (88, due cifre larghe), %s l'ora ("23:59").
+                val grezzo = risorse.getText(id).toString()
+                val testo = if (grezzo.contains("\$s")) risorse.getString(id, "23:59") else risorse.getString(id, 88)
+                campo.name to testo
+            }
+    }
+
+    /** La riga di stato con ciascuna frase, nello sport che e' a schermo. */
+    private fun misuraLeFrasi(caso: String) {
+        val riga = binding.gestureHint
+        riga.visibility = View.VISIBLE
+        for ((nome, testo) in frasi()) {
+            riga.text = testo
+            fasce.requestLayout()
+            idle()
+            val r = inchiostro(riga) ?: continue
+            misurati++
+            val cornice = ariaDallaCornice(r)
+            if (cornice < 8f - 0.01f) {
+                trovati += "$caso: la riga di stato \"$testo\" ($nome) a %.1fdp dalla cornice (ne servono 8)".format(cornice)
+            }
+            if (visibile(binding.keeperProgressBar)) {
+                val dallAnello = ariaDallAnello(r)
+                if (dallAnello < 3f - 0.01f) {
+                    trovati += "$caso: la riga di stato \"$testo\" ($nome) a %.1fdp dall'anello (ne servono 3)".format(dallAnello)
+                }
+            }
+        }
+    }
+
     private fun misuraTutto(forma: String) {
         apri()
         viewModel.applyStateV2(stato("88", "88", calcio = true))
@@ -253,6 +292,7 @@ class MisuraGeometriaDelPolsoTest {
         ambient(true)
         misura("calcio, ambient")
         ambient(false)
+        misuraLeFrasi("calcio")
 
         listOf(1, 2).forEach { lato ->
             viewModel.applyStateV2(stato("AV", "40", calcio = false, servizio = lato, giocatore = 2))
@@ -262,18 +302,22 @@ class MisuraGeometriaDelPolsoTest {
             misura("padel, serve la squadra $lato, ambient")
             ambient(false)
         }
+        misuraLeFrasi("padel")
 
         assertTrue("non ho misurato niente su $forma", misurati > 0)
         val file = File("build/misura/geometria-$forma.txt")
         file.parentFile.mkdirs()
         val config = fasce.resources.configuration
-        val titolo = "${if (config.isScreenRound) "Tondo" else "Quadrato"} da ${config.screenWidthDp}dp"
+        val forma1 = if (config.isScreenRound) "Tondo" else "Quadrato"
+        val lingua = if (forma.startsWith("en-")) ", in inglese" else ""
+        val titolo = "$forma1 da ${config.screenWidthDp}dp$lingua"
         file.writeText(
             buildString {
                 appendLine("- $titolo: ${trovati.size} fuori misura su $misurati misure")
                 trovati.forEach { appendLine("    - $it") }
             },
         )
+        assertTrue("$titolo, fuori dalla geometria di 08-wearable:\n${trovati.joinToString("\n")}", trovati.isEmpty())
     }
 
     @Test
@@ -283,6 +327,18 @@ class MisuraGeometriaDelPolsoTest {
     @Test
     @Config(qualifiers = "it-w227dp-h227dp-round-notnight")
     fun `tondo da 227dp`() = misuraTutto("tondo-227")
+
+    @Test
+    @Config(qualifiers = "en-w192dp-h192dp-round-notnight")
+    fun `tondo da 192dp in inglese`() = misuraTutto("en-tondo-192")
+
+    @Test
+    @Config(qualifiers = "en-w227dp-h227dp-round-notnight")
+    fun `tondo da 227dp in inglese`() = misuraTutto("en-tondo-227")
+
+    @Test
+    @Config(qualifiers = "it-w180dp-h180dp-notround-notnight")
+    fun `quadrato da 180dp`() = misuraTutto("quadrato-180")
 
     @Test
     @Config(qualifiers = "it-w192dp-h192dp-notround-notnight")

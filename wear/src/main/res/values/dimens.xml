@@ -122,4 +122,7 @@
 
     <!-- control-touch: il minimo di un comando al polso (le righe dei giocatori e i due bottoni). -->
     <dimen name="control_touch">48dp</dimen>
+    <!-- La capsula CHI? del marcatore: l'aria ai lati della parola. 11dp e non 12: con "Who?" sul tondo
+         da 192dp gli angoli della capsula restavano a 2,9dp dall'anello del portiere (GeometriaDelPolsoTest). -->
+    <dimen name="face_chi_padding">11dp</dimen>
 </resources>
