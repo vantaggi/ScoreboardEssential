@@ -1,4 +1,4 @@
-package it.vantaggi.scoreboardessential
+package it.vantaggi.scoreboardessential.core
 
 /**
  * Il nome della squadra da mostrare.

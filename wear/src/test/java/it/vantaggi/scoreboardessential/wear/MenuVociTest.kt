@@ -214,6 +214,26 @@ class MenuVociTest {
         assertFalse(MenuVoci.calcola(input(inCoda = 2, partitaIniziata = true)).any { it.id == IdVoce.SCARTA_CODA })
     }
 
+    /**
+     * "Correggi chi serve" c'e' solo dove c'e' servizio, fra lo sport e la fine, accesa a partita in
+     * corso e spenta come le altre da coda e telefono assente. Rosso se compare nel calcio, se si spegne
+     * a partita cominciata o se non dice chi serve.
+     */
+    @Test
+    fun `correggi chi serve c'e' dove c'e' servizio e si spegne solo per coda e telefono`() {
+        assertFalse(MenuVoci.calcola(input(partitaIniziata = true)).any { it.id == IdVoce.CHI_SERVE })
+        val conServizio = input(partitaIniziata = true).copy(chiServe = "Serve ROS")
+        assertEquals(listOf(IdVoce.SPORT, IdVoce.CHI_SERVE, IdVoce.FINE_PARTITA), MenuVoci.calcola(conServizio).map { it.id })
+        val accesa = voce(IdVoce.CHI_SERVE, conServizio)
+        assertTrue(accesa.attiva)
+        assertEquals(SottotitoloVoce.Valore("Serve ROS"), accesa.sottotitolo)
+        assertEquals(
+            SottotitoloVoce.ValoreBloccato("Serve ROS", SottotitoloVoce.PrimaConsegna(2)),
+            voce(IdVoce.CHI_SERVE, conServizio.copy(inCoda = 2)).sottotitolo,
+        )
+        assertFalse(voce(IdVoce.CHI_SERVE, conServizio.copy(collegato = false)).attiva)
+    }
+
     @Test
     fun `disarma riporta al primo tocco`() {
         val conferma = ConfermaSulPosto()

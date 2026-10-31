@@ -25,6 +25,7 @@ import androidx.wear.ambient.AmbientLifecycleObserver
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.TeamInk
+import it.vantaggi.scoreboardessential.core.siglaDiChiServe
 import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
 import it.vantaggi.scoreboardessential.shared.communication.NodoLocale
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
@@ -117,8 +118,23 @@ class MainActivity : ComponentActivity() {
                 MenuActivity.AZIONE_PROSSIMA -> apriProssimaPartita()
                 MenuActivity.AZIONE_REGOLA_40 -> apriSceltaRegola40()
                 MenuActivity.AZIONE_PORTIERE -> apriSceltaPortiere()
+                MenuActivity.AZIONE_SERVIZIO -> apriSceltaDelServizio(correzione = true)
             }
         }
+
+    /** La scelta di chi serve torna qui: la manda il ViewModel, che ha la sequenza. */
+    private val sceltaDelServizio =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { esito ->
+            if (esito.resultCode != android.app.Activity.RESULT_OK) return@registerForActivityResult
+            when (val scelta = SceltaDelServizioActivity.esito(esito.data)) {
+                is EsitoDelServizio.Scelta -> viewModel.scegliChiServe(scelta.lato, scelta.slot1, scelta.slot2)
+                is EsitoDelServizio.Correzione -> viewModel.correggiChiServe(scelta.lato, scelta.slot)
+                null -> Unit
+            }
+        }
+
+    /** L'ultimo stato v2 disegnato: col nuovo dice se si e' appena chiuso un game ([fineDelGame]). */
+    private var statoMostrato: WearScoreState? = null
 
     // Serve solo alla descrizione dei lati per TalkBack: cosa dice la riga in basso lo decide
     // StatoFiducia nel ViewModel, non questa schermata.
@@ -477,25 +493,88 @@ class MainActivity : ComponentActivity() {
             viewModel.toggleKeeperTimer()
         }
 
-        // Lo stesso bersaglio vale due cose: CHI? per 8s dopo un gol confermato, altrimenti il menu.
+        // Lo stesso bersaglio vale tre cose: CHI? per 8s dopo un gol confermato, SERVE? per 8s a
+        // inizio set, altrimenti il menu. Nessuno sport ha tutte e due le offerte.
         binding.btnMenu.setOnClickListener {
-            if (viewModel.finestraChi.value != null) apriMarcatore() else apriMenu()
+            when {
+                viewModel.finestraChi.value != null -> apriMarcatore()
+                viewModel.offertaServizio.value -> apriSceltaDelServizio(correzione = false)
+                else -> apriMenu()
+            }
         }
     }
 
     /**
-     * Mentre CHI? e' offerto la capsula prende il posto della riga di stato (bozza W2a di Cioti) e il
-     * bersaglio cambia descrizione, cosi' TalkBack dice che cosa fa il tocco; il glifo del menu resta.
-     * Quando l'offerta finisce torna la riga. In ambient la capsula non c'e' e la riga parla delle
-     * anomalie, quindi resta in vista.
+     * Mentre CHI? o SERVE? e' offerto la capsula prende il posto della riga di stato (bozza W2a di
+     * Cioti) e il bersaglio cambia descrizione, cosi' TalkBack dice che cosa fa il tocco; il glifo del
+     * menu resta. Quando l'offerta finisce torna la riga. In ambient la capsula non c'e' e la riga
+     * parla delle anomalie, quindi resta in vista.
      */
-    private fun renderFinestraChi(finestra: WearViewModel.FinestraChi?) {
-        val offerta = finestra != null
+    private fun renderCapsula() {
+        val chi = viewModel.finestraChi.value != null
+        val servizio = !chi && viewModel.offertaServizio.value
+        val offerta = chi || servizio
+        binding.chiCapsule.text = getString(if (servizio) R.string.wear_serve_short else R.string.wear_who_short)
         binding.chiCapsule.visibility = if (offerta) View.VISIBLE else View.GONE
         binding.gestureHint.visibility = if (offerta && !ambient) View.INVISIBLE else View.VISIBLE
         binding.menuGlyph.visibility = View.VISIBLE
-        binding.btnMenu.contentDescription = getString(if (offerta) R.string.wear_who_scored else R.string.cd_menu)
+        binding.btnMenu.contentDescription =
+            getString(
+                when {
+                    chi -> R.string.wear_who_scored
+                    servizio -> R.string.wear_serve_choose
+                    else -> R.string.cd_menu
+                },
+            )
         sovrapponiAmbient()
+    }
+
+    /**
+     * La scelta di chi serve a tutto schermo: da SERVE? (la scelta di inizio set) o dal menu (la
+     * correzione). Le proposte sono quelle del registro del telefono; i nomi delle coppie quelli del
+     * quadrante, le rose quelle che il telefono manda per il menu.
+     */
+    private fun apriSceltaDelServizio(correzione: Boolean) {
+        val stato = viewModel.scoreState.value ?: return
+        if (!correzione) viewModel.chiudiOffertaServizio()
+        if (stato.servingSide != 1 && stato.servingSide != 2) return
+        val coppie = viewModel.coppie.value
+        val input =
+            InputDelServizio(
+                nomi = listOf(teamName(viewModel.team1Name.value, 1), teamName(viewModel.team2Name.value, 2)),
+                rose = listOf(coppie?.rosa1.orEmpty(), coppie?.rosa2.orEmpty()),
+                lato = stato.servingSide,
+                prossimi = listOf(viewModel.prossimoAServire(1) ?: 1, viewModel.prossimoAServire(2) ?: 1),
+                slotAttuale = stato.servingSlot,
+                correzione = correzione,
+            )
+        sceltaDelServizio.launch(SceltaDelServizioActivity.intent(this, input))
+    }
+
+    /** Chi serve adesso, per il menu: la sigla del giocatore se le rose ci sono, se no la coppia. */
+    private fun chiServeAdesso(stato: WearScoreState?): String {
+        if (stato == null || stato.matchOver || (stato.servingSide != 1 && stato.servingSide != 2)) return ""
+        val coppie = viewModel.coppie.value
+        val chi =
+            siglaDiChiServe(stato.servingSide, stato.servingSlot.takeIf { it != 0 }, coppie?.rosa1.orEmpty(), coppie?.rosa2.orEmpty())
+                ?: teamName(if (stato.servingSide == 1) viewModel.team1Name.value else viewModel.team2Name.value, stato.servingSide)
+        return getString(R.string.wear_serve_now, chi)
+    }
+
+    /**
+     * A fine game la sigla di chi serve dopo, per tre secondi, al posto dei pallini; un punteggio che
+     * cambia prima la toglie subito. Senza rose non c'e' sigla e restano i pallini. In ambient no.
+     */
+    private fun segnaFineDelGame(
+        prima: WearScoreState?,
+        dopo: WearScoreState,
+    ) {
+        if (prima == null || prima.comeDisplay() == dopo.comeDisplay()) return
+        togliLaSigla(binding.root)
+        if (ambient || !fineDelGame(prima, dopo)) return
+        val coppie = viewModel.coppie.value ?: return
+        val sigla = siglaDiChiServe(dopo.servingSide, dopo.servingSlot.takeIf { it != 0 }, coppie.rosa1, coppie.rosa2) ?: return
+        mostraLaSigla(binding.root, dopo.servingSide, sigla)
     }
 
     /**
@@ -595,6 +674,7 @@ class MainActivity : ComponentActivity() {
             vibrazionePunti = PreferenzeDelPolso(this).vibrazionePunti,
             schermoAcceso = PreferenzeDelPolso(this).schermoAcceso,
             tempoAvviato = viewModel.tempoAvviato,
+            chiServe = chiServeAdesso(stato),
         )
     }
 
@@ -892,7 +972,7 @@ class MainActivity : ComponentActivity() {
             spostaBurnIn()
             renderContesto()
             // Toglie CHI? e rimette in vista la riga di stato, poi sovrappone l'ambient.
-            renderFinestraChi(viewModel.finestraChi.value)
+            renderCapsula()
         } else if (eraAmbient) {
             // La guardia prima del ridisegno: uscendo dall'ambient niente rotolo.
             apriGuardia()
@@ -956,6 +1036,8 @@ class MainActivity : ComponentActivity() {
         ).forEach { it.visibility = View.INVISIBLE }
         ambientPortiere(viewModel.keeperTimer.value)
         binding.chiCapsule.visibility = View.GONE
+        // La sigla di fine game e' colore e movimento: in ambient tornano i pallini.
+        togliLaSigla(binding.root)
         // A polso abbassato la riga parla solo di anomalie (rosso e ambra) e della partita finita:
         // il suggerimento (TIENI: -1) e i transitori positivi (n CONSEGNATI, INVIO n..., CAMBIO
         // SPORT...) si tacciono.
@@ -987,7 +1069,7 @@ class MainActivity : ComponentActivity() {
             renderContesto()
         }
         renderPortiere(viewModel.keeperTimer.value)
-        renderFinestraChi(viewModel.finestraChi.value)
+        renderCapsula()
         renderStatus(viewModel.statoFiducia.value)
     }
 
@@ -1192,7 +1274,11 @@ class MainActivity : ComponentActivity() {
                     // collect su uno StateFlow riemette subito il valore corrente, quindi questo
                     // ridisegna lo stato v2 a ogni ritorno in STARTED: e' il rimedio al risveglio.
                     viewModel.scoreState.collect { state ->
-                        state?.let { renderScoreState(it) }
+                        state?.let {
+                            renderScoreState(it)
+                            segnaFineDelGame(statoMostrato, it)
+                            statoMostrato = it
+                        }
                     }
                 }
 
@@ -1274,7 +1360,9 @@ class MainActivity : ComponentActivity() {
 
                 // CHI? prende il posto del glifo per 8s dopo un gol confermato, e basta: la lista
                 // non si apre piu' da sola. Collect riemette il valore a ogni ritorno in STARTED.
-                launch { viewModel.finestraChi.collect { renderFinestraChi(it) } }
+                launch { viewModel.finestraChi.collect { renderCapsula() } }
+                // SERVE? per 8s a inizio set, nello stesso posto di CHI?.
+                launch { viewModel.offertaServizio.collect { renderCapsula() } }
                 // Il telefono e' tornato: cio' che si e' segnato senza di lui parte adesso, da solo.
                 // Cosa dire del collegamento non e' affare di questo collector: lo dice la riga.
                 launch {

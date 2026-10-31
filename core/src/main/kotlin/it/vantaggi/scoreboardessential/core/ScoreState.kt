@@ -134,6 +134,12 @@ data class RacketScore(
     }
 
     /**
+     * Chi serve per la coppia [side] (1 o 2) al suo prossimo turno, 1 o 2: per la coppia che serve e'
+     * il turno in corso. E' la spunta delle scelte di chi serve, sul telefono e al polso.
+     */
+    fun nextSlot(side: Int): Int = if (side - 1 == servingTeam) servingSlot else slotAt(serveIndex + 1)
+
+    /**
      * Il giocatore (1 o 2) che serve al turno [index]. Ogni squadra serve un turno si' e uno no, e
      * a ogni suo turno cambia giocatore: dal turno della scelta, il primo turno di ciascuna squadra
      * e' quello del giocatore scelto. Senza scelta e' `index % 4 / 2 + 1`, la rotazione di sempre.

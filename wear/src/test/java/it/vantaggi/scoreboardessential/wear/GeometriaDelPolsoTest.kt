@@ -192,6 +192,8 @@ class GeometriaDelPolsoTest {
                 "le cifre della squadra 2" to binding.team2Score,
                 "il dettaglio" to binding.faceDetail,
                 "la riga di stato" to binding.gestureHint,
+                "la sigla di chi serve della squadra 1" to binding.team1ServeNext,
+                "la sigla di chi serve della squadra 2" to binding.team2ServeNext,
             ).filter { visibile(it.second) }
                 .mapNotNull { (nome, vista) -> inchiostro(vista)?.let { "$nome \"${vista.text}\"" to it } }
         val segni =
@@ -275,6 +277,35 @@ class GeometriaDelPolsoTest {
         }
     }
 
+    /**
+     * Chi serve: la capsula SERVE? al posto della riga di stato e la sigla di fine game al posto dei
+     * pallini, con quattro lettere larghe (le sigle che si ripetono ne prendono quattro). La sigla non
+     * deve nemmeno toccare l'inchiostro delle cifre del suo lato.
+     */
+    private fun misuraIlServizio(lato: Int) {
+        binding.chiCapsule.text = fasce.resources.getString(R.string.wear_serve_short)
+        binding.chiCapsule.visibility = View.VISIBLE
+        fasce.requestLayout()
+        idle()
+        misura("padel con SERVE?, attivo")
+        binding.chiCapsule.visibility = View.GONE
+        mostraLaSigla(binding.root, lato, "MOWM")
+        fasce.requestLayout()
+        idle()
+        misura("padel con la sigla della squadra $lato, attivo")
+        val sigla = inchiostro(if (lato == 1) binding.team1ServeNext else binding.team2ServeNext)
+        val cifre = inchiostro(if (lato == 1) binding.team1Score else binding.team2Score)
+        misurati++
+        if (sigla == null) {
+            trovati += "la sigla della squadra $lato non si vede"
+        } else if (cifre != null && RectF.intersects(sigla, cifre)) {
+            trovati += "la sigla della squadra $lato tocca le cifre: sigla $sigla, cifre $cifre"
+        }
+        togliLaSigla(binding.root)
+        fasce.requestLayout()
+        idle()
+    }
+
     private fun misuraTutto(forma: String) {
         apri()
         viewModel.applyStateV2(stato("88", "88", calcio = true))
@@ -298,6 +329,7 @@ class GeometriaDelPolsoTest {
             viewModel.applyStateV2(stato("AV", "40", calcio = false, servizio = lato, giocatore = 2))
             idle()
             misura("padel, serve la squadra $lato, attivo")
+            misuraIlServizio(lato)
             ambient(true)
             misura("padel, serve la squadra $lato, ambient")
             ambient(false)

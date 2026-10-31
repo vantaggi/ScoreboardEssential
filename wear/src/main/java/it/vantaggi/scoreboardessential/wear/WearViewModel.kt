@@ -11,8 +11,10 @@ import it.vantaggi.scoreboardessential.core.DeuceRule
 import it.vantaggi.scoreboardessential.core.MatchEngine
 import it.vantaggi.scoreboardessential.core.MatchLogCodec
 import it.vantaggi.scoreboardessential.core.RacketRules
+import it.vantaggi.scoreboardessential.core.RacketScore
 import it.vantaggi.scoreboardessential.core.ScoringEvent
 import it.vantaggi.scoreboardessential.core.SportRegistry
+import it.vantaggi.scoreboardessential.core.SportRules
 import it.vantaggi.scoreboardessential.shared.HapticFeedbackManager
 import it.vantaggi.scoreboardessential.shared.PlayerData
 import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
@@ -280,6 +282,12 @@ class WearViewModel(
 
         /** Quanto resta offerto CHI? dopo un gol confermato, poi il bersaglio torna al menu. */
         internal const val DURATA_FINESTRA_CHI_MS = 8_000L
+
+        /**
+         * Quanto resta offerto SERVE? a inizio set, poi il bersaglio torna al menu: come CHI?, perche'
+         * e' lo stesso gesto. Chi lo perde sceglie dal menu, con "Correggi chi serve".
+         */
+        internal const val DURATA_FINESTRA_SERVIZIO_MS = 8_000L
     }
 
     /**
@@ -761,6 +769,19 @@ class WearViewModel(
      */
     private var registroDellOfferta: String? = null
 
+    private val _offertaServizio = MutableStateFlow(false)
+
+    /**
+     * Vero per [DURATA_FINESTRA_SERVIZIO_MS] quando il telefono dice che siamo al primo punto di un
+     * set e chi serve non e' ancora scelto ([offreChiServe]): la schermata offre SERVE?. Una volta per
+     * inizio di set: tornare dal menu non la riapre.
+     */
+    val offertaServizio = _offertaServizio.asStateFlow()
+    private var offertaServizioJob: Job? = null
+
+    /** La partita e il registro dell'inizio di set gia' offerto: lo stesso non si offre due volte. */
+    private var inizioGiaOfferto: String? = null
+
     // Player data
     private val _allPlayers = MutableStateFlow<List<PlayerData>>(emptyList())
     val allPlayers = _allPlayers.asStateFlow()
@@ -778,14 +799,25 @@ class WearViewModel(
         // La frase dipende da tre cose che cambiano per conto loro: lo stato, la coda, il
         // collegamento. Ognuna, cambiando, la rifa'.
         viewModelScope.launch { _scoreState.collect { ricalcolaFiducia() } }
-        viewModelScope.launch { _pendingCount.collect { ricalcolaFiducia() } }
-        viewModelScope.launch { _rifiutati.collect { ricalcolaFiducia() } }
+        viewModelScope.launch {
+            _pendingCount.collect {
+                ricalcolaFiducia()
+                aggiornaOffertaServizio()
+            }
+        }
+        viewModelScope.launch {
+            _rifiutati.collect {
+                ricalcolaFiducia()
+                aggiornaOffertaServizio()
+            }
+        }
         viewModelScope.launch {
             connectionState.collect {
                 ricalcolaFiducia()
                 // La scelta del marcatore parte solo verso un telefono che ascolta: da scollegati
                 // l'offerta non resta in piedi.
                 if (it !is ConnectionState.Connected) chiudiFinestraChi()
+                aggiornaOffertaServizio()
             }
         }
         // Il ViewModel nasce insieme all'app: fino alla prima risposta sul collegamento non si
@@ -876,6 +908,8 @@ class WearViewModel(
             pending.size > 0 && rebuildLocalState() -> Unit
             else -> _scoreState.value = state
         }
+        // Dopo il ridisegno e le ricevute: SERVE? si offre solo sullo stato del telefono a schermo.
+        aggiornaOffertaServizio()
         // Il registro e' passato da pieno a vuoto dopo il comando: il telefono ha chiuso.
         if (chiusuraInAttesa && registroPienoAlComando && !state.matchInProgress) chiusuraConfermata()
         // Lo stato puo' restare identico mentre l'ora cambia: il collector non se ne accorgerebbe.
@@ -1297,10 +1331,7 @@ class WearViewModel(
         // che manda il giocatore al servizio (1 o 2) solo in coppia. Il padel lo e' sempre. La
         // regola del 40-40 viene dal telefono: con quella del registro un killer point o i vantaggi
         // chiudevano il game al primo 40-40.
-        val rules =
-            SportRegistry.forMatch(base.sportId, deuce = DeuceRule.daNome(base.deuceRule)).let {
-                if (it is RacketRules && base.servingSlot != 0) it.conIlServizioInCoppia() else it
-            }
+        val rules = regoleDi(base)
         val engine = MatchEngine(rules)
         MatchLogCodec.decode(base.eventLog)?.let { engine.restoreLog(it) }
         pending.all().forEach { intento ->
@@ -1325,6 +1356,116 @@ class WearViewModel(
                 servingSlot = display.servingPlayerSlot ?: 0,
             )
         return true
+    }
+
+    /** Le regole della partita del telefono, come le usa lui: lo sport, la regola del 40-40, la coppia. */
+    private fun regoleDi(base: WearScoreState): SportRules =
+        SportRegistry.forMatch(base.sportId, deuce = DeuceRule.daNome(base.deuceRule)).let {
+            if (it is RacketRules && base.servingSlot != 0) it.conIlServizioInCoppia() else it
+        }
+
+    /** Lo stato della racchetta che il telefono ha mandato per ultimo, dal suo registro; null fuori dalla racchetta. */
+    private fun racchettaDelTelefono(): RacketScore? {
+        val base = statoDalTelefono ?: return null
+        if (base.sportId.isBlank()) return null
+        val engine = MatchEngine(regoleDi(base))
+        MatchLogCodec.decode(base.eventLog)?.let { engine.restoreLog(it) }
+        return engine.state as? RacketScore
+    }
+
+    /**
+     * SERVE? si offre sullo stato del telefono a schermo, al primo punto di un set e con chi serve non
+     * ancora scelto ([offreChiServe]), col telefono collegato e niente in viaggio: una scelta partita
+     * prima del punto che ha chiuso il set arriverebbe al game sbagliato, e da scollegati si perderebbe.
+     * Una volta per inizio di set; quando una condizione cade l'offerta si chiude.
+     */
+    private fun aggiornaOffertaServizio() {
+        val stato = statoDalTelefono
+        val vale =
+            stato != null &&
+                protocolV2Seen &&
+                _scoreState.value == stato &&
+                offreChiServe(stato) &&
+                _pendingCount.value == 0 &&
+                _rifiutati.value == 0 &&
+                !batchAttivo() &&
+                ricevute.isEmpty() &&
+                _finestraChi.value == null &&
+                connectionState.value is ConnectionState.Connected
+        if (!vale || stato == null) {
+            chiudiOffertaServizio()
+            return
+        }
+        val chiave = "${stato.matchUuid}|${stato.sportId}|${stato.eventLog}"
+        if (chiave == inizioGiaOfferto) return
+        inizioGiaOfferto = chiave
+        offertaServizioJob?.cancel()
+        _offertaServizio.value = true
+        offertaServizioJob =
+            viewModelScope.launch {
+                delay(DURATA_FINESTRA_SERVIZIO_MS)
+                chiudiOffertaServizio()
+            }
+    }
+
+    /** SERVE? finisce: scaduta, usata, o non piu' vera (un punto, il telefono che cade). */
+    fun chiudiOffertaServizio() {
+        offertaServizioJob?.cancel()
+        offertaServizioJob = null
+        _offertaServizio.value = false
+    }
+
+    /**
+     * Chi serve per la coppia [lato] al suo prossimo turno (1 o 2), secondo il registro del telefono:
+     * la spunta delle scelte. Null fuori dalla racchetta.
+     */
+    fun prossimoAServire(lato: Int): Int? = racchettaDelTelefono()?.nextSlot(lato)
+
+    /**
+     * La scelta di inizio set: apre la coppia [lato], e nelle due coppie serve per primo [slot1] e
+     * [slot2]. La decide il telefono, come i punti: qui parte solo l'intenzione.
+     */
+    fun scegliChiServe(
+        lato: Int,
+        slot1: Int,
+        slot2: Int,
+    ) = inviaChiServe(ScoringEvent.ServeChoice(side = lato, slot1 = slot1, slot2 = slot2))
+
+    /**
+     * La correzione a partita in corso: adesso serve il giocatore [slot] della coppia [lato]. Chi
+     * servira' per l'altra coppia lo dice il motore, sul registro del telefono, come sul telefono.
+     */
+    fun correggiChiServe(
+        lato: Int,
+        slot: Int,
+    ) {
+        val stato = racchettaDelTelefono() ?: return
+        inviaChiServe(stato.serveCorrection(side = lato, slot = slot))
+    }
+
+    /**
+     * L'intenzione [WearConstants.INTENT_SERVE], con la sua sequenza e senza lato (un telefono vecchio
+     * la scarta): non va in coda e non apre ricevute. Arrivata, la conferma e' lo stato nuovo, coi
+     * pallini al posto giusto; se non parte, la vibrazione d'errore dice di riprovare.
+     */
+    private fun inviaChiServe(scelta: ScoringEvent.ServeChoice) {
+        chiudiOffertaServizio()
+        val seq = prossimaSequenza()
+        val quando = System.currentTimeMillis()
+        viewModelScope.launch {
+            val payload =
+                DataMap().apply {
+                    putString(WearConstants.KEY_INTENT_KIND, WearConstants.INTENT_SERVE)
+                    putLong(WearConstants.KEY_SEQ, seq)
+                    putLong(WearConstants.KEY_AT_MILLIS, quando)
+                    putInt(WearConstants.KEY_SERVE_SIDE, scelta.side)
+                    putInt(WearConstants.KEY_SERVE_SLOT1, scelta.slot1)
+                    putInt(WearConstants.KEY_SERVE_SLOT2, scelta.slot2)
+                }
+            if (!invii.withLock { inviaMessaggio(WearConstants.MSG_SCORE_INTENT, payload.toByteArray()) }) {
+                triggerFailureVibration()
+            }
+        }
     }
 
     /**
@@ -1700,6 +1841,8 @@ class WearViewModel(
         val registroAlTocco = if (protocolV2Seen && statoVivoVisto) lunghezzaRegistro(statoDalTelefono) else null
         val ricevuta =
             registroAlTocco?.let { Ricevuta(seq, side, kind, it, tickAlle, chiediMarcatore).also(ricevute::addLast) }
+        // Un tocco cambia il punteggio: SERVE? valeva per lo 0-0 di prima.
+        chiudiOffertaServizio()
         viewModelScope.launch {
             val payload =
                 DataMap().apply {

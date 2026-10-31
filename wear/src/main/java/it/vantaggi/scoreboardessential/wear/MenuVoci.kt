@@ -5,6 +5,9 @@ enum class IdVoce {
     /** Compare solo a partita ferma, quando il telefono propone la prossima partita della serata. */
     PROSSIMA_PARTITA,
     SPORT,
+
+    /** Solo negli sport col servizio, a partita non finita: la correzione di chi serve. */
+    CHI_SERVE,
     FINE_PARTITA,
 
     /** Compare solo quando il telefono ha rifiutato la coda (L5): e' il modo di scartarla. */
@@ -122,6 +125,8 @@ data class InputMenu(
      * giocato a tempo), con lo stesso criterio di endMatch sul telefono.
      */
     val tempoAvviato: Boolean = false,
+    /** Chi serve adesso, gia' scritto ("Serve ROS"); vuoto dove non c'e' servizio o a partita finita. */
+    val chiServe: String = "",
 )
 
 /**
@@ -138,6 +143,7 @@ object MenuVoci {
             // A partita cominciata non c'e': le coppie sono quelle del motore, e il telefono rifiuterebbe.
             if (input.prossima.isNotEmpty() && !input.partitaIniziata) voceProssima(input) else null,
             if (input.haElencoSport) voceSport(input) else null,
+            if (input.chiServe.isNotEmpty()) voceChiServe(input) else null,
             voceFine(input),
             // Una coda rifiutata non si rimanda e non si applica: si scarta, e finche' non lo si fa le
             // altre voci dicono perche' sono spente.
@@ -183,6 +189,25 @@ object MenuVoci {
         // La durata vale dal prossimo cambio anche a partita in corso, come sul telefono: serve solo lui.
         val blocco = if (!input.collegato) SottotitoloVoce.ServeIlTelefono else null
         return Voce(IdVoce.PORTIERE, blocco == null, blocco ?: SottotitoloVoce.Valore(input.portiere))
+    }
+
+    /**
+     * La correzione di chi serve: la decide il telefono, quindi gli stessi blocchi della prossima
+     * partita (la coda prima, poi il telefono assente). A partita in corso e' accesa: e' fatta per quello.
+     */
+    private fun voceChiServe(input: InputMenu): Voce {
+        val blocco =
+            when {
+                input.rifiutati > 0 -> SottotitoloVoce.CodaRifiutata(input.rifiutati)
+                input.inCoda > 0 -> SottotitoloVoce.PrimaConsegna(input.inCoda)
+                !input.collegato -> SottotitoloVoce.ServeIlTelefono
+                else -> null
+            }
+        return Voce(
+            IdVoce.CHI_SERVE,
+            blocco == null,
+            if (blocco == null) SottotitoloVoce.Valore(input.chiServe) else SottotitoloVoce.ValoreBloccato(input.chiServe, blocco),
+        )
     }
 
     private fun voceProssima(input: InputMenu): Voce {

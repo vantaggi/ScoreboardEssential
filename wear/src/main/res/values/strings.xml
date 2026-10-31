@@ -44,6 +44,15 @@
     <!-- Il marcatore: la finestra in basso dice CHI?, la lista si apre con SALTA in cima. Frasi
          brevi, perche' il tondo da 192dp lascia circa 100dp di larghezza. -->
     <string name="wear_who_short">Who?</string>
+    <string name="wear_serve_short">Serve?</string>
+    <string name="wear_serve_choose">Choose who serves</string>
+    <string name="wear_serve_title">Who serves?</string>
+    <string name="wear_serve_first">Who serves first for %1$s?</string>
+    <string name="wear_serve_correct_title">Who is serving now?</string>
+    <string name="wear_serve_proposed">Proposed</string>
+    <string name="wear_menu_serve">Correct who serves</string>
+    <string name="wear_serve_now">Serving: %1$s</string>
+    <string name="cd_serve_next">%1$s serves</string>
     <string name="wear_skip">Skip</string>
     <string name="wear_goal_header">Goal · %1$s</string>
     <string name="wear_goal_header_plain">Goal</string>

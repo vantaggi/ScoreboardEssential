@@ -33,6 +33,8 @@
 
         <activity android:screenOrientation="portrait" android:name=".ProssimaPartitaActivity" android:exported="false" android:taskAffinity="" android:label="@string/wear_next_match" />
 
+        <activity android:screenOrientation="portrait" android:name=".SceltaDelServizioActivity" android:exported="false" android:taskAffinity="" android:label="@string/wear_serve_title" />
+
         <!--
             Nessun android:permission su questo servizio. Qui c'era BIND_WEARABLE_LISTENER_SERVICE,
             messo per restringere chi puo' collegarsi: ma Google Play Services quel permesso non

@@ -33,9 +33,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isNotEmpty
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.chip.ChipGroup
-import it.vantaggi.scoreboardessential.EtichettaSquadra
 import it.vantaggi.scoreboardessential.R
 import it.vantaggi.scoreboardessential.ScoreboardEssentialApplication
+import it.vantaggi.scoreboardessential.core.EtichettaSquadra
 import it.vantaggi.scoreboardessential.core.GameStat
 import it.vantaggi.scoreboardessential.core.MatchPlayer
 import it.vantaggi.scoreboardessential.core.MatchStats
