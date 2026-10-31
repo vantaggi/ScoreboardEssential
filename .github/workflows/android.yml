@@ -59,13 +59,18 @@ jobs:
       - name: 6. Run unit tests for all modules
         run: ./gradlew --parallel :core:test testDebugUnitTest
 
-      # Misura dell'adozione della UI Constitution (09-checks): valori scritti a mano, nomi doppi,
-      # testi da tradurre e la geometria del quadrante, che il passo 6 ha scritto in wear/build/misura.
-      # Per ora e' solo un avviso nel riepilogo della run: lo script esce sempre con 0. Ogni conteggio
-      # diventa bloccante quando arriva a zero (passo g del piano, docs/ui-constitution/misura.md).
-      - name: 6b. Measure UI Constitution adoption (warning only)
+      # Controlli della UI Constitution (09-checks): valori scritti a mano, nomi doppi, testi da
+      # tradurre e la geometria del quadrante, che il passo 6 ha scritto in wear/build/misura. Dal 31
+      # ottobre 2026 ogni conteggio e' a zero e il passo e' bloccante (PR 10 del piano,
+      # docs/ui-constitution/misura.md): con --blocca lo script elenca cio' che trova ed esce con 1.
+      # shell: bash da' pipefail, altrimenti l'esito sarebbe quello di tee. Prima, il test dello
+      # script: un --blocca che non blocca passerebbe sempre.
+      - name: 6b. Check UI Constitution (blocking)
         if: always()
-        run: python3 scripts/misura-ui.py | tee -a "$GITHUB_STEP_SUMMARY"
+        shell: bash
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_*.py'
+          python3 scripts/misura-ui.py --blocca | tee -a "$GITHUB_STEP_SUMMARY"
 
       # Nessuno step eseguiva lint: l'artefatto "lint-reports" in coda al
       # workflow e' stato vuoto a ogni run da quando esiste.
