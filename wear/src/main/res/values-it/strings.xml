@@ -56,17 +56,17 @@
          Nel tondo da 192dp il testo piu' lungo si taglia, quindi niente frasi nuove senza misurarle. -->
     <string name="wear_status_rejected">%1$d rifiutati</string>
     <string name="wear_status_not_confirmed">Non confermato</string>
-    <string name="wear_status_delivered">%1$d consegnati</string>
+    <string name="wear_status_delivered">%1$d arrivati</string>
     <string name="wear_status_closing">Chiusura…</string>
     <string name="wear_status_close_unconfirmed">Non confermata</string>
     <string name="wear_status_changing_sport">Cambio sport…</string>
-    <string name="wear_status_sport_unchanged">Sport non cambiato</string>
+    <string name="wear_status_sport_unchanged">Sport invariato</string>
     <string name="wear_status_phone_waiting">In attesa telefono</string>
-    <string name="wear_status_not_delivered">%1$d non consegnati</string>
+    <string name="wear_status_not_delivered">%1$d non arrivati</string>
     <string name="wear_status_sending">Invio %1$d…</string>
     <string name="wear_status_queued">%1$d in coda</string>
     <string name="wear_status_offline">Scollegato</string>
-    <string name="wear_status_offline_at">Scollegato · %1$s</string>
+    <string name="wear_status_offline_at">Scollegato %1$s</string>
     <string name="wear_scorer_not_sent">Marcatore non inviato</string>
 
     <!-- Prossima partita della serata e squadre in campo (menu partita). Senza apostrofi: aapt li rifiuta. -->

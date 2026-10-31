@@ -10,7 +10,7 @@ I numeri sono la barra di avanzamento dell'adozione (docs/ui-constitution/misura
 avviso: esce sempre con 0. Quando un conteggio arriva a zero diventa bloccante (passo g del piano).
 
 La geometria del quadrante non si misura qui ma con il test Robolectric
-`MisuraGeometriaDelPolsoTest` (modulo :wear), che scrive `wear/build/misura/geometria-<forma>.txt`: se i
+`GeometriaDelPolsoTest` (modulo :wear), che scrive `wear/build/misura/geometria-<forma>.txt`: se i
 file ci sono, il report li riporta.
 """
 
@@ -264,7 +264,7 @@ def testi():
 
 
 def geometria():
-    ordine = ["tondo-192", "tondo-227", "quadrato-192", "quadrato-227"]
+    ordine = ["tondo-192", "tondo-227", "en-tondo-192", "en-tondo-227", "quadrato-180", "quadrato-192", "quadrato-227"]
     file = [RADICE / f"wear/build/misura/geometria-{forma}.txt" for forma in ordine]
     presenti = [f for f in file if f.exists()]
     if not presenti:
@@ -281,11 +281,11 @@ def main():
     g = geometria()
     print()
     if g:
-        print("Geometria del quadrante (`MisuraGeometriaDelPolsoTest`):")
+        print("Geometria del quadrante (`GeometriaDelPolsoTest`):")
         print()
         print(g)
     else:
-        print("Geometria del quadrante: lanciare `./gradlew :wear:testDebugUnitTest --tests '*MisuraGeometriaDelPolsoTest'` per i file `wear/build/misura/geometria-<forma>.txt`.")
+        print("Geometria del quadrante: lanciare `./gradlew :wear:testDebugUnitTest --tests '*GeometriaDelPolsoTest'` per i file `wear/build/misura/geometria-<forma>.txt`.")
     if DETTAGLIO:
         for c in tutte:
             for m in MODULI:

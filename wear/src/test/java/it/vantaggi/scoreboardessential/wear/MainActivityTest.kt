@@ -475,7 +475,7 @@ class MainActivityTest {
         // Passati i 2 secondi senza un collegamento, la riga lo dice a parole e in ambra, con
         // l'ora dell'ultimo stato che il telefono ha mandato dal vivo (qui, quello di prima).
         passano(3)
-        assertTrue(riga(), Regex("Offline · \\d\\d:\\d\\d").matches(riga()))
+        assertTrue(riga(), Regex("Offline \\d\\d:\\d\\d").matches(riga()))
         assertEquals(colore(R.color.status_warning), coloreRiga())
     }
 

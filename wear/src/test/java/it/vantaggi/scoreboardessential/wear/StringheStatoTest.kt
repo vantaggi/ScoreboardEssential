@@ -71,7 +71,7 @@ class StringheStatoTest {
         // stesso catalogo: la lunghezza della frase inglese non sarebbe mai stata guardata.
         assertEquals("2 in coda", Frase.InCoda(2).testo(contesto("it")))
         assertEquals("2 queued", Frase.InCoda(2).testo(contesto("en")))
-        assertEquals("3 non consegnati", Frase.NonConsegnati(3).testo(contesto("it")))
+        assertEquals("3 non arrivati", Frase.NonConsegnati(3).testo(contesto("it")))
         assertEquals("3 not delivered", Frase.NonConsegnati(3).testo(contesto("en")))
         assertEquals("Invio 2…", Frase.Invio(2).testo(contesto("it")))
         assertEquals("Sending 2…", Frase.Invio(2).testo(contesto("en")))
@@ -85,11 +85,11 @@ class StringheStatoTest {
         // Il cambio sport: l'italiano di SPORT NON CAMBIATO sta al limite, 18 su 18.
         assertEquals("Cambio sport…", Transitorio.CambioSport.testo(contesto("it")))
         assertEquals("Changing sport…", Transitorio.CambioSport.testo(contesto("en")))
-        assertEquals("Sport non cambiato", Transitorio.SportNonCambiato.testo(contesto("it")))
-        assertEquals("Sport not changed", Transitorio.SportNonCambiato.testo(contesto("en")))
+        assertEquals("Sport invariato", Transitorio.SportNonCambiato.testo(contesto("it")))
+        assertEquals("Sport unchanged", Transitorio.SportNonCambiato.testo(contesto("en")))
         // La custodia (L5): il telefono ha messo da parte il tocco, l'italiano e' di nuovo al limite, 18 su 18.
         assertEquals("In attesa telefono", Transitorio.InAttesaDelTelefono.testo(contesto("it")))
-        assertEquals("Waiting for phone", Transitorio.InAttesaDelTelefono.testo(contesto("en")))
+        assertEquals("Awaiting phone", Transitorio.InAttesaDelTelefono.testo(contesto("en")))
     }
 
     @Test
@@ -98,7 +98,7 @@ class StringheStatoTest {
 
         assertEquals("Scollegato", Frase.Scollegato(null).testo(italiano))
         val conOra = Frase.Scollegato(1_700_000_000_000L).testo(italiano)
-        assertTrue(conOra, Regex("Scollegato · \\d\\d:\\d\\d").matches(conOra))
+        assertTrue(conOra, Regex("Scollegato \\d\\d:\\d\\d").matches(conOra))
         assertEquals("Offline", Frase.Scollegato(null).testo(contesto("en")))
     }
 }
