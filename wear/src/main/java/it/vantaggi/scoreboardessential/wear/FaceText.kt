@@ -68,10 +68,10 @@ internal object FaceText {
     }
 
     /**
-     * Il conto del portiere in ambient: solo minuti, "K 5'", perche' il sistema ridisegna una volta al
-     * minuto e un "0:37" scritto a 0:37 resterebbe fermo fino a 59 secondi, proprio quando il conto
-     * sta finendo. I minuti sono per eccesso (4:12 e' "K 5'"): scrive "ne restano al piu' cinque".
-     * Nell'ultimo minuto, che e' vero per tutto il minuto, "K <1'"; a conto finito "K 0'".
+     * Il conto del portiere FERMO in ambient: solo minuti, "K 5'". Il conto che corre scrive invece
+     * l'ora di fine (MainActivity, PR 9): questo testo non invecchia solo perche' il conto e' fermo.
+     * I minuti sono per eccesso (4:12 e' "K 5'"): "ne restano al piu' cinque". Sotto il minuto
+     * "K <1'"; a conto finito "K 0'".
      */
     fun portiereAmbient(secondiRimasti: Int): String =
         when {

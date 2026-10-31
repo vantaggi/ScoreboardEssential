@@ -59,6 +59,8 @@
     <string name="cd_keeper_timer">Goalkeeper countdown</string>
     <!-- Uguale nelle due lingue: K e i minuti:secondi che restano al portiere. -->
     <string name="wear_keeper_running" translatable="false">K %1$d:%2$02d</string>
+    <!-- Uguale nelle due lingue: K e l'ora in cui finisce il conto del portiere, in ambient (21:47). -->
+    <string name="wear_keeper_ends" translatable="false">K %1$s</string>
     <!-- La K da sola, col portiere fermo. -->
     <string name="wear_keeper_idle" translatable="false">K</string>
     <string name="wear_sport">Sport</string>
