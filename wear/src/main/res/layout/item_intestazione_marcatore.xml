@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    La prima riga della scelta del marcatore: QUALE gol (il punteggio dopo il gol) e sotto la barra
+    nel colore della squadra che ha segnato. Sta dentro la lista e scorre via con lei, come il titolo
+    del menu. Non si tocca: e' un titolo, e TalkBack lo legge come tale.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/space_4">
+
+    <TextView
+        android:id="@+id/goal_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:accessibilityHeading="true"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="@color/text_primary"
+        android:textAppearance="@style/TextAppearance.Lista.Titolo"
+        tools:text="GOL · 3–2" />
+
+    <View
+        android:id="@+id/goal_bar"
+        android:layout_width="@dimen/team_bar_title_width"
+        android:layout_height="@dimen/team_bar_width"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="@dimen/space_4"
+        android:importantForAccessibility="no" />
+
+</LinearLayout>

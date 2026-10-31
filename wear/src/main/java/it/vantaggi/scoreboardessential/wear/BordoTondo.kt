@@ -4,6 +4,8 @@ import android.graphics.Matrix
 import android.graphics.Rect
 import android.view.View
 import android.widget.ScrollView
+import androidx.recyclerview.widget.RecyclerView
+import androidx.wear.widget.WearableLinearLayoutManager
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -69,5 +71,35 @@ class ListaTonda(
                     Matrix().apply { setScale(s, s, riga.width / 2f, riga.height / 2f) }
                 }
         }
+    }
+}
+
+/**
+ * [BordoTondo] per le liste che sono una RecyclerView (la scelta del marcatore): le righe si
+ * stringono vicino al bordo come in [ListaTonda], invece di piegarsi ad arco come fa il
+ * WearableLinearLayoutManager di serie. Cosi' tutte le liste del polso si comportano allo stesso modo.
+ *
+ * Il gestore della lista la chiama per ogni riga dopo l'impaginazione e dopo ogni scorrimento, col
+ * dito e con la corona. Sul quadrato non fa niente: le righe restano intere.
+ */
+class ScalaTonda : WearableLinearLayoutManager.LayoutCallback() {
+    private val inizio = IntArray(2)
+
+    override fun onLayoutFinished(
+        child: View,
+        parent: RecyclerView,
+    ) {
+        if (!parent.resources.configuration.isScreenRound) return
+        val diametro = parent.rootView.width.toFloat()
+        if (diametro <= 0f || child.width == 0) return
+        parent.getLocationInWindow(inizio)
+        val cima = (inizio[1] + child.top).toFloat()
+        val s = BordoTondo.scala(cima, cima + child.height, child.width.toFloat(), diametro)
+        child.animationMatrix =
+            if (s >= 1f) {
+                null
+            } else {
+                Matrix().apply { setScale(s, s, child.width / 2f, child.height / 2f) }
+            }
     }
 }

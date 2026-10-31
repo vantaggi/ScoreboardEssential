@@ -70,11 +70,6 @@
     <dimen name="keeper_ring_square_inset">2dp</dimen>
     <dimen name="keeper_ring_square_radius">30dp</dimen>
 
-    <!-- La scelta del marcatore: quanto sta sotto il bordo alto del tondo l'intestazione, e quanto
-         rientrano le righe dai lati. Nei quadrati servono meno. -->
-    <dimen name="scorer_top_inset">22dp</dimen>
-    <dimen name="scorer_row_inset">22dp</dimen>
-
     <!-- Testi: le cifre sono a dimensione FISSA, niente autoSize, cosi' "AV" e "40" hanno la stessa
          misura da un lato all'altro e fra uno stato e l'altro. In dp e non in sp: stanno in colonne
          fisse da 68dp con una riga sola e senza puntini, e col carattere di sistema grande (fino a
@@ -119,10 +114,19 @@
     <!-- La barra del colore di squadra accanto a un nome (marcatore, squadre in campo, prossima partita). -->
     <dimen name="team_bar_width">4dp</dimen>
     <dimen name="team_bar_height">24dp</dimen>
+    <!-- La barra sotto il titolo del marcatore: corta e orizzontale, nel colore di chi ha segnato. -->
+    <dimen name="team_bar_title_width">28dp</dimen>
+
+    <!-- Una riga toccabile delle liste del polso: 52dp, il minimo sicuro col polso in movimento. -->
+    <dimen name="lista_riga_minima">52dp</dimen>
+    <!-- L'aria fra il nome di una voce e la sua riga secondaria ("in uso", il valore nel menu). -->
+    <dimen name="voce_riga_secondaria_aria">2dp</dimen>
 
     <!-- control-touch: il minimo di un comando al polso (le righe dei giocatori e i due bottoni). -->
     <dimen name="control_touch">48dp</dimen>
     <!-- La capsula CHI? del marcatore: l'aria ai lati della parola. 11dp e non 12: con "Who?" sul tondo
          da 192dp gli angoli della capsula restavano a 2,9dp dall'anello del portiere (GeometriaDelPolsoTest). -->
     <dimen name="face_chi_padding">11dp</dimen>
+    <!-- La K del portiere: quanto sta staccata dal centro del quadrante. -->
+    <dimen name="face_keeper_k_gap">5dp</dimen>
 </resources>

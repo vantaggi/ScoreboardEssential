@@ -146,8 +146,8 @@ class WearDataLayerService : WearableListenerService() {
                 }
 
                 WearConstants.PATH_TEAM_NAMES -> {
-                    val team1Name = dataMap.getString(WearConstants.KEY_TEAM1_NAME, "Team 1")
-                    val team2Name = dataMap.getString(WearConstants.KEY_TEAM2_NAME, "Team 2")
+                    val team1Name = dataMap.getString(WearConstants.KEY_TEAM1_NAME, context.getString(R.string.cd_team_fallback, 1))
+                    val team2Name = dataMap.getString(WearConstants.KEY_TEAM2_NAME, context.getString(R.string.cd_team_fallback, 2))
                     val intent =
                         Intent(ACTION_TEAM_NAMES_UPDATE).apply {
                             putExtra(EXTRA_TEAM1_NAME, team1Name)

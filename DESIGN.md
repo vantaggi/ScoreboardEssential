@@ -2923,3 +2923,19 @@ Oggi la rotazione e' fissa (A1, B1, A2, B2 dalle rose), la squadra 1 serve sempr
 - **Stati.** Sale, scende, cambio a raffica, primo disegno, ambient e risveglio (l'orologio non rotola, come prima), movimento ridotto.
 - **Pattern vietati (10-review).** Nessuna durata o curva scritta a mano: tutto da `R.integer` e `R.interpolator`. Niente rimbalzo, niente cicli, nessuna animazione al risveglio.
 - **Non visto a schermo.** Solo test JVM. Al polso e sul telefono va visto un punto che sale e uno annullato (scende).
+
+### PR 4: le liste del polso (31 ottobre 2026)
+
+- **Misura.** Menu, scelta dello sport e prossima partita erano gia' conformi a 08-wearable (revisione dei menu, #197): tutta larghezza col 5% di margine, titolo che scorre via, righe che si stringono sul tondo, corona che scorre la lista, chiusura del menu dopo 20s riarmati a ogni scorrimento. Fuori regola c'era solo la scelta del marcatore.
+- **Scelta.** Bozze nel piano, scheda "Bozze PR 4"; consiglio A, scritta in attesa della scelta del proprietario.
+  - L'intestazione ("Gol · 3–2" e la barra della squadra) e' la prima riga della lista e scorre via con lei (`IntestazioneAdapter` in un `ConcatAdapter`).
+  - La lista parte dall'alto coi margini delle altre liste (`lista_margine_*`) invece di centrare SALTA: all'apertura si leggono SALTA e due nomi invece di uno.
+  - Sul tondo le righe si stringono vicino al bordo con `BordoTondo`, come nel menu (`ScalaTonda`, il callback del `WearableLinearLayoutManager`), invece dell'arco di serie.
+  - La chiusura automatica passa da 15 a 20 secondi, sempre riarmati a ogni input.
+- **Token.** Cinque stili di testo per le liste (`TextAppearance.Lista.Titolo`, `Sezione`, `Dettaglio`, `Voce`, `Nome`) al posto dei 13 corpi scritti nei layout; `lista_riga_minima`, `team_bar_title_width`, `voce_riga_secondaria_aria`, `face_keeper_k_gap`. Spariscono `scorer_top_inset` e `scorer_row_inset`: il marcatore usa le misure delle altre liste. L'aria fra la barra e il nome del marcatore passa da 10 a 8dp, come nelle squadre in campo.
+- **Testi.** La K del portiere passa da una stringa; "Team 1" e "Team 2" come ripiego dell'orologio diventano "Squadra 1" e "Squadra 2" (`cd_team_fallback`). L'orologio ha tutti i conteggi della misura a zero.
+- **Stati.** Rosa vuota (SALTA e la scritta sotto), rosa lunga (12 nomi), invio in corso (la chiusura aspetta l'esito), tondo e quadrato.
+- **Accessibilita'.** L'intestazione e' un titolo per TalkBack (`accessibilityHeading`); la corona scorre la lista (focus).
+- **Pattern vietati (10-review).** Nessun valore scritto a mano nei layout delle liste del polso; nessuna animazione nuova: la scala delle righe segue il dito e la corona.
+- **Non visto a schermo.** Le catture di Robolectric disegnano in software e non mostrano la scala delle righe (`animationMatrix`); la si vede sull'emulatore tondo o al polso, insieme alla lista che parte dall'alto.
+

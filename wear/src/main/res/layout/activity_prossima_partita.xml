@@ -32,12 +32,10 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_8"
             android:accessibilityHeading="true"
-            android:fontFamily="@font/inter"
             android:gravity="center"
             android:maxLines="1"
             android:textColor="@color/text_primary"
-            android:textFontWeight="600"
-            android:textSize="14sp" />
+            android:textAppearance="@style/TextAppearance.Lista.Titolo" />
 
         <TextView
             android:id="@+id/prossima_avviso"
@@ -45,11 +43,10 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/space_8"
             android:accessibilityLiveRegion="polite"
-            android:fontFamily="@font/inter"
             android:gravity="center"
             android:maxLines="2"
             android:textColor="@color/text_secondary"
-            android:textSize="12sp" />
+            android:textAppearance="@style/TextAppearance.Lista.Dettaglio" />
 
         <TextView
             android:id="@+id/prossima_sigla1"
@@ -89,11 +86,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_8"
-            android:fontFamily="@font/inter"
             android:gravity="center"
             android:maxLines="3"
             android:textColor="@color/text_secondary"
-            android:textSize="12sp"
+            android:textAppearance="@style/TextAppearance.Lista.Dettaglio"
             android:visibility="gone" />
 
         <com.google.android.material.button.MaterialButton

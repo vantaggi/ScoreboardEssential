@@ -32,9 +32,7 @@
             android:accessibilityHeading="true"
             android:text="@string/wear_menu_title"
             android:textColor="@color/text_primary"
-            android:fontFamily="@font/inter"
-            android:textFontWeight="600"
-            android:textSize="14sp"
+            android:textAppearance="@style/TextAppearance.Lista.Titolo"
             android:maxLines="1"
             android:gravity="center" />
 
@@ -58,13 +56,11 @@
             android:layout_marginTop="@dimen/space_16"
             android:layout_marginBottom="@dimen/space_8"
             android:accessibilityHeading="true"
-            android:fontFamily="@font/inter"
             android:gravity="center"
             android:maxLines="1"
             android:text="@string/wear_in_campo"
             android:textColor="@color/text_secondary"
-            android:textFontWeight="500"
-            android:textSize="12sp"
+            android:textAppearance="@style/TextAppearance.Lista.Sezione"
             android:visibility="gone" />
 
         <LinearLayout
@@ -87,13 +83,11 @@
             android:layout_marginTop="@dimen/space_16"
             android:layout_marginBottom="@dimen/space_8"
             android:accessibilityHeading="true"
-            android:fontFamily="@font/inter"
             android:gravity="center"
             android:maxLines="1"
             android:text="@string/wear_settings"
             android:textColor="@color/text_secondary"
-            android:textFontWeight="500"
-            android:textSize="12sp" />
+            android:textAppearance="@style/TextAppearance.Lista.Sezione" />
 
         <LinearLayout
             android:id="@+id/menu_impostazioni"

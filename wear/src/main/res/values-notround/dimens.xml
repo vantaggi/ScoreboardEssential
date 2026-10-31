@@ -14,9 +14,6 @@
     <dimen name="face_digits_outer">12dp</dimen>
     <dimen name="face_stripe_inset">38dp</dimen>
 
-    <dimen name="scorer_top_inset">6dp</dimen>
-    <dimen name="scorer_row_inset">10dp</dimen>
-
     <!-- Liste del polso sul quadrato: nessun cerchio che taglia, un margine piccolo e uguale su ogni lato. -->
     <dimen name="lista_margine_lati">8dp</dimen>
     <dimen name="lista_margine_alto">8dp</dimen>

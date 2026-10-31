@@ -259,12 +259,12 @@
             android:importantForAccessibility="no"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:text="K"
+            android:text="@string/wear_keeper_idle"
             app:layout_constraintTop_toBottomOf="@id/guide_24"
             app:layout_constraintBottom_toTopOf="@id/guide_56"
             app:layout_constraintStart_toEndOf="@id/guide_center"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginStart="5dp" />
+            android:layout_marginStart="@dimen/face_keeper_k_gap" />
 
         <!--
             Fascia B: i due lati. Ogni lato e' un bersaglio solo, e contiene le sue cifre e il suo

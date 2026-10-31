@@ -176,8 +176,10 @@ class MainActivity : ComponentActivity() {
                     }
 
                     WearDataLayerService.ACTION_TEAM_NAMES_UPDATE -> {
-                        val team1Name = intent.getStringExtra(WearDataLayerService.EXTRA_TEAM1_NAME) ?: "Team 1"
-                        val team2Name = intent.getStringExtra(WearDataLayerService.EXTRA_TEAM2_NAME) ?: "Team 2"
+                        val team1Name =
+                            intent.getStringExtra(WearDataLayerService.EXTRA_TEAM1_NAME) ?: getString(R.string.cd_team_fallback, 1)
+                        val team2Name =
+                            intent.getStringExtra(WearDataLayerService.EXTRA_TEAM2_NAME) ?: getString(R.string.cd_team_fallback, 2)
                         viewModel.setTeamNames(team1Name, team2Name)
                     }
 
@@ -1111,7 +1113,7 @@ class MainActivity : ComponentActivity() {
         mostraPortiere(auxAvailable)
         when (state) {
             is KeeperTimerState.Hidden -> {
-                binding.keeperTimer.text = "K"
+                binding.keeperTimer.setText(R.string.wear_keeper_idle)
                 binding.keeperTimer.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
                 binding.keeperProgressBar.visibility = View.INVISIBLE
             }
