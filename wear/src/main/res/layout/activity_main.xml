@@ -323,22 +323,26 @@
                 app:layout_constraintStart_toEndOf="@id/team1ServeDot"
                 android:layout_marginStart="@dimen/face_dot_gap" />
 
-            <!-- A fine game, per tre secondi, la sigla di chi serve prende il posto dei pallini: parte
-                 dove parte il primo pallino e va verso le cifre, con la base delle lettere sul fondo dei
-                 pallini, cosi' le maiuscole stanno nella loro fascia e non scendono sulle cifre
-                 (bozza A di chi serve). -->
+            <!-- Le sigle della coppia, sempre, al posto dei pallini (bozza A di chi batte, 3 novembre
+                 2026): centrate sulla colonna delle cifre, con la base delle lettere sul fondo dei
+                 pallini, cosi' le maiuscole stanno nella loro fascia e non scendono sulle cifre. Chi
+                 batte e' in lime e 600, gli altri in grigio e 400 (SigleDelleCoppie). Il primo pallino
+                 resta INVISIBLE e non GONE mentre le sigle ci sono: e' la loro ancora. TalkBack le
+                 legge nella descrizione del lato. -->
             <TextView
                 android:id="@+id/team1ServeNext"
-                android:textAppearance="@style/TextAppearance.Face.Servizio"
-                android:layout_width="wrap_content"
+                android:textAppearance="@style/TextAppearance.Face.Coppie"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:importantForAccessibility="no"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:accessibilityLiveRegion="polite"
                 android:visibility="gone"
                 app:layout_constraintBaseline_toBottomOf="@id/team1ServeDot"
-                app:layout_constraintStart_toStartOf="@id/team1ServeDot"
-                tools:text="ROS"
+                app:layout_constraintStart_toStartOf="@id/team1Score"
+                app:layout_constraintEnd_toEndOf="@id/team1Score"
+                tools:text="VAN GLO"
                 tools:visibility="visible" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -393,16 +397,18 @@
 
             <TextView
                 android:id="@+id/team2ServeNext"
-                android:textAppearance="@style/TextAppearance.Face.Servizio"
-                android:layout_width="wrap_content"
+                android:textAppearance="@style/TextAppearance.Face.Coppie"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:importantForAccessibility="no"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:accessibilityLiveRegion="polite"
                 android:visibility="gone"
                 app:layout_constraintBaseline_toBottomOf="@id/team2ServeDot"
-                app:layout_constraintEnd_toEndOf="@id/team2ServeDot"
-                tools:text="BIA" />
+                app:layout_constraintStart_toStartOf="@id/team2Score"
+                app:layout_constraintEnd_toEndOf="@id/team2Score"
+                tools:text="ROS BIA" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!--

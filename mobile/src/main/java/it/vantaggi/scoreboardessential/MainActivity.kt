@@ -13,6 +13,10 @@ import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.TypefaceSpan
 import android.util.Log
 import android.util.TypedValue
 import android.view.View
@@ -28,6 +32,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnNextLayout
@@ -39,10 +44,12 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.snackbar.Snackbar
 import it.vantaggi.scoreboardessential.core.ClockMode
+import it.vantaggi.scoreboardessential.core.EtichettaSquadra
 import it.vantaggi.scoreboardessential.core.ExportResult
 import it.vantaggi.scoreboardessential.core.MatchSummarizer
 import it.vantaggi.scoreboardessential.core.ReportLabels
@@ -50,7 +57,9 @@ import it.vantaggi.scoreboardessential.core.ScoreDisplay
 import it.vantaggi.scoreboardessential.core.SportCapabilities
 import it.vantaggi.scoreboardessential.core.SportRegistry
 import it.vantaggi.scoreboardessential.core.TeamInk
+import it.vantaggi.scoreboardessential.core.indiceDiChiServe
 import it.vantaggi.scoreboardessential.core.siglaDiChiServe
+import it.vantaggi.scoreboardessential.core.sigleDelleCoppie
 import it.vantaggi.scoreboardessential.database.PlayerWithRoles
 import it.vantaggi.scoreboardessential.domain.models.Formation
 import it.vantaggi.scoreboardessential.domain.models.MatchEvent
@@ -82,6 +91,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import it.vantaggi.scoreboardessential.shared.R as SharedR
 
 // Quanto scurisce la colonna di gioco a foglio PARTITA aperto: nero al 60%.
 private const val SCRIM_ALPHA = 0.6f
@@ -485,6 +495,9 @@ class MainActivity :
         // A fine game, per qualche secondo, le sigle di chi serve adesso al posto dei pallini.
         viewModel.fineGame.observe(this) {
             val display = viewModel.scoreDisplay.value ?: return@observe
+            // Se il nome della coppia sono le sue sigle, chi batte e' gia' in lime li' dentro.
+            val nome = if (display.servingSide == 2) viewModel.team2Name.value else viewModel.team1Name.value
+            if (sigleNelNome(display.servingSide ?: return@observe, nome.orEmpty(), rose()) != null) return@observe
             val sigla = siglaDiChiServe(display, rose()[0], rose()[1]) ?: return@observe
             mostraChiServe(findViewById(android.R.id.content), display.servingSide ?: return@observe, sigla)
         }
@@ -1583,6 +1596,7 @@ class MainActivity :
             display,
             viewModel.team1Name.value.orEmpty(),
             viewModel.team2Name.value.orEmpty(),
+            rose(),
         )
     }
 
@@ -2160,7 +2174,10 @@ internal fun mostraGliSlotDelServizio(
     sportConServizio: Boolean,
 ) {
     for (id in listOf(R.id.team1_serve_slot, R.id.team2_serve_slot)) {
-        righeDeiNomi.findViewById<View>(id).visibility = if (sportConServizio) View.VISIBLE else View.GONE
+        val slot = righeDeiNomi.findViewById<View>(id)
+        slot.visibility = if (sportConServizio) View.VISIBLE else View.GONE
+        // [mostraIlServizio] lo toglie quando il nome della coppia sono le sue sigle, e lo rimette solo qui.
+        slot.setTag(R.id.team1_serve_slot, sportConServizio)
     }
 }
 
@@ -2190,12 +2207,19 @@ internal fun disponiLeFormazioni(
 }
 
 /**
- * I pallini del servizio: uno se batte il primo giocatore della squadra, due se batte il secondo.
+ * Chi serve, accanto al nome della coppia.
  *
- * Niente nomi e niente numeri a schermo: la barra dice gia' chi serve, qui si dice quale dei due.
- * Il singolare ha un solo giocatore per lato, quindi un pallino. Lo slot ha sempre la larghezza
- * di due pallini e quelli spenti sono INVISIBLE e non GONE, cosi' nulla si sposta. Sta fuori
- * dall'Activity perche' sotto Robolectric MainActivity non si monta.
+ * Se il nome della coppia sono le sue sigle ("VAN/GLO", [EtichettaSquadra]), la sigla di chi batte e'
+ * in lime e 600 dentro il nome e i pallini non ci sono (bozza A di chi batte, scelta da Cioti il 3
+ * novembre 2026, come sull'orologio): si legge sempre chi batte e quale coppia e' la propria. Il lime
+ * non e' l'unico segno: cambia anche il peso, e la barra dice chi serve a parole. Lo slot dei pallini
+ * e' GONE solo in questo caso, che non cambia a partita in corso (le rose si bloccano al primo punto).
+ *
+ * Altrimenti (un nome scelto, nessuna rosa) i pallini: uno se batte il primo giocatore della
+ * squadra, due se batte il secondo. Niente nomi e niente numeri: la barra dice gia' chi serve, qui si
+ * dice quale dei due. Il singolare ha un solo giocatore per lato, quindi un pallino. Lo slot ha
+ * sempre la larghezza di due pallini e quelli spenti sono INVISIBLE e non GONE, cosi' nulla si
+ * sposta. Sta fuori dall'Activity perche' sotto Robolectric MainActivity non si monta.
  *
  * TalkBack non vede i pallini uno a uno: lo slot ha una descrizione sola, e solo mentre la
  * squadra serve, che dice chi batte.
@@ -2205,6 +2229,7 @@ internal fun mostraIlServizio(
     display: ScoreDisplay,
     nome1: String,
     nome2: String,
+    rose: List<List<String>> = emptyList(),
 ) {
     val lati =
         listOf(
@@ -2215,6 +2240,17 @@ internal fun mostraIlServizio(
         val nome = if (indice == 0) nome1 else nome2
         val serve = display.servingSide == indice + 1
         val slot = radice.findViewById<View>(ids[1])
+        val sigle = sigleNelNome(indice + 1, nome, rose)
+        val conServizio = slot.getTag(R.id.team1_serve_slot) as? Boolean ?: true
+        slot.visibility = if (conServizio && sigle == null) View.VISIBLE else View.GONE
+        radice.findViewById<TextView>(if (indice == 0) R.id.team1_name_textview else R.id.team2_name_textview)?.let { testo ->
+            testo.text =
+                if (sigle == null) {
+                    nome
+                } else {
+                    nomeConChiBatte(testo, sigle, indiceDiChiServe(indice + 1, display.servingSide, display.servingPlayerSlot, sigle.size))
+                }
+        }
         radice.findViewById<View>(ids[2]).visibility = if (serve) View.VISIBLE else View.INVISIBLE
         radice.findViewById<View>(ids[3]).visibility =
             if (serve && display.servingPlayerSlot == 2) View.VISIBLE else View.INVISIBLE
@@ -2233,6 +2269,43 @@ internal fun mostraIlServizio(
         val modifica = slot.context.getString(R.string.cd_edit_team_name, nome)
         radice.findViewById<View>(ids[0]).contentDescription = if (frase == null) modifica else "$modifica. $frase"
     }
+}
+
+/**
+ * Le sigle della coppia [lato] se il suo nome a schermo e' fatto proprio di quelle ("VAN/GLO": nessun
+ * nome scelto e una o due persone per parte), altrimenti null.
+ */
+internal fun sigleNelNome(
+    lato: Int,
+    nome: String,
+    rose: List<List<String>>,
+): List<String>? {
+    val coppie = sigleDelleCoppie(rose.getOrNull(0).orEmpty(), rose.getOrNull(1).orEmpty()) ?: return null
+    val sigle = if (lato == 2) coppie.second else coppie.first
+    return sigle.takeIf { it.joinToString(EtichettaSquadra.SEPARATORE) == nome }
+}
+
+/** Il nome "VAN/GLO" con la sigla [chiBatte] (0 o 1, null nessuna) nell'accento e in 600. */
+private fun nomeConChiBatte(
+    testo: TextView,
+    sigle: List<String>,
+    chiBatte: Int?,
+): CharSequence {
+    val nome = SpannableStringBuilder()
+    val accento = MaterialColors.getColor(testo, R.attr.colorAccentDefault)
+    val forte = ResourcesCompat.getFont(testo.context, SharedR.font.inter_semibold)
+    sigle.forEachIndexed { i, sigla ->
+        if (i > 0) nome.append(EtichettaSquadra.SEPARATORE)
+        val inizio = nome.length
+        nome.append(sigla)
+        if (i == chiBatte) {
+            nome.setSpan(ForegroundColorSpan(accento), inizio, nome.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            forte?.let {
+                nome.setSpan(TypefaceSpan(it), inizio, nome.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+        }
+    }
+    return nome
 }
 
 /**

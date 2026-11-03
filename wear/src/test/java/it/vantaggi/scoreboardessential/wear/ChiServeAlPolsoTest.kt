@@ -56,7 +56,7 @@ internal fun game(lato: Int): List<ScoringEvent> = List(4) { ScoringEvent.Point(
 internal fun set(lato: Int): List<ScoringEvent> = (1..6).flatMap { game(lato) }
 
 /**
- * Chi serve al polso, le parti pure: quando offrire SERVE?, quando un game si e' chiuso, e le domande
+ * Chi serve al polso, le parti pure: quando offrire SERVE? e le domande
  * della scelta a tutto schermo. Sono le regole della bozza A di Cioti (31 ottobre 2026).
  */
 class ChiServeAlPolsoTest {
@@ -92,30 +92,6 @@ class ChiServeAlPolsoTest {
         assertFalse(offreChiServe(calcio))
         assertFalse(offreChiServe(statoPadel(set(1) + set(1), set = 3)))
         assertFalse("il padel dell'app e' a set unico: finito", offreChiServe(statoPadel(set(1))))
-    }
-
-    // --- Quando si chiude un game ---
-
-    /** Rosso se la sigla non parte a fine game o a fine set, o parte per un punto qualunque. */
-    @Test
-    fun `un game chiuso si riconosce, un punto no`() {
-        val prima = statoPadel(List(3) { ScoringEvent.Point(1) })
-        val dopo = statoPadel(game(1))
-        assertTrue(fineDelGame(prima, dopo))
-        assertFalse("40-0 dopo 30-0", fineDelGame(statoPadel(List(2) { ScoringEvent.Point(1) }), prima))
-        val setQuasi = statoPadel(set(1).dropLast(1), set = 3)
-        assertTrue("anche il game che chiude il set", fineDelGame(setQuasi, statoPadel(set(1), set = 3)))
-    }
-
-    /** Rosso se un annullamento o una partita nuova fanno comparire la sigla. */
-    @Test
-    fun `annullamenti, la stessa schermata e un'altra partita non sono una fine game`() {
-        val quindici = statoPadel(game(1) + ScoringEvent.Point(2))
-        val zero = statoPadel(game(1))
-        assertFalse("annullato il primo punto del game", fineDelGame(quindici, zero))
-        assertFalse("annullato il punto che chiudeva il game", fineDelGame(zero, statoPadel(List(3) { ScoringEvent.Point(1) })))
-        assertFalse("nessuno stato prima", fineDelGame(null, zero))
-        assertFalse("partita nuova", fineDelGame(statoPadel(game(1).dropLast(1)), statoPadel(game(1), uuid = "partita-2")))
     }
 
     // --- La scelta a tutto schermo ---

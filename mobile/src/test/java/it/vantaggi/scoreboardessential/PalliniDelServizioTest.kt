@@ -242,4 +242,70 @@ class PalliniDelServizioTest {
         assertEquals("un punto entro i tre secondi le toglie", View.GONE, sigla.visibility)
         assertEquals(1f, pallini.alpha)
     }
+
+    private val rose = listOf(listOf("Vantaggi", "Glorio"), listOf("Rossi", "Bianchi"))
+
+    /** Le sigle del nome che hanno un colore proprio, col loro colore. */
+    private fun colorate(testo: CharSequence): Map<String, Int> {
+        val s = testo as? android.text.Spanned ?: return emptyMap()
+        return s
+            .getSpans(0, s.length, android.text.style.ForegroundColorSpan::class.java)
+            .associate { s.subSequence(s.getSpanStart(it), s.getSpanEnd(it)).toString() to it.foregroundColor }
+    }
+
+    /**
+     * Bozza A di chi batte (3 novembre 2026): se il nome della coppia sono le sue sigle, la sigla di chi
+     * batte e' nell'accento dentro il nome e i pallini non ci sono. Rosso se manca il colore, se finisce
+     * sulla sigla sbagliata o sull'altra coppia, o se lo slot dei pallini resta.
+     */
+    @Test
+    fun `con le sigle nel nome chi batte e' nell'accento e i pallini non ci sono`() {
+        val radice = gonfia()
+        val accento =
+            com.google.android.material.color.MaterialColors
+                .getColor(radice, R.attr.colorAccentDefault)
+        mostraIlServizio(radice, display(lato = 2, giocatore = 2), "VAN/GLO", "ROS/BIA", rose)
+        val nome1 = radice.findViewById<android.widget.TextView>(R.id.team1_name_textview).text
+        val nome2 = radice.findViewById<android.widget.TextView>(R.id.team2_name_textview).text
+        assertEquals("VAN/GLO", nome1.toString())
+        assertEquals("ROS/BIA", nome2.toString())
+        assertEquals("la coppia che non batte non ha colori", emptyMap<String, Int>(), colorate(nome1))
+        assertEquals("batte Bianchi, il secondo", mapOf("BIA" to accento), colorate(nome2))
+        assertEquals(View.GONE, radice.findViewById<View>(R.id.team1_serve_slot).visibility)
+        assertEquals(View.GONE, radice.findViewById<View>(R.id.team2_serve_slot).visibility)
+        assertEquals(
+            "TalkBack dice ancora chi batte",
+            "Edit the name of ROS/BIA. ROS/BIA serving, second player",
+            radice.findViewById<View>(R.id.team2_name_container).contentDescription,
+        )
+    }
+
+    /** Rosso se un nome scelto perde i pallini, o se prende colori che non sono sigle. */
+    @Test
+    fun `con un nome scelto restano i pallini`() {
+        val radice = gonfia()
+        mostraIlServizio(radice, display(lato = 1, giocatore = 1), "Leoni", "ROS/BIA", rose)
+        assertEquals(View.VISIBLE, radice.findViewById<View>(R.id.team1_serve_slot).visibility)
+        assertEquals(1, pallini(radice, 1))
+        val nome1 = radice.findViewById<android.widget.TextView>(R.id.team1_name_textview).text
+        assertEquals("Leoni", nome1.toString())
+        assertEquals(emptyMap<String, Int>(), colorate(nome1))
+        assertEquals("l'altra coppia ha le sigle nel nome", View.GONE, radice.findViewById<View>(R.id.team2_serve_slot).visibility)
+    }
+
+    /** Rosso se le sigle nel nome riaccendono lo slot nel calcio, o se lo slot non torna nel padel. */
+    @Test
+    fun `lo slot torna solo negli sport col servizio`() {
+        val radice = gonfia()
+        val righe = radice.findViewById<View>(R.id.names_row)
+        val slot = radice.findViewById<View>(R.id.team1_serve_slot)
+        mostraGliSlotDelServizio(righe, sportConServizio = false)
+        mostraIlServizio(radice, display(null, null), "Leoni", "Tigri", rose)
+        assertEquals("nel calcio resta GONE", View.GONE, slot.visibility)
+        mostraGliSlotDelServizio(righe, sportConServizio = true)
+        mostraIlServizio(radice, display(1, 1), "VAN/GLO", "ROS/BIA", rose)
+        assertEquals("con le sigle nel nome GONE", View.GONE, slot.visibility)
+        mostraIlServizio(radice, display(1, 1), "Leoni", "ROS/BIA", rose)
+        assertEquals("rinominata, tornano i pallini", View.VISIBLE, slot.visibility)
+    }
 }
