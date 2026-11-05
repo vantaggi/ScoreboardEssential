@@ -26,6 +26,7 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Wearable
 import it.vantaggi.scoreboardessential.core.TeamInk
 import it.vantaggi.scoreboardessential.core.siglaDiChiServe
+import it.vantaggi.scoreboardessential.core.sigleDelleCoppie
 import it.vantaggi.scoreboardessential.shared.communication.ConnectionState
 import it.vantaggi.scoreboardessential.shared.communication.NodoLocale
 import it.vantaggi.scoreboardessential.shared.communication.WearConstants
@@ -146,8 +147,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    /** L'ultimo stato v2 disegnato: col nuovo dice se si e' appena chiuso un game ([fineDelGame]). */
-    private var statoMostrato: WearScoreState? = null
+    /** Gli sport con la racchetta: solo li' le sigle delle coppie stanno sopra le cifre ([disegnaLeCoppie]). */
+    private var racchetta = false
 
     // Serve solo alla descrizione dei lati per TalkBack: cosa dice la riga in basso lo decide
     // StatoFiducia nel ViewModel, non questa schermata.
@@ -575,22 +576,6 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * A fine game la sigla di chi serve dopo, per tre secondi, al posto dei pallini; un punteggio che
-     * cambia prima la toglie subito. Senza rose non c'e' sigla e restano i pallini. In ambient no.
-     */
-    private fun segnaFineDelGame(
-        prima: WearScoreState?,
-        dopo: WearScoreState,
-    ) {
-        if (prima == null || prima.comeDisplay() == dopo.comeDisplay()) return
-        togliLaSigla(binding.root)
-        if (ambient || !fineDelGame(prima, dopo)) return
-        val coppie = viewModel.coppie.value ?: return
-        val sigla = siglaDiChiServe(dopo.servingSide, dopo.servingSlot.takeIf { it != 0 }, coppie.rosa1, coppie.rosa2) ?: return
-        mostraLaSigla(binding.root, dopo.servingSide, sigla)
-    }
-
-    /**
      * Apre la lista del marcatore e consuma l'offerta: tornati dalla lista, il bersaglio e' di nuovo
      * il menu. Il colore e' quello della squadra che ha segnato, il punteggio quello del gol offerto.
      */
@@ -789,20 +774,38 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Il pallino lime sul lato esterno della colonna di chi serve (in ambient solo il contorno
-     * bianco, vedi [disegnaPallini]); con 0 (calcio, finita) nessuno. Un pallino se batte il primo giocatore o si gioca in singolare, due se batte il
-     * secondo: il secondo sta accanto al primo, verso le cifre, e il primo non si muove.
+     * Chi serve. Con le rose delle due coppie (padel e tennis) le loro sigle stanno sempre sopra le
+     * cifre, con chi batte in lime ([disegnaLeCoppie]); senza rose il pallino lime sul lato esterno
+     * della colonna di chi serve (in ambient solo il contorno bianco, vedi [disegnaPallini]); con 0
+     * (calcio, finita) nessuno. Un pallino se batte il primo giocatore o si gioca in singolare, due
+     * se batte il secondo: il secondo sta accanto al primo, verso le cifre, e il primo non si muove.
      */
     private fun applyServing(state: WearScoreState) {
-        binding.team1ServeDot.visibility = if (state.servingSide == 1) View.VISIBLE else View.GONE
-        binding.team2ServeDot.visibility = if (state.servingSide == 2) View.VISIBLE else View.GONE
-        val secondo = state.servingSlot == 2
-        binding.team1ServeDotSecond.visibility = if (state.servingSide == 1 && secondo) View.VISIBLE else View.GONE
-        binding.team2ServeDotSecond.visibility = if (state.servingSide == 2 && secondo) View.VISIBLE else View.GONE
         serveLato = state.servingSide
         serveGiocatore = state.servingSlot
+        racchetta = !state.hasClock
+        if (!disegnaLeCoppie()) {
+            binding.team1ServeDot.visibility = if (state.servingSide == 1) View.VISIBLE else View.GONE
+            binding.team2ServeDot.visibility = if (state.servingSide == 2) View.VISIBLE else View.GONE
+            val secondo = state.servingSlot == 2
+            binding.team1ServeDotSecond.visibility = if (state.servingSide == 1 && secondo) View.VISIBLE else View.GONE
+            binding.team2ServeDotSecond.visibility = if (state.servingSide == 2 && secondo) View.VISIBLE else View.GONE
+        }
         disegnaPallini()
         describeSides()
+    }
+
+    /**
+     * Le sigle delle due coppie sopra le cifre, chi batte in lime (bozza A di chi batte, 3 novembre
+     * 2026): si legge sempre chi batte e quale coppia e' la propria. Solo negli sport con la racchetta
+     * e con le rose arrivate dal telefono; allora i pallini si spengono ([mostraLeCoppie]). Si ridisegna quando cambiano lo stato, le rose o l'ambient.
+     *
+     * @return true se le sigle sono in vista.
+     */
+    private fun disegnaLeCoppie(): Boolean {
+        val rose = viewModel.coppie.value
+        val coppie = if (racchetta && rose != null) sigleDelleCoppie(rose.rosa1, rose.rosa2) else null
+        return mostraLeCoppie(binding.root, coppie, serveLato, serveGiocatore, ambient)
     }
 
     /**
@@ -1049,8 +1052,8 @@ class MainActivity : ComponentActivity() {
         ).forEach { it.visibility = View.INVISIBLE }
         ambientPortiere(viewModel.keeperTimer.value)
         binding.chiCapsule.visibility = View.GONE
-        // La sigla di fine game e' colore e movimento: in ambient tornano i pallini.
-        togliLaSigla(binding.root)
+        // Le sigle delle coppie restano, ma senza lime: chi batte e' bianco.
+        disegnaLeCoppie()
         // A polso abbassato la riga parla solo di anomalie (rosso e ambra) e della partita finita:
         // il suggerimento (TIENI: -1) e i transitori positivi (n CONSEGNATI, INVIO n..., CAMBIO
         // SPORT...) si tacciono.
@@ -1323,8 +1326,6 @@ class MainActivity : ComponentActivity() {
                     viewModel.scoreState.collect { state ->
                         state?.let {
                             renderScoreState(it)
-                            segnaFineDelGame(statoMostrato, it)
-                            statoMostrato = it
                         }
                     }
                 }
@@ -1354,6 +1355,13 @@ class MainActivity : ComponentActivity() {
                             scriviCifra(2, score.toString())
                             describeSides()
                         }
+                    }
+                }
+
+                // Le rose arrivano quando vogliono: con loro compaiono le sigle delle coppie.
+                launch {
+                    viewModel.coppie.collect {
+                        viewModel.scoreState.value?.let(::applyServing)
                     }
                 }
 

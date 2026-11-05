@@ -48,3 +48,35 @@ fun siglaDiChiServe(
     val posizione = (if (lato == 2) giocatori1.size else 0) + indice
     return sigle.getOrNull(posizione)?.takeIf { it.isNotEmpty() }
 }
+
+/**
+ * Le sigle delle due coppie in campo, nell'ordine delle rose, distinte su tutti e quattro come nei
+ * nomi delle squadre ([EtichettaSquadra.sigle]). Telefono e polso le tengono sempre in vista sopra i
+ * punteggi, con chi serve nell'accento (bozza A, 3 novembre 2026): dopo un paio di partite non si
+ * ricorda piu' se la propria coppia e' la 1 o la 2. Null se una rosa e' vuota o ha piu' di due
+ * giocatori (il calcio), o se una sigla viene vuota.
+ */
+fun sigleDelleCoppie(
+    giocatori1: List<String>,
+    giocatori2: List<String>,
+): Pair<List<String>, List<String>>? {
+    if (giocatori1.size !in 1..2 || giocatori2.size !in 1..2) return null
+    val sigle = EtichettaSquadra.sigle(giocatori1 + giocatori2)
+    if (sigle.any { it.isEmpty() }) return null
+    return sigle.take(giocatori1.size) to sigle.drop(giocatori1.size)
+}
+
+/**
+ * Quale sigla della coppia [lato] serve: 0 o 1, null se quella coppia non serve. [giocatore] e' 1 o
+ * 2 (null o 0 nel singolare, dove la coppia ha una sigla sola).
+ */
+fun indiceDiChiServe(
+    lato: Int,
+    servingSide: Int?,
+    giocatore: Int?,
+    giocatoriDellaCoppia: Int,
+): Int? {
+    if (servingSide != lato) return null
+    if (giocatoriDellaCoppia < 2) return 0
+    return ((giocatore?.takeIf { it in 1..2 } ?: 1) - 1)
+}

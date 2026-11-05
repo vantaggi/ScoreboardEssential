@@ -192,8 +192,8 @@ class GeometriaDelPolsoTest {
                 "le cifre della squadra 2" to binding.team2Score,
                 "il dettaglio" to binding.faceDetail,
                 "la riga di stato" to binding.gestureHint,
-                "la sigla di chi serve della squadra 1" to binding.team1ServeNext,
-                "la sigla di chi serve della squadra 2" to binding.team2ServeNext,
+                "le sigle della coppia 1" to binding.team1ServeNext,
+                "le sigle della coppia 2" to binding.team2ServeNext,
             ).filter { visibile(it.second) }
                 .mapNotNull { (nome, vista) -> inchiostro(vista)?.let { "$nome \"${vista.text}\"" to it } }
         val segni =
@@ -297,9 +297,10 @@ class GeometriaDelPolsoTest {
     }
 
     /**
-     * Chi serve: la capsula SERVE? al posto della riga di stato e la sigla di fine game al posto dei
-     * pallini, con quattro lettere larghe (le sigle che si ripetono ne prendono quattro). La sigla non
-     * deve nemmeno toccare l'inchiostro delle cifre del suo lato.
+     * Chi serve: la capsula SERVE? al posto della riga di stato e le sigle delle coppie sopra le cifre,
+     * sia con tre lettere sia con le piu' larghe da quattro (le sigle che si ripetono ne prendono
+     * quattro, e scendono alla misura piccola), in attivo e in ambient. Le sigle non devono nemmeno
+     * toccare l'inchiostro delle cifre del loro lato, ne' le sigle dell'altro lato.
      */
     private fun misuraIlServizio(lato: Int) {
         binding.chiCapsule.text = fasce.resources.getString(R.string.wear_serve_short)
@@ -308,19 +309,33 @@ class GeometriaDelPolsoTest {
         idle()
         misura("padel con SERVE?, attivo")
         binding.chiCapsule.visibility = View.GONE
-        mostraLaSigla(binding.root, lato, "MOWM")
-        fasce.requestLayout()
-        idle()
-        misura("padel con la sigla della squadra $lato, attivo")
-        val sigla = inchiostro(if (lato == 1) binding.team1ServeNext else binding.team2ServeNext)
-        val cifre = inchiostro(if (lato == 1) binding.team1Score else binding.team2Score)
-        misurati++
-        if (sigla == null) {
-            trovati += "la sigla della squadra $lato non si vede"
-        } else if (cifre != null && RectF.intersects(sigla, cifre)) {
-            trovati += "la sigla della squadra $lato tocca le cifre: sigla $sigla, cifre $cifre"
+        val casi =
+            listOf(
+                "tre lettere" to (listOf("VAN", "GLO") to listOf("MOW", "WOM")),
+                "quattro lettere" to (listOf("MOWM", "WOMW") to listOf("MOWW", "WOMM")),
+            )
+        for ((nome, coppie) in casi) {
+            for (ambiente in listOf(false, true)) {
+                mostraLeCoppie(binding.root, coppie, lato, 2, ambiente)
+                fasce.requestLayout()
+                idle()
+                val caso = "padel con le sigle a $nome, serve la squadra $lato" + if (ambiente) " (colori dell'ambient)" else ""
+                misura(caso)
+                val sigle1 = inchiostro(binding.team1ServeNext)
+                val sigle2 = inchiostro(binding.team2ServeNext)
+                misurati++
+                if (sigle1 == null || sigle2 == null) {
+                    trovati += "$caso: le sigle non si vedono"
+                    continue
+                }
+                if (RectF.intersects(sigle1, sigle2)) trovati += "$caso: le sigle delle due coppie si toccano: $sigle1, $sigle2"
+                listOf(sigle1 to binding.team1Score, sigle2 to binding.team2Score).forEach { (sigle, cifre) ->
+                    val c = inchiostro(cifre)
+                    if (c != null && RectF.intersects(sigle, c)) trovati += "$caso: le sigle toccano le cifre: $sigle, $c"
+                }
+            }
         }
-        togliLaSigla(binding.root)
+        mostraLeCoppie(binding.root, null, lato, 2, false)
         fasce.requestLayout()
         idle()
     }

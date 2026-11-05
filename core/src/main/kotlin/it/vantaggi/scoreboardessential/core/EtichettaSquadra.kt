@@ -12,7 +12,9 @@ package it.vantaggi.scoreboardessential.core
 object EtichettaSquadra {
     private const val LETTERE = 3
     private const val GIOCATORI_MASSIMI = 2
-    private const val SEPARATORE = "/"
+
+    /** Fra le sigle di una coppia nel nome: "VAN/GLO". Il telefono lo cerca per colorare chi batte. */
+    const val SEPARATORE = "/"
 
     // "TEAM 1" del ViewModel, "Team 1" delle impostazioni, "Squadra 1" se qualcuno l'ha tradotto a mano.
     private val PREDEFINITO = Regex("""(team|squadra)\s*\d+""", RegexOption.IGNORE_CASE)

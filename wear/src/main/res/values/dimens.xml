@@ -48,8 +48,11 @@
     <!-- Dal bordo alto del lato: i pallini stanno sopra l'altezza delle cifre, cosi' il secondo
          non finisce mai sul testo. -->
     <dimen name="face_dot_top">2dp</dimen>
-    <!-- La sigla di chi serve a fine game, nel posto dei pallini: alta come loro in maiuscolo. -->
-    <dimen name="face_serve_next_text_size">10sp</dimen>
+    <!-- Le sigle delle coppie, nel posto dei pallini: 12dp; se una sigla ha quattro lettere (cognomi
+         che cominciano uguale) 10dp, perche' "ROSS MORM" a 12 esce dalla colonna delle cifre. In dp
+         e non in sp come le cifre: la colonna e' fissa e col carattere grande uscirebbero. -->
+    <dimen name="face_coppie_text_size">12dp</dimen>
+    <dimen name="face_coppie_text_size_lunghe">10dp</dimen>
     <!-- Dove finiscono le cifre dal lato del centro: il resto del vuoto fra le due colonne. -->
     <dimen name="face_digits_gutter">4dp</dimen>
     <!-- Margine delle cifre dal lato esterno: corda piu' fascia del pallino. -->

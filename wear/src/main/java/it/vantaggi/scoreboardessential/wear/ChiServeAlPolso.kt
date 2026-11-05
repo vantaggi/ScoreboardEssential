@@ -8,8 +8,8 @@ import it.vantaggi.scoreboardessential.core.inizioDelSet
 /*
  * Chi serve al polso (bozza A di Cioti, 31 ottobre 2026): a inizio set la capsula SERVE? apre la scelta
  * a tutto schermo, prima la coppia e poi, in ciascuna coppia, chi serve per primo; a partita in corso
- * la correzione sta nel menu; a fine game la sigla di chi serve prende per tre secondi il posto dei
- * pallini. Qui solo funzioni pure: le domande, le risposte e quando offrire, provate su JVM.
+ * la correzione sta nel menu; le sigle delle coppie stanno sempre sopra le cifre, con chi serve in
+ * lime (SigleDelleCoppie, 3 novembre 2026). Qui solo funzioni pure: le domande, le risposte e quando offrire, provate su JVM.
  */
 
 /** Lo stato del telefono come lo legge :core: le stringhe vuote del protocollo sono i null del display. */
@@ -34,22 +34,6 @@ internal fun offreChiServe(stato: WearScoreState): Boolean {
     if (!inizioDelSet(stato.comeDisplay())) return false
     val ultimo = MatchLogCodec.decode(stato.eventLog)?.lastOrNull() ?: return true
     return ultimo.event !is ScoringEvent.ServeChoice
-}
-
-/**
- * Fra [prima] e [dopo] si e' chiuso un game: i punti ripartono da 0-0 e i game sono cambiati, nella
- * stessa partita e con qualcuno al servizio. Un annullamento che torna al game prima non lo e' (i punti
- * non sono 0-0), e nemmeno quello del primo punto di un game (i game non cambiano). E' il momento in
- * cui il telefono fa comparire la sigla di chi serve dopo.
- */
-internal fun fineDelGame(
-    prima: WearScoreState?,
-    dopo: WearScoreState,
-): Boolean {
-    if (prima == null || dopo.matchOver || dopo.servingSide == 0) return false
-    if (prima.matchUuid != dopo.matchUuid || prima.sportId != dopo.sportId) return false
-    if (dopo.side1Primary != "0" || dopo.side2Primary != "0") return false
-    return prima.side1Secondary != dopo.side1Secondary
 }
 
 /** Che cosa ha scelto chi tocca: la scelta di inizio set, o la correzione a partita in corso. */

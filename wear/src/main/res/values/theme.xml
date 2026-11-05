@@ -115,11 +115,11 @@
         <item name="android:textFontWeight">600</item>
         <item name="android:letterSpacing">0.04</item>
     </style>
-    <!-- La sigla di chi serve a fine game, nel posto dei pallini: in lime come loro, che sul quadrante
-         marca solo chi serve. -->
-    <style name="TextAppearance.Face.Servizio" parent="android:TextAppearance">
-        <item name="android:textSize">@dimen/face_serve_next_text_size</item>
-        <item name="android:textColor">@color/accent_default</item>
+    <!-- Le sigle delle coppie sopra le cifre, nel posto dei pallini: in grigio; chi batte lo colora
+         SigleDelleCoppie (lime e 600, in ambient bianco). In dp come le cifre: stanno in una colonna fissa. -->
+    <style name="TextAppearance.Face.Coppie" parent="android:TextAppearance">
+        <item name="android:textSize">@dimen/face_coppie_text_size</item>
+        <item name="android:textColor">@color/text_secondary</item>
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">600</item>
         <item name="android:letterSpacing">0.04</item>
